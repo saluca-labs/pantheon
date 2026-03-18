@@ -35,7 +35,7 @@ spec:
           image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8001
+            - containerPort: 8002
               name: http
               protocol: TCP
           securityContext:
