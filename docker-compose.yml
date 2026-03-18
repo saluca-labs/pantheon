@@ -1,0 +1,239 @@
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — shared database for all Tiresias services
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    # Bind to localhost only — not exposed to external network (FINDING-05)
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/postgresql
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # SoulAuth — core identity and authorization engine
+  # ---------------------------------------------------------------------------
+  soulauth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    environment:
+      SOULAUTH_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER must be set}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB must be set}
+      SOULAUTH_DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:?POSTGRES_USER must be set}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB must be set}
+      SOULAUTH_MODE: ${SOULAUTH_MODE:-enterprise}
+      SOULAUTH_DEBUG: ${SOULAUTH_DEBUG:-false}
+      SOULAUTH_JWT_PRIVATE_KEY_PATH: ${SOULAUTH_JWT_PRIVATE_KEY_PATH:-}
+      SOULAUTH_JWT_PUBLIC_KEY_PATH: ${SOULAUTH_JWT_PUBLIC_KEY_PATH:-}
+      SOULAUTH_POLICY_REPO_PATH: ${SOULAUTH_POLICY_REPO_PATH:-}
+      SOULAUTH_RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SOULAUTH_TRIAL_VERIFY_BASE_URL: ${TRIAL_VERIFY_BASE_URL:-https://tiresias.saluca.com}
+      TIRESIAS_LICENSE_KEY: ${TIRESIAS_LICENSE_KEY:-}
+      SOULAUTH_LICENSE_REQUIRED: ${SOULAUTH_LICENSE_REQUIRED:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); assert r.status_code == 200"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # SoulGate — API gateway with rate limiting and prompt injection detection
+  # Internal only — no host port mapping (FINDING-06)
+  # ---------------------------------------------------------------------------
+  soulgate:
+    build:
+      context: .
+      dockerfile: soulGate/Dockerfile
+    # No host port — communicates over tiresias-net only
+    env_file:
+      - .env
+    environment:
+      SOULGATE_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER must be set}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB must be set}
+      SOULGATE_SOULAUTH_URL: http://soulauth:8000
+      SOULGATE_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8002/health'); assert r.status_code == 200"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # SoulWatch — behavioral analytics sidecar with detection engine
+  # Internal only — no host port mapping (FINDING-06)
+  # ---------------------------------------------------------------------------
+  soulwatch:
+    build:
+      context: .
+      dockerfile: soulWatch/Dockerfile
+    # No host port — communicates over tiresias-net only
+    env_file:
+      - .env
+    environment:
+      SOULWATCH_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER must be set}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB must be set}
+      SOULWATCH_MODE: ${SOULWATCH_MODE:-sidecar}
+      SOULWATCH_SOULAUTH_URL: http://soulauth:8000
+      SOULWATCH_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8001/health'); assert r.status_code == 200"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # Portal — Next.js management dashboard
+  # ---------------------------------------------------------------------------
+  portal:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SOULAUTH_API_URL: http://soulauth:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NEXT_PUBLIC_SOULAUTH_API_URL: http://soulauth:8000
+      NEXT_PUBLIC_SOULWATCH_API_URL: http://soulwatch:8001
+      NEXT_PUBLIC_SOULGATE_API_URL: http://soulgate:8002
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — metrics collection and alerting
+  # Internal only — no host port mapping (FINDING-06)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    # No host port — access via portal or SSH tunnel only
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - promdata:/prometheus
+    depends_on:
+      - soulauth
+      - soulgate
+      - soulwatch
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+  # ---------------------------------------------------------------------------
+  # Alertmanager — alert routing and notification (FINDING-22)
+  # ---------------------------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - tiresias-net
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+
+volumes:
+  pgdata:
+  promdata:
+
+networks:
+  tiresias-net:
+    driver: bridge

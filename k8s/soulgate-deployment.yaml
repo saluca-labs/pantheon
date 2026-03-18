@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soulgate
+  namespace: tiresias
+  labels:
+    app: soulgate
+    app.kubernetes.io/name: soulgate
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/component: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: soulgate
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: soulgate
+        app.kubernetes.io/name: soulgate
+        app.kubernetes.io/part-of: tiresias
+    spec:
+      serviceAccountName: tiresias-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: soulgate
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0
+          ports:
+            - containerPort: 8001
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: SOULGATE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url
+            - name: SOULGATE_SOULAUTH_URL
+              value: "http://soulauth.tiresias.svc.cluster.local"
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: internal-api-key
+            - name: SOULAUTH_JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: jwt-public-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulgate
+  namespace: tiresias
+  labels:
+    app: soulgate
+    app.kubernetes.io/name: soulgate
+    app.kubernetes.io/part-of: tiresias
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soulgate

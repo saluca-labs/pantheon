@@ -1,0 +1,66 @@
+#!/bin/bash
+set -euo pipefail
+
+PROJECT=salucainfrastructure
+REGION=us-central1
+CLUSTER=tiresias-prod
+REPO=us-central1-docker.pkg.dev/$PROJECT/tiresias
+TAG=v1.0.0
+
+echo "=== Tiresias Production Deployment ==="
+
+# 1. Set project
+gcloud config set project $PROJECT
+
+# 2. Get cluster credentials
+gcloud container clusters get-credentials $CLUSTER --region=$REGION
+
+# 3. Create GCP service account for Workload Identity
+gcloud iam service-accounts create tiresias-sa --display-name="Tiresias Service Account" 2>/dev/null || true
+
+# Grant Cloud SQL Client role
+gcloud projects add-iam-policy-binding $PROJECT \
+  --member="serviceAccount:tiresias-sa@$PROJECT.iam.gserviceaccount.com" \
+  --role="roles/cloudsql.client" --condition=None 2>/dev/null
+
+# 4. Submit Cloud Build (builds all 4 images)
+gcloud builds submit --config=cloudbuild.yaml --timeout=1800s
+
+# 5. Create namespace
+kubectl apply -f k8s/namespace.yaml
+
+# 6. Bind Workload Identity
+kubectl annotate serviceaccount tiresias-sa \
+  --namespace tiresias \
+  iam.gke.io/gcp-service-account=tiresias-sa@$PROJECT.iam.gserviceaccount.com \
+  --overwrite 2>/dev/null || true
+
+gcloud iam service-accounts add-iam-policy-binding \
+  tiresias-sa@$PROJECT.iam.gserviceaccount.com \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:$PROJECT.svc.id.goog[tiresias/tiresias-sa]" 2>/dev/null
+
+# 7. Apply secrets
+kubectl apply -f k8s/secrets.yaml
+
+# 8. Deploy all services
+kubectl apply -f k8s/soulauth-deployment.yaml
+kubectl apply -f k8s/soulgate-deployment.yaml
+kubectl apply -f k8s/soulwatch-deployment.yaml
+kubectl apply -f k8s/portal-deployment.yaml
+
+# 9. Apply ingress, HPA, network policies
+kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/hpa.yaml
+kubectl apply -f k8s/network-policy.yaml
+
+# 10. Wait for rollout
+echo "Waiting for deployments..."
+kubectl rollout status deployment/soulauth -n tiresias --timeout=300s
+kubectl rollout status deployment/portal -n tiresias --timeout=300s
+
+echo "=== Deployment Complete ==="
+kubectl get pods -n tiresias
+kubectl get ingress -n tiresias
+echo ""
+echo "Point tiresias.saluca.com DNS to the ingress IP above."
