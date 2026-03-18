@@ -47,6 +47,7 @@ spec:
       containers:
         - name: soulauth
           image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
               name: http
