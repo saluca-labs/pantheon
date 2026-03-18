@@ -24,12 +24,22 @@ spec:
       ports:
         - protocol: TCP
           port: 8000
+    # GCE health prober CIDRs (required for GKE load balancer health checks)
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8000
   egress:
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity token exchange)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
@@ -64,12 +74,22 @@ spec:
       ports:
         - protocol: TCP
           port: 8002
+    # GCE health prober CIDRs (required for GKE load balancer health checks)
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8002
   egress:
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity token exchange)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
@@ -118,12 +138,22 @@ spec:
       ports:
         - protocol: TCP
           port: 8001
+    # GCE health prober CIDRs (required for GKE load balancer health checks)
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8001
   egress:
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity token exchange)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
@@ -161,12 +191,22 @@ spec:
     - ports:
         - protocol: TCP
           port: 3000
+    # GCE health prober CIDRs (required for GKE load balancer health checks)
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 3000
   egress:
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity token exchange)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
