@@ -33,6 +33,7 @@ spec:
       containers:
         - name: soulwatch
           image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 8002
               name: http
