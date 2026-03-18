@@ -34,7 +34,14 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Cloud SQL Proxy connects to Google API (port 3307 / metadata server)
+    # GKE metadata server (Workload Identity / instance metadata)
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # Cloud SQL Proxy connects to Google API (port 3307)
     - ports:
         - protocol: TCP
           port: 3307
@@ -71,6 +78,13 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity)
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
     # SoulAuth internal
     - to:
         - podSelector:
@@ -114,6 +128,13 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity)
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
     # SoulAuth internal
     - to:
         - podSelector:
@@ -153,6 +174,13 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # GKE metadata server (Workload Identity)
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
     # Internal services (SoulAuth, SoulGate, SoulWatch)
     - to:
         - podSelector:
