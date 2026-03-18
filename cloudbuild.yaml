@@ -1,47 +1,22 @@
 steps:
-  # Configure Docker auth for Artifact Registry
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['auth', 'configure-docker', 'us-central1-docker.pkg.dev', '--quiet']
-    id: 'configure-docker'
-
   # Build all images in parallel
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0', '-f', 'Dockerfile', '.']
     id: 'build-soulauth'
-    waitFor: ['configure-docker']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0', '-f', 'soulGate/Dockerfile', '.']
     id: 'build-soulgate'
-    waitFor: ['configure-docker']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0', '-f', 'soulWatch/Dockerfile', '.']
     id: 'build-soulwatch'
-    waitFor: ['configure-docker']
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0', '-f', 'portal/Dockerfile', '.']
     id: 'build-portal'
-    waitFor: ['configure-docker']
 
-  # Push all images
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0']
-    waitFor: ['build-soulauth']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0']
-    waitFor: ['build-soulgate']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0']
-    waitFor: ['build-soulwatch']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0']
-    waitFor: ['build-portal']
-
+# Cloud Build pushes these automatically using its own credentials
 images:
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0'
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0'
