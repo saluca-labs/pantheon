@@ -113,6 +113,8 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: metrics-auth-token
+            - name: SOULAUTH_LICENSE_REQUIRED
+              value: "false"
             - name: SOULAUTH_LOG_LEVEL
               value: "INFO"
             - name: SOULAUTH_DEBUG
