@@ -74,7 +74,7 @@ class Settings(BaseSettings):
 
     # Server
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = Field(default=8000, validation_alias="SOULAUTH_SERVER_PORT")
 
     # Supabase
     supabase_url: Optional[str] = None
