@@ -107,7 +107,7 @@ class SoulWatchSettings(BaseSettings):
 
     # Server
     host: str = "0.0.0.0"
-    port: int = 8001
+    port: int = Field(default=8001, validation_alias="SOULWATCH_SERVER_PORT")
 
     model_config = {
         "env_prefix": "SOULWATCH_",
