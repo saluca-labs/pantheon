@@ -26,15 +26,23 @@ spec:
     - host: tiresias.saluca.com
       http:
         paths:
-          # SoulAuth API routes
-          - path: /v1/*
+          # SoulGate routes
+          - path: /gate/*
             pathType: ImplementationSpecific
             backend:
               service:
-                name: soulauth
+                name: soulgate
                 port:
                   number: 80
-          # Health check endpoint
+          # SoulWatch routes
+          - path: /watch/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulwatch
+                port:
+                  number: 80
+          # SoulAuth API routes
           - path: /health
             pathType: ImplementationSpecific
             backend:
@@ -42,7 +50,48 @@ spec:
                 name: soulauth
                 port:
                   number: 80
-          # Metrics endpoint
+          - path: /auth/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tokens/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /policies/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tenants/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /admin/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /sdk/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
           - path: /metrics
             pathType: ImplementationSpecific
             backend:
