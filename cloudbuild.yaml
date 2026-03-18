@@ -13,10 +13,16 @@ steps:
     id: 'build-soulwatch'
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0', '-f', 'portal/Dockerfile', '.']
+    args: [
+      'build',
+      '--build-arg', 'NEXT_PUBLIC_SOULAUTH_API_URL=https://tiresias.saluca.com',
+      '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0',
+      '-f', 'portal/Dockerfile',
+      './portal'
+    ]
     id: 'build-portal'
 
-# Cloud Build pushes these automatically using its own credentials
+# Cloud Build pushes these automatically
 images:
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0'
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0'
@@ -25,6 +31,6 @@ images:
 
 options:
   machineType: 'E2_HIGHCPU_8'
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
 
 timeout: '1800s'
