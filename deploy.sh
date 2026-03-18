@@ -59,18 +59,25 @@ gcloud iam service-accounts add-iam-policy-binding \
 # 8. Apply secrets
 kubectl apply -f k8s/secrets.yaml
 
-# 9. Deploy all services
+# 9. Run database migrations as a one-off Job before deploying services
+echo "Running database migrations..."
+kubectl apply -f k8s/migrate-job.yaml
+kubectl wait --for=condition=complete job/tiresias-migrate -n tiresias --timeout=120s
+kubectl delete -f k8s/migrate-job.yaml --ignore-not-found
+
+# 10. Deploy all services
 kubectl apply -f k8s/soulauth-deployment.yaml
 kubectl apply -f k8s/soulgate-deployment.yaml
 kubectl apply -f k8s/soulwatch-deployment.yaml
 kubectl apply -f k8s/portal-deployment.yaml
 
-# 10. Apply ingress, HPA, network policies
+# 11. Apply ingress, HPA, network policies, backend configs
+kubectl apply -f k8s/backendconfigs.yaml
 kubectl apply -f k8s/ingress.yaml
 kubectl apply -f k8s/hpa.yaml
 kubectl apply -f k8s/network-policy.yaml
 
-# 11. Wait for rollout
+# 12. Wait for rollout
 echo "Waiting for deployments..."
 kubectl rollout status deployment/soulauth -n tiresias --timeout=300s
 kubectl rollout status deployment/portal -n tiresias --timeout=300s
