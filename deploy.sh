@@ -12,10 +12,26 @@ echo "=== Tiresias Production Deployment ==="
 # 1. Set project
 gcloud config set project $PROJECT
 
-# 2. Get cluster credentials
+# 2. Create GKE cluster if it doesn't exist
+if ! gcloud container clusters describe $CLUSTER --region=$REGION --project=$PROJECT &>/dev/null; then
+  echo "Creating GKE cluster $CLUSTER..."
+  gcloud container clusters create $CLUSTER \
+    --region=$REGION \
+    --project=$PROJECT \
+    --num-nodes=2 \
+    --machine-type=e2-standard-2 \
+    --workload-pool=$PROJECT.svc.id.goog \
+    --enable-autoscaling \
+    --min-nodes=1 \
+    --max-nodes=5
+else
+  echo "Cluster $CLUSTER already exists, skipping create."
+fi
+
+# 3. Get cluster credentials
 gcloud container clusters get-credentials $CLUSTER --region=$REGION
 
-# 3. Create GCP service account for Workload Identity
+# 4. Create GCP service account for Workload Identity
 gcloud iam service-accounts create tiresias-sa --display-name="Tiresias Service Account" 2>/dev/null || true
 
 # Grant Cloud SQL Client role
@@ -23,13 +39,13 @@ gcloud projects add-iam-policy-binding $PROJECT \
   --member="serviceAccount:tiresias-sa@$PROJECT.iam.gserviceaccount.com" \
   --role="roles/cloudsql.client" --condition=None 2>/dev/null
 
-# 4. Submit Cloud Build (builds all 4 images)
+# 5. Submit Cloud Build (builds all 4 images)
 gcloud builds submit --config=cloudbuild.yaml --timeout=1800s
 
-# 5. Create namespace
+# 6. Create namespace
 kubectl apply -f k8s/namespace.yaml
 
-# 6. Bind Workload Identity
+# 7. Bind Workload Identity
 kubectl annotate serviceaccount tiresias-sa \
   --namespace tiresias \
   iam.gke.io/gcp-service-account=tiresias-sa@$PROJECT.iam.gserviceaccount.com \
@@ -40,21 +56,21 @@ gcloud iam service-accounts add-iam-policy-binding \
   --role roles/iam.workloadIdentityUser \
   --member "serviceAccount:$PROJECT.svc.id.goog[tiresias/tiresias-sa]" 2>/dev/null
 
-# 7. Apply secrets
+# 8. Apply secrets
 kubectl apply -f k8s/secrets.yaml
 
-# 8. Deploy all services
+# 9. Deploy all services
 kubectl apply -f k8s/soulauth-deployment.yaml
 kubectl apply -f k8s/soulgate-deployment.yaml
 kubectl apply -f k8s/soulwatch-deployment.yaml
 kubectl apply -f k8s/portal-deployment.yaml
 
-# 9. Apply ingress, HPA, network policies
+# 10. Apply ingress, HPA, network policies
 kubectl apply -f k8s/ingress.yaml
 kubectl apply -f k8s/hpa.yaml
 kubectl apply -f k8s/network-policy.yaml
 
-# 10. Wait for rollout
+# 11. Wait for rollout
 echo "Waiting for deployments..."
 kubectl rollout status deployment/soulauth -n tiresias --timeout=300s
 kubectl rollout status deployment/portal -n tiresias --timeout=300s
