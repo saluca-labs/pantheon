@@ -1,0 +1,34 @@
+id: pb-investigate
+name: Investigate
+description: >
+  Low-level response playbook for informational detections. Logs enhanced detail
+  and creates an investigation ticket via webhook for SOC triage.
+  Used for off-hours activity and other low-confidence signals.
+trigger_rules:
+  - sa-rule-003-off-hours-activity
+severity_threshold: low
+actions:
+  - type: log
+    params:
+      level: info
+      message: "Detection logged for investigation"
+      enhanced_detail: true
+  - type: webhook
+    params:
+      url: "${INVESTIGATION_WEBHOOK_URL}"
+      method: POST
+      headers:
+        Content-Type: application/json
+      body_template: >
+        {"source": "soulauth", "type": "investigation",
+         "rule": "{{rule_id}}", "level": "{{level}}",
+         "agent": "{{event.persona_id}}", "timestamp": "{{timestamp}}"}
+  - type: notify
+    params:
+      channels:
+        - slack
+      message: "LOW: Detection logged — investigation ticket created."
+      priority: low
+cooldown_minutes: 60
+requires_approval: false
+enabled: true

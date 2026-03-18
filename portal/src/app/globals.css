@@ -1,0 +1,533 @@
+@import "tailwindcss";
+
+/* ============================================
+   TIRESIAS DESIGN SYSTEM
+   "The blind prophet who sees threats, never data."
+
+   Color Philosophy:
+   - Deep navy/charcoal base = security, trust, depth
+   - Gold accent = prophecy, premium, divine insight
+   - Teal secondary = technology, clarity, innovation
+   - All dark-first — light mode optional later
+   ============================================ */
+
+:root {
+  /* Core palette */
+  --navy-950: #0a0e1a;
+  --navy-900: #0f1629;
+  --navy-800: #162038;
+  --navy-700: #1e2d4a;
+  --navy-600: #2a3f5f;
+  --navy-500: #3a5578;
+
+  /* Gold accent — prophecy, premium */
+  --gold-500: #d4a853;
+  --gold-400: #e4bd6a;
+  --gold-300: #f0d08a;
+  --gold-600: #b8903e;
+
+  /* Teal secondary — technology, clarity */
+  --teal-500: #2dd4bf;
+  --teal-400: #5eead4;
+  --teal-300: #99f6e4;
+  --teal-600: #0d9488;
+
+  /* Semantic */
+  --background: var(--navy-950);
+  --background-secondary: var(--navy-900);
+  --background-tertiary: var(--navy-800);
+  --foreground: #e8eaf0;
+  --foreground-muted: #8a92a8;
+  --foreground-subtle: #5a6380;
+  --accent: var(--gold-500);
+  --accent-hover: var(--gold-400);
+  --secondary: var(--teal-500);
+  --secondary-hover: var(--teal-400);
+
+  /* Status */
+  --success: #22c55e;
+  --warning: var(--gold-500);
+  --danger: #ef4444;
+  --info: var(--teal-500);
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(212, 168, 83, 0.3);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-navy-600: var(--navy-600);
+  --color-gold-500: var(--gold-500);
+  --color-gold-400: var(--gold-400);
+  --color-gold-300: var(--gold-300);
+  --color-gold-600: var(--gold-600);
+  --color-teal-500: var(--teal-500);
+  --color-teal-400: var(--teal-400);
+  --color-teal-300: var(--teal-300);
+  --color-teal-600: var(--teal-600);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-border-accent: var(--border-accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Base styles */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--navy-600);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--navy-500);
+}
+
+/* Selection */
+::selection {
+  background: rgba(212, 168, 83, 0.3);
+  color: var(--foreground);
+}
+
+/* ============================================
+   TYPOGRAPHY REFINEMENTS
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  line-height: 1.08;
+}
+
+h2 {
+  line-height: 1.15;
+}
+
+h3 {
+  line-height: 1.25;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* ============================================
+   GLOW EFFECTS
+   ============================================ */
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(212, 168, 83, 0.15), 0 0 60px rgba(212, 168, 83, 0.05);
+}
+
+.glow-teal {
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.15), 0 0 60px rgba(45, 212, 191, 0.05);
+}
+
+/* ============================================
+   GRADIENT TEXT UTILITIES
+   ============================================ */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-teal {
+  background: linear-gradient(135deg, var(--teal-400), var(--teal-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   GLASS MORPHISM CARD (enhanced)
+   ============================================ */
+
+.glass-card {
+  background: rgba(15, 22, 41, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 30px rgba(212, 168, 83, 0.04);
+}
+
+/* ============================================
+   FADE-IN SCROLL REVEAL (pure CSS)
+   ============================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+/* ============================================
+   FLOATING / BREATHING ANIMATION
+   ============================================ */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* ============================================
+   PULSE GLOW (live indicators)
+   ============================================ */
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(212, 168, 83, 0.4);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(212, 168, 83, 0.8), 0 0 24px rgba(212, 168, 83, 0.3);
+    opacity: 0.85;
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlowTeal {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(45, 212, 191, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(45, 212, 191, 0.8), 0 0 24px rgba(45, 212, 191, 0.3);
+  }
+}
+
+.pulse-glow-teal {
+  animation: pulseGlowTeal 2s ease-in-out infinite;
+}
+
+/* ============================================
+   FOCUS STATES (gold ring)
+   ============================================ */
+
+*:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   SECTION DIVIDER
+   ============================================ */
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 168, 83, 0.3) 30%,
+    rgba(45, 212, 191, 0.2) 70%,
+    transparent 100%
+  );
+  border: none;
+  margin: 0;
+}
+
+/* ============================================
+   CARD HOVER LIFT
+   ============================================ */
+
+.card-hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(212, 168, 83, 0.06);
+}
+
+/* ============================================
+   SHIMMER (premium CTA feel)
+   ============================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer {
+  background-image: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.15) 37%,
+    transparent 50%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* ============================================
+   BACKGROUND NOISE TEXTURE (CSS only)
+   ============================================ */
+
+.bg-noise {
+  position: relative;
+}
+
+.bg-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.02) 2px,
+      rgba(255, 255, 255, 0.02) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================
+   LINK UNDERLINE SLIDE-IN
+   ============================================ */
+
+.link-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--gold-500);
+  transition: width 0.3s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* ============================================
+   SMOOTH PAGE TRANSITIONS
+   ============================================ */
+
+main {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* ============================================
+   CONSTELLATION DOTS (hero particles)
+   ============================================ */
+
+@keyframes drift {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translate(10px, -15px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-5px, -25px);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(15px, -10px);
+    opacity: 0.6;
+  }
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--gold-400);
+  opacity: 0.3;
+  animation: drift 8s ease-in-out infinite;
+}
+
+/* ============================================
+   TERMINAL / CODE BLOCK STYLES
+   ============================================ */
+
+.terminal-window {
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal-window .terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(22, 32, 56, 0.8);
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.terminal-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dots span:nth-child(1) { background: rgba(239, 68, 68, 0.7); }
+.terminal-dots span:nth-child(2) { background: rgba(234, 179, 8, 0.7); }
+.terminal-dots span:nth-child(3) { background: rgba(34, 197, 94, 0.7); }
+
+/* ============================================
+   ACCORDION (FAQ)
+   ============================================ */
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s ease;
+}
+
+.accordion-content.open {
+  max-height: 500px;
+}
+
+/* ============================================
+   TILT / PERSPECTIVE EFFECT (cards)
+   ============================================ */
+
+.perspective-card {
+  perspective: 1000px;
+}
+
+.perspective-card-inner {
+  transition: transform 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.perspective-card:hover .perspective-card-inner {
+  transform: rotateY(2deg) rotateX(2deg);
+}
+
+/* ============================================
+   DRAWING LINE ANIMATION (connecting steps)
+   ============================================ */
+
+@keyframes drawLine {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.draw-line {
+  animation: drawLine 1s ease-out forwards;
+}
+
+/* ============================================
+   CTA BREATHING GLOW
+   ============================================ */
+
+@keyframes ctaBreath {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(212, 168, 83, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 30px rgba(212, 168, 83, 0.4), 0 0 50px rgba(212, 168, 83, 0.15);
+  }
+}
+
+.cta-breathe {
+  animation: ctaBreath 3s ease-in-out infinite;
+}

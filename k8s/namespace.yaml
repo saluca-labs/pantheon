@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/managed-by: kubectl

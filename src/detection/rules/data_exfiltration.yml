@@ -1,0 +1,25 @@
+title: Data Exfiltration - Abnormal Read Volume
+id: sa-rule-004-data-exfiltration
+status: stable
+level: high
+description: >
+  Detects abnormally high read operations from a single agent within a short
+  time window (>100 reads in 5 minutes). May indicate data exfiltration,
+  scraping, or a compromised agent credential being used for bulk access.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type:
+      - auth_grant
+      - capability_used
+    action: read
+  condition: selection | count() > 100
+  timeframe: 5m
+tags:
+  - attack.exfiltration
+  - attack.t1048
+  - soulauth.abnormal_volume
+response_playbook: pb-rate-limit-alert
+enabled: true

@@ -1,0 +1,26 @@
+title: Privilege Escalation - Unusual Scope Request with High Denial Rate
+id: sa-rule-002-privilege-escalation
+status: stable
+level: high
+description: >
+  Detects an agent requesting scopes or resources it has never used before,
+  combined with a high denial rate — a strong indicator of privilege escalation
+  attempts or compromised agent credentials.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type:
+      - scope_violation
+      - escalation_requested
+      - auth_deny
+    decision: deny
+  condition: selection | count() > 3
+  timeframe: 5m
+tags:
+  - attack.privilege_escalation
+  - attack.t1078
+  - soulauth.scope_violation
+response_playbook: pb-rate-limit-alert
+enabled: true

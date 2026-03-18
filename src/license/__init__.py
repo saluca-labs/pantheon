@@ -1,0 +1,1 @@
+"""Tiresias license enforcement module."""
