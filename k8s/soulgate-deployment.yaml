@@ -33,6 +33,7 @@ spec:
       containers:
         - name: soulgate
           image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 8001
               name: http
