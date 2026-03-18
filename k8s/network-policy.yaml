@@ -1,7 +1,6 @@
 # Network policies for Tiresias platform
-# Restricts traffic between services, ingress, and external dependencies
 ---
-# SoulAuth: accepts traffic from ingress + internal services, egress to DB + DNS
+# SoulAuth: accepts from ingress + internal, egress to DB + DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -15,11 +14,9 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow from GKE Ingress (GCE load balancer health checks + traffic)
     - ports:
         - protocol: TCP
           port: 8000
-    # Allow from internal services (SoulGate, SoulWatch)
     - from:
         - podSelector:
             matchLabels:
@@ -28,29 +25,25 @@ spec:
         - protocol: TCP
           port: 8000
   egress:
-    # DNS
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # GKE metadata server (Workload Identity / instance metadata)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
       ports:
         - protocol: TCP
           port: 80
-    # Cloud SQL Proxy connects to Google API (port 3307)
     - ports:
         - protocol: TCP
           port: 3307
-    # HTTPS egress for Stripe, Resend, and Google APIs
     - ports:
         - protocol: TCP
           port: 443
 ---
-# SoulGate: accepts traffic from ingress, egress to SoulAuth + DB + DNS
+# SoulGate: accepts from ingress, egress to SoulAuth + SoulWatch + DB + DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -70,22 +63,19 @@ spec:
               app.kubernetes.io/part-of: tiresias
       ports:
         - protocol: TCP
-          port: 8001
+          port: 8002
   egress:
-    # DNS
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # GKE metadata server (Workload Identity)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
       ports:
         - protocol: TCP
           port: 80
-    # SoulAuth internal
     - to:
         - podSelector:
             matchLabels:
@@ -93,14 +83,21 @@ spec:
       ports:
         - protocol: TCP
           port: 8000
-    # Cloud SQL Proxy + Google APIs
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulwatch
+      ports:
+        - protocol: TCP
+          port: 8001
     - ports:
         - protocol: TCP
           port: 3307
+    - ports:
         - protocol: TCP
           port: 443
 ---
-# SoulWatch: accepts traffic from internal services, egress to SoulAuth + DB + DNS
+# SoulWatch: accepts from internal services on port 8001, egress to SoulAuth + DB + DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -120,22 +117,19 @@ spec:
               app.kubernetes.io/part-of: tiresias
       ports:
         - protocol: TCP
-          port: 8002
+          port: 8001
   egress:
-    # DNS
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # GKE metadata server (Workload Identity)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
       ports:
         - protocol: TCP
           port: 80
-    # SoulAuth internal
     - to:
         - podSelector:
             matchLabels:
@@ -143,14 +137,14 @@ spec:
       ports:
         - protocol: TCP
           port: 8000
-    # Cloud SQL Proxy + Google APIs
     - ports:
         - protocol: TCP
           port: 3307
+    - ports:
         - protocol: TCP
           port: 443
 ---
-# Portal: accepts traffic from ingress, egress to internal services + DNS
+# Portal: accepts from ingress, egress to internal services + DNS
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -168,20 +162,17 @@ spec:
         - protocol: TCP
           port: 3000
   egress:
-    # DNS
     - ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # GKE metadata server (Workload Identity)
     - to:
         - ipBlock:
             cidr: 169.254.0.0/16
       ports:
         - protocol: TCP
           port: 80
-    # Internal services (SoulAuth, SoulGate, SoulWatch)
     - to:
         - podSelector:
             matchLabels:
@@ -193,7 +184,6 @@ spec:
           port: 8001
         - protocol: TCP
           port: 8002
-    # HTTPS egress for Stripe webhooks
     - ports:
         - protocol: TCP
           port: 443
