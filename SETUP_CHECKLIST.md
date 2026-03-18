@@ -274,3 +274,13 @@ The environment setup is complete when:
 - [ ] All integration points function correctly
 - [ ] Security requirements are met
 - [ ] Monitoring and observability are functional
+## Production Secrets Checklist
+
+### Required Before Email Functionality Works
+
+> **WARNING**: The `resend-api-key` in `k8s/secrets.yaml` is currently set to a placeholder
+> value (`NEEDS_TO_BE_SET`). Email verification (trial onboarding, password reset) will
+> fail silently until this is replaced.
+
+- [ ] **Resend API key**: Obtain from https://resend.com → API Keys. Replace the
+  `resend-api-key` value in `k8s/secrets.yaml` with `echo -n 're_xxxx' | base64`\n  then re-apply: `kubectl apply -f k8s/secrets.yaml -n tiresias`\n- [ ] **Stripe keys**: Verify `stripe-secret-key` and `stripe-webhook-secret` are live\n  values (not test keys) before enabling billing.\n- [ ] **License**: After running `tiresias keygen`, set `SOULAUTH_LICENSE_REQUIRED=true`\n  in `k8s/soulauth-deployment.yaml` and re-deploy.\n
