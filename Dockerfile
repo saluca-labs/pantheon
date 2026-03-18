@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY config/ config/
 COPY src/ src/
 COPY pyproject.toml .
+COPY alembic/ alembic/
+COPY alembic.ini .
 
 # Create non-root user
 RUN groupadd -r soulauth && useradd -r -g soulauth soulauth
