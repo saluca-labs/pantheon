@@ -1,0 +1,16 @@
+.env
+.env.*
+*.pem
+keys/
+.git/
+.github/
+.planning/
+venv/
+__pycache__/
+*.pyc
+tests/
+monitoring/
+portal/
+sales/
+*.md
+.claude/
