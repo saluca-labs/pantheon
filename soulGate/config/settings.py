@@ -100,7 +100,7 @@ class SoulGateSettings(BaseSettings):
 
     # Server
     host: str = "0.0.0.0"
-    port: int = 8002
+    port: int = Field(default=8002, validation_alias="SOULGATE_SERVER_PORT")
 
     model_config = {
         "env_prefix": "SOULGATE_",
