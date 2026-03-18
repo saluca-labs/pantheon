@@ -35,7 +35,7 @@ spec:
           image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0
           imagePullPolicy: Always
           ports:
-            - containerPort: 8002
+            - containerPort: 8001
               name: http
               protocol: TCP
           securityContext:
