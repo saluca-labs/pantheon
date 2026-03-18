@@ -54,8 +54,10 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: database-url
-            - name: SOULGATE_SOULAUTH_URL
+            - name: SOULGATE_SOULAUTH_BASE_URL
               value: "http://soulauth.tiresias.svc.cluster.local"
+            - name: SOULGATE_SOULWATCH_BASE_URL
+              value: "http://soulwatch.tiresias.svc.cluster.local"
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
