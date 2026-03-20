@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2 } from "lucide-react";
 
 
 interface NavItem {
@@ -96,6 +96,18 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/detection",
     group: "security",
     icon: <Radar className="w-5 h-5" />,
+  },
+  {
+    label: "Rule Editor",
+    href: "/dashboard/detection/rules",
+    group: "security",
+    icon: <Code2 className="w-5 h-5" />,
+  },
+  {
+    label: "Playbooks",
+    href: "/dashboard/detection/playbooks",
+    group: "security",
+    icon: <BookOpen className="w-5 h-5" />,
   },
     {
     label: "Quarantine",
