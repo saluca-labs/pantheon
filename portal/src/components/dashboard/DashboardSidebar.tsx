@@ -4,15 +4,53 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical } from "lucide-react";
+
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "main" | "security" | "soulwatch" | "soulgate" | "system";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system";
 }
 
 const NAV_ITEMS: NavItem[] = [
+  {
+    label: "Overview",
+    href: "/dashboard/overview",
+    group: "observability",
+    icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    label: "Traces",
+    href: "/dashboard/traces",
+    group: "observability",
+    icon: <GitBranch className="w-5 h-5" />,
+  },
+  {
+    label: "Sessions",
+    href: "/dashboard/sessions",
+    group: "observability",
+    icon: <Users className="w-5 h-5" />,
+  },
+  {
+    label: "Providers",
+    href: "/dashboard/providers",
+    group: "observability",
+    icon: <Boxes className="w-5 h-5" />,
+  },
+  {
+    label: "Costs",
+    href: "/dashboard/costs",
+    group: "observability",
+    icon: <DollarSign className="w-5 h-5" />,
+  },
+  {
+    label: "Playground",
+    href: "/dashboard/playground",
+    group: "observability",
+    icon: <FlaskConical className="w-5 h-5" />,
+  },
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -219,6 +257,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const GROUPS = [
+  { key: "observability", label: "Observability" },
   { key: "main", label: "Overview" },
   { key: "security", label: "Security" },
   { key: "soulwatch", label: "SoulWatch" },
@@ -246,7 +285,7 @@ export default function DashboardSidebar() {
   return (
     <aside
       className={`
-        sticky top-16 h-[calc(100vh-4rem)] flex flex-col
+        sticky top-0 h-full flex flex-col
         bg-of-surface-container-low shrink-0
         transition-all duration-300 ease-out
         shadow-[4px_0_20px_-4px_rgba(0,0,0,0.4)]
