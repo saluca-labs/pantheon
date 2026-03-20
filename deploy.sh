@@ -80,6 +80,8 @@ kubectl apply -f k8s/network-policy.yaml
 # 12. Wait for rollout
 echo "Waiting for deployments..."
 kubectl rollout status deployment/soulauth -n tiresias --timeout=300s
+kubectl rollout status deployment/soulgate -n tiresias --timeout=300s
+kubectl rollout status deployment/soulwatch -n tiresias --timeout=300s
 kubectl rollout status deployment/portal -n tiresias --timeout=300s
 
 echo "=== Deployment Complete ==="
