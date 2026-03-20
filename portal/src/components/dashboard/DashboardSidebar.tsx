@@ -234,9 +234,9 @@ export default function DashboardSidebar() {
     <aside
       className={`
         sticky top-16 h-[calc(100vh-4rem)] flex flex-col
-        bg-navy-900 shrink-0
+        bg-of-surface-container-low shrink-0
         transition-all duration-300 ease-out
-        shadow-[1px_0_0_0_rgba(255,255,255,0.04),4px_0_16px_-4px_rgba(0,0,0,0.3)]
+        shadow-[4px_0_20px_-4px_rgba(0,0,0,0.4)]
         ${collapsed ? "w-16" : "w-64"}
       `}
     >
@@ -248,7 +248,7 @@ export default function DashboardSidebar() {
             <div key={group.key}>
               {/* Section divider */}
               {groupIdx > 0 && (
-                <div className="mx-3 my-2 border-t border-white/[0.04]" />
+                <div className="mx-3 my-2 border-t border-of-outline-variant/15" />
               )}
               {/* Section label */}
               <AnimatePresence>
@@ -258,7 +258,7 @@ export default function DashboardSidebar() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -8 }}
                     transition={{ duration: 0.2 }}
-                    className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-foreground-subtle/60"
+                    className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-of-outline"
                   >
                     {group.label}
                   </motion.p>
@@ -277,22 +277,22 @@ export default function DashboardSidebar() {
                         group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
                         transition-all duration-200 ease-out relative overflow-hidden
                         ${isActive
-                          ? "text-foreground"
-                          : "text-foreground-muted hover:text-foreground"
+                          ? "text-of-on-surface"
+                          : "text-of-on-surface-variant hover:text-of-on-surface"
                         }
                       `}
                       title={collapsed ? item.label : undefined}
                     >
                       {/* Hover background slide-in */}
                       {!isActive && (
-                        <div className="absolute inset-0 bg-white/[0.03] translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
+                        <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
                       )}
 
                       {/* Active background */}
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-active-bg"
-                          className="absolute inset-0 bg-white/[0.06] rounded-lg"
+                          className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
                           transition={{ type: "spring", stiffness: 350, damping: 30 }}
                         />
                       )}
@@ -301,13 +301,13 @@ export default function DashboardSidebar() {
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-active-indicator"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-gold-400 shadow-[0_0_8px_rgba(212,168,83,0.4)]"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
                           transition={{ type: "spring", stiffness: 350, damping: 30 }}
                         />
                       )}
 
                       <motion.div
-                        className={`relative shrink-0 ${isActive ? "text-gold-400" : ""}`}
+                        className={`relative shrink-0 ${isActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
                         animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                         transition={{ duration: 0.3, ease: "easeOut" }}
                       >
@@ -343,16 +343,16 @@ export default function DashboardSidebar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-3 py-3 border-t border-white/[0.04]"
+            className="px-3 py-3 border-t border-of-outline-variant/15"
           >
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-500/30 to-gold-600/20 border border-gold-500/20 flex items-center justify-center text-xs font-bold text-gold-400 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-of-primary/20 to-of-on-primary-container/15 border border-of-primary/20 flex items-center justify-center text-xs font-bold text-of-primary shrink-0">
                 AC
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">Acme Corp</p>
+                <p className="text-sm font-medium text-of-on-surface truncate">Acme Corp</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="px-1.5 py-0.5 rounded bg-gold-500/10 text-[9px] font-semibold text-gold-400 tracking-wide uppercase border border-gold-500/15">
+                  <span className="px-1.5 py-0.5 rounded bg-of-primary/10 text-[9px] font-semibold text-of-primary tracking-wide uppercase border border-of-primary/15">
                     Pro Trial
                   </span>
                 </div>
@@ -364,18 +364,18 @@ export default function DashboardSidebar() {
 
       {/* Collapsed user avatar */}
       {collapsed && (
-        <div className="px-3 py-3 border-t border-white/[0.04] flex justify-center">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-500/30 to-gold-600/20 border border-gold-500/20 flex items-center justify-center text-xs font-bold text-gold-400">
+        <div className="px-3 py-3 border-t border-of-outline-variant/15 flex justify-center">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-of-primary/20 to-of-on-primary-container/15 border border-of-primary/20 flex items-center justify-center text-xs font-bold text-of-primary">
             AC
           </div>
         </div>
       )}
 
       {/* Collapse toggle */}
-      <div className="p-3 border-t border-white/[0.04]">
+      <div className="p-3 border-t border-of-outline-variant/15">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-foreground-subtle hover:text-foreground-muted hover:bg-white/[0.03] transition-all duration-200"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container-high transition-all duration-200"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <motion.svg
