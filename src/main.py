@@ -16,6 +16,7 @@ from src.admin.router import router as admin_router
 from src.middleware.pep import SoulAuthPEPMiddleware
 from src.middleware.tenant import TenantContextMiddleware
 from src.middleware.feature_gate import FeatureGateMiddleware
+from src.middleware.model_router import ModelRoutingMiddleware
 from src.trial.router import router as trial_router, verify_router as trial_verify_router
 from src.monitoring.metrics import metrics_router, MetricsMiddleware, start_gauge_updater, stop_gauge_updater
 from src.analytics.router import router as analytics_router
@@ -325,6 +326,9 @@ app.add_middleware(
 )
 
 # Feature gate middleware — enforces tier-based feature access (402)
+# Model routing middleware — enforces per-persona model access policies
+app.add_middleware(ModelRoutingMiddleware)
+
 app.add_middleware(FeatureGateMiddleware)
 
 # PEP middleware — validates capability tokens on protected endpoints
