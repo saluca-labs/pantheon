@@ -75,6 +75,8 @@ class QuarantineRecord:
     auto_release_at: Optional[datetime] = None
     released_by: Optional[str] = None  # human username or "auto"
     reason: str = ""
+    flagged_prompt: Optional[str] = None      # prompt text that triggered quarantine
+    flagged_completion: Optional[str] = None  # completion text that triggered quarantine
 
     def to_dict(self) -> dict:
         return {
@@ -91,6 +93,8 @@ class QuarantineRecord:
             "auto_release_at": self.auto_release_at.isoformat() if self.auto_release_at else None,
             "released_by": self.released_by,
             "reason": self.reason,
+            "flagged_prompt": self.flagged_prompt,
+            "flagged_completion": self.flagged_completion,
         }
 
 
@@ -319,6 +323,8 @@ class QuarantineEngine:
         triggered_by_type: str = "manual",
         triggered_by_id: Optional[str] = None,
         auto_release_after: Optional[int] = None,
+        flagged_prompt: Optional[str] = None,
+        flagged_completion: Optional[str] = None,
     ) -> QuarantineRecord:
         """Execute a set of quarantine actions against an agent."""
         now = datetime.now(timezone.utc)
@@ -338,6 +344,8 @@ class QuarantineEngine:
             quarantined_at=now,
             auto_release_at=auto_release_at,
             reason=reason,
+            flagged_prompt=flagged_prompt,
+            flagged_completion=flagged_completion,
         )
 
         # Execute each action
