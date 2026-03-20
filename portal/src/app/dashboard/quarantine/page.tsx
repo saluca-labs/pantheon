@@ -8,11 +8,14 @@ interface QuarantineEntry {
   soulkey_id: string;
   status: "active" | "released";
   triggered_by: string;
+  triggered_by_type?: string;
   actions: string[];
   reason: string;
   quarantined_at: string;
   released_at?: string;
   auto_release_after?: string;
+  flagged_prompt?: string | null;
+  flagged_completion?: string | null;
 }
 
 interface QuarantineListData {
@@ -310,6 +313,44 @@ export default function QuarantinePage() {
                       <p className="text-xs font-mono text-emerald-400">
                         {new Date(entry.released_at).toLocaleString()}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Flagged prompt (GAP-01) */}
+                  {entry.flagged_prompt != null ? (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-error mb-1.5">
+                        Flagged Prompt
+                      </p>
+                      <pre className="text-xs font-mono text-of-on-surface bg-of-surface-container rounded-lg px-3 py-2 border border-of-error/20 whitespace-pre-wrap break-all overflow-auto max-h-48">
+                        {entry.flagged_prompt}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                        Flagged Prompt
+                      </p>
+                      <p className="text-xs text-of-on-surface-variant italic">Not available</p>
+                    </div>
+                  )}
+
+                  {/* Flagged completion (GAP-01) */}
+                  {entry.flagged_completion != null ? (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-error mb-1.5">
+                        Flagged Completion
+                      </p>
+                      <pre className="text-xs font-mono text-of-on-surface bg-of-surface-container rounded-lg px-3 py-2 border border-of-error/20 whitespace-pre-wrap break-all overflow-auto max-h-48">
+                        {entry.flagged_completion}
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="mb-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                        Flagged Completion
+                      </p>
+                      <p className="text-xs text-of-on-surface-variant italic">Not available</p>
                     </div>
                   )}
 
