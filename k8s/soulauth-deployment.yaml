@@ -121,6 +121,18 @@ spec:
               value: "false"
             - name: SOULAUTH_MODE
               value: "enterprise"
+            - name: TIRESIAS_LICENSE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: tiresias-license-secret
+            - name: TIRESIAS_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: tiresias-license-key
+            - name: SOULAUTH_LICENSE_REQUIRED
+              value: "true"
             - name: TRIAL_VERIFY_BASE_URL
               value: "https://tiresias.saluca.com"
           resources:
