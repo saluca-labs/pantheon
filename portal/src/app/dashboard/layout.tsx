@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/layout/Navbar";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
 export const metadata: Metadata = {
@@ -13,11 +13,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-of-background">
-      <Navbar />
-      <div className="flex pt-16">
+    <div className="min-h-screen bg-of-background flex flex-col">
+      <DashboardHeader />
+      <div className="flex flex-1 overflow-hidden">
         <DashboardSidebar />
-        <main className="flex-1 overflow-y-auto min-h-[calc(100vh-4rem)] p-6 lg:p-8 relative"
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 relative"
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, rgba(90,218,206,0.012) 1px, transparent 0)`,
             backgroundSize: "24px 24px",
