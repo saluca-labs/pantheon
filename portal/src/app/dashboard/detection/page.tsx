@@ -1,659 +1,357 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { useWidgetData } from "@/lib/useWidgetData";
+import { TrendingUp, Cpu, Clock, MapPin, ShieldAlert, AlertTriangle, ExternalLink } from "lucide-react";
 
-interface SigmaRule {
+type SeverityLevel = "critical" | "high" | "medium" | "low" | "informational";
+type AnomalyType = "rate_spike" | "unusual_resources" | "off_hours" | "geo_anomaly" | "scope_escalation";
+
+interface DetectionMatch {
   id: string;
-  name: string;
-  severity: "Critical" | "High" | "Medium" | "Low";
-  status: "Active" | "Disabled";
-  matches: number;
-  lastMatch: string;
-  sigmaYaml: string;
+  rule_id: string;
+  rule_name: string;
+  level: SeverityLevel;
+  soulkey_id: string;
+  matched_fields?: Record<string, unknown>;
+  playbook_id?: string;
+  playbook_name?: string;
+  timestamp: string;
 }
 
-interface Playbook {
+interface DetectionMatchesData {
+  matches?: DetectionMatch[];
+}
+
+interface AnomalyEntry {
   id: string;
-  name: string;
+  type: AnomalyType;
+  severity: SeverityLevel;
+  soulkey_id: string;
   description: string;
-  triggerRule: string;
-  actions: string[];
+  detected_at: string;
+  metadata?: Record<string, unknown>;
 }
 
-const INITIAL_SIGMA_RULES: SigmaRule[] = [
-  {
-    id: "1",
-    name: "Excessive Permission Requests",
-    severity: "High",
-    status: "Active",
-    matches: 23,
-    lastMatch: "12 min ago",
-    sigmaYaml: `title: Excessive Permission Requests
-id: d4a8-53e7-9b1f-2c4d
-status: experimental
-level: high
-description: >
-  Detects agents making an abnormal number
-  of permission requests within a short window.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: selection | count() > 50
-  timeframe: 5m
-  group_by: agent_soulkey
-falsepositives:
-  - Batch processing agents during ETL windows
-  - Initial agent provisioning
-tags:
-  - soulauth.abuse
-  - soulauth.rate_anomaly`,
-  },
-  {
-    id: "2",
-    name: "Off-Hours Activity",
-    severity: "Medium",
-    status: "Active",
-    matches: 47,
-    lastMatch: "2 hours ago",
-    sigmaYaml: `title: Off-Hours Activity
-id: b9c1-7e3f-4a2d-8f6b
-status: stable
-level: medium
-description: >
-  Detects agent activity outside of configured
-  business hours for the tenant.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: selection
-  time_filter:
-    - hours: "22:00-06:00"
-    - days: [saturday, sunday]
-  group_by: agent_soulkey
-falsepositives:
-  - Scheduled maintenance agents
-  - Global teams in different timezones
-tags:
-  - soulauth.temporal_anomaly`,
-  },
-  {
-    id: "3",
-    name: "Rapid Key Rotation",
-    severity: "High",
-    status: "Active",
-    matches: 3,
-    lastMatch: "1 day ago",
-    sigmaYaml: `title: Rapid Key Rotation
-id: e5f2-1a8c-3d7b-9e4f
-status: experimental
-level: high
-description: >
-  Detects soulkey rotation happening more
-  frequently than the expected schedule.
-detection:
-  selection:
-    event_type: KEY_EVENT
-    action: key_rotate
-  condition: selection | count() > 3
-  timeframe: 24h
-  group_by: agent_soulkey
-falsepositives:
-  - Security incident response
-  - Key compromise remediation
-tags:
-  - soulauth.key_abuse`,
-  },
-  {
-    id: "4",
-    name: "Cross-Tenant Access Attempt",
-    severity: "Critical",
-    status: "Active",
-    matches: 1,
-    lastMatch: "3 days ago",
-    sigmaYaml: `title: Cross-Tenant Access Attempt
-id: a3b7-2c9d-5e1f-8a4c
-status: stable
-level: critical
-description: >
-  Detects any attempt by an agent to access
-  resources belonging to a different tenant.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: >
-    selection AND
-    agent.tenant != resource.tenant
-falsepositives:
-  - None expected - always investigate
-tags:
-  - soulauth.cross_tenant
-  - soulauth.critical`,
-  },
-  {
-    id: "5",
-    name: "Unusual Data Volume",
-    severity: "Medium",
-    status: "Active",
-    matches: 8,
-    lastMatch: "6 hours ago",
-    sigmaYaml: `title: Unusual Data Volume
-id: c7d9-4e2a-6f1b-3c8e
-status: experimental
-level: medium
-description: >
-  Detects agents transferring significantly more
-  data than their historical baseline.
-detection:
-  selection:
-    event_type: EVALUATE
-    action: [read, write]
-  condition: >
-    selection AND
-    data_volume > baseline * 3
-  timeframe: 1h
-  group_by: agent_soulkey
-falsepositives:
-  - End-of-quarter reporting
-  - Data migration tasks
-tags:
-  - soulauth.data_exfiltration`,
-  },
-  {
-    id: "6",
-    name: "Failed Auth Spike",
-    severity: "High",
-    status: "Disabled",
-    matches: 156,
-    lastMatch: "5 hours ago",
-    sigmaYaml: `title: Failed Auth Spike
-id: f1a3-8b5c-2d7e-9f4a
-status: stable
-level: high
-description: >
-  Detects a spike in failed authentication
-  attempts that may indicate credential stuffing
-  or brute force attacks.
-detection:
-  selection:
-    event_type: EVALUATE
-    result: DENY
-  condition: selection | count() > 20
-  timeframe: 5m
-  group_by: source_ip
-falsepositives:
-  - Misconfigured agent during deployment
-  - Policy update propagation delay
-tags:
-  - soulauth.brute_force
-  - soulauth.auth_failure`,
-  },
-];
+interface AnomaliesData {
+  anomalies?: AnomalyEntry[];
+}
 
-const PLAYBOOKS: Playbook[] = [
-  {
-    id: "1",
-    name: "Auto-Quarantine High Risk",
-    description: "Immediately quarantine agents that trigger critical detection rules. Suspends agent capabilities and notifies the SOC team.",
-    triggerRule: "Cross-Tenant Access Attempt",
-    actions: [
-      "Suspend agent soulkey",
-      "Revoke all capabilities",
-      "Create incident ticket",
-      "Notify SOC team via PagerDuty",
-      "Capture forensic snapshot",
-    ],
-  },
-  {
-    id: "2",
-    name: "Escalate to SOC",
-    description: "Escalate medium-severity detections to the SOC team for manual review. Adds rate limiting as a precaution.",
-    triggerRule: "Excessive Permission Requests",
-    actions: [
-      "Apply rate limit (10 req/min)",
-      "Create SOC review ticket",
-      "Send Slack alert to #security-alerts",
-      "Add agent to watchlist",
-      "Schedule 24h auto-review",
-    ],
-  },
-  {
-    id: "3",
-    name: "Rate Limit and Alert",
-    description: "Apply rate limiting to agents showing unusual patterns. Monitor for 24 hours before escalating if behavior continues.",
-    triggerRule: "Unusual Data Volume",
-    actions: [
-      "Apply rate limit (5 req/min)",
-      "Send email to tenant admin",
-      "Log detailed access patterns",
-      "Auto-escalate if continues >24h",
-    ],
-  },
-];
-
-const severityColor: Record<SigmaRule["severity"], string> = {
-  Critical: "bg-red-500/15 text-red-400 border border-red-500/20",
-  High: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
-  Medium: "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20",
-  Low: "bg-blue-500/15 text-blue-400 border border-blue-500/20",
+const SEVERITY_STYLES: Record<SeverityLevel, string> = {
+  critical: "bg-of-error/20 text-of-error border border-of-error/30",
+  high: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
+  medium: "bg-warning/15 text-warning border border-warning/20",
+  low: "bg-of-on-surface-variant/10 text-of-on-surface-variant border border-of-outline-variant/20",
+  informational: "bg-of-primary/10 text-of-primary border border-of-primary/20",
 };
 
-const severityGlow: Record<SigmaRule["severity"], string> = {
-  Critical: "shadow-[0_0_6px_rgba(239,68,68,0.2)]",
-  High: "shadow-[0_0_6px_rgba(249,115,22,0.15)]",
-  Medium: "",
-  Low: "",
+const ANOMALY_ICONS: Record<AnomalyType, React.ElementType> = {
+  rate_spike: TrendingUp,
+  unusual_resources: Cpu,
+  off_hours: Clock,
+  geo_anomaly: MapPin,
+  scope_escalation: ShieldAlert,
 };
 
-const SIGMA_TEMPLATE = `title: New Detection Rule
-id: 00000000-0000-0000-0000-000000000000
-status: experimental
-level: medium
-description: >
-  Describe what this rule detects
-  and why it matters.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: selection
-  timeframe: 5m
-  group_by: agent_soulkey
-falsepositives:
-  - List expected false positives here
-tags:
-  - soulauth.custom`;
-
-const TABS = ["sigma", "playbooks"] as const;
+const ANOMALY_LABELS: Record<AnomalyType, string> = {
+  rate_spike: "Rate Spikes",
+  unusual_resources: "Unusual Resources",
+  off_hours: "Off-Hours",
+  geo_anomaly: "Geo Anomalies",
+  scope_escalation: "Scope Escalation",
+};
 
 export default function DetectionPage() {
-  const idCounter = useRef(0);
-  const [activeTab, setActiveTab] = useState<"sigma" | "playbooks">("sigma");
-  const [expandedRule, setExpandedRule] = useState<string | null>(null);
-  const [rules, setRules] = useState<SigmaRule[]>(INITIAL_SIGMA_RULES);
+  const [levelFilter, setLevelFilter] = useState<"" | SeverityLevel>("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Create Rule modal state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newRuleName, setNewRuleName] = useState("");
-  const [newRuleSeverity, setNewRuleSeverity] = useState<SigmaRule["severity"]>("Medium");
-  const [newRuleDescription, setNewRuleDescription] = useState("");
-  const [newRuleYaml, setNewRuleYaml] = useState(SIGMA_TEMPLATE);
-  const [newRuleActive, setNewRuleActive] = useState(true);
+  const matchParams = levelFilter ? `?level=${levelFilter}&limit=50` : "?limit=50";
 
-  // Delete confirmation
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const { data: matchesData, loading: matchesLoading } = useWidgetData<DetectionMatchesData>({
+    endpoint: `/v1/detection/matches${matchParams}`,
+    refreshInterval: 30000,
+  });
 
-  const activeCount = rules.filter((r) => r.status === "Active").length;
+  const { data: anomaliesData, loading: anomaliesLoading } = useWidgetData<AnomaliesData>({
+    endpoint: "/v1/analytics/anomalies?limit=100",
+    refreshInterval: 60000,
+  });
 
-  const handleCreateRule = () => {
-    if (!newRuleName.trim()) return;
-    const newRule: SigmaRule = {
-      id: `rule_${++idCounter.current}`,
-      name: newRuleName.trim(),
-      severity: newRuleSeverity,
-      status: newRuleActive ? "Active" : "Disabled",
-      matches: 0,
-      lastMatch: "Never",
-      sigmaYaml: newRuleYaml,
-    };
-    setRules((prev) => [newRule, ...prev]);
-    setShowCreateModal(false);
-    resetCreateForm();
-  };
+  const matches: DetectionMatch[] =
+    matchesData?.matches ?? (Array.isArray(matchesData) ? (matchesData as DetectionMatch[]) : []);
+  const anomalies: AnomalyEntry[] =
+    anomaliesData?.anomalies ?? (Array.isArray(anomaliesData) ? (anomaliesData as AnomalyEntry[]) : []);
 
-  const resetCreateForm = () => {
-    setNewRuleName("");
-    setNewRuleSeverity("Medium");
-    setNewRuleDescription("");
-    setNewRuleYaml(SIGMA_TEMPLATE);
-    setNewRuleActive(true);
-  };
-
-  const toggleRuleStatus = (id: string) => {
-    setRules((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, status: r.status === "Active" ? "Disabled" : "Active" }
-          : r
-      )
-    );
-  };
-
-  const deleteRule = (id: string) => {
-    setRules((prev) => prev.filter((r) => r.id !== id));
-    setDeleteConfirmId(null);
-    if (expandedRule === id) setExpandedRule(null);
-  };
+  const anomalyCountByType = (Object.keys(ANOMALY_ICONS) as AnomalyType[]).map((type) => ({
+    type,
+    count: anomalies.filter((a) => a.type === type).length,
+    hasCritical: anomalies.some(
+      (a) => a.type === type && (a.severity === "critical" || a.severity === "high")
+    ),
+  }));
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Detection Engine</h1>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/15 text-orange-400 border border-orange-500/20">
-            {activeCount} active rules
-          </span>
+    <div className="max-w-7xl space-y-6">
+      {/* Anomaly indicator strip (QUAR-06) */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-3">
+          Anomaly Indicators
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {anomalyCountByType.map(({ type, count, hasCritical }) => {
+            const Icon = ANOMALY_ICONS[type];
+            return (
+              <div
+                key={type}
+                className={`bg-of-surface-container rounded-xl p-4 border flex items-center gap-3 transition-colors ${
+                  hasCritical && count > 0
+                    ? "border-of-error/30 bg-of-error/5"
+                    : count > 0
+                    ? "border-warning/20 bg-warning/5"
+                    : "border-of-outline-variant/5"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${
+                    hasCritical && count > 0
+                      ? "bg-of-error/15"
+                      : count > 0
+                      ? "bg-warning/15"
+                      : "bg-of-surface-container-high"
+                  }`}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${
+                      hasCritical && count > 0
+                        ? "text-of-error"
+                        : count > 0
+                        ? "text-warning"
+                        : "text-of-on-surface-variant"
+                    }`}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-of-on-surface-variant leading-tight">
+                    {ANOMALY_LABELS[type]}
+                  </p>
+                  <p
+                    className={`text-xl font-black tabular-nums leading-tight ${
+                      hasCritical && count > 0
+                        ? "text-of-error"
+                        : count > 0
+                        ? "text-warning"
+                        : "text-of-on-surface"
+                    }`}
+                  >
+                    {anomaliesLoading ? "\u2014" : count}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        {activeTab === "sigma" && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
-          >
-            + Create Rule
-          </button>
-        )}
       </div>
 
-      {/* Tabs with animated underline */}
-      <div className="relative flex gap-1 p-1 bg-navy-800 rounded-lg w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`relative px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 z-10 ${
-              activeTab === tab
-                ? "text-foreground"
-                : "text-foreground-muted hover:text-foreground"
-            }`}
-          >
-            {activeTab === tab && (
-              <motion.div
-                layoutId="detection-tab-bg"
-                className="absolute inset-0 bg-navy-700 rounded-md shadow"
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              />
-            )}
-            <span className="relative">
-              {tab === "sigma" ? "Sigma Rules" : "Playbooks"}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Sigma Rules Tab */}
-      {activeTab === "sigma" && (
-        <div className="glass-card rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Rule Name</th>
-                  <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Severity</th>
-                  <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Status</th>
-                  <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Matches</th>
-                  <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Last Match</th>
-                  <th className="text-right px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {rules.map((rule) => (
-                    <React.Fragment key={rule.id}>
-                      <motion.tr
-                        layout
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
-                        className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all duration-200"
-                      >
-                        <td className="px-4 py-3 text-foreground font-medium">{rule.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${severityColor[rule.severity]} ${severityGlow[rule.severity]}`}>
-                            {rule.severity}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                            rule.status === "Active"
-                              ? "bg-green-500/15 text-green-400 border border-green-500/20"
-                              : "bg-gray-500/15 text-gray-400 border border-gray-500/20"
-                          }`}>
-                            {rule.status === "Active" && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                            )}
-                            {rule.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-foreground-muted font-mono">{rule.matches}</td>
-                        <td className="px-4 py-3 text-foreground-muted text-xs">{rule.lastMatch}</td>
-                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => toggleRuleStatus(rule.id)}
-                              className={`px-2 py-1 rounded text-xs transition-all duration-200 ${
-                                rule.status === "Active"
-                                  ? "text-foreground-muted hover:bg-white/5"
-                                  : "text-green-400 hover:bg-green-500/10"
-                              }`}
-                            >
-                              {rule.status === "Active" ? "Disable" : "Enable"}
-                            </button>
-                            {deleteConfirmId === rule.id ? (
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => deleteRule(rule.id)}
-                                  className="px-2 py-1 rounded text-xs text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all duration-200"
-                                >
-                                  Confirm
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirmId(null)}
-                                  className="px-2 py-1 rounded text-xs text-foreground-muted hover:bg-white/5 transition-all duration-200"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setDeleteConfirmId(rule.id)}
-                                className="px-2 py-1 rounded text-xs text-red-400 hover:bg-red-500/10 transition-all duration-200"
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </motion.tr>
-                      <AnimatePresence>
-                        {expandedRule === rule.id && (
-                          <tr>
-                            <td colSpan={6} className="p-0">
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.25, ease: "easeOut" }}
-                                className="overflow-hidden"
-                              >
-                                <div className="px-4 py-4 bg-navy-800/50">
-                                  <pre className="font-mono text-xs leading-relaxed text-teal-300 bg-navy-950 rounded-lg p-4 border border-white/5 overflow-x-auto whitespace-pre">
-                                    {rule.sigmaYaml}
-                                  </pre>
-                                </div>
-                              </motion.div>
-                            </td>
-                          </tr>
-                        )}
-                      </AnimatePresence>
-                    </React.Fragment>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+      {/* Detection matches header + filter (QUAR-05) */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-of-on-surface">Detection Matches</h2>
+          <p className="text-[11px] text-of-on-surface-variant mt-0.5">
+            Recent Sigma rule matches \u2014 auto-refreshes every 30s
+          </p>
         </div>
-      )}
-
-      {/* Playbooks Tab */}
-      {activeTab === "playbooks" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {PLAYBOOKS.map((playbook, pbIdx) => (
-            <motion.div
-              key={playbook.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: pbIdx * 0.1 }}
-              className="glass-card rounded-xl p-5 space-y-4 hover:border-gold-500/20 transition-all duration-200"
+        <div className="flex items-center gap-2">
+          {(["", "critical", "high", "medium", "low"] as const).map((level) => (
+            <button
+              key={level}
+              onClick={() => setLevelFilter(level)}
+              className={`px-3 h-7 rounded-full text-[11px] font-bold uppercase transition-colors ${
+                levelFilter === level
+                  ? "bg-of-primary/20 text-of-primary"
+                  : "text-of-on-surface-variant hover:text-of-on-surface"
+              }`}
             >
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">{playbook.name}</h3>
-                <p className="text-xs text-foreground-muted mt-1 leading-relaxed">{playbook.description}</p>
-              </div>
+              {level === "" ? "All" : level}
+            </button>
+          ))}
+        </div>
+      </div>
 
-              <div>
-                <span className="text-[10px] font-medium text-foreground-subtle uppercase tracking-wider">Trigger Rule</span>
-                <p className="text-xs text-orange-400 mt-0.5 font-medium">{playbook.triggerRule}</p>
-              </div>
-
-              <div>
-                <span className="text-[10px] font-medium text-foreground-subtle uppercase tracking-wider">Response Actions</span>
-                <ol className="mt-2 space-y-1.5 relative">
-                  {/* Connecting line */}
-                  <div className="absolute left-2 top-3 bottom-3 w-px bg-white/[0.06]" />
-                  {playbook.actions.map((action, i) => (
-                    <li key={i} className="flex items-start gap-3 text-xs text-foreground-muted relative">
-                      <span className="relative z-10 w-4 h-4 rounded-full bg-navy-700 border border-white/10 text-foreground-subtle flex items-center justify-center text-[10px] font-mono shrink-0 mt-0.5">
-                        {i + 1}
-                      </span>
-                      {action}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              <button className="w-full px-3 py-2 rounded-lg border border-white/10 text-xs text-foreground-muted hover:text-foreground hover:bg-white/[0.03] transition-all duration-200">
-                Edit Playbook
-              </button>
-            </motion.div>
+      {/* Loading skeletons */}
+      {matchesLoading && (
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="h-16 rounded-xl bg-of-surface-container animate-pulse border border-of-outline-variant/5"
+            />
           ))}
         </div>
       )}
 
-      {/* Create Rule Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-            />
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="glass-card rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                  <h2 className="text-lg font-semibold text-foreground">Create Detection Rule</h2>
-                  <button
-                    onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
-                    className="text-foreground-subtle hover:text-foreground transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      {/* Empty state */}
+      {!matchesLoading && matches.length === 0 && (
+        <div className="bg-of-surface-container rounded-xl border border-of-outline-variant/5 flex flex-col items-center justify-center py-16 text-of-on-surface-variant gap-3">
+          <AlertTriangle className="h-8 w-8 opacity-30" />
+          <p className="text-sm">
+            No detection matches{levelFilter ? ` for level "${levelFilter}"` : ""}
+          </p>
+        </div>
+      )}
+
+      {/* Matches feed */}
+      {!matchesLoading && matches.length > 0 && (
+        <div className="bg-of-surface-container rounded-xl border border-of-outline-variant/5 overflow-hidden">
+          {/* Table header */}
+          <div className="grid grid-cols-[120px_1fr_200px_200px_160px_auto] gap-4 px-5 py-3 border-b border-of-outline-variant/10">
+            {["Severity", "Rule", "Soulkey", "Playbook", "Timestamp", ""].map((h, i) => (
+              <span
+                key={i}
+                className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant"
+              >
+                {h}
+              </span>
+            ))}
+          </div>
+
+          {matches.map((match) => (
+            <div key={match.id}>
+              {/* Match row */}
+              <div
+                className="grid grid-cols-[120px_1fr_200px_200px_160px_auto] gap-4 px-5 py-4 border-b border-of-outline-variant/5 hover:bg-of-surface-container-high transition-colors items-center cursor-pointer"
+                onClick={() => setExpandedId(expandedId === match.id ? null : match.id)}
+              >
+                {/* Severity badge */}
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase w-fit ${
+                    SEVERITY_STYLES[match.level] ?? SEVERITY_STYLES.low
+                  }`}
+                >
+                  {match.level}
+                </span>
+
+                {/* Rule name */}
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-of-on-surface truncate">{match.rule_name}</p>
+                  <p className="text-[10px] font-mono text-of-on-surface-variant mt-0.5 truncate">
+                    {match.rule_id}
+                  </p>
+                </div>
+
+                {/* Soulkey ID */}
+                <span
+                  className="font-mono text-xs text-of-on-surface-variant truncate"
+                  title={match.soulkey_id}
+                >
+                  {match.soulkey_id}
+                </span>
+
+                {/* Playbook link */}
+                <div>
+                  {match.playbook_name ? (
+                    <span className="flex items-center gap-1 text-xs text-of-primary hover:text-of-primary-fixed transition-colors">
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{match.playbook_name}</span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-of-on-surface-variant">\u2014</span>
+                  )}
+                </div>
+
+                {/* Timestamp */}
+                <span className="font-mono text-[11px] text-of-on-surface-variant">
+                  {match.timestamp ? new Date(match.timestamp).toLocaleString() : "\u2014"}
+                </span>
+
+                {/* Expand chevron */}
+                <button className="text-of-on-surface-variant hover:text-of-on-surface transition-colors justify-self-end">
+                  {expandedId === match.id ? (
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                  </button>
-                </div>
-
-                <div className="px-6 py-5 space-y-5">
-                  {/* Rule Name */}
-                  <div>
-                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Rule Name</label>
-                    <input
-                      type="text"
-                      value={newRuleName}
-                      onChange={(e) => setNewRuleName(e.target.value)}
-                      placeholder="e.g. Suspicious API Key Usage"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all duration-200"
-                    />
-                  </div>
-
-                  {/* Severity + Status row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Severity</label>
-                      <select
-                        value={newRuleSeverity}
-                        onChange={(e) => setNewRuleSeverity(e.target.value as SigmaRule["severity"])}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all duration-200"
-                      >
-                        <option value="Critical">Critical</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Status</label>
-                      <button
-                        type="button"
-                        onClick={() => setNewRuleActive(!newRuleActive)}
-                        className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium transition-all duration-200 ${
-                          newRuleActive
-                            ? "bg-green-500/10 border-green-500/30 text-green-400"
-                            : "bg-navy-800 border-white/10 text-foreground-muted"
-                        }`}
-                      >
-                        {newRuleActive ? "Active" : "Disabled"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Description</label>
-                    <textarea
-                      value={newRuleDescription}
-                      onChange={(e) => setNewRuleDescription(e.target.value)}
-                      placeholder="Describe what this rule detects and why it matters..."
-                      rows={2}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all duration-200 resize-none"
-                    />
-                  </div>
-
-                  {/* Sigma YAML */}
-                  <div>
-                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Sigma YAML</label>
-                    <textarea
-                      value={newRuleYaml}
-                      onChange={(e) => setNewRuleYaml(e.target.value)}
-                      rows={16}
-                      className="w-full px-4 py-3 rounded-lg bg-navy-950 border border-white/10 text-xs text-teal-300 font-mono leading-relaxed focus:outline-none focus:border-gold-500/50 transition-all duration-200 resize-y"
-                      spellCheck={false}
-                    />
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button
-                    onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
-                    className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateRule}
-                    disabled={!newRuleName.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Save Rule
-                  </button>
-                </div>
+                  ) : (
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                </button>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+
+              {/* Expanded matched fields panel */}
+              {expandedId === match.id &&
+                match.matched_fields &&
+                Object.keys(match.matched_fields).length > 0 && (
+                  <div className="bg-of-surface-container-low border-b border-of-outline-variant/10 px-5 py-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-of-primary mb-3">
+                      Matched Evidence
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {Object.entries(match.matched_fields).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="bg-of-surface-container rounded-lg px-3 py-2 border border-of-outline-variant/5"
+                        >
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
+                            {key}
+                          </p>
+                          <p className="text-xs font-mono text-of-on-surface break-all">
+                            {typeof value === "string" || typeof value === "number"
+                              ? String(value)
+                              : JSON.stringify(value)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Related anomalies for this soulkey (QUAR-06) */}
+                    {(() => {
+                      const relatedAnomalies = anomalies.filter(
+                        (a) => a.soulkey_id === match.soulkey_id
+                      );
+                      if (relatedAnomalies.length === 0) return null;
+                      return (
+                        <div className="mt-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-2">
+                            Related Anomalies for this Agent
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {relatedAnomalies.map((a) => {
+                              const Icon = ANOMALY_ICONS[a.type];
+                              return (
+                                <div
+                                  key={a.id}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs ${
+                                    SEVERITY_STYLES[a.severity] ?? SEVERITY_STYLES.low
+                                  }`}
+                                >
+                                  <Icon className="h-3 w-3" />
+                                  <span className="font-bold">{ANOMALY_LABELS[a.type]}</span>
+                                  <span className="opacity-70">\u2014 {a.description}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
