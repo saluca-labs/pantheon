@@ -14,7 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/agents": "Agents",
   "/dashboard/policies": "Policies",
   "/dashboard/audit": "Audit Trail",
-  "/dashboard/detection": "Detection",
+  "/dashboard/detection": "Detection Feed",
   "/dashboard/quarantine": "Quarantine",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
