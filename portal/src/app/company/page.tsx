@@ -73,7 +73,7 @@ const values = [
   {
     title: "Founder-Led",
     description:
-      "Backed by 14 USPTO provisional patents and deep conviction. Tiresias is built with a long-term vision, not quarterly targets.",
+      "Backed by 29 USPTO provisional patents and deep conviction. Tiresias is built with a long-term vision, not quarterly targets.",
     icon: (
       <svg
         className="h-6 w-6 text-teal-500"
@@ -195,7 +195,7 @@ export default function CompanyPage() {
             <h2 className="text-sm font-semibold text-teal-500 uppercase tracking-wider mb-4">
               Intellectual Property
             </h2>
-            <p className="text-4xl font-bold mb-2">14</p>
+            <p className="text-4xl font-bold mb-2">29</p>
             <p className="text-lg text-foreground-muted mb-2">
               USPTO Provisional Patents
             </p>

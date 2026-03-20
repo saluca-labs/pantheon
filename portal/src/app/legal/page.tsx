@@ -195,7 +195,7 @@ export default function LegalPage() {
               <div className="glass-card rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-3">4. Intellectual Property</h3>
                 <p>
-                  The Service, including all software, algorithms, designs, and documentation, is the exclusive intellectual property of Saluca LLC. The Company holds <span className="text-foreground font-medium">14 USPTO provisional patents</span> covering core aspects of the platform&apos;s architecture. Nothing in these Terms grants you any rights to our intellectual property beyond the limited license to use the Service.
+                  The Service, including all software, algorithms, designs, and documentation, is the exclusive intellectual property of Saluca LLC. The Company holds <span className="text-foreground font-medium">29 USPTO provisional patents</span> covering core aspects of the platform&apos;s architecture. Nothing in these Terms grants you any rights to our intellectual property beyond the limited license to use the Service.
                 </p>
               </div>
 
