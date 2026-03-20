@@ -1,0 +1,52 @@
+metadata:
+  tenant: saluca
+  persona: alfred
+  role: orchestrator
+spec:
+  jit:
+    max_capability_ttl: 900
+    default_capability_ttl: 300
+    require_active_session: true
+    allowed_nodes: ["*"]
+    operating_window: "24/7"
+    max_concurrent_capabilities: 10
+  model_policies:
+    default_models: ["claude-opus-4-20250514", "claude-sonnet-4-20250514"]
+    task_routing:
+      reasoning:
+        required: ["claude-opus-4-20250514"]
+        description: "Architectural decisions, complex analysis"
+      code_generation:
+        allowed: ["claude-sonnet-4-20250514", "claude-opus-4-20250514"]
+        preferred: "claude-sonnet-4-20250514"
+        description: "Code writing, refactoring"
+      code_review:
+        allowed: ["claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"]
+        preferred: "claude-haiku-4-5-20251001"
+        description: "Linting, style checks"
+      summarization:
+        allowed: ["claude-haiku-4-5-20251001", "gpt-4o-mini"]
+        preferred: "claude-haiku-4-5-20251001"
+        description: "Session summaries, compression"
+      vision:
+        allowed: ["gemini-2.5-flash", "claude-sonnet-4-20250514"]
+        preferred: "gemini-2.5-flash"
+        description: "Image analysis, sensor data"
+      simulation:
+        allowed: ["local:diffusion", "local:ness"]
+        description: "Physics simulation, numerical solvers"
+    forbidden_models: ["gpt-3.5-turbo"]
+    cost_budget:
+      daily_limit_usd: 50.0
+      per_request_max_usd: 2.0
+    enforcement: "strict"
+  resources:
+    memory:
+      - actions: [read, write, delete]
+        scopes: ["*"]
+    vault:
+      - actions: [read, reveal]
+        scopes: ["*"]
+    mesh:
+      - actions: [ssh, execute, transfer]
+        nodes: ["*"]
