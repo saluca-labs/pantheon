@@ -118,7 +118,6 @@ function RadarIcon({ className }: { className?: string }) {
 /* ─── Section: Hero ─── */
 
 function Hero() {
-  const trustNames = ["Meridian AI", "Arclight Systems", "Novalink", "Cortex Labs", "Vektora"];
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -260,31 +259,6 @@ function Hero() {
           </div>
         </motion.div>
 
-        {/* Trust bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1.3 }}
-          className="mt-24"
-        >
-          <div className="section-divider mb-10" />
-          <p className="text-xs uppercase tracking-widest text-foreground-subtle mb-8">
-            Trusted by teams securing AI agent fleets
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {trustNames.map((name, i) => (
-              <motion.span
-                key={name}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 1.2 + i * 0.1 }}
-                className="text-sm font-semibold text-foreground-subtle/50 tracking-wide font-mono hover:text-foreground-subtle/80 transition-colors"
-              >
-                {name}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
       </div>
 
       <style>{`
