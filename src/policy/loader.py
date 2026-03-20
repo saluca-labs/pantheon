@@ -17,6 +17,112 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from src.database.models import PolicyCache
 
 
+
+
+class ModelPolicyViolation(Exception):
+    """Raised when a model access request violates policy constraints."""
+    pass
+
+
+class TaskModelRule:
+    """A single task-to-model routing rule from a persona policy."""
+
+    def __init__(self, task_type: str, data: dict):
+        self.task_type: str = task_type
+        self.allowed: list[str] = data.get("allowed", [])
+        self.required: list[str] = data.get("required", None)
+        self.preferred: str = data.get("preferred", None)
+        self.description: str = data.get("description", "")
+
+
+class ModelPolicy:
+    """Model routing policy for a persona -- governs which models can be used per task."""
+
+    def __init__(self, data: dict):
+        self.default_models: list[str] = data.get("default_models", [])
+        self.task_routing: dict[str, TaskModelRule] = {}
+        for task_type, rule_data in data.get("task_routing", {}).items():
+            self.task_routing[task_type] = TaskModelRule(task_type, rule_data)
+        self.forbidden_models: list[str] = data.get("forbidden_models", [])
+        self.cost_budget: dict[str, float] | None = data.get("cost_budget", None)
+        self.enforcement: str = data.get("enforcement", "strict")
+
+    def resolve_models_for_task(
+        self, task_type: str, requested_model: str | None = None
+    ) -> tuple[str, str]:
+        """Returns (model_to_use, decision_reason).
+
+        Raises ModelPolicyViolation in strict mode on forbidden/required violations.
+        """
+        rule = self.task_routing.get(task_type)
+
+        if not rule:
+            # Fall back to default_models
+            if requested_model and requested_model not in self.forbidden_models:
+                return requested_model, "default_policy"
+            if requested_model and requested_model in self.forbidden_models:
+                if self.enforcement == "strict":
+                    raise ModelPolicyViolation(
+                        f"Model {requested_model} is forbidden for persona"
+                    )
+                return self.default_models[0] if self.default_models else requested_model, "forbidden_override"
+            return self.default_models[0] if self.default_models else "", "default_policy"
+
+        if requested_model:
+            if requested_model in self.forbidden_models:
+                if self.enforcement == "strict":
+                    raise ModelPolicyViolation(
+                        f"Model {requested_model} is forbidden for persona"
+                    )
+                return rule.preferred or rule.allowed[0], "forbidden_override"
+            if rule.required and requested_model not in rule.required:
+                if self.enforcement == "strict":
+                    raise ModelPolicyViolation(
+                        f"Task {task_type} requires one of {rule.required}, "
+                        f"got {requested_model}"
+                    )
+                return rule.required[0], "required_override"
+            if rule.allowed and requested_model in rule.allowed:
+                return requested_model, "allowed"
+            if rule.required and requested_model in rule.required:
+                return requested_model, "required"
+            # requested model not in allowed list
+            if rule.allowed:
+                if self.enforcement == "strict":
+                    raise ModelPolicyViolation(
+                        f"Model {requested_model} not in allowed list "
+                        f"{rule.allowed} for task {task_type}"
+                    )
+                return rule.preferred or rule.allowed[0], "not_allowed_override"
+
+        # No specific request
+        if rule.preferred:
+            return rule.preferred, "auto_selected"
+        if rule.allowed:
+            return rule.allowed[0], "auto_selected"
+        if rule.required:
+            return rule.required[0], "auto_selected"
+        return self.default_models[0] if self.default_models else "", "auto_selected"
+
+    def to_dict(self) -> dict:
+        result = {
+            "default_models": self.default_models,
+            "task_routing": {},
+            "forbidden_models": self.forbidden_models,
+            "enforcement": self.enforcement,
+        }
+        if self.cost_budget:
+            result["cost_budget"] = self.cost_budget
+        for task_type, rule in self.task_routing.items():
+            entry = {"allowed": rule.allowed, "description": rule.description}
+            if rule.required:
+                entry["required"] = rule.required
+            if rule.preferred:
+                entry["preferred"] = rule.preferred
+            result["task_routing"][task_type] = entry
+        return result
+
+
 class PolicyRule:
     """A single resource access rule from a persona policy."""
 
@@ -67,6 +173,12 @@ class ResolvedPolicy:
             else:
                 self.resources[resource_name] = []
 
+        # Model routing policy
+        model_policies_data = spec.get("model_policies")
+        self.model_policies: ModelPolicy | None = (
+            ModelPolicy(model_policies_data) if model_policies_data else None
+        )
+
     def to_dict(self) -> dict:
         return {
             "metadata": {
@@ -102,6 +214,7 @@ class ResolvedPolicy:
                     ]
                     for name, rules in self.resources.items()
                 },
+                "model_policies": self.model_policies.to_dict() if self.model_policies else None,
             },
         }
 

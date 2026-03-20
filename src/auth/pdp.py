@@ -13,7 +13,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.soulkey import resolve_identity, check_key_expiry
-from src.policy.loader import load_cached_policy, find_matching_rule, ResolvedPolicy
+from src.policy.loader import load_cached_policy, find_matching_rule, ResolvedPolicy, ModelPolicyViolation
 from src.tokens.capability import issue_capability_token
 from src.audit.logger import log_auth_event
 from src.database.models import Soulkey, AuditLog
@@ -43,6 +43,31 @@ class AuthDecision:
         self.reason = reason
         self.escalation_available = escalation_available
         self.escalation_approver_role = escalation_approver_role
+
+
+
+class ModelAccessDecision:
+    """Result of a model access PDP evaluation."""
+
+    def __init__(
+        self,
+        decision: str,  # "grant" | "deny" | "redirect"
+        requested_model: str,
+        resolved_model: str,
+        task_type: str | None = None,
+        reason: str = "",
+        cost_remaining_usd: float | None = None,
+        enforcement_mode: str = "strict",
+        audit_id: uuid.UUID | None = None,
+    ):
+        self.decision = decision
+        self.requested_model = requested_model
+        self.resolved_model = resolved_model
+        self.task_type = task_type
+        self.reason = reason
+        self.cost_remaining_usd = cost_remaining_usd
+        self.enforcement_mode = enforcement_mode
+        self.audit_id = audit_id
 
 
 def _within_operating_window(window: str) -> bool:
@@ -597,3 +622,255 @@ async def exceeds_rate_limit(
             str(e), rate_limit_str,
         )
         return True
+
+async def evaluate_model_access(
+    db: AsyncSession,
+    raw_soulkey: str,
+    requested_model: str,
+    task_type: str | None = None,
+    estimated_cost_usd: float | None = None,
+    context: dict | None = None,
+) -> ModelAccessDecision:
+    """
+    Evaluate whether a persona can use the requested model for the given task.
+
+    Steps:
+    1. Resolve identity from soulkey
+    2. Load resolved policy
+    3. Extract model_policies
+    4. Check forbidden list
+    5. Check task-specific routing if task_type provided
+    6. Check cost budget (daily + per-request)
+    7. Return decision with recommended model
+    8. Audit log the decision
+    """
+    context = context or {}
+
+    # 1. Resolve identity
+    soulkey = await resolve_identity(db, raw_soulkey)
+    if not soulkey:
+        return ModelAccessDecision(
+            decision="deny",
+            requested_model=requested_model,
+            resolved_model="",
+            task_type=task_type,
+            reason="unknown soulkey",
+        )
+
+    # Check key status
+    if soulkey.status != "active":
+        return ModelAccessDecision(
+            decision="deny",
+            requested_model=requested_model,
+            resolved_model="",
+            task_type=task_type,
+            reason=f"soulkey status: {soulkey.status}",
+        )
+
+    if not await check_key_expiry(db, soulkey):
+        return ModelAccessDecision(
+            decision="deny",
+            requested_model=requested_model,
+            resolved_model="",
+            task_type=task_type,
+            reason="soulkey expired",
+        )
+
+    # 2. Load resolved policy
+    policy = await load_cached_policy(db, soulkey.tenant_id, soulkey.persona_id)
+    if not policy:
+        return ModelAccessDecision(
+            decision="deny",
+            requested_model=requested_model,
+            resolved_model="",
+            task_type=task_type,
+            reason="no policy found for persona",
+        )
+
+    # 3. Extract model_policies
+    model_policy = policy.model_policies
+    if not model_policy:
+        # No model policy defined — allow any model (open policy)
+        audit_id = await log_auth_event(
+            db,
+            tenant_id=soulkey.tenant_id,
+            event_type="model_access_grant",
+            soulkey_id=soulkey.id,
+            persona_id=soulkey.persona_id,
+            resource="model",
+            action="use",
+            scope=requested_model,
+            decision="grant",
+            reason="no model policy defined",
+            context={**context, "task_type": task_type},
+        )
+        return ModelAccessDecision(
+            decision="grant",
+            requested_model=requested_model,
+            resolved_model=requested_model,
+            task_type=task_type,
+            reason="no model policy defined — open access",
+            enforcement_mode="none",
+            audit_id=audit_id,
+        )
+
+    enforcement = model_policy.enforcement
+
+    # 4 + 5. Resolve model for task (handles forbidden + required + allowed checks)
+    try:
+        resolved_model, decision_reason = model_policy.resolve_models_for_task(
+            task_type or "", requested_model
+        )
+    except ModelPolicyViolation as e:
+        audit_id = await log_auth_event(
+            db,
+            tenant_id=soulkey.tenant_id,
+            event_type="model_access_deny",
+            soulkey_id=soulkey.id,
+            persona_id=soulkey.persona_id,
+            resource="model",
+            action="use",
+            scope=requested_model,
+            decision="deny",
+            reason=str(e),
+            context={**context, "task_type": task_type, "enforcement": enforcement},
+        )
+        return ModelAccessDecision(
+            decision="deny",
+            requested_model=requested_model,
+            resolved_model="",
+            task_type=task_type,
+            reason=str(e),
+            enforcement_mode=enforcement,
+            audit_id=audit_id,
+        )
+
+    # 6. Cost budget checks
+    cost_remaining = None
+    if model_policy.cost_budget and estimated_cost_usd is not None:
+        per_request_max = model_policy.cost_budget.get("per_request_max_usd")
+        if per_request_max and estimated_cost_usd > per_request_max:
+            reason = (
+                f"Estimated cost ${estimated_cost_usd:.2f} exceeds "
+                f"per-request max ${per_request_max:.2f}"
+            )
+            if enforcement == "strict":
+                audit_id = await log_auth_event(
+                    db,
+                    tenant_id=soulkey.tenant_id,
+                    event_type="model_access_deny",
+                    soulkey_id=soulkey.id,
+                    persona_id=soulkey.persona_id,
+                    resource="model",
+                    action="use",
+                    scope=requested_model,
+                    decision="deny",
+                    reason=reason,
+                    context={**context, "task_type": task_type, "estimated_cost": estimated_cost_usd},
+                )
+                return ModelAccessDecision(
+                    decision="deny",
+                    requested_model=requested_model,
+                    resolved_model="",
+                    task_type=task_type,
+                    reason=reason,
+                    enforcement_mode=enforcement,
+                    audit_id=audit_id,
+                )
+
+        daily_limit = model_policy.cost_budget.get("daily_limit_usd")
+        if daily_limit:
+            # Query today's spend from audit log
+            today_spend = await _get_daily_model_spend(db, soulkey.id)
+            cost_remaining = daily_limit - today_spend
+            if estimated_cost_usd and (today_spend + estimated_cost_usd) > daily_limit:
+                reason = (
+                    f"Daily budget exhausted: spent ${today_spend:.2f} of "
+                    f"${daily_limit:.2f}, request needs ${estimated_cost_usd:.2f}"
+                )
+                if enforcement == "strict":
+                    audit_id = await log_auth_event(
+                        db,
+                        tenant_id=soulkey.tenant_id,
+                        event_type="model_access_deny",
+                        soulkey_id=soulkey.id,
+                        persona_id=soulkey.persona_id,
+                        resource="model",
+                        action="use",
+                        scope=requested_model,
+                        decision="deny",
+                        reason=reason,
+                        context={**context, "task_type": task_type, "daily_spend": today_spend},
+                    )
+                    return ModelAccessDecision(
+                        decision="deny",
+                        requested_model=requested_model,
+                        resolved_model="",
+                        task_type=task_type,
+                        reason=reason,
+                        cost_remaining_usd=cost_remaining,
+                        enforcement_mode=enforcement,
+                        audit_id=audit_id,
+                    )
+
+    # 7. Determine final decision
+    if resolved_model != requested_model and requested_model:
+        decision = "redirect"
+        reason_str = f"Redirected from {requested_model} to {resolved_model}: {decision_reason}"
+    else:
+        decision = "grant"
+        reason_str = decision_reason
+
+    audit_id = await log_auth_event(
+        db,
+        tenant_id=soulkey.tenant_id,
+        event_type=f"model_access_{decision}",
+        soulkey_id=soulkey.id,
+        persona_id=soulkey.persona_id,
+        resource="model",
+        action="use",
+        scope=resolved_model,
+        decision=decision,
+        reason=reason_str,
+        context={
+            **context,
+            "task_type": task_type,
+            "requested_model": requested_model,
+            "resolved_model": resolved_model,
+        },
+    )
+
+    return ModelAccessDecision(
+        decision=decision,
+        requested_model=requested_model,
+        resolved_model=resolved_model,
+        task_type=task_type,
+        reason=reason_str,
+        cost_remaining_usd=cost_remaining,
+        enforcement_mode=enforcement,
+        audit_id=audit_id,
+    )
+
+
+async def _get_daily_model_spend(
+    db: AsyncSession, soulkey_id: uuid.UUID
+) -> float:
+    """Sum estimated_cost from today's model_access_grant audit events."""
+    from sqlalchemy import cast, Float
+    from sqlalchemy.dialects.postgresql import JSONB
+
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    result = await db.execute(
+        select(AuditLog.context).where(
+            AuditLog.soulkey_id == soulkey_id,
+            AuditLog.event_type.in_(["model_access_grant", "model_access_redirect"]),
+            AuditLog.timestamp >= today_start,
+        )
+    )
+    total = 0.0
+    for (ctx,) in result.all():
+        if ctx and isinstance(ctx, dict):
+            total += ctx.get("estimated_cost", 0.0)
+    return total
