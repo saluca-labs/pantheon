@@ -54,6 +54,8 @@ class ManualQuarantineRequest(BaseModel):
         default=None,
         description="Minutes until auto-release (null = manual only)",
     )
+    flagged_prompt: Optional[str] = Field(default=None, description="Prompt text that triggered quarantine")
+    flagged_completion: Optional[str] = Field(default=None, description="Completion text that triggered quarantine")
 
 
 class ReleaseRequest(BaseModel):
@@ -74,6 +76,8 @@ class QuarantineRecordResponse(BaseModel):
     auto_release_at: Optional[str] = None
     released_by: Optional[str] = None
     reason: str
+    flagged_prompt: Optional[str] = None
+    flagged_completion: Optional[str] = None
 
 
 class QuarantinePolicyResponse(BaseModel):
@@ -301,6 +305,8 @@ async def manual_quarantine(
         reason=request.reason,
         triggered_by_type="manual",
         auto_release_after=request.auto_release_after,
+        flagged_prompt=request.flagged_prompt,
+        flagged_completion=request.flagged_completion,
     )
     return record.to_dict()
 
