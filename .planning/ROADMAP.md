@@ -201,7 +201,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md � Extend to 6-tier hierarchy, TIRESIAS_TIER env override, feature registry, route guards, /health tier exposure (TIER-01, TIER-02, TIER-03, TIER-04, TIER-05)
+- [ ] 10-01-PLAN.md — Extend to 6-tier hierarchy, TIRESIAS_TIER env override, feature registry, route guards, /health tier exposure (TIER-01, TIER-02, TIER-03, TIER-04, TIER-05)
 
 ### Phase 11: MSSP Multi-Tenant
 **Goal**: An MSSP operator can manage a hierarchy of child tenants, query detection and quarantine data across all of them in one call, provision new tenants, and be guaranteed child queries never leak across unrelated hierarchies
@@ -214,7 +214,11 @@ Plans:
   4. GET /v1/mssp/enforcement/quarantine returns quarantines scoped to the parent's hierarchy — cross-hierarchy records are never returned
   5. POST /v1/mssp/tenants creates a child tenant with inherited policies and optional feature overrides, returning the new tenant_id and admin credentials in one response
   6. A query issued from child tenant A cannot return data belonging to child tenant B when both share the same parent — isolation verified by attempting cross-child query
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Tenant hierarchy model + isolation enforcement (MSSP-01, MSSP-06)
+- [ ] 11-02-PLAN.md — Cross-tenant APIs + tenant provisioning (MSSP-02, MSSP-03, MSSP-04, MSSP-05)
 
 ### Phase 12: SaaS Management
 **Goal**: Saluca operators can provision a fully-configured tenant in one API call, meter usage for billing, process Stripe subscription lifecycle events, and suspend or reactivate tenants with a grace period
@@ -237,7 +241,11 @@ Plans:
   3. SaaS admin page renders a tenant provisioning form, usage table with time-range filter, billing status, and suspend/reactivate controls — all wired to Phase 12 APIs
   4. DashboardHeader displays a tier badge (e.g. "MSSP" or "SaaS") adjacent to the product logo — badge is absent on community/starter/pro/enterprise tiers
   5. Any UI element gated to a higher tier that is rendered on a lower-tier deploy shows a TierGate upgrade prompt instead of the feature — no console errors, no blank panels
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — TierGate component, tier-conditional sidebar MSSP nav group, tier badge in header (DTIER-01, DTIER-04, DTIER-05)
+- [ ] 13-02-PLAN.md — MSSP overview page, cross-tenant detection page, SaaS admin page (DTIER-02, DTIER-03)
 
 ---
 
@@ -255,9 +263,9 @@ Plans:
 | 8. SIEM Connectors | 2/2 | Complete | 2026-03-20 |
 | 9. Dashboard Integration | 2/2 | Complete | 2026-03-21 |
 | 10. Tier Framework | 0/1 | Not started | - |
-| 11. MSSP Multi-Tenant | 0/? | Not started | - |
-| 12. SaaS Management | 0/? | Not started | - |
-| 13. Dashboard Tier-Awareness | 0/? | Not started | - |
+| 11. MSSP Multi-Tenant | 0/2 | Not started | - |
+| 12. SaaS Management | 0/1 | Not started | - |
+| 13. Dashboard Tier-Awareness | 0/2 | Not started | - |
 
 ---
 
@@ -265,3 +273,4 @@ Plans:
 *v2.0 phases added: 2026-03-20*
 *v2.1 phases added: 2026-03-21*
 *Last updated: 2026-03-21 — Phase 10-13 Enterprise Tier System added*
+*Phase 13 planned: 2026-03-20 — 2 plans created*
