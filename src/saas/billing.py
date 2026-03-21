@@ -87,6 +87,8 @@ async def handle_stripe_event(
     - customer.subscription.updated -> update tier from plan
     - customer.subscription.deleted -> downgrade to "starter"
     - customer.subscription.created -> same as updated
+    - invoice.paid                  -> clear payment_failed flags, log receipt
+    - invoice.payment_failed        -> flag tenant with payment failure metadata
 
     Returns dict with action taken and tenant_id if found.
     """
@@ -173,6 +175,68 @@ async def handle_stripe_event(
             "tenant_id": str(tenant.id),
             "old_tier": old_tier,
             "new_tier": "starter",
+        }
+
+    elif event_type == "invoice.paid":
+        invoice = event_data.get("object", {})
+        invoice_id = invoice.get("id", "unknown")
+        amount_paid = invoice.get("amount_paid", 0)
+        subscription_id = invoice.get("subscription")
+
+        logger.info(
+            "saas.billing.invoice_paid",
+            tenant_id=str(tenant.id) if tenant else None,
+            invoice_id=invoice_id,
+            amount_paid=amount_paid,
+            subscription_id=subscription_id,
+        )
+
+        # Clear any payment_failed flag from metadata
+        if tenant:
+            meta = tenant.metadata_ or {}
+            meta.pop("payment_failed_at", None)
+            meta.pop("payment_failed_count", None)
+            await db.execute(
+                update(SoulTenant)
+                .where(SoulTenant.id == tenant.id)
+                .values(metadata=meta, updated_at=datetime.now(timezone.utc))
+            )
+
+        return {
+            "action": "invoice_paid",
+            "tenant_id": str(tenant.id) if tenant else None,
+            "invoice_id": invoice_id,
+            "amount_paid": amount_paid,
+        }
+
+    elif event_type == "invoice.payment_failed":
+        invoice = event_data.get("object", {})
+        invoice_id = invoice.get("id", "unknown")
+        attempt_count = invoice.get("attempt_count", 1)
+
+        logger.error(
+            "saas.billing.invoice_payment_failed",
+            tenant_id=str(tenant.id) if tenant else None,
+            invoice_id=invoice_id,
+            attempt_count=attempt_count,
+        )
+
+        # Flag tenant with payment failure — grace period logic in Phase 17
+        if tenant:
+            meta = tenant.metadata_ or {}
+            meta["payment_failed_at"] = datetime.now(timezone.utc).isoformat()
+            meta["payment_failed_count"] = attempt_count
+            await db.execute(
+                update(SoulTenant)
+                .where(SoulTenant.id == tenant.id)
+                .values(metadata=meta, updated_at=datetime.now(timezone.utc))
+            )
+
+        return {
+            "action": "payment_failed",
+            "tenant_id": str(tenant.id) if tenant else None,
+            "invoice_id": invoice_id,
+            "attempt_count": attempt_count,
         }
 
     logger.info(
