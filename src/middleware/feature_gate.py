@@ -84,6 +84,7 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/mssp": "tenant_hierarchy",
     "/v1/saas": "managed_provisioning",
     "/v1/tenant": "white_label",
+    "/v1/aletheia/tool": "aletheia_tool_policies",
     "/v1/aletheia": "aletheia_cot_intercept",
 }
 

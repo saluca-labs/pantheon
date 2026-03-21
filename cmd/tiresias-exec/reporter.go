@@ -71,12 +71,32 @@ func computeEnvironmentHash() string {
 	return fmt.Sprintf("sha256:%x", h)
 }
 
+// buildPayload creates a telemetry payload with default (skipped) policy.
+// Retained for backward compatibility.
 func buildPayload(identity AgentIdentity, command []string, cwd string, result ExecutionResult) TelemetryPayload {
+	return buildPayloadWithPolicy(identity, command, cwd, result, PolicyEvalResponse{}, false)
+}
+
+// buildPayloadWithPolicy creates a telemetry payload with actual policy evaluation results.
+func buildPayloadWithPolicy(identity AgentIdentity, command []string, cwd string, result ExecutionResult, policyResult PolicyEvalResponse, evaluated bool) TelemetryPayload {
 	var args []string
 	if len(command) > 1 {
 		args = command[1:]
 	} else {
 		args = []string{}
+	}
+
+	// Build policy payload
+	policyPayload := PolicyPayload{
+		Evaluated:    evaluated,
+		Verdict:      "skipped",
+		RulesMatched: []string{},
+	}
+	if evaluated {
+		policyPayload.Verdict = policyResult.Verdict
+		if policyResult.RuleMatched != "" {
+			policyPayload.RulesMatched = []string{policyResult.RuleMatched}
+		}
 	}
 
 	return TelemetryPayload{
@@ -99,11 +119,7 @@ func buildPayload(identity AgentIdentity, command []string, cwd string, result E
 			StdoutHash:  result.StdoutHash,
 			StderrHash:  result.StderrHash,
 		},
-		Policy: PolicyPayload{
-			Evaluated:    false,
-			Verdict:      "skipped",
-			RulesMatched: []string{},
-		},
+		Policy: policyPayload,
 		Sanitizer: SanitizerPayload{
 			Mode:            identity.SanitizeMode,
 			Verdict:         "skipped",

@@ -1,0 +1,50 @@
+apiVersion: tiresias/v1
+kind: ToolPolicy
+metadata:
+  name: default-enterprise
+  tier: enterprise
+  description: >
+    Default enterprise tool policy. Blocks destructive commands,
+    warns on data exports, and rate-limits API calls.
+spec:
+  default_action: allow
+  rules:
+    - name: block-destructive
+      match:
+        commands:
+          - "rm"
+          - "gws admin users.delete"
+          - "kubectl delete"
+          - "git push --force"
+          - "mkfs"
+          - "dd"
+      action: deny
+      reason: "Destructive operation requires explicit approval"
+    - name: warn-data-access
+      match:
+        commands:
+          - "gws drive files.export"
+          - "gws gmail users.messages.get"
+        args_pattern: ".*--(format|type)=(raw|full).*"
+      action: warn
+      reason: "Full content export -- verify data classification"
+    - name: rate-limit-api
+      match:
+        commands:
+          - "gws *"
+          - "gh api *"
+      rate_limit:
+        max_per_minute: 60
+        max_per_hour: 500
+      action: allow
+  agent_overrides:
+    alfred-main:
+      override_rules:
+        - name: block-destructive
+          action: warn
+    untrusted-agent:
+      default_action: deny
+      allowed_commands:
+        - "gws gmail users.messages.list"
+        - "gws drive files.list"
+        - "gws calendar events.list"

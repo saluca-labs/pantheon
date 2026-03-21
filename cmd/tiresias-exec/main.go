@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -25,15 +26,81 @@ func main() {
 
 	identity := resolveIdentity(flags)
 
+	// === Action Gate: evaluate policy before execution ===
+	var policyResult PolicyEvalResponse
+	policyEvaluated := false
+
+	if !flags.forceOffline && identity.SoulWatchURL != "" {
+		pr, err := evaluatePolicy(identity, command)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "tiresias-exec: policy check skipped: %v\n", err)
+			policyResult = PolicyEvalResponse{Verdict: "allow", Reason: "policy evaluation unavailable"}
+		} else {
+			policyResult = pr
+			policyEvaluated = true
+		}
+
+		// Dry-run: print policy result as JSON and exit
+		if flags.dryRun {
+			out, _ := json.MarshalIndent(policyResult, "", "  ")
+			fmt.Println(string(out))
+			os.Exit(0)
+		}
+
+		// Deny: exit 77 (EX_NOPERM) without executing
+		if policyResult.Verdict == "deny" {
+			ruleName := policyResult.RuleMatched
+			if ruleName == "" {
+				ruleName = "default"
+			}
+			fmt.Fprintf(os.Stderr, "tiresias-exec: DENIED by policy rule '%s': %s\n", ruleName, policyResult.Reason)
+
+			// Build and report telemetry for the denied invocation
+			cwd, _ := os.Getwd()
+			payload := buildPayloadWithPolicy(identity, command, cwd, ExecutionResult{ExitCode: 77}, policyResult, true)
+
+			// Fire-and-forget report with brief grace period
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				if err := reportEvent(identity.SoulWatchURL, identity.Token, payload); err != nil {
+					writeOffline(identity.OfflineLogPath, payload)
+				}
+			}()
+			select {
+			case <-done:
+			case <-time.After(500 * time.Millisecond):
+			}
+			os.Exit(77)
+		}
+
+		// Warn: print warning but continue execution
+		if policyResult.Verdict == "warn" {
+			ruleName := policyResult.RuleMatched
+			if ruleName == "" {
+				ruleName = "default"
+			}
+			fmt.Fprintf(os.Stderr, "tiresias-exec: WARNING from policy rule '%s': %s\n", ruleName, policyResult.Reason)
+		}
+	} else if flags.dryRun {
+		// Dry-run in offline mode: report no policy available
+		out, _ := json.MarshalIndent(PolicyEvalResponse{
+			Verdict: "allow",
+			Reason:  "offline mode -- no policy evaluation",
+		}, "", "  ")
+		fmt.Println(string(out))
+		os.Exit(0)
+	}
+
 	result := executeCommand(command)
 
 	// Write subprocess output to stdout/stderr immediately
 	os.Stdout.Write(result.Stdout)
 	os.Stderr.Write(result.Stderr)
 
-	// Build telemetry payload
+	// Build telemetry payload with policy result
 	cwd, _ := os.Getwd()
-	payload := buildPayload(identity, command, cwd, result)
+	payload := buildPayloadWithPolicy(identity, command, cwd, result, policyResult, policyEvaluated)
 
 	// Report async with grace period
 	var wg sync.WaitGroup
@@ -162,9 +229,10 @@ Flags:
   --sanitize STRING      Sanitizer mode (passthrough|warn|block) [reserved]
   --config STRING        Config file path (default: ~/.tiresias/agent.yaml)
   --offline              Force offline mode (skip SoulWatch reporting)
-  --dry-run              Policy check only, do not execute [reserved]
+  --dry-run              Policy check only, do not execute
   --version              Print version and exit
 
-The wrapped command always executes. Telemetry is reported async.
+The wrapped command always executes (unless denied by policy).
+Telemetry is reported async.
 `, Version)
 }
