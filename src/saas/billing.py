@@ -29,7 +29,11 @@ STRIPE_TIER_MAP: dict[str, str] = {
     "mssp": "mssp",
     "saas": "saas",
     # Stripe price IDs or product names can be mapped here
+    "price_1TDMSlBkXMYmrc2L29W09pQl": "starter",
+    "price_1TDMSlBkXMYmrc2LuuaUN5Cp": "starter",
     "price_starter": "starter",
+    "price_1TDMT2BkXMYmrc2Lhf1whQpi": "pro",
+    "price_1TDMT2BkXMYmrc2LnBUoJEww": "pro",
     "price_pro": "pro",
     "price_enterprise": "enterprise",
     "price_mssp": "mssp",

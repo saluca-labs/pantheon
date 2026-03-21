@@ -415,10 +415,10 @@ export default function TrialPage() {
                 <h3 className="text-lg font-semibold mb-4">What happens after 14 days?</h3>
                 <div className="space-y-4 text-sm text-foreground-muted leading-relaxed">
                   <p>
-                    When your trial ends, your account automatically transitions to our <span className="text-foreground font-medium">free Community tier</span> - no disruption, no data loss.
+                    When your trial ends, your account automatically transitions to our <span className="text-foreground font-medium">free Open tier</span> - no disruption, no data loss.
                   </p>
                   <p>
-                    The Community tier includes 1 agent identity, 1,000 API calls/month, and basic SoulAuth policy enforcement. Enough to keep developing.
+                    The Open tier includes 25 managed agents, 7-day data retention, and the full platform (SoulAuth + SoulWatch + SoulGate). Enough to keep building.
                   </p>
                   <p>
                     To keep Pro features across all three products, upgrade anytime from your dashboard.
