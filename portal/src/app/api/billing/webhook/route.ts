@@ -2,16 +2,13 @@
  * Stripe Webhook handler.
  * POST /api/billing/webhook
  *
- * Handles Stripe events to keep SoulAuth tier/subscription state in sync.
- * Flat-rate pricing model — Tiresias is ONE platform.
- *
- * Canonical pricing: Z:\saluca-corp\PRICING_POLICY.md v2.0
- *
- * Events:
- *   - checkout.session.completed: provision tenant or upgrade tier
- *   - customer.subscription.updated: update tier on plan changes
- *   - customer.subscription.deleted: downgrade to open
- *   - invoice.payment_failed: log warning, flag tenant
+ * Events handled (BILL-03, TRIAL-02):
+ *   checkout.session.completed       -> provision new tenant OR upgrade existing
+ *   customer.subscription.created    -> set tier from plan
+ *   customer.subscription.updated    -> update tier on plan changes
+ *   customer.subscription.deleted    -> downgrade to community
+ *   invoice.paid                     -> log receipt, forward to SoulAuth
+ *   invoice.payment_failed           -> log warning, flag tenant for grace period
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -24,58 +21,41 @@ function getStripe() {
 }
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
-
-// SoulAuth internal cluster URL (not public-facing)
 const SOULAUTH_INTERNAL_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth.tiresias.svc.cluster.local";
+  process.env.SOULAUTH_INTERNAL_URL || "http://localhost:8000";
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
-// Flat-rate price ID -> tier mapping (PRICING_POLICY.md v2.0)
 const PRICE_TO_TIER: Record<string, string> = {
-  // Starter (monthly + annual)
   [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: "starter",
   [process.env.STRIPE_PRICE_STARTER_ANNUAL || ""]: "starter",
-  // Pro (monthly + annual)
   [process.env.STRIPE_PRICE_PRO_MONTHLY || ""]: "pro",
   [process.env.STRIPE_PRICE_PRO_ANNUAL || ""]: "pro",
+  [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || ""]: "enterprise",
+  [process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || ""]: "enterprise",
 };
 
-// Lookup key fallback (if price ID env vars not set)
 const LOOKUP_KEY_TO_TIER: Record<string, string> = {
   tiresias_starter_monthly: "starter",
   tiresias_starter_annual: "starter",
   tiresias_pro_monthly: "pro",
   tiresias_pro_annual: "pro",
+  tiresias_enterprise_monthly: "enterprise",
+  tiresias_enterprise_annual: "enterprise",
 };
 
-/**
- * Resolve tier from a Stripe subscription's price.
- */
 function resolveTier(subscription: Stripe.Subscription): string {
   const item = subscription.items.data[0];
-  if (!item) return "open";
-
+  if (!item) return "community";
   const priceId = item.price.id;
   const lookupKey = item.price.lookup_key;
-
-  // Try direct price ID match
   if (priceId && PRICE_TO_TIER[priceId]) return PRICE_TO_TIER[priceId];
-
-  // Try lookup key match
   if (lookupKey && LOOKUP_KEY_TO_TIER[lookupKey]) return LOOKUP_KEY_TO_TIER[lookupKey];
-
-  // Fallback: check metadata
   const metaTier = subscription.metadata?.tiresias_tier;
   if (metaTier) return metaTier.toLowerCase();
-
   console.warn("Could not resolve tier for price " + priceId + ", defaulting to starter");
   return "starter";
 }
 
-/**
- * Forward billing event to SoulAuth's internal SaaS webhook.
- * SoulAuth handles tenant tier updates in its own transaction.
- */
 async function forwardToSoulAuth(eventType: string, eventData: object) {
   try {
     const response = await fetch(SOULAUTH_INTERNAL_URL + "/v1/saas/billing/webhook", {
@@ -84,20 +64,12 @@ async function forwardToSoulAuth(eventType: string, eventData: object) {
         "Content-Type": "application/json",
         "X-Internal-Key": INTERNAL_API_KEY,
       },
-      body: JSON.stringify({
-        type: eventType,
-        data: eventData,
-      }),
+      body: JSON.stringify({ type: eventType, data: eventData }),
     });
-
     if (!response.ok) {
-      const text = await response.text();
-      console.error("SoulAuth webhook forward failed: " + response.status + " " + text);
+      console.error("SoulAuth webhook forward failed: " + response.status);
       return false;
     }
-
-    const result = await response.json();
-    console.log("SoulAuth webhook result: " + JSON.stringify(result));
     return true;
   } catch (error) {
     console.error("Failed to forward to SoulAuth:", error);
@@ -105,9 +77,6 @@ async function forwardToSoulAuth(eventType: string, eventData: object) {
   }
 }
 
-/**
- * Update tenant tier directly via SoulAuth admin API.
- */
 async function updateTenantTier(
   tenantId: string,
   tier: string,
@@ -132,14 +101,10 @@ async function updateTenantTier(
         }),
       }
     );
-
     if (!response.ok) {
-      const text = await response.text();
-      console.error("Failed to update tenant " + tenantId + " to tier " + tier + ": " + response.status + " " + text);
+      console.error("Failed to update tenant " + tenantId + " to tier " + tier);
       return false;
     }
-
-    console.log("Tenant " + tenantId + " updated to tier " + tier);
     return true;
   } catch (error) {
     console.error("Tenant tier update failed:", error);
@@ -148,9 +113,10 @@ async function updateTenantTier(
 }
 
 /**
- * Provision a new tenant via SoulAuth SaaS provision API.
- * Used when a checkout completes for a user who registered through Stripe
- * (not through the trial flow).
+ * Provision a new tenant via SoulAuth and return the raw_key + tenant_id.
+ * raw_key is stored in Stripe subscription metadata temporarily so the
+ * /api/billing/session endpoint can surface it to the success page.
+ * Note: raw_key exposure is ephemeral — it will be cleared after first retrieval.
  */
 async function provisionTenant(
   companyName: string,
@@ -158,12 +124,15 @@ async function provisionTenant(
   stripeCustomerId: string,
   stripeSubscriptionId: string,
   email?: string
-) {
-  const slug = companyName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 63) || "tenant";
+): Promise<{ tenant_id: string; soulkey_id: string; raw_key: string } | null> {
+  const slug =
+    (companyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 50) || "tenant") +
+    "-" +
+    Date.now().toString(36);
 
   try {
     const response = await fetch(SOULAUTH_INTERNAL_URL + "/v1/saas/provision", {
@@ -174,7 +143,7 @@ async function provisionTenant(
       },
       body: JSON.stringify({
         company_name: companyName,
-        slug: slug + "-" + Date.now().toString(36),
+        slug,
         tier,
         admin_persona_id: "admin",
         metadata: {
@@ -192,7 +161,12 @@ async function provisionTenant(
       return null;
     }
 
-    return await response.json();
+    const result = await response.json();
+    return {
+      tenant_id: result.tenant_id,
+      soulkey_id: result.soulkey_id,
+      raw_key: result.raw_key,
+    };
   } catch (error) {
     console.error("SaaS provision error:", error);
     return null;
@@ -208,13 +182,15 @@ export async function POST(request: NextRequest) {
   }
 
   let event: Stripe.Event;
-
   try {
     event = getStripe().webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Webhook signature verification failed:", message);
-    return NextResponse.json({ error: "invalid_signature", detail: message }, { status: 400 });
+    return NextResponse.json(
+      { error: "invalid_signature", detail: message },
+      { status: 400 }
+    );
   }
 
   try {
@@ -225,11 +201,20 @@ export async function POST(request: NextRequest) {
         const planId = session.metadata?.plan_id;
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
-        const email = session.customer_email || session.customer_details?.email || undefined;
+        const email =
+          session.metadata?.contact_email ||
+          session.customer_email ||
+          session.customer_details?.email ||
+          undefined;
 
         if (tenantId) {
-          // Existing tenant upgrading — update their tier
-          const tier = planId === "pro" ? "pro" : "starter";
+          // Existing tenant upgrading
+          const tier =
+            planId === "enterprise"
+              ? "enterprise"
+              : planId === "pro"
+              ? "pro"
+              : "starter";
           await updateTenantTier(tenantId, tier, {
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId,
@@ -237,27 +222,51 @@ export async function POST(request: NextRequest) {
           });
           console.log("Checkout: existing tenant " + tenantId + " upgraded to " + tier);
         } else {
-          // New customer from Stripe checkout (no trial flow) — provision tenant
-          const tier = planId === "pro" ? "pro" : "starter";
-          const companyName = session.customer_details?.name || (email ? email.split("@")[1] : "") || "Customer";
-          const result = await provisionTenant(companyName, tier, customerId, subscriptionId, email);
-          if (result) {
-            console.log("Checkout: provisioned new tenant " + result.tenant_id + " (" + tier + ")");
-            // Store tenant_id in subscription metadata for future webhook events
-            if (subscriptionId) {
-              try {
-                await getStripe().subscriptions.update(subscriptionId, {
-                  metadata: { tenant_id: result.tenant_id },
-                });
-              } catch (e) {
-                console.error("Failed to update subscription metadata:", e);
-              }
+          // New customer — provision atomically
+          const tier =
+            planId === "enterprise"
+              ? "enterprise"
+              : planId === "pro"
+              ? "pro"
+              : "starter";
+          const companyName =
+            session.customer_details?.name ||
+            (email ? email.split("@")[1] : "") ||
+            "Customer";
+          const result = await provisionTenant(
+            companyName,
+            tier,
+            customerId,
+            subscriptionId,
+            email
+          );
+          if (result && subscriptionId) {
+            // Store tenant_id + raw_key in subscription metadata for success page retrieval
+            // raw_key is sensitive — cleared by success page after display
+            try {
+              await getStripe().subscriptions.update(subscriptionId, {
+                metadata: {
+                  tenant_id: result.tenant_id,
+                  soulkey_id: result.soulkey_id,
+                  raw_key: result.raw_key,
+                },
+              });
+            } catch (e) {
+              console.error("Failed to update subscription metadata:", e);
             }
+            console.log(
+              "Checkout: provisioned new tenant " +
+                result.tenant_id +
+                " (" +
+                tier +
+                ")"
+            );
           }
         }
         break;
       }
 
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         const tenantId = subscription.metadata?.tenant_id;
@@ -267,9 +276,15 @@ export async function POST(request: NextRequest) {
           await updateTenantTier(tenantId, tier, {
             stripe_subscription_status: subscription.status,
           });
-          console.log("Subscription updated: tenant " + tenantId + " -> " + tier + " (" + subscription.status + ")");
+          console.log(
+            "Subscription " +
+              event.type +
+              ": tenant " +
+              tenantId +
+              " -> " +
+              tier
+          );
         } else {
-          // Forward to SoulAuth which can do customer_id lookup
           await forwardToSoulAuth(event.type, event.data);
         }
         break;
@@ -280,24 +295,47 @@ export async function POST(request: NextRequest) {
         const tenantId = subscription.metadata?.tenant_id;
 
         if (tenantId) {
-          await updateTenantTier(tenantId, "open", {
+          await updateTenantTier(tenantId, "community", {
             stripe_subscription_status: "canceled",
             canceled_at: new Date().toISOString(),
           });
-          console.log("Subscription canceled: tenant " + tenantId + " downgraded to open");
+          console.log("Subscription canceled: tenant " + tenantId + " -> community");
         } else {
           await forwardToSoulAuth(event.type, event.data);
         }
         break;
       }
 
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId =
+          typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : (invoice.subscription as Stripe.Subscription)?.id;
+        console.log(
+          "Invoice paid: customer=" +
+            invoice.customer +
+            " amount=" +
+            invoice.amount_paid +
+            " subscription=" +
+            subscriptionId
+        );
+        // Forward to SoulAuth for audit log
+        await forwardToSoulAuth(event.type, event.data);
+        break;
+      }
+
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         console.error(
-          "Payment failed: customer=" + invoice.customer + " amount=" + invoice.amount_due + " attempt=" + invoice.attempt_count
+          "Payment failed: customer=" +
+            invoice.customer +
+            " amount=" +
+            invoice.amount_due +
+            " attempt=" +
+            invoice.attempt_count
         );
-        // TODO: Send notification via Telegram to alert Cristian
-        // TODO: Start grace period before downgrade
+        await forwardToSoulAuth(event.type, event.data);
         break;
       }
 
