@@ -17,6 +17,7 @@ from soulWatch.src.detection._state import get_sigma_engine, get_playbook_engine
 from soulWatch.src.enforcement.quarantine import QuarantineEngine
 from soulWatch.src.integrations.cef import AuditEvent
 from soulWatch.src.integrations.forwarder import get_event_forwarder
+from soulWatch.src.integrations.geo_enricher import get_geo_enricher
 from soulWatch.src.monitoring.metrics import (
     EVENTS_PROCESSED_TOTAL,
     DETECTIONS_TOTAL,
@@ -116,6 +117,14 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
         "quarantine_triggered": False,
         "forwarded": False,
     }
+
+    # 0. Geo threat enrichment (consent-gated, internal ops)
+    geo_enricher = get_geo_enricher()
+    if geo_enricher.enabled:
+        try:
+            event = geo_enricher.enrich_event(event)
+        except Exception as e:
+            logger.debug("pipeline.geo_enrichment_failed", error=str(e))
 
     # Route tool_invocation events to dedicated handler + continue pipeline
     event_type = event.get("event_type")
