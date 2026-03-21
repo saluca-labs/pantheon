@@ -1,7 +1,9 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
 import { Search, Bell, Settings } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -22,16 +24,44 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/quarantine": "Quarantine",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
+  // MSSP routes (Phase 13)
+  "/dashboard/mssp": "MSSP Overview",
+  "/dashboard/mssp/detection": "Cross-Tenant Detection",
+  "/dashboard/mssp/saas": "SaaS Admin",
+};
+
+// Tiers that get a badge in the header (DTIER-04)
+// community, starter, pro, enterprise do NOT get a badge
+const BADGE_TIERS: Record<string, { label: string; className: string }> = {
+  mssp: {
+    label: "MSSP",
+    className:
+      "bg-of-primary/15 border border-of-primary/30 text-of-primary",
+  },
+  saas: {
+    label: "SaaS",
+    className:
+      "bg-purple-500/15 border border-purple-500/30 text-purple-400",
+  },
 };
 
 export default function DashboardHeader() {
   const pathname = usePathname();
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
+  const { session } = useAuth();
+  const badge = session?.tier ? BADGE_TIERS[session.tier] : undefined;
 
   return (
     <header className="h-16 sticky top-0 z-40 bg-of-surface-container-low/80 backdrop-blur-md border-b border-of-outline-variant/10 flex items-center justify-between px-8 shrink-0">
-      {/* Left: page title */}
+      {/* Left: tier badge (only mssp/saas) + page title */}
       <div className="flex items-center gap-3">
+        {badge && (
+          <span
+            className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${badge.className}`}
+          >
+            {badge.label}
+          </span>
+        )}
         <h2 className="text-lg font-black text-of-primary tracking-tight">
           {title}
         </h2>
@@ -61,7 +91,9 @@ export default function DashboardHeader() {
 
         {/* User avatar */}
         <div className="h-8 w-8 rounded-full bg-of-primary/20 border border-of-primary/30 flex items-center justify-center">
-          <span className="text-xs font-bold text-of-primary">T</span>
+          <span className="text-xs font-bold text-of-primary">
+            {session?.tenant_name?.slice(0, 1).toUpperCase() ?? "T"}
+          </span>
         </div>
       </div>
     </header>
