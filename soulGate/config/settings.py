@@ -98,6 +98,16 @@ class SoulGateSettings(BaseSettings):
         description="Enable prompt injection detection on request bodies",
     )
 
+    # CoT policy enforcement
+    cot_policy_enabled: bool = Field(
+        default=False,
+        description="Enable CoT policy enforcement (inject/reject/warn thinking on requests)",
+    )
+    cot_policy_dir: str = Field(
+        default="policies/cot",
+        description="Directory containing CotPolicy YAML files",
+    )
+
     # Server
     host: str = "0.0.0.0"
     port: int = Field(default=8002, validation_alias="SOULGATE_SERVER_PORT")

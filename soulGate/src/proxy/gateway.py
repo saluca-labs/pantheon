@@ -102,6 +102,7 @@ async def process_request(
     blocked = False
     block_reason: Optional[str] = None
     threat_flags: list[dict] = []
+    cot_policy_injected: bool = False
     response_status: Optional[int] = None
     response_size: Optional[int] = None
 
@@ -185,6 +186,59 @@ async def process_request(
             block_reason = f"scan_failed: {scan_result.reason}"
             BLOCKS_TOTAL.labels(reason="scan_failed").inc()
             return _block_response(400, scan_result.reason)
+
+        # 5b. CoT Policy Enforcement (request path)
+        if body_bytes and settings.cot_policy_enabled:
+            try:
+                import json as _json_cot
+                from src.aletheia.extractors import detect_provider
+                from src.aletheia.cot_enforcer import get_active_enforcer
+
+                enforcer = get_active_enforcer()
+                if enforcer:
+                    provider = detect_provider(upstream.name)
+                    try:
+                        req_body = _json_cot.loads(body_bytes)
+                    except (ValueError, UnicodeDecodeError):
+                        req_body = None
+
+                    if req_body and isinstance(req_body, dict):
+                        model = req_body.get("model", "")
+                        result = enforcer.evaluate(
+                            provider=provider,
+                            body=req_body,
+                            model=model,
+                            endpoint=path,
+                            agent_id=auth_result.persona_id if auth_result else None,
+                        )
+
+                        if result.action == "reject":
+                            blocked = True
+                            block_reason = f"cot_policy: {result.reason}"
+                            BLOCKS_TOTAL.labels(reason="cot_policy").inc()
+                            return JSONResponse(
+                                status_code=403,
+                                content={
+                                    "detail": "CoT policy violation: thinking/reasoning must be enabled",
+                                    "policy": result.policy_name,
+                                    "blocked_by": "soulgate",
+                                },
+                                headers={"X-Tiresias-Reason": "cot-policy-violation"},
+                            )
+
+                        if result.action == "inject" and result.modified_body:
+                            body_bytes = _json_cot.dumps(result.modified_body).encode("utf-8")
+                            cot_policy_injected = True
+
+                        if result.action == "warn":
+                            logger.warning(
+                                "cot_policy.violation",
+                                policy=result.policy_name,
+                                agent_id=auth_result.persona_id if auth_result else None,
+                                model=model,
+                            )
+            except Exception as e:
+                logger.warning("cot_policy.evaluation_error", error=str(e))
 
         # 6. Forward to upstream
         upstream_url = _build_upstream_url(upstream, path)
