@@ -22,7 +22,7 @@ import structlog
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import get_db_session
+from src.database.connection import get_db
 from src.database.models import SoulTenant
 
 logger = structlog.get_logger(__name__)
@@ -123,7 +123,7 @@ async def expire_trials(db: AsyncSession) -> dict:
 
 async def _main():
     """Entry point for direct execution: python -m src.saas.trial_expiry"""
-    async for db in get_db_session():
+    async for db in get_db():
         result = await expire_trials(db)
         print(f"Trial expiry job complete: {result}")
 
