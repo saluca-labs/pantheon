@@ -403,6 +403,10 @@ from src.support.router import router as support_router
 app.include_router(support_router)
 from src.aletheia.router import router as aletheia_router
 app.include_router(aletheia_router)
+from src.billing.router import router as billing_router
+from src.keys.router import router as keys_router
+app.include_router(billing_router)
+app.include_router(keys_router)
 
 
 
