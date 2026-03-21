@@ -1,17 +1,21 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
+// Tier helper inline (avoids circular import from TierGate)
+const MSSP_TIERS = new Set(["mssp", "saas"]);
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp";
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -270,9 +274,29 @@ const NAV_ITEMS: NavItem[] = [
       </svg>
     ),
   },
+  // MSSP nav items — only rendered when tier is mssp or saas (DTIER-01)
+  {
+    label: "MSSP Overview",
+    href: "/dashboard/mssp",
+    group: "mssp",
+    icon: <Building2 className="w-5 h-5" />,
+  },
+  {
+    label: "Cross-Tenant Detection",
+    href: "/dashboard/mssp/detection",
+    group: "mssp",
+    icon: <ScanSearch className="w-5 h-5" />,
+  },
+  {
+    label: "SaaS Admin",
+    href: "/dashboard/mssp/saas",
+    group: "mssp",
+    icon: <Ban className="w-5 h-5" />,
+  },
 ];
 
-const GROUPS = [
+// All groups including mssp — mssp rendered conditionally below
+const BASE_GROUPS = [
   { key: "observability", label: "Observability" },
   { key: "main", label: "Overview" },
   { key: "security", label: "Detection" },
@@ -281,9 +305,20 @@ const GROUPS = [
   { key: "system", label: "System" },
 ] as const;
 
+const MSSP_GROUP = { key: "mssp", label: "MSSP" } as const;
+
+type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp";
+
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { session } = useAuth();
+  const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
+
+  // Build group list conditionally — MSSP group only for mssp/saas tier (DTIER-01)
+  const groups: Array<{ key: GroupKey; label: string }> = isMsspTier
+    ? [...BASE_GROUPS, MSSP_GROUP]
+    : [...BASE_GROUPS];
 
   // Auto-collapse at lg breakpoint (1024px)
   useEffect(() => {
@@ -292,7 +327,6 @@ export default function DashboardSidebar() {
         setCollapsed(true);
       }
     };
-    // Set initial state on mount
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -310,7 +344,7 @@ export default function DashboardSidebar() {
     >
       {/* Nav items */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
-        {GROUPS.map((group, groupIdx) => {
+        {groups.map((group, groupIdx) => {
           const items = NAV_ITEMS.filter((item) => item.group === group.key);
           return (
             <div key={group.key}>
@@ -326,7 +360,11 @@ export default function DashboardSidebar() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -8 }}
                     transition={{ duration: 0.2 }}
-                    className="px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-of-outline"
+                    className={`px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest ${
+                      group.key === "mssp"
+                        ? "text-of-primary"
+                        : "text-of-outline"
+                    }`}
                   >
                     {group.label}
                   </motion.p>
@@ -415,13 +453,15 @@ export default function DashboardSidebar() {
           >
             <div className="flex items-center gap-3 px-2 py-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-of-primary/20 to-of-on-primary-container/15 border border-of-primary/20 flex items-center justify-center text-xs font-bold text-of-primary shrink-0">
-                AC
+                {session?.tenant_name?.slice(0, 2).toUpperCase() ?? "AC"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-of-on-surface truncate">Acme Corp</p>
+                <p className="text-sm font-medium text-of-on-surface truncate">
+                  {session?.tenant_name ?? "Acme Corp"}
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="px-1.5 py-0.5 rounded bg-of-primary/10 text-[9px] font-semibold text-of-primary tracking-wide uppercase border border-of-primary/15">
-                    Pro Trial
+                    {session?.tier ?? "starter"}
                   </span>
                 </div>
               </div>
@@ -434,7 +474,7 @@ export default function DashboardSidebar() {
       {collapsed && (
         <div className="px-3 py-3 border-t border-of-outline-variant/15 flex justify-center">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-of-primary/20 to-of-on-primary-container/15 border border-of-primary/20 flex items-center justify-center text-xs font-bold text-of-primary">
-            AC
+            {session?.tenant_name?.slice(0, 2).toUpperCase() ?? "AC"}
           </div>
         </div>
       )}
