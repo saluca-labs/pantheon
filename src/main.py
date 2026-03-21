@@ -497,3 +497,22 @@ async def root():
         "description": "Enterprise Agent Identity & Zero-Trust Authorization System",
         "docs": "/docs",
     }
+
+
+@app.get("/healthz")
+async def liveness():
+    """Liveness probe — always 200 if the process is running."""
+    return {"status": "alive", "service": "soulauth"}
+
+
+@app.get("/readyz")
+async def readiness():
+    """Readiness probe — checks DB connectivity only."""
+    try:
+        from src.database.connection import async_session_factory
+        from sqlalchemy import text
+        async with async_session_factory() as db:
+            await db.execute(text("SELECT 1"))
+        return JSONResponse(content={"status": "ready", "service": "soulauth"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"status": "not_ready", "error": str(e)}, status_code=503)
