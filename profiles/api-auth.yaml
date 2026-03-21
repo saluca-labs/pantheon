@@ -1,0 +1,27 @@
+profile: api-auth
+description: API and authentication-focused testing
+
+phases:
+  - name: api
+    description: API security + auth bypass + JWT confusion
+    tools: [nuclei, custom]
+    custom_tests:
+      - custom-tests/auth-bypass.py
+      - custom-tests/jwt-confusion.py
+
+  - name: tiresias
+    description: Tenant isolation + encryption verification
+    tools: [custom]
+    custom_tests:
+      - custom-tests/tenant-isolation.py
+      - custom-tests/encryption-verify.py
+
+schedule:
+  frequency: weekly
+  day: wednesday
+  time: "03:00"
+  timezone: UTC
+
+notifications:
+  telegram: true
+  on: [critical, high]
