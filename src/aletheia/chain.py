@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.aletheia.extractors import CotExtraction
 from src.aletheia.models import AletheiaCoTChain
+from src.aletheia.storage import CotContentStorage, is_content_storage_enabled
 
 logger = structlog.get_logger(__name__)
 
@@ -191,6 +192,16 @@ class CotChainWriter:
                 )
                 session.add(entry)
                 # session.begin() context will auto-commit
+
+                # Optionally store encrypted content (ALETH-10)
+                if extraction.reasoning_text and await is_content_storage_enabled(session, self.tenant_id):
+                    try:
+                        storage = CotContentStorage(self.session_factory)
+                        stored = await storage.store_content(entry.id, self.tenant_id, extraction.reasoning_text)
+                        if stored:
+                            logger.debug("cot_chain.content_stored", entry_id=str(entry.id))
+                    except Exception:
+                        logger.warning("cot_chain.content_store_failed", entry_id=str(entry.id), exc_info=True)
 
             logger.debug(
                 "cot_chain.appended",
