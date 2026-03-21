@@ -42,16 +42,16 @@ function LoginForm() {
   };
 
   return (
-    <main className="min-h-screen bg-background pt-16 flex items-center justify-center">
+    <main className="min-h-screen bg-of-background pt-16 flex items-center justify-center">
       <section className="relative w-full max-w-md mx-auto px-6 py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,168,83,0.06),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(90,218,206,0.06),transparent_60%)]" />
 
-        <div className="relative glass-card rounded-2xl p-8 sm:p-10">
+        <div className="relative bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8 sm:p-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gold-500/10 mb-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-of-primary/10 mb-4">
               <svg
-                className="w-7 h-7 text-gold-400"
+                className="w-7 h-7 text-of-primary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -64,15 +64,15 @@ function LoginForm() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold">Sign in to Tiresias</h1>
-            <p className="text-sm text-foreground-muted mt-2">
+            <h1 className="text-headline-md text-of-on-surface">Sign in to Tiresias</h1>
+            <p className="text-body-sm text-of-on-surface-variant mt-2">
               Enter your SoulKey to access the platform dashboard.
             </p>
           </div>
 
           {/* Error */}
           {(error || authError) && (
-            <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
+            <div className="mb-6 rounded-xl bg-of-error-container/20 border border-of-error/30 p-4 text-body-sm text-of-error">
               {error || authError}
             </div>
           )}
@@ -82,7 +82,7 @@ function LoginForm() {
             <div>
               <label
                 htmlFor="soulkey"
-                className="block text-sm font-medium text-foreground-muted mb-2"
+                className="block text-label-md text-of-on-surface-variant mb-2"
               >
                 SoulKey
               </label>
@@ -93,9 +93,9 @@ function LoginForm() {
                 onChange={(e) => setSoulkey(e.target.value)}
                 placeholder="sk_live_..."
                 autoComplete="current-password"
-                className="w-full rounded-lg bg-navy-950 border border-border px-4 py-3 text-sm font-mono text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-colors"
+                className="w-full rounded-lg bg-of-surface-container-lowest border border-of-outline-variant/30 px-4 py-3 text-body-sm font-mono text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50 focus:ring-1 focus:ring-of-primary/20 transition-colors"
               />
-              <p className="mt-2 text-xs text-foreground-subtle">
+              <p className="mt-2 text-label-sm text-of-on-surface-variant/60">
                 Your SoulKey was provided when you activated your trial or was
                 issued by your administrator.
               </p>
@@ -104,7 +104,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={submitting || loading}
-              className="w-full rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-of-primary px-6 py-3.5 text-label-lg font-semibold text-of-on-primary hover:bg-of-primary-fixed transition-all shadow-lg shadow-of-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
@@ -136,27 +136,27 @@ function LoginForm() {
           </form>
 
           {/* Footer links */}
-          <div className="mt-8 pt-6 border-t border-border text-center space-y-3">
-            <p className="text-sm text-foreground-muted">
+          <div className="mt-8 pt-6 border-t border-of-outline-variant/20 text-center space-y-3">
+            <p className="text-body-sm text-of-on-surface-variant">
               Don&apos;t have a SoulKey?{" "}
               <Link
                 href="/trial"
-                className="text-gold-400 hover:text-gold-300 font-medium transition-colors"
+                className="text-of-primary hover:text-of-primary-fixed font-medium transition-colors"
               >
                 Start a free trial
               </Link>
             </p>
-            <p className="text-xs text-foreground-subtle">
+            <p className="text-label-sm text-of-on-surface-variant/50">
               <Link
                 href="/developers"
-                className="hover:text-foreground-muted transition-colors"
+                className="hover:text-of-on-surface-variant transition-colors"
               >
                 What is a SoulKey?
               </Link>
               {" | "}
               <a
                 href="mailto:support@saluca.com"
-                className="hover:text-foreground-muted transition-colors"
+                className="hover:text-of-on-surface-variant transition-colors"
               >
                 Need help?
               </a>
@@ -174,8 +174,8 @@ export default function LoginPage() {
       <Navbar />
       <Suspense
         fallback={
-          <main className="min-h-screen bg-background pt-16 flex items-center justify-center">
-            <div className="animate-spin h-8 w-8 border-2 border-gold-500 border-t-transparent rounded-full" />
+          <main className="min-h-screen bg-of-background pt-16 flex items-center justify-center">
+            <div className="animate-spin h-8 w-8 border-2 border-of-primary border-t-transparent rounded-full" />
           </main>
         }
       >
