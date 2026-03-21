@@ -94,13 +94,37 @@ func main() {
 
 	result := executeCommand(command)
 
-	// Write subprocess output to stdout/stderr immediately
-	os.Stdout.Write(result.Stdout)
-	os.Stderr.Write(result.Stderr)
+	// === Response Sanitizer: scan output before passing to stdout ===
+	sanitizerResult := &SanitizeResponse{Verdict: "skipped"}
+	if identity.SanitizeMode != "passthrough" && !flags.forceOffline && identity.SoulWatchURL != "" {
+		resp, err := sanitizeOutput(identity, command, result.Stdout)
+		if err == nil && resp != nil {
+			sanitizerResult = resp
+			if resp.Verdict == "block" && resp.SanitizedOutput != nil {
+				// Replace stdout with sanitized message
+				fmt.Fprintf(os.Stderr, "tiresias-exec: OUTPUT BLOCKED (%d patterns matched)\n", len(resp.PatternsMatched))
+				os.Stdout.Write([]byte(*resp.SanitizedOutput))
+				os.Stderr.Write(result.Stderr)
+			} else {
+				if resp.Verdict == "warn" {
+					fmt.Fprintf(os.Stderr, "tiresias-exec: WARNING: %d suspicious patterns in output\n", len(resp.PatternsMatched))
+				}
+				os.Stdout.Write(result.Stdout)
+				os.Stderr.Write(result.Stderr)
+			}
+		} else {
+			// Fail-open: pass output through
+			os.Stdout.Write(result.Stdout)
+			os.Stderr.Write(result.Stderr)
+		}
+	} else {
+		os.Stdout.Write(result.Stdout)
+		os.Stderr.Write(result.Stderr)
+	}
 
-	// Build telemetry payload with policy result
+	// Build telemetry payload with policy and sanitizer results
 	cwd, _ := os.Getwd()
-	payload := buildPayloadWithPolicy(identity, command, cwd, result, policyResult, policyEvaluated)
+	payload := buildPayloadWithPolicySanitizer(identity, command, cwd, result, policyResult, policyEvaluated, sanitizerResult)
 
 	// Report async with grace period
 	var wg sync.WaitGroup
