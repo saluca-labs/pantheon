@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBranding, type BrandingConfig } from "@/lib/branding";
+import { TierGate } from "@/components/dashboard/TierGate";
 
-type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing";
+type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label";
 
 interface ApiKey {
   id: string;
@@ -53,6 +55,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "siem", label: "SIEM Integration" },
   { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
+  { id: "white-label", label: "White Label" },
 ];
 
 export default function SettingsPage() {
@@ -64,6 +67,17 @@ export default function SettingsPage() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testSuccess, setTestSuccess] = useState<string | null>(null);
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
+
+  // White Label state (WL-06)
+  const { branding, saveBranding, previewBranding, resetPreview, loading: brandingLoading } = useBranding();
+  const [draftBranding, setDraftBranding] = useState<BrandingConfig>({ ...branding });
+  const [brandingSaving, setBrandingSaving] = useState(false);
+  const [brandingSaved, setBrandingSaved] = useState(false);
+
+  // Sync draft when committed branding loads from API
+  useEffect(() => {
+    setDraftBranding({ ...branding });
+  }, [branding.logo_url, branding.primary_color, branding.accent_color, branding.company_name, branding.favicon_url]);
 
   const tenantId = "tnt_acme_7f3a8b2c1d4e5f6a";
 
@@ -88,6 +102,31 @@ export default function SettingsPage() {
       setTimeout(() => setTestSuccess(null), 3000);
     }, 1500);
   };
+
+  function handleBrandingFieldChange(field: keyof BrandingConfig, value: string) {
+    const updated = { ...draftBranding, [field]: value || null };
+    setDraftBranding(updated);
+    previewBranding(updated);
+  }
+
+  async function handleSaveBranding() {
+    setBrandingSaving(true);
+    setBrandingSaved(false);
+    try {
+      await saveBranding(draftBranding);
+      setBrandingSaved(true);
+      setTimeout(() => setBrandingSaved(false), 3000);
+    } catch {
+      // Error shown inline
+    } finally {
+      setBrandingSaving(false);
+    }
+  }
+
+  function handleResetPreview() {
+    resetPreview();
+    setDraftBranding({ ...branding });
+  }
 
   return (
     <div className="space-y-6">
@@ -466,6 +505,177 @@ export default function SettingsPage() {
           >
             Upgrade Plan
           </a>
+        </motion.div>
+      )}
+
+      {/* White Label Tab (WL-06) */}
+      {activeTab === "white-label" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <TierGate requiredTier="mssp" featureLabel="White Label Branding">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-sm font-bold text-of-on-surface mb-1">White Label Branding</h2>
+                <p className="text-xs text-of-on-surface-variant">
+                  Customize the portal with your company&#39;s brand identity.
+                  Changes are previewed live &mdash; click Save to commit.
+                </p>
+              </div>
+
+              {/* Two-column layout: form + preview */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Left: form inputs */}
+                <div className="space-y-4">
+                  {/* Company Name */}
+                  <div>
+                    <label className="block text-xs font-semibold text-of-on-surface-variant mb-1">Company Name</label>
+                    <input
+                      type="text"
+                      placeholder="Acme Corp"
+                      value={draftBranding.company_name ?? ""}
+                      onChange={(e) => handleBrandingFieldChange("company_name", e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50"
+                    />
+                  </div>
+
+                  {/* Logo URL */}
+                  <div>
+                    <label className="block text-xs font-semibold text-of-on-surface-variant mb-1">Logo URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/logo.png"
+                      value={draftBranding.logo_url ?? ""}
+                      onChange={(e) => handleBrandingFieldChange("logo_url", e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50"
+                    />
+                    <p className="mt-1 text-[11px] text-of-on-surface-variant/60">PNG or SVG recommended. Displayed at 32px height.</p>
+                  </div>
+
+                  {/* Favicon URL */}
+                  <div>
+                    <label className="block text-xs font-semibold text-of-on-surface-variant mb-1">Favicon URL</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/favicon.ico"
+                      value={draftBranding.favicon_url ?? ""}
+                      onChange={(e) => handleBrandingFieldChange("favicon_url", e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50"
+                    />
+                  </div>
+
+                  {/* Primary Color */}
+                  <div>
+                    <label className="block text-xs font-semibold text-of-on-surface-variant mb-1">Primary Color</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={draftBranding.primary_color ?? "#5adace"}
+                        onChange={(e) => handleBrandingFieldChange("primary_color", e.target.value)}
+                        className="h-9 w-12 rounded cursor-pointer bg-transparent border border-of-outline-variant/20"
+                      />
+                      <input
+                        type="text"
+                        placeholder="#5adace"
+                        value={draftBranding.primary_color ?? ""}
+                        onChange={(e) => handleBrandingFieldChange("primary_color", e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div>
+                    <label className="block text-xs font-semibold text-of-on-surface-variant mb-1">Accent Color</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={draftBranding.accent_color ?? "#bdc7dc"}
+                        onChange={(e) => handleBrandingFieldChange("accent_color", e.target.value)}
+                        className="h-9 w-12 rounded cursor-pointer bg-transparent border border-of-outline-variant/20"
+                      />
+                      <input
+                        type="text"
+                        placeholder="#bdc7dc"
+                        value={draftBranding.accent_color ?? ""}
+                        onChange={(e) => handleBrandingFieldChange("accent_color", e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={handleSaveBranding}
+                      disabled={brandingSaving}
+                      className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-xs font-bold hover:bg-of-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {brandingSaving ? "Saving..." : brandingSaved ? "Saved!" : "Save Branding"}
+                    </button>
+                    <button
+                      onClick={handleResetPreview}
+                      className="px-4 py-2 rounded-lg border border-of-outline-variant/20 text-xs font-semibold text-of-on-surface-variant hover:bg-of-surface-container transition-colors"
+                    >
+                      Reset Preview
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right: live preview panel */}
+                <div className="rounded-xl border border-of-outline-variant/10 bg-of-surface-container-low overflow-hidden">
+                  <div className="px-4 py-3 border-b border-of-outline-variant/10">
+                    <p className="text-[11px] font-bold text-of-on-surface-variant uppercase tracking-wider">Live Preview</p>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {/* Mini sidebar preview */}
+                    <div className="rounded-lg border border-of-outline-variant/10 bg-of-surface-container p-3 flex items-center gap-3">
+                      {draftBranding.logo_url ? (
+                        <img
+                          src={draftBranding.logo_url}
+                          alt="Logo preview"
+                          className="h-6 w-auto object-contain max-w-[80px]"
+                        />
+                      ) : (
+                        <div className="h-6 w-20 rounded bg-of-primary/20 flex items-center justify-center">
+                          <span className="text-[9px] font-black text-of-primary tracking-wider">TIRESIAS</span>
+                        </div>
+                      )}
+                      <span className="text-xs font-semibold text-of-on-surface truncate">
+                        {draftBranding.company_name ?? "Your Company"}
+                      </span>
+                    </div>
+
+                    {/* Color swatches */}
+                    <div className="flex gap-2">
+                      <div
+                        className="h-8 flex-1 rounded-lg border border-of-outline-variant/10 flex items-center justify-center text-[10px] font-bold"
+                        style={{ backgroundColor: draftBranding.primary_color ?? "var(--of-primary)", color: "var(--of-on-primary, #003733)" }}
+                      >
+                        Primary
+                      </div>
+                      <div
+                        className="h-8 flex-1 rounded-lg border border-of-outline-variant/10 flex items-center justify-center text-[10px] font-bold"
+                        style={{ backgroundColor: draftBranding.accent_color ?? "var(--of-secondary)", color: "#1a1b21" }}
+                      >
+                        Accent
+                      </div>
+                    </div>
+
+                    {/* Document title preview */}
+                    <div className="rounded-lg border border-of-outline-variant/10 bg-of-surface-container-high px-3 py-2">
+                      <p className="text-[10px] text-of-on-surface-variant font-mono">
+                        Page Title: Dashboard | {draftBranding.company_name ?? "Tiresias"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </TierGate>
         </motion.div>
       )}
     </div>

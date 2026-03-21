@@ -1,9 +1,10 @@
-
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { Search, Bell, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useBranding } from "@/lib/branding";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -49,12 +50,42 @@ export default function DashboardHeader() {
   const pathname = usePathname();
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const { session } = useAuth();
+  const { branding } = useBranding();
   const badge = session?.tier ? BADGE_TIERS[session.tier] : undefined;
+
+  // Update document title when branding.company_name or page title changes (WL-05)
+  useEffect(() => {
+    if (branding.company_name) {
+      document.title = `${title} | ${branding.company_name}`;
+    } else {
+      document.title = `${title} | Tiresias`;
+    }
+  }, [title, branding.company_name]);
+
+  // Update favicon when branding.favicon_url changes (WL-05)
+  useEffect(() => {
+    if (!branding.favicon_url) return;
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = branding.favicon_url;
+  }, [branding.favicon_url]);
 
   return (
     <header className="h-16 sticky top-0 z-40 bg-of-surface-container-low/80 backdrop-blur-md border-b border-of-outline-variant/10 flex items-center justify-between px-8 shrink-0">
-      {/* Left: tier badge (only mssp/saas) + page title */}
+      {/* Left: tenant logo (WL-04) + tier badge (only mssp/saas) + page title */}
       <div className="flex items-center gap-3">
+        {branding.logo_url && (
+          <img
+            src={branding.logo_url}
+            alt={branding.company_name ?? ""}
+            className="h-6 w-auto object-contain max-w-[100px]"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
         {badge && (
           <span
             className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${badge.className}`}

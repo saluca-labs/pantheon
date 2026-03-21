@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useBranding } from "@/lib/branding";
 
 // Tier helper inline (avoids circular import from TierGate)
 const MSSP_TIERS = new Set(["mssp", "saas"]);
@@ -274,7 +274,7 @@ const NAV_ITEMS: NavItem[] = [
       </svg>
     ),
   },
-  // MSSP nav items — only rendered when tier is mssp or saas (DTIER-01)
+  // MSSP nav items -- only rendered when tier is mssp or saas (DTIER-01)
   {
     label: "MSSP Overview",
     href: "/dashboard/mssp",
@@ -295,7 +295,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// All groups including mssp — mssp rendered conditionally below
+// All groups including mssp -- mssp rendered conditionally below
 const BASE_GROUPS = [
   { key: "observability", label: "Observability" },
   { key: "main", label: "Overview" },
@@ -313,9 +313,10 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { session } = useAuth();
+  const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
 
-  // Build group list conditionally — MSSP group only for mssp/saas tier (DTIER-01)
+  // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
   const groups: Array<{ key: GroupKey; label: string }> = isMsspTier
     ? [...BASE_GROUPS, MSSP_GROUP]
     : [...BASE_GROUPS];
@@ -342,17 +343,54 @@ export default function DashboardSidebar() {
         ${collapsed ? "w-16" : "w-64"}
       `}
     >
+      {/* Logo area (WL-04) */}
+      <div className="px-4 py-3 border-b border-of-outline-variant/15 flex items-center gap-2 min-h-[52px]">
+        {branding.logo_url ? (
+          <img
+            src={branding.logo_url}
+            alt={branding.company_name ?? "Tenant Logo"}
+            className="h-8 w-auto object-contain max-w-[140px]"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-7 w-7 shrink-0 text-of-primary"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <ellipse cx="16" cy="22" rx="10" ry="5" stroke="currentColor" strokeWidth="2" fill="none" />
+              <rect x="6" y="13" width="20" height="5" rx="1" fill="currentColor" />
+            </svg>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0, x: -4 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-sm font-black text-of-on-surface tracking-widest uppercase"
+                >
+                  TIRESIAS
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
       {/* Nav items */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
         {groups.map((group, groupIdx) => {
           const items = NAV_ITEMS.filter((item) => item.group === group.key);
           return (
             <div key={group.key}>
-              {/* Section divider */}
               {groupIdx > 0 && (
                 <div className="mx-3 my-2 border-t border-of-outline-variant/15" />
               )}
-              {/* Section label */}
               <AnimatePresence>
                 {!collapsed && (
                   <motion.p
@@ -389,12 +427,10 @@ export default function DashboardSidebar() {
                       `}
                       title={collapsed ? item.label : undefined}
                     >
-                      {/* Hover background slide-in */}
                       {!isActive && (
                         <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
                       )}
 
-                      {/* Active background */}
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-active-bg"
@@ -403,7 +439,6 @@ export default function DashboardSidebar() {
                         />
                       )}
 
-                      {/* Active left border with glow */}
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-active-indicator"
