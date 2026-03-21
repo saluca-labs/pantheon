@@ -132,6 +132,17 @@ class Settings(BaseSettings):
         description="If True, missing/invalid license causes SystemExit(2)",
     )
 
+    # Tier Override (v2.1 Enterprise Tier System)
+    tiresias_tier: str = Field(
+        default="",
+        description=(
+            "Override the license tier at deploy time for SKU selection. "
+            "Valid values: community, starter, pro, enterprise, mssp, saas. "
+            "Empty string = use license JWT tier."
+        ),
+        validation_alias="TIRESIAS_TIER",
+    )
+
     # SIEM Integration
     siem_enabled: bool = False
     siem_buffer_size: int = 100

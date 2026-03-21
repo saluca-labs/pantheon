@@ -109,6 +109,28 @@ async def lifespan(app: FastAPI):
     # Store license state for middleware access
     app.state.license = license_token
 
+    # --- TIRESIAS_TIER override (TIER-02) ---
+    # Allow deploy-time SKU selection without re-signing the license JWT.
+    # TIRESIAS_TIER env var overrides the tier in the license token.
+    _valid_tier_names = {"community", "starter", "pro", "enterprise", "mssp", "saas"}
+    _tier_override = (settings.tiresias_tier or "").strip().lower()
+    if _tier_override and _tier_override in _valid_tier_names:
+        # Mutate the dataclass field directly -- LicenseToken is a plain dataclass
+        import dataclasses as _dc
+        app.state.license = _dc.replace(license_token, tier=_tier_override)
+        logger.info(
+            "soulauth.tier_override_applied",
+            tier_from_license=license_token.tier,
+            tier_override=_tier_override,
+        )
+    elif _tier_override and _tier_override not in _valid_tier_names:
+        logger.warning(
+            "soulauth.tier_override_invalid",
+            tiresias_tier=_tier_override,
+            valid_tiers=sorted(_valid_tier_names),
+            message="TIRESIAS_TIER value is not a valid tier -- using license JWT tier.",
+        )
+
     # Start background gauge updater
     try:
         start_gauge_updater(interval=60)
