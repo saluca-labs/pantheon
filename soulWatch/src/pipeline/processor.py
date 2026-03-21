@@ -47,6 +47,51 @@ def set_ws_manager(manager):
     _ws_manager = manager
 
 
+
+
+async def _handle_tool_invocation(event: dict, db: AsyncSession) -> dict:
+    """Persist a tool_invocation event from tiresias-exec."""
+    from soulWatch.src.database.models import AletheiaToolInvocation
+    from datetime import datetime, timezone
+
+    execution = event.get("execution", {})
+    policy = event.get("policy", {})
+    sanitizer = event.get("sanitizer", {})
+
+    record = AletheiaToolInvocation(
+        tenant_id=uuid.UUID(str(event["tenant_id"])) if event.get("tenant_id") else None,
+        invocation_id=event.get("invocation_id", f"inv_{uuid.uuid4().hex[:12]}"),
+        agent_id=event.get("agent_id"),
+        timestamp=(
+            datetime.fromisoformat(event["timestamp"])
+            if event.get("timestamp")
+            else datetime.now(timezone.utc)
+        ),
+        command=event.get("command", "unknown"),
+        args=event.get("args", []),
+        full_command=event.get("full_command", ""),
+        working_directory=event.get("working_directory"),
+        exit_code=execution.get("exit_code"),
+        duration_ms=execution.get("duration_ms"),
+        stdout_bytes=execution.get("stdout_bytes", 0),
+        stderr_bytes=execution.get("stderr_bytes", 0),
+        stdout_hash=execution.get("stdout_hash"),
+        stderr_hash=execution.get("stderr_hash"),
+        policy_verdict=policy.get("verdict"),
+        policy_rule_matched=", ".join(policy.get("rules_matched", [])) or None,
+        sanitizer_mode=sanitizer.get("mode"),
+        sanitizer_verdict=sanitizer.get("verdict"),
+        patterns_matched=sanitizer.get("patterns_matched", []),
+        environment_hash=event.get("environment_hash"),
+    )
+    db.add(record)
+    logger.info(
+        "pipeline.tool_invocation_persisted",
+        invocation_id=record.invocation_id,
+        command=record.command,
+    )
+    return {"persisted": True, "invocation_id": record.invocation_id}
+
 async def process_event(event: dict, db: AsyncSession) -> dict:
     """
     Process a single audit event through the full SoulWatch pipeline.
@@ -71,6 +116,15 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
         "quarantine_triggered": False,
         "forwarded": False,
     }
+
+    # Route tool_invocation events to dedicated handler + continue pipeline
+    event_type = event.get("event_type")
+    if event_type == "tool_invocation":
+        try:
+            tool_result = await _handle_tool_invocation(event, db)
+            result["tool_invocation"] = tool_result
+        except Exception as e:
+            logger.error("pipeline.tool_invocation_persist_failed", error=str(e))
 
     # 1. Run anomaly detection
     detector = get_detector()
