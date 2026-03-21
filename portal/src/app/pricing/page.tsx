@@ -24,58 +24,56 @@ interface Tier {
 
 const tiers: Tier[] = [
   {
-    name: "Open",
+    name: "Community",
     price: "Free",
     priceAnnual: "Free",
     period: "",
     agents: "25 agents",
     retention: "7-day retention",
-    tagline: "Free forever for non-business use",
+    tagline: "Free forever. Own your data.",
     highlight: false,
     cta: "Get Started Free",
     ctaAction: "link",
     ctaHref: "/trial",
-    planId: "open",
+    planId: "community",
     features: [
-      "Full platform (SoulAuth + SoulWatch + SoulGate)",
-      "Self-hosted or cloud",
-      "25 managed agents",
-      "7-day data retention",
+      "Full observability dashboard",
+      "PRH prompt risk scoring (read-only)",
+      "18-type anomaly detection (baselines only)",
+      "Self-hosted",
       "Unlimited seats",
       "Community support",
-      "No credit card required",
     ],
   },
   {
     name: "Starter",
     price: "$49",
-    priceAnnual: "$41",
+    priceAnnual: "$39",
     period: "/month",
     agents: "50 agents",
     retention: "30-day retention",
-    tagline: "For small teams shipping to production",
+    tagline: "Production visibility for teams that ship fast",
     highlight: false,
     cta: "Start Free Trial",
     ctaAction: "checkout",
     ctaHref: "/trial",
     planId: "starter",
     features: [
-      "Everything in Open",
-      "50 managed agents",
-      "30-day data retention",
-      "Session replay",
-      "Tagging & cost dashboard",
-      "Email support (48h response)",
+      "Everything in Community",
+      "Session replay + cost dashboard",
+      "Provider health monitoring",
+      "Basic analytics",
+      "Email support (48h)",
     ],
   },
   {
     name: "Pro",
     price: "$199",
-    priceAnnual: "$165",
+    priceAnnual: "$169",
     period: "/month",
     agents: "250 agents",
     retention: "90-day retention",
-    tagline: "Full platform for production teams",
+    tagline: "Detection + response for AI-native security teams",
     highlight: true,
     cta: "Start Free Trial",
     ctaAction: "checkout",
@@ -83,50 +81,93 @@ const tiers: Tier[] = [
     planId: "pro",
     features: [
       "Everything in Starter",
-      "250 managed agents",
-      "90-day data retention",
-      "BYOK encryption",
-      "Advanced analytics",
-      "Custom Sigma rules & playbooks",
-      "1 SIEM destination",
-      "Priority support (24h response)",
+      "PRH Engine (full \u2014 60 patterns, 6 categories)",
+      "Behavioral anomaly detection with alerting",
+      "Sigma detection rules + response playbooks",
+      "Quarantine management + prompt forensics",
+      "Delegation + RBAC",
+      "Priority support (24h)",
     ],
   },
   {
     name: "Enterprise",
+    price: "$799",
+    priceAnnual: "$699",
+    period: "/month",
+    agents: "Unlimited agents",
+    retention: "Custom retention",
+    tagline: "Enforcement-grade AI security. CISO-ready.",
+    highlight: false,
+    cta: "Start Free Trial",
+    ctaAction: "checkout",
+    ctaHref: "/trial",
+    planId: "enterprise",
+    features: [
+      "Everything in Pro",
+      "SIEM connectors (CEF/syslog/webhook)",
+      "Policy enforcement (audit \u2192 warn \u2192 enforce)",
+      "Custom detection rules",
+      "Audit log export (tamper-evident)",
+      "Dedicated support (8h SLA)",
+    ],
+  },
+];
+
+const partnerTiers: Tier[] = [
+  {
+    name: "MSSP",
+    price: "$2,499",
+    priceAnnual: "Contact Us",
+    period: "/month base",
+    agents: "Unlimited agents",
+    retention: "Per-tenant configurable",
+    tagline: "One platform. Every client. Your brand.",
+    highlight: false,
+    cta: "Talk to Partner Team",
+    ctaAction: "link",
+    ctaHref: "mailto:partners@saluca.com?subject=Tiresias%20MSSP",
+    planId: "mssp",
+    features: [
+      "Everything in Enterprise",
+      "Multi-tenant hierarchy (parent-child)",
+      "Cross-tenant detection + quarantine views",
+      "White-label branding",
+      "Tenant provisioning API",
+      "Per-tenant pricing from $199/tenant",
+    ],
+  },
+  {
+    name: "SaaS",
     price: "Custom",
     priceAnnual: "Custom",
     period: "",
     agents: "Unlimited agents",
-    retention: "Custom retention",
-    tagline: "For security-critical deployments",
+    retention: "Managed",
+    tagline: "Fully managed AI security operations",
     highlight: false,
     cta: "Talk to Sales",
     ctaAction: "link",
-    ctaHref: "mailto:enterprise@saluca.com?subject=Tiresias%20Enterprise",
-    planId: "enterprise",
+    ctaHref: "mailto:enterprise@saluca.com?subject=Tiresias%20SaaS",
+    planId: "saas",
     features: [
-      "Everything in Pro",
-      "Unlimited agents",
-      "Custom data retention",
-      "SSO / SAML integration",
-      "Audit log export",
-      "Unlimited SIEM destinations",
-      "Air-gap deployment",
-      "Dedicated support (4h P0 response)",
-      "Custom SLA (99.9%+ typical)",
+      "Everything in MSSP",
+      "Managed detection + response (Tier 1 triage)",
+      "Usage metering + billing integration",
+      "Tenant lifecycle management",
+      "Monthly executive reporting",
+      "4hr critical SLA",
     ],
   },
 ];
 
 const faqs = [
   {
-    q: "What is the Open tier?",
-    a: "Open is free forever for non-business use \u2014 indie developers, students, open-source projects, and companies under $1M in annual revenue. It includes the full platform (SoulAuth + SoulWatch + SoulGate) with 25 managed agents and 7-day retention. No credit card, no time limit.",
+    q: "What is the Community tier?",
+    a: "Community is free forever \u2014 for developers, open-source projects, and teams who want full observability without a bill. It includes the full dashboard, PRH prompt risk scoring in read-only mode, and 18-type anomaly detection baselines. No credit card, no time limit.",
   },
   {
     q: "What counts as an agent?",
-    a: "An agent is any autonomous software entity that receives a SoulAuth identity (soulkey). This includes AI agents, bots, microservices, or any automated process. Human users do not count \u2014 all tiers include unlimited seats for your team.",
+    a: "An agent is any autonomous software entity that receives a Tiresias identity. This includes AI agents, bots, microservices, or any automated process. Human users do not count \u2014 all tiers include unlimited seats for your team.",
   },
   {
     q: "Do you charge per seat?",
@@ -134,23 +175,27 @@ const faqs = [
   },
   {
     q: "Can I self-host?",
-    a: "Yes. Every tier \u2014 including Open \u2014 supports self-hosted deployment. Your data stays on your infrastructure. The open-source core (tiresias-core) is Apache 2.0 licensed.",
+    a: "Yes. Every tier \u2014 including Community \u2014 supports self-hosted deployment. Your data stays on your infrastructure. The open-source core is Apache 2.0 licensed.",
   },
   {
     q: "How does the free trial work?",
-    a: "The 14-day trial gives you full Pro access with no credit card required. When it ends, you can subscribe to Starter or Pro, or continue on the Open tier for free.",
+    a: "The 14-day trial gives you full Pro access with no credit card required. When it ends, you can subscribe to any paid tier, or continue on the Community tier for free.",
   },
   {
     q: "Do you offer annual discounts?",
-    a: "Yes. Annual billing saves 17% (2 months free) on Starter and Pro. Starter Annual is $488/yr, Pro Annual is $1,982/yr.",
+    a: "Yes. Annual billing saves approximately 20% on Starter ($39/mo vs $49), Pro ($169/mo vs $199), and Enterprise ($699/mo vs $799).",
   },
   {
-    q: "What about Platform and OEM pricing?",
-    a: "For agent workflow platforms needing multi-tenant isolation or white-label deployment, we offer Platform ($2,499\u2013$24,999/mo) and OEM ($49,999\u2013$199,999/mo) tiers. Contact enterprise@saluca.com to discuss.",
+    q: "What is PRH?",
+    a: "PRH stands for Prompt Risk Heuristic \u2014 our real-time prompt analysis engine. It scores every prompt against 60 threat patterns across 6 categories (injection, exfiltration, manipulation, privilege escalation, evasion, and data leakage). Community gets read-only scores; Pro and above get full alerting, forensics, and response.",
+  },
+  {
+    q: "What is the MSSP tier?",
+    a: "MSSP is designed for managed security providers who want to offer AI agent security as a service to their clients. It includes multi-tenant hierarchy, cross-tenant detection views, white-label branding, and a tenant provisioning API \u2014 so you can run one Tiresias instance and bill your clients separately starting from $199/tenant.",
   },
   {
     q: "Is there a startup program?",
-    a: "The Open tier is free for companies under $1M ARR \u2014 that covers most startups. If you need Pro features before hitting that threshold, contact us and we will work something out.",
+    a: "The Community tier is free for anyone \u2014 that covers most early-stage teams. If you need Pro features before you can justify the cost, contact us and we will work something out.",
   },
 ];
 
@@ -211,6 +256,119 @@ async function handleCheckout(planId: string, billingPeriod: "monthly" | "annual
   }
 }
 
+function TierCard({
+  tier,
+  i,
+  annual,
+  checkoutLoading,
+  setCheckoutLoading,
+}: {
+  tier: Tier;
+  i: number;
+  annual: boolean;
+  checkoutLoading: string | null;
+  setCheckoutLoading: (v: string | null) => void;
+}) {
+  const price = annual ? tier.priceAnnual : tier.price;
+  return (
+    <motion.div
+      key={tier.name}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05 + i * 0.1, duration: 0.4 }}
+      className={`glass-card rounded-2xl p-7 flex flex-col transition-all duration-300 ${
+        tier.highlight
+          ? "border-gold-500/40 ring-1 ring-gold-500/20 glow-gold relative lg:-mt-4 lg:mb-4"
+          : "hover:border-border-hover"
+      }`}
+    >
+      {tier.highlight && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
+            Most Popular
+          </span>
+        </div>
+      )}
+
+      <h3 className="text-lg font-semibold">{tier.name}</h3>
+      <p className="mt-1 text-sm text-foreground-muted">{tier.tagline}</p>
+
+      <div className="mt-5 mb-2">
+        <span className="text-4xl font-bold">{price}</span>
+        {tier.period && (
+          <span className="text-foreground-muted text-sm">{tier.period}</span>
+        )}
+        {annual && tier.priceAnnual !== tier.price && tier.priceAnnual !== "Free" && tier.priceAnnual !== "Custom" && tier.priceAnnual !== "Contact Us" && (
+          <span className="block text-xs text-foreground-subtle mt-1">billed annually</span>
+        )}
+      </div>
+
+      <div className="flex gap-3 text-xs text-foreground-subtle mb-5">
+        <span className="inline-flex items-center gap-1">
+          <svg className="w-3.5 h-3.5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          {tier.agents}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <svg className="w-3.5 h-3.5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {tier.retention}
+        </span>
+      </div>
+
+      {/* CTA */}
+      {tier.ctaAction === "checkout" ? (
+        <button
+          onClick={async () => {
+            setCheckoutLoading(tier.planId);
+            await handleCheckout(tier.planId, annual ? "annual" : "monthly");
+            setCheckoutLoading(null);
+          }}
+          disabled={checkoutLoading === tier.planId}
+          className={`block w-full text-center rounded-lg px-5 py-3 text-sm font-medium transition-all ${
+            tier.highlight
+              ? "bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 hover:from-gold-500 hover:to-gold-400 shadow-lg shadow-gold-500/20"
+              : "border border-border hover:border-border-hover text-foreground hover:bg-navy-800/50"
+          } ${checkoutLoading === tier.planId ? "opacity-60 cursor-wait" : ""}`}
+        >
+          {checkoutLoading === tier.planId ? "Redirecting..." : tier.cta}
+        </button>
+      ) : (
+        <Link
+          href={tier.ctaHref}
+          className={`block text-center rounded-lg px-5 py-3 text-sm font-medium transition-all ${
+            tier.name === "Community"
+              ? "border border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
+              : "border border-border hover:border-border-hover text-foreground hover:bg-navy-800/50"
+          }`}
+        >
+          {tier.cta}
+        </Link>
+      )}
+
+      <div className="mt-6 border-t border-border pt-5 flex-1">
+        <ul className="space-y-2.5">
+          {tier.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5 text-sm text-foreground-muted">
+              <svg
+                className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
+                  tier.highlight ? "text-gold-500" : "text-teal-500"
+                }`}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
@@ -231,7 +389,7 @@ export default function PricingPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Free for non-business use &middot; No per-seat pricing
+            Free forever for the Community tier &middot; No per-seat pricing
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
@@ -276,134 +434,60 @@ export default function PricingPage() {
             >
               Annual
               <span className="text-[10px] font-semibold bg-teal-600/20 text-teal-400 px-2 py-0.5 rounded-full">
-                Save 17%
+                Save ~20%
               </span>
             </button>
           </div>
         </section>
 
-        {/* Pricing Cards */}
-        <section className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
+        {/* Core Pricing Cards */}
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 pb-16">
           <div ref={cardsRef} className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-            {tiers.map((tier, i) => {
-              const price = annual ? tier.priceAnnual : tier.price;
-              return (
-                <motion.div
-                  key={tier.name}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 + i * 0.1, duration: 0.4 }}
-                  className={`glass-card rounded-2xl p-7 flex flex-col transition-all duration-300 ${
-                    tier.highlight
-                      ? "border-gold-500/40 ring-1 ring-gold-500/20 glow-gold relative lg:-mt-4 lg:mb-4"
-                      : "hover:border-border-hover"
-                  }`}
-                >
-                  {tier.highlight && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 text-xs font-semibold px-4 py-1 rounded-full whitespace-nowrap">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-
-                  <h3 className="text-lg font-semibold">{tier.name}</h3>
-                  <p className="mt-1 text-sm text-foreground-muted">{tier.tagline}</p>
-
-                  <div className="mt-5 mb-2">
-                    <span className="text-4xl font-bold">{price}</span>
-                    {tier.period && (
-                      <span className="text-foreground-muted text-sm">{tier.period}</span>
-                    )}
-                    {annual && tier.priceAnnual !== tier.price && tier.priceAnnual !== "Free" && tier.priceAnnual !== "Custom" && (
-                      <span className="block text-xs text-foreground-subtle mt-1">billed annually</span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 text-xs text-foreground-subtle mb-5">
-                    <span className="inline-flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      {tier.agents}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {tier.retention}
-                    </span>
-                  </div>
-
-                  {/* CTA */}
-                  {tier.ctaAction === "checkout" ? (
-                    <button
-                      onClick={async () => {
-                        setCheckoutLoading(tier.planId);
-                        await handleCheckout(tier.planId, annual ? "annual" : "monthly");
-                        setCheckoutLoading(null);
-                      }}
-                      disabled={checkoutLoading === tier.planId}
-                      className={`block w-full text-center rounded-lg px-5 py-3 text-sm font-medium transition-all ${
-                        tier.highlight
-                          ? "bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 hover:from-gold-500 hover:to-gold-400 shadow-lg shadow-gold-500/20"
-                          : "border border-border hover:border-border-hover text-foreground hover:bg-navy-800/50"
-                      } ${checkoutLoading === tier.planId ? "opacity-60 cursor-wait" : ""}`}
-                    >
-                      {checkoutLoading === tier.planId ? "Redirecting..." : tier.cta}
-                    </button>
-                  ) : (
-                    <Link
-                      href={tier.ctaHref}
-                      className={`block text-center rounded-lg px-5 py-3 text-sm font-medium transition-all ${
-                        tier.name === "Open"
-                          ? "border border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
-                          : "border border-border hover:border-border-hover text-foreground hover:bg-navy-800/50"
-                      }`}
-                    >
-                      {tier.cta}
-                    </Link>
-                  )}
-
-                  <div className="mt-6 border-t border-border pt-5 flex-1">
-                    <ul className="space-y-2.5">
-                      {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5 text-sm text-foreground-muted">
-                          <svg
-                            className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
-                              tier.highlight ? "text-gold-500" : "text-teal-500"
-                            }`}
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {tiers.map((tier, i) => (
+              <TierCard
+                key={tier.name}
+                tier={tier}
+                i={i}
+                annual={annual}
+                checkoutLoading={checkoutLoading}
+                setCheckoutLoading={setCheckoutLoading}
+              />
+            ))}
           </div>
+        </section>
 
-          {/* Platform/OEM callout */}
+        {/* Partner & Managed Tiers */}
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="mt-10 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
           >
-            <Link
-              href="mailto:enterprise@saluca.com?subject=Tiresias%20Platform%20%2F%20OEM"
-              className="inline-flex items-center gap-2 rounded-xl border border-gold-500/20 bg-gold-500/5 px-6 py-3 text-sm text-gold-400 hover:bg-gold-500/10 transition-colors"
-            >
+            <span className="inline-flex items-center gap-2 rounded-full border border-gold-500/20 bg-gold-500/5 px-4 py-1.5 text-sm text-gold-400 mb-4">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              Building an agent platform? Ask about Platform &amp; OEM tiers
-            </Link>
+              Partner &amp; Managed Tiers
+            </span>
+            <h2 className="text-2xl font-bold">For platforms, MSSPs, and managed deployments</h2>
+            <p className="mt-3 text-sm text-foreground-muted max-w-xl mx-auto">
+              Build your own AI security practice on top of Tiresias, or let us run it for you.
+            </p>
           </motion.div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {partnerTiers.map((tier, i) => (
+              <TierCard
+                key={tier.name}
+                tier={tier}
+                i={i}
+                annual={annual}
+                checkoutLoading={checkoutLoading}
+                setCheckoutLoading={setCheckoutLoading}
+              />
+            ))}
+          </div>
         </section>
 
         {/* Comparison row */}
@@ -442,8 +526,8 @@ export default function PricingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-sm mb-2">Patent-protected</h3>
-              <p className="text-xs text-foreground-muted leading-relaxed">29 provisional patents. Envelope encryption, BYOK, multi-provider failover — architecture competitors cannot replicate.</p>
+              <h3 className="font-semibold text-sm mb-2">Security-first, not observability-only</h3>
+              <p className="text-xs text-foreground-muted leading-relaxed">PRH prompt risk engine, 18-type anomaly detection, Sigma rules, quarantine — capabilities no LLM observability tool offers at any price.</p>
             </motion.div>
           </div>
         </section>
