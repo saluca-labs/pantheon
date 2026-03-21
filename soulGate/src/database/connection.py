@@ -47,13 +47,13 @@ async def get_db() -> AsyncSession:
 async def init_db():
     """Create tables on startup with retry for cloud-sql-proxy readiness."""
     import asyncio
-    for attempt in range(30):
+    for attempt in range(60):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
             return
         except Exception:
-            if attempt < 29:
+            if attempt < 59:
                 await asyncio.sleep(2)
             else:
                 raise
