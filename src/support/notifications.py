@@ -2,13 +2,12 @@
 Support ticket notification + escalation logic.
 
 Sends Telegram alerts on ticket creation with severity-prefixed messages
-and SLA deadlines. Uses TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID from settings.
+and SLA deadlines. Includes Linear issue link when available.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import httpx
 import structlog
@@ -28,16 +27,16 @@ _SEVERITY_LABELS = {
 }
 
 _SEVERITY_EMOJI = {
-    "p0": "\U0001f6a8",   # rotating light
-    "p1": "\u26a0\ufe0f",  # warning
-    "p2": "\U0001f4cb",    # clipboard
-    "p3": "\U0001f4dd",    # memo
+    "p0": "\U0001f6a8",
+    "p1": "\u26a0\ufe0f",
+    "p2": "\U0001f4cb",
+    "p3": "\U0001f4dd",
 }
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 
 
-def _build_message(ticket: "TicketResponse", tenant_name: str) -> str:
+def _build_message(ticket: "TicketResponse", tenant_name: str, linear_url: Optional[str] = None) -> str:
     label, sla_hours = _SEVERITY_LABELS.get(ticket.severity, ("P2 MEDIUM", 24))
     emoji = _SEVERITY_EMOJI.get(ticket.severity, "\U0001f4cb")
 
@@ -53,16 +52,18 @@ def _build_message(ticket: "TicketResponse", tenant_name: str) -> str:
         ticket.description[:800] + ("..." if len(ticket.description) > 800 else ""),
         "",
         f"<b>Deadline:</b> {ticket.sla_deadline}",
-        f"<b>Acknowledge:</b> PUT /v1/support/tickets/{ticket.ticket_id}/acknowledge",
     ]
+    if linear_url:
+        lines.append(f"<b>Linear:</b> <a href=\"{linear_url}\">{linear_url}</a>")
+    lines.append(f"<b>Acknowledge:</b> PUT /v1/support/tickets/{ticket.ticket_id}/acknowledge")
     return "\n".join(lines)
 
 
-async def send_ticket_notification(ticket: "TicketResponse", tenant_name: str) -> None:
-    """
-    Fire a Telegram message for a newly created support ticket.
-    Non-fatal — logs warning on failure but does not raise.
-    """
+async def send_ticket_notification(
+    ticket: "TicketResponse",
+    tenant_name: str,
+    linear_url: Optional[str] = None,
+) -> None:
     settings = get_settings()
     bot_token = settings.telegram_bot_token
     chat_id = settings.telegram_chat_id
@@ -75,7 +76,7 @@ async def send_ticket_notification(ticket: "TicketResponse", tenant_name: str) -
         )
         return
 
-    text = _build_message(ticket, tenant_name)
+    text = _build_message(ticket, tenant_name, linear_url)
     url = TELEGRAM_API.format(token=bot_token)
 
     try:
