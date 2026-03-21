@@ -30,7 +30,7 @@
 
 ### v2.1 — Enterprise Tier System
 
-- [ ] **Phase 10: Tier Framework** - Extend to 6-tier hierarchy, TIRESIAS_TIER env override, extended feature registry, tier-specific route guards, tier exposure in /health
+- [x] **Phase 10: Tier Framework** - Extend to 6-tier hierarchy, TIRESIAS_TIER env override, extended feature registry, tier-specific route guards, tier exposure in /health (completed 2026-03-20)
 - [ ] **Phase 11: MSSP Multi-Tenant** - Parent-child tenant hierarchy, cross-tenant query/detection/quarantine APIs, tenant provisioning, isolation enforcement
 - [ ] **Phase 12: SaaS Management** - Managed provisioning endpoint, usage metering, Stripe billing webhook, tenant suspension/reactivation
 - [ ] **Phase 13: Dashboard Tier-Awareness** - Tier-conditional nav, MSSP dashboard page, SaaS admin page, tier badge, TierGate component
@@ -198,10 +198,11 @@ Plans:
   3. A request to /v1/saas/* with an mssp token returns 403; only saas token grants access — strict upper-bound gating confirmed
   4. The feature registry contains tenant_hierarchy, cross_tenant_query, managed_provisioning, billing_integration, and white_label entries with correct tier assignments
   5. /health endpoint includes active_tier and enabled_features fields; portal session includes tier so frontend can read it without an extra API call
+**Status**: COMPLETE (2026-03-20)
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Extend to 6-tier hierarchy, TIRESIAS_TIER env override, feature registry, route guards, /health tier exposure (TIER-01, TIER-02, TIER-03, TIER-04, TIER-05)
+- [x] 10-01-PLAN.md — Extend to 6-tier hierarchy, TIRESIAS_TIER env override, feature registry, route guards, /health tier exposure (TIER-01, TIER-02, TIER-03, TIER-04, TIER-05) (completed 2026-03-20)
 
 ### Phase 11: MSSP Multi-Tenant
 **Goal**: An MSSP operator can manage a hierarchy of child tenants, query detection and quarantine data across all of them in one call, provision new tenants, and be guaranteed child queries never leak across unrelated hierarchies
@@ -262,7 +263,7 @@ Plans:
 | 7. Anomaly Expansion | 0/1 | Not started | - |
 | 8. SIEM Connectors | 2/2 | Complete | 2026-03-20 |
 | 9. Dashboard Integration | 2/2 | Complete | 2026-03-21 |
-| 10. Tier Framework | 0/1 | Not started | - |
+| 10. Tier Framework | 1/1 | Complete | 2026-03-20 |
 | 11. MSSP Multi-Tenant | 0/2 | Not started | - |
 | 12. SaaS Management | 0/1 | Not started | - |
 | 13. Dashboard Tier-Awareness | 0/2 | Not started | - |
@@ -272,5 +273,5 @@ Plans:
 *Roadmap created: 2026-03-20*
 *v2.0 phases added: 2026-03-20*
 *v2.1 phases added: 2026-03-21*
-*Last updated: 2026-03-21 — Phase 10-13 Enterprise Tier System added*
+*Last updated: 2026-03-20 — Phase 10 complete (6-tier hierarchy, TIRESIAS_TIER override, route guards)*
 *Phase 13 planned: 2026-03-20 — 2 plans created*
