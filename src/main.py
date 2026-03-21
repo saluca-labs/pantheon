@@ -401,6 +401,8 @@ app.include_router(mssp_router)
 app.include_router(tenant_router)
 from src.support.router import router as support_router
 app.include_router(support_router)
+from src.aletheia.router import router as aletheia_router
+app.include_router(aletheia_router)
 
 
 
