@@ -396,7 +396,9 @@ app.include_router(siem_router)
 from src.saas.router import router as saas_router
 app.include_router(saas_router)
 from src.mssp.router import router as mssp_router
+from src.tenant.router import router as tenant_router
 app.include_router(mssp_router)
+app.include_router(tenant_router)
 
 
 @app.get(
