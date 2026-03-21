@@ -1,0 +1,77 @@
+# Tiresias SOC — Grafana Datasource Provisioning
+
+apiVersion: 1
+
+deleteDatasources: []
+
+datasources:
+  # Prometheus (infrastructure metrics)
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST
+    version: 1
+
+  # Loki (log aggregation)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+    version: 1
+
+  # Pentest Target Postgres
+  - name: Pentest DB
+    uid: pentest-db
+    type: postgres
+    access: proxy
+    url: 192.168.12.169:5432
+    user: $PENTEST_DB_USER
+    editable: false
+    jsonData:
+      database: tiresias
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 600
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: $PENTEST_DB_PASSWORD
+    version: 1
+
+  # Production Cloud SQL
+  - name: Production DB
+    uid: production-db
+    type: postgres
+    access: proxy
+    url: ${PROD_DB_HOST:-localhost}:${PROD_DB_PORT:-5433}
+    user: $PROD_DB_USER
+    editable: false
+    jsonData:
+      database: tiresias
+      sslmode: disable
+      maxOpenConns: 3
+      maxIdleConns: 1
+      connMaxLifetime: 600
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: $PROD_DB_PASSWORD
+    version: 1
+
+  # JSON API (pentest report files)
+  - name: Pentest Reports API
+    type: marcusolsson-json-datasource
+    access: proxy
+    url: ${PENTEST_REPORTS_API_URL:-http://192.168.12.167:9090}
+    editable: false
+    jsonData: {}
+    version: 1
