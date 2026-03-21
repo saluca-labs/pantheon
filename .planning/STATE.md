@@ -1,102 +1,113 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-stopped_at: Completed 04-01-PLAN.md — Quarantine management page + Detection nav group
-last_updated: "2026-03-20T23:00:00.000Z"
+milestone: v2.1
+milestone_name: Enterprise Tier System
+status: in_progress
+stopped_at: Phase 10 Plan 01 complete — 6-tier hierarchy, TIRESIAS_TIER override, /health tier exposure
+last_updated: "2026-03-20T05:12:00Z"
 progress:
-  total_phases: 4
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 7
+  total_phases: 13
+  completed_phases: 9
+  total_plans: 24
+  completed_plans: 19
 ---
 
-# STATE — Tiresias Dashboard UI Redesign
+# STATE — Tiresias v2.1 Enterprise Tier System
 
 ## Project Reference
 
-**Core Value:** A premium, analyst-ready dashboard that makes Tiresias data immediately actionable — security analysts and ops teams can monitor, investigate, and respond without friction.
+**Core Value:** Security analysts can detect, investigate, and respond to AI agent threats — from prompt injection to behavioral anomalies — without ever leaving the Tiresias dashboard.
 
-**Repo:** `github.com/cristianxruvalcaba-coder/tiresias` | Portal path: `~/tiresias/portal/`
-**Stack:** Next.js 16, React 19, Tailwind 4, TypeScript
-**Design source of truth:** `output/html/*.html` + `output/screenshots/*.png` (Stitch mockups)
+**Milestone Goal:** Three enterprise SKUs (on-prem enterprise, on-prem MSSP, SaaS) from a single codebase using feature flags and tier-based gating — no branches per SKU.
+
+**Repo:** `github.com/cristianxruvalcaba-coder/tiresias` | Portal: `~/tiresias/portal/` | Backend: `~/tiresias/src/`
+**Stack:** Next.js 16, React 19, Tailwind 4, TypeScript (frontend) / FastAPI, SQLite, structlog (backend)
+**Access:** `ssh -i C:/Users/crist/.ssh/alfred_id_ed25519 cristian@34.41.26.234`
 
 ---
 
 ## Current Position
 
-Phase: 04 (Quarantine & Detection) — EXECUTING
-Plan: 2 of 2
+Phase: 10 (Tier Framework) — COMPLETE
+Plan: 1 of 1 complete — ready for Phase 11
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phases total | 4 |
-| Phases complete | 1 |
-| Requirements total (v1) | 37 |
-| Requirements mapped | 37 |
-| Requirements complete | 0 |
-| Plans written | 0 |
-| Plans complete | 0 |
+| Phases total (v2.1) | 4 (phases 10–13) |
+| Phases complete (v2.1) | 1 |
+| Requirements total (v2.1) | 20 |
+| Requirements mapped | 20 |
+| Requirements complete | 5 (TIER-01 through TIER-05) |
+| Plans written (v2.1) | 1 |
+| Plans complete (v2.1) | 1 |
+| Duration (Phase 10) | ~22 min |
 
 ---
-| Phase 02 P01 | 210 | 2 tasks | 2 files |
-| Phase 02-design-system-foundation P02 | 18min | 2 tasks | 2 files |
-| Phase 02-design-system-foundation P03 | 6min | 2/3 tasks | 2 files (checkpoint paused) |
-| Phase 02-design-system-foundation P03 | 25min | 3 tasks | 2 files |
-| Phase 03-dashboard-pages P01 | 25 | 2 tasks | 4 files |
-| Phase 03-dashboard-pages P02 | 35min | 2 tasks | 3 files |
-| Phase 03-dashboard-pages P03 | 22 | 2 tasks | 3 files |
-| Phase 04-quarantine-detection P01 | 18min | 2 tasks | 3 files |
+
+## v2.1 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 10 | Tier Framework | TIER-01, TIER-02, TIER-03, TIER-04, TIER-05 | COMPLETE (2026-03-20) |
+| 11 | MSSP Multi-Tenant | MSSP-01, MSSP-02, MSSP-03, MSSP-04, MSSP-05, MSSP-06 | Not started |
+| 12 | SaaS Management | SAAS-01, SAAS-02, SAAS-03, SAAS-04 | Not started |
+| 13 | Dashboard Tier-Awareness | DTIER-01, DTIER-02, DTIER-03, DTIER-04, DTIER-05 | Not started |
+
+---
 
 ## Accumulated Context
 
-### Key Decisions
+### Key Decisions (v2.1)
 
 | Decision | Rationale |
 |----------|-----------|
-| Phases start at 2 | Phase 1 (design/mockups) was already complete at roadmap creation |
-| QUAR/Detection as Phase 4, independent of Phase 3 | New views have no dependency on Phase 3 page reskins; both depend only on Phase 2 foundation |
-| DATA-01..05 merged into Phase 3 | Data wiring and page reskin are a single delivery unit per page — splitting creates horizontal layers |
-| Coarse granularity: 3 build phases | 37 requirements cluster naturally into foundation + existing-pages + new-pages |
-| --of- prefix for Obsidian Flux tokens | Avoids collision with legacy vars and Tailwind built-ins; namespaces clearly to design system |
-| Semantic alias layer preserved | --background/--foreground aliases over --of-* maintain compatibility with existing bg-background/text-foreground classes |
-| No-line rule applied in sidebar/layout | Tonal depth via surface token steps (of-surface-container-low/high/highest) replaces all hard borders between sidebar and content |
-| Widget subdirectory legacy tokens deferred | widgets/*.tsx files have pre-existing gold/teal/navy tokens; out of scope for 02-02, to be addressed in Phase 3 page reskin plans |
-| tabular-nums placed in @layer base | Plan spec explicitly states it goes in @layer base, not @layer utilities — it's a base HTML behavior override, not a utility class |
-| Auto-collapse is one-directional | < 1024px always collapses; does not auto-expand above 1024px — preserves user intent when they manually expand at small viewports |
-| lucide-react installed as standard icon library | Was missing from package.json; added in 03-01 to support Lucide icons for Observability nav items |
-| Sidebar sticky top-0/h-full in new layout | DashboardHeader now flows in document (flex-col); old top-16/calc(100vh-4rem) offset no longer applies |
-| Observability group first in sidebar | Primary use-case pages (overview/traces etc.) appear at top of nav above legacy security/soulwatch/soulgate groups |
-| api.post() not api() callable | api.ts exports an object with method calls (.get/.post/.put) — dynamic import pattern is `const { api } = await import("@/lib/api"); api.post(...)` |
-| Sidebar security group renamed Detection | Existing security group had Detection/Quarantine with SVG icons; plan spec calls for Detection group with lucide ShieldAlert/Radar — updated in place |
+| Feature flags over branches | Merge hell with 3 SKU branches kills velocity — single codebase, TIRESIAS_TIER env var at deploy time |
+| Tier hierarchy: community<starter<pro<enterprise<mssp<saas | Each tier includes all lower-tier features; mssp and saas are new additions to existing 4-tier system |
+| Tenant hierarchy for MSSP | Parent-child model (max_depth=3), not flat list — mirrors real MSSP org structures |
+| Phase 10 before 11+12 | Route guards and feature registry must exist before MSSP/SaaS APIs can be gated correctly |
+| Phase 11 and 12 independent | MSSP and SaaS layers have no dependency on each other — can be planned/executed in parallel if needed |
+| Phase 13 last | Dashboard wiring depends on both Phase 11 (MSSP APIs) and Phase 12 (SaaS APIs) being complete |
+| Backward compatibility required | Existing enterprise tier must not break — only additive changes to FEATURE_TIERS and tier validator |
+| No new Python deps | stdlib + existing FastAPI/SQLAlchemy/structlog stack only |
+| TIER_ORDER rank comparison (Phase 10) | _tier_rank() index comparison replaces set membership — enables hierarchical inheritance without listing all tiers per feature |
+| 403 vs 402 for SKU gates (Phase 10) | mssp/saas routes return 403 (wrong SKU), lower-tier routes return 402 (upgrade needed) — distinct portal CTA per error |
+| validation_alias bypasses env_prefix (Phase 10) | TIRESIAS_TIER field uses validation_alias="TIRESIAS_TIER" to bypass SOULAUTH_ prefix for one deployment-level variable |
+
+### Key Architectural Facts (carried forward)
+
+| Fact | Detail |
+|------|--------|
+| Tier infra (Phase 10) | FeatureGateMiddleware uses TIER_ORDER rank hierarchy; FEATURE_MIN_TIER is source of truth; get_enabled_features(tier) available |
+| Current tiers | community, starter, pro, enterprise, mssp, saas (6 tiers — Phase 10 complete) |
+| Route guards | /v1/mssp -> 403 for non-mssp; /v1/saas -> 403 for non-saas |
+| Health tier exposure | GET /health returns active_tier + enabled_features in both simple and detailed modes |
+| Detection stack | Sigma engine, anomaly detector (18 types post-v2.0), PRH engine, quarantine engine — all complete |
+| Data fetching pattern | useWidgetData hook — 30s auto-refresh, auth headers, standard across all pages |
+| Chart pattern | CSS div-based, conic-gradient donuts, SVG gauges — no chart library |
 
 ### Todos
 
-- [ ] Plan Phase 2 (design system tokens + sidebar + layout)
-- [ ] Identify which existing Tailwind classes/components need replacement vs. augmentation
+- [x] Plan Phase 10 (Tier Framework) — complete
+- [x] Verify existing FeatureGateMiddleware structure before extending FEATURE_TIERS — done in Phase 10
+- [ ] Confirm SoulTenant model schema before adding parent_tenant_id FK (Phase 11)
+- [ ] Execute Phase 11 (MSSP Multi-Tenant) — run `/gsd:execute-phase 11`
 
 ### Blockers
 
 None at roadmap creation.
 
-### Accumulated Learnings
-
-- Portal already has: Navbar, Footer, AuthProvider, dashboard layout with sidebar, 10+ dashboard pages — this is restyling not greenfield
-- All required API endpoints already exist; no backend work needed in this milestone
-- Stitch SDK mockups are the design source of truth, not the written design brief
-
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-03-20T23:00:00.000Z
-**Stopped at:** Completed 04-01-PLAN.md — Quarantine management page + Detection nav group
-**Next action:** Phase 04 Plan 02 — Detection Feed page
+**Last session:** 2026-03-20
+**Stopped at:** Phase 10 Plan 01 complete — 6-tier hierarchy, TIRESIAS_TIER override, /health tier exposure
+**Next action:** Execute Phase 11 (MSSP Multi-Tenant) — run `/gsd:execute-phase 11`
 
 ---
 
-*State initialized: 2026-03-20*
-*Last updated: 2026-03-20 after roadmap creation*
+*State initialized: 2026-03-20 (v1.0)*
+*Reset for v2.0: 2026-03-20*
+*Reset for v2.1: 2026-03-21*
