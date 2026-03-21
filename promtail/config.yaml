@@ -10,7 +10,6 @@ positions:
 
 clients:
   - url: http://loki:3100/loki/api/v1/push
-    tenant_id: saluca
 
 scrape_configs:
   # Pentest scan logs
