@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Search, Bell, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { tierMeets } from "@/components/dashboard/TierGate";
+import { useWidgetData } from "@/lib/useWidgetData";
 import { useBranding } from "@/lib/branding";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -26,6 +28,12 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
   "/dashboard/support": "Support",
+  // Aletheia routes (Phase 17)
+  "/dashboard/aletheia": "Aletheia Overview",
+  "/dashboard/aletheia/cot-audit": "CoT Audit",
+  "/dashboard/aletheia/tool-activity": "Tool Activity",
+  "/dashboard/aletheia/sanitizer": "Sanitizer",
+  "/dashboard/aletheia/policies": "Policy Editor",
   // MSSP routes (Phase 13)
   "/dashboard/mssp": "MSSP Overview",
   "/dashboard/mssp/detection": "Cross-Tenant Detection",
@@ -53,6 +61,15 @@ export default function DashboardHeader() {
   const { session } = useAuth();
   const { branding } = useBranding();
   const badge = session?.tier ? BADGE_TIERS[session.tier] : undefined;
+  const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
+
+  // Aletheia status indicator (ALETH-14)
+  const { data: aletheiaStatus, loading: aletheiaLoading, error: aletheiaError } = useWidgetData<{ entries?: unknown[] }>({
+    endpoint: "/v1/aletheia/cot/chain?limit=1",
+    refreshInterval: 60000,
+    skip: !isEnterprisePlus,
+  });
+  const aletheiaHealthy = isEnterprisePlus && !aletheiaLoading && !aletheiaError && aletheiaStatus != null;
 
   // Update document title when branding.company_name or page title changes (WL-05)
   useEffect(() => {
@@ -110,6 +127,14 @@ export default function DashboardHeader() {
             className="h-8 pl-9 pr-4 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-sm text-of-on-surface placeholder:text-of-on-surface-variant/50 focus:outline-none focus:border-of-primary/40 w-48 transition-colors"
           />
         </div>
+
+        {/* Aletheia status indicator (ALETH-14) */}
+        {isEnterprisePlus && (
+          <div className="flex items-center gap-1.5 px-2" title={aletheiaHealthy ? "Aletheia active" : "Aletheia loading"}>
+            <span className={`w-2 h-2 rounded-full ${aletheiaHealthy ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-of-on-surface-variant/40"}`} />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Aletheia</span>
+          </div>
+        )}
 
         {/* Notification bell */}
         <button className="h-8 w-8 rounded-lg flex items-center justify-center text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container transition-colors">
