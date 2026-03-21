@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 
@@ -315,6 +315,7 @@ export default function DashboardSidebar() {
   const { session } = useAuth();
   const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
+  const isSupportActive = pathname === "/dashboard/support";
 
   // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
   const groups: Array<{ key: GroupKey; label: string }> = isMsspTier
@@ -476,6 +477,58 @@ export default function DashboardSidebar() {
           );
         })}
       </nav>
+
+
+      {/* Support link -- pinned above user info */}
+      <div className="px-2 pb-1 border-t border-of-outline-variant/15 pt-2">
+        <Link
+          href="/dashboard/support"
+          className={}
+          title={collapsed ? "Support" : undefined}
+        >
+          {!isSupportActive && (
+            <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
+          )}
+
+          {isSupportActive && (
+            <motion.div
+              layoutId="sidebar-active-bg"
+              className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            />
+          )}
+
+          {isSupportActive && (
+            <motion.div
+              layoutId="sidebar-active-indicator"
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            />
+          )}
+
+          <motion.div
+            className={}
+            animate={isSupportActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <LifeBuoy className="w-5 h-5" />
+          </motion.div>
+
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.15 }}
+                className="relative text-sm font-medium truncate"
+              >
+                Support
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+      </div>
 
       {/* User / Tenant info */}
       <AnimatePresence>
