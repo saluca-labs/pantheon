@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
+import { BrandingProvider } from "@/lib/branding";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -55,7 +56,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} ${manrope.variable} antialiased bg-background text-foreground`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <BrandingProvider>
+            {children}
+          </BrandingProvider>
+        </AuthProvider>
       </body>
     </html>
   );
