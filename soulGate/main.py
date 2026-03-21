@@ -110,6 +110,8 @@ app = FastAPI(
 # CORS middleware - restrict origins to known domains
 _ALLOWED_ORIGINS = [
     "https://tiresias.saluca.com",
+    "https://tiresias.network",
+    "https://www.tiresias.network",
     "https://www.tiresias.saluca.com",
 ]
 if settings.debug:
@@ -170,3 +172,23 @@ async def root():
     if settings.debug:
         info["docs"] = "/docs"
     return info
+
+
+@app.get("/healthz")
+@app.get("/gate/healthz")
+async def liveness():
+    """Liveness probe — always 200 if the process is running."""
+    return {"status": "alive", "service": "soulgate"}
+
+
+@app.get("/readyz")
+@app.get("/gate/readyz")
+async def readiness():
+    """Readiness probe — checks DB connectivity only (no cross-service deps)."""
+    try:
+        async with async_session_factory() as db:
+            from sqlalchemy import text
+            await db.execute(text("SELECT 1"))
+        return JSONResponse(content={"status": "ready", "service": "soulgate"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"status": "not_ready", "error": str(e)}, status_code=503)
