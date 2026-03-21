@@ -212,6 +212,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("soulauth.prh_start_failed", error=str(e))
 
+    # Initialize Aletheia tool policy engine
+    try:
+        from src.aletheia.tool_policy_engine import init_tool_policy_engine
+        init_tool_policy_engine("policies/tool")
+        logger.info("soulauth.tool_policy_engine_started")
+    except Exception as e:
+        logger.warning("soulauth.tool_policy_engine_start_failed", error=str(e))
+
     # Start SIEM event forwarder if enabled
     if settings.siem_enabled:
         try:
@@ -380,6 +388,8 @@ app.add_middleware(TenantContextMiddleware)
 # Metrics middleware — request duration tracking
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(PRHMiddleware)
+from src.middleware.usage_limit import UsageLimitMiddleware
+app.add_middleware(UsageLimitMiddleware)
 
 # Register routers
 app.include_router(auth_router)
@@ -403,10 +413,14 @@ from src.support.router import router as support_router
 app.include_router(support_router)
 from src.aletheia.router import router as aletheia_router
 app.include_router(aletheia_router)
+from src.aletheia.tool_evaluate_router import router as tool_evaluate_router
+app.include_router(tool_evaluate_router)
 from src.billing.router import router as billing_router
 from src.keys.router import router as keys_router
 app.include_router(billing_router)
 app.include_router(keys_router)
+from src.usage.router import router as usage_router
+app.include_router(usage_router)
 
 
 
