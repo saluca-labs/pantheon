@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
+import { tierMeets } from "@/components/dashboard/TierGate";
 
 // Tier helper inline (avoids circular import from TierGate)
 const MSSP_TIERS = new Set(["mssp", "saas"]);
@@ -15,7 +16,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia";
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -293,6 +294,37 @@ const NAV_ITEMS: NavItem[] = [
     group: "mssp",
     icon: <Ban className="w-5 h-5" />,
   },
+  // Aletheia nav items -- only rendered when tier is enterprise+ (ALETH-14)
+  {
+    label: "Overview",
+    href: "/dashboard/aletheia",
+    group: "aletheia",
+    icon: <Eye className="w-5 h-5" />,
+  },
+  {
+    label: "CoT Audit",
+    href: "/dashboard/aletheia/cot-audit",
+    group: "aletheia",
+    icon: <Link2 className="w-5 h-5" />,
+  },
+  {
+    label: "Tool Activity",
+    href: "/dashboard/aletheia/tool-activity",
+    group: "aletheia",
+    icon: <Terminal className="w-5 h-5" />,
+  },
+  {
+    label: "Sanitizer",
+    href: "/dashboard/aletheia/sanitizer",
+    group: "aletheia",
+    icon: <ShieldCheck className="w-5 h-5" />,
+  },
+  {
+    label: "Policies",
+    href: "/dashboard/aletheia/policies",
+    group: "aletheia",
+    icon: <FileCode className="w-5 h-5" />,
+  },
 ];
 
 // All groups including mssp -- mssp rendered conditionally below
@@ -306,8 +338,9 @@ const BASE_GROUPS = [
 ] as const;
 
 const MSSP_GROUP = { key: "mssp", label: "MSSP" } as const;
+const ALETHEIA_GROUP = { key: "aletheia", label: "Aletheia" } as const;
 
-type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp";
+type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp" | "aletheia";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -315,12 +348,27 @@ export default function DashboardSidebar() {
   const { session } = useAuth();
   const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
+  const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
   const isSupportActive = pathname === "/dashboard/support";
 
   // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
-  const groups: Array<{ key: GroupKey; label: string }> = isMsspTier
-    ? [...BASE_GROUPS, MSSP_GROUP]
-    : [...BASE_GROUPS];
+  // Aletheia group only for enterprise+ tier (ALETH-14)
+  const groups: Array<{ key: GroupKey; label: string }> = (() => {
+    const base: Array<{ key: GroupKey; label: string }> = [...BASE_GROUPS];
+    // Insert Aletheia between security and soulwatch when enterprise+
+    if (isEnterprisePlus) {
+      const soulwatchIdx = base.findIndex((g) => g.key === "soulwatch");
+      if (soulwatchIdx !== -1) {
+        base.splice(soulwatchIdx, 0, ALETHEIA_GROUP);
+      } else {
+        base.push(ALETHEIA_GROUP);
+      }
+    }
+    if (isMsspTier) {
+      base.push(MSSP_GROUP);
+    }
+    return base;
+  })();
 
   // Auto-collapse at lg breakpoint (1024px)
   useEffect(() => {
@@ -402,6 +450,8 @@ export default function DashboardSidebar() {
                     className={`px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest ${
                       group.key === "mssp"
                         ? "text-of-primary"
+                        : group.key === "aletheia"
+                        ? "text-of-accent"
                         : "text-of-outline"
                     }`}
                   >
