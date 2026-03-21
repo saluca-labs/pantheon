@@ -141,7 +141,7 @@ def _validate_claims_structure(claims: dict) -> None:
     if missing:
         raise ValueError(f"Missing required license claims: {', '.join(missing)}")
 
-    valid_tiers = {"starter", "pro", "enterprise", "community"}
+    valid_tiers = {"community", "starter", "pro", "enterprise", "mssp", "saas"}
     if claims["tier"] not in valid_tiers:
         raise ValueError(f"Invalid tier '{claims['tier']}', must be one of {valid_tiers}")
 
