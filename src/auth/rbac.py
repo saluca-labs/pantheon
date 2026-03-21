@@ -40,6 +40,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "detection:*",
         "enforcement:*",
         "analytics:*",
+        "multi_tenant",
     ],
     "operator": [
         "keys:read",
