@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy import (
     String, Text, Boolean, DateTime, Float, Index, ForeignKey,
-    CheckConstraint, UniqueConstraint, Uuid, JSON,
+    CheckConstraint, UniqueConstraint, Uuid, JSON, Integer,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -34,9 +34,28 @@ class SoulTenant(Base):
     slug: Mapped[str] = mapped_column(String(63), nullable=False, unique=True)
     tier: Mapped[str] = mapped_column(String(50), nullable=False, default="free")
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
+    # MSSP hierarchy -- null means this is a root/standalone tenant
+    parent_tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid,
+        ForeignKey("_soul_tenants.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    # Cached depth in hierarchy (0 = root, 1 = direct child, 2 = grandchild, 3 = max)
+    hierarchy_depth: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="Depth in MSSP hierarchy. Max=3 enforced at application layer.",
+    )
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_soul_tenants_parent", "parent_tenant_id"),
+        CheckConstraint("hierarchy_depth >= 0 AND hierarchy_depth <= 3", name="ck_soul_tenants_max_depth"),
+    )
 
 
 class Soulkey(Base):
