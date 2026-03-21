@@ -17,6 +17,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import SoulTenant
+from src.billing.grace import handle_payment_failed, resolve_payment
 
 logger = structlog.get_logger(__name__)
 
@@ -191,16 +192,9 @@ async def handle_stripe_event(
             subscription_id=subscription_id,
         )
 
-        # Clear any payment_failed flag from metadata
+        # Clear any payment_failed flag — delegate to grace module
         if tenant:
-            meta = tenant.metadata_ or {}
-            meta.pop("payment_failed_at", None)
-            meta.pop("payment_failed_count", None)
-            await db.execute(
-                update(SoulTenant)
-                .where(SoulTenant.id == tenant.id)
-                .values(metadata=meta, updated_at=datetime.now(timezone.utc))
-            )
+            await resolve_payment(db, tenant.id)
 
         return {
             "action": "invoice_paid",
@@ -221,16 +215,9 @@ async def handle_stripe_event(
             attempt_count=attempt_count,
         )
 
-        # Flag tenant with payment failure — grace period logic in Phase 17
+        # Trigger grace period — delegate to billing.grace module (BILL-04)
         if tenant:
-            meta = tenant.metadata_ or {}
-            meta["payment_failed_at"] = datetime.now(timezone.utc).isoformat()
-            meta["payment_failed_count"] = attempt_count
-            await db.execute(
-                update(SoulTenant)
-                .where(SoulTenant.id == tenant.id)
-                .values(metadata=meta, updated_at=datetime.now(timezone.utc))
-            )
+            await handle_payment_failed(db, tenant.id)
 
         return {
             "action": "payment_failed",
