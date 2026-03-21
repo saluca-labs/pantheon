@@ -107,13 +107,13 @@ export default function IntegrationsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Integrations</h1>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-500/15 text-teal-400 border border-teal-500/20">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-500/15 text-of-primary border border-of-primary/20">
             {destinations.length} connected
           </span>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
         >
           + Add Destination
         </button>
@@ -127,11 +127,11 @@ export default function IntegrationsPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5 space-y-4"
+            className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-4"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-navy-800 border border-white/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-of-surface-container-high border border-white/10 flex items-center justify-center">
                   {TYPE_ICONS[dest.type]}
                 </div>
                 <div>
@@ -166,7 +166,7 @@ export default function IntegrationsPage() {
               </div>
             )}
             {testResults[dest.id] === "testing" && (
-              <div className="p-2 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground-muted">
+              <div className="p-2 rounded-lg bg-of-surface-container-lowest border border-white/5 text-xs text-foreground-muted">
                 Testing connection...
               </div>
             )}
@@ -175,7 +175,7 @@ export default function IntegrationsPage() {
               <button
                 onClick={() => handleTestConnection(dest.id)}
                 disabled={testingId === dest.id}
-                className="flex-1 px-3 py-2 rounded-lg border border-teal-500/30 text-teal-400 hover:bg-teal-500/10 text-xs font-medium transition-all disabled:opacity-40"
+                className="flex-1 px-3 py-2 rounded-lg border border-of-primary/30 text-of-primary hover:bg-of-primary/10 text-xs font-medium transition-all disabled:opacity-40"
               >
                 Test Connection
               </button>
@@ -191,7 +191,7 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Dead Letter Queue */}
-      <div className="glass-card rounded-xl p-5">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">Dead Letter Queue</h3>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
@@ -204,15 +204,15 @@ export default function IntegrationsPage() {
           Events that failed to deliver to their destination are stored here for retry. Messages are retained for 72 hours.
         </p>
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="p-3 rounded-lg bg-navy-800/50 border border-white/5">
+          <div className="p-3 rounded-lg bg-of-surface-container-high/50 border border-white/5">
             <p className="text-lg font-bold text-yellow-400 font-mono">{deadLetterCount}</p>
             <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mt-1">Pending</p>
           </div>
-          <div className="p-3 rounded-lg bg-navy-800/50 border border-white/5">
+          <div className="p-3 rounded-lg bg-of-surface-container-high/50 border border-white/5">
             <p className="text-lg font-bold text-green-400 font-mono">148</p>
             <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mt-1">Retried OK</p>
           </div>
-          <div className="p-3 rounded-lg bg-navy-800/50 border border-white/5">
+          <div className="p-3 rounded-lg bg-of-surface-container-high/50 border border-white/5">
             <p className="text-lg font-bold text-red-400 font-mono">3</p>
             <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mt-1">Failed</p>
           </div>
@@ -232,7 +232,7 @@ export default function IntegrationsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Add Destination</h2>
                   <button onClick={() => setShowAddModal(false)} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -246,12 +246,12 @@ export default function IntegrationsPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Destination Name</label>
                     <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                       placeholder="e.g. Production Splunk"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Type</label>
                     <select value={newType} onChange={(e) => setNewType(e.target.value as Destination["type"])}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                       <option value="splunk">Splunk HEC</option>
                       <option value="elastic">Elasticsearch</option>
                       <option value="syslog">Syslog / CEF</option>
@@ -263,13 +263,13 @@ export default function IntegrationsPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Endpoint URL</label>
                     <input type="text" value={newUrl} onChange={(e) => setNewUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all font-mono text-xs" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all font-mono text-xs" />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={handleAddDestination} disabled={!newName.trim() || !newUrl.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Add Destination
                   </button>
                 </div>

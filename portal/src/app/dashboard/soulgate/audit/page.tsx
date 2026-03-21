@@ -162,14 +162,14 @@ export default function AuditPage() {
           { label: "Total Requests", value: totalRequests.toLocaleString(), color: "text-foreground" },
           { label: "Blocked", value: blockedCount.toLocaleString(), color: "text-red-400" },
           { label: "Block Rate", value: `${blockRate}%`, color: "text-amber-400" },
-          { label: "Avg Latency", value: `${avgLatency}ms`, color: "text-teal-400" },
+          { label: "Avg Latency", value: `${avgLatency}ms`, color: "text-of-primary" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-4 text-center"
+            className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-4 text-center"
           >
             <p className="text-[10px] text-foreground-subtle uppercase tracking-wider font-medium mb-1">{stat.label}</p>
             <p className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</p>
@@ -182,7 +182,7 @@ export default function AuditPage() {
         <select
           value={filterMethod}
           onChange={(e) => setFilterMethod(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Methods</option>
           <option value="GET">GET</option>
@@ -194,7 +194,7 @@ export default function AuditPage() {
         <select
           value={filterBlocked}
           onChange={(e) => setFilterBlocked(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Requests</option>
           <option value="blocked">Blocked Only</option>
@@ -203,7 +203,7 @@ export default function AuditPage() {
         <select
           value={filterReason}
           onChange={(e) => setFilterReason(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Reasons</option>
           <option value="rate_limit">Rate Limit</option>
@@ -218,7 +218,7 @@ export default function AuditPage() {
       </div>
 
       {/* Audit Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -293,12 +293,12 @@ export default function AuditPage() {
                               transition={{ duration: 0.25, ease: "easeOut" }}
                               className="overflow-hidden"
                             >
-                              <div className="px-4 py-5 bg-navy-800/50 space-y-4">
+                              <div className="px-4 py-5 bg-of-surface-container-high/50 space-y-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                   {/* Request Info */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Request Info</h4>
-                                    <div className="bg-navy-950 rounded-lg p-3 border border-white/5 space-y-2">
+                                    <div className="bg-of-surface-container-lowest rounded-lg p-3 border border-white/5 space-y-2">
                                       <div className="flex items-center justify-between text-xs">
                                         <span className="text-foreground-subtle">Source IP</span>
                                         <span className="text-foreground font-mono">{entry.sourceIp}</span>
@@ -321,7 +321,7 @@ export default function AuditPage() {
                                   {/* Upstream Info */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Upstream</h4>
-                                    <div className="bg-navy-950 rounded-lg p-3 border border-white/5 space-y-2">
+                                    <div className="bg-of-surface-container-lowest rounded-lg p-3 border border-white/5 space-y-2">
                                       <div className="flex items-center justify-between text-xs">
                                         <span className="text-foreground-subtle">Upstream</span>
                                         <span className="text-foreground font-mono">{entry.upstream}</span>
@@ -346,7 +346,7 @@ export default function AuditPage() {
                                   {/* Threat Flags */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Threat Flags</h4>
-                                    <div className="bg-navy-950 rounded-lg p-3 border border-white/5">
+                                    <div className="bg-of-surface-container-lowest rounded-lg p-3 border border-white/5">
                                       {entry.threatFlags.length > 0 ? (
                                         <div className="flex flex-wrap gap-1.5">
                                           {entry.threatFlags.map((flag) => (
