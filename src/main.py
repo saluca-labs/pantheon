@@ -29,6 +29,9 @@ from src.detection.router import router as detection_router
 from src.detection.sigma_engine import SigmaEngine
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
+from src.prh._state import init_prh
+from src.prh.router import router as prh_router
+from src.prh.middleware import PRHMiddleware
 
 settings = get_settings()
 
@@ -179,6 +182,13 @@ async def lifespan(app: FastAPI):
             )
         except Exception as e:
             logger.warning("soulauth.detection_start_failed", error=str(e))
+
+    # Initialize PRH engine
+    try:
+        init_prh()
+        logger.info("soulauth.prh_started")
+    except Exception as e:
+        logger.warning("soulauth.prh_start_failed", error=str(e))
 
     # Start SIEM event forwarder if enabled
     if settings.siem_enabled:
@@ -347,6 +357,7 @@ app.add_middleware(TenantContextMiddleware)
 
 # Metrics middleware — request duration tracking
 app.add_middleware(MetricsMiddleware)
+app.add_middleware(PRHMiddleware)
 
 # Register routers
 app.include_router(auth_router)
@@ -357,6 +368,7 @@ app.include_router(metrics_router)
 app.include_router(analytics_router)
 app.include_router(enforcement_router)
 app.include_router(detection_router)
+app.include_router(prh_router)
 from src.siem.router import router as siem_router
 app.include_router(siem_router)
 
