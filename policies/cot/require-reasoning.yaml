@@ -1,0 +1,30 @@
+apiVersion: tiresias/v1
+kind: CotPolicy
+metadata:
+  name: require-reasoning
+  tier: enterprise
+  description: >
+    Mandate thinking/reasoning on all LLM requests.
+    Exempt lightweight models and non-generative endpoints.
+spec:
+  require_thinking: true
+  enforcement: inject
+  providers:
+    anthropic:
+      inject_field: "thinking.enabled"
+      inject_value: true
+      budget_tokens: 10000
+    openai:
+      inject_field: "reasoning_effort"
+      inject_value: "medium"
+      budget_tokens: 10000
+    gemini:
+      inject_field: "generationConfig.thinkingConfig.thinkingBudget"
+      inject_value: 10000
+      budget_tokens: 10000
+  exempt:
+    - model_pattern: "claude-3-5-haiku*"
+    - model_pattern: "gpt-4o-mini*"
+    - endpoint_pattern: "/v1/embeddings"
+    - endpoint_pattern: "/v1/audio/*"
+    - agent_pattern: "linter-*"
