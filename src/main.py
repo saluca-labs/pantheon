@@ -393,6 +393,8 @@ app.include_router(detection_router)
 app.include_router(prh_router)
 from src.siem.router import router as siem_router
 app.include_router(siem_router)
+from src.saas.router import router as saas_router
+app.include_router(saas_router)
 
 
 @app.get(
