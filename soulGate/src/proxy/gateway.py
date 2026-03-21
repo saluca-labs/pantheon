@@ -4,6 +4,7 @@ Orchestrates auth, access control, rate limiting, circuit breaking,
 payload inspection, upstream forwarding, and audit logging.
 """
 
+import asyncio
 import time
 from typing import Optional
 
@@ -58,6 +59,25 @@ async def close_http_client():
         _http_client = None
 
 
+async def _safe_cot_append(writer, extraction, request_id, auth_result):
+    """Fire-and-forget CoT chain append with error handling."""
+    try:
+        entry = await writer.append(extraction, request_id, auth_result.persona_id)
+        logger.debug(
+            "cot_intercept.appended",
+            entry_index=entry.entry_index,
+            tenant_id=str(auth_result.tenant_id),
+        )
+    except Exception as e:
+        logger.error("cot_intercept.append_failed", error=str(e))
+
+
+def _get_session_factory():
+    """Get the async session factory for database operations."""
+    from soulGate.src.database.connection import async_session_factory
+    return async_session_factory
+
+
 async def process_request(
     request: Request,
     upstream: SoulGateUpstream,
@@ -72,6 +92,7 @@ async def process_request(
     4. Check circuit breaker
     5. Inspect payload (prompt injection, size)
     6. Forward to upstream via httpx
+    6b. CoT intercept (read-only, fire-and-forget)
     7. Log to audit
     Return response or error
     """
@@ -191,6 +212,27 @@ async def process_request(
                     breaker.record_success()
                 else:
                     breaker.record_failure()
+
+            # === 6b. CoT Intercept (read-only, fire-and-forget) ===
+            if response_body and response_status and 200 <= response_status < 300:
+                try:
+                    import json as _json
+                    import uuid as _uuid
+                    body_json = _json.loads(response_body)
+                    from src.aletheia.extractors import extract_cot, detect_provider
+                    provider = detect_provider(upstream.name)
+                    extraction = extract_cot(provider, body_json)
+                    if extraction and extraction.has_reasoning:
+                        from src.aletheia.chain import CotChainWriter
+                        writer = CotChainWriter(
+                            _get_session_factory(), auth_result.tenant_id
+                        )
+                        req_id = _uuid.uuid4()
+                        asyncio.create_task(
+                            _safe_cot_append(writer, extraction, req_id, auth_result)
+                        )
+                except Exception:
+                    logger.warning("cot_intercept.skipped", exc_info=True)
 
             # Build response
             response_headers = dict(upstream_response.headers)

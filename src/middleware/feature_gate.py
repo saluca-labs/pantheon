@@ -56,6 +56,17 @@ FEATURE_MIN_TIER: dict[str, str] = {
     "managed_provisioning": "saas",
     "billing_integration": "saas",
     "white_label": "mssp",
+    # aletheia (enterprise and above)
+    "aletheia_cot_intercept": "enterprise",
+    "aletheia_cot_content_storage": "enterprise",
+    "aletheia_cot_proof_export": "enterprise",
+    "aletheia_tool_monitoring": "enterprise",
+    "aletheia_response_sanitizer": "enterprise",
+    "aletheia_tool_policies": "enterprise",
+    "aletheia_dashboard": "enterprise",
+    # aletheia mssp
+    "aletheia_cross_tenant_cot_audit": "mssp",
+    "aletheia_managed_tool_policies": "mssp",
 }
 
 # Derive the old FEATURE_TIERS dict for backward compatibility (middleware uses FEATURE_MIN_TIER now)
@@ -73,6 +84,7 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/mssp": "tenant_hierarchy",
     "/v1/saas": "managed_provisioning",
     "/v1/tenant": "white_label",
+    "/v1/aletheia": "aletheia_cot_intercept",
 }
 
 # Paths that are always allowed regardless of license
