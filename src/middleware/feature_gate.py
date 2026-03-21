@@ -55,7 +55,7 @@ FEATURE_MIN_TIER: dict[str, str] = {
     # saas only
     "managed_provisioning": "saas",
     "billing_integration": "saas",
-    "white_label": "saas",
+    "white_label": "mssp",
 }
 
 # Derive the old FEATURE_TIERS dict for backward compatibility (middleware uses FEATURE_MIN_TIER now)
@@ -72,6 +72,7 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/integrations": "siem_forwarding",
     "/v1/mssp": "tenant_hierarchy",
     "/v1/saas": "managed_provisioning",
+    "/v1/tenant": "white_label",
 }
 
 # Paths that are always allowed regardless of license
