@@ -25,6 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/quarantine": "Quarantine",
   "/dashboard/analytics": "Analytics",
   "/dashboard/settings": "Settings",
+  "/dashboard/support": "Support",
   // MSSP routes (Phase 13)
   "/dashboard/mssp": "MSSP Overview",
   "/dashboard/mssp/detection": "Cross-Tenant Detection",
