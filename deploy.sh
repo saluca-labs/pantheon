@@ -5,7 +5,7 @@ PROJECT=salucainfrastructure
 REGION=us-central1
 CLUSTER=tiresias-prod
 REPO=us-central1-docker.pkg.dev/$PROJECT/tiresias
-TAG=v1.0.0
+TAG=v1.1.0
 
 echo "=== Tiresias Production Deployment ==="
 
@@ -88,4 +88,4 @@ echo "=== Deployment Complete ==="
 kubectl get pods -n tiresias
 kubectl get ingress -n tiresias
 echo ""
-echo "Point tiresias.saluca.com DNS to the ingress IP above."
+echo "Point tiresias.network DNS to the ingress IP above."

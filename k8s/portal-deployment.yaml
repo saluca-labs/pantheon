@@ -51,7 +51,7 @@ spec:
               mountPath: /app/.next/cache
           env:
             - name: NEXT_PUBLIC_SOULAUTH_API_URL
-              value: "https://tiresias.saluca.com"
+              value: "https://api.tiresias.network"
             - name: NEXT_PUBLIC_SOULWATCH_API_URL
               value: "http://soulwatch.tiresias.svc.cluster.local"
             - name: NEXT_PUBLIC_SOULGATE_API_URL

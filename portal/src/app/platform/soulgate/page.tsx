@@ -459,7 +459,7 @@ export default function SoulGatePage() {
               <TerminalBlock
                 filename="register_upstream.sh"
                 code={`# Register an upstream service with SoulGate
-curl -X POST https://tiresias.saluca.com/gate/v1/upstreams \\
+curl -X POST https://api.tiresias.network/gate/v1/upstreams \\
   -H "Authorization: Bearer sk_gate_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -486,7 +486,7 @@ curl -X POST https://tiresias.saluca.com/gate/v1/upstreams \\
               <TerminalBlock
                 filename="configure_rate_limit.sh"
                 code={`# Set a rate limit policy
-curl -X POST https://tiresias.saluca.com/gate/v1/rate-limits \\
+curl -X POST https://api.tiresias.network/gate/v1/rate-limits \\
   -H "Authorization: Bearer sk_gate_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -512,7 +512,7 @@ curl -X POST https://tiresias.saluca.com/gate/v1/rate-limits \\
 
 # Query the gateway audit log
 resp = requests.get(
-    "https://tiresias.saluca.com/gate/v1/audit",
+    "https://api.tiresias.network/gate/v1/audit",
     headers={"Authorization": "Bearer sk_gate_live_..."},
     params={
         "status": "blocked",

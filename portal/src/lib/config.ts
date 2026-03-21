@@ -4,7 +4,7 @@
 
 export const config = {
   /** SoulAuth API base URL (no trailing slash) */
-  apiUrl: process.env.NEXT_PUBLIC_SOULAUTH_API_URL || "https://tiresias.saluca.com",
+  apiUrl: process.env.NEXT_PUBLIC_SOULAUTH_API_URL || "https://api.tiresias.network",
 
   /** Session cookie name */
   sessionCookie: "tiresias_session",
