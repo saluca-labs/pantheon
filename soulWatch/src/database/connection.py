@@ -45,10 +45,18 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """Create all SoulWatch tables on startup."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
+    """Create tables on startup with retry for cloud-sql-proxy readiness."""
+    import asyncio
+    for attempt in range(30):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            return
+        except Exception:
+            if attempt < 29:
+                await asyncio.sleep(2)
+            else:
+                raise
 
 async def close_db():
     """Dispose engine on shutdown."""
