@@ -105,7 +105,7 @@ export default function SoulWatchDashboardPage() {
           </Link>
           <Link
             href="/dashboard/soulwatch/rules"
-            className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+            className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
           >
             Manage Rules
           </Link>
@@ -125,12 +125,12 @@ export default function SoulWatchDashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           )},
-          { label: "Rules Firing (24h)", value: 47, color: "text-gold-400", icon: (
+          { label: "Rules Firing (24h)", value: 47, color: "text-of-primary", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
             </svg>
           )},
-          { label: "Agents Monitored", value: 47, color: "text-teal-400", icon: (
+          { label: "Agents Monitored", value: 47, color: "text-of-primary", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
             </svg>
@@ -141,7 +141,7 @@ export default function SoulWatchDashboardPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5"
+            className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5"
           >
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">{stat.label}</p>
@@ -157,7 +157,7 @@ export default function SoulWatchDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Anomaly Timeline */}
-        <div className="lg:col-span-2 glass-card rounded-xl p-5">
+        <div className="lg:col-span-2 bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Anomaly Timeline (Last 24 Hours)</h3>
           <div className="flex items-end gap-1 h-48">
             {HOURLY_ANOMALIES.map((h, i) => {
@@ -174,7 +174,7 @@ export default function SoulWatchDashboardPage() {
                     <motion.div
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="absolute -top-8 px-2 py-1 rounded-md bg-navy-700 border border-white/10 text-[10px] text-foreground font-mono shadow-lg whitespace-nowrap z-10"
+                      className="absolute -top-8 px-2 py-1 rounded-md bg-of-surface-container-highest border border-white/10 text-[10px] text-foreground font-mono shadow-lg whitespace-nowrap z-10"
                     >
                       {h.count} anomalies
                     </motion.div>
@@ -182,7 +182,7 @@ export default function SoulWatchDashboardPage() {
                   <motion.div
                     className={`w-full rounded-t-sm cursor-pointer transition-colors duration-200 ${
                       isHovered
-                        ? "bg-gradient-to-t from-gold-600 to-gold-400"
+                        ? "bg-gradient-to-t from-of-primary to-of-primary"
                         : h.count > 15
                           ? "bg-gradient-to-t from-red-600 to-red-400"
                           : h.count > 8
@@ -204,13 +204,13 @@ export default function SoulWatchDashboardPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="glass-card rounded-xl p-5 space-y-3">
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
           <h3 className="text-sm font-semibold text-foreground mb-2">Quick Navigation</h3>
           {[
             { label: "Anomalies", href: "/dashboard/soulwatch/anomalies", count: "14 open", color: "text-red-400" },
-            { label: "Detection Rules", href: "/dashboard/soulwatch/rules", count: "6 active", color: "text-gold-400" },
+            { label: "Detection Rules", href: "/dashboard/soulwatch/rules", count: "6 active", color: "text-of-primary" },
             { label: "Quarantines", href: "/dashboard/soulwatch/quarantines", count: "3 active", color: "text-orange-400" },
-            { label: "Integrations", href: "/dashboard/soulwatch/integrations", count: "4 connected", color: "text-teal-400" },
+            { label: "Integrations", href: "/dashboard/soulwatch/integrations", count: "4 connected", color: "text-of-primary" },
             { label: "Reports", href: "/dashboard/soulwatch/reports", count: "3 frameworks", color: "text-blue-400" },
           ].map((item, i) => (
             <motion.div
@@ -221,7 +221,7 @@ export default function SoulWatchDashboardPage() {
             >
               <Link
                 href={item.href}
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-navy-800/50 border border-white/5 hover:border-white/10 hover:bg-navy-800 transition-all duration-200 group"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-of-surface-container-high/50 border border-white/5 hover:border-white/10 hover:bg-of-surface-container-high transition-all duration-200 group"
               >
                 <span className="text-sm text-foreground-muted group-hover:text-foreground transition-colors">{item.label}</span>
                 <div className="flex items-center gap-2">
@@ -237,10 +237,10 @@ export default function SoulWatchDashboardPage() {
       </div>
 
       {/* Agent Risk Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <h3 className="text-sm font-semibold text-foreground">Agent Risk Scores (Top 10)</h3>
-          <Link href="/dashboard/soulwatch/anomalies" className="text-xs text-gold-400 hover:text-gold-300 transition-colors">
+          <Link href="/dashboard/soulwatch/anomalies" className="text-xs text-of-primary hover:text-of-primary-fixed transition-colors">
             View all agents
           </Link>
         </div>
@@ -278,7 +278,7 @@ export default function SoulWatchDashboardPage() {
                         agent.riskScore >= 50 ? "text-yellow-400" :
                         "text-green-400"
                       }`}>{agent.riskScore}</span>
-                      <div className="flex-1 h-1.5 bg-navy-800 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-of-surface-container-high rounded-full overflow-hidden">
                         <motion.div
                           className={`h-full rounded-full ${riskBarColor(agent.riskScore)}`}
                           initial={{ width: 0 }}
@@ -338,10 +338,10 @@ export default function SoulWatchDashboardPage() {
       </div>
 
       {/* Recent Detections Feed */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <h3 className="text-sm font-semibold text-foreground">Recent Detections (Last 10)</h3>
-          <Link href="/dashboard/soulwatch/rules" className="text-xs text-gold-400 hover:text-gold-300 transition-colors">
+          <Link href="/dashboard/soulwatch/rules" className="text-xs text-of-primary hover:text-of-primary-fixed transition-colors">
             View all rules
           </Link>
         </div>

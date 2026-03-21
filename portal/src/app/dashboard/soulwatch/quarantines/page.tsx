@@ -142,25 +142,25 @@ export default function QuarantinesPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Active Quarantines</p>
           <p className="text-3xl font-bold text-red-400 mt-2"><AnimatedCount target={agents.length} /></p>
           <p className="text-xs text-foreground-muted mt-1">Agents currently quarantined</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Released This Week</p>
           <p className="text-3xl font-bold text-green-400 mt-2"><AnimatedCount target={history.length} /></p>
           <p className="text-xs text-foreground-muted mt-1">Cleared and restored</p>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card rounded-xl p-5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Avg Quarantine Duration</p>
-          <p className="text-3xl font-bold text-gold-400 mt-2">6.3h</p>
+          <p className="text-3xl font-bold text-of-primary mt-2">6.3h</p>
           <p className="text-xs text-foreground-muted mt-1">Average time in quarantine</p>
         </motion.div>
       </div>
 
       {/* Active Quarantines */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-white/10">
           <h3 className="text-sm font-semibold text-foreground">Active Quarantines</h3>
         </div>
@@ -189,7 +189,7 @@ export default function QuarantinesPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div>
-                          <span className="font-mono text-xs text-teal-400">{agent.agentPrefix}</span>
+                          <span className="font-mono text-xs text-of-primary">{agent.agentPrefix}</span>
                           <p className="text-xs text-foreground-muted mt-0.5">{agent.persona}</p>
                         </div>
                         {agent.status === "escalated" && (
@@ -217,7 +217,7 @@ export default function QuarantinesPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => { setReleaseDialogId(agent.id); setReleaseReason(""); setReleaseConfirmed(false); }}
-                          className="px-3 py-1.5 rounded-lg border border-gold-500/30 text-gold-400 hover:bg-gold-500/10 text-xs font-medium transition-all"
+                          className="px-3 py-1.5 rounded-lg border border-of-primary/30 text-of-primary hover:bg-of-primary/10 text-xs font-medium transition-all"
                         >
                           Release
                         </button>
@@ -248,7 +248,7 @@ export default function QuarantinesPage() {
       </div>
 
       {/* Quarantine History */}
-      <div className="glass-card rounded-xl p-4">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-foreground mb-3">Quarantine History</h3>
         <div className="space-y-2">
           {history.map((entry, i) => (
@@ -257,7 +257,7 @@ export default function QuarantinesPage() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="flex items-center justify-between px-3 py-2 rounded-lg bg-navy-800/50 border border-white/5"
+              className="flex items-center justify-between px-3 py-2 rounded-lg bg-of-surface-container-high/50 border border-white/5"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.3)]" />
@@ -286,7 +286,7 @@ export default function QuarantinesPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Release Agent</h2>
                   <button onClick={() => setReleaseDialogId(null)} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -300,12 +300,12 @@ export default function QuarantinesPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Reason for Release <span className="text-red-400">*</span></label>
                     <textarea value={releaseReason} onChange={(e) => setReleaseReason(e.target.value)}
                       placeholder="Explain why this agent should be released..." rows={3}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all resize-none" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all resize-none" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Release Conditions</label>
                     <select value={releaseConditions} onChange={(e) => setReleaseConditions(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                       <option value="Full release">Full release</option>
                       <option value="Probationary (monitored)">Probationary (monitored)</option>
                       <option value="Restricted capabilities">Restricted capabilities</option>
@@ -315,10 +315,10 @@ export default function QuarantinesPage() {
                     <div className="mt-0.5">
                       <input type="checkbox" checked={releaseConfirmed} onChange={(e) => setReleaseConfirmed(e.target.checked)} className="sr-only" />
                       <div className={`w-4 h-4 rounded border-2 transition-all flex items-center justify-center ${
-                        releaseConfirmed ? "bg-gold-500 border-gold-500" : "border-white/20 group-hover:border-white/40"
+                        releaseConfirmed ? "bg-of-primary border-gold-500" : "border-white/20 group-hover:border-white/40"
                       }`}>
                         {releaseConfirmed && (
-                          <svg className="w-3 h-3 text-navy-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <svg className="w-3 h-3 text-of-on-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                           </svg>
                         )}
@@ -328,9 +328,9 @@ export default function QuarantinesPage() {
                   </label>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button onClick={() => setReleaseDialogId(null)} className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                  <button onClick={() => setReleaseDialogId(null)} className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={handleRelease} disabled={!releaseReason.trim() || !releaseConfirmed}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Confirm Release
                   </button>
                 </div>
@@ -353,7 +353,7 @@ export default function QuarantinesPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Manual Quarantine</h2>
                   <button onClick={() => setShowManualModal(false)} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -367,18 +367,18 @@ export default function QuarantinesPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Agent Persona</label>
                     <input type="text" value={manualAgent} onChange={(e) => setManualAgent(e.target.value)}
                       placeholder="e.g. analytics-agent"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Reason</label>
                     <textarea value={manualReason} onChange={(e) => setManualReason(e.target.value)}
                       placeholder="Why is this agent being quarantined?" rows={3}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all resize-none" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all resize-none" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Action</label>
                     <select value={manualAction} onChange={(e) => setManualAction(e.target.value as QuarantinedAgent["actionTaken"])}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                       <option value="Suspended">Suspended</option>
                       <option value="Rate Limited">Rate Limited</option>
                       <option value="Capabilities Revoked">Capabilities Revoked</option>
@@ -387,7 +387,7 @@ export default function QuarantinesPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button onClick={() => setShowManualModal(false)} className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                  <button onClick={() => setShowManualModal(false)} className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={handleManualQuarantine} disabled={!manualAgent.trim() || !manualReason.trim()}
                     className="px-5 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Quarantine Agent

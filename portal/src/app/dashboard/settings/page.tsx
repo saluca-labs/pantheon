@@ -134,7 +134,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold text-foreground tracking-tight">Settings</h1>
 
       {/* Tabs with animated underline */}
-      <div className="relative flex gap-1 p-1 bg-navy-800 rounded-lg w-fit flex-wrap">
+      <div className="relative flex gap-1 p-1 bg-of-surface-container-high rounded-lg w-fit flex-wrap">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -148,7 +148,7 @@ export default function SettingsPage() {
             {activeTab === tab.id && (
               <motion.div
                 layoutId="settings-tab-bg"
-                className="absolute inset-0 bg-navy-700 rounded-md shadow"
+                className="absolute inset-0 bg-of-surface-container-highest rounded-md shadow"
                 transition={{ type: "spring", stiffness: 350, damping: 30 }}
               />
             )}
@@ -162,7 +162,7 @@ export default function SettingsPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl p-6 space-y-6 max-w-2xl"
+          className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6 space-y-6 max-w-2xl"
         >
           <div className="space-y-2">
             <label className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Tenant Name</label>
@@ -170,7 +170,7 @@ export default function SettingsPage() {
               type="text"
               value={tenantName}
               onChange={(e) => setTenantName(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200"
+              className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200"
             />
           </div>
 
@@ -181,14 +181,14 @@ export default function SettingsPage() {
                 type="text"
                 value={tenantId}
                 readOnly
-                className="flex-1 px-4 py-2.5 rounded-lg bg-navy-950 border border-white/5 text-sm text-foreground-muted font-mono cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 rounded-lg bg-of-surface-container-lowest border border-white/5 text-sm text-foreground-muted font-mono cursor-not-allowed"
               />
               <button
                 onClick={() => handleCopy(tenantId)}
                 className={`px-3 py-2.5 rounded-lg border text-xs transition-all duration-200 ${
                   copied
                     ? "bg-green-500/10 border-green-500/20 text-green-400"
-                    : "bg-navy-700 border-white/10 text-foreground-muted hover:text-foreground"
+                    : "bg-of-surface-container-highest border-white/10 text-foreground-muted hover:text-foreground"
                 }`}
               >
                 {copied ? (
@@ -209,11 +209,11 @@ export default function SettingsPage() {
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200"
+              className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200"
             />
           </div>
 
-          <button className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors">
+          <button className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors">
             Save Changes
           </button>
         </motion.div>
@@ -227,11 +227,11 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="flex justify-end">
-            <button className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors">
+            <button className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors">
               + Generate New Key
             </button>
           </div>
-          <div className="glass-card rounded-xl overflow-hidden">
+          <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -249,7 +249,7 @@ export default function SettingsPage() {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => setRevealedKey(revealedKey === key.id ? null : key.id)}
-                          className="font-mono text-xs text-teal-400 hover:text-teal-300 transition-colors duration-200 flex items-center gap-1.5"
+                          className="font-mono text-xs text-of-primary hover:text-of-primary transition-colors duration-200 flex items-center gap-1.5"
                         >
                           <AnimatePresence mode="wait">
                             {revealedKey === key.id ? (
@@ -317,13 +317,13 @@ export default function SettingsPage() {
           className="space-y-4"
         >
           <div className="flex justify-end">
-            <button className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors">
+            <button className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors">
               + Add Destination
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {SIEM_DESTINATIONS.map((dest) => (
-              <div key={dest.id} className="glass-card rounded-xl p-5 space-y-3">
+              <div key={dest.id} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
@@ -347,7 +347,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">Endpoint</label>
-                  <p className="text-xs text-foreground-muted font-mono bg-navy-950 rounded-lg px-3 py-2 border border-white/5 truncate">
+                  <p className="text-xs text-foreground-muted font-mono bg-of-surface-container-lowest rounded-lg px-3 py-2 border border-white/5 truncate">
                     {dest.endpoint}
                   </p>
                 </div>
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                     className={`px-3 py-1.5 rounded-lg border text-xs transition-all duration-200 flex items-center gap-1.5 ${
                       testSuccess === dest.id
                         ? "border-green-500/20 text-green-400 bg-green-500/5"
-                        : "border-teal-500/20 text-teal-400 hover:bg-teal-500/10"
+                        : "border-of-primary/20 text-of-primary hover:bg-of-primary/10"
                     }`}
                   >
                     {testingId === dest.id ? (
@@ -398,10 +398,10 @@ export default function SettingsPage() {
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           {channels.map((channel) => (
-            <div key={channel.id} className="glass-card rounded-xl p-5 space-y-3">
+            <div key={channel.id} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-navy-700 flex items-center justify-center text-lg font-bold text-foreground-muted">
+                  <div className="w-10 h-10 rounded-lg bg-of-surface-container-highest flex items-center justify-center text-lg font-bold text-foreground-muted">
                     {channel.icon}
                   </div>
                   <div>
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                   className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
                     channel.enabled
                       ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.2)]"
-                      : "bg-navy-600"
+                      : "bg-of-surface-container-high"
                   }`}
                 >
                   <motion.div
@@ -432,7 +432,7 @@ export default function SettingsPage() {
                 <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">
                   {channel.name === "Email" ? "Recipient" : channel.name === "PagerDuty" ? "Integration" : "Webhook URL"}
                 </label>
-                <p className="text-xs text-foreground-muted font-mono bg-navy-950 rounded-lg px-3 py-2 border border-white/5 truncate">
+                <p className="text-xs text-foreground-muted font-mono bg-of-surface-container-lowest rounded-lg px-3 py-2 border border-white/5 truncate">
                   {channel.config}
                 </p>
               </div>
@@ -442,7 +442,7 @@ export default function SettingsPage() {
                 className={`w-full px-3 py-1.5 rounded-lg border text-xs transition-all duration-200 flex items-center justify-center gap-1.5 ${
                   testSuccess === `notif-${channel.id}`
                     ? "border-green-500/20 text-green-400 bg-green-500/5"
-                    : "border-teal-500/20 text-teal-400 hover:bg-teal-500/10"
+                    : "border-of-primary/20 text-of-primary hover:bg-of-primary/10"
                 }`}
               >
                 {testingId === `notif-${channel.id}` ? (
@@ -474,7 +474,7 @@ export default function SettingsPage() {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl p-8 max-w-lg space-y-6"
+          className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-8 max-w-lg space-y-6"
         >
           <div className="space-y-2">
             <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Current Plan</p>
@@ -484,9 +484,9 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Trial Expires</p>
             <p className="text-sm text-foreground">March 31, 2026</p>
-            <div className="h-2 bg-navy-800 rounded-full overflow-hidden mt-2">
+            <div className="h-2 bg-of-surface-container-high rounded-full overflow-hidden mt-2">
               <motion.div
-                className="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
+                className="h-full bg-of-primary rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: "56%" }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -495,13 +495,13 @@ export default function SettingsPage() {
             <p className="text-[10px] text-foreground-subtle">13 days remaining</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-gold-500/5 border border-gold-500/20 text-sm text-foreground-muted">
-            Billing management coming soon. Contact <a href="mailto:sales@tiresias.dev" className="text-gold-400 hover:text-gold-300 transition-colors">sales@tiresias.dev</a> for plan upgrades.
+          <div className="p-4 rounded-lg bg-of-primary/5 border border-of-primary/20 text-sm text-foreground-muted">
+            Billing management coming soon. Contact <a href="mailto:sales@tiresias.dev" className="text-of-primary hover:text-of-primary-fixed transition-colors">sales@tiresias.dev</a> for plan upgrades.
           </div>
 
           <a
             href="/pricing"
-            className="inline-block px-6 py-2.5 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+            className="inline-block px-6 py-2.5 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
           >
             Upgrade Plan
           </a>

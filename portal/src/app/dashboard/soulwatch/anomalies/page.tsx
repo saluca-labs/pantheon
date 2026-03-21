@@ -203,7 +203,7 @@ export default function AnomaliesPage() {
         <select
           value={filterSeverity}
           onChange={(e) => setFilterSeverity(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Severities</option>
           <option value="Critical">Critical</option>
@@ -214,7 +214,7 @@ export default function AnomaliesPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Statuses</option>
           <option value="open">Open</option>
@@ -225,7 +225,7 @@ export default function AnomaliesPage() {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 transition-all"
+          className="px-3 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-xs text-foreground focus:outline-none focus:border-of-primary/50 transition-all"
         >
           <option value="all">All Types</option>
           <option value="behavioral_drift">Behavioral Drift</option>
@@ -241,7 +241,7 @@ export default function AnomaliesPage() {
       </div>
 
       {/* Anomaly List */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -273,7 +273,7 @@ export default function AnomaliesPage() {
                           type="checkbox"
                           checked={selectedIds.has(anomaly.id)}
                           onChange={() => toggleSelect(anomaly.id)}
-                          className="rounded border-white/20 bg-navy-800 text-gold-500 focus:ring-gold-500/30 focus:ring-offset-0"
+                          className="rounded border-white/20 bg-of-surface-container-high text-of-primary focus:ring-of-primary/30 focus:ring-offset-0"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -325,12 +325,12 @@ export default function AnomaliesPage() {
                               transition={{ duration: 0.25, ease: "easeOut" }}
                               className="overflow-hidden"
                             >
-                              <div className="px-4 py-5 bg-navy-800/50 space-y-4">
+                              <div className="px-4 py-5 bg-of-surface-container-high/50 space-y-4">
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                   {/* Risk Score */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Risk Score</h4>
-                                    <div className="bg-navy-950 rounded-lg p-3 border border-white/5">
+                                    <div className="bg-of-surface-container-lowest rounded-lg p-3 border border-white/5">
                                       <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs text-foreground-subtle">Score</span>
                                         <span className={`text-lg font-bold font-mono ${
@@ -339,7 +339,7 @@ export default function AnomaliesPage() {
                                           "text-green-400"
                                         }`}>{anomaly.riskScore}/100</span>
                                       </div>
-                                      <div className="h-2 bg-navy-800 rounded-full overflow-hidden">
+                                      <div className="h-2 bg-of-surface-container-high rounded-full overflow-hidden">
                                         <motion.div
                                           className={`h-full rounded-full ${
                                             anomaly.riskScore >= 80 ? "bg-gradient-to-r from-red-600 to-red-400" :
@@ -357,7 +357,7 @@ export default function AnomaliesPage() {
                                   {/* Baseline vs Observed */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Baseline vs Observed</h4>
-                                    <div className="bg-navy-950 rounded-lg p-3 border border-white/5 space-y-2">
+                                    <div className="bg-of-surface-container-lowest rounded-lg p-3 border border-white/5 space-y-2">
                                       <div className="flex items-center justify-between text-xs">
                                         <span className="text-foreground-subtle">Baseline</span>
                                         <span className="text-green-400 font-mono">{anomaly.baselineValue}</span>
@@ -372,7 +372,7 @@ export default function AnomaliesPage() {
                                   {/* Evidence JSON */}
                                   <div className="space-y-2">
                                     <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">Evidence</h4>
-                                    <pre className="font-mono text-xs leading-relaxed text-teal-300 bg-navy-950 rounded-lg p-3 border border-white/5 overflow-x-auto whitespace-pre max-h-32">
+                                    <pre className="font-mono text-xs leading-relaxed text-of-primary bg-of-surface-container-lowest rounded-lg p-3 border border-white/5 overflow-x-auto whitespace-pre max-h-32">
                                       {JSON.stringify(anomaly.evidence, null, 2)}
                                     </pre>
                                   </div>

@@ -144,7 +144,7 @@ export default function UpstreamsPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
         >
           + Add Upstream
         </button>
@@ -158,7 +158,7 @@ export default function UpstreamsPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5 space-y-4"
+            className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-4"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -224,7 +224,7 @@ export default function UpstreamsPage() {
             </div>
 
             {/* Circuit Breaker Status */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-navy-800/50 border border-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-of-surface-container-high/50 border border-white/5">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-foreground-subtle">Circuit Breaker:</span>
                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${cbBadge[upstream.circuitBreaker]}`}>
@@ -251,7 +251,7 @@ export default function UpstreamsPage() {
               </div>
             )}
             {checkResults[upstream.id] === "checking" && (
-              <div className="p-2 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground-muted">
+              <div className="p-2 rounded-lg bg-of-surface-container-lowest border border-white/5 text-xs text-foreground-muted">
                 Running health check...
               </div>
             )}
@@ -260,7 +260,7 @@ export default function UpstreamsPage() {
               <button
                 onClick={() => handleHealthCheck(upstream.id)}
                 disabled={checkingId === upstream.id}
-                className="flex-1 px-3 py-2 rounded-lg border border-teal-500/30 text-teal-400 hover:bg-teal-500/10 text-xs font-medium transition-all disabled:opacity-40"
+                className="flex-1 px-3 py-2 rounded-lg border border-of-primary/30 text-of-primary hover:bg-of-primary/10 text-xs font-medium transition-all disabled:opacity-40"
               >
                 Health Check
               </button>
@@ -288,7 +288,7 @@ export default function UpstreamsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Add Upstream</h2>
                   <button onClick={() => setShowAddModal(false)} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -302,31 +302,31 @@ export default function UpstreamsPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Name</label>
                     <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                       placeholder="e.g. analytics-api"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Base URL</label>
                     <input type="text" value={newUrl} onChange={(e) => setNewUrl(e.target.value)}
                       placeholder="https://service.internal:8080"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all font-mono text-xs" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all font-mono text-xs" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Timeout (ms)</label>
                       <input type="number" value={newTimeout} onChange={(e) => setNewTimeout(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all font-mono" />
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Retries</label>
                       <input type="number" value={newRetries} onChange={(e) => setNewRetries(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all font-mono" />
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={handleAddUpstream} disabled={!newName.trim() || !newUrl.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Add Upstream
                   </button>
                 </div>
