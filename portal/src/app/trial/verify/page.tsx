@@ -156,7 +156,7 @@ export SOULAUTH_API_KEY="${activation.raw_key.slice(0, 12)}..."
 
 # Verify it works
 curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
-  https://tiresias.saluca.com/v1/auth/whoami`}
+  https://api.tiresias.network/v1/auth/whoami`}
                 </pre>
               </div>
 

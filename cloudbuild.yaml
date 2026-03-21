@@ -15,7 +15,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '--build-arg', 'NEXT_PUBLIC_SOULAUTH_API_URL=https://tiresias.saluca.com',
+      '--build-arg', 'NEXT_PUBLIC_SOULAUTH_API_URL=https://api.tiresias.network',
       '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0',
       '-f', 'portal/Dockerfile',
       './portal'
