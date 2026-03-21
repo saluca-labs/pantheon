@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { UsageWidget } from "@/components/dashboard/widgets/UsageWidget";
 
 interface SpendData {
   total_cost: number;
@@ -94,6 +95,14 @@ export default function OverviewPage() {
     endpoint: "/dash/v1/providers/health",
   });
 
+  const { data: usageAlerts } = useWidgetData<{
+    alert_level: string;
+    max_pct_used: number;
+  }>({
+    endpoint: "/v1/usage/alerts",
+    refreshInterval: 60_000,
+  });
+
   const sparklineCounts = (requests?.counts ?? [])
     .slice(-14)
     .map((d) => d.count);
@@ -115,6 +124,27 @@ export default function OverviewPage() {
 
   return (
     <div className="max-w-7xl space-y-6">
+      {/* Usage alert banner — yellow at 80%+, red at 100%+ */}
+      {usageAlerts && usageAlerts.alert_level !== "none" && (
+        <div
+          className={`flex items-center gap-3 rounded-xl px-5 py-3 border text-sm font-medium ${
+            usageAlerts.alert_level === "critical"
+              ? "bg-of-error/10 border-of-error/20 text-of-error"
+              : "bg-amber-400/10 border-amber-400/20 text-amber-400"
+          }`}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <span>
+            {usageAlerts.alert_level === "critical"
+              ? `You have reached ${usageAlerts.max_pct_used.toFixed(0)}% of your tier limit. Requests above 110% will be blocked.`
+              : `You are at ${usageAlerts.max_pct_used.toFixed(0)}% of your tier limit.`}{" "}
+            <a href="/settings/billing" className="underline underline-offset-2 font-bold">Upgrade plan</a>
+          </span>
+        </div>
+      )}
+
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {spendLoading ? (
@@ -238,6 +268,13 @@ export default function OverviewPage() {
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Usage Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1">
+          <UsageWidget />
         </div>
       </div>
 
