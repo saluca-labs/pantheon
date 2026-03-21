@@ -123,25 +123,25 @@ function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Layered animated gradient mesh background */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-navy-950" />
+        <div className="absolute inset-0 bg-of-surface-container-lowest" />
         <div
           className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.07]"
           style={{
-            background: "radial-gradient(circle, var(--gold-500) 0%, transparent 70%)",
+            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)",
             animation: "pulse-slow 8s ease-in-out infinite",
           }}
         />
         <div
           className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05]"
           style={{
-            background: "radial-gradient(circle, var(--teal-500) 0%, transparent 70%)",
+            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)",
             animation: "pulse-slow 10s ease-in-out infinite reverse",
           }}
         />
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.03]"
           style={{
-            background: "radial-gradient(circle, var(--gold-400) 0%, transparent 60%)",
+            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 60%)",
             animation: "pulse-slow 12s ease-in-out infinite 2s",
           }}
         />
@@ -150,7 +150,7 @@ function Hero() {
           className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(212,168,83,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,168,83,0.3) 1px, transparent 1px)",
+              "linear-gradient(rgba(90,218,206,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(90,218,206,0.3) 1px, transparent 1px)",
             backgroundSize: "80px 80px",
           }}
         />
@@ -179,7 +179,7 @@ function Hero() {
               animationDuration: p.dur,
               width: i % 3 === 0 ? "3px" : "2px",
               height: i % 3 === 0 ? "3px" : "2px",
-              background: i % 2 === 0 ? "var(--gold-400)" : "var(--teal-400)",
+              background: i % 2 === 0 ? "var(--of-primary)" : "var(--of-primary)",
             }}
           />
         ))}
@@ -194,8 +194,8 @@ function Hero() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mb-8 inline-flex items-center gap-2 rounded-full border border-border-accent px-4 py-1.5"
           >
-            <span className="h-2 w-2 rounded-full bg-gold-500 pulse-glow" />
-            <span className="text-xs font-medium text-gold-400 tracking-wide uppercase">SoulAuth is Generally Available</span>
+            <span className="h-2 w-2 rounded-full bg-of-primary " />
+            <span className="text-xs font-medium text-of-primary tracking-wide uppercase">SoulAuth is Generally Available</span>
           </motion.div>
 
           <motion.h1
@@ -227,13 +227,13 @@ function Hero() {
           >
             <Link
               href="/trial"
-              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
+              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-of-on-primary hover:bg-of-primary-fixed transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(90,218,206,0.1)] ring-1 ring-white/20 hover:ring-of-primary-fixed/50 hover:shadow-[0_0_40px_rgba(90,218,206,0.25)]"
             >
               Start Free Trial
             </Link>
             <Link
               href="/developers"
-              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-navy-800/50 transition-all"
+              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-of-surface-container-high/50 transition-all"
             >
               Read the Docs
             </Link>
@@ -254,8 +254,8 @@ function Hero() {
               className="w-full h-auto opacity-80 mix-blend-lighten"
             />
             {/* Extra gradient overlay to blend edges further into the page background */}
-            <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/20 to-navy-950/40" />
-            <div className="absolute inset-0 bg-gradient-to-l from-navy-950/60 via-transparent to-navy-950/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-of-background via-of-background/20 to-of-background/40" />
+            <div className="absolute inset-0 bg-gradient-to-l from-of-background/60 via-transparent to-of-background/60" />
           </div>
         </motion.div>
 
@@ -282,7 +282,7 @@ function AnimatedStat({ value, suffix, label }: { value: number; suffix?: string
     <motion.div
       ref={ref}
       variants={scaleIn}
-      className="glass-card rounded-2xl p-8 text-center card-hover-lift"
+      className="bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8 text-center "
     >
       <p className="text-5xl font-bold text-gradient-gold font-mono">
         {count}{suffix}
@@ -363,7 +363,7 @@ function PlatformOverview() {
       description:
         "Cryptographic agent identity, just-in-time authorization, and policy-as-code. Every agent request is verified. No standing permissions. No implicit trust.",
       badge: "GA",
-      badgeColor: "bg-teal-600/20 text-teal-400",
+      badgeColor: "bg-of-primary/20 text-of-primary",
       accentColor: "gold",
       icon: ShieldKeyIcon,
       href: "/platform/soulauth",
@@ -375,7 +375,7 @@ function PlatformOverview() {
       description:
         "Real-time behavioral analytics for your agent fleet. Sigma-compatible detection rules, anomaly scoring, and automated alerting - without reading agent payloads.",
       badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badgeColor: "bg-of-surface-container-highest text-foreground-subtle",
       accentColor: "teal",
       icon: EyeIcon,
       href: "/platform/soulwatch",
@@ -387,7 +387,7 @@ function PlatformOverview() {
       description:
         "Secure the perimeter between your agents and the outside world. Rate limiting, schema validation, and threat detection at the API layer.",
       badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badgeColor: "bg-of-surface-container-highest text-foreground-subtle",
       accentColor: "teal",
       icon: GateIcon,
       href: "/platform/soulgate",
@@ -422,8 +422,8 @@ function PlatformOverview() {
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.92 }}
                 transition={{ delay: 0.3 + i * 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className={`glass-card rounded-2xl p-8 flex flex-col transition-all duration-300 card-hover-lift group ${
-                  isGold ? "hover:border-border-accent glow-gold" : "hover:border-teal-600/30"
+                className={`bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8 flex flex-col transition-all duration-300  group ${
+                  isGold ? "hover:border-border-accent " : "hover:border-of-primary/30"
                 }`}
                 style={{ perspective: "1000px" }}
               >
@@ -431,8 +431,8 @@ function PlatformOverview() {
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 ${
                       isGold
-                        ? "bg-gold-500/10 text-gold-400"
-                        : "bg-teal-500/10 text-teal-400"
+                        ? "bg-of-primary/10 text-of-primary"
+                        : "bg-of-primary/10 text-of-primary"
                     }`}
                   >
                     <product.icon className="h-6 w-6" />
@@ -442,7 +442,7 @@ function PlatformOverview() {
                   </span>
                 </div>
 
-                <h3 className={`text-xl font-bold ${isGold ? "text-gold-400" : "text-teal-400"}`}>
+                <h3 className={`text-xl font-bold ${isGold ? "text-of-primary" : "text-of-primary"}`}>
                   {product.name}
                 </h3>
                 <p className="text-sm text-foreground-muted mt-1 font-medium">
@@ -456,8 +456,8 @@ function PlatformOverview() {
                   href={product.href}
                   className={`mt-6 inline-flex items-center text-sm font-semibold transition-colors ${
                     isGold
-                      ? "text-gold-400 hover:text-gold-300"
-                      : "text-teal-400 hover:text-teal-300"
+                      ? "text-of-primary hover:text-of-primary-fixed"
+                      : "text-of-primary hover:text-of-primary-fixed"
                   }`}
                 >
                   {product.cta}
@@ -510,7 +510,7 @@ function HowItWorks() {
       {/* Subtle bg accent */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-[0.04] rounded-full"
-        style={{ background: "radial-gradient(circle, var(--teal-500) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)" }}
       />
 
       <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8 relative pt-28 sm:pt-36">
@@ -544,16 +544,16 @@ function HowItWorks() {
                     initial={{ width: "0%" }}
                     animate={inView ? { width: "100%" } : { width: "0%" }}
                     transition={{ delay: 0.8 + i * 0.3, duration: 0.8, ease: "easeOut" }}
-                    className="h-px bg-gradient-to-r from-teal-500/40 to-transparent"
+                    className="h-px bg-gradient-to-r from-of-primary/40 to-transparent"
                   />
                 </div>
               )}
 
               <div className="text-center">
-                <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-navy-800/50 border border-border mb-6 transition-all duration-300 hover:border-teal-500/30 hover:bg-navy-800/80">
-                  <item.icon className="h-10 w-10 text-teal-400" />
+                <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-of-surface-container-high/50 border border-border mb-6 transition-all duration-300 hover:border-of-primary/30 hover:bg-of-surface-container-high/80">
+                  <item.icon className="h-10 w-10 text-of-primary" />
                 </div>
-                <p className="text-xs font-mono text-gold-500 tracking-widest mb-2">
+                <p className="text-xs font-mono text-of-primary tracking-widest mb-2">
                   STEP {item.step}
                 </p>
                 <h3 className="text-xl font-bold mb-3">{item.title}</h3>
@@ -609,7 +609,7 @@ function PrivacyFirst() {
                   transition={{ delay: 0.4 + i * 0.1, duration: 0.4 }}
                   className="flex items-start gap-3"
                 >
-                  <svg className="h-5 w-5 mt-0.5 text-gold-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-5 w-5 mt-0.5 text-of-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <span className="text-sm text-foreground-muted">{item}</span>
@@ -633,12 +633,12 @@ function PrivacyFirst() {
               {/* Inner core */}
               <div className="absolute inset-20 rounded-full bg-gradient-to-br from-gold-500/10 to-teal-500/10 border border-border-accent/30 flex items-center justify-center">
                 <div className="text-center">
-                  <svg className="h-10 w-10 mx-auto text-gold-400 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-10 w-10 mx-auto text-of-primary mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="10" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  <p className="text-xs font-mono text-gold-400">ZERO</p>
-                  <p className="text-xs font-mono text-gold-400">KNOWLEDGE</p>
+                  <p className="text-xs font-mono text-of-primary">ZERO</p>
+                  <p className="text-xs font-mono text-of-primary">KNOWLEDGE</p>
                 </div>
               </div>
 
@@ -646,7 +646,7 @@ function PrivacyFirst() {
               {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <div
                   key={deg}
-                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-teal-400/40"
+                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-of-primary/40"
                   style={{
                     transform: `rotate(${deg}deg) translateY(-140px) rotate(-${deg}deg)`,
                     animation: `pulse-slow 3s ease-in-out infinite ${deg * 10}ms`,
@@ -656,16 +656,16 @@ function PrivacyFirst() {
 
               {/* Flow arrows (metadata passing through) */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                <span className="text-[10px] font-mono text-teal-400/60 tracking-wider">METADATA</span>
-                <svg className="h-4 w-4 text-teal-400/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <span className="text-[10px] font-mono text-of-primary/60 tracking-wider">METADATA</span>
+                <svg className="h-4 w-4 text-of-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
               </div>
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                <svg className="h-4 w-4 text-teal-400/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 text-of-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
-                <span className="text-[10px] font-mono text-teal-400/60 tracking-wider">VERDICT</span>
+                <span className="text-[10px] font-mono text-of-primary/60 tracking-wider">VERDICT</span>
               </div>
 
               {/* Blocked data indicator */}
@@ -786,9 +786,9 @@ function EnterpriseFeatures() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
-              className="glass-card rounded-2xl p-8 card-hover-lift group"
+              className="bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8  group"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-navy-800 border border-border text-teal-400 mb-5 transition-all duration-300 group-hover:border-teal-500/30 group-hover:bg-navy-800/80">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-of-surface-container-high border border-border text-of-primary mb-5 transition-all duration-300 group-hover:border-of-primary/30 group-hover:bg-of-surface-container-high/80">
                 {feature.icon}
               </div>
               <h3 className="text-base font-semibold mb-2">{feature.title}</h3>
@@ -817,7 +817,7 @@ function FinalCTA() {
         className="absolute inset-0 opacity-[0.04]"
         style={{
           background:
-            "radial-gradient(ellipse at center, var(--gold-500) 0%, transparent 60%)",
+            "radial-gradient(ellipse at center, var(--of-primary) 0%, transparent 60%)",
         }}
       />
 
@@ -839,13 +839,13 @@ function FinalCTA() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/trial"
-              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
+              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-of-on-primary hover:bg-of-primary-fixed transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(90,218,206,0.1)] ring-1 ring-white/20 hover:ring-of-primary-fixed/50 hover:shadow-[0_0_40px_rgba(90,218,206,0.25)]"
             >
               Start Free Trial
             </Link>
             <Link
               href="/company#contact"
-              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-navy-800/50 transition-all"
+              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-of-surface-container-high/50 transition-all"
             >
               Talk to Sales
             </Link>
