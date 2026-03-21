@@ -39,7 +39,6 @@ scrape_configs:
       - json:
           expressions:
             severity: severity
-            template_id: template-id
             host: host
       - labels:
           severity:
