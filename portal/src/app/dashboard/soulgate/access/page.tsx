@@ -27,7 +27,7 @@ const INITIAL_RULES: AccessRule[] = [
 const typeBadge: Record<string, string> = {
   ip_allow: "bg-green-500/15 text-green-400 border border-green-500/20",
   ip_block: "bg-red-500/15 text-red-400 border border-red-500/20",
-  geo_allow: "bg-teal-500/15 text-teal-400 border border-teal-500/20",
+  geo_allow: "bg-teal-500/15 text-of-primary border border-of-primary/20",
   geo_deny: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
 };
 
@@ -50,7 +50,7 @@ const typeIcon: Record<string, React.ReactNode> = {
     </svg>
   ),
   geo_allow: (
-    <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <svg className="w-4 h-4 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
     </svg>
   ),
@@ -123,14 +123,14 @@ export default function AccessPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
         >
           + Add Rule
         </button>
       </div>
 
       {/* Rule Test Tool */}
-      <div className="glass-card rounded-xl p-5">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
         <h3 className="text-sm font-semibold text-foreground mb-3">Rule Test Tool</h3>
         <p className="text-xs text-foreground-muted mb-3">Enter an IP address to check if it would be allowed or blocked by the current ruleset.</p>
         <div className="flex gap-3">
@@ -139,12 +139,12 @@ export default function AccessPage() {
             value={testIp}
             onChange={(e) => { setTestIp(e.target.value); setTestResult(null); }}
             placeholder="e.g. 45.227.1.100"
-            className="flex-1 px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground font-mono placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground font-mono placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all"
           />
           <button
             onClick={handleTestIp}
             disabled={!testIp.trim()}
-            className="px-5 py-2.5 rounded-lg bg-amber-500 text-navy-950 text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 rounded-lg bg-amber-500 text-of-on-primary text-sm font-semibold hover:bg-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Test
           </button>
@@ -165,7 +165,7 @@ export default function AccessPage() {
       </div>
 
       {/* Rules Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -249,7 +249,7 @@ export default function AccessPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Add Access Rule</h2>
                   <button onClick={() => setShowAddModal(false)} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -262,7 +262,7 @@ export default function AccessPage() {
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Rule Type</label>
                     <select value={newType} onChange={(e) => setNewType(e.target.value as AccessRule["type"])}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                       <option value="ip_allow">IP Allow</option>
                       <option value="ip_block">IP Block</option>
                       <option value="geo_allow">Geo Allow</option>
@@ -275,19 +275,19 @@ export default function AccessPage() {
                     </label>
                     <input type="text" value={newValue} onChange={(e) => setNewValue(e.target.value)}
                       placeholder={newType.startsWith("ip") ? "e.g. 192.168.0.0/16" : "e.g. US, GB, DE"}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground font-mono placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground font-mono placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Note (optional)</label>
                     <input type="text" value={newNote} onChange={(e) => setNewNote(e.target.value)}
                       placeholder="e.g. Known bot farm"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
-                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                  <button onClick={() => setShowAddModal(false)} className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={handleAddRule} disabled={!newValue.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Add Rule
                   </button>
                 </div>

@@ -241,20 +241,20 @@ export default function RulesPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Detection Rules</h1>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold-500/15 text-gold-400 border border-gold-500/20">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-of-primary/15 text-of-primary border border-of-primary/20">
             {activeCount} active
           </span>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
         >
           + Add Rule
         </button>
       </div>
 
       {/* Rules Table */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -284,7 +284,7 @@ export default function RulesPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-foreground font-medium">{rule.name}</span>
                           {rule.builtIn && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-of-primary/10 text-of-primary border border-of-primary/20">
                               Built-in
                             </span>
                           )}
@@ -310,7 +310,7 @@ export default function RulesPage() {
                       <td className="px-4 py-3 text-foreground-muted font-mono text-xs">{rule.matches}</td>
                       <td className="px-4 py-3">
                         {rule.playbook ? (
-                          <span className="text-xs text-gold-400">{rule.playbook}</span>
+                          <span className="text-xs text-of-primary">{rule.playbook}</span>
                         ) : (
                           <span className="text-xs text-foreground-subtle italic">None</span>
                         )}
@@ -319,7 +319,7 @@ export default function RulesPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleTestRule(rule.id)}
-                            className="px-2 py-1 rounded text-xs text-teal-400 hover:bg-teal-500/10 transition-all"
+                            className="px-2 py-1 rounded text-xs text-of-primary hover:bg-of-primary/10 transition-all"
                           >
                             Test
                           </button>
@@ -357,13 +357,13 @@ export default function RulesPage() {
                               transition={{ duration: 0.25, ease: "easeOut" }}
                               className="overflow-hidden"
                             >
-                              <div className="px-4 py-4 bg-navy-800/50 space-y-3">
-                                <pre className="font-mono text-xs leading-relaxed text-teal-300 bg-navy-950 rounded-lg p-4 border border-white/5 overflow-x-auto whitespace-pre">
+                              <div className="px-4 py-4 bg-of-surface-container-high/50 space-y-3">
+                                <pre className="font-mono text-xs leading-relaxed text-of-primary bg-of-surface-container-lowest rounded-lg p-4 border border-white/5 overflow-x-auto whitespace-pre">
                                   {rule.sigmaYaml}
                                 </pre>
                                 {testRuleId === rule.id && (
                                   <div className={`p-3 rounded-lg border text-xs ${
-                                    testResult ? "bg-green-500/5 border-green-500/20 text-green-400" : "bg-navy-950 border-white/5 text-foreground-muted"
+                                    testResult ? "bg-green-500/5 border-green-500/20 text-green-400" : "bg-of-surface-container-lowest border-white/5 text-foreground-muted"
                                   }`}>
                                     {testResult || "Running test against historical data..."}
                                   </div>
@@ -405,7 +405,7 @@ export default function RulesPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">Add Detection Rule</h2>
                   <button onClick={() => { setShowCreateModal(false); resetCreateForm(); }} className="text-foreground-subtle hover:text-foreground transition-colors">
@@ -420,14 +420,14 @@ export default function RulesPage() {
                     <input
                       type="text" value={newRuleName} onChange={(e) => setNewRuleName(e.target.value)}
                       placeholder="e.g. Suspicious Admin API Access"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all"
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Severity</label>
                       <select value={newRuleSeverity} onChange={(e) => setNewRuleSeverity(e.target.value as SigmaRule["severity"])}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                         <option value="Critical">Critical</option>
                         <option value="High">High</option>
                         <option value="Medium">Medium</option>
@@ -438,7 +438,7 @@ export default function RulesPage() {
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Status</label>
                       <button type="button" onClick={() => setNewRuleActive(!newRuleActive)}
                         className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                          newRuleActive ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-navy-800 border-white/10 text-foreground-muted"
+                          newRuleActive ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-of-surface-container-high border-white/10 text-foreground-muted"
                         }`}>
                         {newRuleActive ? "Active" : "Disabled"}
                       </button>
@@ -447,17 +447,17 @@ export default function RulesPage() {
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Sigma YAML</label>
                     <textarea value={newRuleYaml} onChange={(e) => setNewRuleYaml(e.target.value)} rows={16}
-                      className="w-full px-4 py-3 rounded-lg bg-navy-950 border border-white/10 text-xs text-teal-300 font-mono leading-relaxed focus:outline-none focus:border-gold-500/50 transition-all resize-y"
+                      className="w-full px-4 py-3 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-of-primary font-mono leading-relaxed focus:outline-none focus:border-of-primary/50 transition-all resize-y"
                       spellCheck={false} />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
                   <button onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
-                    className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">
+                    className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">
                     Cancel
                   </button>
                   <button onClick={handleCreateRule} disabled={!newRuleName.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     Save Rule
                   </button>
                 </div>

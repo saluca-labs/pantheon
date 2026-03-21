@@ -119,7 +119,7 @@ export default function SoulGateDashboardPage() {
           </Link>
           <Link
             href="/dashboard/soulgate/upstreams"
-            className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+            className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
           >
             Manage Upstreams
           </Link>
@@ -139,7 +139,7 @@ export default function SoulGateDashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           )},
-          { label: "Active Upstreams", value: 5, color: "text-teal-400", icon: (
+          { label: "Active Upstreams", value: 5, color: "text-of-primary", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
             </svg>
@@ -155,7 +155,7 @@ export default function SoulGateDashboardPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="glass-card rounded-xl p-5"
+            className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5"
           >
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">{stat.label}</p>
@@ -171,7 +171,7 @@ export default function SoulGateDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Request Volume Chart */}
-        <div className="lg:col-span-2 glass-card rounded-xl p-5">
+        <div className="lg:col-span-2 bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Request Volume (Last 24 Hours)</h3>
           <div className="flex items-end gap-1 h-48">
             {HOURLY_REQUESTS.map((h, i) => {
@@ -189,7 +189,7 @@ export default function SoulGateDashboardPage() {
                     <motion.div
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="absolute -top-10 px-2 py-1 rounded-md bg-navy-700 border border-white/10 text-[10px] text-foreground font-mono shadow-lg whitespace-nowrap z-10"
+                      className="absolute -top-10 px-2 py-1 rounded-md bg-of-surface-container-highest border border-white/10 text-[10px] text-foreground font-mono shadow-lg whitespace-nowrap z-10"
                     >
                       {h.total.toLocaleString()} req / {h.blocked} blocked
                     </motion.div>
@@ -234,7 +234,7 @@ export default function SoulGateDashboardPage() {
         </div>
 
         {/* Block Reasons Breakdown */}
-        <div className="glass-card rounded-xl p-5">
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Block Reasons (24h)</h3>
           <div className="space-y-3">
             {BLOCK_REASONS.map((item, i) => (
@@ -249,7 +249,7 @@ export default function SoulGateDashboardPage() {
                   <span className="text-foreground-muted">{item.reason}</span>
                   <span className="text-foreground font-mono">{item.count.toLocaleString()} ({item.pct}%)</span>
                 </div>
-                <div className="h-2 bg-navy-800 rounded-full overflow-hidden">
+                <div className="h-2 bg-of-surface-container-high rounded-full overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full ${item.color}`}
                     initial={{ width: 0 }}
@@ -269,7 +269,7 @@ export default function SoulGateDashboardPage() {
       </div>
 
       {/* Top Blocked Agents */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <h3 className="text-sm font-semibold text-foreground">Top Blocked Agents (24h)</h3>
           <Link href="/dashboard/soulgate/audit" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
@@ -316,7 +316,7 @@ export default function SoulGateDashboardPage() {
       </div>
 
       {/* Upstream Health Grid */}
-      <div className="glass-card rounded-xl p-5">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">Upstream Health</h3>
           <Link href="/dashboard/soulgate/upstreams" className="text-xs text-amber-400 hover:text-amber-300 transition-colors">
@@ -363,13 +363,13 @@ export default function SoulGateDashboardPage() {
       </div>
 
       {/* Quick Navigation */}
-      <div className="glass-card rounded-xl p-5 space-y-3">
+      <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground mb-2">Quick Navigation</h3>
         {[
-          { label: "Upstreams", href: "/dashboard/soulgate/upstreams", count: "6 registered", color: "text-teal-400" },
+          { label: "Upstreams", href: "/dashboard/soulgate/upstreams", count: "6 registered", color: "text-of-primary" },
           { label: "Rate Limits", href: "/dashboard/soulgate/rate-limits", count: "4 policies", color: "text-amber-400" },
           { label: "Access Rules", href: "/dashboard/soulgate/access", count: "12 rules", color: "text-blue-400" },
-          { label: "API Keys", href: "/dashboard/soulgate/keys", count: "8 active", color: "text-gold-400" },
+          { label: "API Keys", href: "/dashboard/soulgate/keys", count: "8 active", color: "text-of-primary" },
           { label: "Audit Log", href: "/dashboard/soulgate/audit", count: "4,361 blocked", color: "text-red-400" },
         ].map((item, i) => (
           <motion.div
@@ -380,7 +380,7 @@ export default function SoulGateDashboardPage() {
           >
             <Link
               href={item.href}
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-navy-800/50 border border-white/5 hover:border-white/10 hover:bg-navy-800 transition-all duration-200 group"
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-of-surface-container-high/50 border border-white/5 hover:border-white/10 hover:bg-of-surface-container-high transition-all duration-200 group"
             >
               <span className="text-sm text-foreground-muted group-hover:text-foreground transition-colors">{item.label}</span>
               <div className="flex items-center gap-2">

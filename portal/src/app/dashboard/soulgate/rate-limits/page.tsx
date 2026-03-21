@@ -128,7 +128,7 @@ export default function RateLimitsPage() {
         </div>
         <button
           onClick={() => { resetForm(); setEditingId(null); setShowAddModal(true); }}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
         >
           + Add Policy
         </button>
@@ -147,7 +147,7 @@ export default function RateLimitsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`glass-card rounded-xl p-5 transition-all duration-200 ${!policy.enabled ? "opacity-60" : ""}`}
+              className={`bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 transition-all duration-200 ${!policy.enabled ? "opacity-60" : ""}`}
             >
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                 {/* Info */}
@@ -193,7 +193,7 @@ export default function RateLimitsPage() {
                         {policy.currentUsage} / {policy.rpm} RPM
                       </span>
                     </div>
-                    <div className="h-2.5 bg-navy-800 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-of-surface-container-high rounded-full overflow-hidden">
                       <motion.div
                         className={`h-full rounded-full ${
                           isHot ? "bg-gradient-to-r from-red-600 to-red-400" :
@@ -253,7 +253,7 @@ export default function RateLimitsPage() {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="glass-card rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-lg border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h2 className="text-lg font-semibold text-foreground">
                     {editingId ? "Edit Policy" : "Add Rate Limit Policy"}
@@ -269,12 +269,12 @@ export default function RateLimitsPage() {
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Policy Name</label>
                     <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                       placeholder="e.g. Standard Agent Limit"
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all" />
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Target</label>
                     <select value={newTarget} onChange={(e) => setNewTarget(e.target.value as RateLimitPolicy["target"])}
-                      className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all">
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
                       <option value="per_soulkey">Per Soulkey</option>
                       <option value="tenant_wide">Tenant-Wide</option>
                       <option value="per_ip">Per IP</option>
@@ -284,20 +284,20 @@ export default function RateLimitsPage() {
                     <div>
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Requests Per Minute</label>
                       <input type="number" value={newRpm} onChange={(e) => setNewRpm(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all font-mono" />
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Burst Allowance</label>
                       <input type="number" value={newBurst} onChange={(e) => setNewBurst(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground focus:outline-none focus:border-gold-500/50 transition-all font-mono" />
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
                   <button onClick={() => { setShowAddModal(false); setEditingId(null); resetForm(); }}
-                    className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
+                    className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">Cancel</button>
                   <button onClick={editingId ? handleEditPolicy : handleAddPolicy} disabled={!newName.trim()}
-                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     {editingId ? "Save Changes" : "Add Policy"}
                   </button>
                 </div>
