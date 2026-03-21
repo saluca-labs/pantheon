@@ -46,12 +46,19 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """Create tables on startup with retry for cloud-sql-proxy readiness."""
+    """Create tables on startup with retry for cloud-sql-proxy readiness.
+    Uses file lock to prevent DDL deadlock with multiple uvicorn workers."""
     import asyncio
+    import os
+    lock_file = "/tmp/.init_db_done"
+    if os.path.exists(lock_file):
+        return
     for attempt in range(60):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+            with open(lock_file, "w") as lf:
+                lf.write("done")
             return
         except Exception:
             if attempt < 59:
