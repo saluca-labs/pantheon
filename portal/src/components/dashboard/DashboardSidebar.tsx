@@ -294,6 +294,18 @@ const NAV_ITEMS: NavItem[] = [
     group: "mssp",
     icon: <Ban className="w-5 h-5" />,
   },
+  {
+    label: "Aletheia Audit",
+    href: "/dashboard/mssp/aletheia",
+    group: "mssp",
+    icon: <Eye className="w-5 h-5" />,
+  },
+  {
+    label: "Policy Push",
+    href: "/dashboard/mssp/aletheia/policies",
+    group: "mssp",
+    icon: <FileCode className="w-5 h-5" />,
+  },
   // Aletheia nav items -- only rendered when tier is enterprise+ (ALETH-14)
   {
     label: "Overview",

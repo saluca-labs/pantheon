@@ -77,3 +77,57 @@ class CrossTenantQuarantineRecord(BaseModel):
     quarantined_at: str
     released_at: Optional[str] = None
     reason: str
+
+
+# ---------------------------------------------------------------------------
+# MSSP Aletheia cross-tenant models (ALETH-15)
+# ---------------------------------------------------------------------------
+
+class CrossTenantCoTEntry(BaseModel):
+    """A single CoT chain entry attributed to a child tenant."""
+    id: str
+    chain_id: str
+    entry_index: int
+    request_id: str
+    tenant_id: str
+    tenant_name: Optional[str] = None
+    timestamp: str
+    model: str
+    provider: str
+    agent_id: Optional[str] = None
+    cot_hash: str
+    cot_token_count: int
+    entry_hash: str
+    content_stored: bool
+
+
+class CrossTenantCoTResponse(BaseModel):
+    """Paginated cross-tenant CoT chain query result."""
+    entries: list[CrossTenantCoTEntry]
+    total: int
+    tenant_count: int
+
+
+class PolicyPushRequest(BaseModel):
+    """Request body for POST /v1/mssp/aletheia/policies/push."""
+    target_tenant_ids: list[str] = Field(
+        ..., description="UUIDs of child tenants to push policy to"
+    )
+    policy_yaml: str = Field(
+        ..., min_length=1, description="YAML policy content to push"
+    )
+
+
+class PolicyPushResult(BaseModel):
+    """Per-tenant result of a policy push operation."""
+    tenant_id: str
+    tenant_name: Optional[str] = None
+    status: str  # "success" | "error"
+    detail: Optional[str] = None
+
+
+class PolicyPushResponse(BaseModel):
+    """Aggregate result of pushing policies to child tenants."""
+    results: list[PolicyPushResult]
+    success_count: int
+    error_count: int

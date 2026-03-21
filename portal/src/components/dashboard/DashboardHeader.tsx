@@ -38,6 +38,9 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/mssp": "MSSP Overview",
   "/dashboard/mssp/detection": "Cross-Tenant Detection",
   "/dashboard/mssp/saas": "SaaS Admin",
+  // MSSP Aletheia routes (Phase 17 Plan 02)
+  "/dashboard/mssp/aletheia": "MSSP Aletheia Audit",
+  "/dashboard/mssp/aletheia/policies": "MSSP Policy Push",
 };
 
 // Tiers that get a badge in the header (DTIER-04)
