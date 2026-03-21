@@ -220,6 +220,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("soulauth.tool_policy_engine_start_failed", error=str(e))
 
+    # Initialize Aletheia response sanitizer engine
+    try:
+        from src.aletheia.sanitizer_engine import init_sanitizer
+        init_sanitizer()
+        logger.info("soulauth.sanitizer_engine_started")
+    except Exception as e:
+        logger.warning("soulauth.sanitizer_engine_start_failed", error=str(e))
+
     # Start SIEM event forwarder if enabled
     if settings.siem_enabled:
         try:
@@ -415,6 +423,8 @@ from src.aletheia.router import router as aletheia_router
 app.include_router(aletheia_router)
 from src.aletheia.tool_evaluate_router import router as tool_evaluate_router
 app.include_router(tool_evaluate_router)
+from src.aletheia.sanitize_router import router as sanitize_router
+app.include_router(sanitize_router)
 from src.billing.router import router as billing_router
 from src.keys.router import router as keys_router
 app.include_router(billing_router)
