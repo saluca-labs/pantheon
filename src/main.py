@@ -5,7 +5,7 @@ Enterprise Agent Identity & Zero-Trust Authorization System.
 
 import structlog
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
@@ -395,6 +395,8 @@ from src.siem.router import router as siem_router
 app.include_router(siem_router)
 from src.saas.router import router as saas_router
 app.include_router(saas_router)
+from src.mssp.router import router as mssp_router
+app.include_router(mssp_router)
 
 
 @app.get(
