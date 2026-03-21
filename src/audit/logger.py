@@ -36,6 +36,7 @@ VALID_EVENT_TYPES = {
     "escalation_denied",
     "quarantine_activated",
     "quarantine_released",
+    "prh_finding",
 }
 
 
