@@ -308,10 +308,10 @@ export async function POST(request: NextRequest) {
 
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
+        // Stripe 2026-02-25 API: subscription lives under invoice.parent.subscription_details.subscription
+        const subRef = invoice.parent?.subscription_details?.subscription;
         const subscriptionId =
-          typeof invoice.subscription === "string"
-            ? invoice.subscription
-            : (invoice.subscription as Stripe.Subscription)?.id;
+          typeof subRef === "string" ? subRef : (subRef as Stripe.Subscription)?.id;
         console.log(
           "Invoice paid: customer=" +
             invoice.customer +
