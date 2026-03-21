@@ -142,7 +142,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("soulauth.analytics_start_failed", error=str(e))
 
-    # Initialize Sigma detection engine and response playbooks
+    # Initialize SIEM manager (v2 connector API)
+    try:
+        from src.siem._state import init_siem
+        init_siem()
+        logger.info("soulauth.siem_manager_started")
+    except Exception as e:
+        logger.warning("soulauth.siem_manager_start_failed", error=str(e))
+
+        # Initialize Sigma detection engine and response playbooks
     if settings.detection_enabled:
         try:
             import os
@@ -349,6 +357,8 @@ app.include_router(metrics_router)
 app.include_router(analytics_router)
 app.include_router(enforcement_router)
 app.include_router(detection_router)
+from src.siem.router import router as siem_router
+app.include_router(siem_router)
 
 
 @app.get(
