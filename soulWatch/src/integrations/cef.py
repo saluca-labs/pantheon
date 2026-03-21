@@ -53,6 +53,7 @@ SEVERITY_MAP: dict[str, int] = {
     "scope_violation": 7, "capability_issued": 2, "capability_used": 2,
     "capability_revoked": 5, "policy_synced": 1, "policy_violation": 8,
     "escalation_requested": 4, "escalation_approved": 4, "escalation_denied": 5,
+    "tool_invocation": 3,
 }
 
 EVENT_NAMES: dict[str, str] = {
@@ -65,6 +66,7 @@ EVENT_NAMES: dict[str, str] = {
     "policy_violation": "Policy Violation Detected",
     "escalation_requested": "Escalation Requested",
     "escalation_approved": "Escalation Approved", "escalation_denied": "Escalation Denied",
+    "tool_invocation": "Tool Invocation",
 }
 
 CEF_VERSION = "0"
@@ -121,4 +123,26 @@ def format_cef(event: AuditEvent) -> str:
         extensions.append(f"cs5={_escape_cef_extension(event.capability_id)}")
         extensions.append("cs5Label=capabilityId")
 
-    return f"{header}|{' '.join(extensions)}"
+    # Tool invocation specific extensions
+    if event.event_type == "tool_invocation":
+        ctx = event.context or {}
+        if ctx.get("command"):
+            extensions.append(f"cs3={_escape_cef_extension(str(ctx['command']))}")
+            extensions.append("cs3Label=command")
+        if ctx.get("agent_id"):
+            extensions.append(f"cs4={_escape_cef_extension(str(ctx['agent_id']))}")
+            extensions.append("cs4Label=agentId")
+        if ctx.get("policy_verdict"):
+            extensions.append(f"cs5={_escape_cef_extension(str(ctx['policy_verdict']))}")
+            extensions.append("cs5Label=policyVerdict")
+        if ctx.get("sanitizer_verdict"):
+            extensions.append(f"cs6={_escape_cef_extension(str(ctx['sanitizer_verdict']))}")
+            extensions.append("cs6Label=sanitizerVerdict")
+        if ctx.get("exit_code") is not None:
+            extensions.append(f"cn1={ctx['exit_code']}")
+            extensions.append("cn1Label=exitCode")
+        if ctx.get("duration_ms") is not None:
+            extensions.append(f"cn2={ctx['duration_ms']}")
+            extensions.append("cn2Label=durationMs")
+
+    return f"{header}|{' '.join(extensions)}" 

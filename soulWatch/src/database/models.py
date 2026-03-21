@@ -175,3 +175,37 @@ class SoulWatchCustomRule(Base):
         Index("idx_soulwatch_custom_rules_tenant", "tenant_id"),
         Index("idx_soulwatch_custom_rules_rule_id", "rule_id"),
     )
+
+
+class AletheiaToolInvocation(Base):
+    """Aletheia tool invocation telemetry from tiresias-exec."""
+    __tablename__ = "aletheia_tool_invocations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    invocation_id: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    agent_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+    command: Mapped[str] = mapped_column(String(500), nullable=False)
+    args: Mapped[dict] = mapped_column(JSON, nullable=False, default=list)
+    full_command: Mapped[str] = mapped_column(Text, nullable=False)
+    working_directory: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    exit_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    stdout_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stderr_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    stdout_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    stderr_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    policy_verdict: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    policy_rule_matched: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    sanitizer_mode: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    sanitizer_verdict: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    patterns_matched: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=list)
+    environment_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_now)
+
+    __table_args__ = (
+        Index("idx_tool_inv_tenant_time", "tenant_id", "timestamp"),
+        Index("idx_tool_inv_agent", "tenant_id", "agent_id"),
+        Index("idx_tool_inv_command", "tenant_id", "command"),
+    )

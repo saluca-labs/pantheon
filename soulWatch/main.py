@@ -30,6 +30,7 @@ from soulWatch.src.dashboard.router import router as dashboard_router
 from soulWatch.src.reports.router import router as reports_router
 from soulWatch.src.websocket.live import router as ws_router, init_ws_manager
 from soulWatch.src.monitoring.metrics import metrics_router, MetricsMiddleware
+from soulWatch.src.aletheia.router import router as aletheia_router
 from soulWatch.src.pipeline.processor import set_quarantine_engine as set_pipeline_quarantine, set_ws_manager
 
 settings = get_settings()
@@ -270,6 +271,7 @@ app.include_router(dashboard_router)
 app.include_router(reports_router)
 app.include_router(ws_router)
 app.include_router(metrics_router)
+app.include_router(aletheia_router)
 
 
 # Standalone mode: event ingestion endpoint

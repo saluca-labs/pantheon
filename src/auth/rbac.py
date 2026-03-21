@@ -40,6 +40,7 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "detection:*",
         "enforcement:*",
         "analytics:*",
+        "aletheia:*",
         "multi_tenant",
     ],
     "operator": [
@@ -51,12 +52,14 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "detection:read",
         "enforcement:read",
         "analytics:read",
+        "aletheia:read",
     ],
     "viewer": [
         "audit:read",
         "tenants:read",
         "detection:read",
         "analytics:read",
+        "aletheia:read",
     ],
 }
 
