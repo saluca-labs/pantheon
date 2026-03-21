@@ -129,6 +129,22 @@ func buildPayloadWithPolicy(identity AgentIdentity, command []string, cwd string
 	}
 }
 
+
+// buildPayloadWithPolicySanitizer creates a telemetry payload with actual policy and sanitizer results.
+func buildPayloadWithPolicySanitizer(identity AgentIdentity, command []string, cwd string, result ExecutionResult, policyResult PolicyEvalResponse, evaluated bool, sanitizerResult *SanitizeResponse) TelemetryPayload {
+	payload := buildPayloadWithPolicy(identity, command, cwd, result, policyResult, evaluated)
+
+	// Populate sanitizer telemetry from actual results
+	if sanitizerResult != nil && sanitizerResult.Verdict != "skipped" {
+		payload.Sanitizer.Mode = identity.SanitizeMode
+		payload.Sanitizer.Verdict = sanitizerResult.Verdict
+		payload.Sanitizer.PatternsMatched = extractPatternIDs(sanitizerResult.PatternsMatched)
+		payload.Sanitizer.ScanDurationMs = int64(sanitizerResult.ScanDurationMs)
+	}
+
+	return payload
+}
+
 func reportEvent(soulwatchURL string, token string, payload TelemetryPayload) error {
 	data, err := json.Marshal(payload)
 	if err != nil {

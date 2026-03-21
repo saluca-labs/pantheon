@@ -10,7 +10,7 @@ from typing import Optional
 
 from sqlalchemy import (
     String, Text, Boolean, DateTime, Float, Integer,
-    Index, ForeignKey, Uuid, JSON,
+    Index, ForeignKey, Uuid, JSON, LargeBinary,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -208,4 +208,26 @@ class AletheiaToolInvocation(Base):
         Index("idx_tool_inv_tenant_time", "tenant_id", "timestamp"),
         Index("idx_tool_inv_agent", "tenant_id", "agent_id"),
         Index("idx_tool_inv_command", "tenant_id", "command"),
+    )
+
+
+class AletheiaBlockedOutput(Base):
+    """Forensic storage of blocked tool outputs (encrypted with AES-256-GCM)."""
+    __tablename__ = "aletheia_blocked_outputs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    invocation_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    agent_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    command: Mapped[str] = mapped_column(String(500), nullable=False)
+    encrypted_output: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    output_nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    output_tag: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    output_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    patterns_matched: Mapped[dict] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        Index("idx_blocked_output_tenant", "tenant_id"),
+        Index("idx_blocked_output_created", "created_at"),
     )
