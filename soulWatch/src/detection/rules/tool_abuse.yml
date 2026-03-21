@@ -1,0 +1,91 @@
+title: Destructive Tool Command Detected
+id: aletheia-tool-001
+status: stable
+level: high
+description: >
+  Agent executed a potentially destructive CLI command such as rm -rf,
+  drop table, or force push. Requires immediate investigation.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+    full_command|contains:
+      - "rm -rf"
+      - "drop table"
+      - "delete --force"
+      - "push --force"
+      - "mkfs"
+      - "dd if="
+  condition: selection
+tags:
+  - attack.impact
+  - aletheia.destructive_tool
+response_playbook: investigate
+enabled: true
+---
+title: Tool Invocation with Non-Zero Exit Code Burst
+id: aletheia-tool-002
+status: stable
+level: medium
+description: >
+  Multiple tool invocations failing in rapid succession may indicate
+  misconfiguration, brute-force attempts, or abuse of CLI tooling.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+  filter_failures:
+    exit_code|gt: 0
+  condition: selection and filter_failures
+  timeframe: 5m
+  count: 10
+tags:
+  - aletheia.tool_errors
+response_playbook: rate_limit_and_alert
+enabled: true
+---
+title: Tool Policy Denial
+id: aletheia-tool-003
+status: stable
+level: high
+description: >
+  Agent attempted a tool invocation that was denied by the execution
+  policy engine. May indicate sandbox escape attempts or unauthorized
+  tooling access.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+    policy_verdict: deny
+  condition: selection
+tags:
+  - aletheia.policy_violation
+response_playbook: investigate
+enabled: true
+---
+title: Sanitizer Blocked Tool Output
+id: aletheia-tool-004
+status: stable
+level: high
+description: >
+  The output sanitizer blocked tool invocation output, indicating
+  potential sensitive data exfiltration or injection in command output.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+    sanitizer_verdict: block
+  condition: selection
+tags:
+  - aletheia.sanitizer_block
+  - attack.exfiltration
+response_playbook: investigate
+enabled: true
