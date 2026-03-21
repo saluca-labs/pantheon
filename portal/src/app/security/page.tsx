@@ -62,14 +62,14 @@ const complianceTimeline = [
   },
   {
     label: "SOC 2 Type I",
-    subtitle: "Security & Availability — targeted Q2 2026",
-    status: "Active",
-    statusColor: "text-teal-500 bg-teal-500/10",
+    subtitle: "Security & Availability — targeted Q3 2026",
+    status: "In Progress",
+    statusColor: "text-gold-500 bg-gold-500/10",
     year: "",
   },
   {
     label: "SOC 2 Type II",
-    subtitle: "Sustained Compliance — targeted Q4 2026",
+    subtitle: "Sustained Compliance — targeted Q1 2027",
     status: "Planned",
     statusColor: "text-foreground-subtle bg-navy-700/50",
     year: "",
@@ -77,7 +77,7 @@ const complianceTimeline = [
   {
     label: "ISO 27001",
     subtitle: "Information Security Management — targeted Q3 2026",
-    status: "Active",
+    status: "Planned",
     statusColor: "text-foreground-subtle bg-navy-700/50",
     year: "",
   },
