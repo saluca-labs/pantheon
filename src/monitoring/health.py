@@ -138,7 +138,7 @@ def check_policy_sync() -> dict:
         }
 
 
-async def run_health_checks() -> dict:
+async def run_health_checks(active_tier: str = "community", enabled_features: list[str] | None = None) -> dict:
     """
     Run all health checks and return aggregated status.
 
@@ -177,5 +177,7 @@ async def run_health_checks() -> dict:
         "status": overall,
         "service": "soulauth",
         "version": settings.app_version,
+        "active_tier": active_tier,
+        "enabled_features": enabled_features or [],
         "components": components,
     }
