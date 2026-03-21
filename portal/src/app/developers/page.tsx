@@ -18,7 +18,7 @@ soulauth dev  # starts local server with SQLite`,
   },
   {
     label: "API",
-    code: `curl -X POST https://tiresias.saluca.com/v1/auth/evaluate \\
+    code: `curl -X POST https://api.tiresias.network/v1/auth/evaluate \\
   -H "X-Soulkey: sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{"action": "read", "resource": "customer-data"}'`,
@@ -190,7 +190,7 @@ export default function DevelopersPage() {
                   Get API Key
                 </Link>
                 <a
-                  href="https://tiresias.saluca.com/docs"
+                  href="https://api.tiresias.network/docs"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-colors"
@@ -270,7 +270,7 @@ export default function DevelopersPage() {
               <p className="text-foreground-muted">35+ endpoints across 7 domains. RESTful, JSON-native, SoulKey-authenticated.</p>
             </div>
             <a
-              href="https://tiresias.saluca.com/docs"
+              href="https://api.tiresias.network/docs"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-1 shrink-0"

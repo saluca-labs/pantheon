@@ -442,7 +442,7 @@ export default function PoliciesPage() {
     setSaveSuccess(false);
 
     try {
-      const res = await fetch("https://tiresias.saluca.com/v1/soulauth/admin/policy/update", {
+      const res = await fetch("https://api.tiresias.network/v1/soulauth/admin/policy/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

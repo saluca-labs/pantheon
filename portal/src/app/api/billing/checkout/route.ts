@@ -2,8 +2,10 @@
  * Stripe Checkout Session creation endpoint.
  * POST /api/billing/checkout
  *
- * Creates a Stripe Checkout Session for the selected plan, then returns
- * the session URL for client-side redirect.
+ * Creates a Stripe Checkout Session for the selected plan.
+ * Flat-rate pricing — no per-agent billing.
+ *
+ * Canonical pricing source: Z:\saluca-corp\PRICING_POLICY.md v2.0
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -15,64 +17,31 @@ function getStripe() {
   });
 }
 
-const SOULAUTH_API_URL =
-  process.env.SOULAUTH_API_URL || "http://localhost:8000";
-
-// Pricing plans mapped to Stripe price IDs.
-// In production, set these via env vars. IDs below are placeholders
-// until Stripe products are created in the dashboard.
+// Flat-rate pricing plans — one platform, not three products.
+// Stripe price IDs are set via env vars. Fallbacks are descriptive placeholders.
 const PLANS: Record<
   string,
-  { name: string; stripe_price_id: string; price_cents: number; type: string }
+  { name: string; stripe_price_id: string; stripe_price_id_annual: string; price_cents: number; type: string }
 > = {
-  // Individual products
-  soulauth_community: {
-    name: "SoulAuth Community",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULAUTH_COMMUNITY || "price_soulauth_community",
+  open: {
+    name: "Tiresias Open",
+    stripe_price_id: "",
+    stripe_price_id_annual: "",
     price_cents: 0,
     type: "free",
   },
-  soulauth_pro: {
-    name: "SoulAuth Pro",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULAUTH_PRO || "price_soulauth_pro",
-    price_cents: 1500, // $15/agent/mo
+  starter: {
+    name: "Tiresias Starter",
+    stripe_price_id: process.env.STRIPE_PRICE_STARTER_MONTHLY || "price_tiresias_starter_monthly",
+    stripe_price_id_annual: process.env.STRIPE_PRICE_STARTER_ANNUAL || "price_tiresias_starter_annual",
+    price_cents: 4900, // $49/mo flat
     type: "recurring",
   },
-  soulwatch_starter: {
-    name: "SoulWatch Starter",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULWATCH_STARTER || "price_soulwatch_starter",
-    price_cents: 1000, // $10/agent/mo
-    type: "recurring",
-  },
-  soulwatch_pro: {
-    name: "SoulWatch Pro",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULWATCH_PRO || "price_soulwatch_pro",
-    price_cents: 2000, // $20/agent/mo
-    type: "recurring",
-  },
-  soulgate_starter: {
-    name: "SoulGate Starter",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULGATE_STARTER || "price_soulgate_starter",
-    price_cents: 1000, // $10/agent/mo
-    type: "recurring",
-  },
-  soulgate_pro: {
-    name: "SoulGate Pro",
-    stripe_price_id: process.env.STRIPE_PRICE_SOULGATE_PRO || "price_soulgate_pro",
-    price_cents: 2000, // $20/agent/mo
-    type: "recurring",
-  },
-  // Platform bundles
-  bundle_starter: {
-    name: "Platform Starter Bundle",
-    stripe_price_id: process.env.STRIPE_PRICE_BUNDLE_STARTER || "price_bundle_starter",
-    price_cents: 2900, // $29/agent/mo
-    type: "recurring",
-  },
-  bundle_pro: {
-    name: "Platform Pro Bundle",
-    stripe_price_id: process.env.STRIPE_PRICE_BUNDLE_PRO || "price_bundle_pro",
-    price_cents: 4500, // $45/agent/mo
+  pro: {
+    name: "Tiresias Pro",
+    stripe_price_id: process.env.STRIPE_PRICE_PRO_MONTHLY || "price_tiresias_pro_monthly",
+    stripe_price_id_annual: process.env.STRIPE_PRICE_PRO_ANNUAL || "price_tiresias_pro_annual",
+    price_cents: 19900, // $199/mo flat
     type: "recurring",
   },
 };
@@ -80,13 +49,13 @@ const PLANS: Record<
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { plan_id, quantity, tenant_id, soulkey, billing_period } = body;
+    const { plan_id, tenant_id, soulkey, billing_period, email } = body;
 
     // Validate plan
     const plan = PLANS[plan_id];
     if (!plan) {
       return NextResponse.json(
-        { error: "invalid_plan", detail: `Unknown plan: ${plan_id}` },
+        { error: "invalid_plan", detail: `Unknown plan: ${plan_id}. Valid plans: open, starter, pro` },
         { status: 400 }
       );
     }
@@ -96,8 +65,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "free_plan",
-          detail: "Community plan is free. No checkout required.",
-          redirect_url: "/billing/success?plan=community",
+          detail: "Open plan is free. No checkout required.",
+          redirect_url: "/billing/success?plan=open",
         },
         { status: 400 }
       );
@@ -111,12 +80,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const agentCount = Math.max(1, Math.min(quantity || 1, 10000));
-
-    // Determine price ID based on billing period
+    // Flat-rate — quantity is always 1, no per-agent multiplier
     const priceId =
       billing_period === "annual"
-        ? `${plan.stripe_price_id}_annual`
+        ? plan.stripe_price_id_annual
         : plan.stripe_price_id;
 
     // Create Stripe Checkout Session
@@ -126,20 +93,18 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price: priceId,
-          quantity: agentCount,
+          quantity: 1, // Flat-rate: always 1
         },
       ],
       metadata: {
         tenant_id,
         plan_id,
-        agent_count: String(agentCount),
-        soulauth_api_url: SOULAUTH_API_URL,
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.saluca.com"}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.saluca.com"}/pricing`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/pricing`,
       allow_promotion_codes: true,
       billing_address_collection: "required",
-      customer_email: body.email || undefined,
+      customer_email: email || undefined,
     });
 
     return NextResponse.json({
