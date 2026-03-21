@@ -399,6 +399,9 @@ from src.mssp.router import router as mssp_router
 from src.tenant.router import router as tenant_router
 app.include_router(mssp_router)
 app.include_router(tenant_router)
+from src.support.router import router as support_router
+app.include_router(support_router)
+
 
 
 @app.get(
