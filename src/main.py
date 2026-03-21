@@ -443,7 +443,7 @@ app.include_router(siem_router)
         },
     },
 )
-async def health_check(detail: bool = Query(False, description="Return detailed component health")):
+async def health_check(request: Request, detail: bool = Query(False, description="Return detailed component health")):
     """
     Service health check for load balancers, Kubernetes probes, and monitoring.
 
@@ -454,16 +454,26 @@ async def health_check(detail: bool = Query(False, description="Return detailed 
     Returns HTTP 503 if any critical component (database, JWT keys) is unhealthy.
     """
     from src.monitoring.health import run_health_checks
-    result = await run_health_checks()
+    from src.middleware.feature_gate import get_enabled_features
+
+    # Resolve active tier from app state (includes TIRESIAS_TIER override)
+    license_state = getattr(request.app.state, "license", None)
+    active_tier = license_state.tier if license_state else "community"
+    enabled_features = get_enabled_features(active_tier)
+
+    result = await run_health_checks(active_tier=active_tier, enabled_features=enabled_features)
     status_code = 503 if result["status"] == "unhealthy" else 200
 
     if not detail:
         # Simple mode: fast response for k8s probes and load balancers.
+        # Includes tier info for portal conditional rendering (TIER-05).
         return JSONResponse(
             content={
                 "status": result["status"],
                 "service": "soulauth",
                 "version": settings.app_version,
+                "active_tier": active_tier,
+                "enabled_features": enabled_features,
             },
             status_code=status_code,
         )
