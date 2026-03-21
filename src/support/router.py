@@ -22,6 +22,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from src.support.models import TicketCreate, TicketResponse, TicketListResponse, sla_deadline_for
 from src.support.notifications import send_ticket_notification
+from src.support.linear import create_linear_issue
 
 logger = structlog.get_logger(__name__)
 
@@ -105,9 +106,18 @@ async def create_ticket(payload: TicketCreate, request: Request) -> TicketRespon
 
     response = _ticket_to_response(ticket)
 
-    # Fire Telegram notification (non-blocking, non-fatal)
+    # Create Linear issue first (non-fatal)
+    linear_url = None
     try:
-        await send_ticket_notification(response, tenant_name)
+        linear_url = await create_linear_issue(response, tenant_name)
+        if linear_url:
+            ticket["linear_url"] = linear_url
+    except Exception as exc:
+        logger.warning("support.linear_create_error", ticket_id=ticket_id, error=str(exc))
+
+    # Fire Telegram notification with Linear URL (non-fatal)
+    try:
+        await send_ticket_notification(response, tenant_name, linear_url=linear_url)
     except Exception as exc:
         logger.warning("support.create_notification_error", ticket_id=ticket_id, error=str(exc))
 
