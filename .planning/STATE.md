@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Enterprise Tier System
-status: in_progress
-stopped_at: Phase 10 Plan 01 complete — 6-tier hierarchy, TIRESIAS_TIER override, /health tier exposure
-last_updated: "2026-03-20T05:12:00Z"
+milestone: v1.0
+milestone_name: — UI Redesign
+status: unknown
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-20T05:12:00.000Z"
 progress:
-  total_phases: 13
-  completed_phases: 9
+  total_phases: 12
+  completed_phases: 10
   total_plans: 24
-  completed_plans: 19
+  completed_plans: 22
 ---
 
 # STATE — Tiresias v2.1 Enterprise Tier System
@@ -28,8 +28,8 @@ progress:
 
 ## Current Position
 
-Phase: 10 (Tier Framework) — COMPLETE
-Plan: 1 of 1 complete — ready for Phase 11
+Phase: 12
+Plan: 01 complete
 
 ## Performance Metrics
 
@@ -52,7 +52,7 @@ Plan: 1 of 1 complete — ready for Phase 11
 |-------|------|--------------|--------|
 | 10 | Tier Framework | TIER-01, TIER-02, TIER-03, TIER-04, TIER-05 | COMPLETE (2026-03-20) |
 | 11 | MSSP Multi-Tenant | MSSP-01, MSSP-02, MSSP-03, MSSP-04, MSSP-05, MSSP-06 | Not started |
-| 12 | SaaS Management | SAAS-01, SAAS-02, SAAS-03, SAAS-04 | Not started |
+| 12 | SaaS Management | SAAS-01, SAAS-02, SAAS-03, SAAS-04 | COMPLETE (2026-03-20) |
 | 13 | Dashboard Tier-Awareness | DTIER-01, DTIER-02, DTIER-03, DTIER-04, DTIER-05 | Not started |
 
 ---
@@ -74,6 +74,8 @@ Plan: 1 of 1 complete — ready for Phase 11
 | TIER_ORDER rank comparison (Phase 10) | _tier_rank() index comparison replaces set membership — enables hierarchical inheritance without listing all tiers per feature |
 | 403 vs 402 for SKU gates (Phase 10) | mssp/saas routes return 403 (wrong SKU), lower-tier routes return 402 (upgrade needed) — distinct portal CTA per error |
 | validation_alias bypasses env_prefix (Phase 10) | TIRESIAS_TIER field uses validation_alias="TIRESIAS_TIER" to bypass SOULAUTH_ prefix for one deployment-level variable |
+| No Stripe SDK dep (Phase 12) | Webhook endpoint parses JSON directly; route already protected by saas-tier gate; HMAC-SHA256 signature verification deferred |
+| Suspend cascades, reactivate is selective (Phase 12) | Suspend sets all active soulkeys to suspended; reactivate only reinstates keys with suspended_by=saas_operator |
 
 ### Key Architectural Facts (carried forward)
 
@@ -102,9 +104,9 @@ None at roadmap creation.
 
 ## Session Continuity
 
-**Last session:** 2026-03-20
-**Stopped at:** Phase 10 Plan 01 complete — 6-tier hierarchy, TIRESIAS_TIER override, /health tier exposure
-**Next action:** Execute Phase 11 (MSSP Multi-Tenant) — run `/gsd:execute-phase 11`
+**Last session:** 2026-03-20T05:12:00.000Z
+**Stopped at:** Completed 12-01-PLAN.md
+**Next action:** Execute Phase 11 (MSSP Multi-Tenant) if not already done, then Phase 13 (Dashboard Tier-Awareness)
 
 ---
 
