@@ -9,7 +9,7 @@ steps:
     id: 'build-soulgate'
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0', '-f', 'soulWatch/Dockerfile', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.8', '-f', 'soulWatch/Dockerfile', '.']
     id: 'build-soulwatch'
 
   - name: 'gcr.io/cloud-builders/docker'
@@ -26,7 +26,7 @@ steps:
 images:
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.0.0'
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.0'
-  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.0'
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.8'
   - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.0'
 
 options:
