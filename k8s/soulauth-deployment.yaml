@@ -122,9 +122,10 @@ spec:
             - name: STRIPE_PRICE_PRO_ANNUAL
               value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
             - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
-              value: "price_enterprise_placeholder"
+              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
             - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
-              value: "price_enterprise_placeholder"
+            value: price_1TDjH4BkXMYmrc2LeWPVTZT0
+              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
             - name: SOULAUTH_LICENSE_REQUIRED
               value: "false"
             - name: SOULAUTH_LOG_LEVEL

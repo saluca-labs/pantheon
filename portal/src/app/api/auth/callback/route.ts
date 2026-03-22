@@ -11,13 +11,22 @@ const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
 const OIDC_SESSION_TTL = 28800; // 8 hours in seconds
 
+
+function getBaseUrl(request: NextRequest): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) return appUrl;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  return `${proto}://${host}`;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
   if (!code || !state) {
-    return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
   }
 
   try {
@@ -30,19 +39,19 @@ export async function GET(request: NextRequest) {
 
     if (!res.ok) {
       console.error("[OIDC callback] backend error:", res.status, await res.text());
-      return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
     const data = await res.json();
     const { session_token, tenant_id, role, user, expires_at } = data;
 
     if (!session_token || !tenant_id || !user?.email) {
-      return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
     const isSecure = process.env.NODE_ENV === "production";
 
-    const response = NextResponse.redirect(new URL("/dashboard", request.url));
+    const response = NextResponse.redirect(new URL("/dashboard", getBaseUrl(request)));
 
     // HttpOnly cookie: stores the raw OIDC session token (not readable by JS)
     response.cookies.set(OIDC_SESSION_COOKIE, session_token, {
@@ -74,6 +83,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[OIDC callback] unexpected error:", err);
-    return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
   }
 }

@@ -7,12 +7,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
 
+
+function getBaseUrl(request: NextRequest): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) return appUrl;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  return `${proto}://${host}`;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tenant = searchParams.get("tenant");
 
   if (!tenant) {
-    return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
   }
 
   try {
@@ -24,19 +33,19 @@ export async function GET(request: NextRequest) {
 
     if (!res.ok) {
       console.error("[OIDC authorize] backend error:", res.status, await res.text());
-      return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
     const data = await res.json();
     const { authorize_url } = data;
 
     if (!authorize_url) {
-      return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
     return NextResponse.redirect(authorize_url);
   } catch (err) {
     console.error("[OIDC authorize] unexpected error:", err);
-    return NextResponse.redirect(new URL("/login?error=sso_failed", request.url));
+    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
   }
 }
