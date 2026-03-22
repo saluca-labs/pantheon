@@ -54,6 +54,16 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: database-url
+            - name: SOULAUTH_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url
+            - name: SOULAUTH_DATABASE_URL_SYNC
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url-sync
             - name: SOULWATCH_SOULAUTH_URL
               value: "http://soulauth.tiresias.svc.cluster.local"
             - name: SOULWATCH_MODE
