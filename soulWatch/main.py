@@ -30,6 +30,7 @@ from soulWatch.src.dashboard.router import router as dashboard_router
 from soulWatch.src.reports.router import router as reports_router
 from soulWatch.src.websocket.live import router as ws_router, init_ws_manager
 from soulWatch.src.monitoring.metrics import metrics_router, MetricsMiddleware
+from soulWatch.src.security_headers import SecurityHeadersMiddleware
 from soulWatch.src.aletheia.router import router as aletheia_router
 from soulWatch.src.pipeline.processor import set_quarantine_engine as set_pipeline_quarantine, set_ws_manager
 
@@ -261,6 +262,8 @@ app.add_middleware(
 
 # Metrics middleware
 app.add_middleware(MetricsMiddleware)
+# Security headers — applied to all responses
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Register routers
 app.include_router(analytics_router)
