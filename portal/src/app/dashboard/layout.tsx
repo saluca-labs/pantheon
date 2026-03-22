@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import ChatWidget from "@/components/dashboard/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Dashboard | Tiresias",
@@ -30,6 +31,8 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+      {/* Floating support chatbot — visible across all dashboard pages */}
+      <ChatWidget />
       {/* Custom scrollbar styling */}
       <style>{`
         main::-webkit-scrollbar {
