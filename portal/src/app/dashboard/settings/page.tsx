@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBranding, type BrandingConfig } from "@/lib/branding";
 import { TierGate } from "@/components/dashboard/TierGate";
@@ -84,7 +84,7 @@ const UPGRADE_OPTIONS = [
   { tier: "enterprise", label: "Upgrade to Enterprise", priceId: "price_enterprise" },
 ];
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab) || "general";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
@@ -1019,5 +1019,13 @@ export default function SettingsPage() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SettingsPageInner />
+    </Suspense>
   );
 }
