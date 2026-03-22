@@ -191,6 +191,23 @@ class TrialActivationResponse(BaseModel):
     expires_at: datetime
 
 
+# --- Waitlist schemas ---
+
+class WaitlistJoinRequest(BaseModel):
+    contact_name: str
+    contact_email: str = Field(pattern=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+    company_name: str
+    company_domain: str
+    use_case: Optional[str] = None
+
+
+class WaitlistJoinResponse(BaseModel):
+    waitlist_id: uuid.UUID
+    status: str
+    message: str
+    position: Optional[int] = None
+
+
 # --- Policy sync schemas ---
 
 class PolicySyncResponse(BaseModel):

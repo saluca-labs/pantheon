@@ -123,25 +123,25 @@ function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Layered animated gradient mesh background */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-of-surface-container-lowest" />
+        <div className="absolute inset-0 bg-navy-950" />
         <div
           className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.07]"
           style={{
-            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)",
+            background: "radial-gradient(circle, var(--gold-500) 0%, transparent 70%)",
             animation: "pulse-slow 8s ease-in-out infinite",
           }}
         />
         <div
           className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05]"
           style={{
-            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)",
+            background: "radial-gradient(circle, var(--teal-500) 0%, transparent 70%)",
             animation: "pulse-slow 10s ease-in-out infinite reverse",
           }}
         />
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.03]"
           style={{
-            background: "radial-gradient(circle, var(--of-primary) 0%, transparent 60%)",
+            background: "radial-gradient(circle, var(--gold-400) 0%, transparent 60%)",
             animation: "pulse-slow 12s ease-in-out infinite 2s",
           }}
         />
@@ -150,7 +150,7 @@ function Hero() {
           className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(90,218,206,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(90,218,206,0.3) 1px, transparent 1px)",
+              "linear-gradient(rgba(212,168,83,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,168,83,0.3) 1px, transparent 1px)",
             backgroundSize: "80px 80px",
           }}
         />
@@ -179,7 +179,7 @@ function Hero() {
               animationDuration: p.dur,
               width: i % 3 === 0 ? "3px" : "2px",
               height: i % 3 === 0 ? "3px" : "2px",
-              background: i % 2 === 0 ? "var(--of-primary)" : "var(--of-primary)",
+              background: i % 2 === 0 ? "var(--gold-400)" : "var(--teal-400)",
             }}
           />
         ))}
@@ -192,10 +192,10 @@ function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-8 inline-flex items-center gap-2 rounded-full border border-of-outline-variant/15-accent px-4 py-1.5"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-border-accent px-4 py-1.5"
           >
-            <span className="h-2 w-2 rounded-full bg-of-primary " />
-            <span className="text-xs font-medium text-of-primary tracking-wide uppercase">SoulAuth is Generally Available</span>
+            <span className="h-2 w-2 rounded-full bg-gold-500 pulse-glow" />
+            <span className="text-xs font-medium text-gold-400 tracking-wide uppercase">SoulAuth is Generally Available</span>
           </motion.div>
 
           <motion.h1
@@ -204,16 +204,16 @@ function Hero() {
             transition={{ duration: 0.7, delay: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight"
           >
-            <span className="text-of-primary">Tiresias</span> sees threats.
+            <span className="text-gradient-gold">Tiresias</span> sees threats.
             <br />
-            <span className="text-of-on-surface-variant">Never data.</span>
+            <span className="text-foreground-muted">Never data.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-8 text-lg sm:text-xl text-of-on-surface-variant leading-relaxed max-w-2xl mx-auto"
+            className="mt-8 text-lg sm:text-xl text-foreground-muted leading-relaxed max-w-2xl mx-auto"
           >
             Zero-knowledge agent security for the enterprise. Identity, authorization,
             and runtime protection - without ever accessing your data.
@@ -227,13 +227,13 @@ function Hero() {
           >
             <Link
               href="/trial"
-              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-of-on-primary hover:bg-of-primary-fixed transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(90,218,206,0.1)] ring-1 ring-white/20 hover:ring-of-primary-fixed/50 hover:shadow-[0_0_40px_rgba(90,218,206,0.25)]"
+              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Start Free Trial
+              Join Beta Waitlist
             </Link>
             <Link
               href="/developers"
-              className="rounded-lg border border-of-outline-variant/15-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-of-surface-container-high/50 transition-all"
+              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-navy-800/50 transition-all"
             >
               Read the Docs
             </Link>
@@ -254,8 +254,8 @@ function Hero() {
               className="w-full h-auto opacity-80 mix-blend-lighten"
             />
             {/* Extra gradient overlay to blend edges further into the page background */}
-            <div className="absolute inset-0 bg-gradient-to-t from-of-background via-of-background/20 to-of-background/40" />
-            <div className="absolute inset-0 bg-gradient-to-l from-of-background/60 via-transparent to-of-background/60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/20 to-navy-950/40" />
+            <div className="absolute inset-0 bg-gradient-to-l from-navy-950/60 via-transparent to-navy-950/60" />
           </div>
         </motion.div>
 
@@ -282,12 +282,12 @@ function AnimatedStat({ value, suffix, label }: { value: number; suffix?: string
     <motion.div
       ref={ref}
       variants={scaleIn}
-      className="bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8 text-center "
+      className="glass-card rounded-2xl p-8 text-center card-hover-lift"
     >
-      <p className="text-5xl font-bold text-of-primary font-mono">
+      <p className="text-5xl font-bold text-gradient-gold font-mono">
         {count}{suffix}
       </p>
-      <p className="mt-3 text-sm text-of-on-surface-variant leading-relaxed">
+      <p className="mt-3 text-sm text-foreground-muted leading-relaxed">
         {label}
       </p>
     </motion.div>
@@ -319,7 +319,7 @@ function ProblemStatement() {
           <motion.p
             variants={fadeUp}
             custom={1}
-            className="mt-6 text-lg text-of-on-surface-variant leading-relaxed"
+            className="mt-6 text-lg text-foreground-muted leading-relaxed"
           >
             Every autonomous agent is an identity without governance. They call APIs,
             access data stores, and communicate with other agents - all with implicit
@@ -341,7 +341,7 @@ function ProblemStatement() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 0.8 }}
-          className="mt-6 text-center text-xs text-of-outline"
+          className="mt-6 text-center text-xs text-foreground-subtle"
         >
           Statistics are illustrative, based on industry trends and research estimates.
         </motion.p>
@@ -363,7 +363,7 @@ function PlatformOverview() {
       description:
         "Cryptographic agent identity, just-in-time authorization, and policy-as-code. Every agent request is verified. No standing permissions. No implicit trust.",
       badge: "GA",
-      badgeColor: "bg-of-primary/20 text-of-primary",
+      badgeColor: "bg-teal-600/20 text-teal-400",
       accentColor: "gold",
       icon: ShieldKeyIcon,
       href: "/platform/soulauth",
@@ -375,7 +375,7 @@ function PlatformOverview() {
       description:
         "Real-time behavioral analytics for your agent fleet. Sigma-compatible detection rules, anomaly scoring, and automated alerting - without reading agent payloads.",
       badge: "Coming Soon",
-      badgeColor: "bg-of-surface-container-highest text-of-outline",
+      badgeColor: "bg-navy-700 text-foreground-subtle",
       accentColor: "teal",
       icon: EyeIcon,
       href: "/platform/soulwatch",
@@ -387,7 +387,7 @@ function PlatformOverview() {
       description:
         "Secure the perimeter between your agents and the outside world. Rate limiting, schema validation, and threat detection at the API layer.",
       badge: "Coming Soon",
-      badgeColor: "bg-of-surface-container-highest text-of-outline",
+      badgeColor: "bg-navy-700 text-foreground-subtle",
       accentColor: "teal",
       icon: GateIcon,
       href: "/platform/soulgate",
@@ -406,9 +406,9 @@ function PlatformOverview() {
           className="mx-auto max-w-2xl text-center"
         >
           <motion.h2 variants={fadeUp} custom={0} className="text-3xl sm:text-4xl font-bold tracking-tight">
-            The <span className="text-of-primary">Soul*</span> Platform
+            The <span className="text-gradient-gold">Soul*</span> Platform
           </motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-of-on-surface-variant">
+          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-foreground-muted">
             End-to-end agent security. From identity to runtime to the API edge.
           </motion.p>
         </motion.div>
@@ -422,8 +422,8 @@ function PlatformOverview() {
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.92 }}
                 transition={{ delay: 0.3 + i * 0.15, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className={`bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8 flex flex-col transition-all duration-300  group ${
-                  isGold ? "hover:border-of-outline-variant/15-accent " : "hover:border-of-primary/30"
+                className={`glass-card rounded-2xl p-8 flex flex-col transition-all duration-300 card-hover-lift group ${
+                  isGold ? "hover:border-border-accent glow-gold" : "hover:border-teal-600/30"
                 }`}
                 style={{ perspective: "1000px" }}
               >
@@ -431,8 +431,8 @@ function PlatformOverview() {
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 ${
                       isGold
-                        ? "bg-of-primary/10 text-of-primary"
-                        : "bg-of-primary/10 text-of-primary"
+                        ? "bg-gold-500/10 text-gold-400"
+                        : "bg-teal-500/10 text-teal-400"
                     }`}
                   >
                     <product.icon className="h-6 w-6" />
@@ -442,13 +442,13 @@ function PlatformOverview() {
                   </span>
                 </div>
 
-                <h3 className={`text-xl font-bold ${isGold ? "text-of-primary" : "text-of-primary"}`}>
+                <h3 className={`text-xl font-bold ${isGold ? "text-gold-400" : "text-teal-400"}`}>
                   {product.name}
                 </h3>
-                <p className="text-sm text-of-on-surface-variant mt-1 font-medium">
+                <p className="text-sm text-foreground-muted mt-1 font-medium">
                   {product.tagline}
                 </p>
-                <p className="mt-4 text-sm text-of-on-surface-variant leading-relaxed flex-grow">
+                <p className="mt-4 text-sm text-foreground-muted leading-relaxed flex-grow">
                   {product.description}
                 </p>
 
@@ -456,8 +456,8 @@ function PlatformOverview() {
                   href={product.href}
                   className={`mt-6 inline-flex items-center text-sm font-semibold transition-colors ${
                     isGold
-                      ? "text-of-primary hover:text-of-primary-fixed"
-                      : "text-of-primary hover:text-of-primary-fixed"
+                      ? "text-gold-400 hover:text-gold-300"
+                      : "text-teal-400 hover:text-teal-300"
                   }`}
                 >
                   {product.cta}
@@ -510,7 +510,7 @@ function HowItWorks() {
       {/* Subtle bg accent */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-[0.04] rounded-full"
-        style={{ background: "radial-gradient(circle, var(--of-primary) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, var(--teal-500) 0%, transparent 70%)" }}
       />
 
       <div ref={ref} className="mx-auto max-w-7xl px-6 lg:px-8 relative pt-28 sm:pt-36">
@@ -523,7 +523,7 @@ function HowItWorks() {
           <motion.h2 variants={fadeUp} custom={0} className="text-3xl sm:text-4xl font-bold tracking-tight">
             How it <span className="text-gradient-teal">works</span>
           </motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-of-on-surface-variant">
+          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-foreground-muted">
             Three layers of defense. One unified platform.
           </motion.p>
         </motion.div>
@@ -544,20 +544,20 @@ function HowItWorks() {
                     initial={{ width: "0%" }}
                     animate={inView ? { width: "100%" } : { width: "0%" }}
                     transition={{ delay: 0.8 + i * 0.3, duration: 0.8, ease: "easeOut" }}
-                    className="h-px bg-gradient-to-r from-of-primary/40 to-transparent"
+                    className="h-px bg-gradient-to-r from-teal-500/40 to-transparent"
                   />
                 </div>
               )}
 
               <div className="text-center">
-                <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-of-surface-container-high/50 border border-of-outline-variant/15 mb-6 transition-all duration-300 hover:border-of-primary/30 hover:bg-of-surface-container-high/80">
-                  <item.icon className="h-10 w-10 text-of-primary" />
+                <div className="inline-flex h-24 w-24 items-center justify-center rounded-2xl bg-navy-800/50 border border-border mb-6 transition-all duration-300 hover:border-teal-500/30 hover:bg-navy-800/80">
+                  <item.icon className="h-10 w-10 text-teal-400" />
                 </div>
-                <p className="text-xs font-mono text-of-primary tracking-widest mb-2">
+                <p className="text-xs font-mono text-gold-500 tracking-widest mb-2">
                   STEP {item.step}
                 </p>
                 <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-sm text-of-on-surface-variant leading-relaxed max-w-xs mx-auto">
+                <p className="text-sm text-foreground-muted leading-relaxed max-w-xs mx-auto">
                   {item.description}
                 </p>
               </div>
@@ -588,9 +588,9 @@ function PrivacyFirst() {
           >
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
               We can&apos;t see your data.{" "}
-              <span className="text-of-primary">That&apos;s the point.</span>
+              <span className="text-gradient-gold">That&apos;s the point.</span>
             </h2>
-            <p className="mt-6 text-lg text-of-on-surface-variant leading-relaxed">
+            <p className="mt-6 text-lg text-foreground-muted leading-relaxed">
               Tiresias is built on a zero-knowledge architecture. We verify identities,
               evaluate policies, and detect anomalies - all without accessing, storing,
               or transmitting your agent payloads. Metadata flows through. Data never does.
@@ -609,10 +609,10 @@ function PrivacyFirst() {
                   transition={{ delay: 0.4 + i * 0.1, duration: 0.4 }}
                   className="flex items-start gap-3"
                 >
-                  <svg className="h-5 w-5 mt-0.5 text-of-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-5 w-5 mt-0.5 text-gold-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-sm text-of-on-surface-variant">{item}</span>
+                  <span className="text-sm text-foreground-muted">{item}</span>
                 </motion.li>
               ))}
             </ul>
@@ -627,18 +627,18 @@ function PrivacyFirst() {
           >
             <div className="relative w-full max-w-md aspect-square animate-float" style={{ animationDuration: "8s" }}>
               {/* Outer ring */}
-              <div className="absolute inset-0 rounded-full border border-of-outline-variant/15 opacity-40" />
+              <div className="absolute inset-0 rounded-full border border-border opacity-40" />
               {/* Middle ring */}
-              <div className="absolute inset-8 rounded-full border border-of-outline-variant/15-accent opacity-30" />
+              <div className="absolute inset-8 rounded-full border border-border-accent opacity-30" />
               {/* Inner core */}
-              <div className="absolute inset-20 rounded-full bg-gradient-to-br from-of-primary/10 to-of-primary/10 border border-of-outline-variant/15-accent/30 flex items-center justify-center">
+              <div className="absolute inset-20 rounded-full bg-gradient-to-br from-gold-500/10 to-teal-500/10 border border-border-accent/30 flex items-center justify-center">
                 <div className="text-center">
-                  <svg className="h-10 w-10 mx-auto text-of-primary mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-10 w-10 mx-auto text-gold-400 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="10" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
-                  <p className="text-xs font-mono text-of-primary">ZERO</p>
-                  <p className="text-xs font-mono text-of-primary">KNOWLEDGE</p>
+                  <p className="text-xs font-mono text-gold-400">ZERO</p>
+                  <p className="text-xs font-mono text-gold-400">KNOWLEDGE</p>
                 </div>
               </div>
 
@@ -646,7 +646,7 @@ function PrivacyFirst() {
               {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <div
                   key={deg}
-                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-of-primary/40"
+                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-teal-400/40"
                   style={{
                     transform: `rotate(${deg}deg) translateY(-140px) rotate(-${deg}deg)`,
                     animation: `pulse-slow 3s ease-in-out infinite ${deg * 10}ms`,
@@ -656,16 +656,16 @@ function PrivacyFirst() {
 
               {/* Flow arrows (metadata passing through) */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                <span className="text-[10px] font-mono text-of-primary/60 tracking-wider">METADATA</span>
-                <svg className="h-4 w-4 text-of-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <span className="text-[10px] font-mono text-teal-400/60 tracking-wider">METADATA</span>
+                <svg className="h-4 w-4 text-teal-400/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
               </div>
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-                <svg className="h-4 w-4 text-of-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-4 w-4 text-teal-400/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
-                <span className="text-[10px] font-mono text-of-primary/60 tracking-wider">VERDICT</span>
+                <span className="text-[10px] font-mono text-teal-400/60 tracking-wider">VERDICT</span>
               </div>
 
               {/* Blocked data indicator */}
@@ -774,7 +774,7 @@ function EnterpriseFeatures() {
           <motion.h2 variants={fadeUp} custom={0} className="text-3xl sm:text-4xl font-bold tracking-tight">
             Built for the <span className="text-gradient-teal">enterprise</span>
           </motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-of-on-surface-variant">
+          <motion.p variants={fadeUp} custom={1} className="mt-4 text-lg text-foreground-muted">
             Production-grade security infrastructure, not another proof-of-concept.
           </motion.p>
         </motion.div>
@@ -786,13 +786,13 @@ function EnterpriseFeatures() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ delay: 0.2 + i * 0.1, duration: 0.5 }}
-              className="bg-of-surface-container border border-of-outline-variant/20 rounded-2xl p-8  group"
+              className="glass-card rounded-2xl p-8 card-hover-lift group"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-of-surface-container-high border border-of-outline-variant/15 text-of-primary mb-5 transition-all duration-300 group-hover:border-of-primary/30 group-hover:bg-of-surface-container-high/80">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-navy-800 border border-border text-teal-400 mb-5 transition-all duration-300 group-hover:border-teal-500/30 group-hover:bg-navy-800/80">
                 {feature.icon}
               </div>
               <h3 className="text-base font-semibold mb-2">{feature.title}</h3>
-              <p className="text-sm text-of-on-surface-variant leading-relaxed">
+              <p className="text-sm text-foreground-muted leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
@@ -817,7 +817,7 @@ function FinalCTA() {
         className="absolute inset-0 opacity-[0.04]"
         style={{
           background:
-            "radial-gradient(ellipse at center, var(--of-primary) 0%, transparent 60%)",
+            "radial-gradient(ellipse at center, var(--gold-500) 0%, transparent 60%)",
         }}
       />
 
@@ -830,28 +830,28 @@ function FinalCTA() {
         >
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             Ready to secure your{" "}
-            <span className="text-of-primary">AI agents</span>?
+            <span className="text-gradient-gold">AI agents</span>?
           </h2>
-          <p className="mt-4 text-lg text-of-on-surface-variant">
-            Start with a free trial. No credit card required. Deploy in under 15 minutes.
+          <p className="mt-4 text-lg text-foreground-muted">
+            Join the beta waitlist. Be among the first to secure your AI agents.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/trial"
-              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-of-on-primary hover:bg-of-primary-fixed transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(90,218,206,0.1)] ring-1 ring-white/20 hover:ring-of-primary-fixed/50 hover:shadow-[0_0_40px_rgba(90,218,206,0.25)]"
+              className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Start Free Trial
+              Join Beta Waitlist
             </Link>
             <Link
               href="/company#contact"
-              className="rounded-lg border border-of-outline-variant/15-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-of-surface-container-high/50 transition-all"
+              className="rounded-lg border border-border-hover px-8 py-3.5 text-sm font-semibold text-foreground hover:bg-navy-800/50 transition-all"
             >
               Talk to Sales
             </Link>
           </div>
 
-          <p className="mt-8 text-xs text-of-outline">
+          <p className="mt-8 text-xs text-foreground-subtle">
             Free tier includes 1,000 agent authentications/month.
             Enterprise plans available.
           </p>
