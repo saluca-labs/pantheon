@@ -7,7 +7,7 @@ YAML-defined correlation rules to determine incident type and severity.
 import logging
 import re
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -117,8 +117,8 @@ class Correlator:
 
     def _prune_window(self) -> None:
         """Remove alerts older than the window from the buffer."""
-        cutoff = datetime.utcnow() - self._window
-        while self._buffer and (self._buffer[0].starts_at or datetime.min) < cutoff:
+        cutoff = datetime.now(tz=timezone.utc) - self._window
+        while self._buffer and (self._buffer[0].starts_at or datetime.min.replace(tzinfo=timezone.utc)) < cutoff:
             self._buffer.popleft()
 
     def _add_to_buffer(self, alerts: list[Alert]) -> None:
