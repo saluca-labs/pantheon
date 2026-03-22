@@ -13,6 +13,8 @@ COPY soulWatch/ soulWatch/
 COPY config/ config/
 COPY src/database/models.py src/database/models.py
 COPY src/database/connection.py src/database/connection.py
+COPY src/auth/__init__.py src/auth/__init__.py
+COPY src/auth/rbac.py src/auth/rbac.py
 
 # Create non-root user
 RUN groupadd -r soulwatch && useradd -r -g soulwatch soulwatch
