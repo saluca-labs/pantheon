@@ -86,17 +86,17 @@ export default function TenantHealth() {
           {/* Health items */}
           <div className="flex-1 space-y-2.5 min-h-0">
             {data.items.map((item) => (
-              <div key={item.name} className="flex items-center justify-between bg-navy-950/50 rounded-lg px-3 py-2">
+              <div key={item.name} className="flex items-center justify-between bg-of-background/50 rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
                   <span className={`h-2 w-2 rounded-full ${item.color}`} />
                   <div>
-                    <div className="text-xs text-foreground-muted">{item.name}</div>
-                    <div className="text-[10px] text-foreground-subtle">{item.status}</div>
+                    <div className="text-xs text-of-on-surface-variant">{item.name}</div>
+                    <div className="text-[10px] text-of-outline">{item.status}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-mono text-foreground">{item.value}</div>
-                  <div className="text-[10px] text-foreground-subtle">{item.metric}</div>
+                  <div className="text-[10px] text-of-outline">{item.metric}</div>
                 </div>
               </div>
             ))}

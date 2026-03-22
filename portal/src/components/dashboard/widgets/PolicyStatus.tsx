@@ -62,7 +62,7 @@ export default function PolicyStatus() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-lg font-bold font-mono text-foreground">{data.version}</div>
-              <div className="text-[10px] text-foreground-subtle">Current Version</div>
+              <div className="text-[10px] text-of-outline">Current Version</div>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
@@ -71,7 +71,7 @@ export default function PolicyStatus() {
                   {data.synced ? "Synced" : "Pending"}
                 </span>
               </div>
-              <div className="text-[10px] text-foreground-subtle">{formatTimeAgo(data.last_sync)}</div>
+              <div className="text-[10px] text-of-outline">{formatTimeAgo(data.last_sync)}</div>
             </div>
           </div>
 
@@ -82,25 +82,25 @@ export default function PolicyStatus() {
               { label: "Resources", value: data.resources_count.toString() },
               { label: "Personas", value: data.personas_count.toString() },
             ].map((s) => (
-              <div key={s.label} className="text-center bg-navy-950/50 rounded-lg py-1.5">
-                <div className="text-sm font-bold font-mono text-gold-400">{s.value}</div>
-                <div className="text-[10px] text-foreground-subtle">{s.label}</div>
+              <div key={s.label} className="text-center bg-of-background/50 rounded-lg py-1.5">
+                <div className="text-sm font-bold font-mono text-of-primary">{s.value}</div>
+                <div className="text-[10px] text-of-outline">{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Recent changes */}
           <div className="flex-1 min-h-0">
-            <div className="text-[10px] text-foreground-subtle uppercase mb-2">Recent Changes</div>
+            <div className="text-[10px] text-of-outline uppercase mb-2">Recent Changes</div>
             <div className="space-y-2">
               {data.recent_changes.length === 0 && (
-                <p className="text-xs text-foreground-subtle">No recent changes.</p>
+                <p className="text-xs text-of-outline">No recent changes.</p>
               )}
               {data.recent_changes.map((c, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
-                  <span className="text-gold-500 mt-0.5 shrink-0">&#8226;</span>
-                  <span className="text-foreground-muted flex-1">{c.message}</span>
-                  <span className="text-foreground-subtle text-[10px] shrink-0">{c.time}</span>
+                  <span className="text-of-primary mt-0.5 shrink-0">&#8226;</span>
+                  <span className="text-of-on-surface-variant flex-1">{c.message}</span>
+                  <span className="text-of-outline text-[10px] shrink-0">{c.time}</span>
                 </div>
               ))}
             </div>

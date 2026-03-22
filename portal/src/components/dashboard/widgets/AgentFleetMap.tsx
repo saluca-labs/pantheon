@@ -61,12 +61,12 @@ export default function AgentFleetMap() {
           {/* Grid */}
           <div className="flex-1 flex items-center justify-center min-h-0 relative">
             {hoveredAgent && (
-              <div className="absolute top-0 right-0 bg-navy-700 text-xs text-foreground px-2 py-1 rounded shadow-lg z-10 border border-[#818cf8]/20 font-mono">
+              <div className="absolute top-0 right-0 bg-of-surface-container-high text-xs text-foreground px-2 py-1 rounded shadow-lg z-10 border border-[#818cf8]/20 font-mono">
                 {hoveredAgent.soulkey}... ({(statusConfig[hoveredAgent.status] || statusConfig.inactive).label})
               </div>
             )}
             {agents.length === 0 ? (
-              <p className="text-xs text-foreground-subtle">No agents registered.</p>
+              <p className="text-xs text-of-outline">No agents registered.</p>
             ) : (
               <div className="grid grid-cols-6 gap-2 p-2">
                 {agents.map((agent) => {
@@ -94,13 +94,13 @@ export default function AgentFleetMap() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-4 mt-2 pt-2 border-t border-border">
+          <div className="flex items-center justify-center gap-4 mt-2 pt-2 border-t border-of-outline-variant/15">
             {Object.entries(statusConfig)
               .filter(([key]) => ["active", "elevated", "quarantined", "inactive"].includes(key))
               .map(([key, cfg]) => (
                 <div key={key} className="flex items-center gap-1">
                   <span className={`h-2 w-2 rounded-full ${cfg.bg}`} />
-                  <span className="text-[10px] text-foreground-subtle">{cfg.label}</span>
+                  <span className="text-[10px] text-of-outline">{cfg.label}</span>
                 </div>
               ))}
           </div>

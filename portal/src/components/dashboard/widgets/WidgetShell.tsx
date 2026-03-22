@@ -21,7 +21,7 @@ export function LoadingSkeleton({ lines = 4 }: { lines?: number }) {
     <div className="flex-1 space-y-3 animate-pulse">
       {widths.map((w, i) => (
         <div key={i} className="flex items-center gap-3">
-          <div className="h-3 rounded bg-navy-700/50" style={{ width: `${w}%` }} />
+          <div className="h-3 rounded bg-of-surface-container/50" style={{ width: `${w}%` }} />
         </div>
       ))}
     </div>
@@ -38,7 +38,7 @@ export function ErrorDisplay({ message, onRetry }: { message: string; onRetry?: 
       {onRetry && (
         <button
           onClick={onRetry}
-          className="text-[10px] px-3 py-1 rounded border border-border text-foreground-subtle hover:text-foreground hover:border-border-hover transition-colors"
+          className="text-[10px] px-3 py-1 rounded border border-of-outline-variant/15 text-of-outline hover:text-foreground hover:border-of-outline-variant/30 transition-colors"
         >
           Retry
         </button>
@@ -49,7 +49,7 @@ export function ErrorDisplay({ message, onRetry }: { message: string; onRetry?: 
 
 export default function WidgetShell({
   title,
-  titleColor = "text-gold-400",
+  titleColor = "text-of-primary",
   glowClass = "glow-gold",
   boxShadow,
   loading,
@@ -59,7 +59,7 @@ export default function WidgetShell({
 }: WidgetShellProps) {
   return (
     <div
-      className={`glass-card ${glowClass} rounded-xl p-4 h-full flex flex-col`}
+      className={`bg-of-surface-container border border-of-outline-variant/15 rounded-xl ${glowClass} rounded-xl p-4 h-full flex flex-col`}
       style={boxShadow ? { boxShadow } : undefined}
     >
       <h3 className={`text-sm font-semibold ${titleColor} uppercase tracking-wider mb-3`}>

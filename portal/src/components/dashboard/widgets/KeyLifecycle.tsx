@@ -93,7 +93,7 @@ export default function KeyLifecycle() {
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className={`text-lg font-bold font-mono ${s.color}`}>{s.value}</div>
-                <div className="text-[10px] text-foreground-subtle uppercase">{s.label}</div>
+                <div className="text-[10px] text-of-outline uppercase">{s.label}</div>
               </div>
             ))}
           </div>
@@ -101,19 +101,19 @@ export default function KeyLifecycle() {
           {/* Timeline */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             {data.timeline.length === 0 ? (
-              <p className="text-xs text-foreground-subtle text-center py-4">No key activity yet.</p>
+              <p className="text-xs text-of-outline text-center py-4">No key activity yet.</p>
             ) : (
-              <div className="relative pl-4 border-l border-gold-500/20 space-y-3">
+              <div className="relative pl-4 border-l border-of-primary/20 space-y-3">
                 {data.timeline.map((t, i) => (
                   <div key={i} className="relative">
-                    <span className="absolute -left-[21px] top-0.5 w-4 h-4 rounded-full bg-navy-900 border border-gold-500/30 flex items-center justify-center text-[8px] text-gold-400">
+                    <span className="absolute -left-[21px] top-0.5 w-4 h-4 rounded-full bg-of-surface-container-low border border-of-primary/30 flex items-center justify-center text-[8px] text-of-primary">
                       {t.icon}
                     </span>
                     <div className="text-xs">
-                      <span className="font-mono text-gold-400/70">{t.key}...</span>
-                      <span className="text-foreground-muted ml-1">{t.event}</span>
+                      <span className="font-mono text-of-primary/70">{t.key}...</span>
+                      <span className="text-of-on-surface-variant ml-1">{t.event}</span>
                     </div>
-                    <div className="text-[10px] text-foreground-subtle">{t.time}</div>
+                    <div className="text-[10px] text-of-outline">{t.time}</div>
                   </div>
                 ))}
               </div>
@@ -121,7 +121,7 @@ export default function KeyLifecycle() {
           </div>
 
           {/* Health indicator */}
-          <div className="mt-3 flex items-center gap-2 pt-3 border-t border-border">
+          <div className="mt-3 flex items-center gap-2 pt-3 border-t border-of-outline-variant/15">
             <span className={`h-2 w-2 rounded-full ${data.healthy ? "bg-green-400" : "bg-yellow-400"}`} />
             <span className={`text-xs ${data.healthy ? "text-green-400" : "text-yellow-400"}`}>
               {data.healthy ? "Key Infrastructure Healthy" : "Attention: Suspended Keys"}

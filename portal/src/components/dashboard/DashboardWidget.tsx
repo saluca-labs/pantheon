@@ -9,20 +9,20 @@ import { useDashboard, getWidgetDef, colSpanToSize, type WidgetConfig, type Widg
 
 const CATEGORY_ACCENT: Record<WidgetCategory, { border: string; bg: string; text: string; dot: string; gradientFrom: string; gradientTo: string }> = {
   security: {
-    border: "border-teal-500/20",
-    bg: "bg-teal-500/5",
-    text: "text-teal-400",
-    dot: "bg-teal-400",
-    gradientFrom: "from-teal-500/20",
-    gradientTo: "to-teal-500/0",
+    border: "border-of-primary/20",
+    bg: "bg-of-primary/5",
+    text: "text-of-primary",
+    dot: "bg-of-primary",
+    gradientFrom: "from-of-primary/20",
+    gradientTo: "to-of-primary/0",
   },
   management: {
-    border: "border-gold-500/20",
-    bg: "bg-gold-500/5",
-    text: "text-gold-400",
-    dot: "bg-gold-400",
-    gradientFrom: "from-gold-500/20",
-    gradientTo: "to-gold-500/0",
+    border: "border-of-primary/20",
+    bg: "bg-of-primary/5",
+    text: "text-of-primary",
+    dot: "bg-of-primary",
+    gradientFrom: "from-of-primary/20",
+    gradientTo: "to-of-primary/0",
   },
   analytics: {
     border: "border-blue-400/20",
@@ -130,7 +130,7 @@ export { WidgetIcon };
 function DragHandle({ listeners, attributes }: { listeners: ReturnType<typeof import("@dnd-kit/sortable").useSortable>["listeners"]; attributes: ReturnType<typeof import("@dnd-kit/sortable").useSortable>["attributes"] }) {
   return (
     <button
-      className="cursor-grab active:cursor-grabbing p-1.5 rounded-md hover:bg-white/[0.06] text-foreground-subtle hover:text-foreground-muted transition-all duration-200 hover:scale-110"
+      className="cursor-grab active:cursor-grabbing p-1.5 rounded-md hover:bg-white/[0.06] text-of-outline hover:text-of-on-surface-variant transition-all duration-200 hover:scale-110"
       {...listeners}
       {...attributes}
     >
@@ -162,7 +162,7 @@ function SizeButton({ widget }: { widget: WidgetConfig }) {
   return (
     <button
       onClick={cycle}
-      className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-white/[0.06] hover:bg-white/[0.12] text-foreground-muted hover:text-foreground transition-all duration-200 border border-white/[0.06] hover:border-white/[0.12]"
+      className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-white/[0.06] hover:bg-white/[0.12] text-of-on-surface-variant hover:text-foreground transition-all duration-200 border border-white/[0.06] hover:border-white/[0.12]"
       title={`Size: ${size} -- click to cycle`}
     >
       {label[size]}
@@ -204,9 +204,9 @@ export default function DashboardWidget({ widget, children }: DashboardWidgetPro
       ref={setNodeRef}
       style={style}
       className={`
-        group relative rounded-xl bg-navy-900/70 backdrop-blur-sm
+        group relative rounded-xl bg-of-surface-container-low/70 backdrop-blur-sm
         transition-all duration-250 ease-out
-        ${isDragging ? "opacity-50 scale-[1.02] shadow-2xl shadow-black/30 ring-2 ring-gold-500/30" : ""}
+        ${isDragging ? "opacity-50 scale-[1.02] shadow-2xl shadow-black/30 ring-2 ring-of-primary/30" : ""}
         ${isEditMode && !isDragging ? "ring-1 ring-dashed ring-white/10 animate-[pulse_3s_ease-in-out_infinite] hover:ring-white/20" : ""}
       `}
     >
@@ -224,8 +224,8 @@ export default function DashboardWidget({ widget, children }: DashboardWidgetPro
             {def?.name || widget.type}
           </h3>
           {category === "security" && (
-            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-teal-500/10 text-[10px] font-medium text-teal-400 border border-teal-500/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-of-primary/10 text-[10px] font-medium text-of-primary border border-of-primary/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-of-primary animate-pulse" />
               Live
             </span>
           )}
@@ -238,7 +238,7 @@ export default function DashboardWidget({ widget, children }: DashboardWidgetPro
               <SizeButton widget={widget} />
               <button
                 onClick={() => removeWidget(widget.id)}
-                className="p-1.5 rounded-md hover:bg-red-500/10 text-foreground-subtle hover:text-red-400 transition-all duration-200 hover:shadow-[0_0_8px_rgba(239,68,68,0.15)]"
+                className="p-1.5 rounded-md hover:bg-red-500/10 text-of-outline hover:text-red-400 transition-all duration-200 hover:shadow-[0_0_8px_rgba(239,68,68,0.15)]"
                 title="Remove widget"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -254,14 +254,14 @@ export default function DashboardWidget({ widget, children }: DashboardWidgetPro
       {/* Content */}
       <div className={`relative p-4 min-h-[120px]`}>
         {/* Subtle inner gradient for depth */}
-        <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-navy-950/20 pointer-events-none rounded-b-xl`} />
+        <div className={`absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-of-background/20 pointer-events-none rounded-b-xl`} />
         <div className="relative">
           {children || (
             <div className="flex flex-col items-center justify-center h-full min-h-[100px] gap-3 opacity-40">
               <div className={accent.text}>
                 <WidgetIcon type={widget.type} className="w-8 h-8" />
               </div>
-              <p className="text-xs text-foreground-subtle">Widget content here</p>
+              <p className="text-xs text-of-outline">Widget content here</p>
             </div>
           )}
         </div>

@@ -25,23 +25,23 @@ const severityColors = {
 };
 
 const statusColors = {
-  Investigating: "text-teal-400 bg-teal-500/10 border-teal-500/20",
+  Investigating: "text-of-primary bg-of-primary/10 border-of-primary/20",
   Resolved: "text-green-400 bg-green-500/10 border-green-500/20",
   Escalated: "text-red-400 bg-red-500/10 border-red-500/20",
 };
 
 export default function SigmaMatches() {
   return (
-    <div className="glass-card glow-teal rounded-xl p-4 h-full flex flex-col">
+    <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl glow-teal rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-teal-400 uppercase tracking-wider">Sigma Matches</h3>
-        <span className="text-xs text-foreground-muted">{mockMatches.length} rules triggered</span>
+        <h3 className="text-sm font-semibold text-of-primary uppercase tracking-wider">Sigma Matches</h3>
+        <span className="text-xs text-of-on-surface-variant">{mockMatches.length} rules triggered</span>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-foreground-subtle uppercase border-b border-border">
+            <tr className="text-of-outline uppercase border-b border-of-outline-variant/15">
               <th className="text-left py-2 font-medium">Rule</th>
               <th className="text-left py-2 font-medium">Sev</th>
               <th className="text-left py-2 font-medium">Agent</th>
@@ -51,15 +51,15 @@ export default function SigmaMatches() {
           </thead>
           <tbody>
             {mockMatches.map((m) => (
-              <tr key={m.id} className="border-b border-border/50 hover:bg-navy-800/30 transition-colors">
-                <td className="py-2 text-foreground-muted max-w-[140px] truncate">{m.ruleName}</td>
+              <tr key={m.id} className="border-b border-of-outline-variant/15/50 hover:bg-of-surface-container/30 transition-colors">
+                <td className="py-2 text-of-on-surface-variant max-w-[140px] truncate">{m.ruleName}</td>
                 <td className="py-2">
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${severityColors[m.severity]}`}>
                     {m.severity === "critical" ? "CRIT" : m.severity.toUpperCase().slice(0, 4)}
                   </span>
                 </td>
-                <td className="py-2 font-mono text-teal-400/70">{m.agent}...</td>
-                <td className="py-2 text-foreground-subtle">{m.time}</td>
+                <td className="py-2 font-mono text-of-primary/70">{m.agent}...</td>
+                <td className="py-2 text-of-outline">{m.time}</td>
                 <td className="py-2">
                   <span className={`px-1.5 py-0.5 rounded border text-[10px] ${statusColors[m.status]}`}>
                     {m.status}
