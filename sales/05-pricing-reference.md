@@ -4,113 +4,117 @@
 
 ---
 
-## Individual Product Pricing
+## Platform Pricing (Flat-Rate)
 
-### SoulAuth - Agent Identity & Zero-Trust Auth
+Tiresias bills per platform tier -- not per agent, not per seat.
+All tiers include unlimited users. Pricing matches what is shown on tiresias.network/pricing.
 
-| Tier | Monthly | Annual (save 20%) | Key Limits |
-|---|---|---|---|
-| Community | **Free** | Free | 1 agent, 1K API calls/mo |
-| Pro | **$15**/agent/mo | $12/agent/mo | Unlimited agents, 50K calls/mo |
-| Enterprise | Custom | Custom | Unlimited everything |
-
-### SoulWatch - Runtime Security Monitoring
-
-| Tier | Monthly | Annual (save 20%) | Key Limits |
-|---|---|---|---|
-| Starter | **$10**/agent/mo | $8/agent/mo | 7-day retention, email alerts |
-| Pro | **$20**/agent/mo | $16/agent/mo | 30-day retention, 1 SIEM |
-| Enterprise | Custom | Custom | 90-day retention, unlimited SIEM |
-
-### SoulGate - API Security Gateway
-
-| Tier | Monthly | Annual (save 20%) | Key Limits |
-|---|---|---|---|
-| Starter | **$10**/agent/mo | $8/agent/mo | 7-day audit retention |
-| Pro | **$20**/agent/mo | $16/agent/mo | 30-day retention, API keys |
-| Enterprise | Custom | Custom | 90-day retention, dedicated instance |
+| Tier | Monthly | Annual (save ~20%) | Agents | Retention |
+|---|---|---|---|---|
+| **Community** | **Free** | Free | 25 agents | 7 days |
+| **Starter** | **$49/mo** | $39/mo | 50 agents | 30 days |
+| **Pro** | **$199/mo** | $169/mo | 250 agents | 90 days |
+| **Enterprise** | **$799/mo** | $699/mo | Unlimited | Custom |
+| **MSSP** | $2,499/mo base | Contact us | Unlimited | Per-tenant |
+| **SaaS** | Custom | Custom | Unlimited | Managed |
 
 ---
 
-## Platform Bundles (All Three Products)
+## Value Comparison (Per-Agent Breakdown)
 
-| Bundle | Monthly | Annual (save 20%) | Savings vs. Individual |
+*Use this section to illustrate value -- do not quote per-agent pricing to customers.*
+
+For a team running 10 agents:
+
+| Scenario | Tier | Effective per-agent | vs. Point Solutions |
 |---|---|---|---|
-| Platform Starter | **$29**/agent/mo | $23/agent/mo | Save 17% |
-| Platform Pro | **$45**/agent/mo | $36/agent/mo | Save 18% |
-| Platform Enterprise | Custom | Custom | Volume discounts |
+| Observability only | Community | $0/agent | Free |
+| Production security | Starter ($49/mo) | ~$5/agent | SoulAuth Pro alone would be $150/mo |
+| Full detection + response | Pro ($199/mo) | ~$20/agent | SIEM + EDR equivalents start at $500+/mo |
+| Enterprise compliance | Enterprise ($799/mo) | ~$80/agent | Custom SLAs, dedicated support |
 
 ---
 
-## Bundle Breakdown
+## Tier Capabilities at a Glance
 
-### Platform Starter ($29/agent/mo)
-- SoulAuth Pro (full identity & auth)
-- SoulWatch Starter (anomaly detection)
-- SoulGate Starter (gateway & rate limiting)
-- Buying separately: $35/agent/mo
+### Community (Free)
+- Full observability dashboard
+- PRH prompt risk scoring (read-only)
+- 18-type anomaly detection (baselines)
+- Self-hosted, unlimited seats, community support
 
-### Platform Pro ($45/agent/mo)
-- SoulAuth Pro (full identity & auth)
-- SoulWatch Pro (SIEM, playbooks, custom rules)
-- SoulGate Pro (API keys, access controls)
-- Buying separately: $55/agent/mo
+### Starter ($49/mo)
+- Everything in Community
+- Session replay + cost dashboard
+- Provider health monitoring
+- Basic analytics
+- Email support (48h)
 
-### Platform Enterprise (Custom)
-- All three products at Enterprise tier
-- Volume discounts
-- Custom SLAs and deployment
-- Quarterly security reviews
-- On-premise option
+### Pro ($199/mo)
+- Everything in Starter
+- PRH Engine (full -- 60 patterns, 6 categories)
+- Behavioral anomaly detection with alerting
+- Sigma detection rules + response playbooks
+- Quarantine management + prompt forensics
+- Delegation + RBAC
+- Priority support (24h)
+
+### Enterprise ($799/mo)
+- Everything in Pro
+- SIEM connectors (CEF/syslog/webhook)
+- Policy enforcement (audit -> warn -> enforce)
+- Custom detection rules
+- Audit log export (tamper-evident)
+- Dedicated support (8h SLA)
+
+### MSSP ($2,499/mo base)
+- Everything in Enterprise
+- Multi-tenant hierarchy (parent-child)
+- Cross-tenant detection + quarantine views
+- White-label branding
+- Tenant provisioning API
+- Per-tenant pricing from $199/tenant
 
 ---
 
 ## Free Trial
 
-- 14 days, full Pro access to all three products
+- 14 days, full Pro access
 - No credit card required
-- After trial: subscribe to individual products or bundle, or downgrade to SoulAuth Community (free forever)
+- After trial: subscribe or continue on Community (free forever)
 
 ---
 
-## Startup Program
+## Annual Discount
 
-- Platform Pro free for 12 months
-- Qualification: under $5M in funding, fewer than 50 employees
-- Contact: contact@saluca.com
+Annual billing saves approximately 20%:
+- Starter: $39/mo vs $49/mo (billed annually as $468/yr)
+- Pro: $169/mo vs $199/mo (billed annually as $2,028/yr)
+- Enterprise: $699/mo vs $799/mo (billed annually as $8,388/yr)
+
+---
+
+## Common Scenarios
+
+| Scenario | Recommended | Monthly Cost |
+|---|---|---|
+| Indie dev / hobbyist | Community | Free |
+| Small team, production | Starter | $49/mo |
+| AI-native security team | Pro | $199/mo |
+| Compliance-driven enterprise | Enterprise | $799/mo |
+| MSSP / managed security | MSSP | $2,499/mo + per-tenant |
+| Evaluation / trial | Free Trial | $0 for 14 days |
 
 ---
 
 ## What Counts as an Agent?
 
-An "agent" is any autonomous software entity that receives a SoulAuth identity (soulkey):
+An "agent" is any autonomous software entity with a Tiresias identity:
 - AI agents and assistants
 - Bots and automated workflows
 - Microservices with agent identity
-- Any automated process
 
-**Human users do not count** toward the agent limit.
-
----
-
-## Common Pricing Scenarios
-
-| Scenario | Recommended | Monthly Cost (10 agents) |
-|---|---|---|
-| Just need identity/auth | SoulAuth Pro | $150/mo |
-| Identity + basic monitoring | Platform Starter | $290/mo |
-| Full security stack | Platform Pro | $450/mo |
-| Compliance-driven enterprise | Platform Enterprise | Custom |
-| Testing/evaluation | Free Trial | $0 for 14 days |
-| Indie dev / hobbyist | SoulAuth Community | Free |
-
----
-
-## Discount Stacking
-
-- Annual billing: 20% off
-- Platform bundle: 17-18% off vs. individual
-- **Maximum combined**: Annual Platform Pro = $36/agent/mo (35% off vs. monthly individual pricing)
+**Human users do not count** toward the agent limit. All tiers include unlimited seats.
 
 ---
 

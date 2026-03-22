@@ -1,13 +1,17 @@
 """
-Stripe billing webhook handler — subscription lifecycle -> tenant tier updates.
+Stripe billing webhook handler -- subscription lifecycle -> tenant tier updates.
 Implements SAAS-03.
 
 Stripe sends events as JSON to /v1/saas/billing/webhook.
-We do NOT verify the Stripe signature (no Stripe SDK dep) — the endpoint is
-protected by SaaS-tier route guard. Signature verification can be added later
-by reading STRIPE_WEBHOOK_SECRET from env and doing HMAC-SHA256 comparison.
+Signature verification is performed via HMAC-SHA256 against STRIPE_WEBHOOK_SECRET.
+If STRIPE_WEBHOOK_SECRET is not set, verification is skipped with a warning
+(graceful degradation for dev environments).
 """
 
+import hashlib
+import hmac
+import os
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -40,6 +44,87 @@ STRIPE_TIER_MAP: dict[str, str] = {
     "price_mssp": "mssp",
     "price_saas": "saas",
 }
+
+
+def verify_stripe_signature(raw_body: bytes, signature_header: str) -> bool:
+    """
+    Verify a Stripe webhook signature using HMAC-SHA256.
+
+    Stripe signature header format:
+        t=<timestamp>,v1=<hex-signature>[,v1=<hex-signature>...]
+
+    Verification steps (per Stripe docs):
+      1. Extract t= (Unix timestamp) and all v1= values.
+      2. Build the signed payload: f"{timestamp}.{raw_body_utf8}".
+      3. Compute HMAC-SHA256(webhook_secret, signed_payload).
+      4. Compare against each v1 value using constant-time comparison.
+      5. Reject if timestamp is older than 5 minutes (replay protection).
+
+    Returns True if valid, False otherwise.
+    If STRIPE_WEBHOOK_SECRET is not configured, logs a warning and returns True
+    (graceful degradation -- useful in dev/staging without a real webhook secret).
+    """
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+    if not webhook_secret:
+        logger.warning(
+            "saas.billing.webhook_secret_missing",
+            detail="STRIPE_WEBHOOK_SECRET not set -- skipping signature verification",
+        )
+        return True
+
+    timestamp: Optional[str] = None
+    v1_signatures: list[str] = []
+
+    for part in signature_header.split(","):
+        part = part.strip()
+        if part.startswith("t="):
+            timestamp = part[2:]
+        elif part.startswith("v1="):
+            v1_signatures.append(part[3:])
+
+    if not timestamp or not v1_signatures:
+        logger.warning(
+            "saas.billing.webhook_signature_malformed",
+            header=signature_header[:120],
+        )
+        return False
+
+    # Replay protection -- reject events older than 5 minutes
+    try:
+        event_ts = int(timestamp)
+    except ValueError:
+        logger.warning("saas.billing.webhook_timestamp_invalid", timestamp=timestamp)
+        return False
+
+    age_seconds = int(time.time()) - event_ts
+    if age_seconds > 300:
+        logger.warning(
+            "saas.billing.webhook_replay_rejected",
+            age_seconds=age_seconds,
+            event_ts=event_ts,
+        )
+        return False
+
+    # Compute expected HMAC-SHA256 signature
+    signed_payload = f"{timestamp}.{raw_body.decode('utf-8', errors='replace')}"
+    expected = hmac.new(
+        webhook_secret.encode("utf-8"),
+        signed_payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    for v1 in v1_signatures:
+        try:
+            if hmac.compare_digest(expected, v1):
+                return True
+        except (TypeError, ValueError):
+            continue
+
+    logger.warning(
+        "saas.billing.webhook_signature_mismatch",
+        expected_prefix=expected[:8],
+    )
+    return False
 
 
 def _resolve_tier_from_stripe(event_data: dict) -> Optional[str]:
@@ -86,7 +171,7 @@ async def handle_stripe_event(
 
     Handled events:
     - customer.subscription.updated -> update tier from plan
-    - customer.subscription.deleted -> downgrade to "starter"
+    - customer.subscription.deleted -> downgrade to "community" (free tier)
     - customer.subscription.created -> same as updated
     - invoice.paid                  -> clear payment_failed flags, log receipt
     - invoice.payment_failed        -> flag tenant with payment failure metadata
@@ -164,7 +249,7 @@ async def handle_stripe_event(
         await db.execute(
             update(SoulTenant)
             .where(SoulTenant.id == tenant.id)
-            .values(tier="starter", updated_at=datetime.now(timezone.utc))
+            .values(tier="community", updated_at=datetime.now(timezone.utc))
         )
         logger.info(
             "saas.billing.subscription_cancelled",
@@ -175,7 +260,7 @@ async def handle_stripe_event(
             "action": "subscription_cancelled",
             "tenant_id": str(tenant.id),
             "old_tier": old_tier,
-            "new_tier": "starter",
+            "new_tier": "community",
         }
 
     elif event_type == "invoice.paid":
@@ -198,7 +283,7 @@ async def handle_stripe_event(
             subscription_id=subscription_id,
         )
 
-        # Clear any payment_failed flag — delegate to grace module
+        # Clear any payment_failed flag -- delegate to grace module
         if tenant:
             await resolve_payment(db, tenant.id)
 
@@ -239,7 +324,7 @@ async def handle_stripe_event(
             attempt_count=attempt_count,
         )
 
-        # Trigger grace period — delegate to billing.grace module (BILL-04)
+        # Trigger grace period -- delegate to billing.grace module (BILL-04)
         if tenant:
             await handle_payment_failed(db, tenant.id)
 
