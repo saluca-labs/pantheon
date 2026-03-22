@@ -1,0 +1,106 @@
+name: Deploy Tiresias v2.3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'soulWatch/**'
+      - 'k8s/**'
+      - '.github/workflows/deploy-v2.3.yaml'
+  workflow_dispatch:
+
+env:
+  PROJECT: salucainfrastructure
+  REGION: us-central1
+  CLUSTER: tiresias-v2
+  REGISTRY: us-central1-docker.pkg.dev/salucainfrastructure/tiresias
+  SOULWATCH_VERSION: v2.3.1
+  SOULAUTH_VERSION: v2.3.0
+  SOULGATE_VERSION: v2.3.0
+  PORTAL_VERSION: v2.3.0
+
+jobs:
+  build-soulwatch:
+    name: Build soulwatch v2.3.1
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build soulwatch image
+        run: |
+          docker build             -t ${{ env.REGISTRY }}/soulwatch:${{ env.SOULWATCH_VERSION }}             -f soulWatch/Dockerfile             .
+
+      - name: Push soulwatch image
+        run: |
+          docker push ${{ env.REGISTRY }}/soulwatch:${{ env.SOULWATCH_VERSION }}
+
+  deploy:
+    name: Deploy to GKE tiresias-v2
+    runs-on: ubuntu-latest
+    needs: build-soulwatch
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+          project_id: ${{ env.PROJECT }}
+
+      - name: Apply namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Apply all deployments (drain-then-add strategy)
+        run: |
+          kubectl apply -f k8s/soulauth-deployment.yaml
+          kubectl apply -f k8s/soulgate-deployment.yaml
+          kubectl apply -f k8s/soulwatch-deployment.yaml
+          kubectl apply -f k8s/portal-deployment.yaml
+
+      - name: Apply ingress and policies
+        run: |
+          kubectl apply -f k8s/backendconfigs.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f k8s/hpa.yaml
+          kubectl apply -f k8s/network-policy.yaml
+
+      - name: Wait for rollouts
+        run: |
+          kubectl rollout status deployment/soulauth -n tiresias --timeout=300s
+          kubectl rollout status deployment/soulgate -n tiresias --timeout=300s
+          kubectl rollout status deployment/soulwatch -n tiresias --timeout=300s
+          kubectl rollout status deployment/portal -n tiresias --timeout=300s
+
+      - name: Verify pods
+        run: |
+          kubectl get pods -n tiresias
+          kubectl get deployments -n tiresias
