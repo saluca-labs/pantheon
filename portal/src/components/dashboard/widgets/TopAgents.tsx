@@ -80,7 +80,7 @@ export default function TopAgents() {
       {agents && (
         <div className="flex-1 space-y-2 min-h-0 overflow-y-auto">
           {agents.length === 0 && (
-            <div className="text-center py-4 text-xs text-foreground-subtle">No agents found.</div>
+            <div className="text-center py-4 text-xs text-of-outline">No agents found.</div>
           )}
           {agents.map((agent) => {
             const isFirst = agent.rank === 1;
@@ -88,26 +88,26 @@ export default function TopAgents() {
               <div
                 key={agent.rank}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                  isFirst ? "bg-gold-500/5 border border-gold-500/20" : "bg-navy-950/50 hover:bg-navy-800/30"
+                  isFirst ? "bg-of-primary/5 border border-of-primary/20" : "bg-of-background/50 hover:bg-of-surface-container/30"
                 }`}
               >
                 <span
                   className={`text-sm font-bold font-mono w-5 text-center ${
-                    isFirst ? "text-gold-400" : "text-foreground-subtle"
+                    isFirst ? "text-of-primary" : "text-of-outline"
                   }`}
                 >
                   {agent.rank}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`font-mono text-xs ${isFirst ? "text-gold-400" : "text-[#818cf8]/70"}`}>
+                    <span className={`font-mono text-xs ${isFirst ? "text-of-primary" : "text-[#818cf8]/70"}`}>
                       {agent.soulkey}...
                     </span>
-                    <span className="text-xs text-foreground-muted truncate">{agent.persona}</span>
+                    <span className="text-xs text-of-on-surface-variant truncate">{agent.persona}</span>
                   </div>
                 </div>
                 <MiniSparkline data={agent.sparkline} highlight={isFirst} />
-                <span className={`text-xs font-mono tabular-nums ${isFirst ? "text-gold-400" : "text-foreground-muted"}`}>
+                <span className={`text-xs font-mono tabular-nums ${isFirst ? "text-of-primary" : "text-of-on-surface-variant"}`}>
                   {agent.evaluations.toLocaleString()}
                 </span>
               </div>

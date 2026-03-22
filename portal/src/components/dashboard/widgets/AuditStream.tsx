@@ -23,15 +23,15 @@ const mockEvents: AuditEvent[] = [
 ];
 
 const typeColors: Record<string, string> = {
-  EVALUATE: "text-foreground-subtle",
-  KEY_EVENT: "text-gold-400",
+  EVALUATE: "text-of-outline",
+  KEY_EVENT: "text-of-primary",
   ANOMALY: "text-orange-400",
   POLICY: "text-[#818cf8]",
 };
 
 const typeBg: Record<string, string> = {
   EVALUATE: "bg-foreground-subtle/10",
-  KEY_EVENT: "bg-gold-500/10",
+  KEY_EVENT: "bg-of-primary/10",
   ANOMALY: "bg-orange-500/10",
   POLICY: "bg-[#818cf8]/10",
 };
@@ -43,23 +43,23 @@ const resultColors: Record<string, string> = {
 
 export default function AuditStream() {
   return (
-    <div className="glass-card rounded-xl p-4 h-full flex flex-col" style={{ boxShadow: "0 0 20px rgba(129,140,248,0.1)" }}>
+    <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-4 h-full flex flex-col" style={{ boxShadow: "0 0 20px rgba(129,140,248,0.1)" }}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-[#818cf8] uppercase tracking-wider">Audit Stream</h3>
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-[10px] text-foreground-subtle">Live</span>
+          <span className="text-[10px] text-of-outline">Live</span>
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 bg-navy-950 rounded-lg p-2 font-mono text-[11px] leading-relaxed">
+      <div className="flex-1 overflow-y-auto min-h-0 bg-of-background rounded-lg p-2 font-mono text-[11px] leading-relaxed">
         {mockEvents.map((evt, i) => (
-          <div key={i} className="hover:bg-navy-800/30 px-1 rounded">
-            <span className="text-foreground-subtle">[{evt.timestamp}]</span>{" "}
+          <div key={i} className="hover:bg-of-surface-container/30 px-1 rounded">
+            <span className="text-of-outline">[{evt.timestamp}]</span>{" "}
             <span className={`px-1 rounded ${typeBg[evt.type]} ${typeColors[evt.type]}`}>
               {evt.type.padEnd(9)}
             </span>{" "}
-            <span className="text-foreground-muted">{evt.message}</span>
+            <span className="text-of-on-surface-variant">{evt.message}</span>
             {evt.result && (
               <>
                 {" \u2192 "}

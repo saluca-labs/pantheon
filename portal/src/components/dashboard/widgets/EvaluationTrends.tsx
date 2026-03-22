@@ -94,11 +94,11 @@ export default function EvaluationTrends() {
           <div className="flex gap-4 mb-4">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-green-400" />
-              <span className="text-xs text-foreground-muted">Allow rate: <span className="text-green-400 font-mono">{data.allowRate}%</span></span>
+              <span className="text-xs text-of-on-surface-variant">Allow rate: <span className="text-green-400 font-mono">{data.allowRate}%</span></span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-red-400" />
-              <span className="text-xs text-foreground-muted">Deny rate: <span className="text-red-400 font-mono">{data.denyRate}%</span></span>
+              <span className="text-xs text-of-on-surface-variant">Deny rate: <span className="text-red-400 font-mono">{data.denyRate}%</span></span>
             </div>
           </div>
 
@@ -131,7 +131,7 @@ export default function EvaluationTrends() {
                       }}
                     />
                   </div>
-                  <span className="text-[10px] text-foreground-subtle font-mono">{d.day}</span>
+                  <span className="text-[10px] text-of-outline font-mono">{d.day}</span>
                 </div>
               );
             })}
@@ -139,12 +139,12 @@ export default function EvaluationTrends() {
 
           {/* Top denied */}
           {data.topDenied.length > 0 && (
-            <div className="border-t border-border pt-2">
-              <div className="text-[10px] text-foreground-subtle uppercase mb-1">Top Denied Resources</div>
+            <div className="border-t border-of-outline-variant/15 pt-2">
+              <div className="text-[10px] text-of-outline uppercase mb-1">Top Denied Resources</div>
               {data.topDenied.map((r) => (
                 <div key={r.resource} className="flex items-center justify-between text-xs py-0.5">
                   <span className="font-mono text-red-400/70">{r.resource}</span>
-                  <span className="text-foreground-subtle">{r.count}</span>
+                  <span className="text-of-outline">{r.count}</span>
                 </div>
               ))}
             </div>

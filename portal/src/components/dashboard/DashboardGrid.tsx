@@ -95,11 +95,11 @@ export default function DashboardGrid() {
           {/* Empty state */}
           {sortedLayout.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
-              <svg className="w-16 h-16 text-foreground-subtle mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <svg className="w-16 h-16 text-of-outline mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" />
               </svg>
-              <p className="text-foreground-muted text-sm mb-1">No widgets added</p>
-              <p className="text-foreground-subtle text-xs">Click &quot;Edit Layout&quot; and add widgets from the palette</p>
+              <p className="text-of-on-surface-variant text-sm mb-1">No widgets added</p>
+              <p className="text-of-outline text-xs">Click &quot;Edit Layout&quot; and add widgets from the palette</p>
             </div>
           )}
         </div>
@@ -109,7 +109,7 @@ export default function DashboardGrid() {
       <DragOverlay dropAnimation={{ duration: 200, easing: "ease-out" }}>
         {activeWidget ? (
           <div
-            className="rounded-xl border border-gold-500/30 bg-navy-900/90 backdrop-blur-lg shadow-2xl shadow-black/40 opacity-90 scale-[1.03]"
+            className="rounded-xl border border-of-primary/30 bg-of-surface-container-low/90 backdrop-blur-lg shadow-2xl shadow-black/40 opacity-90 scale-[1.03]"
             style={{ gridColumn: `span ${activeWidget.colSpan}`, width: "100%" }}
           >
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
@@ -118,7 +118,7 @@ export default function DashboardGrid() {
               </span>
             </div>
             <div className="p-4 min-h-[80px] flex items-center justify-center">
-              <p className="text-xs text-foreground-subtle">Moving...</p>
+              <p className="text-xs text-of-outline">Moving...</p>
             </div>
           </div>
         ) : null}
