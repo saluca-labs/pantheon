@@ -195,10 +195,10 @@ export default function Navbar() {
                     Sign In
                   </Link>
                   <Link
-                    href="mailto:hello@saluca.com?subject=Tiresias%20Waitlist"
+                    href="mailto:hello@saluca.com?subject=Tiresias%20Closed%20Beta"
                     className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-2 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                   >
-                    Join the Waitlist
+                    Join the Closed Beta
                   </Link>
                 </>
               )}
@@ -316,11 +316,11 @@ export default function Navbar() {
                         Sign In
                       </Link>
                       <Link
-                        href="mailto:hello@saluca.com?subject=Tiresias%20Waitlist"
+                        href="mailto:hello@saluca.com?subject=Tiresias%20Closed%20Beta"
                         className="block w-full text-center rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-3 text-sm font-medium text-of-background"
                         onClick={() => setMobileOpen(false)}
                       >
-                        Join the Waitlist
+                        Join the Closed Beta
                       </Link>
                     </>
                   )}
