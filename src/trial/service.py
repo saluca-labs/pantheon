@@ -172,6 +172,8 @@ async def verify_and_activate_trial(
         "raw_key": raw_key,
         "status": "active",
         "expires_at": trial.expires_at,
+        "contact_name": trial.contact_name,
+        "contact_email": trial.contact_email,
     }
 
 

@@ -196,6 +196,24 @@ async def acknowledge_ticket(ticket_id: str, request: Request) -> TicketResponse
     ticket["status"] = "acknowledged"
     ticket["acknowledged_at"] = now.isoformat()
 
+    # Fire P0 acknowledgment email (EMAIL-05, non-fatal, P0 only)
+    if ticket.get("severity") == "p0":
+        try:
+            import asyncio as _asyncio
+            from src.email.triggers import on_p0_acknowledged as _email_p0
+            contact_email = ticket.get("contact_email") or ticket.get("email") or ""
+            contact_name = ticket.get("contact_name") or "Customer"
+            if contact_email:
+                _asyncio.create_task(_email_p0(
+                    contact_name=contact_name,
+                    contact_email=contact_email,
+                    ticket_id=ticket["ticket_id"],
+                    subject=ticket.get("subject", "P0 Issue"),
+                    sla_hours=4,
+                ))
+        except Exception:
+            pass
+
     logger.info("support.ticket_acknowledged", ticket_id=ticket_id)
     return _ticket_to_response(ticket)
 

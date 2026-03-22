@@ -183,6 +183,12 @@ async def handle_stripe_event(
         invoice_id = invoice.get("id", "unknown")
         amount_paid = invoice.get("amount_paid", 0)
         subscription_id = invoice.get("subscription")
+        billing_email = invoice.get("customer_email") or invoice.get("email") or ""
+        invoice_url = invoice.get("invoice_pdf") or invoice.get("hosted_invoice_url") or ""
+        currency = invoice.get("currency", "usd")
+        billing_reason = invoice.get("billing_reason", "subscription")
+        tier = tenant.tier.title() if tenant else "Pro"
+        contact_name = (tenant.name if tenant else None) or "Customer"
 
         logger.info(
             "saas.billing.invoice_paid",
@@ -195,6 +201,24 @@ async def handle_stripe_event(
         # Clear any payment_failed flag — delegate to grace module
         if tenant:
             await resolve_payment(db, tenant.id)
+
+        # Fire payment receipt email (EMAIL-04, non-fatal)
+        if billing_email:
+            try:
+                import asyncio as _asyncio
+                from src.email.triggers import on_payment_received as _email_receipt
+                _asyncio.create_task(_email_receipt(
+                    contact_name=contact_name,
+                    contact_email=billing_email,
+                    amount_cents=amount_paid,
+                    currency=currency,
+                    invoice_id=invoice_id,
+                    invoice_url=invoice_url,
+                    billing_reason=billing_reason,
+                    tier=tier,
+                ))
+            except Exception:
+                pass
 
         return {
             "action": "invoice_paid",
