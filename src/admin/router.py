@@ -56,7 +56,9 @@ def _get_caller_tenant_id(request) -> Optional[uuid.UUID]:
     Returns None in testing mode to disable tenant scoping.
     """
     import os
-    if os.environ.get("SOULAUTH_TESTING", "").lower() == "true":
+    _is_testing = os.environ.get("SOULAUTH_TESTING", "").lower() == "true"
+    _env = os.environ.get("ENVIRONMENT", "production").lower()
+    if _is_testing and _env != "production":
         return None
 
     soulkey = getattr(request.state, "rbac_soulkey", None)

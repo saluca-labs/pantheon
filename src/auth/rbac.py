@@ -186,9 +186,14 @@ def require_permission(permission: str):
         request: Request,
         db: AsyncSession = Depends(get_db),
     ):
-        # Bypass RBAC in testing mode (SOULAUTH_TESTING=true).
-        # Safe: production never sets this env var.
-        if os.environ.get("SOULAUTH_TESTING", "").lower() == "true":
+        # Bypass RBAC in testing mode.
+        # Requires BOTH:
+        #   SOULAUTH_TESTING=true      (test flag)
+        #   ENVIRONMENT != production  (production guard)
+        # This prevents accidental or malicious activation in prod deployments.
+        _is_testing = os.environ.get("SOULAUTH_TESTING", "").lower() == "true"
+        _env = os.environ.get("ENVIRONMENT", "production").lower()
+        if _is_testing and _env != "production":
             # Create a mock soulkey that satisfies downstream tenant-scoping.
             # Extract tenant_id from the request so IDOR checks pass naturally.
             _mock_tenant_id = _extract_tenant_id_from_request(request)
