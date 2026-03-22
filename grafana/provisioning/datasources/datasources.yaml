@@ -54,7 +54,7 @@ datasources:
     uid: production-db
     type: postgres
     access: proxy
-    url: ${PROD_DB_HOST:-localhost}:${PROD_DB_PORT:-5433}
+    url: $PROD_DB_HOST:$PROD_DB_PORT
     user: $PROD_DB_USER
     editable: false
     jsonData:

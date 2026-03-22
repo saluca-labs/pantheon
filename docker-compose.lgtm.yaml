@@ -27,6 +27,14 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_SECURITY_COOKIE_SECURE: "false"
       GF_SECURITY_COOKIE_SAMESITE: "lax"
+      # DB credentials for datasource provisioning
+      PENTEST_DB_USER: "${PENTEST_DB_USER}"
+      PENTEST_DB_PASSWORD: "${PENTEST_DB_PASSWORD}"
+      PROD_DB_HOST: "${PROD_DB_HOST}"
+      PROD_DB_PORT: "${PROD_DB_PORT}"
+      PROD_DB_USER: "${PROD_DB_USER}"
+      PROD_DB_PASSWORD: "${PROD_DB_PASSWORD}"
+      PENTEST_REPORTS_API_URL: "${PENTEST_REPORTS_API_URL}"
     depends_on:
       loki:
         condition: service_healthy
