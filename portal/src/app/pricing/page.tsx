@@ -34,7 +34,7 @@ const tiers: Tier[] = [
     highlight: false,
     cta: "Get Started Free",
     ctaAction: "link",
-    ctaHref: "/trial",
+    ctaHref: "mailto:hello@saluca.com?subject=Tiresias%20Waitlist",
     planId: "community",
     features: [
       "Full observability dashboard",
@@ -54,9 +54,9 @@ const tiers: Tier[] = [
     retention: "30-day retention",
     tagline: "Production visibility for teams that ship fast",
     highlight: false,
-    cta: "Start Free Trial",
+    cta: "Join the Waitlist",
     ctaAction: "checkout",
-    ctaHref: "/trial",
+    ctaHref: "mailto:hello@saluca.com?subject=Tiresias%20Waitlist",
     planId: "starter",
     features: [
       "Everything in Community",
@@ -75,9 +75,9 @@ const tiers: Tier[] = [
     retention: "90-day retention",
     tagline: "Detection + response for AI-native security teams",
     highlight: true,
-    cta: "Start Free Trial",
+    cta: "Join the Waitlist",
     ctaAction: "checkout",
-    ctaHref: "/trial",
+    ctaHref: "mailto:hello@saluca.com?subject=Tiresias%20Waitlist",
     planId: "pro",
     features: [
       "Everything in Starter",
@@ -98,9 +98,9 @@ const tiers: Tier[] = [
     retention: "Custom retention",
     tagline: "Enforcement-grade AI security. CISO-ready.",
     highlight: false,
-    cta: "Start Free Trial",
+    cta: "Join the Waitlist",
     ctaAction: "checkout",
-    ctaHref: "/trial",
+    ctaHref: "mailto:hello@saluca.com?subject=Tiresias%20Waitlist",
     planId: "enterprise",
     features: [
       "Everything in Pro",
@@ -567,7 +567,7 @@ export default function PricingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/trial"
+                href="mailto:hello@saluca.com?subject=Tiresias%20Waitlist"
                 className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
               >
                 Start Free
