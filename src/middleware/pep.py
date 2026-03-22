@@ -158,3 +158,40 @@ class SoulAuthPEPMiddleware(BaseHTTPMiddleware):
         )
 
         return response
+
+
+# ---------------------------------------------------------------------------
+# OIDC session auth support
+# ---------------------------------------------------------------------------
+
+async def resolve_oidc_context(request: Request) -> None:
+    """
+    Check for an OIDC portal session token in X-OIDC-Session header or
+    Authorization: Bearer header.  Injects request.state.oidc_user if valid.
+    Falls through silently if no OIDC token is present (existing SoulKey auth
+    remains the primary mechanism).
+    """
+    from config.settings import get_settings
+    if not get_settings().oidc_enabled:
+        return
+
+    raw_token = request.headers.get("X-OIDC-Session")
+    if not raw_token:
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            raw_token = auth[7:].strip()
+
+    if not raw_token:
+        return
+
+    from src.auth.oidc_session import validate_session
+    from src.database.connection import async_session_factory
+
+    try:
+        async with async_session_factory() as db:
+            result = await validate_session(db, raw_token)
+            if result:
+                _session, user = result
+                request.state.oidc_user = user
+    except Exception:
+        pass  # Non-fatal; fall through to SoulKey auth
