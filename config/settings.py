@@ -104,6 +104,10 @@ class Settings(BaseSettings):
 
     # Resend (transactional email for trial verification)
     resend_api_key: Optional[str] = None
+    openrouter_api_key: Optional[str] = Field(
+        default=None,
+        description="OpenRouter API key for chatbot LLM (OPENROUTER_API_KEY env var)",
+    )
     trial_from_email: str = "Tiresias <onboarding@resend.dev>"
     trial_verify_base_url: str = "https://tiresias.saluca.com/trial/verify"
 
