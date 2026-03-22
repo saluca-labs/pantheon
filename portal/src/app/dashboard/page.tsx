@@ -1,13 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DashboardProvider, useDashboard } from "@/components/dashboard/DashboardProvider";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import LayoutPresets from "@/components/dashboard/LayoutPresets";
 import WidgetPalette from "@/components/dashboard/WidgetPalette";
+import { useAuth } from "@/lib/auth";
 
 function DashboardContent() {
   const { isEditMode, toggleEditMode } = useDashboard();
+  const { session, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    // Check cookie flag set by welcome page on first visit
+    const hasVisitedWelcome =
+      typeof document !== "undefined" &&
+      document.cookie.includes("tiresias_welcomed=1");
+    // If session exists and flag not set, redirect to welcome
+    if (session && !hasVisitedWelcome) {
+      router.push("/dashboard/welcome");
+    }
+  }, [session, loading, router]);
 
   return (
     <div className="space-y-6">
