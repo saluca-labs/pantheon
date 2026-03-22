@@ -177,6 +177,10 @@ class Settings(BaseSettings):
         default=3600,
         description="JWKS cache TTL in seconds (default: 1 hour)",
     )
+    public_url: str = Field(
+        default="https://tiresias.network",
+        description="Public base URL for OAuth redirect_uri construction",
+    )
     oidc_enabled: bool = Field(
         default=False,
         description="Feature flag: enable SSO/OIDC portal authentication",
