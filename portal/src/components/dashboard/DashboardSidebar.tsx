@@ -265,6 +265,26 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    label: "API Keys",
+    href: "/dashboard/settings?tab=api-keys",
+    group: "system",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+      </svg>
+    ),
+  },
+  {
+    label: "API Keys",
+    href: "/dashboard/settings?tab=api-keys",
+    group: "system",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+      </svg>
+    ),
+  },
+  {
     label: "Settings",
     href: "/dashboard/settings",
     group: "system",
@@ -545,7 +565,14 @@ export default function DashboardSidebar() {
       <div className="px-2 pb-1 border-t border-of-outline-variant/15 pt-2">
         <Link
           href="/dashboard/support"
-          className={}
+          className={`
+            group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
+            transition-all duration-200 ease-out relative overflow-hidden
+            ${isSupportActive
+              ? "text-of-on-surface"
+              : "text-of-on-surface-variant hover:text-of-on-surface"
+            }
+          `}
           title={collapsed ? "Support" : undefined}
         >
           {!isSupportActive && (
@@ -569,7 +596,7 @@ export default function DashboardSidebar() {
           )}
 
           <motion.div
-            className={}
+            className={`relative shrink-0 ${isSupportActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
             animate={isSupportActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >

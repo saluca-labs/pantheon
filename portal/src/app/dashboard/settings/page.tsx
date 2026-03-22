@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useBranding, type BrandingConfig } from "@/lib/branding";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { api, ApiError } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 
 type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label";
 
@@ -84,7 +85,9 @@ const UPGRADE_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("general");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "general";
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [tenantName, setTenantName] = useState("Acme Corp");
   const [contactEmail, setContactEmail] = useState("admin@acme.com");
   const [copied, setCopied] = useState(false);
