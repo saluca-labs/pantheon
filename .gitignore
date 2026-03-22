@@ -47,3 +47,6 @@ htmlcov/
 # Alembic
 alembic/versions/*.pyc
 .github/
+
+# Kubernetes secrets with real values - use k8s/secrets.yaml.example instead
+k8s/secrets.yaml
