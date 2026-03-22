@@ -50,6 +50,8 @@ spec:
             - name: nextjs-cache
               mountPath: /app/.next/cache
           env:
+            - name: NEXT_PUBLIC_APP_URL
+              value: "https://tiresias.network"
             - name: NEXT_PUBLIC_SOULAUTH_API_URL
               value: "https://api.tiresias.network"
             - name: NEXT_PUBLIC_SOULWATCH_API_URL
@@ -75,9 +77,9 @@ spec:
             - name: STRIPE_PRICE_PRO_ANNUAL
               value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
             - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
-              value: "price_enterprise_placeholder"
+              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
             - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
-              value: "price_enterprise_placeholder"
+              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
             - name: NODE_ENV
               value: "production"
           resources:

@@ -1,0 +1,9 @@
+.git
+portal/node_modules
+**/__pycache__
+**/*.pyc
+.planning
+.venv
+**/.venv
+cmd/tiresias-exec/tiresias-exec
+sales

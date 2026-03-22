@@ -40,7 +40,8 @@ STRIPE_TIER_MAP: dict[str, str] = {
     "price_1TDMT2BkXMYmrc2Lhf1whQpi": "pro",
     "price_1TDMT2BkXMYmrc2LnBUoJEww": "pro",
     "price_pro": "pro",
-    "price_enterprise": "enterprise",
+    "price_1TDjH4BkXMYmrc2LBA1vL1qs": "enterprise",
+    "price_1TDjH4BkXMYmrc2LeWPVTZT0": "enterprise",
     "price_mssp": "mssp",
     "price_saas": "saas",
 }
