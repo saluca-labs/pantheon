@@ -236,7 +236,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "API Keys",
-    href: "/dashboard/soulgate/keys",
+    href: "/dashboard/settings?tab=api-keys",
     group: "soulgate",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
