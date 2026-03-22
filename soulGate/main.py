@@ -22,6 +22,7 @@ from soulGate.src.circuit.router import router as circuit_router
 from soulGate.src.audit.logger import start_audit_logger, stop_audit_logger
 from soulGate.src.audit.router import router as audit_router
 from soulGate.src.monitoring.metrics import metrics_router, MetricsMiddleware
+from soulGate.src.security_headers import SecurityHeadersMiddleware
 from soulGate.src.proxy.gateway import close_http_client
 
 settings = get_settings()
@@ -127,6 +128,8 @@ app.add_middleware(
 
 # Metrics middleware
 app.add_middleware(MetricsMiddleware)
+# Security headers — applied to all responses
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Register routers
 app.include_router(proxy_router)

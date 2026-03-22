@@ -32,6 +32,7 @@ from src.detection._state import init_detection
 from src.prh._state import init_prh
 from src.prh.router import router as prh_router
 from src.prh.middleware import PRHMiddleware
+from src.middleware.security_headers import SecurityHeadersMiddleware
 
 settings = get_settings()
 
@@ -398,6 +399,7 @@ app.add_middleware(MetricsMiddleware)
 app.add_middleware(PRHMiddleware)
 from src.middleware.usage_limit import UsageLimitMiddleware
 app.add_middleware(UsageLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Register routers
 app.include_router(auth_router)

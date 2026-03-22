@@ -117,12 +117,17 @@ class AuditLog(Base):
     reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     capability_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
     context: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=dict)
+    # prev_hash: SHA-256 of the previous row's chain data (migration 0004).
+    # NULL only for rows written before migration 0004 was applied.
+    # The first row in a fresh deployment stores the sentinel value "genesis".
+    prev_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
 
     __table_args__ = (
         Index("idx_audit_tenant_time", "tenant_id", "timestamp"),
         Index("idx_audit_soulkey", "soulkey_id", "timestamp"),
         Index("idx_audit_event", "event_type"),
+        Index("idx_audit_prev_hash_lookup", "timestamp"),
     )
 
 
