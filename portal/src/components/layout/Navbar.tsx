@@ -86,7 +86,7 @@ export default function Navbar() {
                   >
                     <button
                       className={`relative px-4 py-2 text-sm transition-colors ${
-                        isActive(item.href) ? "text-foreground" : "text-of-on-surface-variant hover:text-foreground"
+                        isActive(item.href) ? "text-foreground" : "text-foreground-muted hover:text-foreground"
                       }`}
                     >
                       {item.label}
@@ -99,7 +99,7 @@ export default function Navbar() {
                       {isActive(item.href) && (
                         <motion.div
                           layoutId="nav-indicator"
-                          className="absolute bottom-0 left-4 right-4 h-0.5 bg-of-primary rounded-full"
+                          className="absolute bottom-0 left-4 right-4 h-0.5 bg-gold-500 rounded-full"
                         />
                       )}
                     </button>
@@ -112,22 +112,22 @@ export default function Navbar() {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute left-0 top-full pt-2"
                         >
-                          <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-2 min-w-[220px] shadow-2xl">
+                          <div className="glass-card rounded-xl p-2 min-w-[220px] shadow-2xl">
                             {item.children.map((child) => (
                               <Link
                                 key={child.href}
                                 href={child.href}
-                                className="flex items-center justify-between rounded-lg px-4 py-3 text-sm text-of-on-surface-variant hover:text-foreground hover:bg-of-surface-container/50 transition-colors"
+                                className="flex items-center justify-between rounded-lg px-4 py-3 text-sm text-foreground-muted hover:text-foreground hover:bg-navy-800/50 transition-colors"
                               >
                                 {child.label}
                                 {child.badge && (
                                   <span
                                     className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                                       child.badge === "GA"
-                                        ? "bg-of-primary/20 text-of-primary"
+                                        ? "bg-teal-600/20 text-teal-400"
                                         : child.badge === "New"
-                                          ? "bg-of-primary/15 text-of-primary"
-                                          : "bg-of-surface-container text-of-outline"
+                                          ? "bg-gold-500/15 text-gold-400"
+                                          : "bg-navy-700 text-foreground-subtle"
                                     }`}
                                   >
                                     {child.badge}
@@ -145,14 +145,14 @@ export default function Navbar() {
                     key={item.label}
                     href={item.href}
                     className={`relative px-4 py-2 text-sm transition-colors ${
-                      isActive(item.href) ? "text-foreground" : "text-of-on-surface-variant hover:text-foreground"
+                      isActive(item.href) ? "text-foreground" : "text-foreground-muted hover:text-foreground"
                     }`}
                   >
                     {item.label}
                     {isActive(item.href) && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute bottom-0 left-4 right-4 h-0.5 bg-of-primary rounded-full"
+                        className="absolute bottom-0 left-4 right-4 h-0.5 bg-gold-500 rounded-full"
                       />
                     )}
                   </Link>
@@ -166,22 +166,22 @@ export default function Navbar() {
                 <>
                   <Link
                     href="/dashboard"
-                    className="px-4 py-2 text-sm text-of-on-surface-variant hover:text-foreground transition-colors"
+                    className="px-4 py-2 text-sm text-foreground-muted hover:text-foreground transition-colors"
                   >
                     Dashboard
                   </Link>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-of-surface-container/50 border border-of-outline-variant/15">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-navy-800/50 border border-border">
                     <span className="h-2 w-2 rounded-full bg-green-400" />
-                    <span className="text-xs text-of-on-surface-variant font-mono">
+                    <span className="text-xs text-foreground-muted font-mono">
                       {session.tenant_name || session.tenant_id.slice(0, 8)}
                     </span>
-                    <span className="text-[10px] text-of-outline px-1.5 py-0.5 rounded bg-of-surface-container">
+                    <span className="text-[10px] text-foreground-subtle px-1.5 py-0.5 rounded bg-navy-700">
                       {session.tier}
                     </span>
                   </div>
                   <button
                     onClick={logout}
-                    className="px-4 py-2 text-sm text-of-outline hover:text-red-400 transition-colors"
+                    className="px-4 py-2 text-sm text-foreground-subtle hover:text-red-400 transition-colors"
                   >
                     Logout
                   </button>
@@ -190,15 +190,15 @@ export default function Navbar() {
                 <>
                   <Link
                     href="/login"
-                    className="px-4 py-2 text-sm text-of-on-surface-variant hover:text-foreground transition-colors"
+                    className="px-4 py-2 text-sm text-foreground-muted hover:text-foreground transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link
-                    href="mailto:hello@saluca.com?subject=Tiresias%20Closed%20Beta"
-                    className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-2 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
+                    href="/trial"
+                    className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-2 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
                   >
-                    Join the Closed Beta
+                    Join Beta Waitlist
                   </Link>
                 </>
               )}
@@ -206,7 +206,7 @@ export default function Navbar() {
 
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 text-of-on-surface-variant"
+              className="lg:hidden p-2 text-foreground-muted"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -232,7 +232,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-of-background/60 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-sm lg:hidden"
               onClick={() => setMobileOpen(false)}
             />
             {/* Panel */}
@@ -241,12 +241,12 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[85vw] bg-of-background/95 backdrop-blur-xl border-l border-of-outline-variant/15 lg:hidden"
+              className="fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[85vw] bg-navy-950/95 backdrop-blur-xl border-l border-border lg:hidden"
             >
               <div className="flex justify-end p-4">
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-2 text-of-on-surface-variant hover:text-foreground"
+                  className="p-2 text-foreground-muted hover:text-foreground"
                   aria-label="Close menu"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,7 +265,7 @@ export default function Navbar() {
                     <Link
                       href={item.href}
                       className={`block px-4 py-3 text-sm rounded-lg transition-colors ${
-                        isActive(item.href) ? "text-foreground bg-of-surface-container/50" : "text-of-on-surface-variant hover:text-foreground"
+                        isActive(item.href) ? "text-foreground bg-navy-800/50" : "text-foreground-muted hover:text-foreground"
                       }`}
                       onClick={() => setMobileOpen(false)}
                     >
@@ -275,7 +275,7 @@ export default function Navbar() {
                       <Link
                         key={child.href}
                         href={child.href}
-                        className="block pl-8 py-2 text-sm text-of-outline hover:text-foreground transition-colors"
+                        className="block pl-8 py-2 text-sm text-foreground-subtle hover:text-foreground transition-colors"
                         onClick={() => setMobileOpen(false)}
                       >
                         {child.label}
@@ -286,22 +286,22 @@ export default function Navbar() {
                 <div className="pt-6 space-y-3">
                   {session ? (
                     <>
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-of-surface-container/50 border border-of-outline-variant/15">
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-navy-800/50 border border-border">
                         <span className="h-2 w-2 rounded-full bg-green-400" />
-                        <span className="text-xs text-of-on-surface-variant font-mono">
+                        <span className="text-xs text-foreground-muted font-mono">
                           {session.tenant_name || session.tenant_id.slice(0, 8)}
                         </span>
                       </div>
                       <Link
                         href="/dashboard"
-                        className="block w-full text-center rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-3 text-sm font-medium text-of-background"
+                        className="block w-full text-center rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-3 text-sm font-medium text-navy-950"
                         onClick={() => setMobileOpen(false)}
                       >
                         Dashboard
                       </Link>
                       <button
                         onClick={() => { setMobileOpen(false); logout(); }}
-                        className="block w-full text-center rounded-lg border border-of-outline-variant/15 px-5 py-3 text-sm text-of-outline hover:text-red-400 transition-colors"
+                        className="block w-full text-center rounded-lg border border-border px-5 py-3 text-sm text-foreground-subtle hover:text-red-400 transition-colors"
                       >
                         Logout
                       </button>
@@ -310,17 +310,17 @@ export default function Navbar() {
                     <>
                       <Link
                         href="/login"
-                        className="block w-full text-center rounded-lg border border-of-outline-variant/15 px-5 py-3 text-sm font-medium text-of-on-surface-variant"
+                        className="block w-full text-center rounded-lg border border-border px-5 py-3 text-sm font-medium text-foreground-muted"
                         onClick={() => setMobileOpen(false)}
                       >
                         Sign In
                       </Link>
                       <Link
-                        href="mailto:hello@saluca.com?subject=Tiresias%20Closed%20Beta"
-                        className="block w-full text-center rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-3 text-sm font-medium text-of-background"
+                        href="/trial"
+                        className="block w-full text-center rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-3 text-sm font-medium text-navy-950"
                         onClick={() => setMobileOpen(false)}
                       >
-                        Join the Closed Beta
+                        Join Beta Waitlist
                       </Link>
                     </>
                   )}

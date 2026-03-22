@@ -14,7 +14,7 @@ const products = [
     name: "SoulAuth",
     tagline: "Agent Identity & Zero-Trust Authorization",
     status: "Generally Available",
-    statusColor: "bg-of-primary/20 text-of-primary border-of-primary/30",
+    statusColor: "bg-teal-600/20 text-teal-400 border-teal-500/30",
     accent: "teal",
     href: "/platform/soulauth",
     description:
@@ -32,7 +32,7 @@ const products = [
     name: "SoulWatch",
     tagline: "AI Runtime Security Monitoring",
     status: "Coming Soon",
-    statusColor: "bg-of-surface-container text-of-outline border-of-outline-variant/15",
+    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
     accent: "gold",
     href: "/platform/soulwatch",
     description:
@@ -50,7 +50,7 @@ const products = [
     name: "SoulGate",
     tagline: "API Security Gateway",
     status: "Coming Soon",
-    statusColor: "bg-of-surface-container text-of-outline border-of-outline-variant/15",
+    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
     accent: "gold",
     href: "/platform/soulgate",
     description:
@@ -73,17 +73,17 @@ export default function PlatformPage() {
       <main className="min-h-screen pt-16">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 lg:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-of-surface-container-low/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-navy-900/50 to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 text-center">
-            <p className="text-sm font-medium tracking-widest uppercase text-of-primary mb-4">
+            <p className="text-sm font-medium tracking-widest uppercase text-gold-500 mb-4">
               The Tiresias Platform
             </p>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
               One platform, three pillars
               <br />
-              <span className="text-of-primary">of AI agent security</span>
+              <span className="text-gradient-gold">of AI agent security</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-of-on-surface-variant leading-relaxed">
+            <p className="mx-auto max-w-2xl text-lg text-foreground-muted leading-relaxed">
               Identity. Monitoring. Enforcement. Tiresias delivers zero-knowledge
               security across your entire agent infrastructure - seeing threats,
               never data.
@@ -94,7 +94,7 @@ export default function PlatformPage() {
         {/* Architecture Diagram */}
         <section className="py-16 lg:py-24">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12">
+            <div className="glass-card rounded-2xl p-8 lg:p-12">
               <h2 className="text-center text-2xl font-semibold mb-12">
                 How the platform works together
               </h2>
@@ -103,8 +103,8 @@ export default function PlatformPage() {
               <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4">
                 {/* Agent */}
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-of-surface-container border border-of-outline-variant/15 flex items-center justify-center mb-3">
-                    <svg className="w-10 h-10 text-of-on-surface-variant" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-20 h-20 rounded-2xl bg-navy-700 border border-border flex items-center justify-center mb-3">
+                    <svg className="w-10 h-10 text-foreground-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
                     </svg>
                   </div>
@@ -112,12 +112,12 @@ export default function PlatformPage() {
                 </div>
 
                 {/* Arrow */}
-                <div className="hidden lg:block text-of-outline">
+                <div className="hidden lg:block text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <div className="lg:hidden text-of-outline">
+                <div className="lg:hidden text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
                   </svg>
@@ -125,22 +125,22 @@ export default function PlatformPage() {
 
                 {/* SoulAuth */}
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-of-primary/10 border border-of-primary/30 flex items-center justify-center mb-3 glow-teal">
-                    <svg className="w-10 h-10 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-20 h-20 rounded-2xl bg-teal-600/10 border border-teal-500/30 flex items-center justify-center mb-3 glow-teal">
+                    <svg className="w-10 h-10 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
                   </div>
-                  <span className="text-sm font-semibold text-of-primary">SoulAuth</span>
-                  <span className="text-xs text-of-outline">Identity & AuthZ</span>
+                  <span className="text-sm font-semibold text-teal-400">SoulAuth</span>
+                  <span className="text-xs text-foreground-subtle">Identity & AuthZ</span>
                 </div>
 
                 {/* Arrow */}
-                <div className="hidden lg:block text-of-outline">
+                <div className="hidden lg:block text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <div className="lg:hidden text-of-outline">
+                <div className="lg:hidden text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
                   </svg>
@@ -148,23 +148,23 @@ export default function PlatformPage() {
 
                 {/* SoulWatch */}
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-of-primary/10 border border-of-primary/30 flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(90,218,206,0.15)]">
-                    <svg className="w-10 h-10 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-20 h-20 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-3 glow-gold">
+                    <svg className="w-10 h-10 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <span className="text-sm font-semibold text-of-primary">SoulWatch</span>
-                  <span className="text-xs text-of-outline">Monitoring</span>
+                  <span className="text-sm font-semibold text-gold-400">SoulWatch</span>
+                  <span className="text-xs text-foreground-subtle">Monitoring</span>
                 </div>
 
                 {/* Arrow */}
-                <div className="hidden lg:block text-of-outline">
+                <div className="hidden lg:block text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <div className="lg:hidden text-of-outline">
+                <div className="lg:hidden text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
                   </svg>
@@ -172,22 +172,22 @@ export default function PlatformPage() {
 
                 {/* SoulGate */}
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-of-primary/10 border border-of-primary/30 flex items-center justify-center mb-3">
-                    <svg className="w-10 h-10 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-20 h-20 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-3">
+                    <svg className="w-10 h-10 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
                     </svg>
                   </div>
-                  <span className="text-sm font-semibold text-of-primary">SoulGate</span>
-                  <span className="text-xs text-of-outline">Gateway</span>
+                  <span className="text-sm font-semibold text-gold-400">SoulGate</span>
+                  <span className="text-xs text-foreground-subtle">Gateway</span>
                 </div>
 
                 {/* Arrow */}
-                <div className="hidden lg:block text-of-outline">
+                <div className="hidden lg:block text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <div className="lg:hidden text-of-outline">
+                <div className="lg:hidden text-foreground-subtle">
                   <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
                   </svg>
@@ -195,8 +195,8 @@ export default function PlatformPage() {
 
                 {/* Resource */}
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-of-surface-container border border-of-outline-variant/15 flex items-center justify-center mb-3">
-                    <svg className="w-10 h-10 text-of-on-surface-variant" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-20 h-20 rounded-2xl bg-navy-700 border border-border flex items-center justify-center mb-3">
+                    <svg className="w-10 h-10 text-foreground-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
                     </svg>
                   </div>
@@ -204,7 +204,7 @@ export default function PlatformPage() {
                 </div>
               </div>
 
-              <p className="text-center text-sm text-of-outline mt-8">
+              <p className="text-center text-sm text-foreground-subtle mt-8">
                 Agent requests flow through identity verification, real-time monitoring, and gateway enforcement - end to end.
               </p>
             </div>
@@ -212,13 +212,13 @@ export default function PlatformPage() {
         </section>
 
         {/* Better Together */}
-        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
+        <section className="py-16 lg:py-24 bg-navy-900/30">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Better <span className="text-of-primary">Together</span>
+                Better <span className="text-gradient-gold">Together</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-of-on-surface-variant leading-relaxed">
+              <p className="mx-auto max-w-2xl text-foreground-muted leading-relaxed">
                 Each product is powerful on its own, but the real magic happens when they
                 work as an integrated platform. Identity feeds monitoring. Monitoring
                 informs enforcement. Enforcement validates identity.
@@ -226,23 +226,23 @@ export default function PlatformPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-of-primary mb-2">Identity</div>
-                <p className="text-sm text-of-on-surface-variant">
+              <div className="glass-card rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-teal-400 mb-2">Identity</div>
+                <p className="text-sm text-foreground-muted">
                   SoulAuth establishes who an agent is and what it can do. Every action
                   starts with verified identity.
                 </p>
               </div>
-              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-of-primary mb-2">Visibility</div>
-                <p className="text-sm text-of-on-surface-variant">
+              <div className="glass-card rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-gold-400 mb-2">Visibility</div>
+                <p className="text-sm text-foreground-muted">
                   SoulWatch monitors what agents actually do against what they should do.
                   Zero-knowledge behavioral analysis.
                 </p>
               </div>
-              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-of-primary mb-2">Enforcement</div>
-                <p className="text-sm text-of-on-surface-variant">
+              <div className="glass-card rounded-xl p-6 text-center">
+                <div className="text-3xl font-bold text-gold-400 mb-2">Enforcement</div>
+                <p className="text-sm text-foreground-muted">
                   SoulGate enforces policy at the API perimeter. Bad requests never
                   reach your services.
                 </p>
@@ -258,7 +258,7 @@ export default function PlatformPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Three products. One mission.
               </h2>
-              <p className="text-of-on-surface-variant">
+              <p className="text-foreground-muted">
                 Secure every agent, every action, every API call.
               </p>
             </div>
@@ -267,7 +267,7 @@ export default function PlatformPage() {
               {products.map((product) => (
                 <div
                   key={product.name}
-                  className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-10 hover:border-of-outline-variant/15-hover transition-all"
+                  className="glass-card rounded-2xl p-8 lg:p-10 hover:border-border-hover transition-all"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
                     <div className="flex-1">
@@ -279,18 +279,18 @@ export default function PlatformPage() {
                           {product.status}
                         </span>
                       </div>
-                      <p className="text-lg text-of-on-surface-variant mb-2">
+                      <p className="text-lg text-foreground-muted mb-2">
                         {product.tagline}
                       </p>
-                      <p className="text-of-on-surface-variant leading-relaxed mb-6">
+                      <p className="text-foreground-muted leading-relaxed mb-6">
                         {product.description}
                       </p>
                       <Link
                         href={product.href}
                         className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
                           product.accent === "teal"
-                            ? "text-of-primary hover:text-of-primary/70"
-                            : "text-of-primary hover:text-of-primary/70"
+                            ? "text-teal-400 hover:text-teal-300"
+                            : "text-gold-400 hover:text-gold-300"
                         }`}
                       >
                         Learn more
@@ -300,20 +300,20 @@ export default function PlatformPage() {
                       </Link>
                     </div>
                     <div className="lg:w-72 shrink-0">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-of-outline mb-3">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground-subtle mb-3">
                         Key capabilities
                       </h4>
                       <ul className="space-y-2">
                         {product.features.map((feature) => (
                           <li
                             key={feature}
-                            className="flex items-start gap-2 text-sm text-of-on-surface-variant"
+                            className="flex items-start gap-2 text-sm text-foreground-muted"
                           >
                             <svg
                               className={`w-4 h-4 mt-0.5 shrink-0 ${
                                 product.accent === "teal"
-                                  ? "text-of-primary"
-                                  : "text-of-primary"
+                                  ? "text-teal-500"
+                                  : "text-gold-500"
                               }`}
                               fill="none"
                               viewBox="0 0 24 24"
@@ -335,25 +335,25 @@ export default function PlatformPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
+        <section className="py-16 lg:py-24 bg-navy-900/30">
           <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Ready to secure your agents?
             </h2>
-            <p className="text-of-on-surface-variant mb-8 leading-relaxed">
-              SoulAuth is live and ready. Start with a free trial - no credit card
-              required. Full platform access in minutes.
+            <p className="text-foreground-muted mb-8 leading-relaxed">
+              Tiresias is in private beta. Join the waitlist for early access to the
+              full platform.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
                 href="/trial"
-                className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
+                className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
               >
-                Start Free Trial
+                Join Beta Waitlist
               </Link>
               <Link
                 href="/platform/soulauth"
-                className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
+                className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
               >
                 Explore SoulAuth
               </Link>

@@ -5,7 +5,7 @@ Enterprise Agent Identity & Zero-Trust Authorization System.
 
 import structlog
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
@@ -18,6 +18,7 @@ from src.middleware.tenant import TenantContextMiddleware
 from src.middleware.feature_gate import FeatureGateMiddleware
 from src.middleware.model_router import ModelRoutingMiddleware
 from src.trial.router import router as trial_router, verify_router as trial_verify_router
+from src.waitlist.router import router as waitlist_router
 from src.monitoring.metrics import metrics_router, MetricsMiddleware, start_gauge_updater, stop_gauge_updater
 from src.analytics.router import router as analytics_router
 from src.enforcement.router import router as enforcement_router
@@ -29,10 +30,6 @@ from src.detection.router import router as detection_router
 from src.detection.sigma_engine import SigmaEngine
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
-from src.prh._state import init_prh
-from src.prh.router import router as prh_router
-from src.prh.middleware import PRHMiddleware
-from src.middleware.security_headers import SecurityHeadersMiddleware
 
 settings = get_settings()
 
@@ -110,28 +107,6 @@ async def lifespan(app: FastAPI):
     # Store license state for middleware access
     app.state.license = license_token
 
-    # --- TIRESIAS_TIER override (TIER-02) ---
-    # Allow deploy-time SKU selection without re-signing the license JWT.
-    # TIRESIAS_TIER env var overrides the tier in the license token.
-    _valid_tier_names = {"community", "starter", "pro", "enterprise", "mssp", "saas"}
-    _tier_override = (settings.tiresias_tier or "").strip().lower()
-    if _tier_override and _tier_override in _valid_tier_names:
-        # Mutate the dataclass field directly -- LicenseToken is a plain dataclass
-        import dataclasses as _dc
-        app.state.license = _dc.replace(license_token, tier=_tier_override)
-        logger.info(
-            "soulauth.tier_override_applied",
-            tier_from_license=license_token.tier,
-            tier_override=_tier_override,
-        )
-    elif _tier_override and _tier_override not in _valid_tier_names:
-        logger.warning(
-            "soulauth.tier_override_invalid",
-            tiresias_tier=_tier_override,
-            valid_tiers=sorted(_valid_tier_names),
-            message="TIRESIAS_TIER value is not a valid tier -- using license JWT tier.",
-        )
-
     # Start background gauge updater
     try:
         start_gauge_updater(interval=60)
@@ -168,15 +143,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("soulauth.analytics_start_failed", error=str(e))
 
-    # Initialize SIEM manager (v2 connector API)
-    try:
-        from src.siem._state import init_siem
-        init_siem()
-        logger.info("soulauth.siem_manager_started")
-    except Exception as e:
-        logger.warning("soulauth.siem_manager_start_failed", error=str(e))
-
-        # Initialize Sigma detection engine and response playbooks
+    # Initialize Sigma detection engine and response playbooks
     if settings.detection_enabled:
         try:
             import os
@@ -205,29 +172,6 @@ async def lifespan(app: FastAPI):
             )
         except Exception as e:
             logger.warning("soulauth.detection_start_failed", error=str(e))
-
-    # Initialize PRH engine
-    try:
-        init_prh()
-        logger.info("soulauth.prh_started")
-    except Exception as e:
-        logger.warning("soulauth.prh_start_failed", error=str(e))
-
-    # Initialize Aletheia tool policy engine
-    try:
-        from src.aletheia.tool_policy_engine import init_tool_policy_engine
-        init_tool_policy_engine("policies/tool")
-        logger.info("soulauth.tool_policy_engine_started")
-    except Exception as e:
-        logger.warning("soulauth.tool_policy_engine_start_failed", error=str(e))
-
-    # Initialize Aletheia response sanitizer engine
-    try:
-        from src.aletheia.sanitizer_engine import init_sanitizer
-        init_sanitizer()
-        logger.info("soulauth.sanitizer_engine_started")
-    except Exception as e:
-        logger.warning("soulauth.sanitizer_engine_start_failed", error=str(e))
 
     # Start SIEM event forwarder if enabled
     if settings.siem_enabled:
@@ -396,51 +340,17 @@ app.add_middleware(TenantContextMiddleware)
 
 # Metrics middleware — request duration tracking
 app.add_middleware(MetricsMiddleware)
-app.add_middleware(PRHMiddleware)
-from src.middleware.usage_limit import UsageLimitMiddleware
-app.add_middleware(UsageLimitMiddleware)
-app.add_middleware(SecurityHeadersMiddleware)
 
 # Register routers
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(trial_router)
 app.include_router(trial_verify_router)
+app.include_router(waitlist_router)
 app.include_router(metrics_router)
 app.include_router(analytics_router)
 app.include_router(enforcement_router)
 app.include_router(detection_router)
-app.include_router(prh_router)
-from src.siem.router import router as siem_router
-app.include_router(siem_router)
-from src.saas.router import router as saas_router
-app.include_router(saas_router)
-from src.mssp.router import router as mssp_router
-from src.tenant.router import router as tenant_router
-app.include_router(mssp_router)
-app.include_router(tenant_router)
-from src.support.router import router as support_router
-from src.chatbot.router import router as chatbot_router
-app.include_router(support_router)
-app.include_router(chatbot_router)
-from src.aletheia.router import router as aletheia_router
-app.include_router(aletheia_router)
-from src.aletheia.tool_evaluate_router import router as tool_evaluate_router
-app.include_router(tool_evaluate_router)
-from src.aletheia.sanitize_router import router as sanitize_router
-app.include_router(sanitize_router)
-from src.billing.router import router as billing_router
-from src.keys.router import router as keys_router
-app.include_router(billing_router)
-app.include_router(keys_router)
-from src.usage.router import router as usage_router
-if get_settings().oidc_enabled:
-    from src.auth.oidc_router import router as oidc_router
-    from src.idp.router import router as idp_router
-    app.include_router(oidc_router)
-    app.include_router(idp_router)
-app.include_router(usage_router)
-
 
 
 @app.get(
@@ -491,7 +401,7 @@ app.include_router(usage_router)
         },
     },
 )
-async def health_check(request: Request, detail: bool = Query(False, description="Return detailed component health")):
+async def health_check(detail: bool = Query(False, description="Return detailed component health")):
     """
     Service health check for load balancers, Kubernetes probes, and monitoring.
 
@@ -502,26 +412,16 @@ async def health_check(request: Request, detail: bool = Query(False, description
     Returns HTTP 503 if any critical component (database, JWT keys) is unhealthy.
     """
     from src.monitoring.health import run_health_checks
-    from src.middleware.feature_gate import get_enabled_features
-
-    # Resolve active tier from app state (includes TIRESIAS_TIER override)
-    license_state = getattr(request.app.state, "license", None)
-    active_tier = license_state.tier if license_state else "community"
-    enabled_features = get_enabled_features(active_tier)
-
-    result = await run_health_checks(active_tier=active_tier, enabled_features=enabled_features)
+    result = await run_health_checks()
     status_code = 503 if result["status"] == "unhealthy" else 200
 
     if not detail:
         # Simple mode: fast response for k8s probes and load balancers.
-        # Includes tier info for portal conditional rendering (TIER-05).
         return JSONResponse(
             content={
                 "status": result["status"],
                 "service": "soulauth",
                 "version": settings.app_version,
-                "active_tier": active_tier,
-                "enabled_features": enabled_features,
             },
             status_code=status_code,
         )
@@ -539,22 +439,3 @@ async def root():
         "description": "Enterprise Agent Identity & Zero-Trust Authorization System",
         "docs": "/docs",
     }
-
-
-@app.get("/healthz")
-async def liveness():
-    """Liveness probe — always 200 if the process is running."""
-    return {"status": "alive", "service": "soulauth"}
-
-
-@app.get("/readyz")
-async def readiness():
-    """Readiness probe — checks DB connectivity only."""
-    try:
-        from src.database.connection import async_session_factory
-        from sqlalchemy import text
-        async with async_session_factory() as db:
-            await db.execute(text("SELECT 1"))
-        return JSONResponse(content={"status": "ready", "service": "soulauth"}, status_code=200)
-    except Exception as e:
-        return JSONResponse(content={"status": "not_ready", "error": str(e)}, status_code=503)
