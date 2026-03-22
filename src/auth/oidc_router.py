@@ -104,7 +104,10 @@ async def authorize(
     elif tenant_slug:
         tenant = await resolve_tenant_by_slug(db, tenant_slug)
         if not tenant:
-            raise HTTPException(status_code=404, detail="Tenant not found")
+            # Fallback: treat tenant_slug as a domain hint
+            idp_config = await resolve_idp_by_email(db, f"user@{tenant_slug}")
+            if not idp_config:
+                raise HTTPException(status_code=404, detail="Tenant not found")
         idp_config = await load_idp_config(db, tenant.id, provider_type=provider_type)
         if not idp_config:
             raise HTTPException(status_code=404, detail="No SSO provider for this tenant")
@@ -117,7 +120,7 @@ async def authorize(
     state = _make_state(str(idp_config.tenant_id), str(idp_config.id), nonce, state_secret)
     _nonce_store[state] = nonce
     scopes = idp_config.scopes or ["openid", "email", "profile"]
-    redirect_uri = str(request.base_url).rstrip("/") + _CALLBACK_PATH
+    redirect_uri = (request.headers.get("x-forwarded-proto", "https") + "://" + request.headers.get("x-forwarded-host", request.headers.get("host", "tiresias.network"))) + "/api/auth/callback"
     qs = (
         "?response_type=code&client_id=" + idp_config.client_id +
         "&redirect_uri=" + redirect_uri + "&scope=" + " ".join(scopes) +
