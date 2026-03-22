@@ -17,7 +17,13 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // SSO state
+  const [ssoEmail, setSsoEmail] = useState("");
+  const [ssoSubmitting, setSsoSubmitting] = useState(false);
+  const [ssoError, setSsoError] = useState<string | null>(null);
+
   const redirect = searchParams.get("redirect") || "/dashboard";
+  const ssoFailed = searchParams.get("error") === "sso_failed";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,6 +44,30 @@ function LoginForm() {
       setError(authError || "Invalid SoulKey. Please check and try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSSOSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const email = ssoEmail.trim().toLowerCase();
+
+    if (!email || !email.includes("@")) {
+      setSsoError("Please enter a valid work email address.");
+      return;
+    }
+
+    setSsoSubmitting(true);
+    setSsoError(null);
+
+    try {
+      const domain = email.split("@")[1];
+      // Navigate directly so the browser follows the full OIDC redirect chain.
+      window.location.href = `/api/auth/authorize?tenant=${encodeURIComponent(domain)}`;
+    } catch {
+      setSsoError(
+        "No SSO identity provider found for this domain. Contact your administrator."
+      );
+      setSsoSubmitting(false);
     }
   };
 
@@ -66,18 +96,25 @@ function LoginForm() {
             </div>
             <h1 className="text-headline-md text-of-on-surface">Sign in to Tiresias</h1>
             <p className="text-body-sm text-of-on-surface-variant mt-2">
-              Enter your SoulKey to access the platform dashboard.
+              Enter your SoulKey or sign in with your organization&apos;s SSO provider.
             </p>
           </div>
 
-          {/* Error */}
+          {/* SSO callback error */}
+          {ssoFailed && (
+            <div className="mb-6 rounded-xl bg-of-error-container/20 border border-of-error/30 p-4 text-body-sm text-of-error">
+              SSO sign-in failed. Please try again or contact your administrator.
+            </div>
+          )}
+
+          {/* SoulKey error */}
           {(error || authError) && (
             <div className="mb-6 rounded-xl bg-of-error-container/20 border border-of-error/30 p-4 text-body-sm text-of-error">
               {error || authError}
             </div>
           )}
 
-          {/* Form */}
+          {/* SoulKey Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
@@ -108,10 +145,7 @@ function LoginForm() {
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -134,6 +168,93 @@ function LoginForm() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="my-7 flex items-center gap-4">
+            <div className="flex-1 h-px bg-of-outline-variant/20" />
+            <span className="text-label-sm text-of-on-surface-variant/40 uppercase tracking-widest">
+              or
+            </span>
+            <div className="flex-1 h-px bg-of-outline-variant/20" />
+          </div>
+
+          {/* SSO Section */}
+          <div>
+            <p className="text-label-md text-of-on-surface-variant mb-3">
+              Sign in with SSO
+            </p>
+
+            {ssoError && (
+              <div className="mb-4 rounded-xl bg-of-error-container/20 border border-of-error/30 p-3 text-label-sm text-of-error">
+                {ssoError}
+              </div>
+            )}
+
+            <form onSubmit={handleSSOSubmit} className="space-y-3">
+              <div>
+                <label
+                  htmlFor="sso-email"
+                  className="block text-label-sm text-of-on-surface-variant mb-2"
+                >
+                  Work Email
+                </label>
+                <input
+                  id="sso-email"
+                  type="email"
+                  value={ssoEmail}
+                  onChange={(e) => setSsoEmail(e.target.value)}
+                  placeholder="you@yourcompany.com"
+                  autoComplete="email"
+                  className="w-full rounded-lg bg-of-surface-container-lowest border border-of-outline-variant/30 px-4 py-3 text-body-sm text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/50 focus:ring-1 focus:ring-of-primary/20 transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={ssoSubmitting}
+                className="w-full rounded-lg border border-of-outline-variant/40 bg-of-surface-container-high px-6 py-3 text-label-lg font-semibold text-of-on-surface hover:bg-of-surface-container-highest hover:border-of-outline-variant/60 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {ssoSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-4 h-4 text-of-on-surface-variant"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                      />
+                    </svg>
+                    Continue with SSO
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
 
           {/* Footer links */}
           <div className="mt-8 pt-6 border-t border-of-outline-variant/20 text-center space-y-3">

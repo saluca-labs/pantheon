@@ -6,8 +6,9 @@ import { useBranding, type BrandingConfig } from "@/lib/branding";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { api, ApiError } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
+import { SSOSettingsTab } from "@/components/sso/SSOSettingsTab";
 
-type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label";
+type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso";
 
 // --- API response types (from Plan 17-01 backend) ---
 
@@ -67,6 +68,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
   { id: "white-label", label: "White Label" },
+  { id: "sso", label: "SSO / Identity" },
 ];
 
 // Tier display config
@@ -845,6 +847,19 @@ function SettingsPageInner() {
               ))}
             </div>
           </div>
+        </motion.div>
+      )}
+
+
+      {/* SSO / Identity Providers Tab */}
+      {activeTab === "sso" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <TierGate requiredTier="enterprise" featureLabel="SSO / Identity Providers">
+            <SSOSettingsTab />
+          </TierGate>
         </motion.div>
       )}
 
