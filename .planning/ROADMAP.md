@@ -3,11 +3,15 @@
 **Milestone v1.0:** UI Redesign (Obsidian Flux) — COMPLETE
 **Milestone v2.0:** Aletheia Detection
 **Milestone v2.1:** Enterprise Tier System
+**Milestone v2.2:** White-Label & Platform Polish
+**Milestone v2.3:** Customer Lifecycle & Self-Service
 **Granularity:** Coarse
 **Coverage:**
 - v1.0: 37/37 requirements mapped (complete)
 - v2.0: 25/25 requirements mapped
 - v2.1: 20/20 requirements mapped
+- v2.2: 13/13 requirements mapped
+- v2.3: 27/27 requirements mapped
 
 ---
 
@@ -31,9 +35,23 @@
 ### v2.1 — Enterprise Tier System
 
 - [x] **Phase 10: Tier Framework** - Extend to 6-tier hierarchy, TIRESIAS_TIER env override, extended feature registry, tier-specific route guards, tier exposure in /health (completed 2026-03-20)
-- [ ] **Phase 11: MSSP Multi-Tenant** - Parent-child tenant hierarchy, cross-tenant query/detection/quarantine APIs, tenant provisioning, isolation enforcement
-- [ ] **Phase 12: SaaS Management** - Managed provisioning endpoint, usage metering, Stripe billing webhook, tenant suspension/reactivation
-- [ ] **Phase 13: Dashboard Tier-Awareness** - Tier-conditional nav, MSSP dashboard page, SaaS admin page, tier badge, TierGate component
+- [x] **Phase 11: MSSP Multi-Tenant** - Parent-child tenant hierarchy, cross-tenant query/detection/quarantine APIs, tenant provisioning, isolation enforcement (completed 2026-03-21)
+- [x] **Phase 12: SaaS Management** - Managed provisioning endpoint, usage metering, Stripe billing webhook, tenant suspension/reactivation (completed 2026-03-21)
+- [x] **Phase 13: Dashboard Tier-Awareness** - Tier-conditional nav, MSSP dashboard page, SaaS admin page, tier badge, TierGate component (completed 2026-03-21)
+
+### v2.2 — White-Label & Platform Polish
+
+- [x] **Phase 14: White-Label Engine** - Per-tenant branding model, config API, CSS variable injection, logo swap, page title/favicon, preview UI — gated to mssp + saas tiers (completed 2026-03-21)
+- [x] **Phase 15: Platform Visual Polish** - Restyle login, landing, SoulWatch, SoulGate, and settings pages with Obsidian Flux; add consistent loading skeletons and error states (completed 2026-03-21)
+
+### v2.3 — Customer Lifecycle & Self-Service
+
+- [ ] **Phase 16: Trial & Checkout** - Stripe Checkout flow, auto-provisioning on success, free Community trial registration, trial expiration handling
+- [ ] **Phase 17: Billing & Key Management** - Stripe Customer Portal, self-service tier upgrade, payment failure grace period, full API key CRUD with usage stats
+- [ ] **Phase 18: Usage & Limits** - Usage dashboard widget, 80%/100% alerts, soft and hard tier limit enforcement
+- [ ] **Phase 19: Self-Service Chatbot** - RAG-powered support chat widget, customer context injection, action capability, escalation to Linear/Telegram, chat history
+- [ ] **Phase 20: Lifecycle Emails** - Welcome, trial-expiring, trial-expired, payment receipt, and P0 acknowledgment emails via Resend
+- [ ] **Phase 21: Dashboard Integration** - Wire welcome wizard, usage widget, chat widget, billing settings, and key management into unified dashboard experience
 
 ---
 
@@ -218,7 +236,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Tenant hierarchy model + isolation enforcement (MSSP-01, MSSP-06)
+- [x] 11-01-PLAN.md — Tenant hierarchy model + isolation enforcement (MSSP-01, MSSP-06)
 - [ ] 11-02-PLAN.md — Cross-tenant APIs + tenant provisioning (MSSP-02, MSSP-03, MSSP-04, MSSP-05)
 
 ### Phase 12: SaaS Management
@@ -250,6 +268,136 @@ Plans:
 
 ---
 
+### Phase 14: White-Label Engine
+**Goal**: MSSP partners and enterprise SaaS customers can brand their Tiresias deployment with their own logo, colors, company name, and favicon — applied portal-wide via CSS variable injection, gated to mssp and saas tiers
+**Depends on**: Phase 13
+**Requirements**: WL-01, WL-02, WL-03, WL-04, WL-05, WL-06, WL-07
+**Success Criteria** (what must be TRUE):
+  1. A tenant admin on an mssp or saas deploy can set logo URL, primary color, accent color, company name, and favicon URL via PUT /v1/tenant/branding and see changes reflected in the portal without a full reload
+  2. After branding is applied, DashboardSidebar and DashboardHeader render the tenant logo in place of the Tiresias logo; if no branding is configured, the Tiresias logo is shown as fallback
+  3. The portal document title and browser favicon update to tenant values when white-label is active — a Tiresias-branded tab title is never shown for a white-labeled tenant
+  4. A tenant admin can open the branding preview panel, adjust colors and logo, and see the changes applied to a live preview before committing them with "Save Branding"
+  5. Visiting the white-label config UI on a community, starter, pro, or enterprise tier deploy shows a TierGate upgrade prompt — the branding API returns 403 for those tiers
+**Plans**: 2 plans
+
+Plans:
+- [x] 14-01-PLAN.md — Backend: BrandingConfig schema, GET/PUT /v1/tenant/branding, white_label tier fix to mssp, main.py wiring (WL-01, WL-02, WL-07) (completed 2026-03-21)
+- [x] 14-02-PLAN.md — Frontend: BrandingProvider context, CSS injection, logo swap, title/favicon, Settings White Label tab (WL-03, WL-04, WL-05, WL-06)
+
+### Phase 15: Platform Visual Polish
+**Goal**: Every page in the Tiresias portal uses Obsidian Flux tokens, consistent loading skeletons, and standardized error states — no page is left on legacy styles
+**Depends on**: Phase 14
+**Requirements**: POLISH-01, POLISH-02, POLISH-03, POLISH-04, POLISH-05, POLISH-06
+**Success Criteria** (what must be TRUE):
+  1. Login page renders on #0D0D0D background with Electric Mint accents, Manrope typography, and the Tiresias Obsidian Flux mark — no legacy Tailwind utility classes or off-brand colors remain
+  2. Landing page hero, features section, pricing table, and footer all use Obsidian Flux tokens; the page is visually consistent with the dashboard chrome
+  3. All five SoulWatch pages (anomalies, rules, integrations, reports, quarantines) and all four SoulGate pages (audit, rate-limits, upstreams, access) render with Obsidian Flux dark surfaces, no white backgrounds or default browser chrome
+  4. Settings page uses Obsidian Flux form controls, section headers, and surface tokens — no mixed styling with legacy components
+  5. Every dashboard page shows a consistent skeleton loader (pulsing placeholder blocks) while data is loading, and a standardized error state card (icon + message + retry button) on fetch failure
+**Plans**: 2 plans
+
+Plans:
+- [x] 15-01-PLAN.md — Restyle login page and landing page with Obsidian Flux tokens (POLISH-01, POLISH-02)
+- [x] 15-02-PLAN.md — SkeletonCard + ErrorCard components; restyle SoulWatch, SoulGate, Settings pages (POLISH-03, POLISH-04, POLISH-05, POLISH-06)
+
+---
+
+### Phase 16: Trial & Checkout
+**Goal**: A prospect can sign up for a free Community trial or purchase a paid tier through Stripe Checkout and arrive in the dashboard with a working soulkey — no human intervention required
+**Depends on**: Phase 15
+**Requirements**: TRIAL-01, TRIAL-02, TRIAL-03, TRIAL-04, TRIAL-05, BILL-03
+**Success Criteria** (what must be TRUE):
+  1. A visitor on the pricing page can click "Start Trial" or "Buy Now", enter their email, complete Stripe Checkout, and land on a success page that displays their soulkey with a copy button
+  2. POST /v1/saas/provision is called atomically on checkout.session.completed — the resulting tenant, admin soulkey, and default policies either all exist or none do (no partial state)
+  3. A new user can register for a free Community account with just an email, receive a verification email via Resend, and log in without ever touching Stripe
+  4. A tenant on a paid trial sees a 14-day countdown in the dashboard; at day 14 with no payment method, the account auto-downgrades to Community and data is preserved for 30 days
+  5. The Stripe webhook handler at /v1/saas/billing/webhook processes subscription.created, subscription.updated, subscription.deleted, invoice.paid, and invoice.payment_failed — each event updates the tenant tier in the same request and returns 200 within 3 seconds
+**Plans**: 2 plans
+
+Plans:
+- [ ] 16-01-PLAN.md -- Backend: checkout session (email-only), webhook (invoice events), Python billing handler (invoice.paid/failed), trial expiry cron (TRIAL-01, TRIAL-02, TRIAL-05, BILL-03)
+- [ ] 16-02-PLAN.md -- Portal: /checkout/success page (soulkey + quickstart), /trial Community signup form (TRIAL-03, TRIAL-04)
+
+### Phase 17: Billing & Key Management
+**Goal**: A customer can manage their subscription and payment method without contacting support, and can create, label, and revoke API keys directly from the dashboard
+**Depends on**: Phase 16
+**Requirements**: BILL-01, BILL-02, BILL-04, KEY-01, KEY-02, KEY-03, KEY-04
+**Success Criteria** (what must be TRUE):
+  1. Clicking "Manage Billing" in settings opens the Stripe Customer Portal in a new tab where the customer can update payment methods, download invoices, and cancel their subscription
+  2. A customer on Starter tier can click "Upgrade to Pro" or "Upgrade to Enterprise" in settings, complete the Stripe subscription update, and see their tier badge change without a page reload
+  3. When a payment fails, the customer sees a persistent red banner in the dashboard for up to 3 days; if no payment is resolved within the grace period, the account auto-downgrades with a notification
+  4. The API Keys settings page lists all soulkeys for the tenant with label, status badge, created date, and last-used timestamp
+  5. A customer can create a new soulkey with a label and optional expiry date — the key value is shown exactly once after creation, then only the hash is stored
+  6. A customer can revoke any soulkey from the dashboard via a confirmation modal — revocation takes effect immediately with no grace period
+**Plans**: 2 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Backend: billing portal + upgrade + payment grace + key CRUD (BILL-01, BILL-02, BILL-04, KEY-01, KEY-02, KEY-03, KEY-04)
+- [ ] 17-02-PLAN.md — Portal: Settings billing tab + API Keys tab live-wired (BILL-01, BILL-02, BILL-04, KEY-01, KEY-02, KEY-03, KEY-04)
+
+
+### Phase 18: Usage & Limits
+**Goal**: Customers always know how much of their tier allowance they have consumed, receive warnings before hitting limits, and are blocked gracefully when they exceed them
+**Depends on**: Phase 17
+**Requirements**: USAGE-01, USAGE-02, USAGE-03
+**Success Criteria** (what must be TRUE):
+  1. The dashboard Overview page includes a usage widget showing current-period agent count vs tier limit, total requests, and storage used — values update on page load
+  2. When a tenant reaches 80% of their tier limit, a yellow warning banner appears in the dashboard and a usage alert email is sent; at 100%, the banner turns red and a second email fires
+  3. API requests from a tenant at 100% of their limit receive a warning header but are processed (soft block with 10% grace); requests from a tenant at 110% receive a 429 response with an upgrade CTA in the body
+**Plans**: 1 plan
+
+Plans:
+- [ ] 18-01-PLAN.md — Usage tracking + limits + alerts + dashboard widget (USAGE-01, USAGE-02, USAGE-03)
+
+### Phase 19: Self-Service Chatbot
+**Goal**: A customer can ask any question about Tiresias, get answers grounded in product documentation, and receive proactive help based on their account context — without opening a support ticket
+**Depends on**: Phase 18
+**Requirements**: BOT-01, BOT-02, BOT-03, BOT-04, BOT-05, BOT-06, BOT-07
+**Success Criteria** (what must be TRUE):
+  1. A floating chat button appears in the bottom-right of every dashboard page; clicking it opens a slide-out panel showing message history and a text input
+  2. Sending a message returns a streamed response within 3 seconds, grounded in Tiresias documentation (API reference, quickstart, integration guides, detection rule library, PRH pattern explanations)
+  3. The bot's responses reflect the customer's current tier, agent count, and recent alerts — without the customer having to re-explain their context
+  4. The bot can perform actions: check agent status, surface recent alerts, test a detection rule, and link directly to the relevant dashboard page
+  5. When the bot's confidence is low or the customer types "talk to a human", a support ticket is automatically created in Linear with the chat transcript, and a Telegram notification fires to the Saluca ops channel
+  6. Chat conversations are persisted per tenant and visible as history in the chat panel across sessions
+**Plans**: 3 plans
+
+Plans:
+- [ ] 19-01-PLAN.md -- Backend LLM + knowledge base + context injection (BOT-02, BOT-03, BOT-04)
+- [x] 19-02-PLAN.md -- Action engine + escalation + chat history (BOT-05, BOT-06, BOT-07)
+- [ ] 19-03-PLAN.md -- Portal ChatWidget component (BOT-01)
+
+### Phase 20: Lifecycle Emails
+**Goal**: The right email reaches the customer at every critical moment in their lifecycle — registration, trial expiry warning, trial expiry, payment receipt, and P0 acknowledgment — without any manual sending
+**Depends on**: Phase 18
+**Requirements**: EMAIL-01, EMAIL-02, EMAIL-03, EMAIL-04, EMAIL-05
+**Success Criteria** (what must be TRUE):
+  1. A customer receives a welcome email within 60 seconds of completing registration — the email contains their soulkey, a quickstart link, and a docs link, sent via Resend
+  2. On day 10 of a 14-day trial, the customer receives a trial-expiring email showing their current usage stats and a prominent "Upgrade Now" CTA
+  3. When a trial expires without payment, the customer receives a trial-expired email with a 30-day data retention notice and an upgrade offer
+  4. Every successful Stripe invoice.paid event triggers a payment receipt email to the billing contact within 60 seconds
+  5. When a P0 support ticket is acknowledged by a Saluca operator, the customer receives an acknowledgment email containing the ticket ID and expected response SLA
+**Plans**: 1 plan
+
+Plans:
+- [ ] 20-01-PLAN.md — Email module (5 templates, sender, triggers) + hook wiring in trial/billing/support
+
+### Phase 21: Dashboard Integration
+**Goal**: Every v2.3 capability — trial onboarding, usage visibility, self-service chat, billing management, and key management — is wired into a unified dashboard experience that a new customer can navigate end-to-end without documentation
+**Depends on**: Phase 19, Phase 20
+**Requirements**: (Covered by TRIAL-03 from Phase 16 + integration wiring for all Phase 16-20 capabilities)
+**Success Criteria** (what must be TRUE):
+  1. A customer who just completed checkout lands on a welcome page that shows their soulkey, a 3-step quickstart (install SDK, send first request, verify in dashboard), and progress indicators that update as each step is completed
+  2. The Settings page has a Billing tab (Stripe Customer Portal link, current tier, upgrade button) and an API Keys tab (key list, create, revoke) — both tabs render without errors for all tier levels
+  3. The Overview page usage widget and the sidebar chat button are present and functional from the first login — no additional configuration required
+  4. A customer can complete the full onboarding loop (register, verify email, copy soulkey, install SDK, send first request, see it in the dashboard) without leaving the product or reading external documentation
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01-PLAN.md — Welcome wizard + first-login redirect + layout wiring (ChatWidget, UsageMetrics, Settings Billing + API Keys)
+
+---
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -263,15 +411,24 @@ Plans:
 | 7. Anomaly Expansion | 0/1 | Not started | - |
 | 8. SIEM Connectors | 2/2 | Complete | 2026-03-20 |
 | 9. Dashboard Integration | 2/2 | Complete | 2026-03-21 |
-| 10. Tier Framework | 1/1 | Complete | 2026-03-20 |
-| 11. MSSP Multi-Tenant | 0/2 | Not started | - |
-| 12. SaaS Management | 0/1 | Not started | - |
-| 13. Dashboard Tier-Awareness | 0/2 | Not started | - |
+| 10. Tier Framework | 1/1 | Complete | 2026-03-21 |
+| 11. MSSP Multi-Tenant | 1/2 | Complete | 2026-03-21 |
+| 12. SaaS Management | 0/1 | Complete | 2026-03-21 |
+| 13. Dashboard Tier-Awareness | 0/2 | Complete | 2026-03-21 |
+| 14. White-Label Engine | 2/2 | Complete | 2026-03-21 |
+| 15. Platform Visual Polish | 2/2 | Complete | 2026-03-21 |
+| 16. Trial & Checkout | 0/2 | Not started | - |
+| 17. Billing & Key Management | 0/2 | Not started | - |
+| 18. Usage & Limits | 0/1 | Not started | - |
+| 19. Self-Service Chatbot | 0/TBD | Not started | - |
+| 20. Lifecycle Emails | 0/1 | Not started | - |
+| 21. Dashboard Integration | 0/TBD | Not started | - |
 
 ---
 
 *Roadmap created: 2026-03-20*
 *v2.0 phases added: 2026-03-20*
 *v2.1 phases added: 2026-03-21*
-*Last updated: 2026-03-20 — Phase 10 complete (6-tier hierarchy, TIRESIAS_TIER override, route guards)*
-*Phase 13 planned: 2026-03-20 — 2 plans created*
+*v2.2 phases added: 2026-03-21*
+*v2.3 phases added: 2026-03-21*
+*Last updated: 2026-03-21 — v2.3 Customer Lifecycle & Self-Service roadmap created (Phases 16-21); Phase 18 planned (1 plan)*
