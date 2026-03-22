@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const res = await fetch(`${backendUrl}/v1/auth/oidc/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, state, redirect_uri: \`\${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/api/auth/callback\` }),
+      body: JSON.stringify({ code, state, redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/api/auth/callback` }),
     });
 
     if (!res.ok) {
