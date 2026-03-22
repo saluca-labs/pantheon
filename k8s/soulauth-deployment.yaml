@@ -148,9 +148,9 @@ spec:
             - name: TRIAL_VERIFY_BASE_URL
               value: "https://api.tiresias.network"
             - name: SOULAUTH_OIDC_ENABLED
+              value: "true"
             - name: SOULAUTH_PUBLIC_URL
               value: "https://tiresias.network"
-              value: "true"
             - name: SOULAUTH_OIDC_SECRET_KEY
               valueFrom:
                 secretKeyRef:
