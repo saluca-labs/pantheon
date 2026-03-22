@@ -108,9 +108,11 @@ async def authorize(
             idp_config = await resolve_idp_by_email(db, f"user@{tenant_slug}")
             if not idp_config:
                 raise HTTPException(status_code=404, detail="Tenant not found")
-        idp_config = await load_idp_config(db, tenant.id, provider_type=provider_type)
-        if not idp_config:
-            raise HTTPException(status_code=404, detail="No SSO provider for this tenant")
+            # idp_config resolved via domain fallback -- skip load_idp_config
+        else:
+            idp_config = await load_idp_config(db, tenant.id, provider_type=provider_type)
+            if not idp_config:
+                raise HTTPException(status_code=404, detail="No SSO provider for this tenant")
     else:
         raise HTTPException(status_code=400, detail="Provide email or tenant_slug")
     discovery = await fetch_discovery_document(idp_config.discovery_url)
