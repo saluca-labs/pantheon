@@ -129,22 +129,22 @@ function TerminalBlock({ filename, code }: { filename: string; code: string }) {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
-      className="glass-card rounded-2xl overflow-hidden terminal-window"
+      className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl overflow-hidden terminal-window"
     >
-      <div className="flex items-center justify-between px-6 py-3 bg-navy-800/50 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-3 bg-of-surface-container/50 border-b border-of-outline-variant/15">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             <span className="w-3 h-3 rounded-full bg-red-500/60" />
             <span className="w-3 h-3 rounded-full bg-yellow-500/60" />
             <span className="w-3 h-3 rounded-full bg-green-500/60" />
           </div>
-          <span className="text-xs text-foreground-subtle font-mono">
+          <span className="text-xs text-of-outline font-mono">
             {filename}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="text-xs text-foreground-subtle hover:text-foreground-muted transition-colors px-2 py-1 rounded border border-border hover:border-border-hover"
+          className="text-xs text-of-outline hover:text-of-on-surface-variant transition-colors px-2 py-1 rounded border border-of-outline-variant/15 hover:border-of-outline-variant/15-hover"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
@@ -165,37 +165,37 @@ function PipelineDiagram() {
     {
       label: "Events",
       sublabel: "Agent telemetry stream",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
     {
       label: "Detection",
       sublabel: "Sigma rules + baselines",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Analysis",
       sublabel: "Risk scoring + correlation",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Response",
       sublabel: "Playbooks + quarantine",
-      color: "border-gold-500/40 text-gold-400",
-      bg: "bg-gold-500/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Forward",
       sublabel: "SIEM + notifications",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
   ];
 
   return (
-    <div ref={ref} className="glass-card rounded-2xl p-8 lg:p-12">
+    <div ref={ref} className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
           {steps.map((step, i) => (
@@ -210,7 +210,7 @@ function PipelineDiagram() {
                 className={`flex flex-col items-center justify-center w-32 h-20 rounded-xl border ${step.color} ${step.bg} text-center px-2 transition-all duration-300 hover:scale-105`}
               >
                 <span className="text-xs font-semibold">{step.label}</span>
-                <span className="text-[10px] text-foreground-subtle mt-0.5 leading-tight">
+                <span className="text-[10px] text-of-outline mt-0.5 leading-tight">
                   {step.sublabel}
                 </span>
               </div>
@@ -219,7 +219,7 @@ function PipelineDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="hidden lg:block w-5 h-5 text-foreground-subtle shrink-0"
+                  className="hidden lg:block w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -230,7 +230,7 @@ function PipelineDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="lg:hidden w-5 h-5 text-foreground-subtle shrink-0"
+                  className="lg:hidden w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
@@ -245,19 +245,19 @@ function PipelineDiagram() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 1.0, duration: 0.4 }}
-          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-border mt-4"
+          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-of-outline-variant/15 mt-4"
         >
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-teal-600/30 border border-teal-500/40" />
-            <span className="text-xs text-foreground-subtle">SoulWatch processing</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/30 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">SoulWatch processing</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-gold-500/20 border border-gold-500/40" />
-            <span className="text-xs text-foreground-subtle">Response layer</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/20 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">Response layer</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-navy-800 border border-foreground-subtle/30" />
-            <span className="text-xs text-foreground-subtle">External</span>
+            <div className="w-3 h-3 rounded-sm bg-of-surface-container border border-foreground-subtle/30" />
+            <span className="text-xs text-of-outline">External</span>
           </div>
         </motion.div>
       </div>
@@ -275,7 +275,7 @@ export default function SoulWatchPage() {
       <main className="min-h-screen pt-16">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 lg:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-gold-500/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-of-primary/5 to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
             <div className="max-w-3xl">
               <motion.div
@@ -284,8 +284,8 @@ export default function SoulWatchPage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="flex items-center gap-3 mb-6"
               >
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-500/10 border border-gold-500/30 px-3 py-1 text-xs font-medium text-gold-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gold-400 pulse-glow" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-of-primary/10 border border-of-primary/30 px-3 py-1 text-xs font-medium text-of-primary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-of-primary pulse-glow" />
                   Now Available
                 </span>
               </motion.div>
@@ -295,7 +295,7 @@ export default function SoulWatchPage() {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6"
               >
-                <span className="text-gradient-gold">SoulWatch</span>
+                <span className="text-of-primary">SoulWatch</span>
                 <br />
                 AI Runtime Security
                 <br />
@@ -305,7 +305,7 @@ export default function SoulWatchPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-xl text-foreground-muted leading-relaxed mb-4"
+                className="text-xl text-of-on-surface-variant leading-relaxed mb-4"
               >
                 See what your agents are actually doing. Without seeing anything they handle.
               </motion.p>
@@ -313,7 +313,7 @@ export default function SoulWatchPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="text-foreground-muted leading-relaxed mb-8"
+                className="text-of-on-surface-variant leading-relaxed mb-8"
               >
                 Your AI agents are running in production right now. Do you know what
                 they&apos;re doing? SoulWatch gives you full behavioral visibility
@@ -328,13 +328,13 @@ export default function SoulWatchPage() {
               >
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-center text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-center text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-center text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>
@@ -344,13 +344,13 @@ export default function SoulWatchPage() {
         </section>
 
         {/* Problem Statement */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <div className="glass-card rounded-2xl p-8 lg:p-12 border-gold-500/20">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12 border-of-primary/20">
               <h2 className="text-2xl font-bold mb-4">
                 The problem: blind spots in agent operations
               </h2>
-              <div className="space-y-4 text-foreground-muted leading-relaxed">
+              <div className="space-y-4 text-of-on-surface-variant leading-relaxed">
                 <p>
                   You deployed 50 AI agents last quarter. They process customer data,
                   make API calls, and execute business logic autonomously. But you have
@@ -383,9 +383,9 @@ export default function SoulWatchPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Ten capabilities for complete
                 <br />
-                <span className="text-gradient-gold">agent fleet visibility</span>
+                <span className="text-of-primary">agent fleet visibility</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-foreground-muted">
+              <p className="mx-auto max-w-2xl text-of-on-surface-variant">
                 From real-time event streaming to automated incident response.
                 Everything your SOC needs to monitor AI agents at scale.
               </p>
@@ -398,15 +398,15 @@ export default function SoulWatchPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={featuresInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ delay: i * 0.06, duration: 0.4 }}
-                  className="glass-card rounded-xl p-6 border-l-4 border-l-gold-500 hover:border-gold-500/30 transition-all group card-hover-lift"
+                  className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 border-l-4 border-l-of-primary hover:border-of-primary/30 transition-all group card-hover-lift"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="shrink-0 w-10 h-10 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400 group-hover:bg-gold-500/20 transition-colors">
+                    <div className="shrink-0 w-10 h-10 rounded-lg bg-of-primary/10 border border-of-primary/20 flex items-center justify-center text-of-primary group-hover:bg-of-primary/20 transition-colors">
                       {feature.icon}
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">{feature.title}</h3>
-                      <p className="text-sm text-foreground-muted leading-relaxed">
+                      <p className="text-sm text-of-on-surface-variant leading-relaxed">
                         {feature.description}
                       </p>
                     </div>
@@ -418,7 +418,7 @@ export default function SoulWatchPage() {
         </section>
 
         {/* Architecture Diagram */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -430,7 +430,7 @@ export default function SoulWatchPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 How SoulWatch works
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Every agent event flows through a five-stage pipeline from ingestion to response.
               </p>
             </motion.div>
@@ -452,7 +452,7 @@ export default function SoulWatchPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 See the API in action
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Stream events, query anomalies, and manage rules - all through a clean REST API.
               </p>
             </motion.div>
@@ -531,13 +531,13 @@ tags:
         </section>
 
         {/* Pairs with SoulAuth */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Pairs with <span className="text-gradient-teal">SoulAuth</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-foreground-muted leading-relaxed">
+              <p className="mx-auto max-w-2xl text-of-on-surface-variant leading-relaxed">
                 SoulAuth tells you who an agent is and what it&apos;s allowed to do.
                 SoulWatch tells you what it&apos;s actually doing. Together, they close
                 the loop between authorization and accountability.
@@ -545,14 +545,14 @@ tags:
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass-card rounded-xl p-6">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-teal-600/15 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-8 h-8 rounded-lg bg-of-primary/15 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-teal-400">SoulAuth provides</h3>
+                  <h3 className="font-semibold text-of-primary">SoulAuth provides</h3>
                 </div>
                 <ul className="space-y-2">
                   {[
@@ -561,8 +561,8 @@ tags:
                     "Capability token issuance",
                     "Audit events for every decision",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-foreground-muted">
-                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <li key={item} className="flex items-start gap-2 text-sm text-of-on-surface-variant">
+                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       {item}
@@ -571,15 +571,15 @@ tags:
                 </ul>
               </div>
 
-              <div className="glass-card rounded-xl p-6">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gold-500/15 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-8 h-8 rounded-lg bg-of-primary/15 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-gold-400">SoulWatch adds</h3>
+                  <h3 className="font-semibold text-of-primary">SoulWatch adds</h3>
                 </div>
                 <ul className="space-y-2">
                   {[
@@ -588,8 +588,8 @@ tags:
                     "Automated quarantine + response",
                     "SIEM forwarding + compliance reports",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-foreground-muted">
-                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-gold-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <li key={item} className="flex items-start gap-2 text-sm text-of-on-surface-variant">
+                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       {item}
@@ -613,20 +613,20 @@ tags:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Pricing
               </h2>
-              <p className="text-foreground-muted mb-8 leading-relaxed">
+              <p className="text-of-on-surface-variant mb-8 leading-relaxed">
                 SoulWatch is included with SoulAuth Pro plans at no additional cost.
                 Standalone pricing for teams using third-party authorization is coming soon.
               </p>
-              <div className="glass-card rounded-xl p-8 inline-block">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-8 inline-block">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="w-12 h-12 rounded-lg bg-of-primary/10 border border-of-primary/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                     </svg>
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-foreground">Included with SoulAuth Pro</p>
-                    <p className="text-sm text-foreground-muted">Full SoulWatch access, no extra charge</p>
+                    <p className="text-sm text-of-on-surface-variant">Full SoulWatch access, no extra charge</p>
                   </div>
                 </div>
                 <ul className="text-left space-y-2 mb-6">
@@ -637,8 +637,8 @@ tags:
                     "WebSocket live feed",
                     "Compliance report export",
                   ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-foreground-muted">
-                      <svg className="w-4 h-4 text-gold-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <li key={item} className="flex items-center gap-2 text-sm text-of-on-surface-variant">
+                      <svg className="w-4 h-4 text-of-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       {item}
@@ -651,7 +651,7 @@ tags:
         </section>
 
         {/* CTA */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -662,20 +662,20 @@ tags:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Monitor your agents today
               </h2>
-              <p className="text-foreground-muted mb-8 leading-relaxed">
+              <p className="text-of-on-surface-variant mb-8 leading-relaxed">
                 SoulWatch is production-ready and included with every SoulAuth Pro trial.
                 Start monitoring your agent fleet in minutes - no credit card required.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 cta-breathe"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20 cta-breathe"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>

@@ -71,13 +71,13 @@ export default function BillingPage() {
           <h1 className="text-3xl font-bold mb-8">Billing & Subscription</h1>
 
           {loading && (
-            <div className="glass-card rounded-2xl p-12 text-center">
-              <div className="animate-spin w-8 h-8 border-4 border-gold-500/30 border-t-gold-500 rounded-full mx-auto" />
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-12 text-center">
+              <div className="animate-spin w-8 h-8 border-4 border-of-primary/30 border-t-of-primary rounded-full mx-auto" />
             </div>
           )}
 
           {error && (
-            <div className="glass-card rounded-2xl p-8 border-red-500/30">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 border-red-500/30">
               <p className="text-red-400">{error}</p>
             </div>
           )}
@@ -85,20 +85,20 @@ export default function BillingPage() {
           {billing && !loading && (
             <div className="space-y-6">
               {/* Current Plan */}
-              <div className="glass-card rounded-2xl p-8">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8">
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-lg font-semibold mb-1">
                       Current Plan
                     </h2>
-                    <p className="text-foreground-muted text-sm">
+                    <p className="text-of-on-surface-variant text-sm">
                       Your subscription details
                     </p>
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       billing.status === "active"
-                        ? "bg-teal-500/20 text-teal-400"
+                        ? "bg-of-primary/20 text-of-primary"
                         : "bg-amber-500/20 text-amber-400"
                     }`}
                   >
@@ -108,13 +108,13 @@ export default function BillingPage() {
 
                 <div className="mt-6 grid sm:grid-cols-3 gap-6">
                   <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                    <p className="text-xs text-of-outline uppercase tracking-wider mb-1">
                       Plan
                     </p>
                     <p className="text-lg font-semibold">{billing.plan}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                    <p className="text-xs text-of-outline uppercase tracking-wider mb-1">
                       Agents
                     </p>
                     <p className="text-lg font-semibold">
@@ -122,7 +122,7 @@ export default function BillingPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider mb-1">
+                    <p className="text-xs text-of-outline uppercase tracking-wider mb-1">
                       Next billing date
                     </p>
                     <p className="text-lg font-semibold">
@@ -141,26 +141,26 @@ export default function BillingPage() {
               </div>
 
               {/* Actions */}
-              <div className="glass-card rounded-2xl p-8">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8">
                 <h2 className="text-lg font-semibold mb-4">
                   Manage Subscription
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   <Link
                     href="/pricing"
-                    className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-2.5 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all"
+                    className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-2.5 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all"
                   >
                     Upgrade Plan
                   </Link>
                   <button
                     onClick={handleManageBilling}
-                    className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover transition-all"
+                    className="rounded-lg border border-of-outline-variant/15 px-5 py-2.5 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover transition-all"
                   >
                     Payment Methods
                   </button>
                   <button
                     onClick={handleManageBilling}
-                    className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover transition-all"
+                    className="rounded-lg border border-of-outline-variant/15 px-5 py-2.5 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover transition-all"
                   >
                     Invoice History
                   </button>
@@ -168,21 +168,21 @@ export default function BillingPage() {
               </div>
 
               {/* Usage */}
-              <div className="glass-card rounded-2xl p-8">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8">
                 <h2 className="text-lg font-semibold mb-4">Usage</h2>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-foreground-muted">
+                      <span className="text-of-on-surface-variant">
                         Active Agents
                       </span>
                       <span className="font-medium">
                         {billing.agent_count} agents
                       </span>
                     </div>
-                    <div className="h-2 bg-navy-800 rounded-full overflow-hidden">
+                    <div className="h-2 bg-of-surface-container rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-gold-600 to-gold-500 rounded-full"
+                        className="h-full bg-gradient-to-r from-of-primary to-of-primary rounded-full"
                         style={{
                           width: `${Math.min(
                             (billing.agent_count / 50) * 100,
@@ -196,11 +196,11 @@ export default function BillingPage() {
               </div>
 
               {/* Cancel */}
-              <div className="glass-card rounded-2xl p-8 border-red-500/10">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 border-red-500/10">
                 <h2 className="text-lg font-semibold mb-2">
                   Cancel Subscription
                 </h2>
-                <p className="text-foreground-muted text-sm mb-4">
+                <p className="text-of-on-surface-variant text-sm mb-4">
                   Canceling will downgrade your account to SoulAuth Community
                   (free) at the end of your current billing period.
                 </p>

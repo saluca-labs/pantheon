@@ -144,12 +144,12 @@ function CodeBlock({ code }: { code: string; language?: string }) {
   };
   return (
     <div className="relative group">
-      <pre className="bg-navy-950 border border-border rounded-xl p-5 overflow-x-auto text-sm font-mono leading-relaxed text-foreground-muted">
+      <pre className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 overflow-x-auto text-sm font-mono leading-relaxed text-of-on-surface-variant">
         <code>{code}</code>
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 px-3 py-1.5 text-xs rounded-lg bg-navy-800 text-foreground-muted hover:text-foreground border border-border hover:border-border-hover transition-colors opacity-0 group-hover:opacity-100"
+        className="absolute top-3 right-3 px-3 py-1.5 text-xs rounded-lg bg-of-surface-container text-of-on-surface-variant hover:text-foreground border border-of-outline-variant/15 hover:border-of-outline-variant/15-hover transition-colors opacity-0 group-hover:opacity-100"
       >
         {copied ? "Copied!" : "Copy"}
       </button>
@@ -169,7 +169,7 @@ export default function DevelopersPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(45,212,191,0.08),transparent_60%)]" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-24 lg:py-32">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-teal-600/10 border border-teal-500/20 px-4 py-1.5 text-sm text-teal-400 mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-of-primary/10 border border-of-primary/20 px-4 py-1.5 text-sm text-of-primary mb-6">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
@@ -179,13 +179,13 @@ export default function DevelopersPage() {
                 Build secure AI agents{" "}
                 <span className="text-gradient-teal">in minutes</span>
               </h1>
-              <p className="mt-6 text-lg sm:text-xl text-foreground-muted leading-relaxed max-w-2xl">
+              <p className="mt-6 text-lg sm:text-xl text-of-on-surface-variant leading-relaxed max-w-2xl">
                 SDKs, APIs, and documentation to integrate SoulAuth into your agent infrastructure.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-6 py-3 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                 >
                   Get API Key
                 </Link>
@@ -193,7 +193,7 @@ export default function DevelopersPage() {
                   href="https://api.tiresias.network/docs"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-colors"
+                  className="rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-colors"
                 >
                   Full API Docs
                 </a>
@@ -205,18 +205,18 @@ export default function DevelopersPage() {
         {/* Quickstart */}
         <section id="quickstart" className="mx-auto max-w-7xl px-6 lg:px-8 py-20">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Quickstart</h2>
-          <p className="text-foreground-muted mb-10">Get up and running in under 60 seconds.</p>
+          <p className="text-of-on-surface-variant mb-10">Get up and running in under 60 seconds.</p>
 
           {/* Tabs */}
-          <div className="flex border-b border-border mb-0">
+          <div className="flex border-b border-of-outline-variant/15 mb-0">
             {quickstartTabs.map((tab, i) => (
               <button
                 key={tab.label}
                 onClick={() => setActiveTab(i)}
                 className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   activeTab === i
-                    ? "border-teal-500 text-teal-400"
-                    : "border-transparent text-foreground-muted hover:text-foreground"
+                    ? "border-of-primary text-of-primary"
+                    : "border-transparent text-of-on-surface-variant hover:text-foreground"
                 }`}
               >
                 {tab.label}
@@ -229,29 +229,29 @@ export default function DevelopersPage() {
         </section>
 
         {/* SDK Reference */}
-        <section id="sdk" className="bg-navy-900/50">
+        <section id="sdk" className="bg-of-surface-container-low/50">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20">
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-start">
               <div className="lg:w-2/5 lg:sticky lg:top-24">
                 <h2 className="text-3xl font-bold tracking-tight mb-2">Python SDK</h2>
-                <p className="text-foreground-muted mb-6 leading-relaxed">
+                <p className="text-of-on-surface-variant mb-6 leading-relaxed">
                   Type-safe, async-ready client with built-in caching and automatic key rotation.
                 </p>
-                <ul className="space-y-3 text-sm text-foreground-muted">
+                <ul className="space-y-3 text-sm text-of-on-surface-variant">
                   <li className="flex items-center gap-2">
-                    <span className="text-teal-400">&#10003;</span> Full type hints and IDE autocomplete
+                    <span className="text-of-primary">&#10003;</span> Full type hints and IDE autocomplete
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-teal-400">&#10003;</span> Async/await support
+                    <span className="text-of-primary">&#10003;</span> Async/await support
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-teal-400">&#10003;</span> Automatic retry with exponential backoff
+                    <span className="text-of-primary">&#10003;</span> Automatic retry with exponential backoff
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-teal-400">&#10003;</span> Built-in response caching
+                    <span className="text-of-primary">&#10003;</span> Built-in response caching
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-teal-400">&#10003;</span> Zero external dependencies
+                    <span className="text-of-primary">&#10003;</span> Zero external dependencies
                   </li>
                 </ul>
               </div>
@@ -267,13 +267,13 @@ export default function DevelopersPage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
             <div>
               <h2 className="text-3xl font-bold tracking-tight mb-2">API Endpoints</h2>
-              <p className="text-foreground-muted">35+ endpoints across 7 domains. RESTful, JSON-native, SoulKey-authenticated.</p>
+              <p className="text-of-on-surface-variant">35+ endpoints across 7 domains. RESTful, JSON-native, SoulKey-authenticated.</p>
             </div>
             <a
               href="https://api.tiresias.network/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-1 shrink-0"
+              className="text-sm text-of-primary hover:text-of-primary/70 transition-colors flex items-center gap-1 shrink-0"
             >
               Interactive docs
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -284,17 +284,17 @@ export default function DevelopersPage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {apiEndpoints.map((group) => (
-              <div key={group.category} className="glass-card rounded-xl p-5">
+              <div key={group.category} className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-5">
                 <h3
                   className={`text-sm font-semibold mb-3 ${
-                    group.color === "gold" ? "text-gold-400" : "text-teal-400"
+                    group.color === "gold" ? "text-of-primary" : "text-of-primary"
                   }`}
                 >
                   {group.category}
                 </h3>
                 <ul className="space-y-2">
                   {group.endpoints.map((ep) => (
-                    <li key={ep} className="text-sm font-mono text-foreground-muted">
+                    <li key={ep} className="text-sm font-mono text-of-on-surface-variant">
                       {ep}
                     </li>
                   ))}
@@ -305,21 +305,21 @@ export default function DevelopersPage() {
         </section>
 
         {/* CLI */}
-        <section id="cli" className="bg-navy-900/50">
+        <section id="cli" className="bg-of-surface-container-low/50">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20">
             <h2 className="text-3xl font-bold tracking-tight mb-2">CLI Reference</h2>
-            <p className="text-foreground-muted mb-10">12 commands to manage your entire SoulAuth lifecycle from the terminal.</p>
+            <p className="text-of-on-surface-variant mb-10">12 commands to manage your entire SoulAuth lifecycle from the terminal.</p>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {cliCommands.map((item) => (
                 <div
                   key={item.cmd}
-                  className="flex items-start gap-3 rounded-xl border border-border bg-navy-950/50 p-4 hover:border-border-hover transition-colors"
+                  className="flex items-start gap-3 rounded-xl border border-of-outline-variant/15 bg-of-background/50 p-4 hover:border-of-outline-variant/15-hover transition-colors"
                 >
-                  <span className="text-teal-500 mt-0.5 shrink-0 font-mono text-xs">$</span>
+                  <span className="text-of-primary mt-0.5 shrink-0 font-mono text-xs">$</span>
                   <div>
                     <p className="text-sm font-mono font-medium text-foreground">{item.cmd}</p>
-                    <p className="text-xs text-foreground-muted mt-1">{item.desc}</p>
+                    <p className="text-xs text-of-on-surface-variant mt-1">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -330,34 +330,34 @@ export default function DevelopersPage() {
         {/* Integration Guides */}
         <section className="mx-auto max-w-7xl px-6 lg:px-8 py-20">
           <h2 className="text-3xl font-bold tracking-tight mb-2">Integration Guides</h2>
-          <p className="text-foreground-muted mb-10">Step-by-step guides for your stack.</p>
+          <p className="text-of-on-surface-variant mb-10">Step-by-step guides for your stack.</p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {integrationGuides.map((guide) => (
               <div
                 key={guide.title}
-                className="glass-card rounded-xl p-6 hover:border-teal-500/30 transition-all group cursor-pointer"
+                className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 hover:border-of-primary/30 transition-all group cursor-pointer"
               >
-                <div className="text-teal-400 mb-4 group-hover:text-teal-300 transition-colors">
+                <div className="text-of-primary mb-4 group-hover:text-of-primary/70 transition-colors">
                   {guide.icon}
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{guide.title}</h3>
-                <p className="text-sm text-foreground-muted leading-relaxed">{guide.desc}</p>
+                <p className="text-sm text-of-on-surface-variant leading-relaxed">{guide.desc}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Bottom CTA */}
-        <section className="border-t border-border bg-navy-900/30">
+        <section className="border-t border-of-outline-variant/15 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-7xl px-6 lg:px-8 py-20 text-center">
             <h2 className="text-3xl font-bold tracking-tight mb-4">Ready to start building?</h2>
-            <p className="text-foreground-muted mb-8 max-w-xl mx-auto">
+            <p className="text-of-on-surface-variant mb-8 max-w-xl mx-auto">
               Get your API key in under a minute. 14-day Pro trial, no credit card required.
             </p>
             <Link
               href="/trial"
-              className="inline-flex rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3.5 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+              className="inline-flex rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3.5 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
             >
               Start Building
             </Link>
