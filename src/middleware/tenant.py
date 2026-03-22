@@ -47,17 +47,14 @@ TENANT_EXEMPT_PATHS = [
     "/",
     "/v1/trial/register",
     "/v1/trial/verify",
-    "/v1/auth/oidc/",
+    "/v1/waitlist/join",
 ]
 
 
 def _is_tenant_exempt(path: str) -> bool:
     """Check if a path is exempt from tenant context."""
     for exempt in TENANT_EXEMPT_PATHS:
-        if exempt.endswith("/"):
-            if path.startswith(exempt) or path.startswith(exempt.rstrip("/")):
-                return True
-        elif path == exempt or path.rstrip("/") == exempt:
+        if path == exempt or path.rstrip("/") == exempt:
             return True
     return False
 
