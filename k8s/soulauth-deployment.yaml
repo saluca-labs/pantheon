@@ -113,6 +113,18 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: metrics-auth-token
+            - name: STRIPE_PRICE_STARTER_MONTHLY
+              value: "price_1TDMSlBkXMYmrc2L29W09pQl"
+            - name: STRIPE_PRICE_STARTER_ANNUAL
+              value: "price_1TDMSlBkXMYmrc2LuuaUN5Cp"
+            - name: STRIPE_PRICE_PRO_MONTHLY
+              value: "price_1TDMT2BkXMYmrc2Lhf1whQpi"
+            - name: STRIPE_PRICE_PRO_ANNUAL
+              value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
+            - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
+              value: "price_enterprise_placeholder"
+            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
+              value: "price_enterprise_placeholder"
             - name: SOULAUTH_LICENSE_REQUIRED
               value: "false"
             - name: SOULAUTH_LOG_LEVEL
