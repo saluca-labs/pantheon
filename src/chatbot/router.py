@@ -1,12 +1,12 @@
 """
-Chatbot router -- /v1/support/chat SSE streaming endpoint.
+Chatbot router -- /v1/support/chat SSE streaming endpoint + history.
 
-Extends the /v1/support prefix. Streams grounded LLM responses using
-OpenRouter (google/gemma-3-27b-it:free fallback openai/gpt-4o-mini).
-Knowledge base chunks and customer context are injected into the system prompt.
+Extends the /v1/support prefix.
 
 Routes:
-  POST /v1/support/chat          -- stream a chat response (SSE)
+  POST /v1/support/chat                      -- stream chat response (SSE)
+  GET  /v1/support/chat/history              -- list sessions for tenant
+  GET  /v1/support/chat/history/{session_id} -- get full session turns
 """
 
 from __future__ import annotations
@@ -19,11 +19,14 @@ from typing import AsyncGenerator, Optional
 
 import httpx
 import structlog
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from src.chatbot.actions import detect_action, execute_action
 from src.chatbot.context import build_customer_context
+from src.chatbot.escalation import escalate, should_escalate
+from src.chatbot.history import append_turn, get_session, list_sessions
 from src.chatbot.knowledge import search_knowledge
 
 logger = structlog.get_logger(__name__)
@@ -35,7 +38,7 @@ MODEL_PRIMARY = "google/gemma-3-27b-it:free"
 MODEL_FALLBACK = "openai/gpt-4o-mini"
 
 # ---------------------------------------------------------------------------
-# Request models
+# Request / Response models
 # ---------------------------------------------------------------------------
 
 
@@ -48,6 +51,23 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     history: list[ChatMessage] = Field(default_factory=list)
     session_id: Optional[str] = None
+
+
+class SessionSummary(BaseModel):
+    session_id: str
+    tenant_id: Optional[str]
+    created_at: float
+    updated_at: float
+    turn_count: int
+    preview: str
+
+
+class SessionDetail(BaseModel):
+    session_id: str
+    tenant_id: Optional[str]
+    created_at: float
+    updated_at: float
+    turns: list  # [{role, content, timestamp}]
 
 
 # ---------------------------------------------------------------------------
@@ -63,42 +83,48 @@ def _sse_token(token: str) -> str:
     return _sse("token", json.dumps({"token": token}))
 
 
-def _sse_done(session_id: str, confidence: float) -> str:
-    return _sse("done", json.dumps({"session_id": session_id, "confidence": confidence}))
+def _sse_done(session_id: str, confidence: float, escalated: bool = False) -> str:
+    return _sse("done", json.dumps({
+        "session_id": session_id,
+        "confidence": confidence,
+        "escalated": escalated,
+    }))
 
 
 def _sse_error(msg: str) -> str:
     return _sse("error", json.dumps({"error": msg}))
 
 
+def _sse_action(result: str) -> str:
+    return _sse("action", json.dumps({"result": result}))
+
+
 # ---------------------------------------------------------------------------
 # System prompt
 # ---------------------------------------------------------------------------
 
-_SYSTEM_TEMPLATE = (
-    "You are the Tiresias AI support assistant. Tiresias is an enterprise AI agent security platform.\n"
-    "Answer questions about Tiresias features, configuration, APIs, and troubleshooting.\n"
-    "Be concise (2-4 sentences unless detail is requested). Ground all answers in the provided documentation.\n"
-    "If confidence is low, say so clearly and offer escalation to human support.\n"
-    "\n"
-    "--- DOCUMENTATION CONTEXT ---\n"
-    "{doc_context}\n"
-    "\n"
-    "--- CUSTOMER CONTEXT ---\n"
-    "{customer_context}\n"
-    "\n"
-    "--- INSTRUCTIONS ---\n"
-    "- Reference specific API endpoints or dashboard paths when relevant (e.g. \"go to Detection > PRH\").\n"
-    "- For navigation questions, use the exact path format: Overview, Traces, Sessions, Providers, Costs, "
-    "Playground, Quarantine, Detection Feed, Detection > PRH, Detection > SIEM Config, Detection > Rules, "
-    "Detection > Playbooks, Settings > API Keys, Settings > Billing, Settings > White Label.\n"
-    "- If the question is outside your knowledge, append CONFIDENCE:LOW at the end of your message.\n"
-    "- Respond in plain text. No markdown headers or bullet points unless listing steps.\n"
-)
+_SYSTEM_TEMPLATE = """\
+You are the Tiresias AI support assistant. Tiresias is an enterprise AI agent security platform.
+Answer questions about Tiresias features, configuration, APIs, and troubleshooting.
+Be concise (2-4 sentences unless detail is requested). Ground all answers in the provided documentation.
+If confidence is low, say so clearly and offer escalation to human support.
+
+--- DOCUMENTATION CONTEXT ---
+{doc_context}
+
+--- CUSTOMER CONTEXT ---
+{customer_context}
+
+{action_context}--- INSTRUCTIONS ---
+- Reference specific API endpoints or dashboard paths when relevant.
+- For navigation: Overview, Traces, Sessions, Providers, Costs, Playground, Quarantine, Detection Feed, Detection > PRH, Detection > SIEM Config, Detection > Rules, Detection > Playbooks, Settings > API Keys, Settings > Billing.
+- If the question is outside your knowledge, append CONFIDENCE:LOW at the end of your message.
+- Respond in plain text. No markdown headers.
+"""
 
 
 # ---------------------------------------------------------------------------
-# LLM streaming
+# LLM helpers
 # ---------------------------------------------------------------------------
 
 
@@ -114,8 +140,7 @@ def _get_api_key() -> Optional[str]:
     return os.environ.get("OPENROUTER_API_KEY")
 
 
-async def _stream_openrouter(messages: list[dict], api_key: str) -> AsyncGenerator[str, None]:
-    """Stream token deltas from OpenRouter. Yields raw content strings."""
+async def _stream_openrouter(messages: list, api_key: str) -> AsyncGenerator[str, None]:
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -129,12 +154,11 @@ async def _stream_openrouter(messages: list[dict], api_key: str) -> AsyncGenerat
         "max_tokens": 600,
         "temperature": 0.3,
     }
-
     async with httpx.AsyncClient(timeout=30.0) as client:
         async with client.stream("POST", OPENROUTER_URL, json=payload, headers=headers) as resp:
             if resp.status_code != 200:
                 body = await resp.aread()
-                raise RuntimeError(f"OpenRouter error {resp.status_code}: {body.decode()[:200]}")
+                raise RuntimeError(f"OpenRouter {resp.status_code}: {body.decode()[:200]}")
             async for line in resp.aiter_lines():
                 if not line.startswith("data: "):
                     continue
@@ -152,12 +176,20 @@ async def _stream_openrouter(messages: list[dict], api_key: str) -> AsyncGenerat
 
 def _estimate_confidence(response: str) -> float:
     low_signals = ["confidence:low", "i don't know", "i'm not sure", "cannot find", "not certain"]
-    lower = response.lower()
-    return 0.3 if any(s in lower for s in low_signals) else 0.85
+    return 0.3 if any(s in response.lower() for s in low_signals) else 0.85
+
+
+def _build_transcript(history: list, user_message: str, assistant_message: str) -> str:
+    lines = []
+    for msg in history[-6:]:
+        lines.append(f"{msg.role.upper()}: {msg.content[:200]}")
+    lines.append(f"USER: {user_message[:200]}")
+    lines.append(f"ASSISTANT: {assistant_message[:400]}")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
-# Route
+# Routes
 # ---------------------------------------------------------------------------
 
 
@@ -166,12 +198,14 @@ async def chat(request: Request, body: ChatRequest) -> StreamingResponse:
     """
     Stream a support chat response via Server-Sent Events.
 
-    Client reads events:
-      event: token  data: {"token": "..."}
-      event: done   data: {"session_id": "...", "confidence": 0.85}
-      event: error  data: {"error": "..."}
+    SSE events:
+      event: action  data: {"result": "..."}   (if action detected, sent before LLM tokens)
+      event: token   data: {"token": "..."}
+      event: done    data: {"session_id": "...", "confidence": 0.85, "escalated": false}
+      event: error   data: {"error": "..."}
     """
     session_id = body.session_id or str(uuid.uuid4())
+    tenant_id: Optional[str] = getattr(getattr(request, "state", None), "tenant_id", None)
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
@@ -180,26 +214,38 @@ async def chat(request: Request, body: ChatRequest) -> StreamingResponse:
                 yield _sse_error("OpenRouter API key not configured.")
                 return
 
-            # Knowledge retrieval
+            # --- Action detection (BOT-05) ---
+            action_context = ""
+            action_name = detect_action(body.message)
+            if action_name:
+                action_result = await execute_action(action_name, body.message)
+                if action_result:
+                    yield _sse_action(action_result)
+                    action_context = (
+                        f"--- ACTION RESULT (for context only) ---\n{action_result}\n\n"
+                    )
+
+            # --- Knowledge retrieval ---
             doc_chunks = search_knowledge(body.message, top_k=3)
             doc_context = "\n\n".join(
                 f"[{c.source} / {c.heading}]\n{c.text}" for c in doc_chunks
             ) or "No relevant documentation found."
 
-            # Customer context
+            # --- Customer context ---
             customer_context = await build_customer_context(request)
 
-            # Build messages
+            # --- Build LLM messages ---
             system_content = _SYSTEM_TEMPLATE.format(
                 doc_context=doc_context,
                 customer_context=customer_context,
+                action_context=action_context,
             )
-            messages: list[dict] = [{"role": "system", "content": system_content}]
+            messages = [{"role": "system", "content": system_content}]
             for msg in body.history[-10:]:
                 messages.append({"role": msg.role, "content": msg.content})
             messages.append({"role": "user", "content": body.message})
 
-            # Stream
+            # --- Stream LLM response ---
             full_response = ""
             t0 = time.monotonic()
             async for token in _stream_openrouter(messages, api_key):
@@ -215,22 +261,32 @@ async def chat(request: Request, body: ChatRequest) -> StreamingResponse:
                 elapsed_s=round(elapsed, 2),
                 confidence=confidence,
                 doc_chunks=len(doc_chunks),
+                action=action_name,
             )
 
-            yield _sse_done(session_id, confidence)
+            # --- Persist history (BOT-07) ---
+            await append_turn(
+                tenant_id=tenant_id,
+                session_id=session_id,
+                user_message=body.message,
+                assistant_message=full_response,
+            )
 
-            # Attempt to persist to history (plan 02 adds the module)
-            try:
-                from src.chatbot.history import append_turn  # type: ignore[import]
-                tenant_id = getattr(getattr(request, "state", None), "tenant_id", None)
-                await append_turn(
+            # --- Auto-escalation (BOT-06) ---
+            escalated = False
+            if should_escalate(body.message, confidence):
+                transcript = _build_transcript(body.history, body.message, full_response)
+                linear_url = await escalate(
                     tenant_id=tenant_id,
                     session_id=session_id,
                     user_message=body.message,
-                    assistant_message=full_response,
+                    chat_transcript=transcript,
+                    confidence=confidence,
                 )
-            except ImportError:
-                pass  # history module not yet available (plan 02)
+                escalated = True
+                logger.info("chatbot.escalation_triggered", session_id=session_id, linear_url=linear_url)
+
+            yield _sse_done(session_id, confidence, escalated)
 
         except Exception as exc:
             logger.error("chatbot.stream_error", error=str(exc))
@@ -241,3 +297,33 @@ async def chat(request: Request, body: ChatRequest) -> StreamingResponse:
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@router.get("/chat/history")
+async def list_chat_history(request: Request) -> dict:
+    """List chat session summaries for the current tenant."""
+    tenant_id: Optional[str] = getattr(getattr(request, "state", None), "tenant_id", None)
+    sessions = list_sessions(tenant_id)
+    return {"sessions": sessions, "total": len(sessions)}
+
+
+@router.get("/chat/history/{session_id}")
+async def get_chat_session(session_id: str, request: Request) -> dict:
+    """Get full turn history for a chat session."""
+    tenant_id: Optional[str] = getattr(getattr(request, "state", None), "tenant_id", None)
+    session = get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    # Tenant isolation: only return if session belongs to this tenant
+    if session.tenant_id and tenant_id and session.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return {
+        "session_id": session.session_id,
+        "tenant_id": session.tenant_id,
+        "created_at": session.created_at,
+        "updated_at": session.updated_at,
+        "turns": [
+            {"role": t.role, "content": t.content, "timestamp": t.timestamp}
+            for t in session.turns
+        ],
+    }
