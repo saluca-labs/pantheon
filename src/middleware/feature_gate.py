@@ -64,6 +64,10 @@ FEATURE_MIN_TIER: dict[str, str] = {
     "aletheia_response_sanitizer": "enterprise",
     "aletheia_tool_policies": "enterprise",
     "aletheia_dashboard": "enterprise",
+    # SSO/OIDC (enterprise and above)
+    "sso_oidc": "enterprise",
+    # Multi-IdP (mssp and above)
+    "multi_idp": "mssp",
     # aletheia mssp
     "aletheia_cross_tenant_cot_audit": "mssp",
     "aletheia_managed_tool_policies": "mssp",
@@ -86,6 +90,7 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/tenant": "white_label",
     "/v1/aletheia/tool": "aletheia_tool_policies",
     "/v1/aletheia": "aletheia_cot_intercept",
+    "/v1/idp": "sso_oidc",
 }
 
 # Paths that are always allowed regardless of license

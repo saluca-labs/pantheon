@@ -434,6 +434,11 @@ from src.keys.router import router as keys_router
 app.include_router(billing_router)
 app.include_router(keys_router)
 from src.usage.router import router as usage_router
+if get_settings().oidc_enabled:
+    from src.auth.oidc_router import router as oidc_router
+    from src.idp.router import router as idp_router
+    app.include_router(oidc_router)
+    app.include_router(idp_router)
 app.include_router(usage_router)
 
 

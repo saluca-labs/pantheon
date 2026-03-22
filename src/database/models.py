@@ -219,3 +219,115 @@ class Trial(Base):
         Index("idx_trials_email", "contact_email"),
         Index("idx_trials_domain", "company_domain"),
     )
+# SSO/OIDC ORM models to append to src/database/models.py
+
+
+class SoulUser(Base):
+    """_soul_users — Human portal users (distinct from SoulKey agent identities)."""
+    __tablename__ = "_soul_users"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id"), nullable=False
+    )
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    display_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    admin_role: Mapped[str] = mapped_column(Text, nullable=False, default="viewer")
+    idp_sub: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    idp_provider: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, onupdate=_now, nullable=True
+    )
+    metadata_: Mapped[Optional[dict]] = mapped_column(
+        "metadata_", JSON, default=dict, nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_soul_users_tenant_email"),
+        UniqueConstraint(
+            "tenant_id", "idp_provider", "idp_sub",
+            name="uq_soul_users_tenant_idp_sub",
+        ),
+        Index("idx_soul_users_tenant", "tenant_id"),
+        Index("idx_soul_users_email", "email"),
+    )
+
+
+class SoulIdPConfig(Base):
+    """_soul_idp_configs — Per-tenant Identity Provider configuration."""
+    __tablename__ = "_soul_idp_configs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id"), nullable=False
+    )
+    provider_type: Mapped[str] = mapped_column(Text, nullable=False)
+    display_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
+    client_id: Mapped[str] = mapped_column(Text, nullable=False)
+    client_secret_enc: Mapped[str] = mapped_column(Text, nullable=False)
+    discovery_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    issuer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Stored as JSON list for cross-DB compatibility (PostgreSQL uses ARRAY in migration)
+    scopes: Mapped[Optional[list]] = mapped_column(
+        JSON, default=lambda: ["openid", "email", "profile"], nullable=True
+    )
+    claim_mapping: Mapped[Optional[dict]] = mapped_column(
+        JSON, default=lambda: {"email": "email", "name": "name"}, nullable=True
+    )
+    domain_hint: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    group_role_map: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, onupdate=_now, nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "provider_type",
+            name="uq_soul_idp_configs_tenant_provider",
+        ),
+        Index("idx_soul_idp_configs_tenant", "tenant_id"),
+        Index("idx_soul_idp_configs_domain_hint", "domain_hint"),
+    )
+
+
+class SoulOIDCSession(Base):
+    """_soul_oidc_sessions — Short-lived portal sessions for human users."""
+    __tablename__ = "_soul_oidc_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="CASCADE"), nullable=False
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id"), nullable=False
+    )
+    session_token: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    refresh_token_enc: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    issued_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_active: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    ip_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("session_token", name="uq_soul_oidc_sessions_token"),
+        Index("idx_soul_oidc_sessions_token", "session_token"),
+        Index("idx_soul_oidc_sessions_user_expires", "user_id", "expires_at"),
+    )
