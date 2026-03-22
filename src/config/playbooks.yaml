@@ -1,0 +1,323 @@
+# ---------------------------------------------------------------------------
+# Tiresias Incident Controller — Automated Playbooks  (Section 5.2)
+#
+# Each playbook is triggered by one or more severity levels. Steps execute
+# sequentially; if any step fails the controller runs the rollback_steps
+# in reverse order.
+#
+# action_type values map 1:1 to handler functions in
+#   src/engine/actions/<action_type>.py
+# ---------------------------------------------------------------------------
+
+playbooks:
+
+  # ── SEV-0: Security Quarantine & Failover ────────────────────────────────
+
+  - id: security-quarantine-failover
+    name: Security Quarantine & Failover
+    description: >-
+      Immediate containment of an active breach. Isolates affected
+      workloads via network policy, rotates all exposed credentials,
+      captures a forensic snapshot, and fails over traffic to the
+      standby cluster.
+    triggers:
+      severity:
+        - SEV-0
+    steps:
+      - order: 1
+        action_type: apply_network_policy
+        target: affected_namespace
+        params:
+          policy: deny-all-ingress
+          label_selector: "app in (${affected_services})"
+          priority: 1000
+        timeout_ms: 10000
+
+      - order: 2
+        action_type: capture_forensic_snapshot
+        target: affected_namespace
+        params:
+          include:
+            - pod_logs
+            - network_flows
+            - process_trees
+            - container_filesystem
+          storage_bucket: saluca-incident-forensics
+          retention_days: 2555  # 7 years for compliance
+        timeout_ms: 60000
+
+      - order: 3
+        action_type: rotate_credentials
+        target: secret_manager
+        params:
+          scope: affected_services
+          providers:
+            - gcp-secret-manager
+            - vault
+          force: true
+        timeout_ms: 30000
+
+      - order: 4
+        action_type: failover_traffic
+        target: global_load_balancer
+        params:
+          from_cluster: primary
+          to_cluster: standby
+          health_check_interval_ms: 5000
+          drain_timeout_ms: 15000
+        timeout_ms: 60000
+
+      - order: 5
+        action_type: notify
+        target: incident_channel
+        params:
+          audiences:
+            - security-team
+            - executive-oncall
+            - sre-oncall
+          template: sev0_breach_notification
+        timeout_ms: 5000
+
+    rollback_steps:
+      - order: 1
+        action_type: failover_traffic
+        target: global_load_balancer
+        params:
+          from_cluster: standby
+          to_cluster: primary
+          health_check_interval_ms: 5000
+          drain_timeout_ms: 30000
+
+      - order: 2
+        action_type: remove_network_policy
+        target: affected_namespace
+        params:
+          policy: deny-all-ingress
+
+  # ── SEV-1: Service Failover ──────────────────────────────────────────────
+
+  - id: service-failover
+    name: Service Failover
+    description: >-
+      Rapid failover for total service outages. Attempts in-place restart,
+      then scales up healthy replicas, and finally fails traffic to the
+      standby cluster if recovery does not succeed within the window.
+    triggers:
+      severity:
+        - SEV-1
+    steps:
+      - order: 1
+        action_type: restart_deployment
+        target: affected_deployment
+        params:
+          strategy: rolling
+          max_unavailable: "25%"
+        timeout_ms: 30000
+
+      - order: 2
+        action_type: scale_deployment
+        target: affected_deployment
+        params:
+          replicas: "+50%"
+          min_ready_seconds: 10
+        timeout_ms: 60000
+
+      - order: 3
+        action_type: health_check_gate
+        target: affected_deployment
+        params:
+          endpoint: /healthz
+          success_threshold: 3
+          interval_ms: 5000
+          timeout_ms: 30000
+        timeout_ms: 45000
+
+      - order: 4
+        action_type: failover_traffic
+        target: global_load_balancer
+        params:
+          from_cluster: primary
+          to_cluster: standby
+          condition: health_check_gate_failed
+          drain_timeout_ms: 15000
+        timeout_ms: 60000
+
+      - order: 5
+        action_type: notify
+        target: incident_channel
+        params:
+          audiences:
+            - sre-oncall
+            - engineering-leads
+          template: sev1_outage_notification
+        timeout_ms: 5000
+
+    rollback_steps:
+      - order: 1
+        action_type: scale_deployment
+        target: affected_deployment
+        params:
+          replicas: original
+      - order: 2
+        action_type: failover_traffic
+        target: global_load_balancer
+        params:
+          from_cluster: standby
+          to_cluster: primary
+          drain_timeout_ms: 30000
+
+  # ── SEV-2: Targeted Recovery ─────────────────────────────────────────────
+
+  - id: targeted-recovery
+    name: Targeted Recovery
+    description: >-
+      Focused remediation for degraded services. Identifies the failing
+      component, applies targeted fixes (restart pods, clear disk, renew
+      certs), and verifies recovery before standing down.
+    triggers:
+      severity:
+        - SEV-2
+    steps:
+      - order: 1
+        action_type: diagnose
+        target: affected_component
+        params:
+          checks:
+            - pod_status
+            - resource_utilisation
+            - dependency_health
+            - recent_deployments
+        timeout_ms: 15000
+
+      - order: 2
+        action_type: targeted_remediation
+        target: affected_component
+        params:
+          actions_map:
+            crashloop: restart_pod
+            disk_full: expand_pvc
+            cert_expiry: trigger_cert_renewal
+            oom_kill: increase_memory_limit
+        timeout_ms: 60000
+
+      - order: 3
+        action_type: health_check_gate
+        target: affected_component
+        params:
+          endpoint: /healthz
+          success_threshold: 3
+          interval_ms: 10000
+          timeout_ms: 60000
+        timeout_ms: 75000
+
+      - order: 4
+        action_type: notify
+        target: incident_channel
+        params:
+          audiences:
+            - sre-oncall
+          template: sev2_degradation_notification
+        timeout_ms: 5000
+
+    rollback_steps:
+      - order: 1
+        action_type: revert_remediation
+        target: affected_component
+        params:
+          restore_from: pre_remediation_snapshot
+
+  # ── SEV-3: Enhanced Monitoring ───────────────────────────────────────────
+
+  - id: enhanced-monitoring
+    name: Enhanced Monitoring
+    description: >-
+      No automated remediation. Increases observability by bumping
+      scrape intervals, enabling debug-level logging, and creating a
+      monitoring dashboard for the affected component.
+    triggers:
+      severity:
+        - SEV-3
+    steps:
+      - order: 1
+        action_type: adjust_monitoring
+        target: affected_component
+        params:
+          scrape_interval: 10s
+          log_level: debug
+          enable_tracing: true
+          duration: 3600s
+        timeout_ms: 10000
+
+      - order: 2
+        action_type: create_dashboard
+        target: grafana
+        params:
+          template: incident_deep_dive
+          datasources:
+            - prometheus
+            - loki
+            - tempo
+          auto_expire_hours: 72
+        timeout_ms: 15000
+
+      - order: 3
+        action_type: notify
+        target: incident_channel
+        params:
+          audiences:
+            - sre-oncall
+          template: sev3_anomaly_notification
+        timeout_ms: 5000
+
+    rollback_steps:
+      - order: 1
+        action_type: adjust_monitoring
+        target: affected_component
+        params:
+          scrape_interval: default
+          log_level: info
+          enable_tracing: false
+
+  # ── SEV-4: Log & Brief ──────────────────────────────────────────────────
+
+  - id: log-and-brief
+    name: Log & Brief
+    description: >-
+      Informational incidents that require no immediate action. The
+      controller logs the event, files a ticket for review during the
+      next business day, and sends a low-priority notification.
+    triggers:
+      severity:
+        - SEV-4
+    steps:
+      - order: 1
+        action_type: log_event
+        target: incident_log
+        params:
+          retention_days: 90
+          index: tiresias-incidents-info
+        timeout_ms: 5000
+
+      - order: 2
+        action_type: create_ticket
+        target: jira
+        params:
+          project: TIRE
+          issue_type: task
+          priority: low
+          labels:
+            - auto-generated
+            - sev4
+          assign_to: oncall_rotation
+        timeout_ms: 10000
+
+      - order: 3
+        action_type: notify
+        target: incident_channel
+        params:
+          audiences:
+            - sre-general
+          template: sev4_info_notification
+        timeout_ms: 5000
+
+    rollback_steps: []
