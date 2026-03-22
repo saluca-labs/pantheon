@@ -418,7 +418,9 @@ from src.tenant.router import router as tenant_router
 app.include_router(mssp_router)
 app.include_router(tenant_router)
 from src.support.router import router as support_router
+from src.chatbot.router import router as chatbot_router
 app.include_router(support_router)
+app.include_router(chatbot_router)
 from src.aletheia.router import router as aletheia_router
 app.include_router(aletheia_router)
 from src.aletheia.tool_evaluate_router import router as tool_evaluate_router
