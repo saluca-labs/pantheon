@@ -46,7 +46,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: soulauth
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.3.0
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -135,6 +135,8 @@ spec:
               value: "true"
             - name: TRIAL_VERIFY_BASE_URL
               value: "https://api.tiresias.network"
+            - name: SOULAUTH_OIDC_ENABLED
+              value: "false"
           resources:
             requests:
               cpu: 250m
