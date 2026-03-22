@@ -122,7 +122,7 @@ async def authorize(
     state = _make_state(str(idp_config.tenant_id), str(idp_config.id), nonce, state_secret)
     _nonce_store[state] = nonce
     scopes = idp_config.scopes or ["openid", "email", "profile"]
-    redirect_uri = (request.headers.get("x-forwarded-proto", "https") + "://" + request.headers.get("x-forwarded-host", request.headers.get("host", "tiresias.network"))) + "/api/auth/callback"
+    redirect_uri = settings.public_url + "/api/auth/callback"
     qs = (
         "?response_type=code&client_id=" + idp_config.client_id +
         "&redirect_uri=" + redirect_uri + "&scope=" + " ".join(scopes) +
