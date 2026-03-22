@@ -99,9 +99,9 @@ export default function UsageMetrics() {
               { label: "Tokens Issued", value: data.tokensIssued.toLocaleString() },
               { label: "Avg Latency", value: `${data.avgLatencyMs}ms` },
             ].map((s) => (
-              <div key={s.label} className="text-center bg-navy-950/50 rounded-lg py-2">
+              <div key={s.label} className="text-center bg-of-background/50 rounded-lg py-2">
                 <div className="text-lg font-bold font-mono text-[#818cf8]">{s.value}</div>
-                <div className="text-[10px] text-foreground-subtle uppercase">{s.label}</div>
+                <div className="text-[10px] text-of-outline uppercase">{s.label}</div>
               </div>
             ))}
           </div>
@@ -113,7 +113,7 @@ export default function UsageMetrics() {
               return (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-1 relative">
                   {hoveredIdx === i && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-navy-700 text-xs text-foreground px-2 py-1 rounded shadow-lg whitespace-nowrap z-10 border border-[#818cf8]/20">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-of-surface-container-high text-xs text-foreground px-2 py-1 rounded shadow-lg whitespace-nowrap z-10 border border-[#818cf8]/20">
                       {d.count.toLocaleString()}
                     </div>
                   )}
@@ -130,7 +130,7 @@ export default function UsageMetrics() {
                     onMouseEnter={() => setHoveredIdx(i)}
                     onMouseLeave={() => setHoveredIdx(null)}
                   />
-                  <span className="text-[10px] text-foreground-subtle font-mono">{d.day}</span>
+                  <span className="text-[10px] text-of-outline font-mono">{d.day}</span>
                 </div>
               );
             })}

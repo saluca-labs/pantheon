@@ -27,17 +27,17 @@ const severityConfig = {
   critical: { color: "bg-red-500", text: "text-red-400", border: "border-red-500/30", label: "CRIT" },
   high: { color: "bg-orange-500", text: "text-orange-400", border: "border-orange-500/20", label: "HIGH" },
   medium: { color: "bg-yellow-500", text: "text-yellow-400", border: "border-yellow-500/20", label: "MED" },
-  low: { color: "bg-foreground-subtle", text: "text-foreground-muted", border: "border-foreground-subtle/20", label: "LOW" },
+  low: { color: "bg-foreground-subtle", text: "text-of-on-surface-variant", border: "border-foreground-subtle/20", label: "LOW" },
 };
 
 export default function AlertFeed() {
   const [alerts] = useState<Alert[]>(mockAlerts);
 
   return (
-    <div className="glass-card glow-teal rounded-xl p-4 h-full flex flex-col">
+    <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl glow-teal rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-teal-400 uppercase tracking-wider">Alert Feed</h3>
-        <span className="text-xs text-foreground-muted">{alerts.length} events</span>
+        <h3 className="text-sm font-semibold text-of-primary uppercase tracking-wider">Alert Feed</h3>
+        <span className="text-xs text-of-on-surface-variant">{alerts.length} events</span>
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 min-h-0 pr-1">
         {alerts.map((alert) => {
@@ -45,20 +45,20 @@ export default function AlertFeed() {
           return (
             <div
               key={alert.id}
-              className={`relative rounded-lg border ${cfg.border} bg-navy-950/50 px-3 py-2 transition-colors hover:bg-navy-800/40`}
+              className={`relative rounded-lg border ${cfg.border} bg-of-background/50 px-3 py-2 transition-colors hover:bg-of-surface-container/40`}
             >
               {alert.severity === "critical" && (
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
               )}
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono text-foreground-subtle">{alert.timestamp}</span>
+                <span className="text-[10px] font-mono text-of-outline">{alert.timestamp}</span>
                 <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${cfg.color}/20 ${cfg.text}`}>
                   {cfg.label}
                 </span>
               </div>
-              <p className="text-xs text-foreground-muted leading-relaxed">
+              <p className="text-xs text-of-on-surface-variant leading-relaxed">
                 {alert.message}{" "}
-                <span className="font-mono text-teal-400/70">{alert.agentKey}...</span>
+                <span className="font-mono text-of-primary/70">{alert.agentKey}...</span>
               </p>
             </div>
           );

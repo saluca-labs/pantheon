@@ -69,7 +69,7 @@ export default function AnomalyChart() {
   return (
     <WidgetShell
       title="Anomaly Detection"
-      titleColor="text-teal-400"
+      titleColor="text-of-primary"
       glowClass="glow-teal"
       loading={loading}
       error={error}
@@ -86,7 +86,7 @@ export default function AnomalyChart() {
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</div>
-                <div className="text-[10px] text-foreground-subtle uppercase">{stat.label}</div>
+                <div className="text-[10px] text-of-outline uppercase">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -98,7 +98,7 @@ export default function AnomalyChart() {
               return (
                 <div key={d.day} className="flex-1 flex flex-col items-center gap-1 relative">
                   {hoveredIdx === i && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-navy-700 text-xs text-foreground px-2 py-1 rounded shadow-lg whitespace-nowrap z-10 border border-teal-500/20">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-of-surface-container-high text-xs text-foreground px-2 py-1 rounded shadow-lg whitespace-nowrap z-10 border border-of-primary/20">
                       {d.count} anomalies
                     </div>
                   )}
@@ -115,7 +115,7 @@ export default function AnomalyChart() {
                     onMouseEnter={() => setHoveredIdx(i)}
                     onMouseLeave={() => setHoveredIdx(null)}
                   />
-                  <span className="text-[10px] text-foreground-subtle font-mono">{d.day}</span>
+                  <span className="text-[10px] text-of-outline font-mono">{d.day}</span>
                 </div>
               );
             })}

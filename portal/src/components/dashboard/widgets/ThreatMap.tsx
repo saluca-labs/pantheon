@@ -73,7 +73,7 @@ export default function ThreatMap() {
   return (
     <WidgetShell
       title="Threat Map"
-      titleColor="text-teal-400"
+      titleColor="text-of-primary"
       glowClass="glow-teal"
       loading={loading}
       error={error}

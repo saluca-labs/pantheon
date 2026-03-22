@@ -55,7 +55,7 @@ export default function QuarantineStatus() {
   return (
     <WidgetShell
       title="Quarantine Status"
-      titleColor="text-teal-400"
+      titleColor="text-of-primary"
       glowClass="glow-teal"
       loading={loading}
       error={error}
@@ -66,34 +66,34 @@ export default function QuarantineStatus() {
           {/* Big count */}
           <div className="text-center mb-4">
             <div className="text-4xl font-bold font-mono text-red-400">{agents.length}</div>
-            <div className="text-xs text-foreground-subtle uppercase mt-1">Agents Quarantined</div>
+            <div className="text-xs text-of-outline uppercase mt-1">Agents Quarantined</div>
           </div>
 
           {/* Agent list */}
           <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
             {agents.length === 0 && (
-              <div className="text-center py-4 text-xs text-foreground-subtle">
+              <div className="text-center py-4 text-xs text-of-outline">
                 No agents currently quarantined.
               </div>
             )}
             {agents.map((agent) => (
-              <div key={agent.soulkey_id || agent.soulkey} className="rounded-lg border border-red-500/10 bg-navy-950/50 p-3">
+              <div key={agent.soulkey_id || agent.soulkey} className="rounded-lg border border-red-500/10 bg-of-background/50 p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-mono text-xs text-teal-400">
+                  <span className="font-mono text-xs text-of-primary">
                     {(agent.soulkey || agent.soulkey_id || "").slice(0, 8)}...
                   </span>
-                  <span className="text-[10px] text-foreground-subtle">
+                  <span className="text-[10px] text-of-outline">
                     {agent.quarantined_at ? formatTimeAgo(agent.quarantined_at) : ""}
                   </span>
                 </div>
-                <p className="text-xs text-foreground-muted mb-2">{agent.reason}</p>
+                <p className="text-xs text-of-on-surface-variant mb-2">{agent.reason}</p>
                 <div className="flex items-center justify-between">
                   <span className={`text-[10px] px-2 py-0.5 rounded border ${actionColors[agent.action] || actionColors.suspended}`}>
                     {actionLabel(agent.action || "suspended")}
                   </span>
                   <button
                     onClick={() => handleRelease(agent.soulkey_id || agent.soulkey)}
-                    className="text-[10px] px-2 py-0.5 rounded border border-gold-500/30 text-gold-400 hover:bg-gold-500/10 transition-colors cursor-pointer"
+                    className="text-[10px] px-2 py-0.5 rounded border border-of-primary/30 text-of-primary hover:bg-of-primary/10 transition-colors cursor-pointer"
                   >
                     Release
                   </button>

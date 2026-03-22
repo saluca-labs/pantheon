@@ -101,8 +101,8 @@ export default function QuickActions() {
   }, []);
 
   return (
-    <div className="glass-card glow-gold rounded-xl p-4 h-full flex flex-col">
-      <h3 className="text-sm font-semibold text-gold-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+    <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl glow-gold rounded-xl p-4 h-full flex flex-col">
+      <h3 className="text-sm font-semibold text-of-primary uppercase tracking-wider mb-3">Quick Actions</h3>
 
       {/* Feedback toast */}
       {feedback && (
@@ -121,9 +121,9 @@ export default function QuickActions() {
             key={action.label}
             onClick={() => handleAction(action)}
             disabled={executing === action.label}
-            className="glass-card rounded-lg p-3 flex flex-col items-center justify-center gap-2 text-foreground-muted hover:text-gold-400 hover:border-gold-500/30 transition-all cursor-pointer group disabled:opacity-50"
+            className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-lg p-3 flex flex-col items-center justify-center gap-2 text-of-on-surface-variant hover:text-of-primary hover:border-of-primary/30 transition-all cursor-pointer group disabled:opacity-50"
           >
-            <span className="text-foreground-subtle group-hover:text-gold-400 transition-colors">
+            <span className="text-of-outline group-hover:text-of-primary transition-colors">
               {executing === action.label ? (
                 <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
