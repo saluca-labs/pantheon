@@ -122,6 +122,18 @@ async def trial_verify(
             detail="Invalid or expired verification token",
         )
 
+    # Fire welcome email (EMAIL-01, non-fatal)
+    try:
+        import asyncio as _asyncio
+        from src.email.triggers import on_registration as _email_on_registration
+        _asyncio.create_task(_email_on_registration(
+            contact_name=activation.get("contact_name") or "there",
+            contact_email=activation["contact_email"],
+            soulkey=activation["raw_key"],
+        ))
+    except Exception:
+        pass
+
     return TrialActivationResponse(
         trial_id=activation["trial_id"],
         tenant_id=activation["tenant_id"],
@@ -239,6 +251,18 @@ async def trial_verify_get(
     activation = await verify_and_activate_trial(db, tid, token)
     if not activation:
         return HTMLResponse(_verify_page_html("error", message="Invalid or expired verification link. It may have already been used."))
+
+    # Fire welcome email (EMAIL-01, non-fatal)
+    try:
+        import asyncio as _asyncio
+        from src.email.triggers import on_registration as _email_on_registration
+        _asyncio.create_task(_email_on_registration(
+            contact_name=activation.get("contact_name") or "there",
+            contact_email=activation["contact_email"],
+            soulkey=activation["raw_key"],
+        ))
+    except Exception:
+        pass
 
     return HTMLResponse(_verify_page_html(
         "success",
