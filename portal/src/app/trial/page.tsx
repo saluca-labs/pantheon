@@ -139,7 +139,7 @@ export default function TrialPage() {
         <div className="mx-auto max-w-5xl px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-1.5 text-sm text-teal-400 mb-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-of-primary/30 bg-of-primary/10 px-4 py-1.5 text-sm text-of-primary mb-5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
@@ -147,9 +147,9 @@ export default function TrialPage() {
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               Get started with{" "}
-              <span className="text-gradient-gold">Community</span>
+              <span className="text-of-primary">Community</span>
             </h1>
-            <p className="text-lg text-foreground-muted max-w-xl mx-auto">
+            <p className="text-lg text-of-on-surface-variant max-w-xl mx-auto">
               Full Tiresias observability dashboard, self-hosted, unlimited seats.
               Start in 60 seconds.
             </p>
@@ -158,16 +158,16 @@ export default function TrialPage() {
           <div className="grid lg:grid-cols-2 gap-10 items-start">
             {/* Left: Features */}
             <div>
-              <div className="glass-card rounded-2xl p-7 mb-6">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-7 mb-6">
                 <h2 className="font-semibold mb-5 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-teal-400 inline-block" />
+                  <span className="w-2 h-2 rounded-full bg-of-primary inline-block" />
                   Community tier includes
                 </h2>
                 <ul className="space-y-3">
                   {COMMUNITY_FEATURES.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-foreground-muted">
+                    <li key={f} className="flex items-start gap-3 text-sm text-of-on-surface-variant">
                       <svg
-                        className="h-4 w-4 flex-shrink-0 mt-0.5 text-teal-500"
+                        className="h-4 w-4 flex-shrink-0 mt-0.5 text-of-primary"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -182,13 +182,13 @@ export default function TrialPage() {
               </div>
 
               {/* Upgrade nudge */}
-              <div className="glass-card rounded-xl p-5 border-gold-500/20">
-                <p className="text-sm text-foreground-muted mb-3">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-5 border-of-primary/20">
+                <p className="text-sm text-of-on-surface-variant mb-3">
                   Need PRH enforcement, alerting, Sigma rules, or more agents?
                 </p>
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-gold-400 hover:text-gold-300 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-of-primary hover:text-of-primary/70 transition-colors"
                 >
                   See paid plans starting at $49/mo
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -199,25 +199,25 @@ export default function TrialPage() {
             </div>
 
             {/* Right: Form or success state */}
-            <div className="glass-card rounded-2xl p-8">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8">
               {status === "success" ? (
                 <div className="text-center py-4">
-                  <div className="w-14 h-14 bg-teal-500/15 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <svg className="w-7 h-7 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-14 h-14 bg-of-primary/15 rounded-full flex items-center justify-center mx-auto mb-5">
+                    <svg className="w-7 h-7 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <h2 className="text-xl font-bold mb-2">Check your email</h2>
-                  <p className="text-sm text-foreground-muted mb-1">{successMessage}</p>
-                  <p className="text-sm text-foreground-subtle mt-4">
+                  <p className="text-sm text-of-on-surface-variant mb-1">{successMessage}</p>
+                  <p className="text-sm text-of-outline mt-4">
                     Sent to{" "}
                     <span className="text-foreground">{form.contact_email}</span>
                   </p>
-                  <p className="text-xs text-foreground-subtle mt-5">
+                  <p className="text-xs text-of-outline mt-5">
                     Didn&apos;t get it? Check spam or{" "}
                     <a
                       href="mailto:support@saluca.com?subject=Trial%20Verification%20Email"
-                      className="text-teal-400 hover:text-teal-300 underline"
+                      className="text-of-primary hover:text-of-primary/70 underline"
                     >
                       contact support
                     </a>
@@ -228,7 +228,7 @@ export default function TrialPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <h2 className="text-lg font-semibold mb-1">Create your account</h2>
-                    <p className="text-sm text-foreground-muted">
+                    <p className="text-sm text-of-on-surface-variant">
                       Free forever. No credit card required.
                     </p>
                   </div>
@@ -241,7 +241,7 @@ export default function TrialPage() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted mb-1.5">
+                      <label className="block text-xs font-medium text-of-on-surface-variant mb-1.5">
                         Your name <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -251,12 +251,12 @@ export default function TrialPage() {
                         onChange={handleChange}
                         required
                         placeholder="Jane Smith"
-                        className="w-full bg-navy-800/50 border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500/50 placeholder:text-foreground-subtle"
+                        className="w-full bg-of-surface-container/50 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-of-primary/50 placeholder:text-of-outline"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted mb-1.5">
+                      <label className="block text-xs font-medium text-of-on-surface-variant mb-1.5">
                         Work email <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -266,12 +266,12 @@ export default function TrialPage() {
                         onChange={handleChange}
                         required
                         placeholder="jane@yourcompany.com"
-                        className="w-full bg-navy-800/50 border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500/50 placeholder:text-foreground-subtle"
+                        className="w-full bg-of-surface-container/50 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-of-primary/50 placeholder:text-of-outline"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted mb-1.5">
+                      <label className="block text-xs font-medium text-of-on-surface-variant mb-1.5">
                         Company name <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -281,12 +281,12 @@ export default function TrialPage() {
                         onChange={handleChange}
                         required
                         placeholder="Acme Corp"
-                        className="w-full bg-navy-800/50 border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500/50 placeholder:text-foreground-subtle"
+                        className="w-full bg-of-surface-container/50 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-of-primary/50 placeholder:text-of-outline"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted mb-1.5">
+                      <label className="block text-xs font-medium text-of-on-surface-variant mb-1.5">
                         Company domain <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -296,17 +296,17 @@ export default function TrialPage() {
                         onChange={handleChange}
                         required
                         placeholder="yourcompany.com"
-                        className="w-full bg-navy-800/50 border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500/50 placeholder:text-foreground-subtle"
+                        className="w-full bg-of-surface-container/50 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-of-primary/50 placeholder:text-of-outline"
                       />
-                      <p className="text-xs text-foreground-subtle mt-1">
+                      <p className="text-xs text-of-outline mt-1">
                         Auto-filled from your email. One account per domain.
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted mb-1.5">
+                      <label className="block text-xs font-medium text-of-on-surface-variant mb-1.5">
                         What will you use Tiresias for?{" "}
-                        <span className="text-foreground-subtle">(optional)</span>
+                        <span className="text-of-outline">(optional)</span>
                       </label>
                       <textarea
                         name="use_case"
@@ -314,7 +314,7 @@ export default function TrialPage() {
                         onChange={handleChange}
                         rows={2}
                         placeholder="Monitoring AI agents in production, detecting prompt injection..."
-                        className="w-full bg-navy-800/50 border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500/50 placeholder:text-foreground-subtle resize-none"
+                        className="w-full bg-of-surface-container/50 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-of-primary/50 placeholder:text-of-outline resize-none"
                       />
                     </div>
                   </div>
@@ -322,18 +322,18 @@ export default function TrialPage() {
                   <button
                     type="submit"
                     disabled={status === "submitting"}
-                    className="w-full rounded-lg border border-teal-500/30 text-teal-400 hover:bg-teal-500/10 px-6 py-3 text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-wait"
+                    className="w-full rounded-lg border border-of-primary/30 text-of-primary hover:bg-of-primary/10 px-6 py-3 text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-wait"
                   >
                     {status === "submitting" ? "Creating account..." : "Get started free"}
                   </button>
 
-                  <p className="text-xs text-center text-foreground-subtle">
+                  <p className="text-xs text-center text-of-outline">
                     By signing up you agree to our{" "}
-                    <Link href="/legal/terms" className="text-foreground-muted hover:text-foreground underline">
+                    <Link href="/legal/terms" className="text-of-on-surface-variant hover:text-foreground underline">
                       Terms of Service
                     </Link>{" "}
                     and{" "}
-                    <Link href="/legal/privacy" className="text-foreground-muted hover:text-foreground underline">
+                    <Link href="/legal/privacy" className="text-of-on-surface-variant hover:text-foreground underline">
                       Privacy Policy
                     </Link>
                     .
