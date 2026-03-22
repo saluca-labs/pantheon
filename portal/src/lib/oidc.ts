@@ -41,7 +41,7 @@ export interface OIDCSession {
 }
 
 interface AuthorizeResponse {
-  authorize_url: string;
+  authorization_url: string;
   state: string;
 }
 
@@ -65,7 +65,7 @@ export async function buildAuthorizeUrl(tenantSlug: string): Promise<string> {
   const data = await api.get<AuthorizeResponse>(
     `/v1/auth/oidc/authorize?tenant_slug=${encodeURIComponent(tenantSlug)}`
   );
-  return data.authorize_url;
+  return data.authorization_url;
 }
 
 /**

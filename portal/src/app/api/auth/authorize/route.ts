@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const backendUrl = config.apiUrl;
     const res = await fetch(
-      `${backendUrl}/v1/auth/oidc/authorize?tenant_slug=${encodeURIComponent(tenant)}`,
+      `${backendUrl}/v1/auth/oidc/authorize?email=user%40${encodeURIComponent(tenant)}`,
       { method: "GET" }
     );
 
@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    const { authorize_url } = data;
+    const { authorization_url } = data;
 
-    if (!authorize_url) {
+    if (!authorization_url) {
       return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
-    return NextResponse.redirect(authorize_url);
+    return NextResponse.redirect(authorization_url);
   } catch (err) {
     console.error("[OIDC authorize] unexpected error:", err);
     return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));

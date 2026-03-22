@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const res = await fetch(`${backendUrl}/v1/auth/oidc/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, state }),
+      body: JSON.stringify({ code, state, redirect_uri: \`\${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/api/auth/callback\` }),
     });
 
     if (!res.ok) {
@@ -43,9 +43,15 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    const { session_token, tenant_id, role, user, expires_at } = data;
+    const session_token = data.session_token;
+    const tenant_id = data.tenant_id;
+    const role = data.admin_role || "viewer";
+    const email = data.email;
+    const display_name = data.display_name;
+    const expires_in = data.expires_in || 28800;
+    const expires_at = new Date(Date.now() + expires_in * 1000).toISOString();
 
-    if (!session_token || !tenant_id || !user?.email) {
+    if (!session_token || !tenant_id || !email) {
       return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
     }
 
@@ -64,9 +70,9 @@ export async function GET(request: NextRequest) {
 
     // Regular cookie: stores non-sensitive OIDC user profile (readable by client for UI)
     const oidcData = JSON.stringify({
-      email: user.email,
-      name: user.name ?? null,
-      picture: user.picture ?? null,
+      email,
+      name: display_name ?? null,
+      picture: null,
       role,
       tenant_id,
       expires_at,
