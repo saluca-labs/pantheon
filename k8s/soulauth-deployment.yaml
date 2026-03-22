@@ -46,7 +46,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: soulauth
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.3
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.4
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

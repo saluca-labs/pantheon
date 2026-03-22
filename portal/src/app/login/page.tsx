@@ -52,7 +52,7 @@ function LoginForm() {
     const email = ssoEmail.trim().toLowerCase();
 
     if (!email || !email.includes("@")) {
-      setSsoError("Please enter a valid work email address.");
+      setSsoError("Please enter a valid email address.");
       return;
     }
 
@@ -65,7 +65,7 @@ function LoginForm() {
       window.location.href = `/api/auth/authorize?tenant=${encodeURIComponent(domain)}`;
     } catch {
       setSsoError(
-        "No SSO identity provider found for this domain. Contact your administrator."
+        "No SSO provider found for this domain. Contact your administrator."
       );
       setSsoSubmitting(false);
     }
@@ -196,7 +196,7 @@ function LoginForm() {
                   htmlFor="sso-email"
                   className="block text-label-sm text-of-on-surface-variant mb-2"
                 >
-                  Work Email
+                  Email
                 </label>
                 <input
                   id="sso-email"
