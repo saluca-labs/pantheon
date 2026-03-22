@@ -34,7 +34,7 @@ spec:
       containers:
         - name: soulauth
           # Pinned image tag — never use :latest in production (FINDING-15)
-          image: gcr.io/saluca-infra/soulauth:v1.0.0
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.4
           ports:
             - containerPort: 8000
               name: http
