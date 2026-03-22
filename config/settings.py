@@ -160,6 +160,28 @@ class Settings(BaseSettings):
         ),
     )
 
+    # OIDC / SSO Settings
+    oidc_secret_key: Optional[str] = Field(
+        default=None,
+        description="Fernet key for client_secret encryption in IdP configs",
+    )
+    oidc_state_secret: Optional[str] = Field(
+        default=None,
+        description="HMAC secret for PKCE state parameter signing",
+    )
+    oidc_session_ttl: int = Field(
+        default=28800,
+        description="OIDC portal session TTL in seconds (default: 8 hours)",
+    )
+    oidc_jwks_cache_ttl: int = Field(
+        default=3600,
+        description="JWKS cache TTL in seconds (default: 1 hour)",
+    )
+    oidc_enabled: bool = Field(
+        default=False,
+        description="Feature flag: enable SSO/OIDC portal authentication",
+    )
+
     model_config = {
         "env_prefix": "SOULAUTH_",
         "env_file": ".env",

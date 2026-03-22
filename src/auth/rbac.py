@@ -250,3 +250,24 @@ def require_permission(permission: str):
         request.state.rbac_role = role
 
     return _check_permission
+
+
+# ---------------------------------------------------------------------------
+# OIDC session user support in require_permission
+# ---------------------------------------------------------------------------
+
+async def resolve_oidc_user_role(request: Request) -> tuple:
+    """
+    Attempt to resolve an OIDC portal user from the request state.
+    Returns (SoulUser, role) or (None, None).
+    Set by pep.resolve_oidc_context() before this is called.
+    """
+    oidc_user = getattr(request.state, "oidc_user", None)
+    if oidc_user is None:
+        return None, None
+    role = oidc_user.admin_role or "viewer"
+    try:
+        AdminRole(role)
+    except ValueError:
+        role = "viewer"
+    return oidc_user, role
