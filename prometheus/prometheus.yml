@@ -53,6 +53,82 @@ scrape_configs:
           service: loki
     metrics_path: /metrics
 
+  # Blackbox exporter self-metrics
+  - job_name: blackbox
+    static_configs:
+      - targets: ['blackbox-exporter:9115']
+
+  # ── Synthetic HTTP probes ─────────────────────────────────────
+  - job_name: blackbox-http
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://tiresias.network/
+        - https://tiresias.network/health
+        labels:
+          probe: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ── SSL certificate probes ───────────────────────────────────
+  - job_name: blackbox-ssl
+    scrape_interval: 300s
+    scrape_timeout: 15s
+    metrics_path: /probe
+    params:
+      module: [tls_connect]
+    static_configs:
+      - targets:
+        - tiresias.network:443
+        labels:
+          probe: ssl
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ── TCP port probes (internal services) ──────────────────────
+  - job_name: blackbox-tcp
+    scrape_interval: 30s
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - loki:3100
+        - prometheus:9090
+        - grafana:3000
+        labels:
+          probe: tcp
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ── GKE kube-state-metrics (via Tailscale port-forward) ────
+  - job_name: kube-state-metrics
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['100.100.85.53:8082']
+        labels:
+          cluster: tiresias-v2
+          env: production
+
   # GKE Tiresias production (uncomment when /metrics exposed)
   # - job_name: soulauth-prod
   #   scheme: https

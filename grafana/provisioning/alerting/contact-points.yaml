@@ -9,7 +9,7 @@ contactPoints:
       - uid: telegram-alfred
         type: webhook
         settings:
-          url: http://34.41.26.234:8080/notify/telegram
+          url: http://100.100.85.53:8080/notify/telegram
           httpMethod: POST
           maxAlerts: 10
         disableResolveMessage: false
@@ -20,7 +20,7 @@ contactPoints:
       - uid: daily-briefing
         type: webhook
         settings:
-          url: http://34.41.26.234:8080/notify/briefing
+          url: http://100.100.85.53:8080/notify/briefing
           httpMethod: POST
           maxAlerts: 50
         disableResolveMessage: true

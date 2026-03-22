@@ -120,6 +120,17 @@ services:
     networks:
       - tiresias-soc
 
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: tiresias-blackbox
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox/config.yaml:/etc/blackbox_exporter/config.yml:ro
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.51.0
     container_name: tiresias-cadvisor
