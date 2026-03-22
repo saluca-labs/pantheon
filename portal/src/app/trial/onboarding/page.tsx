@@ -80,9 +80,9 @@ export default function OnboardingPage() {
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
                 Get started with{" "}
-                <span className="text-gradient-gold">Tiresias</span>
+                <span className="text-of-primary">Tiresias</span>
               </h1>
-              <p className="mt-4 text-foreground-muted leading-relaxed">
+              <p className="mt-4 text-of-on-surface-variant leading-relaxed">
                 Follow these steps to integrate Tiresias into your agent
                 infrastructure. You will be up and running in under 5 minutes.
               </p>
@@ -93,9 +93,9 @@ export default function OnboardingPage() {
               {steps.map((step, i) => (
                 <div
                   key={step.number}
-                  className={`glass-card rounded-2xl p-6 sm:p-8 transition-all ${
+                  className={`bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-6 sm:p-8 transition-all ${
                     i <= currentStep
-                      ? "border-gold-500/20"
+                      ? "border-of-primary/20"
                       : "opacity-60"
                   }`}
                 >
@@ -106,8 +106,8 @@ export default function OnboardingPage() {
                         i < currentStep
                           ? "bg-green-500/20 text-green-400"
                           : i === currentStep
-                            ? "bg-gold-500/20 text-gold-400"
-                            : "bg-navy-700 text-foreground-subtle"
+                            ? "bg-of-primary/20 text-of-primary"
+                            : "bg-of-surface-container text-of-outline"
                       }`}
                     >
                       {i < currentStep ? (
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
                       <h3 className="text-lg font-semibold mb-1">
                         {step.title}
                       </h3>
-                      <p className="text-sm text-foreground-muted mb-4">
+                      <p className="text-sm text-of-on-surface-variant mb-4">
                         {step.description}
                       </p>
 
@@ -141,20 +141,20 @@ export default function OnboardingPage() {
                             value={soulkey}
                             onChange={(e) => setSoulkey(e.target.value)}
                             placeholder="sk_live_..."
-                            className="w-full rounded-lg bg-navy-950 border border-border px-4 py-3 text-sm font-mono text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-colors"
+                            className="w-full rounded-lg bg-of-background border border-of-outline-variant/15 px-4 py-3 text-sm font-mono text-foreground placeholder:text-of-outline focus:outline-none focus:border-of-primary/50 focus:ring-1 focus:ring-of-primary/20 transition-colors"
                           />
                           <button
                             onClick={() => setCurrentStep(Math.max(currentStep, 1))}
                             disabled={!soulkey.trim()}
-                            className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-2 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-5 py-2 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {soulkey.trim() ? "Continue" : "Paste your SoulKey to continue"}
                           </button>
-                          <p className="text-xs text-foreground-subtle">
+                          <p className="text-xs text-of-outline">
                             Lost your key? Check the activation email or{" "}
                             <a
                               href={`mailto:${config.supportEmail}`}
-                              className="text-gold-400 hover:underline"
+                              className="text-of-primary hover:underline"
                             >
                               contact support
                             </a>
@@ -166,14 +166,14 @@ export default function OnboardingPage() {
                       {/* Code block */}
                       {step.code && (
                         <div className="relative">
-                          <pre className="bg-navy-950 border border-border rounded-xl p-4 text-sm font-mono text-teal-400 overflow-x-auto leading-relaxed">
+                          <pre className="bg-of-background border border-of-outline-variant/15 rounded-xl p-4 text-sm font-mono text-of-primary overflow-x-auto leading-relaxed">
                             {soulkey
                               ? step.code.replace(/YOUR_SOULKEY/g, soulkey)
                               : step.code}
                           </pre>
                           <button
                             onClick={() => copyCode(step.code!, step.number)}
-                            className="absolute top-3 right-3 text-xs text-foreground-subtle hover:text-gold-400 transition-colors px-2 py-1 rounded bg-navy-800/50"
+                            className="absolute top-3 right-3 text-xs text-of-outline hover:text-of-primary transition-colors px-2 py-1 rounded bg-of-surface-container/50"
                           >
                             {copiedStep === step.number ? "Copied!" : "Copy"}
                           </button>
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                               onClick={() =>
                                 setCurrentStep(Math.max(currentStep, i + 1))
                               }
-                              className="mt-3 text-sm text-gold-400 hover:text-gold-300 transition-colors"
+                              className="mt-3 text-sm text-of-primary hover:text-of-primary/70 transition-colors"
                             >
                               Done, next step &rarr;
                             </button>
@@ -195,13 +195,13 @@ export default function OnboardingPage() {
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Link
                             href="/login"
-                            className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all text-center"
+                            className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-6 py-3 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all text-center"
                           >
                             Sign In to Dashboard
                           </Link>
                           <Link
                             href="/developers"
-                            className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-colors text-center"
+                            className="rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-colors text-center"
                           >
                             Full Documentation
                           </Link>
@@ -215,16 +215,16 @@ export default function OnboardingPage() {
 
             {/* Help section */}
             <div className="mt-12 text-center">
-              <p className="text-sm text-foreground-subtle">
+              <p className="text-sm text-of-outline">
                 Need help? Email{" "}
                 <a
                   href={`mailto:${config.supportEmail}`}
-                  className="text-gold-400 hover:underline"
+                  className="text-of-primary hover:underline"
                 >
                   {config.supportEmail}
                 </a>{" "}
                 or check our{" "}
-                <Link href="/developers" className="text-gold-400 hover:underline">
+                <Link href="/developers" className="text-of-primary hover:underline">
                   developer documentation
                 </Link>
                 .

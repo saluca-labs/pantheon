@@ -29,22 +29,22 @@ function SuccessContent() {
       <main className="min-h-screen pt-24 pb-20 flex items-center justify-center">
         <div className="max-w-lg mx-auto text-center px-6">
           {status === "loading" && (
-            <div className="glass-card rounded-2xl p-12">
-              <div className="animate-spin w-12 h-12 border-4 border-gold-500/30 border-t-gold-500 rounded-full mx-auto mb-6" />
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-12">
+              <div className="animate-spin w-12 h-12 border-4 border-of-primary/30 border-t-of-primary rounded-full mx-auto mb-6" />
               <h2 className="text-xl font-semibold mb-2">
                 Confirming your subscription...
               </h2>
-              <p className="text-foreground-muted text-sm">
+              <p className="text-of-on-surface-variant text-sm">
                 Please wait while we verify your payment.
               </p>
             </div>
           )}
 
           {status === "success" && (
-            <div className="glass-card rounded-2xl p-12">
-              <div className="w-16 h-16 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-12">
+              <div className="w-16 h-16 bg-of-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg
-                  className="w-8 h-8 text-teal-400"
+                  className="w-8 h-8 text-of-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -60,20 +60,20 @@ function SuccessContent() {
               <h1 className="text-2xl font-bold mb-3">
                 Subscription activated
               </h1>
-              <p className="text-foreground-muted mb-8">
+              <p className="text-of-on-surface-variant mb-8">
                 Your Tiresias subscription is now active. Your license tier has
                 been updated and all features are available immediately.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/platform"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-6 py-3 text-sm font-medium text-of-background hover:from-of-primary hover:to-of-primary transition-all"
                 >
                   Go to Dashboard
                 </Link>
                 <Link
                   href="/billing"
-                  className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Manage Billing
                 </Link>
@@ -82,7 +82,7 @@ function SuccessContent() {
           )}
 
           {status === "error" && (
-            <div className="glass-card rounded-2xl p-12">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-12">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg
                   className="w-8 h-8 text-red-400"
@@ -101,13 +101,13 @@ function SuccessContent() {
               <h1 className="text-2xl font-bold mb-3">
                 Something went wrong
               </h1>
-              <p className="text-foreground-muted mb-8">
+              <p className="text-of-on-surface-variant mb-8">
                 We could not verify your payment. If you were charged, please
                 contact support and we will resolve this immediately.
               </p>
               <Link
                 href="mailto:support@saluca.com?subject=Billing%20Issue"
-                className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground hover:border-border-hover transition-all"
+                className="rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover transition-all"
               >
                 Contact Support
               </Link>
@@ -125,7 +125,7 @@ export default function BillingSuccessPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-gold-500/30 border-t-gold-500 rounded-full" />
+          <div className="animate-spin w-8 h-8 border-4 border-of-primary/30 border-t-of-primary rounded-full" />
         </div>
       }
     >

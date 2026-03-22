@@ -108,22 +108,22 @@ function TerminalBlock({ filename, code }: { filename: string; code: string }) {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
-      className="glass-card rounded-2xl overflow-hidden terminal-window"
+      className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl overflow-hidden terminal-window"
     >
-      <div className="flex items-center justify-between px-6 py-3 bg-navy-800/50 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-3 bg-of-surface-container/50 border-b border-of-outline-variant/15">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             <span className="w-3 h-3 rounded-full bg-red-500/60" />
             <span className="w-3 h-3 rounded-full bg-yellow-500/60" />
             <span className="w-3 h-3 rounded-full bg-green-500/60" />
           </div>
-          <span className="text-xs text-foreground-subtle font-mono">
+          <span className="text-xs text-of-outline font-mono">
             {filename}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="text-xs text-foreground-subtle hover:text-foreground-muted transition-colors px-2 py-1 rounded border border-border hover:border-border-hover"
+          className="text-xs text-of-outline hover:text-of-on-surface-variant transition-colors px-2 py-1 rounded border border-of-outline-variant/15 hover:border-of-outline-variant/15-hover"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
@@ -144,8 +144,8 @@ function PipelineDiagram() {
     {
       label: "Request",
       sublabel: "Inbound agent traffic",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
     {
       label: "Auth",
@@ -168,25 +168,25 @@ function PipelineDiagram() {
     {
       label: "Inspect",
       sublabel: "Injection scanning",
-      color: "border-gold-500/40 text-gold-400",
-      bg: "bg-gold-500/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Proxy",
       sublabel: "Upstream forwarding",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Audit",
       sublabel: "Log + metrics",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
   ];
 
   return (
-    <div ref={ref} className="glass-card rounded-2xl p-8 lg:p-12">
+    <div ref={ref} className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
           {steps.map((step, i) => (
@@ -201,7 +201,7 @@ function PipelineDiagram() {
                 className={`flex flex-col items-center justify-center w-28 h-20 rounded-xl border ${step.color} ${step.bg} text-center px-2 transition-all duration-300 hover:scale-105`}
               >
                 <span className="text-xs font-semibold">{step.label}</span>
-                <span className="text-[10px] text-foreground-subtle mt-0.5 leading-tight">
+                <span className="text-[10px] text-of-outline mt-0.5 leading-tight">
                   {step.sublabel}
                 </span>
               </div>
@@ -210,7 +210,7 @@ function PipelineDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="hidden lg:block w-5 h-5 text-foreground-subtle shrink-0"
+                  className="hidden lg:block w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -221,7 +221,7 @@ function PipelineDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="lg:hidden w-5 h-5 text-foreground-subtle shrink-0"
+                  className="lg:hidden w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
@@ -236,23 +236,23 @@ function PipelineDiagram() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 1.2, duration: 0.4 }}
-          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-border mt-4"
+          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-of-outline-variant/15 mt-4"
         >
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-sm bg-amber-600/30 border border-amber-500/40" />
-            <span className="text-xs text-foreground-subtle">SoulGate enforcement</span>
+            <span className="text-xs text-of-outline">SoulGate enforcement</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-gold-500/20 border border-gold-500/40" />
-            <span className="text-xs text-foreground-subtle">Threat inspection</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/20 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">Threat inspection</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-teal-600/30 border border-teal-500/40" />
-            <span className="text-xs text-foreground-subtle">Upstream proxy</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/30 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">Upstream proxy</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-navy-800 border border-foreground-subtle/30" />
-            <span className="text-xs text-foreground-subtle">External</span>
+            <div className="w-3 h-3 rounded-sm bg-of-surface-container border border-foreground-subtle/30" />
+            <span className="text-xs text-of-outline">External</span>
           </div>
         </motion.div>
       </div>
@@ -290,7 +290,7 @@ export default function SoulGatePage() {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6"
               >
-                <span className="text-gradient-gold">SoulGate</span>
+                <span className="text-of-primary">SoulGate</span>
                 <br />
                 API Security
                 <br />
@@ -300,7 +300,7 @@ export default function SoulGatePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-xl text-foreground-muted leading-relaxed mb-4"
+                className="text-xl text-of-on-surface-variant leading-relaxed mb-4"
               >
                 Protect your agent APIs at the edge. Zero-trust enforcement before requests reach your services.
               </motion.p>
@@ -308,7 +308,7 @@ export default function SoulGatePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="text-foreground-muted leading-relaxed mb-8"
+                className="text-of-on-surface-variant leading-relaxed mb-8"
               >
                 Your APIs were built for human traffic. Now AI agents are making
                 thousands of requests per minute. SoulGate is an API security gateway
@@ -324,13 +324,13 @@ export default function SoulGatePage() {
               >
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-center text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-center text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-center text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>
@@ -340,13 +340,13 @@ export default function SoulGatePage() {
         </section>
 
         {/* Problem Statement */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <div className="glass-card rounded-2xl p-8 lg:p-12 border-gold-500/20">
+            <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12 border-of-primary/20">
               <h2 className="text-2xl font-bold mb-4">
                 The problem: APIs designed for humans, attacked at agent scale
               </h2>
-              <div className="space-y-4 text-foreground-muted leading-relaxed">
+              <div className="space-y-4 text-of-on-surface-variant leading-relaxed">
                 <p>
                   Your APIs were designed for human users making a few requests per
                   minute. Now AI agents are making hundreds. Traditional API gateways
@@ -381,9 +381,9 @@ export default function SoulGatePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Eight capabilities for complete
                 <br />
-                <span className="text-gradient-gold">API perimeter security</span>
+                <span className="text-of-primary">API perimeter security</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-foreground-muted">
+              <p className="mx-auto max-w-2xl text-of-on-surface-variant">
                 From rate limiting to request inspection. Everything your agent APIs
                 need to stay secure at scale.
               </p>
@@ -396,7 +396,7 @@ export default function SoulGatePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={featuresInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ delay: i * 0.06, duration: 0.4 }}
-                  className="glass-card rounded-xl p-6 border-l-4 border-l-amber-500 hover:border-amber-500/30 transition-all group card-hover-lift"
+                  className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 border-l-4 border-l-amber-500 hover:border-amber-500/30 transition-all group card-hover-lift"
                 >
                   <div className="flex items-start gap-4">
                     <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/20 transition-colors">
@@ -404,7 +404,7 @@ export default function SoulGatePage() {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">{feature.title}</h3>
-                      <p className="text-sm text-foreground-muted leading-relaxed">
+                      <p className="text-sm text-of-on-surface-variant leading-relaxed">
                         {feature.description}
                       </p>
                     </div>
@@ -416,7 +416,7 @@ export default function SoulGatePage() {
         </section>
 
         {/* Architecture Diagram */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -428,7 +428,7 @@ export default function SoulGatePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 How SoulGate works
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Every request flows through a seven-stage pipeline from ingestion to audit.
               </p>
             </motion.div>
@@ -450,7 +450,7 @@ export default function SoulGatePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 See the API in action
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Register upstreams, configure rate limits, and query the audit log - all through a clean REST API.
               </p>
             </motion.div>
@@ -533,13 +533,13 @@ for entry in resp.json()["entries"]:
         </section>
 
         {/* Completes the Platform */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Completes the <span className="text-gradient-gold">platform</span>
+                Completes the <span className="text-of-primary">platform</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-foreground-muted leading-relaxed">
+              <p className="mx-auto max-w-2xl text-of-on-surface-variant leading-relaxed">
                 SoulGate is the enforcement layer of the Tiresias platform. Identity
                 (SoulAuth) + Monitoring (SoulWatch) + Enforcement (SoulGate) = complete
                 agent security.
@@ -547,14 +547,14 @@ for entry in resp.json()["entries"]:
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass-card rounded-xl p-6">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-teal-600/15 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-8 h-8 rounded-lg bg-of-primary/15 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
                   </div>
-                  <h3 className="font-semibold text-teal-400">SoulAuth + SoulWatch provide</h3>
+                  <h3 className="font-semibold text-of-primary">SoulAuth + SoulWatch provide</h3>
                 </div>
                 <ul className="space-y-2">
                   {[
@@ -563,8 +563,8 @@ for entry in resp.json()["entries"]:
                     "Real-time behavioral monitoring",
                     "Anomaly detection and risk scoring",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-foreground-muted">
-                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <li key={item} className="flex items-start gap-2 text-sm text-of-on-surface-variant">
+                      <svg className="w-4 h-4 mt-0.5 shrink-0 text-of-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       {item}
@@ -573,7 +573,7 @@ for entry in resp.json()["entries"]:
                 </ul>
               </div>
 
-              <div className="glass-card rounded-xl p-6">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
                     <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -589,7 +589,7 @@ for entry in resp.json()["entries"]:
                     "Prompt injection detection",
                     "Full request audit logging",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-foreground-muted">
+                    <li key={item} className="flex items-start gap-2 text-sm text-of-on-surface-variant">
                       <svg className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
@@ -614,11 +614,11 @@ for entry in resp.json()["entries"]:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Pricing
               </h2>
-              <p className="text-foreground-muted mb-8 leading-relaxed">
+              <p className="text-of-on-surface-variant mb-8 leading-relaxed">
                 SoulGate is included with SoulAuth Pro plans at no additional cost.
                 Standalone gateway pricing for teams using third-party auth is available on request.
               </p>
-              <div className="glass-card rounded-xl p-8 inline-block">
+              <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-8 inline-block">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
                     <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -627,7 +627,7 @@ for entry in resp.json()["entries"]:
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-foreground">Included with SoulAuth Pro</p>
-                    <p className="text-sm text-foreground-muted">Full SoulGate access, no extra charge</p>
+                    <p className="text-sm text-of-on-surface-variant">Full SoulGate access, no extra charge</p>
                   </div>
                 </div>
                 <ul className="text-left space-y-2 mb-6">
@@ -638,7 +638,7 @@ for entry in resp.json()["entries"]:
                     "Full audit log with 90-day retention",
                     "API key management",
                   ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-foreground-muted">
+                    <li key={item} className="flex items-center gap-2 text-sm text-of-on-surface-variant">
                       <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
@@ -652,7 +652,7 @@ for entry in resp.json()["entries"]:
         </section>
 
         {/* CTA */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -663,20 +663,20 @@ for entry in resp.json()["entries"]:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Secure your agent APIs today
               </h2>
-              <p className="text-foreground-muted mb-8 leading-relaxed">
+              <p className="text-of-on-surface-variant mb-8 leading-relaxed">
                 SoulGate is production-ready and included with every SoulAuth Pro trial.
                 Start protecting your APIs in minutes - no credit card required.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 cta-breathe"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20 cta-breathe"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>

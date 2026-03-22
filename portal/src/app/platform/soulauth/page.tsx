@@ -7,8 +7,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 const featureCategories: Record<string, { color: string; border: string; glow: string }> = {
-  identity: { color: "border-l-gold-500", border: "hover:border-gold-500/30", glow: "group-hover:shadow-gold-500/10" },
-  authorization: { color: "border-l-teal-500", border: "hover:border-teal-500/30", glow: "group-hover:shadow-teal-500/10" },
+  identity: { color: "border-l-of-primary", border: "hover:border-of-primary/30", glow: "group-hover:shadow-of-primary/10" },
+  authorization: { color: "border-l-of-primary", border: "hover:border-of-primary/30", glow: "group-hover:shadow-of-primary/10" },
   detection: { color: "border-l-red-400", border: "hover:border-red-400/30", glow: "group-hover:shadow-red-400/10" },
   integration: { color: "border-l-blue-400", border: "hover:border-blue-400/30", glow: "group-hover:shadow-blue-400/10" },
 };
@@ -153,22 +153,22 @@ function TerminalBlock({ filename, code }: { filename: string; code: string }) {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
-      className="glass-card rounded-2xl overflow-hidden terminal-window"
+      className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl overflow-hidden terminal-window"
     >
-      <div className="flex items-center justify-between px-6 py-3 bg-navy-800/50 border-b border-border">
+      <div className="flex items-center justify-between px-6 py-3 bg-of-surface-container/50 border-b border-of-outline-variant/15">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             <span className="w-3 h-3 rounded-full bg-red-500/60" />
             <span className="w-3 h-3 rounded-full bg-yellow-500/60" />
             <span className="w-3 h-3 rounded-full bg-green-500/60" />
           </div>
-          <span className="text-xs text-foreground-subtle font-mono">
+          <span className="text-xs text-of-outline font-mono">
             {filename}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="text-xs text-foreground-subtle hover:text-foreground-muted transition-colors px-2 py-1 rounded border border-border hover:border-border-hover"
+          className="text-xs text-of-outline hover:text-of-on-surface-variant transition-colors px-2 py-1 rounded border border-of-outline-variant/15 hover:border-of-outline-variant/15-hover"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
@@ -190,43 +190,43 @@ function ArchitectureDiagram() {
     {
       label: "Agent",
       sublabel: "Presents Soulkey",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
     {
       label: "Soulkey Verify",
       sublabel: "SHA-512 identity check",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "PDP",
       sublabel: "Policy evaluation",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Capability Token",
       sublabel: "JWT ES256, 5-15 min TTL",
-      color: "border-teal-500/40 text-teal-400",
-      bg: "bg-teal-600/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "PEP",
       sublabel: "Enforcement point",
-      color: "border-gold-500/40 text-gold-400",
-      bg: "bg-gold-500/10",
+      color: "border-of-primary/40 text-of-primary",
+      bg: "bg-of-primary/10",
     },
     {
       label: "Resource",
       sublabel: "Access granted",
-      color: "border-foreground-subtle text-foreground-muted",
-      bg: "bg-navy-800",
+      color: "border-foreground-subtle text-of-on-surface-variant",
+      bg: "bg-of-surface-container",
     },
   ];
 
   return (
-    <div ref={ref} className="glass-card rounded-2xl p-8 lg:p-12">
+    <div ref={ref} className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 lg:p-12">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
           {steps.map((step, i) => (
@@ -241,7 +241,7 @@ function ArchitectureDiagram() {
                 className={`flex flex-col items-center justify-center w-28 h-20 rounded-xl border ${step.color} ${step.bg} text-center px-2 transition-all duration-300 hover:scale-105`}
               >
                 <span className="text-xs font-semibold">{step.label}</span>
-                <span className="text-[10px] text-foreground-subtle mt-0.5 leading-tight">
+                <span className="text-[10px] text-of-outline mt-0.5 leading-tight">
                   {step.sublabel}
                 </span>
               </div>
@@ -250,7 +250,7 @@ function ArchitectureDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="hidden lg:block w-5 h-5 text-foreground-subtle shrink-0"
+                  className="hidden lg:block w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -261,7 +261,7 @@ function ArchitectureDiagram() {
                   initial={{ opacity: 0 }}
                   animate={inView ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ delay: 0.15 * i + 0.3, duration: 0.3 }}
-                  className="lg:hidden w-5 h-5 text-foreground-subtle shrink-0"
+                  className="lg:hidden w-5 h-5 text-of-outline shrink-0"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6.75-6.75M12 19.5l-6.75-6.75" />
@@ -276,19 +276,19 @@ function ArchitectureDiagram() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ delay: 1.2, duration: 0.4 }}
-          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-border mt-4"
+          className="flex flex-col lg:flex-row items-center justify-center gap-6 pt-4 border-t border-of-outline-variant/15 mt-4"
         >
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-teal-600/30 border border-teal-500/40" />
-            <span className="text-xs text-foreground-subtle">SoulAuth components</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/30 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">SoulAuth components</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-gold-500/20 border border-gold-500/40" />
-            <span className="text-xs text-foreground-subtle">Enforcement layer</span>
+            <div className="w-3 h-3 rounded-sm bg-of-primary/20 border border-of-primary/40" />
+            <span className="text-xs text-of-outline">Enforcement layer</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-sm bg-navy-800 border border-foreground-subtle/30" />
-            <span className="text-xs text-foreground-subtle">External</span>
+            <div className="w-3 h-3 rounded-sm bg-of-surface-container border border-foreground-subtle/30" />
+            <span className="text-xs text-of-outline">External</span>
           </div>
         </motion.div>
       </div>
@@ -308,7 +308,7 @@ export default function SoulAuthPage() {
       <main className="min-h-screen pt-16">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 lg:py-32">
-          <div className="absolute inset-0 bg-gradient-to-b from-teal-600/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-of-primary/5 to-transparent" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
             <div className="max-w-3xl">
               <motion.div
@@ -317,8 +317,8 @@ export default function SoulAuthPage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="flex items-center gap-3 mb-6"
               >
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-600/15 border border-teal-500/30 px-3 py-1 text-xs font-medium text-teal-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 pulse-glow-teal" />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-of-primary/15 border border-of-primary/30 px-3 py-1 text-xs font-medium text-of-primary">
+                  <span className="w-1.5 h-1.5 rounded-full bg-of-primary pulse-glow-teal" />
                   Generally Available
                 </span>
               </motion.div>
@@ -338,7 +338,7 @@ export default function SoulAuthPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-xl text-foreground-muted leading-relaxed mb-4"
+                className="text-xl text-of-on-surface-variant leading-relaxed mb-4"
               >
                 Every AI agent deserves an identity. Every action deserves authorization.
               </motion.p>
@@ -346,7 +346,7 @@ export default function SoulAuthPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="text-foreground-muted leading-relaxed mb-8"
+                className="text-of-on-surface-variant leading-relaxed mb-8"
               >
                 SoulAuth gives your AI agents durable cryptographic identities and
                 evaluates every action against real-time policy. No standing permissions.
@@ -360,13 +360,13 @@ export default function SoulAuthPage() {
               >
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-center text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-center text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-center text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>
@@ -376,7 +376,7 @@ export default function SoulAuthPage() {
         </section>
 
         {/* Features Grid */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -390,7 +390,7 @@ export default function SoulAuthPage() {
                 <br />
                 <span className="text-gradient-teal">your agent fleet</span>
               </h2>
-              <p className="mx-auto max-w-2xl text-foreground-muted">
+              <p className="mx-auto max-w-2xl text-of-on-surface-variant">
                 Ten deeply integrated capabilities, from identity to incident response.
                 Built for production. Built for scale.
               </p>
@@ -405,15 +405,15 @@ export default function SoulAuthPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={featuresInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: i * 0.06, duration: 0.4 }}
-                    className={`glass-card rounded-xl p-6 border-l-4 ${cat.color} ${cat.border} transition-all group card-hover-lift`}
+                    className={`bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 border-l-4 ${cat.color} ${cat.border} transition-all group card-hover-lift`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="shrink-0 w-10 h-10 rounded-lg bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-400 group-hover:bg-teal-600/20 transition-colors">
+                      <div className="shrink-0 w-10 h-10 rounded-lg bg-of-primary/10 border border-of-primary/20 flex items-center justify-center text-of-primary group-hover:bg-of-primary/20 transition-colors">
                         {feature.icon}
                       </div>
                       <div>
                         <h3 className="font-semibold mb-1">{feature.title}</h3>
-                        <p className="text-sm text-foreground-muted leading-relaxed">
+                        <p className="text-sm text-of-on-surface-variant leading-relaxed">
                           {feature.description}
                         </p>
                       </div>
@@ -438,7 +438,7 @@ export default function SoulAuthPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 How SoulAuth works
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Every request follows a zero-trust path from agent to resource.
               </p>
             </motion.div>
@@ -448,7 +448,7 @@ export default function SoulAuthPage() {
         </section>
 
         {/* Code Example */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -460,7 +460,7 @@ export default function SoulAuthPage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Simple to integrate
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 A few lines of Python. That&apos;s all it takes.
               </p>
             </motion.div>
@@ -510,7 +510,7 @@ policies:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Works with your stack
               </h2>
-              <p className="text-foreground-muted">
+              <p className="text-of-on-surface-variant">
                 Deploy however you want. Integrate with what you already use.
               </p>
             </motion.div>
@@ -522,10 +522,10 @@ policies:
                   initial={{ opacity: 0, y: 20 }}
                   animate={integrationsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ delay: i * 0.1, duration: 0.4 }}
-                  className="glass-card rounded-xl p-6 text-center card-hover-lift"
+                  className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6 text-center card-hover-lift"
                 >
                   <h3 className="font-semibold mb-1">{item.name}</h3>
-                  <p className="text-sm text-foreground-muted font-mono">
+                  <p className="text-sm text-of-on-surface-variant font-mono">
                     {item.description}
                   </p>
                 </motion.div>
@@ -535,7 +535,7 @@ policies:
         </section>
 
         {/* CTA */}
-        <section className="py-16 lg:py-24 bg-navy-900/30">
+        <section className="py-16 lg:py-24 bg-of-surface-container-low/30">
           <div className="mx-auto max-w-3xl px-6 lg:px-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -546,7 +546,7 @@ policies:
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Secure your agents today
               </h2>
-              <p className="text-foreground-muted mb-8 leading-relaxed">
+              <p className="text-of-on-surface-variant mb-8 leading-relaxed">
                 SoulAuth is production-ready. Start with a free trial - full platform
                 access, no credit card required. Your agents are one soulkey away from
                 zero-trust security.
@@ -554,13 +554,13 @@ policies:
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link
                   href="/trial"
-                  className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
+                  className="rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3 text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
                 >
                   Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
-                  className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-all"
+                  className="rounded-lg border border-of-outline-variant/15 px-8 py-3 text-sm font-medium text-of-on-surface-variant hover:text-foreground hover:border-of-outline-variant/15-hover transition-all"
                 >
                   Read the Docs
                 </Link>

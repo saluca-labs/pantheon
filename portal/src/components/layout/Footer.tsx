@@ -46,7 +46,7 @@ function BackToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-8 right-8 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-navy-800 border border-border text-foreground-muted hover:text-gold-400 hover:border-gold-500/30 transition-all duration-300 shadow-lg"
+      className="fixed bottom-8 right-8 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-of-surface-container border border-of-outline-variant/15 text-of-on-surface-variant hover:text-of-primary hover:border-of-primary/30 transition-all duration-300 shadow-lg"
       aria-label="Back to top"
     >
       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -59,9 +59,9 @@ function BackToTop() {
 export default function Footer() {
   return (
     <>
-      <footer className="relative bg-navy-950">
+      <footer className="relative bg-of-background">
         {/* Top gradient border */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent" />
+        <div className="h-px bg-gradient-to-r from-transparent via-of-primary/30 to-transparent" />
 
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
@@ -73,7 +73,7 @@ export default function Footer() {
                 </div>
                 <span className="text-lg font-semibold">Tiresias</span>
               </div>
-              <p className="text-sm text-foreground-muted leading-relaxed">
+              <p className="text-sm text-of-on-surface-variant leading-relaxed">
                 Zero-knowledge agent security for the enterprise. We see threats. Never data.
               </p>
             </div>
@@ -87,7 +87,7 @@ export default function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-foreground-muted hover:text-foreground transition-colors link-underline"
+                        className="text-sm text-of-on-surface-variant hover:text-foreground transition-colors link-underline"
                       >
                         {link.label}
                       </Link>
@@ -99,12 +99,12 @@ export default function Footer() {
           </div>
 
           {/* Bottom bar */}
-          <div className="mt-16 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-foreground-subtle">
+          <div className="mt-16 pt-8 border-t border-of-outline-variant/15 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-of-outline">
               &copy; {new Date().getFullYear()} Saluca LLC. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <span className="text-xs text-foreground-subtle">
+              <span className="text-xs text-of-outline">
                 Privacy by architecture, not by policy.
               </span>
             </div>

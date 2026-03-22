@@ -11,9 +11,9 @@ const useCases = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a4.5 4.5 0 018.484 2.854" />
       </svg>
     ),
-    iconColor: "text-teal-400",
-    iconBg: "bg-teal-600/15",
-    borderColor: "border-teal-500/30",
+    iconColor: "text-of-primary",
+    iconBg: "bg-of-primary/15",
+    borderColor: "border-of-primary/30",
     problem:
       "Your agents talk to each other, to APIs, and to data stores. Who authorized that?",
     solution:
@@ -32,9 +32,9 @@ const useCases = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
     ),
-    iconColor: "text-gold-400",
-    iconBg: "bg-gold-500/15",
-    borderColor: "border-gold-500/30",
+    iconColor: "text-of-primary",
+    iconBg: "bg-of-primary/15",
+    borderColor: "border-of-primary/30",
     problem:
       "Regulators are asking about your AI agents' access patterns. Can you answer?",
     solution:
@@ -57,9 +57,9 @@ const useCases = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
     ),
-    iconColor: "text-teal-400",
-    iconBg: "bg-teal-600/15",
-    borderColor: "border-teal-500/30",
+    iconColor: "text-of-primary",
+    iconBg: "bg-of-primary/15",
+    borderColor: "border-of-primary/30",
     problem:
       "Traditional perimeter security doesn't work when agents are the perimeter.",
     solution:
@@ -81,9 +81,9 @@ export default function UseCasesPage() {
         {/* Hero */}
         <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center mb-20">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6">
-            <span className="text-gradient-gold">How teams use Tiresias</span>
+            <span className="text-of-primary">How teams use Tiresias</span>
           </h1>
-          <p className="text-xl text-foreground-muted max-w-2xl mx-auto">
+          <p className="text-xl text-of-on-surface-variant max-w-2xl mx-auto">
             From startup AI assistants to enterprise agent fleets &mdash; secure every interaction, satisfy every auditor.
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function UseCasesPage() {
           {useCases.map((uc, index) => (
             <div
               key={uc.title}
-              className={`glass-card rounded-2xl p-8 md:p-10 border-l-2 ${uc.borderColor} hover:border-border-hover transition-colors`}
+              className={`bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-8 md:p-10 border-l-2 ${uc.borderColor} hover:border-of-outline-variant/15-hover transition-colors`}
             >
               <div className="grid md:grid-cols-[1fr_1fr] gap-10">
                 {/* Left: Problem + Solution */}
@@ -103,7 +103,7 @@ export default function UseCasesPage() {
                       <span className={uc.iconColor}>{uc.icon}</span>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-foreground-subtle uppercase tracking-wider">
+                      <span className="text-xs font-medium text-of-outline uppercase tracking-wider">
                         Use Case {index + 1}
                       </span>
                       <h2 className="text-2xl font-bold text-foreground">
@@ -114,19 +114,19 @@ export default function UseCasesPage() {
 
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground-subtle uppercase tracking-wider mb-2">
+                      <h3 className="text-sm font-semibold text-of-outline uppercase tracking-wider mb-2">
                         The Problem
                       </h3>
-                      <p className="text-lg text-foreground-muted leading-relaxed">
+                      <p className="text-lg text-of-on-surface-variant leading-relaxed">
                         &ldquo;{uc.problem}&rdquo;
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground-subtle uppercase tracking-wider mb-2">
+                      <h3 className="text-sm font-semibold text-of-outline uppercase tracking-wider mb-2">
                         The Solution
                       </h3>
-                      <p className="text-foreground-muted leading-relaxed">
+                      <p className="text-of-on-surface-variant leading-relaxed">
                         {uc.solution}
                       </p>
                     </div>
@@ -136,7 +136,7 @@ export default function UseCasesPage() {
                 {/* Right: Benefits + Audience */}
                 <div className="flex flex-col justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground-subtle uppercase tracking-wider mb-4">
+                    <h3 className="text-sm font-semibold text-of-outline uppercase tracking-wider mb-4">
                       Key Benefits
                     </h3>
                     <ul className="space-y-3">
@@ -155,21 +155,21 @@ export default function UseCasesPage() {
                               d="M5 13l4 4L19 7"
                             />
                           </svg>
-                          <span className="text-foreground-muted">{benefit}</span>
+                          <span className="text-of-on-surface-variant">{benefit}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="mt-8">
-                    <h3 className="text-sm font-semibold text-foreground-subtle uppercase tracking-wider mb-3">
+                    <h3 className="text-sm font-semibold text-of-outline uppercase tracking-wider mb-3">
                       Built For
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {uc.audience.map((role) => (
                         <span
                           key={role}
-                          className="text-xs font-medium px-3 py-1.5 rounded-full bg-navy-800 text-foreground-muted border border-border"
+                          className="text-xs font-medium px-3 py-1.5 rounded-full bg-of-surface-container text-of-on-surface-variant border border-of-outline-variant/15"
                         >
                           {role}
                         </span>
@@ -184,16 +184,16 @@ export default function UseCasesPage() {
 
         {/* Bottom CTA */}
         <div className="mx-auto max-w-7xl px-6 lg:px-8 mt-24 text-center">
-          <div className="glass-card rounded-2xl p-12 glow-gold">
+          <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-12 shadow-[0_0_20px_rgba(90,218,206,0.15)]">
             <h2 className="text-3xl font-bold mb-4">
-              <span className="text-gradient-gold">See it in action</span>
+              <span className="text-of-primary">See it in action</span>
             </h2>
-            <p className="text-foreground-muted text-lg mb-8 max-w-xl mx-auto">
+            <p className="text-of-on-surface-variant text-lg mb-8 max-w-xl mx-auto">
               Deploy Tiresias in minutes with our free trial. No credit card required.
             </p>
             <Link
               href="/trial"
-              className="inline-block rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+              className="inline-block rounded-lg bg-gradient-to-r from-of-primary to-of-primary px-8 py-3.5 text-sm font-semibold text-of-background hover:from-of-primary hover:to-of-primary transition-all shadow-lg shadow-of-primary/20"
             >
               Start Free Trial
             </Link>
