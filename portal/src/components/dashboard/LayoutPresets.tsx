@@ -4,6 +4,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useDashboard, PRESETS, type PresetKey } from "./DashboardProvider";
 
+/** Layout preset selector -- switches dashboard grid between predefined widget arrangements. */
+
 const PRESET_META: Record<Exclude<PresetKey, "custom">, { icon: React.ReactNode; accentClass: string; borderClass: string; glowClass: string; description: string }> = {
   soc: {
     icon: (

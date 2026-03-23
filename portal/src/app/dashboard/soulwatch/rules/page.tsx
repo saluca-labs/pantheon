@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulWatch Sigma rules -- detection rule editor with severity and test controls. Uses hardcoded mock data. */
+
 interface SigmaRule {
   id: string;
   name: string;

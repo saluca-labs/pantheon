@@ -155,7 +155,11 @@ class PRHAnalyzer:
             aggregate = 0.0
         else:
             max_score = max(category_scores.values())
-            # Bonus for multi-category signals (capped at +0.15)
+            # Cross-category bonus: prompts that trigger multiple threat
+            # categories are riskier than single-category hits. Each additional
+            # active category (score >= 0.3) adds +0.05, capped at +0.15 total
+            # (i.e. max benefit from 4+ categories). This avoids inflating
+            # benign prompts that accidentally match one low-weight pattern.
             active_categories = sum(1 for s in category_scores.values() if s >= 0.3)
             cross_bonus = min(0.15, (active_categories - 1) * 0.05) if active_categories > 1 else 0.0
             aggregate = min(1.0, max_score + cross_bonus)

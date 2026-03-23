@@ -7,6 +7,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { config } from "@/lib/config";
 
+/** Email verification for trial -- activates trial tenant and reveals SoulKey. */
+
 interface ActivationResponse {
   trial_id: string;
   tenant_id: string;

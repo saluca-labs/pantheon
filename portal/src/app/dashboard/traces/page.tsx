@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { Search } from "lucide-react";
 
+/** Trace explorer -- search and inspect individual request traces. Uses live API via useWidgetData. */
+
 interface TraceEntry {
   id: string;
   timestamp: string;

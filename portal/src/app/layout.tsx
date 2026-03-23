@@ -4,6 +4,12 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { BrandingProvider } from "@/lib/branding";
 
+/**
+ * Root layout with AuthProvider > BrandingProvider nesting.
+ * Order matters: BrandingProvider reads tenant from auth context,
+ * so AuthProvider must wrap it.
+ */
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

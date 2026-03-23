@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { Link2, Users, Clock } from "lucide-react";
 
+/** MSSP Aletheia -- cross-tenant CoT chain viewer for managed providers. Uses live API via useWidgetData. */
+
 interface CrossTenantCoTEntry {
   id: string;
   chain_id: string;

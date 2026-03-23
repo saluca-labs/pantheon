@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulWatch anomaly list -- detailed anomaly inspection with severity and type filters. Uses hardcoded mock data. */
+
 interface Anomaly {
   id: string;
   type: "behavioral_drift" | "privilege_escalation" | "data_exfiltration" | "temporal_anomaly" | "rate_anomaly" | "cross_tenant";

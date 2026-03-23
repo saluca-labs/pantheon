@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** Agent fleet management -- soulkey generation, agent CRUD, and status controls. */
+
 interface Agent {
   id: string;
   soulkeyPrefix: string;

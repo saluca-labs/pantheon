@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { Play, Copy, RotateCcw } from "lucide-react";
 
+/** Policy playground -- interactive policy evaluation tester with conversational UI. Uses live API via useWidgetData. */
+
 // --- Types ---
 interface Turn {
   turn: number;

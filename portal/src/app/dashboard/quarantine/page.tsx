@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { ShieldAlert, ShieldCheck, ChevronDown, ChevronRight, X, Plus } from "lucide-react";
 
+/** Quarantine management -- view, release, and add agent quarantine entries. Uses live API via useWidgetData. */
+
 interface QuarantineEntry {
   soulkey_id: string;
   status: "active" | "released";

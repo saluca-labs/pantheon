@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { ShieldAlert, TrendingUp, AlertTriangle, Settings, X, CheckCircle } from "lucide-react";
 
+/** PRH (Proactive Risk Heuristics) dashboard -- risk scoring and flagged agents. Uses live API via useWidgetData. */
+
 interface PRHStats {
   tenant_id: string;
   total_scored: number;

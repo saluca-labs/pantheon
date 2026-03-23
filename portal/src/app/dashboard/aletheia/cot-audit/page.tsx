@@ -6,6 +6,8 @@ import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { Download, CheckCircle, XCircle, ChevronDown, ChevronRight, Link2 } from "lucide-react";
 
+/** CoT audit log -- detailed chain-of-thought inspection with export. Uses live API via useWidgetData. */
+
 interface ChainEntry {
   request_id: string;
   model: string;

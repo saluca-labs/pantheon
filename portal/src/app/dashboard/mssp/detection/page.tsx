@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { AlertTriangle } from "lucide-react";
 
+/** MSSP detection -- cross-tenant anomaly correlation view. Uses live API via useWidgetData. */
+
 type SeverityLevel = "critical" | "high" | "medium" | "low" | "informational";
 
 interface MsspDetectionMatch {

@@ -1,3 +1,16 @@
+/**
+ * @module SSOLoginButton
+ *
+ * Button that initiates the OIDC Authorization Code + PKCE flow.
+ * When clicked, redirects the browser to `/api/auth/authorize?tenant={tenantSlug}`
+ * which constructs the IdP authorization URL with PKCE challenge, state param,
+ * and the correct redirect_uri for the callback handler.
+ *
+ * The `tenantSlug` prop identifies which tenant's IdP configuration to use,
+ * enabling multi-tenant SSO where each tenant can have its own identity provider.
+ *
+ * Renders a provider-branded button (Google, Okta, Azure AD, or generic shield icon).
+ */
 "use client";
 
 import type { OIDCProvider } from "@/lib/oidc";

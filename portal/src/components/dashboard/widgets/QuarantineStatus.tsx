@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { api } from "@/lib/api";
 import WidgetShell from "./WidgetShell";
 
+/** Quarantine status -- active quarantines with release actions. Uses live API via useWidgetData. */
+
 interface QuarantinedAgent {
   soulkey_id: string;
   soulkey: string;

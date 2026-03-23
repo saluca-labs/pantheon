@@ -15,6 +15,8 @@ import EvaluationTrends from "./EvaluationTrends";
 import TopAgents from "./TopAgents";
 import WidgetShell from "./WidgetShell";
 
+/** Widget registry -- maps widget IDs to components with metadata (name, category, default span). */
+
 export const widgetRegistry: Record<
   string,
   {

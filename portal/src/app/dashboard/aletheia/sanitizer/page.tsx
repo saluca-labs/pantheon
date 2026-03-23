@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { ShieldCheck, ChevronDown, ChevronRight } from "lucide-react";
 
+/** Response sanitizer dashboard -- pattern match stats and invocation log. Uses live API via useWidgetData. */
+
 interface ToolInvocation {
   id: string;
   command: string;

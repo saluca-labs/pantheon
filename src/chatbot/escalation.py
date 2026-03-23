@@ -29,7 +29,11 @@ _ESCALATION_PHRASES = [
     r"need help",
 ]
 
-CONFIDENCE_THRESHOLD = 0.4  # below this, auto-escalate
+# 0.4 was chosen empirically: the LLM returns ~0.3 when it includes
+# hedging language ("I'm not sure", "cannot find") and ~0.85 otherwise.
+# 0.4 sits between these two clusters, catching genuinely uncertain
+# responses while avoiding false escalations on confident answers.
+CONFIDENCE_THRESHOLD = 0.4
 
 
 def should_escalate(message: str, confidence: float) -> bool:

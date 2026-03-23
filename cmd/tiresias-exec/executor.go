@@ -12,17 +12,23 @@ import (
 	"time"
 )
 
+// ExecutionResult captures the outcome of a wrapped command execution,
+// including exit code, timing, byte counts, raw output, and SHA-512
+// content integrity hashes for tamper detection.
 type ExecutionResult struct {
 	ExitCode    int
 	DurationMs  int64
 	StdoutBytes int64
 	StderrBytes int64
-	StdoutHash  string
-	StderrHash  string
+	StdoutHash  string // SHA-512 content integrity hash for tamper detection
+	StderrHash  string // SHA-512 content integrity hash for tamper detection
 	Stdout      []byte
 	Stderr      []byte
 }
 
+// executeCommand runs the given command, capturing stdout and stderr while
+// streaming through SHA-512 hash writers. Exit codes are translated:
+// 127 = command not found, 126 = exec error, 128+N = killed by signal N.
 func executeCommand(command []string) ExecutionResult {
 	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Dir, _ = os.Getwd()

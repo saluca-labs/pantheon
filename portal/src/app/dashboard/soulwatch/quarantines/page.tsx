@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulWatch quarantines -- auto-quarantined agent list with release controls. Uses hardcoded mock data. */
+
 interface QuarantinedAgent {
   id: string;
   agentPrefix: string;

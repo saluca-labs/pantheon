@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { Terminal, AlertTriangle } from "lucide-react";
 
+/** Tool activity monitor -- tracks agent tool invocations with risk flags. Uses live API via useWidgetData. */
+
 interface ToolInvocation {
   id: string;
   command: string;

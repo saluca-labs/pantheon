@@ -1,6 +1,6 @@
 # Tiresias User & Developer Guide
 
-*AI Agent Security Platform -- SoulAuth | SoulWatch | SoulGate*
+*AI Agent Security Platform: SoulAuth | SoulWatch | SoulGate*
 
 **Version:** 1.0
 **Last updated:** 2026-03-22
@@ -10,9 +10,9 @@
 ## Table of Contents
 
 1. [Getting Started](#1-getting-started)
-2. [SoulAuth -- Agent Identity & Authorization](#2-soulauth--agent-identity--authorization)
-3. [SoulWatch -- Runtime Monitoring](#3-soulwatch--runtime-monitoring)
-4. [SoulGate -- API Gateway](#4-soulgate--api-gateway)
+2. [SoulAuth: Agent Identity & Authorization](#2-soulauth-agent-identity--authorization)
+3. [SoulWatch: Runtime Monitoring](#3-soulwatch-runtime-monitoring)
+4. [SoulGate: API Gateway](#4-soulgate-api-gateway)
 5. [API Reference Quick Start](#5-api-reference-quick-start)
 6. [SDK & CLI](#6-sdk--cli)
 7. [Dashboard](#7-dashboard)
@@ -25,7 +25,7 @@
 
 ### What is Tiresias?
 
-Tiresias is a security platform purpose-built for AI agent systems. If you're deploying autonomous agents -- whether they read documents, execute code, call APIs, or talk to other agents -- Tiresias gives you the identity, authorization, monitoring, and gateway controls you need to keep those agents safe, accountable, and under control.
+Tiresias is a security platform purpose-built for AI agent systems. If you're deploying autonomous agents - whether they read documents, execute code, call APIs, or talk to other agents - Tiresias gives you the identity, authorization, monitoring, and gateway controls you need to keep those agents safe, accountable, and under control.
 
 The platform is composed of three products:
 
@@ -56,7 +56,7 @@ From the dashboard, navigate to **Keys > Issue New Key**. Choose a persona name 
 sk_agent_<tenant>_<persona>_<hex32>
 ```
 
-Copy it immediately -- you won't be able to see the full key again.
+Copy it immediately - you won't be able to see the full key again.
 
 **Step 2: Make your first auth request**
 
@@ -73,7 +73,7 @@ When your agent needs to access a protected resource, it first *evaluates* acces
 
 ---
 
-## 2. SoulAuth -- Agent Identity & Authorization
+## 2. SoulAuth: Agent Identity & Authorization
 
 SoulAuth is the identity and authorization backbone. Every agent in your system gets a SoulKey, and every action that agent takes is evaluated against a policy engine before it's allowed to proceed.
 
@@ -198,10 +198,10 @@ Every SoulKey follows this format:
 sk_agent_<tenant>_<persona>_<hex32>
 ```
 
-- `sk_agent_` -- fixed prefix identifying this as a SoulAuth agent key
-- `<tenant>` -- your organization's tenant identifier (e.g., `acme`)
-- `<persona>` -- the agent's identity name (e.g., `alfred`, `researcher`)
-- `<hex32>` -- 32 hex characters of cryptographic randomness
+- `sk_agent_`: fixed prefix identifying this as a SoulAuth agent key
+- `<tenant>`: your organization's tenant identifier (e.g., `acme`)
+- `<persona>`: the agent's identity name (e.g., `alfred`, `researcher`)
+- `<hex32>`: 32 hex characters of cryptographic randomness
 
 Example: `sk_agent_acme_alfred_3f8a9b2c1d4e5f6a7b8c9d0e1f2a3b4c`
 
@@ -225,7 +225,7 @@ soulkey = "sk_agent_acme_alfred_3f8a9b2c..."
 
 #### One Key Per Agent
 
-Each SoulKey represents a single agent identity (persona). If you have three agents -- a researcher, a code reviewer, and a deployer -- issue three separate keys. This gives you:
+Each SoulKey represents a single agent identity (persona). If you have three agents - a researcher, a code reviewer, and a deployer - issue three separate keys. This gives you:
 
 - Per-agent audit trails
 - Per-agent policy enforcement
@@ -378,10 +378,10 @@ Tokens are ES256-signed JWTs with these claims:
 
 When a resource server receives a capability token, it performs validation in this order:
 
-1. **Signature check** -- verify the ES256 signature against Tiresias's public key
-2. **Expiry check** -- reject if `exp` < current time
-3. **Revocation check** -- verify the `jti` hasn't been revoked
-4. **Scope match** -- confirm the requested resource:action:scope is covered by the token's `scp` claim
+1. **Signature check**: verify the ES256 signature against Tiresias's public key
+2. **Expiry check**: reject if `exp` < current time
+3. **Revocation check**: verify the `jti` hasn't been revoked
+4. **Scope match**: confirm the requested resource:action:scope is covered by the token's `scp` claim
 
 If any check fails, the request is denied with an appropriate error.
 
@@ -445,7 +445,7 @@ curl -X POST https://tiresias.network/v1/auth/delegate \
 
 ---
 
-## 3. SoulWatch -- Runtime Monitoring
+## 3. SoulWatch: Runtime Monitoring
 
 SoulWatch watches your agents in real time. It builds behavioral baselines, detects anomalies, enforces detection rules, and can automatically quarantine agents that exhibit suspicious behavior.
 
@@ -515,7 +515,7 @@ An agent that normally makes 10 requests per minute suddenly making 40+ suggests
 
 **Trigger**: activity outside the agent's typical operating hours.
 
-If an agent has only ever been active during business hours (9 AM -- 6 PM), a 3 AM burst of requests is suspicious and worth investigating.
+If an agent has only ever been active during business hours (9 AM - 6 PM), a 3 AM burst of requests is suspicious and worth investigating.
 
 #### 3. NEW_RESOURCE
 
@@ -533,7 +533,7 @@ An agent that normally operates within `staging:*` requesting access to `prod:*`
 
 **Trigger**: denial rate exceeds 2x the agent's baseline.
 
-A sudden increase in denied requests often indicates an agent probing for permissions it doesn't have -- a classic reconnaissance pattern.
+A sudden increase in denied requests often indicates an agent probing for permissions it doesn't have - a classic reconnaissance pattern.
 
 #### 6. BURST
 
@@ -572,7 +572,7 @@ SoulWatch doesn't use static thresholds. Instead, it builds a behavioral profile
 
 - **Build period**: baselines are constructed from **7 days** of audit history
 - **Refresh cycle**: baselines are automatically rebuilt **every 6 hours**
-- **Cold start**: new agents have limited anomaly detection for their first 7 days of operation -- this is intentional. SoulWatch needs real behavioral data before it can detect deviations from normal.
+- **Cold start**: new agents have limited anomaly detection for their first 7 days of operation - this is intentional. SoulWatch needs real behavioral data before it can detect deviations from normal.
 
 If you need detection coverage during the cold-start period, consider defining explicit Sigma rules (see below) that don't depend on baselines.
 
@@ -704,7 +704,7 @@ curl -H "X-Soulkey: sk_agent_acme_admin_..." \
 
 ---
 
-## 4. SoulGate -- API Gateway
+## 4. SoulGate: API Gateway
 
 SoulGate is a security gateway that sits between your agents and the APIs they call. It provides seven layers of protection in a single deployment.
 
@@ -815,7 +815,7 @@ circuit_breaker:
   success_threshold: 2       # consecutive successes to close
 ```
 
-**Anti-weaponization**: the circuit breaker tracks failures per upstream, not per requester. A single attacker deliberately sending bad requests won't trip the breaker for everyone -- only genuine upstream failures count.
+**Anti-weaponization**: the circuit breaker tracks failures per upstream, not per requester. A single attacker deliberately sending bad requests won't trip the breaker for everyone - only genuine upstream failures count.
 
 #### Stage 5: Payload Inspection
 
@@ -843,7 +843,7 @@ Each detected pattern has a severity score. SoulGate aggregates scores across al
 | Aggregated Score | Action |
 |---|---|
 | < 0.3 | Pass (no issues detected) |
-| 0.3 -- 0.7 | Warn (logged, request proceeds, alert raised) |
+| 0.3 - 0.7 | Warn (logged, request proceeds, alert raised) |
 | > 0.7 | Block (request rejected with 403) |
 
 Thresholds are tunable per tenant:
@@ -873,7 +873,7 @@ Your backend can use these headers for its own authorization logic or audit purp
 
 #### Stage 7: Audit Logging
 
-Every request -- whether allowed or blocked -- is recorded in the audit log with:
+Every request - whether allowed or blocked - is recorded in the audit log with:
 
 - Timestamp, request ID, agent, tenant
 - Request method, path, headers (sensitive values redacted)
@@ -1104,7 +1104,7 @@ Issue, inspect, and manage SoulKeys:
 - **Inspect**: view a key's metadata, last used timestamp, and associated policies
 - **Suspend**: temporarily disable a key (reversible)
 - **Revoke**: permanently invalidate a key (irreversible)
-- **Lifecycle view**: see a key's full history -- when it was created, when it was last used, any suspensions or escalations
+- **Lifecycle view**: see a key's full history - when it was created, when it was last used, any suspensions or escalations
 
 ### Policy Editor
 
@@ -1183,7 +1183,7 @@ Search and explore the full audit trail:
 1. Verify the key format: `sk_agent_<tenant>_<persona>_<hex32>`
 2. Check for whitespace or truncation (common when copying from dashboards)
 3. Use the dashboard's Keys panel to verify the key's status
-4. If the key was revoked, issue a new one -- revocation is irreversible
+4. If the key was revoked, issue a new one - revocation is irreversible
 5. If you suspect a hash mismatch, compare the SHA-512 hash of your key against the hash stored in the dashboard
 
 ### "Token expired"
@@ -1232,11 +1232,11 @@ if response.status_code == 429:
 **Cause**: the upstream service behind SoulGate is unhealthy. The circuit breaker is protecting it from additional load.
 
 **Steps:**
-1. This is not a Tiresias misconfiguration -- your upstream is genuinely failing
+1. This is not a Tiresias misconfiguration - your upstream is genuinely failing
 2. Check the health of the upstream service independently
 3. The circuit breaker will automatically probe the upstream at regular intervals
 4. Once the upstream recovers, the circuit closes and traffic flows normally
-5. Do not attempt to bypass the circuit breaker -- it's protecting both your agent and the upstream
+5. Do not attempt to bypass the circuit breaker - it's protecting both your agent and the upstream
 
 ### No anomaly detection for new agents
 

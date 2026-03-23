@@ -4,6 +4,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { getStoredTenantId } from "@/lib/api";
 import WidgetShell from "./WidgetShell";
 
+/** Policy status -- sync state, version info, and recent policy changes. Uses live API via useWidgetData. */
+
 interface PolicyData {
   version: string;
   synced: boolean;

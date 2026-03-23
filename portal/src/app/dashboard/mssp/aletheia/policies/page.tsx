@@ -6,6 +6,8 @@ import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { CheckCircle, XCircle, Upload } from "lucide-react";
 
+/** MSSP Aletheia policies -- bulk policy push to child tenants. Uses live API via useWidgetData. */
+
 interface ChildTenant {
   id: string;
   name: string;

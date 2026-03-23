@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Agent fleet map -- visual grid of agent nodes colored by status. Uses live API via useWidgetData. */
+
 type AgentStatus = "active" | "elevated" | "quarantined" | "inactive" | "suspended" | "revoked";
 
 interface AgentNode {

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulGate access rules -- IP/geo allow/block list management. Uses hardcoded mock data. */
+
 interface AccessRule {
   id: string;
   type: "ip_allow" | "ip_block" | "geo_allow" | "geo_deny";

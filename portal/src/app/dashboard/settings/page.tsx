@@ -1,3 +1,21 @@
+/**
+ * @module SettingsPage
+ *
+ * Settings page with 7 tabs, each governing a different configuration domain:
+ *
+ *  1. **general**       -- Tenant display name (placeholder for future settings)
+ *  2. **api-keys**      -- SoulKey lifecycle: create, revoke, suspend/reactivate,
+ *                          view per-key usage, copy raw key on creation
+ *  3. **siem**          -- SIEM destination configuration (Splunk, Elastic)
+ *  4. **notifications** -- Notification channel toggles (Slack, PagerDuty, email, webhook)
+ *  5. **billing**       -- Grace period status, tier display, upgrade/manage subscription
+ *  6. **white-label**   -- Branding configuration: company name, logo URL, favicon URL,
+ *                          accent color, custom domain (enterprise+ only)
+ *  7. **sso**           -- Enterprise SSO / OIDC IdP management (enterprise+ only,
+ *                          rendered via `SSOSettingsTab`)
+ *
+ * The active tab is controlled via the `?tab=` query parameter for deep linking.
+ */
 "use client";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";

@@ -1,5 +1,17 @@
 """
 Component health checks for SoulGate.
+
+run_health_checks() probes every dependency and returns an aggregated
+status dict consumed by the /health endpoint. Components checked:
+  - database (Postgres connectivity)
+  - soulauth (upstream HTTP health)
+  - soulwatch (upstream HTTP health)
+  - upstreams (per-registered-service health endpoints)
+  - circuit_breakers (open circuit summary)
+  - audit_queue (in-memory queue depth)
+
+Overall status is "unhealthy" if ANY component reports unhealthy;
+otherwise "healthy".
 """
 
 import httpx

@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+// AgentIdentity holds the fully resolved identity of the calling agent.
+// Fields are populated through a 4-layer precedence chain in resolveIdentity.
 type AgentIdentity struct {
 	AgentID      string
 	TenantID     string
@@ -18,6 +20,10 @@ type AgentIdentity struct {
 	OfflineLogPath string
 }
 
+// resolveIdentity builds an AgentIdentity using a 4-layer precedence chain:
+// JWT claims (lowest) < config file < environment variables < CLI flags (highest).
+// Each layer overrides values set by the previous one. This is the
+// security-critical identity resolution path.
 func resolveIdentity(flags cliFlags) AgentIdentity {
 	cfg := loadConfig(flags.configPath)
 

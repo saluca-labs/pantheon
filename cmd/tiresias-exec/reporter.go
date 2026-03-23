@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+// TelemetryPayload is the core telemetry envelope sent to the Tiresias
+// ingest API on every tool invocation. It combines identity, command metadata,
+// execution results, policy evaluation, and sanitizer output into a single event.
 type TelemetryPayload struct {
 	EventType        string            `json:"event_type"`
 	Version          string            `json:"version"`
@@ -30,6 +33,8 @@ type TelemetryPayload struct {
 	Sanitizer        SanitizerPayload  `json:"sanitizer"`
 }
 
+// ExecutionPayload contains the command execution metrics: exit code, timing,
+// byte counts, and SHA-512 integrity hashes of stdout/stderr.
 type ExecutionPayload struct {
 	ExitCode    int    `json:"exit_code"`
 	DurationMs  int64  `json:"duration_ms"`
@@ -39,12 +44,16 @@ type ExecutionPayload struct {
 	StderrHash  string `json:"stderr_hash"`
 }
 
+// PolicyPayload records whether policy was evaluated and the resulting verdict
+// (allow/deny/warn) along with any matched rule names.
 type PolicyPayload struct {
 	Evaluated    bool     `json:"evaluated"`
 	Verdict      string   `json:"verdict"`
 	RulesMatched []string `json:"rules_matched"`
 }
 
+// SanitizerPayload records the output sanitizer mode, verdict, matched patterns,
+// and scan duration for the telemetry event.
 type SanitizerPayload struct {
 	Mode            string   `json:"mode"`
 	Verdict         string   `json:"verdict"`
@@ -52,12 +61,16 @@ type SanitizerPayload struct {
 	ScanDurationMs  int64    `json:"scan_duration_ms"`
 }
 
+// generateInvocationID returns a random 12-hex-char invocation ID prefixed with "inv_".
 func generateInvocationID() string {
 	b := make([]byte, 6)
 	rand.Read(b)
 	return fmt.Sprintf("inv_%x", b)
 }
 
+// computeEnvironmentHash produces a SHA-256 fingerprint of the current environment
+// by hashing sorted environment variable KEY NAMES only (not values). This detects
+// environment shape changes without leaking secret values into telemetry.
 func computeEnvironmentHash() string {
 	envVars := os.Environ()
 	keys := make([]string, 0, len(envVars))
@@ -145,6 +158,8 @@ func buildPayloadWithPolicySanitizer(identity AgentIdentity, command []string, c
 	return payload
 }
 
+// reportEvent POSTs a TelemetryPayload to the SoulWatch ingest endpoint.
+// Returns an error if the request fails or returns a non-2xx status.
 func reportEvent(soulwatchURL string, token string, payload TelemetryPayload) error {
 	data, err := json.Marshal(payload)
 	if err != nil {

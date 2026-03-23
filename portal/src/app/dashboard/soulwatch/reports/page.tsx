@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+/** SoulWatch reports -- compliance framework report generation. Uses hardcoded mock data. */
+
 interface Framework {
   id: string;
   name: string;
