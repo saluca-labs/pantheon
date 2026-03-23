@@ -25,6 +25,7 @@ async def exchange_code_for_tokens(
     idp_config: SoulIdPConfig,
     code: str,
     redirect_uri: str,
+    code_verifier: str | None = None,
 ) -> dict:
     """
     Exchange an authorization code for tokens at the IdP's token endpoint.
@@ -44,6 +45,9 @@ async def exchange_code_for_tokens(
         "client_id": idp_config.client_id,
         "client_secret": client_secret,
     }
+    # PKCE: include code_verifier so the IdP can verify the S256 challenge
+    if code_verifier:
+        payload["code_verifier"] = code_verifier
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(token_endpoint, data=payload)

@@ -53,8 +53,12 @@ class SanitizerEngine:
         start = time.perf_counter()
         partial_scan = len(output) > MAX_SCAN_BYTES
 
+        # Truncate oversized output to MAX_SCAN_BYTES to bound regex cost.
+        # The partial_scan flag signals that not all content was inspected.
+        scan_data = output[:MAX_SCAN_BYTES] if partial_scan else output
+
         # Decode into multiple text representations
-        passes = decode_passes(output)
+        passes = decode_passes(scan_data)
         passes_run = [name for name, _ in passes]
 
         # Match patterns across all passes

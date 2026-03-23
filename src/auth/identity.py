@@ -6,7 +6,7 @@ Combines soulkey and tenant resolution for complete identity verification.
 from typing import Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Soulkey, SoulTenant
@@ -39,7 +39,9 @@ async def resolve_identity_with_tenant(
     if soulkey is None:
         return None, None
 
-    # Update last_used_at
+    # Update last_used_at separately (not via ORM attribute mutation) to avoid
+    # loading the full model into the session and to use the DB server's clock
+    # for consistent timestamping across instances.
     await db.execute(
         select(Soulkey)
         .where(Soulkey.id == soulkey.id)

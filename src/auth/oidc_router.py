@@ -25,6 +25,9 @@ from src.middleware.tenant import resolve_tenant_by_slug
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/v1/auth/oidc", tags=["Auth"])
 _CALLBACK_PATH = "/v1/auth/oidc/callback"
+# SECURITY WARNING: In-memory dict is NOT safe for multi-instance/horizontal scaling.
+# Nonce replay protection breaks if requests hit different instances behind a load balancer.
+# Production deployments MUST use a Redis or database-backed nonce store with TTL expiry.
 _nonce_store: dict[str, str] = {}
 
 
@@ -92,9 +95,18 @@ async def authorize(
     email: Optional[str] = None,
     provider_type: Optional[str] = None,
 ):
+    """Initiate the OIDC authorization code flow with PKCE.
+
+    Resolves the IdP configuration from the provided email domain or tenant slug,
+    generates a PKCE challenge and cryptographic nonce, signs the state parameter
+    with HMAC-SHA256 to prevent CSRF, and returns the IdP authorization URL.
+    The caller must redirect the user-agent to that URL to begin authentication.
+    """
     settings = get_settings()
     if not settings.oidc_enabled:
         raise HTTPException(status_code=404, detail="OIDC SSO is not enabled")
+    # SECURITY WARNING: "dev-state-secret-change-me" is a dev-only default.
+    # In production, oidc_state_secret MUST be set via config to a cryptographically random value.
     state_secret = settings.oidc_state_secret or "dev-state-secret-change-me"
     idp_config: Optional[SoulIdPConfig] = None
     if email:
@@ -117,10 +129,11 @@ async def authorize(
         raise HTTPException(status_code=400, detail="Provide email or tenant_slug")
     discovery = await fetch_discovery_document(idp_config.discovery_url)
     auth_endpoint = discovery["authorization_endpoint"]
-    _cv, code_challenge = _generate_pkce()
+    code_verifier, code_challenge = _generate_pkce()
     nonce = secrets.token_urlsafe(32)
     state = _make_state(str(idp_config.tenant_id), str(idp_config.id), nonce, state_secret)
-    _nonce_store[state] = nonce
+    # Store both nonce and PKCE code_verifier so the callback can complete the proof
+    _nonce_store[state] = {"nonce": nonce, "code_verifier": code_verifier}
     scopes = idp_config.scopes or ["openid", "email", "profile"]
     redirect_uri = settings.public_url + "/api/auth/callback"
     qs = (
@@ -135,21 +148,37 @@ async def authorize(
 
 @router.post("/callback", response_model=CallbackResponse, summary="OIDC callback")
 async def callback(request: Request, body: CallbackRequest, db: AsyncSession = Depends(get_db)):
+    """Complete the OIDC authorization code flow.
+
+    Verifies the HMAC-signed state to prevent CSRF, validates the nonce to
+    prevent replay attacks, exchanges the authorization code for tokens using
+    the PKCE code_verifier, validates the id_token signature and claims,
+    JIT-provisions the user if needed, and creates an authenticated session.
+    Returns a session token for subsequent API calls.
+    """
     settings = get_settings()
     if not settings.oidc_enabled:
         raise HTTPException(status_code=404, detail="OIDC SSO is not enabled")
+    # SECURITY WARNING: "dev-state-secret-change-me" is a dev-only default.
+    # In production, oidc_state_secret MUST be set via config to a cryptographically random value.
     state_secret = settings.oidc_state_secret or "dev-state-secret-change-me"
     state_data = _verify_state(body.state, state_secret)
     tenant_id = UUID(state_data["tenant_id"])
     idp_config_id = UUID(state_data["idp_id"])
     expected_nonce = state_data["nonce"]
     stored = _nonce_store.pop(body.state, None)
-    if stored and stored != expected_nonce:
+    if stored and stored.get("nonce") != expected_nonce:
         raise HTTPException(status_code=400, detail="Nonce mismatch")
     idp_config = await load_idp_config(db, tenant_id, idp_config_id=idp_config_id)
     if not idp_config:
         raise HTTPException(status_code=404, detail="IdP config not found")
-    tokens = await exchange_code_for_tokens(idp_config=idp_config, code=body.code, redirect_uri=body.redirect_uri)
+    # PKCE: retrieve the code_verifier generated during /authorize so the IdP can
+    # verify that the same client that started the flow is completing it.
+    code_verifier = stored.get("code_verifier") if stored else None
+    tokens = await exchange_code_for_tokens(
+        idp_config=idp_config, code=body.code,
+        redirect_uri=body.redirect_uri, code_verifier=code_verifier,
+    )
     id_token = tokens.get("id_token")
     if not id_token:
         raise HTTPException(status_code=502, detail="IdP did not return id_token")
@@ -178,6 +207,12 @@ async def revoke_oidc_session(
     x_oidc_session: Optional[str] = Header(None),
     authorization: Optional[str] = Header(None),
 ):
+    """Revoke the current OIDC session.
+
+    Accepts the session token via X-OIDC-Session header or Authorization Bearer.
+    Invalidates the session in the database so it cannot be reused.
+    Returns 204 on success, 401 if no token provided, 404 if session not found.
+    """
     settings = get_settings()
     if not settings.oidc_enabled:
         raise HTTPException(status_code=404, detail="OIDC SSO is not enabled")
@@ -195,6 +230,12 @@ async def userinfo(
     x_oidc_session: Optional[str] = Header(None),
     authorization: Optional[str] = Header(None),
 ):
+    """Return the authenticated user profile from the current OIDC session.
+
+    Validates the session token and returns user identity attributes including
+    tenant association, admin role, and IdP provider. Returns 401 if the
+    session is missing, invalid, or expired.
+    """
     settings = get_settings()
     if not settings.oidc_enabled:
         raise HTTPException(status_code=404, detail="OIDC SSO is not enabled")
