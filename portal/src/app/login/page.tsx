@@ -68,7 +68,7 @@ export default function LoginPage() {
               href="/trial"
               className="block w-full text-center rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
             >
-              Join Beta Waitlist
+              Join Waitlist
             </Link>
 
             {/* Footer links */}

@@ -199,7 +199,7 @@ class Trial(Base):
 
 
 class Waitlist(Base):
-    """_soulauth_waitlist - Beta waitlist email collection."""
+    """_soulauth_waitlist - Waitlist email collection."""
     __tablename__ = "_soulauth_waitlist"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
