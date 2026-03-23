@@ -98,6 +98,7 @@ class AuditLog(Base):
     reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     capability_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
     context: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=dict)
+    prev_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, comment="SHA-256 hex of previous audit row in chain. NULL for pre-0004 rows. Genesis sentinel is literal string genesis.")
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
 
     __table_args__ = (
@@ -215,4 +216,100 @@ class Waitlist(Base):
     __table_args__ = (
         Index("idx_waitlist_email", "contact_email"),
         Index("idx_waitlist_domain", "company_domain"),
+    )
+
+
+class SoulUser(Base):
+    """_soul_users - Authenticated human users provisioned via OIDC/SSO JIT flow.
+
+    Users are created on first login through an IdP (Google, Okta, Azure AD, generic OIDC).
+    Each user belongs to exactly one tenant and holds an admin_role for portal access control.
+    The idp_sub + idp_provider pair uniquely identifies the user within a tenant.
+    """
+    __tablename__ = "_soul_users"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("_soul_tenants.id"), nullable=False)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    display_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    admin_role: Mapped[str] = mapped_column(Text, nullable=False, default="viewer")
+    idp_sub: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    idp_provider: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_soul_users_tenant_email"),
+        UniqueConstraint("tenant_id", "idp_provider", "idp_sub", name="uq_soul_users_tenant_idp_sub"),
+        CheckConstraint("admin_role IN ('owner', 'admin', 'operator', 'viewer')", name="ck_soul_users_admin_role"),
+        CheckConstraint("status IN ('active', 'suspended', 'deactivated')", name="ck_soul_users_status"),
+        Index("idx_soul_users_tenant", "tenant_id"),
+        Index("idx_soul_users_email", "email"),
+    )
+
+
+class SoulIdPConfig(Base):
+    """_soul_idp_configs - OIDC Identity Provider configurations per tenant.
+
+    Each tenant can have one IdP config per provider_type (google, okta, azure_ad, oidc).
+    The client_secret_enc field stores the encrypted client secret (AES-256-GCM via IdP encryption module).
+    The group_role_map enables automatic admin_role assignment based on IdP group claims.
+    """
+    __tablename__ = "_soul_idp_configs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("_soul_tenants.id"), nullable=False)
+    provider_type: Mapped[str] = mapped_column(Text, nullable=False)
+    display_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_default: Mapped[Optional[bool]] = mapped_column(Boolean, default=False, nullable=True)
+    client_id: Mapped[str] = mapped_column(Text, nullable=False)
+    client_secret_enc: Mapped[str] = mapped_column(Text, nullable=False)
+    discovery_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    issuer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    scopes: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    claim_mapping: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
+    domain_hint: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    group_role_map: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "provider_type", name="uq_soul_idp_configs_tenant_provider"),
+        CheckConstraint("provider_type IN ('google', 'okta', 'azure_ad', 'oidc')", name="ck_soul_idp_provider_type"),
+        CheckConstraint("status IN ('active', 'disabled')", name="ck_soul_idp_status"),
+        Index("idx_soul_idp_configs_tenant", "tenant_id"),
+        Index("idx_soul_idp_configs_domain_hint", "domain_hint"),
+    )
+
+
+class SoulOIDCSession(Base):
+    """_soul_oidc_sessions - Active OIDC login sessions for portal users.
+
+    Sessions are created after successful OIDC callback and token exchange.
+    The session_token is stored as a SHA-256 hash; the raw token is returned to the client
+    once and set as an HttpOnly cookie. Sessions are validated by hashing the presented token
+    and looking up the hash. Revocation sets revoked_at; expired sessions are filtered by expires_at.
+    """
+    __tablename__ = "_soul_oidc_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("_soul_users.id", ondelete="CASCADE"), nullable=False)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("_soul_tenants.id"), nullable=False)
+    session_token: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    refresh_token_enc: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    issued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_active: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    ip_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("session_token", name="uq_soul_oidc_sessions_token"),
+        Index("idx_soul_oidc_sessions_token", "session_token"),
+        Index("idx_soul_oidc_sessions_user_expires", "user_id", "expires_at"),
     )
