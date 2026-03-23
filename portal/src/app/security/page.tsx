@@ -4,6 +4,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
+
+/** Security practices and compliance information page (Trust Center). */
   title: "Security & Trust Center - Tiresias",
   description:
     "Our security posture, compliance roadmap, architecture overview, and responsible disclosure policy. Trust, verified.",

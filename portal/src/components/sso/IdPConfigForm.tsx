@@ -1,3 +1,14 @@
+/**
+ * @module IdPConfigForm
+ *
+ * OIDC Identity Provider configuration form for enterprise SSO setup.
+ * Supports **create** and **edit** modes -- when an existing `idp` prop is
+ * provided the form pre-fills fields and uses PUT to update; otherwise it
+ * POSTs to create a new IdP entry.
+ *
+ * Supported providers: Google Workspace, Okta, Azure AD / Entra ID, Generic OIDC.
+ * The discovery URL is auto-filled based on the selected provider template.
+ */
 "use client";
 
 import { useState } from "react";
@@ -59,6 +70,11 @@ export function IdPConfigForm({
     }
   };
 
+  /**
+   * Test the IdP connection by calling POST `/v1/idp/{id}/test`.
+   * Verifies that the discovery URL is reachable and the client credentials
+   * are accepted by the upstream identity provider.
+   */
   const handleTest = async () => {
     if (!idp?.id) return;
     setTesting(true);
@@ -74,6 +90,11 @@ export function IdPConfigForm({
     }
   };
 
+  /**
+   * Save the IdP configuration. Uses PUT for existing IdPs (edit mode)
+   * and POST for new ones (create mode). The client_secret field is
+   * omitted when blank in edit mode to preserve the existing secret.
+   */
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);

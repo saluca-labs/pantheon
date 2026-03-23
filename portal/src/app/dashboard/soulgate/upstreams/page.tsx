@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulGate upstreams -- backend target management with health checks. Uses hardcoded mock data. */
+
 interface Upstream {
   id: string;
   name: string;

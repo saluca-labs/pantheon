@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Tenant health -- system component health indicators with latency. Uses live API via useWidgetData. */
+
 interface HealthComponent {
   name: string;
   status: string;

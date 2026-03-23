@@ -1,5 +1,7 @@
 "use client";
 
+/** Reusable error display card with optional retry button. */
+
 interface ErrorCardProps {
   message?: string;
   onRetry?: () => void;

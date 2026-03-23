@@ -6,6 +6,8 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Post-checkout success confirmation page -- verifies Stripe session status. */
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");

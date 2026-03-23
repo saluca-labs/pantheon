@@ -1,6 +1,18 @@
 """
 Health check module for SoulWatch.
 Checks DB connectivity, detection engine, SIEM destinations, baseline freshness.
+
+Critical vs non-critical component distinction:
+  Critical (failure -> overall "unhealthy"):
+    - database        -- all persistence depends on it
+    - detection_engine -- core security scanning stops without it
+  Non-critical (failure -> overall "degraded"):
+    - baselines        -- anomaly detection quality drops but events still flow
+    - siem_forwarder   -- events queue in DLQ for retry; detection still works
+    - pipeline         -- informational mode check, always healthy
+
+This hierarchy lets the orchestrator (k8s/Cloud Run) restart on critical
+failure while tolerating transient non-critical degradation.
 """
 
 import time

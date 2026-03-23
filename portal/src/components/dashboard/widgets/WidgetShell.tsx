@@ -2,6 +2,8 @@
 
 import { type ReactNode, useMemo } from "react";
 
+/** Widget shell -- standard wrapper providing loading, error, and retry states for dashboard widgets. */
+
 interface WidgetShellProps {
   title: string;
   titleColor?: string;

@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import { api } from "@/lib/api";
 
+/** Quick actions -- common admin operation buttons (sync, rotate, etc.). Uses live API for actions. */
+
 interface ActionDef {
   label: string;
   endpoint?: string;

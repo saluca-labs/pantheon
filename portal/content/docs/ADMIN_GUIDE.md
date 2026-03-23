@@ -1781,13 +1781,13 @@ Reports include: audit chain integrity verification, access pattern analysis, po
 
 **Diagnostic steps:**
 
-1. **Verify the ES256 key pair** -- confirm the private and public keys are a matching pair:
+1. **Verify the ES256 key pair**: confirm the private and public keys are a matching pair:
    ```bash
    # Extract public key from private key and compare
    openssl ec -in keys/private.pem -pubout 2>/dev/null | diff - keys/public.pem
    ```
 
-2. **Check clock skew** -- JWT validation is sensitive to time differences between services:
+2. **Check clock skew**: JWT validation is sensitive to time differences between services:
    ```bash
    # On each service host/container
    date -u
@@ -1795,7 +1795,7 @@ Reports include: audit chain integrity verification, access pattern analysis, po
    # Use NTP if not already configured
    ```
 
-3. **Verify JWT_KID matches** -- the key ID in the token must match the server's current KID:
+3. **Verify JWT_KID matches**: the key ID in the token must match the server's current KID:
    ```bash
    # Decode a token header (without validation)
    echo "$TOKEN" | cut -d. -f1 | base64 -d 2>/dev/null | jq .
@@ -1804,7 +1804,7 @@ Reports include: audit chain integrity verification, access pattern analysis, po
    # The "kid" must match SOULAUTH_JWT_KID
    ```
 
-4. **Check key file permissions** -- key files must be readable by the service user:
+4. **Check key file permissions**: key files must be readable by the service user:
    ```bash
    ls -la keys/private.pem keys/public.pem
    # Should be readable by the service process (e.g., 0400 or 0440)

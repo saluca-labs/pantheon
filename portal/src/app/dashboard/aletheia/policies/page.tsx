@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, FileCode } from "lucide-react";
 
+/** Aletheia policy management -- CoT policy editor with dry-run evaluation. Uses live API via useWidgetData. */
+
 interface EvalResult {
   verdict: string;
   matched_rule?: string;

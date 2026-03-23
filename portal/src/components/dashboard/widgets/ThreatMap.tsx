@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Threat map -- radar-style threat category visualization. Uses live API via useWidgetData. */
+
 interface Anomaly {
   anomaly_type: string;
   severity?: string;

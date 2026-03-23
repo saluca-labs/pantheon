@@ -1,5 +1,7 @@
 "use client";
 
+/** Loading skeleton placeholder with configurable line count and header visibility. */
+
 interface SkeletonCardProps {
   lines?: number;
   showHeader?: boolean;

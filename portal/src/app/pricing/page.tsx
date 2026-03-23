@@ -6,6 +6,8 @@ import { motion, useInView } from "framer-motion";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Pricing tier comparison page with Stripe checkout integration. */
+
 type Product = "all" | "soulauth" | "soulwatch" | "soulgate";
 
 // Map tier names to checkout plan IDs

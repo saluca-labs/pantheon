@@ -4,6 +4,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { SkeletonCard } from "@/components/ui/SkeletonCard";
 import { ErrorCard } from "@/components/ui/ErrorCard";
 
+/** Usage widget -- plan usage bars (agents, requests, storage) with limit display. Uses live API via useWidgetData. */
+
 interface UsageDimensions {
   agents: number;
   requests: number;

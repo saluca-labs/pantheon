@@ -58,7 +58,8 @@ func evaluatePolicy(identity AgentIdentity, command []string) (PolicyEvalRespons
 		return failOpen, fmt.Errorf("marshal policy request: %w", err)
 	}
 
-	// Construct URL: strip known ingest paths to get base, then append evaluate path
+	// Construct URL: strip known ingest paths (e.g. /v1/aletheia/tool/ingest)
+	// to derive the API base URL, then append the evaluate endpoint path.
 	baseURL := identity.SoulWatchURL
 	for _, suffix := range []string{"/v1/aletheia/tool/ingest", "/ingest"} {
 		if strings.HasSuffix(baseURL, suffix) {

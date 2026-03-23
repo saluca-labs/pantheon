@@ -4,6 +4,11 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
+/**
+ * First-visit welcome page -- tenant setup wizard with SoulKey copy.
+ * Sets a cookie so the dashboard entry point skips redirect on subsequent visits.
+ */
+
 function CopyIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Anomaly chart -- 7-day anomaly bar chart with summary stats. Uses live API via useWidgetData. */
+
 interface Anomaly {
   anomaly_type: string;
   severity: string;

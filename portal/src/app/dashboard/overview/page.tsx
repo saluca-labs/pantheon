@@ -1,3 +1,17 @@
+/**
+ * @module OverviewPage
+ *
+ * Dashboard overview page -- the primary landing view after login.
+ *
+ * Fetches data from 4 API endpoints:
+ *  1. `/dash/v1/spend`            -- total cost, request count, and token usage (30d)
+ *  2. `/dash/v1/requests`         -- daily request counts for sparklines and bar charts
+ *  3. `/dash/v1/providers/health` -- per-provider UP/DOWN/DEGRADED status with error counts
+ *  4. `/v1/usage/alerts`          -- tier usage percentage and alert level (warning/critical)
+ *
+ * Renders KPI cards, request/cost bar charts with 7d/30d toggle, a usage
+ * widget, provider health strip, and a recent activity stream.
+ */
 "use client";
 
 import { useState } from "react";

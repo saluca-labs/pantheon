@@ -195,7 +195,7 @@ export default function CompanyPage() {
             <h2 className="text-sm font-semibold text-teal-500 uppercase tracking-wider mb-4">
               Intellectual Property
             </h2>
-            <p className="text-4xl font-bold mb-2">29</p>
+            <p className="text-4xl font-bold mb-2">30</p>
             <p className="text-lg text-foreground-muted mb-2">
               USPTO Provisional Patents
             </p>

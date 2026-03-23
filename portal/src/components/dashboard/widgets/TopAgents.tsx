@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Top agents -- most active agents ranked by evaluation count. Uses live API via useWidgetData. */
+
 interface SoulKey {
   soulkey_id: string;
   persona_id: string;

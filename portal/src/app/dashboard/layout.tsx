@@ -4,6 +4,8 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import ChatWidget from "@/components/dashboard/ChatWidget";
 
 export const metadata: Metadata = {
+
+/** Dashboard shell layout -- renders header, sidebar, and scrollable content area. */
   title: "Dashboard | Tiresias",
   description: "Tiresias enterprise dashboard -- monitor agents, policies, and security events.",
 };

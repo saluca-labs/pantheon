@@ -634,15 +634,25 @@ async def evaluate_model_access(
     """
     Evaluate whether a persona can use the requested model for the given task.
 
-    Steps:
-    1. Resolve identity from soulkey
-    2. Load resolved policy
-    3. Extract model_policies
-    4. Check forbidden list
-    5. Check task-specific routing if task_type provided
-    6. Check cost budget (daily + per-request)
-    7. Return decision with recommended model
-    8. Audit log the decision
+    Model access decision flow (8 steps):
+
+    1. Resolve identity -- look up soulkey via resolve_identity(), reject if
+       unknown or inactive or expired.
+    2. Load resolved policy -- fetch the cached tenant+persona policy tree.
+       Deny if no policy exists for this persona.
+    3. Extract model_policies -- pull the ModelPolicy sub-object from the
+       resolved policy. If absent, treat as open-access (any model allowed).
+    4. Check forbidden models -- resolve_models_for_task() rejects models on
+       the persona's forbidden list.
+    5. Check task-specific routing -- if a task_type header was supplied,
+       resolve_models_for_task() may redirect to a required model for that
+       task (e.g. embeddings -> text-embedding-3-small).
+    6. Check cost budget -- compare estimated_cost_usd against the persona's
+       daily and per-request cost caps. Deny if either would be exceeded.
+    7. Return decision -- grant, deny, or redirect with the resolved model
+       name, remaining cost budget, and enforcement mode.
+    8. Audit log -- persist the decision to the audit log for compliance
+       and downstream dashboard visibility.
     """
     context = context or {}
 

@@ -4,6 +4,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { ShieldCheck, Link2, Activity } from "lucide-react";
 
+/** Aletheia overview -- CoT hash-chain viewer with integrity verification. Uses live API via useWidgetData. */
+
 interface ChainEntry {
   request_id: string;
   model: string;

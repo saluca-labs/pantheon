@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LifeBuoy, AlertTriangle, CheckCircle2, Clock, ChevronDown } from "lucide-react";
 import { api } from "@/lib/api";
 
+/** Support ticket system -- create, track, and manage support tickets. Uses live API. */
+
 type Severity = "P0" | "P1" | "P2" | "P3";
 type Category = "bug" | "security" | "outage" | "question" | "feature";
 type TicketStatus = "open" | "in_progress" | "resolved" | "closed";

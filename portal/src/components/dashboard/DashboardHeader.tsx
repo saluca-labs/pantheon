@@ -1,3 +1,18 @@
+/**
+ * @module DashboardHeader
+ *
+ * Dashboard header bar displayed at the top of every dashboard page.
+ *
+ * Features:
+ *  - **Aletheia status indicator** (enterprise+ only): polls `/v1/aletheia/cot/chain`
+ *    every 60s and shows a green dot when the CoT hash chain is healthy.
+ *  - **Dynamic document title & favicon**: updates `document.title` and the
+ *    favicon link element based on `branding.company_name` / `branding.favicon_url`
+ *    for white-label tenants (WL-05).
+ *  - **Tier badge**: renders MSSP / SaaS badge for elevated tiers (DTIER-04).
+ *  - **Navigation breadcrumbs**: resolves the current pathname to a human-readable
+ *    page title from the `PAGE_TITLES` map.
+ */
 "use client";
 
 import { usePathname } from "next/navigation";

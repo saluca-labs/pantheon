@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import { BookOpen, CheckCircle, XCircle, Clock, Shield } from "lucide-react";
 
+/** Detection playbooks -- automated response playbook management. Uses live API via useWidgetData. */
+
 interface PlaybookSummary {
   id: string;
   name: string;

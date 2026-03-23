@@ -5,6 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { Building2, Users, AlertTriangle, ShieldAlert, ChevronRight } from "lucide-react";
 
+/** MSSP overview -- multi-tenant management console for managed security providers. Uses live API via useWidgetData. */
+
 interface MsspTenant {
   tenant_id: string;
   name: string;

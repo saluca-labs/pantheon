@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Evaluation trends -- allow/deny trend chart with top denied resources. Uses live API via useWidgetData. */
+
 interface AuditEvent {
   event_type: string;
   decision?: string;

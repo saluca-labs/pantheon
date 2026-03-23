@@ -1,3 +1,20 @@
+/**
+ * @module useWidgetData
+ *
+ * Custom React hook for dashboard widget data fetching.
+ *
+ * Handles the full lifecycle of widget data: initial fetch, automatic
+ * interval-based polling (default 30s from config), error normalization
+ * (ApiError status codes surfaced), and an optional `transform` callback
+ * to reshape the raw API response before it reaches the widget component.
+ *
+ * @param endpoint  - API path to poll (e.g. `/dash/v1/spend`)
+ * @param transform - Optional function to reshape the raw response into `T`
+ * @param refreshInterval - Polling interval in ms (default: `config.refreshInterval`)
+ * @param skip      - When true, suppresses all fetching (e.g. unauthenticated state)
+ *
+ * @returns `{ data, loading, error, refetch }` -- standard async data tuple
+ */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";

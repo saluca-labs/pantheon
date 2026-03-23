@@ -129,10 +129,83 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
+  /* Gold palette */
+  --color-gold-300: #e8c374;
+  --color-gold-400: #d4a853;
+  --color-gold-500: #c9a84c;
+  --color-gold-600: #b8943a;
+
+  /* Teal palette */
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+
+  /* Amber palette */
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+
+  /* Navy palette */
+  --color-navy-700: #1e293b;
+  --color-navy-800: #1a1b21;
+  --color-navy-900: #0f1117;
+  --color-navy-950: #0a0e1a;
+
+  /* Border */
+  --color-border: var(--of-surface-container-high);
+  --color-border-hover: var(--of-surface-bright);
+  --color-border-accent: #d4a853;
+
+  /* Green (status) */
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+
+  /* Red (status) */
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+
   /* Typography */
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
   --font-manrope: var(--font-manrope);
+}
+
+/* ── Custom component utilities ─────────────────────────────── */
+
+@utility glass-card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid var(--of-surface-container-high);
+  backdrop-filter: blur(12px);
+}
+
+@utility glow-gold {
+  box-shadow: 0 0 40px rgba(212, 168, 83, 0.08), 0 0 80px rgba(212, 168, 83, 0.04);
+}
+
+@utility glow-teal {
+  box-shadow: 0 0 40px rgba(45, 212, 191, 0.08), 0 0 80px rgba(45, 212, 191, 0.04);
+}
+
+@utility text-gradient-gold {
+  background: linear-gradient(135deg, #d4a853, #e8c374);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility text-gradient-teal {
+  background: linear-gradient(135deg, #2dd4bf, #5eead4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility cta-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.15); }
+  50% { box-shadow: 0 0 30px rgba(212, 168, 83, 0.25); }
 }
 
 @layer base {

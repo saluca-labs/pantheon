@@ -212,7 +212,17 @@ class AletheiaToolInvocation(Base):
 
 
 class AletheiaBlockedOutput(Base):
-    """Forensic storage of blocked tool outputs (encrypted with AES-256-GCM)."""
+    """Forensic storage of blocked tool outputs (encrypted with AES-256-GCM).
+
+    Encryption key management:
+      - Master key: ALETHEIA_MASTER_KEY env var (base64-encoded 256-bit key).
+        Set via Cloud Run secrets or Vault injection at deploy time.
+      - Per-tenant DEK: derived from master key + tenant_id using HKDF-SHA256
+        (see src.aletheia.encryption.derive_tenant_dek).
+      - Rotation: deploy a new ALETHEIA_MASTER_KEY and re-encrypt existing
+        rows via the aletheia key-rotation management command. Old rows
+        remain readable until purged (nonce+tag stored per-row).
+    """
     __tablename__ = "aletheia_blocked_outputs"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)

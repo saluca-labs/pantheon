@@ -3,6 +3,8 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** Policy file manager -- YAML policy editor with syntax display. Uses hardcoded mock data. */
+
 interface PolicyFile {
   name: string;
   description: string;

@@ -6,6 +6,8 @@ import { motion, useInView } from "framer-motion";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Landing page -- animated hero section, feature grid, and pricing CTA. */
+
 /* ─── Animation Variants ─── */
 
 const fadeUp = {

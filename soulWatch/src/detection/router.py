@@ -125,6 +125,11 @@ async def list_rules(
     ]
 
 
+# SECURITY WARNING: Custom Sigma rules accept user-supplied regex in their
+# detection blocks. Malicious or poorly written regex can cause catastrophic
+# backtracking (ReDoS), blocking the event loop for seconds or longer.
+# TODO: Add regex complexity analysis or execution timeout before loading
+# user-supplied rules into the Sigma engine.
 @router.post("/rules", response_model=RuleDetail, status_code=201)
 async def add_rule(
     body: str = Body(..., media_type="text/yaml"),

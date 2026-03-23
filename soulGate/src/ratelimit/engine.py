@@ -36,7 +36,13 @@ class SlidingWindow:
     burst_size: int = 10
 
     def check_and_record(self) -> RateLimitResult:
-        """Check if request is allowed and record it if so."""
+        """Check if this request fits within the sliding window and record it.
+
+        Prunes timestamps older than 60s, then compares the current count
+        against total_limit. If allowed, appends the current timestamp and
+        returns remaining capacity. If denied, calculates a Retry-After
+        value based on when the oldest request in the window will expire.
+        """
         now = time.monotonic()
         window_start = now - 60.0
 
@@ -44,6 +50,8 @@ class SlidingWindow:
         self.timestamps = [ts for ts in self.timestamps if ts > window_start]
 
         current_count = len(self.timestamps)
+        # Effective limit = sustained RPM + burst headroom. The burst_size
+        # allows short spikes above the steady-state rate before throttling.
         total_limit = self.requests_per_minute + self.burst_size
 
         if current_count >= total_limit:
@@ -101,6 +109,12 @@ def _find_policy(
 
     for policy in _policies:
         specificity = 0
+        # Specificity scoring weights:
+        #   tenant match  = +1 (required baseline)
+        #   soulkey match = +2 (most specific dimension)
+        #   endpoint match = +1 (path-level override)
+        # Higher specificity wins; this ensures per-soulkey policies beat
+        # tenant-wide defaults.
         # Match tenant
         if str(policy.tenant_id) != tenant_id:
             continue

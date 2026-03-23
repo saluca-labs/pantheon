@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+
+/** Widget palette slide-out panel -- lets users add widgets to the dashboard grid. */
   useDashboard,
   WIDGET_REGISTRY,
   sizeToColSpan,

@@ -5,6 +5,8 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Billing management page -- displays current plan, usage, and Stripe portal link. */
+
 interface BillingInfo {
   plan: string;
   tier: string;

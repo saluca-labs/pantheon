@@ -1,5 +1,7 @@
 "use client";
 
+/** Audit stream -- terminal-style live audit event log. Uses hardcoded mock data. */
+
 interface AuditEvent {
   timestamp: string;
   type: "EVALUATE" | "KEY_EVENT" | "ANOMALY" | "POLICY";

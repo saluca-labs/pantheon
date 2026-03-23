@@ -1,3 +1,20 @@
+/**
+ * @module DashboardProvider
+ *
+ * Core state manager for the customizable dashboard grid.
+ *
+ * Manages widget layout (add / remove / reorder / resize), a preset system
+ * (SOC, Admin, Hybrid), drag-and-drop reordering (consumed by DashboardGrid
+ * via dnd-kit), and localStorage persistence so layouts survive page reloads.
+ *
+ * Key exports:
+ *  - `WIDGET_REGISTRY` -- canonical list of all available widget definitions
+ *  - `PRESETS`         -- pre-built widget layouts (soc / admin / hybrid)
+ *  - `sizeToColSpan`   -- maps "small" | "medium" | "large" to grid column spans
+ *  - `colSpanToSize`   -- inverse of sizeToColSpan
+ *  - `DashboardProvider` -- React context provider wrapping the dashboard
+ *  - `useDashboard()`   -- hook to consume layout state and mutation actions
+ */
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
@@ -158,6 +175,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Load from localStorage on mount
   useEffect(() => {
+    // Deferred hydration via setTimeout(0): the initial render uses the default
+    // preset so Next.js SSR/client hydration completes without mismatch warnings.
+    // localStorage state is then applied in a microtask after hydration.
     const t = setTimeout(() => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);

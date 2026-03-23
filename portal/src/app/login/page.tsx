@@ -4,6 +4,8 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Private-beta login gate -- SoulKey entry point for authenticated access. */
+
 export default function LoginPage() {
   return (
     <>

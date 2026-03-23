@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 
+/** Cost analytics -- spend breakdown by model/provider with projections. Uses live API via useWidgetData. */
+
 interface SpendData {
   total_cost: number;
   request_count: number;

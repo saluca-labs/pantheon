@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+/** SoulGate overview -- API gateway metrics, routing rules, and rate limit summary. Uses hardcoded mock data. */
+
 /* ---- Mock Data ---- */
 
 const HOURLY_REQUESTS = Array.from({ length: 24 }, (_, i) => ({

@@ -1,3 +1,20 @@
+/**
+ * @module auth
+ *
+ * Dual-auth session layer for the Tiresias portal.
+ *
+ * Two authentication paths are supported:
+ *  1. **SoulKey direct auth** -- API-key based login used by individual developers
+ *     and starter-tier tenants. The key is validated against `/v1/auth/whoami`,
+ *     then an HttpOnly session cookie is set via the Next.js `/api/session` route.
+ *  2. **OIDC / SSO enterprise auth** -- OAuth 2.0 PKCE flow for enterprise tenants.
+ *     The OIDC callback sets its own `tiresias_oidc_data` cookie. OIDC sessions
+ *     always resolve to the `enterprise` tier.
+ *
+ * Session state is read from cookies on the client and exposed through the
+ * React `AuthContext` (via `useAuth()`). The `AuthProvider` wraps the app
+ * and handles hydration, login, logout, and OIDC logout flows.
+ */
 "use client";
 
 import {
@@ -48,6 +65,11 @@ interface AuthContextValue {
 
 // -- Server-side session helpers (SoulKey) ----------------------------------
 
+/**
+ * Create an HttpOnly session cookie on the server via the `/api/session` route.
+ * Returns the opaque session token and its expiry timestamp (epoch ms).
+ * The actual SoulKey is stored server-side; only a session token is returned.
+ */
 async function createServerSession(session: {
   soulkey: string;
   tenant_id: string;
@@ -66,6 +88,10 @@ async function createServerSession(session: {
   return res.json();
 }
 
+/**
+ * Destroy the server-side session by calling DELETE on `/api/session`.
+ * This clears both the HttpOnly session cookie and any OIDC data cookie.
+ */
 async function destroyServerSession(): Promise<void> {
   await fetch("/api/session", { method: "DELETE" });
 }
@@ -89,9 +115,18 @@ export function getAuthMethod(): AuthMethod | null {
  * Read non-sensitive session metadata from cookies (client-side).
  * Checks both SoulKey (tiresias_session_data) and OIDC (tiresias_oidc_data) cookies.
  */
+/**
+ * Read non-sensitive session metadata from browser cookies.
+ *
+ * Checks both SoulKey (`tiresias_session_data`) and OIDC (`tiresias_oidc_data`)
+ * cookies. **OIDC takes priority** because enterprise SSO sessions carry
+ * stricter identity guarantees (IdP-verified email, MFA, domain binding)
+ * and must not be overridden by a stale SoulKey cookie from a prior session.
+ */
 function getSessionFromCookies(): AuthSession | null {
   if (typeof document === "undefined") return null;
 
+  // OIDC takes priority over SoulKey: enterprise SSO carries IdP-verified identity
   // Try OIDC session first
   const oidcMatch = document.cookie.match(
     /(?:^|; )tiresias_oidc_data=([^;]*)/,
@@ -151,6 +186,14 @@ function getSessionFromCookies(): AuthSession | null {
  * Clear OIDC cookies client-side and call the backend revoke endpoint.
  * The backend revoke call is best-effort — we always clear cookies locally.
  */
+/**
+ * Clear OIDC session state and revoke the token on the backend.
+ *
+ * The backend revoke call (`DELETE /v1/auth/oidc/session`) is **best-effort**:
+ * if it fails (e.g. network issue, IdP unreachable) we still clear local
+ * cookies so the user is logged out of the portal. This avoids trapping
+ * users in a broken session when the IdP is temporarily down.
+ */
 export async function oidcLogout(): Promise<void> {
   // Best-effort backend revoke
   try {
@@ -180,6 +223,14 @@ export function useAuth() {
 
 // -- Provider ---------------------------------------------------------------
 
+/**
+ * Top-level authentication context provider.
+ *
+ * Wraps the application and exposes session state, `login`, `logout`, and
+ * `oidcLogout` via the `useAuth()` hook. On mount it hydrates from cookies;
+ * the `login` callback performs: API whoami validation -> server session
+ * creation (HttpOnly cookie) -> React state update.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,6 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
+    /**
+     * SoulKey login flow:
+     * 1. Call `/v1/auth/whoami` to validate the key and fetch tenant metadata
+     * 2. Create a server-side HttpOnly session via `/api/session`
+     * 3. Store the resulting session in React state (triggers re-render / redirect)
+     */
   const login = useCallback(async (soulkey: string) => {
     setLoading(true);
     setError(null);

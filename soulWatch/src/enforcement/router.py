@@ -48,6 +48,12 @@ class ApproveRequest(BaseModel):
 
 # ---------------------------------------------------------------------------
 # Endpoints
+#
+# AUTH GUARD STATUS: These quarantine endpoints are currently unguarded --
+# they rely on network-level protection (SoulGate proxy + internal-only
+# routing). Adding soulkey-based auth is tracked but not yet implemented.
+# Do NOT expose these endpoints on a public route without adding
+# authentication middleware first.
 # ---------------------------------------------------------------------------
 
 

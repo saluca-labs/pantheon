@@ -14,7 +14,12 @@ from soulGate.src.database.models import SoulGateUpstream
 
 logger = structlog.get_logger(__name__)
 
-# In-memory upstream cache: name -> SoulGateUpstream
+# In-memory upstream cache: name -> SoulGateUpstream.
+# Invalidation strategy: the cache is fully rebuilt on each call to
+# load_upstreams() (triggered at startup and on admin CRUD operations).
+# Individual entries are updated inline by register_upstream() and
+# removed by remove_upstream(). There is no TTL -- the cache lives for
+# the lifetime of the process and is authoritative after the last load.
 _upstream_cache: dict[str, SoulGateUpstream] = {}
 
 

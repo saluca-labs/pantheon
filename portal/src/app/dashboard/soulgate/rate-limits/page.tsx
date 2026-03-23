@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulGate rate limits -- per-tenant, per-key, and per-IP rate policy editor. Uses hardcoded mock data. */
+
 interface RateLimitPolicy {
   id: string;
   name: string;

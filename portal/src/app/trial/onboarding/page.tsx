@@ -6,6 +6,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { config } from "@/lib/config";
 
+/** Trial onboarding wizard -- walks new users through SoulKey setup and SDK install. */
+
 const steps = [
   {
     number: 1,

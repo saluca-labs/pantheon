@@ -50,9 +50,14 @@ async def init_db():
     Uses file lock to prevent DDL deadlock with multiple uvicorn workers."""
     import asyncio
     import os
+    # WARNING: /tmp/.init_db_done persists across process restarts but NOT
+    # across container restarts (tmpfs). If the DB schema changes and you need
+    # DDL to re-run, delete this file or restart the container.
     lock_file = "/tmp/.init_db_done"
     if os.path.exists(lock_file):
         return
+    # Retry loop: 60 iterations x 2s sleep = 120s total timeout, giving
+    # cloud-sql-proxy enough time to establish the connection.
     for attempt in range(60):
         try:
             async with engine.begin() as conn:

@@ -1,5 +1,7 @@
 "use client";
 
+/** Agent overview -- fleet stats and recent registrations. Uses hardcoded mock data. */
+
 const stats = [
   { label: "Total", value: 47, color: "text-foreground" },
   { label: "Active", value: 42, color: "text-green-400" },

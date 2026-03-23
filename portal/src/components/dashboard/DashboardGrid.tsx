@@ -1,3 +1,15 @@
+/**
+ * @module DashboardGrid
+ *
+ * Renders the widget grid layout using dnd-kit for drag-and-drop reordering.
+ * Each widget is wrapped in a `DashboardWidget` sortable container. Widgets
+ * are looked up from `widgetRegistry` by type; a camelCase fallback is
+ * attempted when the exact type string doesn't match (e.g. "AlertFeed" ->
+ * "alertFeed") to handle registry key conventions.
+ *
+ * In edit mode, a subtle grid overlay is shown to help users visualize the
+ * 12-column layout, and a `DragOverlay` ghost follows the cursor during drags.
+ */
 "use client";
 
 import React, { useState } from "react";
@@ -78,6 +90,8 @@ export default function DashboardGrid() {
           )}
 
           {sortedLayout.map((widget) => {
+            // Widget type matching: try exact key first, then camelCase fallback
+            // to bridge PascalCase widget types with camelCase registry keys
             // Match widget type to registry (try exact, then camelCase)
             const key = widget.type in widgetRegistry
               ? widget.type

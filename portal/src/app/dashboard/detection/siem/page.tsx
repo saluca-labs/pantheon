@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { Server, Plus, Trash2, CheckCircle, XCircle, MinusCircle, ToggleLeft, ToggleRight, X, Activity } from "lucide-react";
 
+/** SIEM connectors -- syslog/webhook connector management and health. Uses live API via useWidgetData. */
+
 // ---- Types ----
 
 type ConnectorKind = "syslog" | "webhook";

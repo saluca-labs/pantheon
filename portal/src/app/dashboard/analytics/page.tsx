@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
+/** Analytics dashboard -- evaluation trends, latency, and agent activity charts. Uses hardcoded mock data. */
+
 const DAILY_EVALS = [
   { day: "Mar 5", value: 3120 },
   { day: "Mar 6", value: 3450 },

@@ -1,3 +1,15 @@
+/**
+ * @module SSOSettingsTab
+ *
+ * Enterprise SSO configuration panel for managing OIDC Identity Provider
+ * integrations. Displayed as a tab within the Settings page (enterprise+ tier).
+ *
+ * Features:
+ *  - Shows the OIDC callback URL that must be registered with the IdP
+ *  - Lists all configured IdPs with active/inactive status badges
+ *  - Provides create, edit, test-connection, and delete operations via `IdPConfigForm`
+ *  - Auto-refreshes the IdP list after save or delete
+ */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

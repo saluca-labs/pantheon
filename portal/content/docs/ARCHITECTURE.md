@@ -1,8 +1,8 @@
-# Tiresias Platform — Architecture Overview
+# Tiresias Platform: Architecture Overview
 
 > **Version:** 1.0
 > **Date:** March 2026
-> **Classification:** Public — Technical Audience
+> **Classification:** Public - Technical Audience
 > **Audience:** Security architects, CISOs, technical evaluators, compliance officers
 
 ---
@@ -11,10 +11,10 @@
 
 1. [Platform Overview](#1-platform-overview)
 2. [System Architecture](#2-system-architecture)
-3. [SoulAuth — Identity & Authorization Engine](#3-soulauth--identity--authorization-engine)
-4. [SoulWatch — Detection & Response Engine](#4-soulwatch--detection--response-engine)
-5. [SoulGate — API Security Gateway](#5-soulgate--api-security-gateway)
-6. [Data Flow — The Closed Loop](#6-data-flow--the-closed-loop)
+3. [SoulAuth: Identity & Authorization Engine](#3-soulauth-identity--authorization-engine)
+4. [SoulWatch: Detection & Response Engine](#4-soulwatch-detection--response-engine)
+5. [SoulGate: API Security Gateway](#5-soulgate-api-security-gateway)
+6. [Data Flow: The Closed Loop](#6-data-flow-the-closed-loop)
 7. [Security Properties](#7-security-properties)
 8. [Deployment Models](#8-deployment-models)
 9. [Integration Points](#9-integration-points)
@@ -24,11 +24,11 @@
 
 ## 1. Platform Overview
 
-**Tiresias** is an AI agent security platform purpose-built for organizations deploying autonomous AI agents in production. Named after the blind prophet of Greek mythology, Tiresias embodies its namesake's paradox: it *sees threats without seeing data*. The platform operates on metadata, behavioral patterns, and policy decisions — never on the content of agent communications.
+**Tiresias** is an AI agent security platform purpose-built for organizations deploying autonomous AI agents in production. Named after the blind prophet of Greek mythology, Tiresias embodies its namesake's paradox: it *sees threats without seeing data*. The platform operates on metadata, behavioral patterns, and policy decisions - never on the content of agent communications.
 
 ### The Problem
 
-AI agents are proliferating across enterprises — orchestrating workflows, accessing APIs, managing infrastructure, and making decisions at machine speed. Traditional security tooling was designed for human users with human-speed interactions. It cannot address:
+AI agents are proliferating across enterprises - orchestrating workflows, accessing APIs, managing infrastructure, and making decisions at machine speed. Traditional security tooling was designed for human users with human-speed interactions. It cannot address:
 
 - **Agent identity**: How do you authenticate a process that has no password, no biometric, no MFA device?
 - **Agent authorization**: How do you enforce least privilege when an agent's scope changes dynamically?
@@ -51,7 +51,7 @@ Each product is independently deployable and valuable on its own. Together, they
 
 - **Zero trust**: Every request is evaluated. There is no implicit trust, no ambient authority, no "trusted network."
 - **Policy as code**: All authorization rules are defined in version-controlled YAML, reviewed like application code.
-- **Deterministic security**: Detection and enforcement use rule-based, auditable logic — not opaque ML models.
+- **Deterministic security**: Detection and enforcement use rule-based, auditable logic - not opaque ML models.
 - **Tenant isolation**: Every data path is scoped by tenant. No cross-tenant access is architecturally possible.
 - **Graceful degradation**: Component failures reduce capability, never create false positives or security gaps.
 
@@ -121,7 +121,7 @@ Tiresias follows a microservices architecture. Each service is stateless (with t
 
 ---
 
-## 3. SoulAuth — Identity & Authorization Engine
+## 3. SoulAuth: Identity & Authorization Engine
 
 SoulAuth provides the identity layer for AI agents. It answers two questions for every request: *Who is this agent?* and *What is it allowed to do right now?*
 
@@ -140,7 +140,7 @@ Example: sk_agent_acme_orchestrator_x7k2m9p4q1
 
 | Property | Implementation |
 |----------|---------------|
-| Storage | SHA-512 hash only — raw key is never persisted |
+| Storage | SHA-512 hash only - raw key is never persisted |
 | Issuance | Key shown exactly once at creation, then discarded |
 | Rotation | New key issued, old key enters grace period, then revoked |
 | Transmission | TLS-only, never logged, never included in error responses |
@@ -167,7 +167,7 @@ Example: sk_agent_acme_orchestrator_x7k2m9p4q1
 
 #### Agent Personas
 
-Each SoulKey is bound to a **persona** — a named identity with metadata describing the agent's purpose, owner, and operational context. Personas enable policy decisions based on *what an agent is*, not just *what key it presents*.
+Each SoulKey is bound to a **persona**: a named identity with metadata describing the agent's purpose, owner, and operational context. Personas enable policy decisions based on *what an agent is*, not just *what key it presents*.
 
 ### 3.2 Policy Decision Point (PDP)
 
@@ -232,16 +232,16 @@ Policies are synced from a Git repository, versioned, and applied atomically. Ev
 
 #### Capability Tokens
 
-When a request is authorized, SoulAuth issues a **capability token** — a short-lived JWT that encodes exactly what the agent is allowed to do:
+When a request is authorized, SoulAuth issues a **capability token**: a short-lived JWT that encodes exactly what the agent is allowed to do:
 
 | Property | Value |
 |----------|-------|
 | Format | ES256-signed JWT |
 | TTL | 300–900 seconds (configurable per policy) |
 | Contents | Tenant, agent, scope, constraints, issuance metadata |
-| Refresh | New evaluation required — no silent renewal |
+| Refresh | New evaluation required - no silent renewal |
 
-Capability tokens are the *only* mechanism for accessing protected resources. They cannot be forged (asymmetric signature), cannot be reused beyond their TTL, and encode the exact scope granted — not the full set of permissions the agent *could* have.
+Capability tokens are the *only* mechanism for accessing protected resources. They cannot be forged (asymmetric signature), cannot be reused beyond their TTL, and encode the exact scope granted - not the full set of permissions the agent *could* have.
 
 #### JIT Constraints
 
@@ -276,7 +276,7 @@ Delegation is:
 
 ### 3.3 Audit Trail
 
-Every authorization decision — grant, denial, key operation, policy change, delegation, enforcement action — is recorded in a **tamper-evident audit log**.
+Every authorization decision - grant, denial, key operation, policy change, delegation, enforcement action - is recorded in a **tamper-evident audit log**.
 
 ```
   Event N-1                    Event N                     Event N+1
@@ -287,14 +287,14 @@ Every authorization decision — grant, denial, key operation, policy change, de
   └───────────┘               └───────────┘               └───────────┘
 ```
 
-- **Algorithm**: SHA-256 hash chain — each event includes the hash of the previous event.
+- **Algorithm**: SHA-256 hash chain - each event includes the hash of the previous event.
 - **Tamper evidence**: Modifying any event breaks the chain, detectable by integrity verification.
 - **Queryable**: Filter by tenant, event type, agent identity, time range, severity.
 - **Exportable**: CEF-formatted events for SIEM integration.
 
 ---
 
-## 4. SoulWatch — Detection & Response Engine
+## 4. SoulWatch: Detection & Response Engine
 
 SoulWatch is the platform's detection and response layer. It continuously analyzes agent behavior, applies detection rules, and executes automated response playbooks.
 
@@ -344,7 +344,7 @@ SoulWatch maintains a **7-day rolling behavioral baseline** for each agent. Inco
 | 7 | **Credential stuffing** | Multiple failed authentications across different keys |
 | 8 | **Lateral movement** | Agent accessing resources in a pattern suggesting compromise |
 
-Baselines are rebuilt from audit data on service restart. When no baseline exists (new agent), SoulWatch operates in **learning mode** — it collects data without generating anomaly alerts for a configurable warm-up period. This prevents false positives during onboarding.
+Baselines are rebuilt from audit data on service restart. When no baseline exists (new agent), SoulWatch operates in **learning mode**: it collects data without generating anomaly alerts for a configurable warm-up period. This prevents false positives during onboarding.
 
 #### Sigma Rule Engine
 
@@ -378,10 +378,10 @@ Every detection event is assigned a severity level:
 
 | Severity | Score Range | Description |
 |----------|-----------|-------------|
-| **Low** | 0.0–0.3 | Informational — logged but no action |
-| **Medium** | 0.3–0.6 | Suspicious — alert generated |
-| **High** | 0.6–0.8 | Likely threat — playbook triggered |
-| **Critical** | 0.8–1.0 | Active compromise — immediate enforcement |
+| **Low** | 0.0–0.3 | Informational - logged but no action |
+| **Medium** | 0.3–0.6 | Suspicious - alert generated |
+| **High** | 0.6–0.8 | Likely threat - playbook triggered |
+| **Critical** | 0.8–1.0 | Active compromise - immediate enforcement |
 
 **Automatic escalation**: If the same anomaly type occurs **3 times within a 15-minute window**, its severity is automatically bumped one level. This catches slow, persistent attacks that individually register as low-severity events.
 
@@ -389,7 +389,7 @@ Every detection event is assigned a severity level:
 
 #### Playbook Engine
 
-Detection events trigger **response playbooks** — automated sequences of actions executed without human intervention (unless an approval gate is configured).
+Detection events trigger **response playbooks**: automated sequences of actions executed without human intervention (unless an approval gate is configured).
 
 **Available actions:**
 
@@ -402,7 +402,7 @@ Detection events trigger **response playbooks** — automated sequences of actio
 | `webhook` | Call an external URL with event payload |
 | `reset_context` | Force the agent to discard its current session context |
 
-**Cooldown windows**: Each playbook action has a configurable cooldown period. If the same trigger fires within the cooldown window, the action is suppressed. This prevents **response storms** — cascading automated actions that amplify an incident rather than containing it.
+**Cooldown windows**: Each playbook action has a configurable cooldown period. If the same trigger fires within the cooldown window, the action is suppressed. This prevents **response storms**: cascading automated actions that amplify an incident rather than containing it.
 
 **Approval gates**: For critical actions (key revocation, full quarantine), playbooks can be configured to require human approval before execution. The pending action is held in queue with a configurable timeout.
 
@@ -422,7 +422,7 @@ The quarantine engine provides **policy-driven incident response** with 7 enforc
 
 **Auto-release timers**: Reversible enforcement actions can be configured with automatic release timers. This prevents a misconfigured detection rule from permanently locking out a legitimate agent. Example: suspend a key for 30 minutes, then automatically reactivate.
 
-**Per-tenant policies**: Each tenant configures their own quarantine policies — which enforcement actions are available, which require approval, and what auto-release timers to apply.
+**Per-tenant policies**: Each tenant configures their own quarantine policies - which enforcement actions are available, which require approval, and what auto-release timers to apply.
 
 ### 4.3 Alert Routing
 
@@ -441,7 +441,7 @@ SoulWatch routes alerts to **8 notification sinks**, each with independent confi
 
 **Routing logic:**
 
-- **Default routing**: Severity-based — critical alerts go to PagerDuty, high to Slack, medium to email.
+- **Default routing**: Severity-based - critical alerts go to PagerDuty, high to Slack, medium to email.
 - **Per-tenant overrides**: Tenants configure their own routing rules.
 - **Circuit breakers**: Each sink has an independent circuit breaker. If a sink fails repeatedly, it is temporarily disabled to prevent alert delivery delays to other sinks.
 - **Rate limiting**: Per-sink rate limits prevent notification floods.
@@ -449,7 +449,7 @@ SoulWatch routes alerts to **8 notification sinks**, each with independent confi
 
 ---
 
-## 5. SoulGate — API Security Gateway
+## 5. SoulGate: API Security Gateway
 
 SoulGate is a reverse proxy that sits between AI agents and their upstream API providers. Every request passes through a 7-stage security pipeline before reaching the upstream service.
 
@@ -498,7 +498,7 @@ Each stage can independently reject a request. Rejections include machine-readab
 
 ### 5.2 Prompt Injection Detection
 
-SoulGate's payload inspection stage includes a **deterministic prompt injection detector**. This is not an ML classifier — it is a rule-based pattern matching engine that produces auditable, explainable results.
+SoulGate's payload inspection stage includes a **deterministic prompt injection detector**. This is not an ML classifier - it is a rule-based pattern matching engine that produces auditable, explainable results.
 
 #### Detection Approach
 
@@ -544,7 +544,7 @@ This is a deliberate design choice:
 4. **Extensibility**: Organizations add custom patterns via the API. No ML expertise required.
 5. **Transparency**: The full pattern library is inspectable. No black box.
 
-The trade-off is that novel injection techniques may evade regex detection. SoulGate is designed as **one layer** in a defense-in-depth strategy — behavioral detection in SoulWatch catches attacks that bypass pattern matching.
+The trade-off is that novel injection techniques may evade regex detection. SoulGate is designed as **one layer** in a defense-in-depth strategy - behavioral detection in SoulWatch catches attacks that bypass pattern matching.
 
 ### 5.3 Circuit Breaker Design
 
@@ -570,7 +570,7 @@ SoulGate's circuit breaker protects upstream services from cascading failures. H
 | Property | Value |
 |----------|-------|
 | Minimum request threshold | Configurable (default: 100 requests before breaker can trip) |
-| Failure ratio | Per-source AND global — both must exceed threshold |
+| Failure ratio | Per-source AND global - both must exceed threshold |
 | Half-open probe | Single request forwarded to test upstream recovery |
 | Recovery | Automatic with exponential backoff |
 
@@ -588,7 +588,7 @@ Rate limits are applied from broadest to narrowest. A request that passes tenant
 
 ---
 
-## 6. Data Flow — The Closed Loop
+## 6. Data Flow: The Closed Loop
 
 The three Tiresias products form a **closed feedback loop** where detection drives enforcement, enforcement generates audit events, and audit events feed detection. This is the platform's core architectural insight.
 
@@ -655,13 +655,13 @@ The three Tiresias products form a **closed feedback loop** where detection driv
 | **6** | If threat detected: risk scoring, severity assignment, automatic escalation if repeated | SoulWatch |
 | **7a** | Enforcement: playbook triggers action (suspend key, kill session, rate limit) via SoulAuth | SoulWatch → SoulAuth |
 | **7b** | No threat: event contributes to baseline, monitoring continues | SoulWatch |
-| **8** | Enforcement action generates its own audit event — the loop continues | All |
+| **8** | Enforcement action generates its own audit event - the loop continues | All |
 
 ### Why the Closed Loop Matters
 
 Traditional security architectures separate detection from enforcement. A SIEM detects, a human investigates, a human remediates. This works for human-speed threats.
 
-AI agents operate at machine speed. A compromised agent can exfiltrate data, escalate privileges, or pivot laterally in seconds — faster than any human can respond. The closed loop enables:
+AI agents operate at machine speed. A compromised agent can exfiltrate data, escalate privileges, or pivot laterally in seconds - faster than any human can respond. The closed loop enables:
 
 - **Machine-speed response**: Detection to enforcement in milliseconds, not minutes.
 - **Continuous verification**: Every enforcement action is itself audited and analyzed.
@@ -693,12 +693,12 @@ Security systems must fail safely. Tiresias guarantees the following degradation
 |---------|-------------------|---------------------|
 | SIEM integration down | Events queued in dead-letter queue, replayed on recovery | Events are not lost |
 | Notification sink down | Circuit breaker disables sink, alerts routed to remaining sinks | Alert storm against failed sink |
-| Baseline missing (new agent) | Learning mode — reduced anomaly detection | False positive alerts |
+| Baseline missing (new agent) | Learning mode - reduced anomaly detection | False positive alerts |
 | Database read replica down | Queries routed to primary | Service outage |
 | SoulWatch down | SoulGate and SoulAuth continue operating; detection paused | Auth failures or gateway outage |
 | SoulAuth down | SoulGate rejects all auth-required requests (fail-closed) | Unauthenticated access granted |
 
-The critical property: **SoulAuth fails closed**. If the authorization service is unavailable, requests are denied — never silently permitted.
+The critical property: **SoulAuth fails closed**. If the authorization service is unavailable, requests are denied - never silently permitted.
 
 ---
 
@@ -910,16 +910,16 @@ CEF:0|Tiresias|SoulAuth|1.0|AUTH_GRANT|Agent Authorized|3|
 
 | Term | Definition |
 |------|------------|
-| **SoulKey** | Durable agent credential — the agent equivalent of an API key |
+| **SoulKey** | Durable agent credential - the agent equivalent of an API key |
 | **Capability token** | Short-lived JWT encoding specific authorized actions |
-| **PDP** | Policy Decision Point — the evaluation engine in SoulAuth |
+| **PDP** | Policy Decision Point - the evaluation engine in SoulAuth |
 | **Persona** | Named agent identity with metadata (purpose, owner, context) |
 | **Baseline** | 7-day rolling behavioral profile for anomaly detection |
 | **Playbook** | Automated response sequence triggered by detection events |
 | **Quarantine** | Enforcement action that restricts or disables an agent |
 | **Hash chain** | Linked sequence of SHA-256 hashes providing tamper evidence |
-| **Tenant** | Isolated organizational unit — all data scoped by tenant_id |
-| **CEF** | Common Event Format — standard log format for SIEM integration |
+| **Tenant** | Isolated organizational unit - all data scoped by tenant_id |
+| **CEF** | Common Event Format - standard log format for SIEM integration |
 
 ---
 
@@ -943,4 +943,4 @@ CEF:0|Tiresias|SoulAuth|1.0|AUTH_GRANT|Agent Authorized|3|
 ---
 
 *Tiresias is developed by Saluca LLC. For technical questions, contact security@saluca.com.*
-*Document version 1.0 — March 2026*
+*Document version 1.0 - March 2026*
