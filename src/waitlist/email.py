@@ -33,7 +33,7 @@ WAITLIST_CONFIRMATION_HTML = """
             <td style="padding:32px 40px;">
               <p style="margin:0 0 16px;font-size:16px;color:#e5e7eb;">Hi {contact_name},</p>
               <p style="margin:0 0 24px;font-size:15px;color:#9ca3af;line-height:1.6;">
-                You're on the Tiresias beta waitlist for <strong style="color:#e5e7eb;">{company_name}</strong>.
+                You're on the Tiresias waitlist for <strong style="color:#e5e7eb;">{company_name}</strong>.
                 You're number <strong style="color:#d4a853;">#{position}</strong> in line.
               </p>
               <div style="background:#0a0e1a;border:1px solid #1f2937;border-radius:8px;padding:20px;margin-bottom:24px;">
@@ -93,7 +93,7 @@ async def send_waitlist_confirmation_email(
         result = resend.Emails.send({
             "from": settings.trial_from_email,
             "to": [contact_email],
-            "subject": f"You're on the Tiresias beta waitlist - {company_name}",
+            "subject": f"You're on the Tiresias waitlist - {company_name}",
             "html": html,
         })
         logger.info(

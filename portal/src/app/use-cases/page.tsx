@@ -191,13 +191,13 @@ export default function UseCasesPage() {
               <span className="text-gradient-gold">See it in action</span>
             </h2>
             <p className="text-foreground-muted text-lg mb-8 max-w-xl mx-auto">
-              Join the beta waitlist. Be among the first to secure your AI agents.
+              Join the waitlist. Be among the first to secure your AI agents.
             </p>
             <Link
               href="/trial"
               className="inline-block rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
             >
-              Join Beta Waitlist
+              Join Waitlist
             </Link>
           </div>
         </div>

@@ -76,7 +76,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "For teams running production agents",
       highlight: true,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "Unlimited agents",
@@ -118,7 +118,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "Basic monitoring for small fleets",
       highlight: false,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "Anomaly detection (8 types)",
@@ -137,7 +137,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "Full monitoring for production",
       highlight: true,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "Everything in Starter",
@@ -178,7 +178,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "Basic gateway protection",
       highlight: false,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "Reverse proxy gateway",
@@ -197,7 +197,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "Full gateway for production",
       highlight: true,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "Everything in Starter",
@@ -238,7 +238,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "All three products, one price",
       highlight: false,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "SoulAuth Pro (full identity & auth)",
@@ -256,7 +256,7 @@ const pricing: Record<Product, Tier[]> = {
       period: "/agent/month",
       tagline: "Full platform, best value",
       highlight: true,
-      cta: "Join Beta Waitlist",
+      cta: "Join Waitlist",
       ctaHref: "/trial",
       features: [
         "SoulAuth Pro (full identity & auth)",
@@ -620,14 +620,14 @@ export default function PricingPage() {
               Ready to secure your agents?
             </h2>
             <p className="text-foreground-muted mb-8 max-w-xl mx-auto">
-              Join the beta waitlist for early access to the full platform.
+              Join the waitlist for early access to the full platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/trial"
                 className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
               >
-                Join Beta Waitlist
+                Join Waitlist
               </Link>
               <Link
                 href="mailto:contact@saluca.com?subject=Enterprise%20Inquiry"

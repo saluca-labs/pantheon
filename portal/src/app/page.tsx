@@ -231,7 +231,7 @@ function Hero() {
               href="/trial"
               className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Join Beta Waitlist
+              Join Waitlist
             </Link>
             <Link
               href="/developers"
@@ -835,7 +835,7 @@ function FinalCTA() {
             <span className="text-gradient-gold">AI agents</span>?
           </h2>
           <p className="mt-4 text-lg text-foreground-muted">
-            Join the beta waitlist. Be among the first to secure your AI agents.
+            Join the waitlist. Be among the first to secure your AI agents.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -843,7 +843,7 @@ function FinalCTA() {
               href="/trial"
               className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Join Beta Waitlist
+              Join Waitlist
             </Link>
             <Link
               href="/company#contact"
