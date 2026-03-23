@@ -1,5 +1,5 @@
 """
-Waitlist API router — beta waitlist email collection.
+Waitlist API router — waitlist email collection.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/v1/waitlist", tags=["Waitlist"])
 @router.post(
     "/join",
     response_model=WaitlistJoinResponse,
-    summary="Join the beta waitlist",
+    summary="Join the waitlist",
     dependencies=[Depends(check_trial_rate_limit)],
     responses={
         200: {"description": "Added to waitlist"},
@@ -33,7 +33,7 @@ async def waitlist_join(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Join the Tiresias beta waitlist.
+    Join the Tiresias waitlist.
 
     Collects contact information for early access notification.
     No tenant or SoulKey is provisioned at this stage.

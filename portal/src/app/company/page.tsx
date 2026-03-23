@@ -224,7 +224,7 @@ export default function CompanyPage() {
                 href="/trial"
                 className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
               >
-                Join Beta Waitlist
+                Join Waitlist
               </Link>
               <Link
                 href="mailto:contact@saluca.com?subject=Enterprise%20Inquiry"

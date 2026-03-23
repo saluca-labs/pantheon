@@ -362,7 +362,7 @@ export default function SoulAuthPage() {
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
                 >
-                  Join Beta Waitlist
+                  Join Waitlist
                 </Link>
                 <Link
                   href="/developers"
@@ -547,7 +547,7 @@ policies:
                 Secure your agents today
               </h2>
               <p className="text-foreground-muted mb-8 leading-relaxed">
-                SoulAuth is production-ready. Join the beta waitlist for early access
+                SoulAuth is production-ready. Join the waitlist for early access
                 to the full platform. Your agents are one soulkey away from
                 zero-trust security.
               </p>
@@ -556,7 +556,7 @@ policies:
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
                 >
-                  Join Beta Waitlist
+                  Join Waitlist
                 </Link>
                 <Link
                   href="/developers"

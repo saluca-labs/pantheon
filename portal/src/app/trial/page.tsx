@@ -372,7 +372,7 @@ export default function WaitlistPage() {
                           Submitting...
                         </span>
                       ) : (
-                        "Join Beta Waitlist"
+                        "Join Waitlist"
                       )}
                     </button>
                   </div>
