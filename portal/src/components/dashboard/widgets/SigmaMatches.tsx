@@ -1,5 +1,7 @@
 "use client";
 
+/** Sigma matches -- recent Sigma detection rule match table. Uses hardcoded mock data. */
+
 interface SigmaMatch {
   id: string;
   ruleName: string;

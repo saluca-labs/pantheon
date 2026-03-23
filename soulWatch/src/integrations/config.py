@@ -33,7 +33,7 @@ class SyslogConfig(BaseModel):
     host: str = Field(...)
     port: int = Field(default=514)
     protocol: Literal["tcp", "udp"] = Field(default="tcp")
-    facility: int = Field(default=13)
+    facility: int = Field(default=13)  # RFC 5424 facility 13 = "log audit" (security/auth)
     use_cef: bool = Field(default=True)
 
 

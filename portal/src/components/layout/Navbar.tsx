@@ -6,6 +6,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 
+/**
+ * Main navigation bar with scroll-aware backdrop blur, platform dropdown,
+ * mobile hamburger menu, and auth-conditional CTA buttons.
+ */
+
 const navigation = [
   {
     label: "Platform",
@@ -19,6 +24,7 @@ const navigation = [
   { label: "Use Cases", href: "/use-cases" },
   { label: "Pricing", href: "/pricing" },
   { label: "Developers", href: "/developers" },
+  { label: "Docs", href: "/docs" },
   { label: "Company", href: "/company" },
 ];
 

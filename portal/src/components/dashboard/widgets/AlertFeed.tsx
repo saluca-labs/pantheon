@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+/** Alert feed -- live security alert stream with severity indicators. Uses hardcoded mock data. */
+
 interface Alert {
   id: string;
   timestamp: string;

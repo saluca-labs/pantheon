@@ -41,12 +41,17 @@ def scan_request(
         return ScanResult(passed=True)
 
     if text.startswith("{") or text.startswith("["):
+        # Validate JSON structure: malformed JSON can crash upstream parsers
+        # (e.g. orjson segfault on truncated input) or cause partial-parse
+        # injection where only a prefix is consumed.
         try:
             json.loads(text)
         except json.JSONDecodeError as e:
             return ScanResult(passed=False, reason=f"Invalid JSON payload: {e}")
 
-    # Check for null bytes in body
+    # Reject null bytes: their presence in a text payload indicates binary
+    # injection (e.g. polyglot attacks, smuggled executables, or attempts to
+    # truncate strings in C-backed libraries).
     if b"\x00" in body:
         return ScanResult(passed=False, reason="Request body contains null bytes")
 

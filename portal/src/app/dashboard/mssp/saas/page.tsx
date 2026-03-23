@@ -6,6 +6,8 @@ import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { Plus, PauseCircle, PlayCircle, RefreshCw } from "lucide-react";
 
+/** MSSP SaaS tenant management -- provision, pause, and refresh child tenants. Uses live API via useWidgetData. */
+
 interface MsspTenant {
   tenant_id: string;
   name: string;

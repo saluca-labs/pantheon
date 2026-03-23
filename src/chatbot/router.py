@@ -37,6 +37,11 @@ OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL_PRIMARY = "google/gemma-3-27b-it:free"
 MODEL_FALLBACK = "openai/gpt-4o-mini"
 
+# LLM generation parameters
+MAX_RESPONSE_TOKENS = 600      # Cap response length to keep answers concise and cost-bounded
+LLM_TEMPERATURE = 0.3           # Low temperature for factual, deterministic support answers
+HISTORY_WINDOW = 10             # Number of most-recent turns sent to the LLM for context
+
 # ---------------------------------------------------------------------------
 # Request / Response models
 # ---------------------------------------------------------------------------
@@ -151,8 +156,8 @@ async def _stream_openrouter(messages: list, api_key: str) -> AsyncGenerator[str
         "model": MODEL_PRIMARY,
         "messages": messages,
         "stream": True,
-        "max_tokens": 600,
-        "temperature": 0.3,
+        "max_tokens": MAX_RESPONSE_TOKENS,
+        "temperature": LLM_TEMPERATURE,
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
         async with client.stream("POST", OPENROUTER_URL, json=payload, headers=headers) as resp:
@@ -241,7 +246,7 @@ async def chat(request: Request, body: ChatRequest) -> StreamingResponse:
                 action_context=action_context,
             )
             messages = [{"role": "system", "content": system_content}]
-            for msg in body.history[-10:]:
+            for msg in body.history[-HISTORY_WINDOW:]:
                 messages.append({"role": msg.role, "content": msg.content})
             messages.append({"role": "user", "content": body.message})
 

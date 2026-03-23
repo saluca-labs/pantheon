@@ -2,6 +2,8 @@
 
 import { useWidgetData } from "@/lib/useWidgetData";
 
+/** LLM provider health dashboard -- latency and status for upstream providers. Uses live API via useWidgetData. */
+
 interface ProviderHealth {
   name: string;
   status: "UP" | "DOWN" | "DEGRADED";

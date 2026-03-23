@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+/** Site footer with link columns and animated BackToTop scroll button. */
+
 const footerLinks = {
   Platform: [
     { label: "SoulAuth", href: "/platform/soulauth" },

@@ -1,3 +1,18 @@
+/**
+ * @module DashboardSidebar
+ *
+ * Dashboard navigation sidebar with tier-gated nav groups.
+ *
+ * Features:
+ *  - **Tier-gated sections**: MSSP group only renders for mssp/saas tiers (DTIER-01);
+ *    Aletheia group only renders for enterprise+ tiers (ALETH-14).
+ *  - **Auto-collapse**: sidebar collapses to icon-only mode below 1024px viewport width.
+ *  - **White-label logo**: renders `branding.logo_url` when available, otherwise
+ *    the default Tiresias logo mark (WL-04).
+ *  - **Animated transitions**: uses framer-motion for smooth expand/collapse,
+ *    active-item indicator sliding, and label fade animations.
+ *  - **Support link**: pinned above the user info section at the sidebar bottom.
+ */
 "use client";
 
 import React, { useState, useEffect } from "react";

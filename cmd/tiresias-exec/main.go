@@ -1,3 +1,6 @@
+// Package main implements tiresias-exec, a security-aware CLI shim that wraps
+// tool invocations with policy evaluation, output sanitization, and
+// integrity-hashed telemetry reporting.
 package main
 
 import (
@@ -164,6 +167,8 @@ func main() {
 	os.Exit(result.ExitCode)
 }
 
+// cliFlags holds parsed command-line flags that control identity overrides,
+// execution mode (offline, dry-run), and configuration file location.
 type cliFlags struct {
 	agentID       string
 	tenantID      string

@@ -8,6 +8,12 @@ import LayoutPresets from "@/components/dashboard/LayoutPresets";
 import WidgetPalette from "@/components/dashboard/WidgetPalette";
 import { useAuth } from "@/lib/auth";
 
+/**
+ * Dashboard entry point.
+ * Checks a cookie to detect first-visit and redirects to /dashboard/welcome
+ * if the user has not completed onboarding.
+ */
+
 function DashboardContent() {
   const { isEditMode, toggleEditMode } = useDashboard();
   const { session, loading } = useAuth();

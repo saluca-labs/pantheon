@@ -6,7 +6,7 @@
 
 ## The Problem
 
-AI agents are proliferating across the enterprise. Customer service bots, code generation assistants, data analysis pipelines, security automation — organizations are deploying autonomous software agents at an accelerating pace.
+AI agents are proliferating across the enterprise. Customer service bots, code generation assistants, data analysis pipelines, security automation - organizations are deploying autonomous software agents at an accelerating pace.
 
 But existing security infrastructure was never designed for them.
 
@@ -31,47 +31,47 @@ Built by security practitioners, for security practitioners.
 
 ---
 
-### SoulAuth — Agent Identity & Zero-Trust Authorization
+### SoulAuth: Agent Identity & Zero-Trust Authorization
 
 Every AI agent in your organization gets a durable, cryptographic identity called a **SoulKey**. From there, SoulAuth provides fine-grained access control evaluated on every request.
 
 **What it does:**
 
-- **Cryptographic agent identity** — Each agent receives a unique SoulKey. Keys are SHA-512 hashed at rest; raw keys are shown once at issuance and never stored.
-- **Fine-grained access control** — Policies define what each agent can access by resource, action, and scope. No blanket permissions.
-- **Short-lived capability tokens** — ES256-signed JWTs with 300 to 900 second lifetimes. Even if intercepted, exposure is measured in minutes.
-- **Policy-as-code** — Authorization policies are version-controlled, synced from Git, auditable, and rollback-capable. Security policy gets the same rigor as application code.
-- **Delegation workflows** — Temporary privilege escalation with explicit approval chains. Agents can request elevated access for specific tasks without permanent permission grants.
-- **Tamper-evident audit trail** — Every authorization decision is logged in a SHA-256 hash chain. Each entry is cryptographically linked to the previous. Tampering with any record breaks the chain and is immediately detectable.
+- **Cryptographic agent identity**: Each agent receives a unique SoulKey. Keys are SHA-512 hashed at rest; raw keys are shown once at issuance and never stored.
+- **Fine-grained access control**: Policies define what each agent can access by resource, action, and scope. No blanket permissions.
+- **Short-lived capability tokens**: ES256-signed JWTs with 300 to 900 second lifetimes. Even if intercepted, exposure is measured in minutes.
+- **Policy-as-code**: Authorization policies are version-controlled, synced from Git, auditable, and rollback-capable. Security policy gets the same rigor as application code.
+- **Delegation workflows**: Temporary privilege escalation with explicit approval chains. Agents can request elevated access for specific tasks without permanent permission grants.
+- **Tamper-evident audit trail**: Every authorization decision is logged in a SHA-256 hash chain. Each entry is cryptographically linked to the previous. Tampering with any record breaks the chain and is immediately detectable.
 
 ---
 
-### SoulWatch — AI Runtime Security Monitoring
+### SoulWatch: AI Runtime Security Monitoring
 
 SoulWatch learns what "normal" looks like for each agent and alerts when behavior deviates. It combines behavioral baselines with a rule engine for comprehensive runtime security.
 
 **What it does:**
 
-- **Behavioral anomaly detection** — Builds per-agent baselines over time and flags deviations. Eight anomaly types detected out of the box: rate spikes, off-hours activity, credential stuffing, scope escalation, unusual resource access, geographic anomalies, pattern breaks, and privilege accumulation.
-- **Sigma-compatible rule engine** — Write custom detection rules in standard Sigma YAML format with field matching, wildcards, aggregation, and time windows. Your existing Sigma expertise transfers directly.
-- **Automated response playbooks** — Define quarantine policies per anomaly type. Credential stuffing can suspend a key for an hour. Scope escalation can force re-authentication. Rate spikes can kill the session entirely. All configurable per tenant.
-- **Real-time event feed and alerting** — Stream security events as they happen. Configure alert channels and escalation paths.
-- **SIEM integration** — Forward events to Splunk (HEC), Elasticsearch/OpenSearch, Azure Sentinel (Log Analytics), Syslog (RFC 5424 over TCP/UDP), or any webhook endpoint. Events are formatted in CEF (Common Event Format) for universal compatibility.
+- **Behavioral anomaly detection**: Builds per-agent baselines over time and flags deviations. Eight anomaly types detected out of the box: rate spikes, off-hours activity, credential stuffing, scope escalation, unusual resource access, geographic anomalies, pattern breaks, and privilege accumulation.
+- **Sigma-compatible rule engine**: Write custom detection rules in standard Sigma YAML format with field matching, wildcards, aggregation, and time windows. Your existing Sigma expertise transfers directly.
+- **Automated response playbooks**: Define quarantine policies per anomaly type. Credential stuffing can suspend a key for an hour. Scope escalation can force re-authentication. Rate spikes can kill the session entirely. All configurable per tenant.
+- **Real-time event feed and alerting**: Stream security events as they happen. Configure alert channels and escalation paths.
+- **SIEM integration**: Forward events to Splunk (HEC), Elasticsearch/OpenSearch, Azure Sentinel (Log Analytics), Syslog (RFC 5424 over TCP/UDP), or any webhook endpoint. Events are formatted in CEF (Common Event Format) for universal compatibility.
 
 ---
 
-### SoulGate — API Security Gateway
+### SoulGate: API Security Gateway
 
 SoulGate sits in front of your backend APIs and runs every agent request through a seven-stage security pipeline before it reaches your services.
 
 **What it does:**
 
-- **7-stage security pipeline** — Each request passes through authentication, authorization, rate limiting, prompt injection detection, payload inspection, circuit breaking, and audit logging.
-- **Prompt injection detection** — Over 40 pattern-based detection rules covering the OWASP LLM Top 10. Individual severities are aggregated into a composite risk score. Detection is deterministic and auditable — not a black-box ML classifier — with tunable warn and block thresholds.
-- **Rate limiting and circuit breakers** — Protect backend services from runaway agents or coordinated abuse.
-- **Anti-weaponization safeguards** — Circuit breakers include three protections against deliberate exploitation: a minimum request threshold (won't trip on low volume), per-source failure ratio analysis (rejects opening if a single attacker caused most failures), and an admin lock (manual override prevents automatic transitions during attacks). Security controls cannot be turned against you.
-- **IP and geographic access control** — Restrict agent traffic by source address or region.
-- **Full request audit logging** — Every request through the gateway is logged with metadata for compliance and forensic analysis.
+- **7-stage security pipeline**: Each request passes through authentication, authorization, rate limiting, prompt injection detection, payload inspection, circuit breaking, and audit logging.
+- **Prompt injection detection**: Over 40 pattern-based detection rules covering the OWASP LLM Top 10. Individual severities are aggregated into a composite risk score. Detection is deterministic and auditable - not a black-box ML classifier - with tunable warn and block thresholds.
+- **Rate limiting and circuit breakers**: Protect backend services from runaway agents or coordinated abuse.
+- **Anti-weaponization safeguards**: Circuit breakers include three protections against deliberate exploitation: a minimum request threshold (won't trip on low volume), per-source failure ratio analysis (rejects opening if a single attacker caused most failures), and an admin lock (manual override prevents automatic transitions during attacks). Security controls cannot be turned against you.
+- **IP and geographic access control**: Restrict agent traffic by source address or region.
+- **Full request audit logging**: Every request through the gateway is logged with metadata for compliance and forensic analysis.
 
 ---
 
@@ -92,7 +92,7 @@ Your Agent --> SoulGate (inspect) --> SoulAuth (authorize) --> Your Backend
 3. **SoulAuth** evaluates the agent's identity and authorization against policy. A short-lived capability token is issued if approved.
 4. The request reaches your backend.
 5. **SoulWatch** continuously monitors behavior patterns across all agent activity.
-6. If an anomaly is detected, the configured response fires automatically — quarantine, rate limit, force re-auth, or suspend — without waiting for a human to intervene.
+6. If an anomaly is detected, the configured response fires automatically - quarantine, rate limit, force re-auth, or suspend - without waiting for a human to intervene.
 
 ---
 
@@ -114,10 +114,10 @@ Your Agent --> SoulGate (inspect) --> SoulAuth (authorize) --> Your Backend
 
 Tiresias fits your infrastructure, not the other way around.
 
-- **SaaS (Managed)** — Multi-tenant, fully managed at tiresias.network. Fastest path to production.
-- **Self-hosted** — Deploy on your infrastructure with Docker Compose or Kubernetes. Full control over data residency and network topology.
-- **Hybrid** — SaaS control plane with on-premise gateway. Central management with local data processing.
-- **Local development** — Zero-config SQLite mode. A single command spins up the full platform for development and testing.
+- **SaaS (Managed)**: Multi-tenant, fully managed at tiresias.network. Fastest path to production.
+- **Self-hosted**: Deploy on your infrastructure with Docker Compose or Kubernetes. Full control over data residency and network topology.
+- **Hybrid**: SaaS control plane with on-premise gateway. Central management with local data processing.
+- **Local development**: Zero-config SQLite mode. A single command spins up the full platform for development and testing.
 
 ---
 
@@ -160,11 +160,11 @@ The SDK includes identity resolution, access evaluation, token management, and C
 
 **What makes Tiresias different from a regular API gateway?**
 
-API gateways protect APIs. Tiresias protects AI agents. It understands agent identity, builds behavioral baselines per agent, and detects LLM-specific threats like prompt injection. Most importantly, the detection loop feeds back into enforcement automatically — anomalies trigger quarantine without waiting for a human.
+API gateways protect APIs. Tiresias protects AI agents. It understands agent identity, builds behavioral baselines per agent, and detects LLM-specific threats like prompt injection. Most importantly, the detection loop feeds back into enforcement automatically - anomalies trigger quarantine without waiting for a human.
 
 **Do I need all three products?**
 
-No. Each product works independently. SoulAuth is the foundation — it provides agent identity and authorization. SoulWatch adds behavioral monitoring and anomaly detection. SoulGate adds gateway-level inspection and prompt injection defense. Most teams start with SoulAuth and add products as their agent fleet grows.
+No. Each product works independently. SoulAuth is the foundation - it provides agent identity and authorization. SoulWatch adds behavioral monitoring and anomaly detection. SoulGate adds gateway-level inspection and prompt injection defense. Most teams start with SoulAuth and add products as their agent fleet grows.
 
 **What types of AI agents does Tiresias support?**
 
@@ -180,11 +180,11 @@ SoulKeys are SHA-512 hashed at rest. The raw key is displayed once at issuance a
 
 **Is the audit log tamper-proof?**
 
-The audit log uses a SHA-256 hash chain where each entry includes a hash of the previous entry. Modifying, deleting, or reordering any record breaks the cryptographic chain and is detectable. This provides tamper-evidence — any alteration is visible — rather than tamper-prevention.
+The audit log uses a SHA-256 hash chain where each entry includes a hash of the previous entry. Modifying, deleting, or reordering any record breaks the cryptographic chain and is detectable. This provides tamper-evidence - any alteration is visible - rather than tamper-prevention.
 
 **How does prompt injection detection work?**
 
-Pattern-based detection using over 40 regex rules mapped to the OWASP LLM Top 10 threat categories. Each pattern has an individual severity. Matched severities are aggregated into a composite risk score per request. Detection is deterministic and auditable — every decision can be traced to specific rules — with configurable warn and block thresholds. This is not an ML-based classifier; there are no false positives from model drift.
+Pattern-based detection using over 40 regex rules mapped to the OWASP LLM Top 10 threat categories. Each pattern has an individual severity. Matched severities are aggregated into a composite risk score per request. Detection is deterministic and auditable - every decision can be traced to specific rules - with configurable warn and block thresholds. This is not an ML-based classifier; there are no false positives from model drift.
 
 **What happens when an anomaly is detected?**
 
@@ -216,7 +216,7 @@ Three safeguards prevent attackers from deliberately tripping circuit breakers t
 
 **Does Tiresias work with my existing identity provider?**
 
-The Tiresias portal supports Google OIDC for human login, with SAML, Azure AD, and Okta support on the roadmap. Agent identity uses SoulKeys, which are independent of any human identity provider. Both identity systems coexist — your team logs into the portal with their corporate credentials while agents authenticate with SoulKeys.
+The Tiresias portal supports Google OIDC for human login, with SAML, Azure AD, and Okta support on the roadmap. Agent identity uses SoulKeys, which are independent of any human identity provider. Both identity systems coexist - your team logs into the portal with their corporate credentials while agents authenticate with SoulKeys.
 
 **Can I use Tiresias with my existing monitoring stack?**
 

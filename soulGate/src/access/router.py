@@ -1,5 +1,14 @@
 """
 Access rule CRUD endpoints.
+
+Valid ``rule_type`` values:
+  - ``ip_allow``  -- whitelist a specific IP or CIDR range
+  - ``ip_deny``   -- blacklist a specific IP or CIDR range
+  - ``geo_allow`` -- whitelist a country code (ISO 3166-1 alpha-2)
+  - ``geo_deny``  -- blacklist a country code (ISO 3166-1 alpha-2)
+
+Priority is evaluated lowest-number-first; deny rules take precedence
+over allow rules at the same priority level.
 """
 
 import uuid

@@ -22,6 +22,8 @@ logger = structlog.get_logger(__name__)
 
 LINEAR_API = "https://api.linear.app/graphql"
 
+# All UUIDs below are specific to Saluca's Linear workspace.
+# They must be updated if the workspace or label configuration changes.
 TEAM_ID = "03ee70b4-ed03-4305-a3ae-4556afb06b04"
 
 SEVERITY_LABEL_IDS = {

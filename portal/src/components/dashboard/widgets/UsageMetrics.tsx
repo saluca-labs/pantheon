@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Usage metrics -- evaluation counts, token stats, and daily usage sparkline. Uses live API via useWidgetData. */
+
 interface MetricsData {
   evaluationsToday: number;
   tokensIssued: number;

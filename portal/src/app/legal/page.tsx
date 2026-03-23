@@ -4,6 +4,8 @@ import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+/** Legal hub with tabbed Privacy Policy, Terms of Service, and DPA sections. */
+
 const sections = [
   { id: "privacy", label: "Privacy Policy" },
   { id: "terms", label: "Terms of Service" },

@@ -123,7 +123,10 @@ class ModelRoutingMiddleware(BaseHTTPMiddleware):
             )
             # Rewrite the model in the request body
             body["model"] = decision.resolved_model
-            # Store the rewritten body so downstream can read it
+            # Store the rewritten body so downstream can read it.
+            # ASGI does not support mutating the request body in-place, so
+            # downstream middleware and route handlers MUST read from
+            # request.state.rewritten_body instead of calling request.body().
             request.state.rewritten_body = json.dumps(body).encode("utf-8")
             request.state.model_redirected = True
             request.state.original_model = requested_model
@@ -137,7 +140,9 @@ class ModelRoutingMiddleware(BaseHTTPMiddleware):
             reason=decision.reason,
         )
 
-        # Store decision metadata for downstream consumers
+        # Store decision metadata for downstream consumers.
+        # Downstream middleware and route handlers read request.state.model_decision
+        # for audit logging, cost tracking, and response header enrichment.
         request.state.model_decision = decision
 
         response = await call_next(request)

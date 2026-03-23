@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { Search, ExternalLink } from "lucide-react";
 
+/** Session explorer -- search and inspect agent sessions with cost/request detail. Uses live API via useWidgetData. */
+
 interface Session {
   id: string;
   cost: number;

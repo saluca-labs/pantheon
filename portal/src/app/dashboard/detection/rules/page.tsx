@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { Plus, Trash2, FlaskConical, ChevronDown, ChevronRight, X, ToggleLeft, ToggleRight } from "lucide-react";
 
+/** Detection rules -- Sigma rule CRUD with test and toggle controls. Uses live API via useWidgetData. */
+
 interface RuleSummary {
   id: string;
   title: string;

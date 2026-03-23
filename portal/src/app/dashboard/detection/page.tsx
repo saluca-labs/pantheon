@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { TrendingUp, Cpu, Clock, MapPin, ShieldAlert, AlertTriangle, ExternalLink } from "lucide-react";
 
+/** Detection overview -- anomaly matches with severity and type breakdown. Uses live API via useWidgetData. */
+
 type SeverityLevel = "critical" | "high" | "medium" | "low" | "informational";
 type AnomalyType = "rate_spike" | "unusual_resources" | "off_hours" | "geo_anomaly" | "scope_escalation";
 

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulWatch integrations -- SIEM/webhook destination management. Uses hardcoded mock data. */
+
 interface Destination {
   id: string;
   name: string;

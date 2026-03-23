@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+/** SoulGate audit log -- HTTP request/response trace viewer. Uses hardcoded mock data. */
+
 interface AuditEntry {
   id: string;
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";

@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+/** Audit log viewer -- filterable event stream with type and severity columns. Uses hardcoded mock data. */
+
 interface AuditEvent {
   id: string;
   timestamp: string;

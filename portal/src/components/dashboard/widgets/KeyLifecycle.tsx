@@ -3,6 +3,8 @@
 import { useWidgetData } from "@/lib/useWidgetData";
 import WidgetShell from "./WidgetShell";
 
+/** Key lifecycle -- soulkey age timeline and health overview. Uses live API via useWidgetData. */
+
 interface SoulKeyResponse {
   soulkey_id: string;
   persona_id: string;

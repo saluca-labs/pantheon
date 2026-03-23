@@ -21,7 +21,15 @@ logger = structlog.get_logger(__name__)
 
 
 class TenantContext:
-    """Tenant context injected into request.state by middleware."""
+    """Tenant context injected into request.state by middleware.
+
+    Uses a lazy resolution pattern: the middleware only populates tenant_id
+    and status from the X-Tenant-ID header. The remaining fields (slug,
+    name, tier) are left empty and resolved on demand by calling
+    resolve_tenant() when a specific endpoint needs them. This avoids a
+    DB round-trip on every request. TenantContextMiddleware is the
+    middleware that performs initial injection.
+    """
 
     def __init__(
         self,
@@ -113,6 +121,10 @@ async def resolve_tenant_by_slug(db: AsyncSession, slug: str) -> Optional[SoulTe
     return result.scalar_one_or_none()
 
 
+# create_tenant() and update_tenant_status() live in this middleware module
+# (rather than a separate service layer) for convenience co-location with
+# TenantContext and the resolve_* helpers. All tenant CRUD shares the same
+# import surface, keeping the call-sites simple.
 async def create_tenant(
     db: AsyncSession,
     name: str,

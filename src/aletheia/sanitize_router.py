@@ -144,6 +144,11 @@ def _store_blocked_output(
 
     # Store via database if available, otherwise log the encrypted blob metadata
     try:
+        # Cross-service import: sanitize_router (SoulAuth process) reaches into
+        # soulWatch's DB layer to persist blocked outputs. This import is expected
+        # to fail gracefully when soulWatch is not co-deployed (e.g. standalone
+        # SoulAuth); the outer except block catches ImportError and logs metadata
+        # for manual recovery instead.
         from soulWatch.src.database.connection import sync_session_factory
         from soulWatch.src.database.models import AletheiaBlockedOutput
 
