@@ -45,7 +45,7 @@ _INDIRECT_INJECTION_RAW: list[tuple[str, str, float]] = [
     ("zero_width_encoded", r"[\u200b\u200c\u200d\ufeff]{4,}", 0.8),
     ("invisible_text_block", r"[\u200b-\u200f\u2028-\u202f\ufeff\u00ad]{10,}", 0.7),
     ("rtl_override_trick", r"[\u202e\u2066-\u2069]", 0.75),
-    ("homoglyph_substitution", r"(?i)\b\w*[\u0400-\u04ff]+\w*[a-z]+\w*\b|\b\w*[a-z]+\w*[\u0400-\u04ff]+\w*\b", 0.6),
+    ("homoglyph_substitution", r"(?i)\b(?=[\w]*[\u0400-\u04ff])(?=[\w]*[a-z])[\w]+\b", 0.6),
 ]
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import os
 os.environ.setdefault("SOULAUTH_MODE", "local")
 os.environ.setdefault("SOULAUTH_TESTING", "true")
 os.environ.setdefault("SOULAUTH_DEBUG", "true")
+os.environ.setdefault("ENVIRONMENT", "test")
 
 import asyncio
 import uuid
