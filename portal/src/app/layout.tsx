@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { BrandingProvider } from "@/lib/branding";
+import { StructuredData } from "./structured-data";
 
 /**
  * Root layout with AuthProvider > BrandingProvider nesting.
@@ -59,6 +60,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <StructuredData />
+      </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} ${manrope.variable} antialiased bg-background text-foreground`}
       >
