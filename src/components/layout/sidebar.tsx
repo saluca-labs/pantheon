@@ -17,7 +17,7 @@ export const navItems = [
   { label: 'Policy', href: '/dashboard', icon: Shield, enabled: true },
   { label: 'Sessions', href: '/dashboard/sessions', icon: ScrollText, enabled: false },
   { label: 'Cost', href: '/dashboard/cost', icon: DollarSign, enabled: false },
-  { label: 'Providers', href: '/dashboard/providers', icon: Activity, enabled: false },
+  { label: 'Providers', href: '/dashboard/providers', icon: Activity, enabled: true },
   { label: 'Alerts', href: '/dashboard/alerts', icon: Bell, enabled: false },
   { label: 'API Keys', href: '/dashboard/keys', icon: Key, enabled: false },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings, enabled: false },
