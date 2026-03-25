@@ -14,8 +14,11 @@ services:
       - WORKOS_API_KEY=${WORKOS_API_KEY}
       - WORKOS_COOKIE_PASSWORD=${WORKOS_COOKIE_PASSWORD}
       - WORKOS_REDIRECT_URI=${WORKOS_REDIRECT_URI:-http://localhost:3000/callback}
+      - BFF_DATABASE_URL=postgresql://tiresias:tiresias@postgres:5432/tiresias
     depends_on:
       tiresias-api:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   tiresias-api:
