@@ -1,0 +1,54 @@
+services:
+  next-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+    environment:
+      - TIRESIAS_API_URL=http://tiresias-api:8900
+      - WORKOS_CLIENT_ID=${WORKOS_CLIENT_ID}
+      - WORKOS_API_KEY=${WORKOS_API_KEY}
+      - WORKOS_COOKIE_PASSWORD=${WORKOS_COOKIE_PASSWORD}
+      - WORKOS_REDIRECT_URI=${WORKOS_REDIRECT_URI:-http://localhost:3000/callback}
+    depends_on:
+      tiresias-api:
+        condition: service_healthy
+
+  tiresias-api:
+    image: ghcr.io/salucallc/tiresias:latest
+    ports:
+      - "8900:8900"
+    environment:
+      - DATABASE_URL=postgresql://tiresias:tiresias@postgres:5432/tiresias
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8900/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=tiresias
+      - POSTGRES_PASSWORD=tiresias
+      - POSTGRES_DB=tiresias
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tiresias"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
