@@ -75,3 +75,14 @@ export function hasPermission(
 export function isAtLeastRole(role: Role, minimumRole: Role): boolean {
   return (ROLE_HIERARCHY[role] ?? 0) >= (ROLE_HIERARCHY[minimumRole] ?? 0);
 }
+
+/** Set of all valid permission slugs for fast lookup. */
+const VALID_PERMISSIONS = new Set<string>(Object.values(Permission));
+
+/**
+ * Convert raw permission strings (from JWT or WorkOS) to typed Permission[].
+ * Unknown permission strings are silently dropped.
+ */
+export function toPermissions(raw: string[]): Permission[] {
+  return raw.filter((p): p is Permission => VALID_PERMISSIONS.has(p));
+}
