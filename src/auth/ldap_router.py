@@ -194,6 +194,7 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request, db: Async
         tenant_id = str(tenant.id)
 
     # JIT provision or update user
+    # Try to find by LDAP DN first
     result = await db.execute(
         select(SoulUser).where(
             SoulUser.idp_provider == "ldap",
@@ -202,6 +203,22 @@ async def ldap_login(request: LDAPLoginRequest, http_request: Request, db: Async
         )
     )
     user = result.scalar_one_or_none()
+
+    # Fallback: find by email (user may exist from local auth or OIDC)
+    if not user and ldap_user.get("email"):
+        result = await db.execute(
+            select(SoulUser).where(
+                SoulUser.email == ldap_user["email"],
+                SoulUser.tenant_id == tenant_id,
+            )
+        )
+        user = result.scalar_one_or_none()
+        if user:
+            # Link existing user to LDAP
+            user.idp_provider = "ldap"
+            user.idp_sub = ldap_user["dn"]
+            user.auth_provider = f"{user.auth_provider or 'unknown'},ldap" if user.auth_provider and "ldap" not in user.auth_provider else "ldap"
+            logger.info("ldap_auth.user_linked", email=ldap_user["email"], dn=ldap_user["dn"])
 
     if user:
         # Update on login
