@@ -79,7 +79,7 @@ async def _ldap_authenticate(username: str, password: str) -> dict | None:
     """
     try:
         from ldap3 import Server, Connection, ALL, SUBTREE, Tls
-import ssl
+        import ssl
     except ImportError:
         logger.error("ldap_auth.ldap3_not_installed")
         raise HTTPException(status_code=500, detail="LDAP support not available (ldap3 not installed)")
