@@ -31,6 +31,7 @@ from src.auth.oidc_router import router as oidc_router
 from src.detection.sigma_engine import SigmaEngine
 from src.auth.local_router import router as local_auth_router
 from src.auth.local_bootstrap import bootstrap_local_admin
+from src.auth.ldap_router import router as ldap_auth_router
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
 
@@ -362,6 +363,7 @@ app.include_router(enforcement_router)
 app.include_router(detection_router)
 app.include_router(oidc_router)
 app.include_router(local_auth_router)
+app.include_router(ldap_auth_router)
 
 
 @app.get(
