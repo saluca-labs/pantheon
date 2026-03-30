@@ -85,7 +85,7 @@ async def local_login(request: LoginRequest, http_request: Request, db: AsyncSes
     # Find user by email
     query = select(SoulUser).where(
         SoulUser.email == request.email,
-        SoulUser.auth_provider == "local",
+        SoulUser.auth_provider.contains('local'),
         SoulUser.status == "active",
     )
     if request.tenant_id:
