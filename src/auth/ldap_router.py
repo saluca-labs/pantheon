@@ -78,7 +78,8 @@ async def _ldap_authenticate(username: str, password: str) -> dict | None:
     Returns user info dict or None if auth fails.
     """
     try:
-        from ldap3 import Server, Connection, ALL, SUBTREE
+        from ldap3 import Server, Connection, ALL, SUBTREE, Tls
+import ssl
     except ImportError:
         logger.error("ldap_auth.ldap3_not_installed")
         raise HTTPException(status_code=500, detail="LDAP support not available (ldap3 not installed)")
@@ -86,7 +87,9 @@ async def _ldap_authenticate(username: str, password: str) -> dict | None:
     if not settings.ldap_url:
         raise HTTPException(status_code=500, detail="LDAP not configured (SOULAUTH_LDAP_URL not set)")
 
-    server = Server(settings.ldap_url, get_info=ALL)
+    tls_config = Tls(validate=ssl.CERT_NONE) if settings.ldap_url.startswith("ldaps") else None
+    use_ssl = settings.ldap_url.startswith("ldaps")
+    server = Server(settings.ldap_url, get_info=ALL, use_ssl=use_ssl, tls=tls_config)
 
     # Step 1: Bind as service account to search for the user
     try:
@@ -266,7 +269,9 @@ async def list_ldap_groups(
     except ImportError:
         raise HTTPException(status_code=500, detail="ldap3 not installed")
 
-    server = Server(settings.ldap_url, get_info=ALL)
+    tls_config = Tls(validate=ssl.CERT_NONE) if settings.ldap_url.startswith("ldaps") else None
+    use_ssl = settings.ldap_url.startswith("ldaps")
+    server = Server(settings.ldap_url, get_info=ALL, use_ssl=use_ssl, tls=tls_config)
     conn = Connection(server, user=settings.ldap_bind_dn, password=settings.ldap_bind_password, auto_bind=True, read_only=True)
 
     conn.search(
