@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
     const isSecure = process.env.NODE_ENV === "production";
 
-    cookieStore.set("tiresias_oidc_session", data.session_token, {
+    cookieStore.set("tiresias_session", data.session_token, {
       httpOnly: true,
       secure: isSecure,
       sameSite: "lax",
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     });
 
     cookieStore.set(
-      "tiresias_oidc_data",
+      "tiresias_session_data",
       JSON.stringify({
         email: data.email,
         name: data.display_name,
