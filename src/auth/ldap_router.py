@@ -112,7 +112,7 @@ async def _ldap_authenticate(username: str, password: str) -> dict | None:
         search_base=search_base,
         search_filter=search_filter,
         search_scope=SUBTREE,
-        attributes=["dn", "cn", "mail", "displayName", "sAMAccountName",
+        attributes=["cn", "mail", "displayName", "sAMAccountName",
                      "employeeID", "department", "title", settings.ldap_group_attribute],
     )
 
