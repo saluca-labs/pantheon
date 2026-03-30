@@ -37,14 +37,26 @@ class SoulGateSettings(BaseSettings):
         description="Base URL for SoulWatch API (event forwarding)",
     )
 
-    # Database (same Postgres as SoulAuth)
-    database_url: str = Field(
-        default="postgresql+asyncpg://saluca:saluca@100.101.95.99:5432/soulauth",
-        description="Async database connection URL (shared DB with SoulAuth)",
+    # Database — dual backend support
+    # When set to a postgresql+asyncpg:// URL: shared Postgres engine.
+    # When empty/None: per-tenant SQLite under data_root.
+    database_url: Optional[str] = Field(
+        default=None,
+        description=(
+            "Async database connection URL. "
+            "Set to a postgresql+asyncpg:// URL for shared Postgres, "
+            "or leave unset for per-tenant SQLite."
+        ),
     )
     db_pool_size: int = 10
     db_max_overflow: int = 20
     db_pool_timeout: int = 30
+
+    # Data root — base directory for per-tenant SQLite files (ignored with Postgres)
+    data_root: str = Field(
+        default="/data",
+        description="Root directory for per-tenant SQLite databases (used when database_url is unset)",
+    )
 
     # Rate limiting
     default_rate_limit_rpm: int = Field(

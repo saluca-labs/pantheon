@@ -8,6 +8,7 @@ httpx==0.25.2
 
 # Async database drivers
 asyncpg==0.29.0
+aiosqlite>=0.20.0
 
 # Security
 cryptography==41.0.7
