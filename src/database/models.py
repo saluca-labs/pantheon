@@ -235,6 +235,8 @@ class SoulUser(Base):
     admin_role: Mapped[str] = mapped_column(Text, nullable=False, default="viewer")
     idp_sub: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     idp_provider: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True, doc="bcrypt hash for local auth (null for OIDC/LDAP users)")
+    auth_provider: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="oidc", doc="Authentication method: oidc, local, ldap")
     status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
