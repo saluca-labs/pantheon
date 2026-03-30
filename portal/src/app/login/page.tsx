@@ -8,7 +8,7 @@ import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth";
 
 function LoginForm() {
-  const [soulkey, setSoulkey] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
@@ -57,20 +57,7 @@ function LoginForm() {
     }
   };
 
-  const handleSoulKeyLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!soulkey.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await login(soulkey.trim());
-      router.push(redirect);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -78,7 +65,7 @@ function LoginForm() {
     window.location.href = `/api/auth/authorize?provider=google&redirect=${encodeURIComponent(redirect)}`;
   };
 
-  const displayError = error || (ssoError === "sso_unavailable" ? "Google sign-in is temporarily unavailable. Try SoulKey login." : ssoError === "sso_failed" ? "SSO authentication failed. Please try again." : null);
+  const displayError = error || (ssoError === "sso_unavailable" ? "Google sign-in is temporarily unavailable. Try email login." : ssoError === "sso_failed" ? "SSO authentication failed. Please try again." : null);
 
   return (
     <div className="relative glass-card rounded-2xl p-8 sm:p-10">
@@ -184,21 +171,7 @@ function LoginForm() {
         Continue with Google
       </button>
 
-      <div className="flex items-center gap-4 my-6">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-foreground-subtle uppercase tracking-wider">or</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-
-      <form onSubmit={handleSoulKeyLogin} className="space-y-4">
-        <div>
-          <label htmlFor="soulkey" className="block text-sm font-medium text-foreground-muted mb-2">SoulKey</label>
-          <input id="soulkey" type="password" value={soulkey} onChange={(e) => setSoulkey(e.target.value)} placeholder="sk_soul_..." className="w-full rounded-lg border border-border bg-navy-950 px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30 transition-colors" />
-        </div>
-        <button type="submit" disabled={loading || !soulkey.trim()} className="w-full rounded-lg border border-border bg-white/5 hover:bg-white/10 px-6 py-3.5 text-sm font-medium text-foreground transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          {loading ? "Signing in..." : "Sign in with SoulKey"}
-        </button>
-      </form>
+      
 
       <div className="mt-8 pt-6 border-t border-border text-center space-y-3">
         <p className="text-xs text-foreground-subtle">
