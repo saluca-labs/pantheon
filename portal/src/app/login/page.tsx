@@ -18,6 +18,45 @@ function LoginForm() {
 
   const ssoError = searchParams.get("error");
 
+  // Credential login state
+  const [credEmail, setCredEmail] = useState("");
+  const [credPassword, setCredPassword] = useState("");
+  const [credError, setCredError] = useState("");
+  const [credLoading, setCredLoading] = useState(false);
+  const [authMethod, setAuthMethod] = useState<"local" | "ldap">("local");
+
+  const handleCredentialLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredLoading(true);
+    setCredError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: authMethod,
+          email: authMethod === "local" ? credEmail : undefined,
+          username: authMethod === "ldap" ? credEmail : undefined,
+          password: credPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCredError(data.error || "Invalid credentials");
+        return;
+      }
+
+      // Redirect to dashboard
+      window.location.href = redirect;
+    } catch {
+      setCredError("Connection error. Please try again.");
+    } finally {
+      setCredLoading(false);
+    }
+  };
+
   const handleSoulKeyLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!soulkey.trim()) return;
@@ -59,6 +98,82 @@ function LoginForm() {
         </div>
       )}
 
+      {/* Username/Password Login Form */}
+      <form onSubmit={handleCredentialLogin} className="space-y-4">
+        {/* Auth method toggle */}
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setAuthMethod("local")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              authMethod === "local"
+                ? "bg-gold-500/20 text-gold-400 border-r border-border"
+                : "bg-white/5 text-foreground-subtle hover:bg-white/10 border-r border-border"
+            }`}
+          >
+            Email (Local)
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMethod("ldap")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              authMethod === "ldap"
+                ? "bg-gold-500/20 text-gold-400"
+                : "bg-white/5 text-foreground-subtle hover:bg-white/10"
+            }`}
+          >
+            Username (LDAP)
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="cred-email" className="block text-sm font-medium text-foreground-muted mb-2">
+            {authMethod === "ldap" ? "Username" : "Email"}
+          </label>
+          <input
+            id="cred-email"
+            type={authMethod === "ldap" ? "text" : "email"}
+            value={credEmail}
+            onChange={(e) => setCredEmail(e.target.value)}
+            placeholder={authMethod === "ldap" ? "username" : "you@company.com"}
+            className="w-full rounded-lg border border-border bg-navy-950 px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30 transition-colors"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="cred-password" className="block text-sm font-medium text-foreground-muted mb-2">
+            Password
+          </label>
+          <input
+            id="cred-password"
+            type="password"
+            value={credPassword}
+            onChange={(e) => setCredPassword(e.target.value)}
+            placeholder="********"
+            className="w-full rounded-lg border border-border bg-navy-950 px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30 transition-colors"
+            required
+          />
+        </div>
+        {credError && (
+          <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+            {credError}
+          </div>
+        )}
+        <button
+          type="submit"
+          disabled={credLoading}
+          className="w-full rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {credLoading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
+
+      <div className="flex items-center gap-4 my-6">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-foreground-subtle uppercase tracking-wider">or continue with</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
       <button onClick={handleGoogleLogin} disabled={loading} className="w-full flex items-center justify-center gap-3 rounded-lg border border-border bg-white/5 hover:bg-white/10 px-6 py-3.5 text-sm font-medium text-foreground transition-all disabled:opacity-50">
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -80,7 +195,7 @@ function LoginForm() {
           <label htmlFor="soulkey" className="block text-sm font-medium text-foreground-muted mb-2">SoulKey</label>
           <input id="soulkey" type="password" value={soulkey} onChange={(e) => setSoulkey(e.target.value)} placeholder="sk_soul_..." className="w-full rounded-lg border border-border bg-navy-950 px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:border-gold-500/50 focus:outline-none focus:ring-1 focus:ring-gold-500/30 transition-colors" />
         </div>
-        <button type="submit" disabled={loading || !soulkey.trim()} className="w-full rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3.5 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
+        <button type="submit" disabled={loading || !soulkey.trim()} className="w-full rounded-lg border border-border bg-white/5 hover:bg-white/10 px-6 py-3.5 text-sm font-medium text-foreground transition-all disabled:opacity-50 disabled:cursor-not-allowed">
           {loading ? "Signing in..." : "Sign in with SoulKey"}
         </button>
       </form>
