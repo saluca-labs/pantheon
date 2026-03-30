@@ -160,6 +160,52 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Authentication mode
+    auth_mode: str = Field(
+        default="oidc",
+        description="Authentication mode: oidc, local, ldap, or comma-separated for multi-mode (e.g., local,ldap)",
+    )
+
+    # Local auth bootstrap
+    local_admin_email: Optional[str] = Field(
+        default=None,
+        description="Bootstrap admin email for local auth mode (first run only)",
+    )
+    local_admin_password: Optional[str] = Field(
+        default=None,
+        description="Bootstrap admin password for local auth mode (first run only, hashed on creation)",
+    )
+
+    # LDAP settings (for Phase 3)
+    ldap_url: Optional[str] = Field(
+        default=None,
+        description="LDAP server URL (e.g., ldap://saluca.local:389 or ldaps://saluca.local:636)",
+    )
+    ldap_bind_dn: Optional[str] = Field(
+        default=None,
+        description="Service account DN for LDAP bind (e.g., CN=soulauth-bind,OU=Service-Accounts,DC=saluca,DC=local)",
+    )
+    ldap_bind_password: Optional[str] = Field(
+        default=None,
+        description="Service account password for LDAP bind",
+    )
+    ldap_search_base: Optional[str] = Field(
+        default=None,
+        description="LDAP search base DN (e.g., DC=saluca,DC=local)",
+    )
+    ldap_user_filter: str = Field(
+        default="(sAMAccountName={username})",
+        description="LDAP user search filter template",
+    )
+    ldap_group_attribute: str = Field(
+        default="memberOf",
+        description="LDAP attribute containing group memberships",
+    )
+    ldap_group_role_map: Optional[str] = Field(
+        default=None,
+        description="JSON mapping of LDAP group DNs to SoulAuth roles",
+    )
+
     # OIDC / SSO Settings
     oidc_secret_key: Optional[str] = Field(
         default=None,
