@@ -9,7 +9,7 @@ import bcrypt
 import structlog
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends, Request
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,7 +42,7 @@ class LoginResponse(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., description="User email")
     password: str = Field(..., min_length=8, description="Password (min 8 chars)")
     display_name: str | None = None
     tenant_id: str
