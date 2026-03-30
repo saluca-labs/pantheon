@@ -64,13 +64,15 @@ async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown."""
     logger.info("soulauth.starting", version=settings.app_version)
 
-    # Initialize database tables (dev mode)
-    if settings.debug:
-        await init_db()
+    # Initialize database tables (creates tables if they don't exist)
+    await init_db()
     # Bootstrap local admin user if configured
     from src.database.connection import async_session_factory
-    async with async_session_factory() as bootstrap_db:
-        await bootstrap_local_admin(bootstrap_db)
+    try:
+        async with async_session_factory() as bootstrap_db:
+            await bootstrap_local_admin(bootstrap_db)
+    except Exception as e:
+        logger.warning("local_auth.bootstrap_failed", error=str(e))
 
     # --- License JWT Validation (Track B1) ---
     import os
