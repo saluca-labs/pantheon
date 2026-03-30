@@ -34,7 +34,7 @@ class SoulTenant(Base):
     slug: Mapped[str] = mapped_column(String(63), nullable=False, unique=True)
     tier: Mapped[str] = mapped_column(String(50), nullable=False, default="free")
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
 
@@ -57,7 +57,7 @@ class Soulkey(Base):
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     revocation_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
 
     __table_args__ = (
         Index("idx_soulkeys_hash", "key_hash"),
@@ -190,7 +190,7 @@ class Trial(Base):
     activated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     converted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
 
     __table_args__ = (
         Index("idx_trials_email", "contact_email"),
@@ -211,7 +211,7 @@ class Waitlist(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False, default="pending")
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     invited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
 
     __table_args__ = (
         Index("idx_waitlist_email", "contact_email"),
@@ -241,7 +241,7 @@ class SoulUser(Base):
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, default=dict, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "email", name="uq_soul_users_tenant_email"),
