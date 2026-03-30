@@ -29,6 +29,8 @@ from src.analytics._state import init_analytics
 from src.detection.router import router as detection_router
 from src.auth.oidc_router import router as oidc_router
 from src.detection.sigma_engine import SigmaEngine
+from src.auth.local_router import router as local_auth_router
+from src.auth.local_bootstrap import bootstrap_local_admin
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
 
@@ -65,6 +67,10 @@ async def lifespan(app: FastAPI):
     # Initialize database tables (dev mode)
     if settings.debug:
         await init_db()
+    # Bootstrap local admin user if configured
+    from src.database.connection import async_session_factory
+    async with async_session_factory() as bootstrap_db:
+        await bootstrap_local_admin(bootstrap_db)
 
     # --- License JWT Validation (Track B1) ---
     import os
@@ -353,6 +359,7 @@ app.include_router(analytics_router)
 app.include_router(enforcement_router)
 app.include_router(detection_router)
 app.include_router(oidc_router)
+app.include_router(local_auth_router)
 
 
 @app.get(
