@@ -176,6 +176,16 @@ class Settings(BaseSettings):
         description="Bootstrap admin password for local auth mode (first run only, hashed on creation)",
     )
 
+    # Login rate limiting
+    login_max_attempts: int = Field(
+        default=5,
+        description="Maximum failed login attempts before lockout",
+    )
+    login_lockout_minutes: int = Field(
+        default=15,
+        description="Minutes to lock account after max failed attempts",
+    )
+
     # LDAP settings (for Phase 3)
     ldap_url: Optional[str] = Field(
         default=None,
