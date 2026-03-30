@@ -1,12 +1,8 @@
 /**
- * GET /api/auth/authorize?tenant=<slug>
- * Resolves the IdP authorize URL for the given tenant slug and
- * redirects the browser to the IdP (Google, Okta, Azure AD, etc.).
+ * GET /api/auth/authorize?provider=google&redirect=/dashboard
+ * Initiates OIDC flow via SoulAuth backend, then redirects to the IdP.
  */
-
 import { NextRequest, NextResponse } from "next/server";
-import { config } from "@/lib/config";
-
 
 function getBaseUrl(request: NextRequest): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -18,34 +14,29 @@ function getBaseUrl(request: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const tenant = searchParams.get("tenant");
-
-  if (!tenant) {
-    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
-  }
+  const provider = searchParams.get("provider") || "google";
+  const backendUrl = process.env.NEXT_PUBLIC_SOULAUTH_API_URL || "http://soulauth.tiresias.svc.cluster.local";
 
   try {
-    const backendUrl = config.apiUrl;
     const res = await fetch(
-      `${backendUrl}/v1/auth/oidc/authorize?email=user%40${encodeURIComponent(tenant)}`,
+      `${backendUrl}/v1/auth/oidc/authorize?provider_type=${encodeURIComponent(provider)}`,
       { method: "GET" }
     );
 
     if (!res.ok) {
-      console.error("[OIDC authorize] backend error:", res.status, await res.text());
-      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
+      const body = await res.text();
+      console.error("[authorize] backend error:", res.status, body);
+      return NextResponse.redirect(new URL("/login?error=sso_unavailable", getBaseUrl(request)));
     }
 
     const data = await res.json();
-    const { authorization_url } = data;
-
-    if (!authorization_url) {
-      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
+    if (!data.authorization_url) {
+      return NextResponse.redirect(new URL("/login?error=sso_unavailable", getBaseUrl(request)));
     }
 
-    return NextResponse.redirect(authorization_url);
+    return NextResponse.redirect(data.authorization_url);
   } catch (err) {
-    console.error("[OIDC authorize] unexpected error:", err);
-    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
+    console.error("[authorize] unexpected error:", err);
+    return NextResponse.redirect(new URL("/login?error=sso_unavailable", getBaseUrl(request)));
   }
 }

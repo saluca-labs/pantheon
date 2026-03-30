@@ -125,8 +125,19 @@ async def authorize(
             idp_config = await load_idp_config(db, tenant.id, provider_type=provider_type)
             if not idp_config:
                 raise HTTPException(status_code=404, detail="No SSO provider for this tenant")
+    elif provider_type:
+        # Public sign-in: find any active IdP matching the provider_type
+        from sqlalchemy import select
+        stmt = select(SoulIdPConfig).where(
+            SoulIdPConfig.provider_type == provider_type,
+            SoulIdPConfig.status == "active",
+        ).limit(1)
+        result = await db.execute(stmt)
+        idp_config = result.scalar_one_or_none()
+        if not idp_config:
+            raise HTTPException(status_code=404, detail=f"No active {provider_type} SSO provider configured")
     else:
-        raise HTTPException(status_code=400, detail="Provide email or tenant_slug")
+        raise HTTPException(status_code=400, detail="Provide email, tenant_slug, or provider_type")
     discovery = await fetch_discovery_document(idp_config.discovery_url)
     auth_endpoint = discovery["authorization_endpoint"]
     code_verifier, code_challenge = _generate_pkce()
