@@ -27,6 +27,7 @@ from src.analytics.detector import AnomalyDetector
 from src.analytics.alerts import AlertRouter, PrometheusAlertSink, TelegramAlertSink
 from src.analytics._state import init_analytics
 from src.detection.router import router as detection_router
+from src.auth.oidc_router import router as oidc_router
 from src.detection.sigma_engine import SigmaEngine
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
@@ -351,6 +352,7 @@ app.include_router(metrics_router)
 app.include_router(analytics_router)
 app.include_router(enforcement_router)
 app.include_router(detection_router)
+app.include_router(oidc_router)
 
 
 @app.get(
