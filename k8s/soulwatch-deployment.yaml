@@ -32,7 +32,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: soulwatch
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.4.4
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.4.5
           imagePullPolicy: Always
           ports:
             - containerPort: 8001

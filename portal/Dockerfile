@@ -11,7 +11,7 @@ RUN npm ci
 COPY . .
 
 # Build-time env vars (override at build or runtime)
-ARG NEXT_PUBLIC_SOULAUTH_API_URL=https://tiresias.saluca.com
+ARG NEXT_PUBLIC_SOULAUTH_API_URL=http://soulauth.tiresias.svc.cluster.local
 ENV NEXT_PUBLIC_SOULAUTH_API_URL=$NEXT_PUBLIC_SOULAUTH_API_URL
 
 RUN npm run build
