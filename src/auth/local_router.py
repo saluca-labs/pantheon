@@ -18,6 +18,7 @@ from src.database.models import SoulUser, SoulTenant
 from src.auth.oidc_session import create_session, validate_session
 from src.auth.rbac import require_permission
 from config.settings import get_settings
+from src.auth.rate_limit import login_rate_limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/v1/auth/local", tags=["local-auth"])
@@ -72,6 +73,15 @@ async def local_login(request: LoginRequest, http_request: Request, db: AsyncSes
     if "local" not in settings.auth_mode.split(","):
         raise HTTPException(status_code=404, detail="Local auth is not enabled")
 
+    # Rate limit check
+    allowed, retry_after = login_rate_limiter.check(request.email)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many failed attempts. Try again in {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     # Find user by email
     query = select(SoulUser).where(
         SoulUser.email == request.email,
@@ -85,16 +95,20 @@ async def local_login(request: LoginRequest, http_request: Request, db: AsyncSes
     user = result.scalar_one_or_none()
 
     if not user or not user.password_hash:
+        login_rate_limiter.record_failure(request.email)
         logger.warning("local_auth.login_failed", email=request.email, reason="user_not_found")
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not _verify_password(request.password, user.password_hash):
+        login_rate_limiter.record_failure(request.email)
         logger.warning("local_auth.login_failed", email=request.email, reason="bad_password")
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # Update last login
     user.last_login = datetime.now(timezone.utc)
     await db.commit()
+
+    login_rate_limiter.record_success(request.email)
 
     # Create session (reuse OIDC session infrastructure)
     ip = http_request.client.host if http_request.client else None
