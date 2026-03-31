@@ -11,7 +11,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def _get_proxy_health():
 # Auth dependency — accepts X-SoulKey OR X-Tiresias-Api-Key / Bearer
 # ---------------------------------------------------------------------------
 
-async def _require_auth(request) -> str:
+async def _require_auth(request: Request) -> str:
     from tiresias.dashboard.auth import make_auth_dependency
     dep = make_auth_dependency(_get_proxy_settings, _get_proxy_engine)
     return await dep(request)

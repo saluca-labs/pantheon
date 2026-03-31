@@ -35,7 +35,7 @@ async def _verify_soulkey(soul_key: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as client:
             resp = await client.get(
-                f"{_SOULAUTH_URL}/v1/auth/session/verify",
+                f"{_SOULAUTH_URL}/v1/auth/local/session/verify",
                 headers={"X-SoulKey": soul_key},
             )
             if resp.status_code == 200:
