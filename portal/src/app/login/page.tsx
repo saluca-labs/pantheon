@@ -139,9 +139,16 @@ function LoginForm() {
           )}
 
           <div>
-            <label htmlFor="local-password" className="block text-sm font-medium text-foreground-muted mb-2">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="local-password" className="block text-sm font-medium text-foreground-muted">
+                Password
+              </label>
+              {authMode === "local" && (
+                <Link href="/forgot-password" className="text-xs text-gold-400 hover:text-gold-300 transition-colors">
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <input
               id="local-password"
               type="password"
