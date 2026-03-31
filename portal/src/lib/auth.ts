@@ -137,6 +137,7 @@ function getSessionFromCookies(): AuthSession | null {
         email: string;
         name: string | null;
         role: string;
+        tenant_name?: string | null;
       };
       if (data.expires_at && Date.now() > data.expires_at) {
         // expired — fall through to SoulKey check
@@ -146,7 +147,7 @@ function getSessionFromCookies(): AuthSession | null {
           tenant_id: data.tenant_id,
           persona_id: data.role ?? "member",
           tier: "enterprise", // OIDC users are always enterprise+
-          tenant_name: undefined,
+          tenant_name: data.tenant_name ?? undefined,
           expires_at: data.expires_at,
           auth_method: "oidc",
         };

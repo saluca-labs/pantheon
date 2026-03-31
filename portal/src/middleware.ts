@@ -16,21 +16,28 @@ const AUTH_ROUTES = ["/login"];
  * Edge middleware, but we can validate the session metadata and expiry.
  */
 function isSessionValid(request: NextRequest): boolean {
+  // Check SoulKey session cookies
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
   const sessionDataCookie = request.cookies.get(SESSION_DATA_COOKIE);
 
-  // Both cookies must be present
-  if (!sessionCookie?.value || !sessionDataCookie?.value) {
+  // Check OIDC / local-auth session cookies
+  const oidcSessionCookie = request.cookies.get("tiresias_oidc_session");
+  const oidcDataCookie = request.cookies.get("tiresias_oidc_data");
+
+  // Either cookie pair is valid
+  const hasSession = (sessionCookie?.value && sessionCookie.value.length >= 10 && sessionDataCookie?.value)
+    || (oidcSessionCookie?.value && oidcSessionCookie.value.length >= 10 && oidcDataCookie?.value);
+
+  if (!hasSession) {
     return false;
   }
 
-  // Session cookie must have a non-empty value
-  if (sessionCookie.value.length < 10) {
-    return false;
-  }
+  // Validate whichever data cookie is present
+  const dataCookieValue = sessionDataCookie?.value || oidcDataCookie?.value;
+  if (!dataCookieValue) return false;
 
   try {
-    const data = JSON.parse(decodeURIComponent(sessionDataCookie.value));
+    const data = JSON.parse(decodeURIComponent(dataCookieValue));
 
     // Validate required fields exist
     if (!data.tenant_id || !data.expires_at) {
@@ -79,6 +86,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // Inject X-SoulKey header for /v1/* and /dash/* API requests so the Next.js rewrite
+  // forwards authentication to the soulauth backend.  The SoulKey lives in
+  // an HttpOnly cookie that client-side JS cannot read, but middleware can.
+  if (pathname.startsWith("/v1/") || pathname.startsWith("/dash/")) {
+    const soulkey = request.cookies.get(SESSION_COOKIE)?.value || request.cookies.get("tiresias_oidc_session")?.value;
+    if (soulkey) {
+      const headers = new Headers(request.headers);
+      headers.set("X-SoulKey", soulkey);
+      headers.set("Authorization", `Bearer ${soulkey}`);
+      return NextResponse.next({
+        request: { headers },
+      });
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -86,5 +108,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/login",
+    "/v1/:path*",
+    "/dash/:path*",
   ],
 };

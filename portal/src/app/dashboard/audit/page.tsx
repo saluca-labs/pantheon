@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useWidgetData } from "@/lib/useWidgetData";
+import { getStoredTenantId } from "@/lib/api";
 
-/** Audit log viewer -- filterable event stream with type and severity columns. Uses hardcoded mock data. */
+/** Audit log viewer -- filterable event stream with type and severity columns. Fetches live data from SoulAuth audit endpoint. */
 
 interface AuditEvent {
   id: string;
@@ -16,28 +18,50 @@ interface AuditEvent {
   details: string;
 }
 
-const MOCK_EVENTS: AuditEvent[] = [
-  { id: "1", timestamp: "2026-03-18 14:34:02", eventType: "EVALUATE", agentPrefix: "sk_7f3a...", action: "read", resource: "customer-data/segment-q1", result: "ALLOW", details: "Standard read evaluation -- policy: analytics-team.yaml" },
-  { id: "2", timestamp: "2026-03-18 14:33:45", eventType: "EVALUATE", agentPrefix: "sk_3b7d...", action: "read", resource: "tickets/TKT-8847", result: "ALLOW", details: "Support agent ticket access -- policy: custom.yaml" },
-  { id: "3", timestamp: "2026-03-18 14:32:01", eventType: "ANOMALY", agentPrefix: "sk_8a1c...", action: "write", resource: "compliance-reports/q1-draft", result: "DENY", details: "Suspended agent attempted write. Anomaly score: 92. Auto-quarantine triggered." },
-  { id: "4", timestamp: "2026-03-18 14:29:55", eventType: "EVALUATE", agentPrefix: "sk_9e2b...", action: "execute", resource: "scan/vulnerability-check", result: "ALLOW", details: "Security scanner routine execution -- policy: default.yaml" },
-  { id: "5", timestamp: "2026-03-18 14:28:44", eventType: "KEY_EVENT", agentPrefix: "sk_2e6a...", action: "key_rotate", resource: "soulkeys/sk_2e6a...", result: "ALLOW", details: "Scheduled key rotation completed. New key issued with 90-day TTL." },
-  { id: "6", timestamp: "2026-03-18 14:20:11", eventType: "EVALUATE", agentPrefix: "sk_9e2b...", action: "read", resource: "logs/auth-events", result: "ALLOW", details: "Log access for security audit -- policy: admin-agents.yaml" },
-  { id: "7", timestamp: "2026-03-18 14:16:40", eventType: "EVALUATE", agentPrefix: "sk_1d4f...", action: "execute", resource: "pipelines/staging-deploy", result: "ALLOW", details: "Deployment pipeline triggered -- policy: custom.yaml" },
-  { id: "8", timestamp: "2026-03-18 14:10:33", eventType: "EVALUATE", agentPrefix: "sk_9e2b...", action: "write", resource: "alerts/cve-2026-1234", result: "ALLOW", details: "Security alert creation -- policy: default.yaml" },
-  { id: "9", timestamp: "2026-03-18 13:59:30", eventType: "POLICY", agentPrefix: "system", action: "sync", resource: "policies/quarantine-rules.yaml", result: "ALLOW", details: "Git sync completed. 1 file updated from main branch." },
-  { id: "10", timestamp: "2026-03-18 13:55:07", eventType: "EVALUATE", agentPrefix: "sk_9e2b...", action: "read", resource: "config/firewall-rules", result: "ALLOW", details: "Config read for vulnerability scan correlation -- policy: admin-agents.yaml" },
-  { id: "11", timestamp: "2026-03-18 13:49:10", eventType: "EVALUATE", agentPrefix: "sk_2e6a...", action: "read", resource: "billing/gcp-march", result: "ALLOW", details: "Cost optimizer billing data access -- policy: custom.yaml" },
-  { id: "12", timestamp: "2026-03-18 13:45:33", eventType: "ANOMALY", agentPrefix: "sk_5c8e...", action: "read", resource: "data-lake/raw/events", result: "ALLOW", details: "Unusual access volume detected. 3x normal read rate. Monitoring escalated." },
-  { id: "13", timestamp: "2026-03-18 13:40:05", eventType: "EVALUATE", agentPrefix: "sk_2e6a...", action: "write", resource: "recommendations/right-size-batch", result: "ALLOW", details: "Cost optimization recommendations generated -- policy: custom.yaml" },
-  { id: "14", timestamp: "2026-03-18 13:35:22", eventType: "EVALUATE", agentPrefix: "sk_5c8e...", action: "execute", resource: "etl/daily-ingest", result: "ALLOW", details: "ETL pipeline execution -- policy: custom.yaml, time_window condition met" },
-  { id: "15", timestamp: "2026-03-18 13:30:55", eventType: "EVALUATE", agentPrefix: "sk_1d4f...", action: "read", resource: "config/secrets-staging", result: "DENY", details: "Secret access denied -- insufficient clearance. Policy: admin-agents.yaml requires elevated clearance." },
-  { id: "16", timestamp: "2026-03-18 13:20:11", eventType: "KEY_EVENT", agentPrefix: "sk_4f0b...", action: "key_revoke", resource: "soulkeys/sk_4f0b...", result: "ALLOW", details: "Key revoked for legacy-migrator. Migration project completed." },
-  { id: "17", timestamp: "2026-03-18 12:30:00", eventType: "EVALUATE", agentPrefix: "sk_2e6a...", action: "read", resource: "billing/aws-march", result: "ALLOW", details: "Cross-cloud billing access for cost analysis -- policy: custom.yaml" },
-  { id: "18", timestamp: "2026-03-18 12:00:01", eventType: "POLICY", agentPrefix: "system", action: "validate", resource: "policies/*", result: "ALLOW", details: "Scheduled policy validation. All 5 policy files validated successfully." },
-  { id: "19", timestamp: "2026-03-18 11:45:30", eventType: "EVALUATE", agentPrefix: "sk_5c8e...", action: "write", resource: "data-lake/processed/events", result: "ALLOW", details: "Processed data write to data lake -- policy: custom.yaml" },
-  { id: "20", timestamp: "2026-03-18 11:30:15", eventType: "ANOMALY", agentPrefix: "sk_6d9e...", action: "read", resource: "metrics/network-ingress", result: "ALLOW", details: "Off-hours access pattern detected (weekend). Low severity -- monitoring only." },
-];
+/** Map backend event_type strings to the UI's event type categories */
+function mapEventType(raw: string): AuditEvent["eventType"] {
+  const normalized = (raw || "").toLowerCase();
+  if (normalized.includes("key_")) return "KEY_EVENT";
+  if (normalized.includes("policy") || normalized === "policy_synced") return "POLICY";
+  if (
+    normalized.includes("anomaly") ||
+    normalized.includes("quarantine") ||
+    normalized.includes("scope_violation")
+  )
+    return "ANOMALY";
+  // auth_grant, auth_deny, capability_*, escalation_*, etc. → EVALUATE
+  return "EVALUATE";
+}
+
+/** Map backend decision to ALLOW/DENY */
+function mapDecision(decision: string | null, eventType: string): AuditEvent["result"] {
+  if (decision) {
+    const d = decision.toLowerCase();
+    if (d === "deny" || d === "denied" || d === "blocked") return "DENY";
+    if (d === "allow" || d === "allowed" || d === "granted" || d === "grant") return "ALLOW";
+  }
+  // Infer from event_type if decision is null
+  const et = (eventType || "").toLowerCase();
+  if (et.includes("deny") || et.includes("violation") || et.includes("quarantine")) return "DENY";
+  return "ALLOW";
+}
+
+interface AuditApiResponse {
+  tenant_id: string;
+  count: number;
+  events: {
+    id: string;
+    timestamp: string | null;
+    event_type: string;
+    persona_id: string | null;
+    resource: string | null;
+    action: string | null;
+    scope: string | null;
+    decision: string | null;
+    reason: string | null;
+    context: Record<string, unknown> | null;
+  }[];
+}
 
 const eventTypeColor: Record<AuditEvent["eventType"], string> = {
   EVALUATE: "bg-blue-500/15 text-blue-400 border border-blue-500/20",
@@ -56,9 +80,56 @@ export default function AuditPage() {
   const [resultFilter, setResultFilter] = useState("All");
   const [agentFilter, setAgentFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const totalEvents = 1247;
 
-  const filtered = MOCK_EVENTS.filter((e) => {
+  const tenantId = typeof window !== "undefined" ? getStoredTenantId() : null;
+
+  const transform = useCallback(
+    (raw: unknown): AuditEvent[] => {
+      const resp = raw as AuditApiResponse;
+      if (!resp || !resp.events || !Array.isArray(resp.events)) return [];
+      return resp.events.map((e) => ({
+        id: e.id,
+        timestamp: e.timestamp
+          ? new Date(e.timestamp).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            })
+          : "—",
+        eventType: mapEventType(e.event_type),
+        agentPrefix: e.persona_id
+          ? e.persona_id.length > 10
+            ? `${e.persona_id.slice(0, 8)}...`
+            : e.persona_id
+          : "system",
+        action: e.action || e.event_type || "—",
+        resource: e.resource || "—",
+        result: mapDecision(e.decision, e.event_type),
+        details: e.reason || (e.context ? JSON.stringify(e.context) : "—"),
+      }));
+    },
+    [],
+  );
+
+  const endpoint = tenantId
+    ? `/v1/soulauth/admin/audit/report?tenant_id=${tenantId}&limit=200`
+    : null;
+
+  const { data: events, loading, error } = useWidgetData<AuditEvent[]>({
+    endpoint: endpoint || "/v1/soulauth/admin/audit/report?limit=200",
+    transform,
+    skip: !tenantId,
+    refreshInterval: 30000,
+  });
+
+  const allEvents = events || [];
+  const totalEvents = allEvents.length;
+
+  const filtered = allEvents.filter((e) => {
     if (eventTypeFilter !== "All" && e.eventType !== eventTypeFilter) return false;
     if (resultFilter !== "All" && e.result !== resultFilter) return false;
     if (agentFilter && !e.agentPrefix.toLowerCase().includes(agentFilter.toLowerCase())) return false;
@@ -78,7 +149,7 @@ export default function AuditPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Audit Trail</h1>
           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20">
-            {totalEvents.toLocaleString()} events
+            {loading ? "..." : totalEvents.toLocaleString()} events
           </span>
         </div>
         <button className="group px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200 flex items-center gap-2">
@@ -173,33 +244,58 @@ export default function AuditPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((event, index) => (
-                <motion.tr
-                  key={event.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.02 }}
-                  className={`border-b border-white/5 hover:bg-white/[0.03] transition-all duration-200 ${
-                    index % 2 === 1 ? "bg-white/[0.01]" : ""
-                  }`}
-                >
-                  <td className="px-4 py-3 font-mono text-xs text-foreground-muted whitespace-nowrap">{event.timestamp}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${eventTypeColor[event.eventType]}`}>
-                      {event.eventType}
-                    </span>
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-foreground-subtle text-sm">
+                    Loading audit events...
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-teal-400">{event.agentPrefix}</td>
-                  <td className="px-4 py-3 text-foreground">{event.action}</td>
-                  <td className="px-4 py-3 text-foreground-muted font-mono text-xs max-w-[200px] truncate">{event.resource}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${resultColor[event.result]}`}>
-                      {event.result}
-                    </span>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-foreground-subtle text-sm">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-orange-400">Failed to load audit events</span>
+                      <span className="text-xs text-foreground-subtle">{error}</span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-foreground-subtle max-w-[250px] truncate">{event.details}</td>
-                </motion.tr>
-              ))}
+                </tr>
+              )}
+              {!loading && !error && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-foreground-subtle text-sm">
+                    No audit events yet
+                  </td>
+                </tr>
+              )}
+              {!loading &&
+                filtered.map((event, index) => (
+                  <motion.tr
+                    key={event.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.02 }}
+                    className={`border-b border-white/5 hover:bg-white/[0.03] transition-all duration-200 ${
+                      index % 2 === 1 ? "bg-white/[0.01]" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-foreground-muted whitespace-nowrap">{event.timestamp}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${eventTypeColor[event.eventType]}`}>
+                        {event.eventType}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-teal-400">{event.agentPrefix}</td>
+                    <td className="px-4 py-3 text-foreground">{event.action}</td>
+                    <td className="px-4 py-3 text-foreground-muted font-mono text-xs max-w-[200px] truncate">{event.resource}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${resultColor[event.result]}`}>
+                        {event.result}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-foreground-subtle max-w-[250px] truncate">{event.details}</td>
+                  </motion.tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -207,7 +303,7 @@ export default function AuditPage() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
           <span className="text-xs text-foreground-subtle">
-            Showing 1-{filtered.length} of {totalEvents.toLocaleString()} events
+            Showing {filtered.length} of {totalEvents.toLocaleString()} events
           </span>
           <div className="flex items-center gap-1">
             <button

@@ -1,20 +1,64 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useWidgetData } from "@/lib/useWidgetData";
 
-/** SoulGate overview -- API gateway metrics, routing rules, and rate limit summary. Uses hardcoded mock data. */
+/** SoulGate overview -- API gateway metrics, routing rules, and rate limit summary. Fetches live data with mock fallback. */
 
-/* ---- Mock Data ---- */
+/* ---- Types ---- */
 
-const HOURLY_REQUESTS = Array.from({ length: 24 }, (_, i) => ({
+interface GateMetrics {
+  requests_per_min?: number;
+  blocked_24h?: number;
+  active_upstreams?: number;
+  circuit_breakers_open?: number;
+  hourly_requests?: { hour: string; total: number; blocked: number }[];
+  block_reasons?: { reason: string; count: number; pct: number }[];
+}
+
+interface Upstream {
+  id?: string;
+  name: string;
+  status: "healthy" | "degraded" | "down";
+  base_url?: string;
+  timeout_ms?: number;
+  circuit_breaker_enabled?: boolean;
+  latency?: number;
+  circuitBreaker?: "closed" | "open" | "half_open";
+}
+
+interface BlockEntry {
+  id?: string;
+  persona_id?: string;
+  agent?: string;
+  soulkey_id?: string;
+  soulkey?: string;
+  block_reason?: string;
+  reason?: string;
+  blocked_count?: number;
+  blocked?: number;
+  created_at?: string;
+  lastBlocked?: string;
+}
+
+interface SoulGateDashboard {
+  metrics: GateMetrics | null;
+  upstreams: Upstream[] | null;
+  blocks: BlockEntry[] | null;
+  fetched_at: string;
+}
+
+/* ---- Mock Fallback Data ---- */
+
+const MOCK_HOURLY_REQUESTS = Array.from({ length: 24 }, (_, i) => ({
   hour: `${String(i).padStart(2, "0")}:00`,
   total: Math.floor(Math.random() * 8000) + 2000 + (i >= 9 && i <= 17 ? 5000 : 0),
   blocked: Math.floor(Math.random() * 400) + 50 + (i >= 2 && i <= 5 ? 200 : 0),
 }));
 
-const BLOCK_REASONS = [
+const MOCK_BLOCK_REASONS = [
   { reason: "Rate Limit", count: 1842, color: "bg-amber-500", pct: 42 },
   { reason: "Token Invalid", count: 876, color: "bg-red-500", pct: 20 },
   { reason: "Injection Detected", count: 657, color: "bg-purple-500", pct: 15 },
@@ -22,7 +66,7 @@ const BLOCK_REASONS = [
   { reason: "IP Blocked", count: 438, color: "bg-orange-500", pct: 10 },
 ];
 
-const TOP_BLOCKED_AGENTS = [
+const MOCK_TOP_BLOCKED_AGENTS = [
   { agent: "test-agent-beta", soulkey: "sk_f2b9...", blocked: 312, reason: "rate_limit", lastBlocked: "2 min ago" },
   { agent: "scraper-unknown", soulkey: "sk_0000...", blocked: 287, reason: "token_invalid", lastBlocked: "5 min ago" },
   { agent: "data-pipeline", soulkey: "sk_5c8e...", blocked: 156, reason: "rate_limit", lastBlocked: "12 min ago" },
@@ -30,16 +74,37 @@ const TOP_BLOCKED_AGENTS = [
   { agent: "compliance-checker", soulkey: "sk_8a1c...", blocked: 89, reason: "geo_block", lastBlocked: "31 min ago" },
 ];
 
-const UPSTREAMS = [
-  { name: "analytics-api", status: "healthy" as const, latency: 42, circuitBreaker: "closed" as const },
-  { name: "auth-service", status: "healthy" as const, latency: 18, circuitBreaker: "closed" as const },
-  { name: "data-lake", status: "degraded" as const, latency: 340, circuitBreaker: "closed" as const },
-  { name: "ml-inference", status: "healthy" as const, latency: 128, circuitBreaker: "closed" as const },
-  { name: "notification-svc", status: "down" as const, latency: 0, circuitBreaker: "open" as const },
-  { name: "billing-api", status: "healthy" as const, latency: 65, circuitBreaker: "closed" as const },
+const MOCK_UPSTREAMS: Upstream[] = [
+  { name: "analytics-api", status: "healthy", latency: 42, circuitBreaker: "closed" },
+  { name: "auth-service", status: "healthy", latency: 18, circuitBreaker: "closed" },
+  { name: "data-lake", status: "degraded", latency: 340, circuitBreaker: "closed" },
+  { name: "ml-inference", status: "healthy", latency: 128, circuitBreaker: "closed" },
+  { name: "notification-svc", status: "down", latency: 0, circuitBreaker: "open" },
+  { name: "billing-api", status: "healthy", latency: 65, circuitBreaker: "closed" },
 ];
 
-const maxRequests = Math.max(...HOURLY_REQUESTS.map((h) => h.total));
+/* ---- Helpers ---- */
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = (mins / 60).toFixed(1);
+  return `${hrs} hours ago`;
+}
+
+const REASON_COLOR_MAP: Record<string, string> = {
+  "Rate Limit": "bg-amber-500",
+  "rate_limit": "bg-amber-500",
+  "Token Invalid": "bg-red-500",
+  "token_invalid": "bg-red-500",
+  "Injection Detected": "bg-purple-500",
+  "injection": "bg-purple-500",
+  "Geo Blocked": "bg-blue-500",
+  "geo_block": "bg-blue-500",
+  "IP Blocked": "bg-orange-500",
+  "ip_block": "bg-orange-500",
+};
 
 const reasonBadge: Record<string, string> = {
   rate_limit: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
@@ -101,6 +166,68 @@ function AnimatedCount({ target, className, suffix = "" }: { target: number; cla
 export default function SoulGateDashboardPage() {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
+  /* ---- Live data fetch ---- */
+  const { data: dashData, loading } = useWidgetData<SoulGateDashboard>({
+    endpoint: "/api/soulgate/dashboard",
+    refreshInterval: 30000,
+  });
+
+  /* ---- Derived state: live data or mock fallback ---- */
+  const isLive = dashData !== null && (
+    (dashData.metrics !== null) ||
+    (dashData.upstreams && dashData.upstreams.length > 0) ||
+    (dashData.blocks && dashData.blocks.length > 0)
+  );
+
+  const hourlyRequests = useMemo(() => {
+    if (isLive && dashData?.metrics?.hourly_requests && dashData.metrics.hourly_requests.length > 0) {
+      return dashData.metrics.hourly_requests;
+    }
+    return MOCK_HOURLY_REQUESTS;
+  }, [isLive, dashData]);
+
+  const blockReasons = useMemo(() => {
+    if (isLive && dashData?.metrics?.block_reasons && dashData.metrics.block_reasons.length > 0) {
+      return dashData.metrics.block_reasons.map((r) => ({
+        ...r,
+        color: REASON_COLOR_MAP[r.reason] || "bg-gray-500",
+      }));
+    }
+    return MOCK_BLOCK_REASONS;
+  }, [isLive, dashData]);
+
+  const topBlockedAgents = useMemo(() => {
+    if (isLive && dashData?.blocks && dashData.blocks.length > 0) {
+      return dashData.blocks.map((b) => ({
+        agent: b.agent || b.persona_id || "unknown",
+        soulkey: b.soulkey || (b.soulkey_id ? `${b.soulkey_id.substring(0, 8)}...` : "unknown"),
+        blocked: b.blocked_count || b.blocked || 0,
+        reason: b.block_reason || b.reason || "unknown",
+        lastBlocked: b.lastBlocked || (b.created_at ? timeAgo(b.created_at) : "unknown"),
+      }));
+    }
+    return MOCK_TOP_BLOCKED_AGENTS;
+  }, [isLive, dashData]);
+
+  const upstreams = useMemo(() => {
+    if (isLive && dashData?.upstreams && dashData.upstreams.length > 0) {
+      return dashData.upstreams.map((u) => ({
+        name: u.name,
+        status: u.status || "healthy" as const,
+        latency: u.latency ?? 0,
+        circuitBreaker: u.circuitBreaker || (u.circuit_breaker_enabled ? "closed" : "closed") as "closed" | "open" | "half_open",
+      }));
+    }
+    return MOCK_UPSTREAMS;
+  }, [isLive, dashData]);
+
+  const requestsPerMin = dashData?.metrics?.requests_per_min ?? 2847;
+  const blocked24h = dashData?.metrics?.blocked_24h ?? 4361;
+  const activeUpstreams = dashData?.metrics?.active_upstreams ?? upstreams.filter((u) => u.status !== "down").length;
+  const cbOpen = dashData?.metrics?.circuit_breakers_open ?? upstreams.filter((u) => u.circuitBreaker === "open").length;
+
+  const maxRequests = Math.max(...hourlyRequests.map((h) => h.total), 1);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -109,8 +236,15 @@ export default function SoulGateDashboardPage() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">SoulGate</h1>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-medium text-green-400">Gateway active</span>
+            <span className="text-xs font-medium text-green-400">
+              {loading ? "Connecting..." : isLive ? "Live" : "Gateway active"}
+            </span>
           </div>
+          {!isLive && !loading && (
+            <span className="text-[10px] text-foreground-subtle px-2 py-0.5 rounded bg-white/5 border border-white/10">
+              Demo data
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -131,22 +265,22 @@ export default function SoulGateDashboardPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Requests / Min", value: 2847, color: "text-amber-400", icon: (
+          { label: "Requests / Min", value: requestsPerMin, color: "text-amber-400", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
           )},
-          { label: "Blocked (24h)", value: 4361, color: "text-red-400", icon: (
+          { label: "Blocked (24h)", value: blocked24h, color: "text-red-400", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           )},
-          { label: "Active Upstreams", value: 5, color: "text-of-primary", icon: (
+          { label: "Active Upstreams", value: activeUpstreams, color: "text-of-primary", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
             </svg>
           )},
-          { label: "Circuit Breakers Open", value: 1, color: "text-blue-400", icon: (
+          { label: "Circuit Breakers Open", value: cbOpen, color: "text-blue-400", icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
@@ -176,7 +310,7 @@ export default function SoulGateDashboardPage() {
         <div className="lg:col-span-2 bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Request Volume (Last 24 Hours)</h3>
           <div className="flex items-end gap-1 h-48">
-            {HOURLY_REQUESTS.map((h, i) => {
+            {hourlyRequests.map((h, i) => {
               const height = maxRequests > 0 ? (h.total / maxRequests) * 100 : 0;
               const blockedHeight = maxRequests > 0 ? (h.blocked / maxRequests) * 100 : 0;
               const isHovered = hoveredBar === i;
@@ -239,7 +373,7 @@ export default function SoulGateDashboardPage() {
         <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Block Reasons (24h)</h3>
           <div className="space-y-3">
-            {BLOCK_REASONS.map((item, i) => (
+            {blockReasons.map((item, i) => (
               <motion.div
                 key={item.reason}
                 initial={{ opacity: 0, x: 8 }}
@@ -264,7 +398,7 @@ export default function SoulGateDashboardPage() {
           </div>
           <div className="mt-4 pt-3 border-t border-white/5 text-center">
             <span className="text-xs text-foreground-subtle">
-              Total blocked: <span className="text-foreground font-mono">4,361</span>
+              Total blocked: <span className="text-foreground font-mono">{blocked24h.toLocaleString()}</span>
             </span>
           </div>
         </div>
@@ -289,9 +423,9 @@ export default function SoulGateDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {TOP_BLOCKED_AGENTS.map((agent, i) => (
+              {topBlockedAgents.map((agent, i) => (
                 <motion.tr
-                  key={agent.agent}
+                  key={agent.agent + i}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3 }}
@@ -305,8 +439,8 @@ export default function SoulGateDashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-red-400 font-mono text-xs font-bold">{agent.blocked}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${reasonBadge[agent.reason]}`}>
-                      {reasonLabel[agent.reason]}
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${reasonBadge[agent.reason] || "bg-gray-500/15 text-gray-400 border border-gray-500/20"}`}>
+                      {reasonLabel[agent.reason] || agent.reason}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-foreground-muted text-xs">{agent.lastBlocked}</td>
@@ -326,7 +460,7 @@ export default function SoulGateDashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {UPSTREAMS.map((upstream, i) => (
+          {upstreams.map((upstream, i) => (
             <motion.div
               key={upstream.name}
               initial={{ opacity: 0, y: 8 }}
@@ -347,16 +481,16 @@ export default function SoulGateDashboardPage() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-foreground-subtle">Latency</span>
                 <span className={`font-mono ${
-                  upstream.latency === 0 ? "text-red-400" :
-                  upstream.latency > 200 ? "text-yellow-400" : "text-foreground-muted"
+                  (upstream.latency ?? 0) === 0 ? "text-red-400" :
+                  (upstream.latency ?? 0) > 200 ? "text-yellow-400" : "text-foreground-muted"
                 }`}>
-                  {upstream.latency === 0 ? "N/A" : `${upstream.latency}ms`}
+                  {(upstream.latency ?? 0) === 0 ? "N/A" : `${upstream.latency}ms`}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs mt-1">
                 <span className="text-foreground-subtle">Circuit Breaker</span>
-                <span className={`font-mono capitalize ${cbColor[upstream.circuitBreaker]}`}>
-                  {upstream.circuitBreaker}
+                <span className={`font-mono capitalize ${cbColor[upstream.circuitBreaker ?? "closed"]}`}>
+                  {upstream.circuitBreaker ?? "closed"}
                 </span>
               </div>
             </motion.div>
@@ -368,11 +502,11 @@ export default function SoulGateDashboardPage() {
       <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
         <h3 className="text-sm font-semibold text-foreground mb-2">Quick Navigation</h3>
         {[
-          { label: "Upstreams", href: "/dashboard/soulgate/upstreams", count: "6 registered", color: "text-of-primary" },
+          { label: "Upstreams", href: "/dashboard/soulgate/upstreams", count: `${upstreams.length} registered`, color: "text-of-primary" },
           { label: "Rate Limits", href: "/dashboard/soulgate/rate-limits", count: "4 policies", color: "text-amber-400" },
           { label: "Access Rules", href: "/dashboard/soulgate/access", count: "12 rules", color: "text-blue-400" },
           { label: "API Keys", href: "/dashboard/soulgate/keys", count: "8 active", color: "text-of-primary" },
-          { label: "Audit Log", href: "/dashboard/soulgate/audit", count: "4,361 blocked", color: "text-red-400" },
+          { label: "Audit Log", href: "/dashboard/soulgate/audit", count: `${blocked24h.toLocaleString()} blocked`, color: "text-red-400" },
         ].map((item, i) => (
           <motion.div
             key={item.label}
