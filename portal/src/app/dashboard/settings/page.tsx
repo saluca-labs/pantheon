@@ -25,6 +25,7 @@ import { TierGate } from "@/components/dashboard/TierGate";
 import { api, ApiError } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 import { SSOSettingsTab } from "@/components/sso/SSOSettingsTab";
+import { useAuth } from "@/lib/auth";
 
 type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso";
 
@@ -108,8 +109,18 @@ function SettingsPageInner() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab) || "general";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
-  const [tenantName, setTenantName] = useState("Acme Corp");
-  const [contactEmail, setContactEmail] = useState("admin@acme.com");
+  const { session } = useAuth();
+
+  // Read tenant/email from OIDC data cookie (set by local/OIDC login)
+  const oidcData = (() => {
+    if (typeof document === "undefined") return null;
+    const match = document.cookie.match(/tiresias_oidc_data=([^;]+)/);
+    if (!match) return null;
+    try { return JSON.parse(decodeURIComponent(match[1])); } catch { return null; }
+  })();
+
+  const [tenantName, setTenantName] = useState(session?.tenant_name || oidcData?.tenant_name || "");
+  const [contactEmail, setContactEmail] = useState(oidcData?.email || "");
   const [copied, setCopied] = useState(false);
   const [channels, setChannels] = useState(NOTIFICATION_CHANNELS);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -142,7 +153,7 @@ function SettingsPageInner() {
   const [upgrading, setUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
-  const tenantId = "tnt_acme_7f3a8b2c1d4e5f6a";
+  const tenantId = session?.tenant_id || "";
 
   // Fetch keys when API Keys tab is active
   const fetchKeys = useCallback(async () => {

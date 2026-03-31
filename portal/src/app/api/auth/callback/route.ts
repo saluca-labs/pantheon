@@ -9,6 +9,7 @@ import { config } from "@/lib/config";
 
 const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
+const TENANT_COOKIE = "tiresias_tenant";
 const OIDC_SESSION_TTL = 28800; // 8 hours in seconds
 
 
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
     const session_token = data.session_token;
     const tenant_id = data.tenant_id;
+    const tenant_name = data.tenant_name || null;
     const role = data.admin_role || "viewer";
     const email = data.email;
     const display_name = data.display_name;
@@ -75,10 +77,20 @@ export async function GET(request: NextRequest) {
       picture: null,
       role,
       tenant_id,
+      tenant_name,
       expires_at,
     });
 
     response.cookies.set(OIDC_DATA_COOKIE, oidcData, {
+      httpOnly: false,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge: OIDC_SESSION_TTL,
+    });
+
+    // Tenant cookie: used by the API client for X-Tenant-ID header
+    response.cookies.set(TENANT_COOKIE, tenant_id, {
       httpOnly: false,
       secure: isSecure,
       sameSite: "lax",
