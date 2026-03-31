@@ -16,8 +16,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import { Search, Bell, Settings } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import { Search, Bell, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { tierMeets } from "@/components/dashboard/TierGate";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -90,8 +91,23 @@ const BADGE_TIERS: Record<string, { label: string; className: string }> = {
 export default function DashboardHeader() {
   const pathname = usePathname();
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const { branding } = useBranding();
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close avatar dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        setAvatarMenuOpen(false);
+      }
+    }
+    if (avatarMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [avatarMenuOpen]);
   const badge = session?.tier ? BADGE_TIERS[session.tier] : undefined;
   const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
 
@@ -174,15 +190,61 @@ export default function DashboardHeader() {
         </button>
 
         {/* Settings */}
-        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container transition-colors">
+        <Link
+          href="/dashboard/settings"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container transition-colors"
+          title="Settings"
+        >
           <Settings className="h-4 w-4" />
-        </button>
+        </Link>
 
-        {/* User avatar */}
-        <div className="h-8 w-8 rounded-full bg-of-primary/20 border border-of-primary/30 flex items-center justify-center">
-          <span className="text-xs font-bold text-of-primary">
-            {session?.tenant_name?.slice(0, 1).toUpperCase() ?? "T"}
-          </span>
+        {/* User avatar with dropdown */}
+        <div className="relative" ref={avatarMenuRef}>
+          <button
+            onClick={() => setAvatarMenuOpen((v) => !v)}
+            className="h-8 w-8 rounded-full bg-of-primary/20 border border-of-primary/30 flex items-center justify-center cursor-pointer hover:bg-of-primary/30 transition-colors"
+            title="Account menu"
+          >
+            <span className="text-xs font-bold text-of-primary">
+              {session?.tenant_name?.slice(0, 1).toUpperCase() ?? "T"}
+            </span>
+          </button>
+
+          {avatarMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-of-outline-variant/20 bg-of-surface-container shadow-xl py-1 z-50">
+              {/* Tenant / user info */}
+              <div className="px-4 py-2.5 border-b border-of-outline-variant/10">
+                <p className="text-sm font-semibold text-of-on-surface truncate">
+                  {session?.tenant_name ?? "Tenant"}
+                </p>
+                <p className="text-xs text-of-on-surface-variant truncate">
+                  {session?.tenant_id ?? ""}
+                </p>
+              </div>
+
+              {/* Settings link */}
+              <Link
+                href="/dashboard/settings"
+                onClick={() => setAvatarMenuOpen(false)}
+                className="flex items-center gap-2.5 px-4 py-2 text-sm text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container-high transition-colors"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Settings
+              </Link>
+
+              {/* Logout */}
+              <button
+                onClick={() => {
+                  setAvatarMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-of-surface-container-high transition-colors"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Log out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
