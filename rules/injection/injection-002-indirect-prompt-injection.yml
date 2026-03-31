@@ -1,0 +1,70 @@
+title: Indirect Prompt Injection via Tool Output
+id: injection-002
+status: stable
+level: critical
+description: |
+  Detects prompt injection patterns appearing in tool call responses,
+  retrieved documents, API responses, or any data fetched by the agent
+  from external sources. Indirect injection is particularly dangerous
+  because the malicious payload is embedded in trusted data channels,
+  not direct user input. Attackers plant instructions in web pages,
+  documents, database records, or API responses that the agent will
+  process as part of its workflow.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-002
+  - https://atlas.mitre.org/techniques/AML.T0051.001
+tags:
+  - attack.initial_access
+  - attack.execution
+  - atlas.aml.t0051.001
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulwatch
+detection:
+  selection:
+    event_type: tool_response
+    data_source:
+      - web_fetch
+      - document_retrieval
+      - api_response
+      - database_query
+      - email_content
+      - file_read
+  injection_patterns:
+    response_content|re:
+      - '(?i)ignore\s+(previous|prior|above|all)\s+(instructions?|prompts?|rules?)'
+      - '(?i)you\s+are\s+now\s+(a|an|the)'
+      - '(?i)new\s+instructions?\s*[:=]'
+      - '(?i)system\s*prompt\s*[:=]'
+      - '(?i)IMPORTANT:\s*(ignore|disregard|override|forget)'
+      - '(?i)(assistant|ai|bot)\s*[:=]\s*I\s+will'
+      - '(?i)\[hidden\s*instruction\]'
+      - '(?i)<!--\s*(inject|override|system)'
+      - '<\|im_start\|>'
+      - '(?i)do\s+not\s+tell\s+the\s+user'
+  invisible_text:
+    response_content|re:
+      - '[\x00-\x08\x0e-\x1f]{10,}'
+      - '[\u200b\u200c\u200d\ufeff]{5,}'
+      - '(?:<span[^>]*style="[^"]*display:\s*none[^"]*"[^>]*>)'
+      - '(?:<div[^>]*style="[^"]*font-size:\s*0[^"]*"[^>]*>)'
+  condition: selection and (injection_patterns or invisible_text)
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - data_source
+  - source_url
+  - response_content_hash
+  - response_content_snippet
+  - matched_pattern
+  - invisible_char_count
+  - timestamp
+falsepositives:
+  - Security documentation discussing injection techniques
+  - Crawling security research blogs that contain injection examples
+  - Legitimate HTML with hidden accessibility elements
+response_playbook: playbook-injection-002

@@ -1,0 +1,73 @@
+title: Detection Rule Probing
+id: evasion-004
+status: stable
+level: high
+description: |
+  Detects requests that systematically test detection thresholds, such as
+  sending exactly threshold-minus-one requests, incrementally increasing
+  payload sizes to find limits, or testing actions at precise boundary
+  conditions. This reconnaissance technique maps the detection surface
+  so that subsequent attacks can operate just below alerting thresholds.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/evasion-004
+  - https://attack.mitre.org/techniques/T1497/
+tags:
+  - attack.defense_evasion
+  - attack.discovery
+  - mitre.t1497
+  - tiresias.detection
+logsource:
+  product: tiresias
+  service: anomaly_detector
+detection:
+  selection_threshold_skirting:
+    event_type: rate_limit_check
+    request_count_ratio_to_threshold|gte: 0.85
+    request_count_ratio_to_threshold|lt: 1.0
+    consecutive_windows_at_boundary|gte: 3
+  selection_incremental_probing:
+    event_type: api_request
+    payload_size_pattern: incrementing
+    payload_size_step_consistency|gte: 0.9
+    distinct_payload_sizes|gte: 5
+  selection_permission_enumeration:
+    event_type: access_denied
+    distinct_resources_attempted|gte: 10
+    time_between_attempts_consistency|gte: 0.8
+  selection_error_harvesting:
+    event_type: api_response
+    response_status|in:
+      - 403
+      - 429
+      - 413
+    distinct_error_types_collected|gte: 5
+    source_agent_behavioral_change_after: true
+  filter_load_testing:
+    source_agent_role: load_tester
+    load_test_id|exists: true
+    authorized_test: true
+  filter_capacity_planning:
+    request_tag: capacity_assessment
+    authorized_by|exists: true
+  condition: (selection_threshold_skirting or selection_incremental_probing or selection_permission_enumeration or selection_error_harvesting) and not (filter_load_testing or filter_capacity_planning)
+  timeframe: 30m
+  group_by:
+    - source_agent_id
+fields:
+  - source_agent_id
+  - source_ip
+  - request_count
+  - threshold_value
+  - request_count_ratio_to_threshold
+  - consecutive_windows_at_boundary
+  - distinct_resources_attempted
+  - distinct_error_types_collected
+  - payload_size_pattern
+  - timestamp
+falsepositives:
+  - Authorized load testing or capacity planning exercises
+  - Agent operating at natural steady-state near rate limit
+  - Automated permission discovery during initial agent provisioning
+response_playbook: playbook-evasion-004

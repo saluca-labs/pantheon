@@ -1,0 +1,68 @@
+title: Agent Identity Impersonation
+id: lateral-004
+status: stable
+level: critical
+description: |
+  Detects an agent presenting credentials, SoulKey claims, or identity
+  assertions belonging to a different agent. Identity impersonation enables
+  an attacker to inherit the target agent's permissions, bypass access
+  controls, and operate under a trusted identity to avoid detection while
+  performing unauthorized actions across the agent mesh.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/lateral-004
+  - https://attack.mitre.org/techniques/T1134/
+tags:
+  - attack.lateral_movement
+  - attack.privilege_escalation
+  - mitre.t1134
+  - tiresias.identity
+logsource:
+  product: tiresias
+  service: soulauth
+detection:
+  selection_identity_mismatch:
+    event_type: authentication
+    claimed_agent_id|ne: authenticated_agent_id
+    authentication_result: success
+  selection_soulkey_mismatch:
+    event_type: authentication
+    soulkey_owner|ne: request_source_agent
+  selection_duplicate_identity:
+    event_type: agent_heartbeat
+    agent_id|exists: true
+    concurrent_sessions|gte: 2
+    distinct_source_ips|gte: 2
+  selection_identity_spoofing:
+    event_type: agent_request
+    x_agent_id_header|ne: tls_client_cert_agent_id
+  filter_failover:
+    event_type: agent_heartbeat
+    failover_active: true
+    failover_authorized: true
+  filter_migration:
+    event_type: authentication
+    migration_in_progress: true
+    migration_ticket|exists: true
+  condition: (selection_identity_mismatch or selection_soulkey_mismatch or selection_duplicate_identity or selection_identity_spoofing) and not (filter_failover or filter_migration)
+  timeframe: 1m
+  group_by:
+    - claimed_agent_id
+    - authenticated_agent_id
+fields:
+  - claimed_agent_id
+  - authenticated_agent_id
+  - soulkey_owner
+  - source_ip
+  - tls_client_cert_agent_id
+  - x_agent_id_header
+  - concurrent_sessions
+  - distinct_source_ips
+  - auth_method
+  - timestamp
+falsepositives:
+  - Agent migration or failover with temporary identity overlap
+  - Load balancer reassigning agent identity during scaling event
+  - Key rotation window where old and new identities briefly coexist
+response_playbook: playbook-lateral-004

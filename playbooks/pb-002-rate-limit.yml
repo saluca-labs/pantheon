@@ -1,0 +1,85 @@
+id: pb-002
+title: Rate Limit and Alert
+description: |
+  Applies adaptive rate limiting and enhanced logging when high-severity
+  exfiltration, privilege escalation, or tool abuse patterns are detected.
+  Rather than fully quarantining the agent, this playbook throttles its
+  operations to prevent damage while preserving the ability to observe
+  attacker behavior. Security analysts are alerted via Slack for triage.
+version: "1.0"
+author: Saluca LLC
+severity: high
+
+triggers:
+  - rule_id: exfil-001       # Bulk data read anomaly
+  - rule_id: exfil-002       # Slow exfiltration
+  - rule_id: exfil-003       # Encoding-based exfiltration
+  - level: high               # Any rule at high severity (privilege escalation, tool abuse)
+
+actions:
+  - type: rate_limit
+    description: Throttle agent API calls to prevent rapid exfiltration
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      limits:
+        - scope: tool_invocations
+          max_requests: 5
+          window_seconds: 60
+        - scope: data_reads
+          max_requests: 3
+          window_seconds: 60
+        - scope: external_api_calls
+          max_requests: 2
+          window_seconds: 60
+      enforcement: hard   # Reject requests exceeding the limit
+      response_code: 429
+      response_message: "Rate limit applied — security review in progress"
+      duration_minutes: 60
+      auto_expire: true
+
+  - type: enhanced_logging
+    description: Enable verbose logging for all agent operations
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      log_level: debug
+      capture:
+        - full_request_body
+        - full_response_body
+        - tool_call_arguments
+        - network_destinations
+        - data_access_patterns
+      duration_minutes: 120
+      destination: "{{ env.SIEM_LOG_ENDPOINT }}"
+      format: cef
+
+  - type: notify
+    description: Alert security channel for analyst triage
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-alerts"
+      message: |
+        :warning: *Rate Limit Applied*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* High
+        *Action taken:* Rate limited to 5 req/60s, enhanced logging enabled
+        *Tenant:* {{ alert.tenant_id }}
+        *Details:* {{ alert.description }}
+        *Time:* {{ alert.timestamp }}
+      thread_key: "rate-limit-{{ alert.agent_id }}"
+
+cooldown_minutes: 15
+requires_approval: false
+
+notification_channels:
+  - slack
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1048      # Exfiltration Over Alternative Protocol
+    - T1078      # Valid Accounts
+  mitre_atlas:
+    - AML.T0048  # Exfiltration via ML API

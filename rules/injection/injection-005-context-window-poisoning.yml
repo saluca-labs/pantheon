@@ -1,0 +1,57 @@
+title: Context Window Poisoning
+id: injection-005
+status: stable
+level: medium
+description: |
+  Detects abnormally large inputs designed to fill or overflow the agent's
+  context window, pushing safety instructions, system prompts, and prior
+  conversation context out of the effective processing window. This forces
+  the model to "forget" its guardrails, making it susceptible to follow-up
+  injection or producing unguarded responses. Also detects repeated padding
+  patterns used to consume token budget.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-005
+  - https://atlas.mitre.org/techniques/AML.T0043
+tags:
+  - attack.initial_access
+  - attack.defense_evasion
+  - atlas.aml.t0043
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulgate
+detection:
+  selection:
+    event_type: agent_input
+  oversized_input:
+    input_token_count|gte: 8000
+  repetitive_padding:
+    input_content|re:
+      - '(.{1,50})\1{20,}'
+      - '(?i)(ignore|skip|forget)\s*[\.\!\s]*\1{10,}'
+      - '\b(\w+\s+){1,3}\1{15,}'
+  rapid_context_fill:
+    event_type: agent_input
+    input_token_count|gte: 2000
+  multi_turn_flood:
+    condition: rapid_context_fill | count() by session_id > 5
+    timeframe: 3m
+  condition: selection and (oversized_input or repetitive_padding or multi_turn_flood)
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - input_token_count
+  - context_window_utilization_pct
+  - input_content_hash
+  - repetition_ratio
+  - source_ip
+  - conversation_turn_count
+  - timestamp
+falsepositives:
+  - Users pasting large code blocks or documents for analysis
+  - Bulk data processing agents receiving legitimate large inputs
+  - File upload workflows with inline content encoding
+response_playbook: playbook-injection-005

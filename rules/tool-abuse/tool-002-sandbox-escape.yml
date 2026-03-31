@@ -1,0 +1,84 @@
+title: Sandbox Escape Attempt
+id: tool-002
+status: experimental
+description: >
+  Detects AI agent tool calls attempting to access files, paths, or
+  resources outside the designated sandbox boundary. This includes
+  reads of system files, environment variable harvesting, and access
+  to sensitive configuration files.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1611/
+tags:
+  - attack.privilege_escalation
+  - attack.t1611
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.sandbox
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+
+  # System file access
+  system_files:
+    tool_arguments|re: '(?:/etc/(?:passwd|shadow|sudoers|hosts|ssh|ssl|pam\.d|security)|/proc/(?:self|[0-9]+)/(?:environ|cmdline|maps|fd)|/sys/|/boot/|/root/)'
+
+  # Environment variable harvesting
+  env_access:
+    tool_arguments|re: '(?:os\.environ|process\.env|System\.Environment|getenv|printenv|\$ENV\{|env\s*\||export\s*\|)'
+
+  # Sensitive config files
+  sensitive_configs:
+    tool_arguments|re: '(?:\.env(?:\.|$)|\.aws/credentials|\.ssh/|\.gnupg/|\.docker/config|\.kube/config|\.npmrc|\.pypirc|\.netrc|credentials\.json|service[_-]?account.*\.json|\.git-credentials)'
+
+  # Container escape indicators
+  container_escape:
+    tool_arguments|re: '(?:/var/run/docker\.sock|/run/containerd|nsenter|unshare|chroot|mount\s+-t\s+proc|/proc/1/root)'
+
+  # Metadata service access (cloud)
+  metadata_access:
+    tool_arguments|re: '(?:169\.254\.169\.254|metadata\.google\.internal|metadata\.azure\.com|100\.100\.100\.200)'
+
+  # Path outside sandbox boundary
+  sandbox_boundary:
+    tiresias_context:
+      condition: resolved_path NOT starts_with agent_sandbox_root
+      fields:
+        - resolved_path
+        - agent_sandbox_root
+
+  condition: selection AND (system_files OR env_access OR sensitive_configs OR container_escape OR metadata_access OR sandbox_boundary)
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - resolved_path
+  - agent_sandbox_root
+  - access_type  # read, write, execute
+  - access_result  # allowed, denied, error
+  - timestamp
+
+level: critical
+severity: critical
+
+falsepositives:
+  - Agents with explicit elevated filesystem access (system admin agents)
+  - Cloud infrastructure agents legitimately accessing metadata services
+  - Development agents reading project-level .env.example files
+  - Container management agents with authorized Docker socket access
+
+response:
+  - Block access immediately
+  - Terminate agent session after 3 sandbox escape attempts
+  - Alert security team with full session context
+  - Review and tighten sandbox boundary configuration
+  - Check for prompt injection that may have directed the escape attempt

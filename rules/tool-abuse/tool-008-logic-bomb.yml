@@ -1,0 +1,91 @@
+title: Time-Delayed Malicious Tool Invocation
+id: tool-008
+status: experimental
+description: >
+  Detects AI agent tool calls that set up delayed or scheduled execution,
+  including cron jobs, at commands, setTimeout chains, sleep-then-execute
+  patterns, and other time-bomb mechanisms. Delayed execution is used to
+  evade real-time detection and execute payloads after monitoring windows.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1053/
+tags:
+  - attack.execution
+  - attack.persistence
+  - attack.t1053
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.logic-bomb
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+
+  # Unix scheduled execution
+  cron_scheduling:
+    tool_arguments|re: '(?:crontab|cron\.d|/etc/cron|systemd[_-]?timer|anacron)'
+
+  at_scheduling:
+    tool_arguments|re: '(?:\bat\s+\d|at\s+now\s*\+|atq|batch\s)'
+
+  # Sleep/delay + execute chains
+  sleep_exec:
+    tool_arguments|re: '(?:sleep\s+\d+\s*(?:;|&&)\s*|time\.sleep\s*\(\s*\d+\s*\).*(?:os\.|subprocess|exec|eval)|setTimeout\s*\(\s*(?:function|\(\))\s*.*\d{4,}|Thread\.sleep\s*\(\s*\d{4,}\s*\))'
+
+  # Windows scheduled tasks
+  windows_scheduler:
+    tool_arguments|re|i: '(?:schtasks\s|New-ScheduledTask|Register-ScheduledJob|TaskScheduler|at\s+\d{1,2}:\d{2})'
+
+  # Cloud scheduled functions
+  cloud_scheduler:
+    tool_arguments|re|i: '(?:CloudWatch.*Events|EventBridge.*Schedule|Cloud\s*Scheduler|Cloud\s*Functions.*schedule|Lambda.*schedule|schedule[_-]?expression|rate\s*\(\s*\d+|cron\s*\()'
+
+  # Queue-based delayed execution
+  queue_delay:
+    tool_arguments|re|i: '(?:delay[_-]?(?:seconds|until|queue)|deliver[_-]?(?:at|after|later)|send[_-]?(?:at|after|later)|eta\s*=|countdown\s*=|visibility[_-]?timeout|message[_-]?timer)'
+
+  # Webhook/callback setup for future execution
+  callback_setup:
+    tool_arguments|re|i: '(?:webhook.*(?:schedule|timer|delay)|callback.*(?:after|delay|timer)|register.*(?:hook|callback|handler).*(?:time|schedule|delay))'
+
+  # Nohup / background persistence
+  background_persist:
+    tool_arguments|re: '(?:nohup\s|disown|screen\s+-dm|tmux\s+new.*-d|start-process.*-windowstyle\s+hidden|daemon\s)'
+
+  condition: selection AND (cron_scheduling OR at_scheduling OR sleep_exec OR windows_scheduler OR cloud_scheduler OR queue_delay OR callback_setup OR background_persist)
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - schedule_type
+  - scheduled_time  # when the delayed action would execute
+  - delay_duration  # how far in the future
+  - payload_command  # what would be executed
+  - persistence_mechanism
+  - timestamp
+
+level: high
+severity: high
+
+falsepositives:
+  - CI/CD agents configuring legitimate build schedules
+  - Monitoring agents setting up health check cron jobs
+  - Reminder/notification agents scheduling future messages
+  - Agents configuring legitimate cloud function triggers
+  - Deployment agents setting up rolling restart schedules
+
+response:
+  - Block scheduled task creation and log full payload
+  - Extract and analyze the payload that would execute after delay
+  - Check if similar payloads were blocked by other rules
+  - If a scheduled task was created, immediately remove/disable it
+  - Review agent permissions — most agents should not create scheduled tasks
+  - Alert operations team to verify no orphaned scheduled tasks exist
