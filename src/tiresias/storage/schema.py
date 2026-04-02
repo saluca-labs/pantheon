@@ -63,7 +63,6 @@ class TiresiasLicense(Base):
     config_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expiry: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    jwt_signature: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
