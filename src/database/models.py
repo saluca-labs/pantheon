@@ -13,6 +13,7 @@ from sqlalchemy import (
     String, Text, Boolean, DateTime, Float, Integer, Index, ForeignKey,
     CheckConstraint, UniqueConstraint, Uuid, JSON,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database.connection import Base
@@ -276,7 +277,7 @@ class SoulIdPConfig(Base):
     client_secret_enc: Mapped[str] = mapped_column(Text, nullable=False)
     discovery_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     issuer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    scopes: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    scopes: Mapped[Optional[list]] = mapped_column(ARRAY(Text), nullable=True)
     claim_mapping: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
     domain_hint: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     group_role_map: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
