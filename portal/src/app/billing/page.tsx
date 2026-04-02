@@ -52,7 +52,7 @@ export default function BillingPage() {
         // Fetch agent count and grace status in parallel
         const [agentsRes, graceRes] = await Promise.allSettled([
           fetch("/api/soulauth/agents"),
-          fetch("/api/partner/grace-status"),
+          fetch("/v1/billing/grace-status"),
         ]);
 
         let agentCount = 0;

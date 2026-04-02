@@ -9,15 +9,23 @@ Routes:
   DELETE /v1/siem/connectors/{id}     -- delete connector
   GET    /v1/siem/health              -- per-connector health status
 
-All endpoints require X-SoulKey header (enforced by SoulAuthPEPMiddleware).
+Connectors are persisted to _siem_connectors table and synced to the
+in-memory SIEMManager for runtime event routing.
 """
 
 from __future__ import annotations
 
-from typing import Any, Optional
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy import select, update, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database.connection import get_db
+from src.database.models import SIEMConnector
 from src.siem._state import (
     ConnectorConfig,
     ConnectorKind,
@@ -30,6 +38,7 @@ router = APIRouter(prefix="/v1/siem", tags=["SIEM"])
 # ------------------------------------------------------------------
 # Request / Response models
 # ------------------------------------------------------------------
+
 
 class ConnectorCreateRequest(BaseModel):
     kind: ConnectorKind
@@ -54,7 +63,6 @@ class ConnectorCreateRequest(BaseModel):
     filter_event_kind: list = Field(default_factory=list)
 
     def validate_kind_fields(self) -> None:
-        """Raise ValueError if required fields for the kind are missing."""
         if self.kind == ConnectorKind.SYSLOG and not self.syslog_host:
             raise ValueError("syslog_host is required for syslog connectors")
         if self.kind == ConnectorKind.WEBHOOK and not self.webhook_url:
@@ -77,39 +85,86 @@ class ConnectorUpdateRequest(BaseModel):
 
 
 # ------------------------------------------------------------------
+# Helpers: DB row <-> ConnectorConfig
+# ------------------------------------------------------------------
+
+
+def _row_to_config(row: SIEMConnector) -> ConnectorConfig:
+    """Convert a DB row to an in-memory ConnectorConfig."""
+    cfg = row.config or {}
+    return ConnectorConfig(
+        id=str(row.id),
+        kind=ConnectorKind(row.kind),
+        name=row.name,
+        enabled=row.enabled,
+        syslog_host=cfg.get("syslog_host"),
+        syslog_port=cfg.get("syslog_port", 514),
+        syslog_protocol=cfg.get("syslog_protocol", "udp"),
+        syslog_tls_verify=cfg.get("syslog_tls_verify", True),
+        syslog_tls_ca_cert=cfg.get("syslog_tls_ca_cert"),
+        webhook_url=cfg.get("webhook_url"),
+        webhook_headers=cfg.get("webhook_headers", {}),
+        webhook_max_retries=cfg.get("webhook_max_retries", 3),
+        webhook_verify_ssl=cfg.get("webhook_verify_ssl", True),
+        filter_severity=row.filter_severity or [],
+        filter_event_kind=row.filter_event_kind or [],
+        created_at=row.created_at.isoformat() if row.created_at else "",
+    )
+
+
+def _build_config_json(req) -> dict:
+    """Extract kind-specific fields into a config JSON blob."""
+    return {
+        "syslog_host": req.syslog_host,
+        "syslog_port": req.syslog_port,
+        "syslog_protocol": req.syslog_protocol,
+        "syslog_tls_verify": getattr(req, "syslog_tls_verify", True),
+        "syslog_tls_ca_cert": getattr(req, "syslog_tls_ca_cert", None),
+        "webhook_url": req.webhook_url,
+        "webhook_headers": req.webhook_headers,
+        "webhook_max_retries": req.webhook_max_retries,
+        "webhook_verify_ssl": getattr(req, "webhook_verify_ssl", True),
+    }
+
+
+# ------------------------------------------------------------------
 # Endpoints
 # ------------------------------------------------------------------
+
 
 @router.post(
     "/connectors",
     status_code=status.HTTP_201_CREATED,
     summary="Create a SIEM connector",
-    description="Configure a new syslog or webhook connector. Events will be forwarded to this endpoint based on filter criteria.",
 )
-async def create_connector(req: ConnectorCreateRequest) -> dict:
+async def create_connector(
+    req: ConnectorCreateRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
     try:
         req.validate_kind_fields()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    mgr = get_siem_manager()
-    config = ConnectorConfig(
-        kind=req.kind,
+    row = SIEMConnector(
         name=req.name,
+        kind=req.kind.value,
         enabled=req.enabled,
-        syslog_host=req.syslog_host,
-        syslog_port=req.syslog_port,
-        syslog_protocol=req.syslog_protocol,
-        syslog_tls_verify=req.syslog_tls_verify,
-        syslog_tls_ca_cert=req.syslog_tls_ca_cert,
-        webhook_url=req.webhook_url,
-        webhook_headers=req.webhook_headers,
-        webhook_max_retries=req.webhook_max_retries,
-        webhook_verify_ssl=req.webhook_verify_ssl,
+        config=_build_config_json(req),
         filter_severity=req.filter_severity,
         filter_event_kind=req.filter_event_kind,
+        # tenant_id will be set from middleware context in production;
+        # for now default to a placeholder if not available
+        tenant_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
     )
-    mgr.add_connector(config)
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+
+    # Sync to in-memory manager for runtime routing
+    config = _row_to_config(row)
+    get_siem_manager().add_connector(config)
+
     return config.to_dict()
 
 
@@ -117,37 +172,77 @@ async def create_connector(req: ConnectorCreateRequest) -> dict:
     "/connectors",
     summary="List all SIEM connectors",
 )
-async def list_connectors() -> dict:
-    mgr = get_siem_manager()
-    connectors = mgr.list_connectors()
-    return {
-        "connectors": [c.to_dict() for c in connectors],
-        "total": len(connectors),
-    }
+async def list_connectors(db: AsyncSession = Depends(get_db)) -> dict:
+    result = await db.execute(select(SIEMConnector))
+    rows = result.scalars().all()
+    connectors = [_row_to_config(r).to_dict() for r in rows]
+    return {"connectors": connectors, "total": len(connectors)}
 
 
 @router.get(
     "/connectors/{connector_id}",
     summary="Get a single SIEM connector",
 )
-async def get_connector(connector_id: str) -> dict:
-    mgr = get_siem_manager()
-    config = mgr.get_connector(connector_id)
-    if config is None:
+async def get_connector(
+    connector_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    result = await db.execute(
+        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail=f"Connector '{connector_id}' not found")
-    return config.to_dict()
+    return _row_to_config(row).to_dict()
 
 
 @router.put(
     "/connectors/{connector_id}",
     summary="Update a SIEM connector",
 )
-async def update_connector(connector_id: str, req: ConnectorUpdateRequest) -> dict:
-    mgr = get_siem_manager()
-    updates = {k: v for k, v in req.model_dump().items() if v is not None}
-    config = mgr.update_connector(connector_id, updates)
-    if config is None:
+async def update_connector(
+    connector_id: str,
+    req: ConnectorUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    result = await db.execute(
+        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail=f"Connector '{connector_id}' not found")
+
+    updates = {k: v for k, v in req.model_dump().items() if v is not None}
+    config_fields = {
+        "syslog_host", "syslog_port", "syslog_protocol", "syslog_tls_verify",
+        "webhook_url", "webhook_headers", "webhook_max_retries", "webhook_verify_ssl",
+    }
+
+    # Separate DB-column updates from config-JSON updates
+    new_config = dict(row.config or {})
+    for key in list(updates.keys()):
+        if key in config_fields:
+            new_config[key] = updates.pop(key)
+
+    if "name" in updates:
+        row.name = updates["name"]
+    if "enabled" in updates:
+        row.enabled = updates["enabled"]
+    if "filter_severity" in updates:
+        row.filter_severity = updates["filter_severity"]
+    if "filter_event_kind" in updates:
+        row.filter_event_kind = updates["filter_event_kind"]
+
+    row.config = new_config
+    row.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(row)
+
+    # Sync to in-memory manager
+    config = _row_to_config(row)
+    mgr = get_siem_manager()
+    mgr.update_connector(str(row.id), config.to_dict()) or mgr.add_connector(config)
+
     return config.to_dict()
 
 
@@ -157,17 +252,29 @@ async def update_connector(connector_id: str, req: ConnectorUpdateRequest) -> di
     response_model=None,
     summary="Delete a SIEM connector",
 )
-async def delete_connector(connector_id: str) -> None:
-    mgr = get_siem_manager()
-    removed = mgr.remove_connector(connector_id)
-    if not removed:
+async def delete_connector(
+    connector_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    result = await db.execute(
+        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail=f"Connector '{connector_id}' not found")
+
+    await db.execute(
+        delete(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+    )
+    await db.commit()
+
+    # Remove from in-memory manager
+    get_siem_manager().remove_connector(connector_id)
 
 
 @router.get(
     "/health",
     summary="SIEM connector health status",
-    description="Returns connectivity status and last event timestamp for each configured connector.",
 )
 async def siem_health() -> dict:
     mgr = get_siem_manager()
