@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { Plus, Trash2, FlaskConical, ChevronDown, ChevronRight, X, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Trash2, FlaskConical, ChevronDown, ChevronRight, X, ToggleLeft, ToggleRight, Pencil, Loader2 } from "lucide-react";
 
 /** Detection rules -- Sigma rule CRUD with test and toggle controls. Uses live API via useWidgetData. */
 
@@ -14,6 +14,13 @@ interface RuleSummary {
   enabled: boolean;
   tags: string[];
   response_playbook?: string | null;
+}
+
+interface RuleDetail extends RuleSummary {
+  description?: string;
+  logsource?: Record<string, unknown>;
+  detection?: Record<string, unknown>;
+  is_custom?: boolean;
 }
 
 interface RuleTestResponse {
@@ -53,6 +60,24 @@ export default function RuleEditorPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [actionResult, setActionResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Rule detail cache & loading
+  const [ruleDetail, setRuleDetail] = useState<Record<string, RuleDetail>>({});
+  const [detailLoading, setDetailLoading] = useState<Record<string, boolean>>({});
+
+  // Edit modal state
+  const [editRule, setEditRule] = useState<RuleDetail | null>(null);
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    description: string;
+    level: string;
+    status: string;
+    detection: string;
+    response_playbook: string;
+    enabled: boolean;
+  } | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   // Test panel state
   const [testRuleId, setTestRuleId] = useState<string | null>(null);
@@ -156,6 +181,102 @@ export default function RuleEditorPage() {
     }
   }
 
+  // Fetch full rule detail
+  async function fetchRuleDetail(ruleId: string) {
+    if (ruleDetail[ruleId]) return ruleDetail[ruleId];
+    setDetailLoading((prev) => ({ ...prev, [ruleId]: true }));
+    try {
+      const { api } = await import("@/lib/api");
+      const detail = await api.get<RuleDetail>(`/v1/detection/rules/${ruleId}`);
+      setRuleDetail((prev) => ({ ...prev, [ruleId]: detail }));
+      return detail;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setActionResult({ type: "error", message: `Failed to load rule detail: ${message}` });
+      return null;
+    } finally {
+      setDetailLoading((prev) => ({ ...prev, [ruleId]: false }));
+    }
+  }
+
+  // Handle expand toggle — fetch detail on expand
+  async function handleExpand(ruleId: string) {
+    if (expandedId === ruleId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(ruleId);
+    if (!ruleDetail[ruleId]) {
+      await fetchRuleDetail(ruleId);
+    }
+  }
+
+  // Open edit modal
+  async function openEditModal(rule: RuleSummary) {
+    setEditError(null);
+    let detail = ruleDetail[rule.id];
+    if (!detail) {
+      detail = (await fetchRuleDetail(rule.id)) as RuleDetail;
+      if (!detail) return;
+    }
+    setEditRule(detail);
+    setEditForm({
+      title: detail.title,
+      description: detail.description ?? "",
+      level: detail.level,
+      status: detail.status,
+      detection: detail.detection ? JSON.stringify(detail.detection, null, 2) : "{}",
+      response_playbook: detail.response_playbook ?? "",
+      enabled: detail.enabled,
+    });
+  }
+
+  // Save edited rule
+  async function handleEditSave() {
+    if (!editRule || !editForm) return;
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      let parsedDetection: Record<string, unknown> | undefined;
+      if (editForm.detection.trim()) {
+        try {
+          parsedDetection = JSON.parse(editForm.detection);
+        } catch {
+          throw new Error("Invalid JSON in detection field");
+        }
+      }
+      const { api } = await import("@/lib/api");
+      await api.put(`/v1/detection/rules/${editRule.id}`, {
+        title: editForm.title,
+        description: editForm.description || undefined,
+        level: editForm.level,
+        status: editForm.status,
+        detection: parsedDetection,
+        response_playbook: editForm.response_playbook || undefined,
+        enabled: editForm.enabled,
+      });
+      // Invalidate cache for this rule
+      setRuleDetail((prev) => {
+        const next = { ...prev };
+        delete next[editRule.id];
+        return next;
+      });
+      setActionResult({ type: "success", message: `Rule "${editForm.title}" updated.` });
+      setEditRule(null);
+      setEditForm(null);
+      refetch();
+      // Re-fetch detail if still expanded
+      if (expandedId === editRule.id) {
+        await fetchRuleDetail(editRule.id);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setEditError(message);
+    } finally {
+      setEditSubmitting(false);
+    }
+  }
+
   const selectedRuleTitle = rules.find((r) => r.id === testRuleId)?.title ?? null;
 
   return (
@@ -238,7 +359,7 @@ export default function RuleEditorPage() {
                 {/* Title + expand */}
                 <div className="flex items-center gap-2 min-w-0">
                   <button
-                    onClick={() => setExpandedId(expandedId === rule.id ? null : rule.id)}
+                    onClick={() => handleExpand(rule.id)}
                     className="text-of-on-surface-variant hover:text-of-on-surface transition-colors shrink-0"
                   >
                     {expandedId === rule.id ? (
@@ -312,22 +433,95 @@ export default function RuleEditorPage() {
                 </div>
               </div>
 
-              {/* Expanded detail: tags */}
+              {/* Expanded detail panel */}
               {expandedId === rule.id && (
-                <div className="bg-of-surface-container-low border-b border-of-outline-variant/10 px-5 py-4">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {rule.tags.map((tag) => (
-                      <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-bold bg-of-primary/10 text-of-primary border border-of-primary/20">
-                        {tag}
-                      </span>
-                    ))}
-                    {rule.tags.length === 0 && (
-                      <span className="text-xs text-of-on-surface-variant italic">No tags</span>
-                    )}
+                <div className="bg-of-surface-container-low border-b border-of-outline-variant/10 px-5 py-4 space-y-4">
+                  {detailLoading[rule.id] && (
+                    <div className="flex items-center gap-2 text-of-on-surface-variant text-xs">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Loading rule details...
+                    </div>
+                  )}
+
+                  {!detailLoading[rule.id] && ruleDetail[rule.id] && (
+                    <>
+                      {/* Description */}
+                      {ruleDetail[rule.id].description && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
+                            Description
+                          </p>
+                          <p className="text-xs text-of-on-surface leading-relaxed">
+                            {ruleDetail[rule.id].description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Logsource */}
+                      {ruleDetail[rule.id].logsource && Object.keys(ruleDetail[rule.id].logsource!).length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
+                            Log Source
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {Object.entries(ruleDetail[rule.id].logsource!).map(([k, v]) => (
+                              <div key={k} className="flex gap-1.5 text-xs font-mono">
+                                <span className="text-of-primary">{k}:</span>
+                                <span className="text-of-on-surface">{String(v)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Detection logic */}
+                      {ruleDetail[rule.id].detection && (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
+                            Detection Logic
+                          </p>
+                          <pre className="px-3 py-2 bg-of-surface-container rounded-lg border border-of-outline-variant/10 text-xs font-mono text-of-on-surface overflow-x-auto whitespace-pre-wrap">
+                            {JSON.stringify(ruleDetail[rule.id].detection, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Custom rule indicator */}
+                      {ruleDetail[rule.id].is_custom && (
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-of-secondary/10 text-of-secondary border border-of-secondary/20">
+                          Custom Rule
+                        </span>
+                      )}
+                    </>
+                  )}
+
+                  {/* Tags (always from summary) */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
+                      Tags
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {rule.tags.map((tag) => (
+                        <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-bold bg-of-primary/10 text-of-primary border border-of-primary/20">
+                          {tag}
+                        </span>
+                      ))}
+                      {rule.tags.length === 0 && (
+                        <span className="text-xs text-of-on-surface-variant italic">No tags</span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[10px] text-of-on-surface-variant">
-                    Use the test panel (Flask icon) to run a sample event against this rule.
-                  </p>
+
+                  {/* Edit button */}
+                  <div className="pt-1">
+                    <button
+                      onClick={() => openEditModal(rule)}
+                      className="flex items-center gap-1.5 h-8 px-4 rounded-lg bg-of-primary/15 text-of-primary border border-of-primary/20 hover:bg-of-primary/25 transition-colors text-xs font-bold"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Edit Rule
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -455,6 +649,156 @@ export default function RuleEditorPage() {
                 className="px-4 h-9 rounded-lg text-sm font-bold bg-of-primary/20 text-of-primary border border-of-primary/20 hover:bg-of-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting ? "Creating..." : "Create Rule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit rule modal */}
+      {editRule && editForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-of-surface-container rounded-2xl border border-of-outline-variant/20 p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Pencil className="h-5 w-5 text-of-primary" />
+                <h2 className="text-base font-bold text-of-on-surface">Edit Rule</h2>
+              </div>
+              <button
+                onClick={() => { setEditRule(null); setEditForm(null); setEditError(null); }}
+                className="text-of-on-surface-variant hover:text-of-on-surface transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-sm text-of-on-surface focus:outline-none focus:border-of-primary/40"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-xs text-of-on-surface focus:outline-none focus:border-of-primary/40 resize-y"
+                />
+              </div>
+
+              {/* Level + Status row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                    Level
+                  </label>
+                  <select
+                    value={editForm.level}
+                    onChange={(e) => setEditForm({ ...editForm, level: e.target.value })}
+                    className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-sm text-of-on-surface focus:outline-none focus:border-of-primary/40"
+                  >
+                    {["critical", "high", "medium", "low", "informational"].map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-sm text-of-on-surface focus:outline-none focus:border-of-primary/40"
+                  >
+                    {["experimental", "test", "stable"].map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Detection */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                  Detection (JSON)
+                </label>
+                <textarea
+                  value={editForm.detection}
+                  onChange={(e) => setEditForm({ ...editForm, detection: e.target.value })}
+                  rows={10}
+                  className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-xs font-mono text-of-on-surface focus:outline-none focus:border-of-primary/40 resize-y"
+                  spellCheck={false}
+                />
+              </div>
+
+              {/* Response Playbook */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
+                  Response Playbook
+                </label>
+                <input
+                  type="text"
+                  value={editForm.response_playbook}
+                  onChange={(e) => setEditForm({ ...editForm, response_playbook: e.target.value })}
+                  placeholder="e.g. PB-001 or playbook URL"
+                  className="w-full px-3 py-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-sm text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/40"
+                />
+              </div>
+
+              {/* Enabled toggle */}
+              <div className="flex items-center gap-3">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-of-on-surface-variant">
+                  Enabled
+                </label>
+                <button
+                  onClick={() => setEditForm({ ...editForm, enabled: !editForm.enabled })}
+                  className="transition-colors"
+                >
+                  {editForm.enabled ? (
+                    <ToggleRight className="h-5 w-5 text-emerald-400" />
+                  ) : (
+                    <ToggleLeft className="h-5 w-5 text-of-on-surface-variant" />
+                  )}
+                </button>
+                <span className="text-xs text-of-on-surface-variant">
+                  {editForm.enabled ? "Active" : "Disabled"}
+                </span>
+              </div>
+            </div>
+
+            {editError && (
+              <div className="mt-3 p-3 rounded-lg bg-of-error/10 border border-of-error/20 text-of-error text-xs font-mono">
+                {editError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => { setEditRule(null); setEditForm(null); setEditError(null); }}
+                className="px-4 h-9 rounded-lg text-sm font-bold border border-of-outline-variant/20 text-of-on-surface-variant hover:text-of-on-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={editSubmitting || !editForm.title.trim()}
+                className="px-4 h-9 rounded-lg text-sm font-bold bg-of-primary/20 text-of-primary border border-of-primary/20 hover:bg-of-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {editSubmitting ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

@@ -23,10 +23,9 @@ logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/v1/usage", tags=["Usage & Limits"])
 
 
-def _get_tenant_and_tier(request: Request) -> tuple[uuid.UUID, str]:
+async def _get_tenant_and_tier(request: Request, db: AsyncSession) -> tuple[uuid.UUID, str]:
     """
-    Extract tenant_id and tier from request context.
-    tenant_id from X-Tenant-ID header; tier from app.state.license.
+    Extract tenant_id from request headers and resolve tier from _soul_tenants table.
     Returns (tenant_id, tier). Raises HTTPException 401 if missing.
     """
     raw_id = request.headers.get("X-Tenant-ID") or request.cookies.get("tiresias_tenant")
@@ -37,8 +36,13 @@ def _get_tenant_and_tier(request: Request) -> tuple[uuid.UUID, str]:
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tenant_id format (must be UUID).")
 
-    license_state = getattr(request.app.state, "license", None)
-    tier = license_state.tier if license_state else "community"
+    from sqlalchemy import text
+    result = await db.execute(
+        text("SELECT tier FROM _soul_tenants WHERE id = :tid"),
+        {"tid": str(tenant_id)},
+    )
+    row = result.first()
+    tier = row[0] if row else "community"
     return tenant_id, tier
 
 
@@ -105,7 +109,7 @@ async def usage_current(
     calendar month vs the calling tenant's tier limits.
     Unlimited tiers have limit=-1 and pct=0.0.
     """
-    tenant_id, tier = _get_tenant_and_tier(request)
+    tenant_id, tier = await _get_tenant_and_tier(request, db)
     data = await get_usage_current(db, tenant_id, tier)
     return UsageCurrentResponse(**data)
 
@@ -128,6 +132,6 @@ async def usage_alerts(
     warning = any dimension >= 80%, critical = any dimension >= 100%.
     Portal uses this to drive banner color.
     """
-    tenant_id, tier = _get_tenant_and_tier(request)
+    tenant_id, tier = await _get_tenant_and_tier(request, db)
     data = await check_alerts(db, tenant_id, tier)
     return UsageAlertsResponse(**data)

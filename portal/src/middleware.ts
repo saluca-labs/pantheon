@@ -60,6 +60,12 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const validSession = isSessionValid(request);
 
+  // On-prem: root path redirects to /dashboard (authenticated) or /login
+  if (pathname === "/") {
+    const target = validSession ? "/dashboard" : "/login";
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
   // Protect /platform/* and /dashboard/* routes
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),
@@ -106,6 +112,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/login",
     "/v1/:path*",

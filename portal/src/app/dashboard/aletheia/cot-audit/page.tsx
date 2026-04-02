@@ -45,12 +45,12 @@ export default function CoTAuditPage() {
   const [proofLoading, setProofLoading] = useState(false);
 
   const { data: chainData, loading, error } = useWidgetData<ChainData>({
-    endpoint: "/v1/aletheia/cot/chain?limit=50",
+    endpoint: "/api/watch/v1/aletheia/cot/chain?limit=50",
     refreshInterval: 30000,
   });
 
   const { data: contentData, loading: contentLoading } = useWidgetData<ContentData>({
-    endpoint: expandedRequestId ? `/v1/aletheia/cot/chain/${expandedRequestId}/content` : "",
+    endpoint: expandedRequestId ? `/api/watch/v1/aletheia/cot/chain/${expandedRequestId}/content` : "",
     skip: !expandedRequestId,
   });
 
@@ -59,7 +59,7 @@ export default function CoTAuditPage() {
   async function handleVerify() {
     setVerifyLoading(true);
     try {
-      const result = await api.post("/v1/aletheia/cot/chain/verify", { start_index: 0, end_index: -1 });
+      const result = await api.post("/api/watch/v1/aletheia/cot/chain/verify", { start_index: 0, end_index: -1 });
       setVerifyResult(result as VerifyResult);
     } catch {
       setVerifyResult({ valid: false, broken_at: -1 });
@@ -71,7 +71,7 @@ export default function CoTAuditPage() {
   async function handleExportProof() {
     setProofLoading(true);
     try {
-      const data = await api.post("/v1/aletheia/cot/proof", { format: "json" });
+      const data = await api.post("/api/watch/v1/aletheia/cot/chain/proof", { format: "json" });
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -210,7 +210,7 @@ export default function CoTAuditPage() {
                       )}
                       {!contentLoading && !contentData?.content && (
                         <p className="text-xs text-of-on-surface-variant bg-of-surface-container-high rounded-lg p-4">
-                          Content not available or encrypted
+                          Chain-of-thought content is encrypted at rest. Decryption requires tenant DEK provisioning.
                         </p>
                       )}
                     </div>

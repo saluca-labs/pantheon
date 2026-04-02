@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWidgetData } from "@/lib/useWidgetData";
+import { api } from "@/lib/api";
 
-/** SoulWatch Sigma rules -- detection rule editor with severity and test controls. Uses hardcoded mock data. */
+/** SoulWatch Sigma rules -- detection rule editor with severity and test controls. */
 
 interface SigmaRule {
   id: string;
@@ -17,140 +19,24 @@ interface SigmaRule {
   sigmaYaml: string;
 }
 
-const INITIAL_RULES: SigmaRule[] = [
-  {
-    id: "1", name: "Cross-Tenant Access Attempt", severity: "Critical", status: "Active", matches: 1, lastMatch: "3 days ago",
-    playbook: "Auto-Quarantine High Risk", builtIn: true,
-    sigmaYaml: `title: Cross-Tenant Access Attempt
-id: a3b7-2c9d-5e1f-8a4c
-status: stable
-level: critical
-description: >
-  Detects any attempt by an agent to access
-  resources belonging to a different tenant.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: >
-    selection AND agent.tenant != resource.tenant
-falsepositives:
-  - None expected - always investigate
-tags:
-  - soulwatch.cross_tenant
-  - soulwatch.critical`,
-  },
-  {
-    id: "2", name: "Excessive Permission Requests", severity: "High", status: "Active", matches: 23, lastMatch: "12 min ago",
-    playbook: "Escalate to SOC", builtIn: true,
-    sigmaYaml: `title: Excessive Permission Requests
-id: d4a8-53e7-9b1f-2c4d
-status: experimental
-level: high
-description: >
-  Detects agents making an abnormal number
-  of permission requests within a short window.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: selection | count() > 50
-  timeframe: 5m
-  group_by: agent_soulkey
-falsepositives:
-  - Batch processing agents during ETL windows
-tags:
-  - soulwatch.rate_anomaly`,
-  },
-  {
-    id: "3", name: "Off-Hours Activity", severity: "Medium", status: "Active", matches: 47, lastMatch: "31 min ago",
-    playbook: null, builtIn: true,
-    sigmaYaml: `title: Off-Hours Activity
-id: b9c1-7e3f-4a2d-8f6b
-status: stable
-level: medium
-description: >
-  Detects agent activity outside of configured
-  business hours for the tenant.
-detection:
-  selection:
-    event_type: EVALUATE
-  condition: selection
-  time_filter:
-    hours: "22:00-06:00"
-    days: [saturday, sunday]
-  group_by: agent_soulkey
-falsepositives:
-  - Scheduled maintenance agents
-tags:
-  - soulwatch.temporal_anomaly`,
-  },
-  {
-    id: "4", name: "Rapid Key Rotation", severity: "High", status: "Active", matches: 3, lastMatch: "56 min ago",
-    playbook: null, builtIn: true,
-    sigmaYaml: `title: Rapid Key Rotation
-id: e5f2-1a8c-3d7b-9e4f
-status: experimental
-level: high
-description: >
-  Detects soulkey rotation happening more
-  frequently than the expected schedule.
-detection:
-  selection:
-    event_type: KEY_EVENT
-    action: key_rotate
-  condition: selection | count() > 3
-  timeframe: 24h
-  group_by: agent_soulkey
-falsepositives:
-  - Security incident response
-tags:
-  - soulwatch.key_abuse`,
-  },
-  {
-    id: "5", name: "Unusual Data Volume", severity: "Medium", status: "Active", matches: 8, lastMatch: "45 min ago",
-    playbook: "Rate Limit and Alert", builtIn: true,
-    sigmaYaml: `title: Unusual Data Volume
-id: c7d9-4e2a-6f1b-3c8e
-status: experimental
-level: medium
-description: >
-  Detects agents transferring significantly more
-  data than their historical baseline.
-detection:
-  selection:
-    event_type: EVALUATE
-    action: [read, write]
-  condition: >
-    selection AND data_volume > baseline * 3
-  timeframe: 1h
-  group_by: agent_soulkey
-falsepositives:
-  - End-of-quarter reporting
-tags:
-  - soulwatch.data_exfiltration`,
-  },
-  {
-    id: "6", name: "Failed Auth Spike", severity: "High", status: "Active", matches: 156, lastMatch: "1 hour ago",
-    playbook: null, builtIn: true,
-    sigmaYaml: `title: Failed Auth Spike
-id: f1a3-8b5c-2d7e-9f4a
-status: stable
-level: high
-description: >
-  Detects a spike in failed authentication
-  attempts that may indicate credential stuffing.
-detection:
-  selection:
-    event_type: EVALUATE
-    result: DENY
-  condition: selection | count() > 20
-  timeframe: 5m
-  group_by: source_ip
-falsepositives:
-  - Misconfigured agent during deployment
-tags:
-  - soulwatch.brute_force`,
-  },
-];
+/** Detail shape returned by GET /api/watch/v1/rules/:id */
+interface RuleDetail {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  level: string;
+  logsource: Record<string, unknown>;
+  detection: Record<string, unknown>;
+  tags: string[];
+  response_playbook: string | null;
+  enabled: boolean;
+  is_custom: boolean;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 
 const SIGMA_TEMPLATE = `title: New Detection Rule
 id: 00000000-0000-0000-0000-000000000000
@@ -177,37 +63,152 @@ const severityColor: Record<string, string> = {
   Low: "bg-blue-500/15 text-blue-400 border border-blue-500/20",
 };
 
+/** Convert a RuleDetail to display YAML. */
+function detailToYaml(d: RuleDetail): string {
+  const lines: string[] = [];
+  lines.push(`title: ${d.title}`);
+  lines.push(`id: ${d.id}`);
+  lines.push(`status: ${d.status}`);
+  lines.push(`level: ${d.level}`);
+  if (d.description) {
+    lines.push(`description: >`);
+    lines.push(`  ${d.description.replace(/\n/g, "\n  ")}`);
+  }
+  if (d.logsource && Object.keys(d.logsource).length > 0) {
+    lines.push(`logsource:`);
+    for (const [k, v] of Object.entries(d.logsource)) {
+      lines.push(`  ${k}: ${v}`);
+    }
+  }
+  if (d.detection && Object.keys(d.detection).length > 0) {
+    lines.push(`detection:`);
+    for (const [k, v] of Object.entries(d.detection)) {
+      if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+        lines.push(`  ${k}:`);
+        for (const [fk, fv] of Object.entries(v as Record<string, unknown>)) {
+          lines.push(`    ${fk}: ${fv}`);
+        }
+      } else {
+        lines.push(`  ${k}: ${v}`);
+      }
+    }
+  }
+  if (d.tags && d.tags.length > 0) {
+    lines.push(`tags:`);
+    for (const t of d.tags) lines.push(`  - ${t}`);
+  }
+  if (d.response_playbook) {
+    lines.push(`response_playbook: ${d.response_playbook}`);
+  }
+  return lines.join("\n");
+}
+
 export default function RulesPage() {
-  const idCounter = useRef(0);
-  const [rules, setRules] = useState(INITIAL_RULES);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformRules = useCallback((raw: unknown): SigmaRule[] => {
+    const items = Array.isArray(raw) ? raw : ((raw as any)?.items ?? (raw as any)?.rules ?? []);
+    return items.map((r: any) => ({
+      id: r.id ?? "",
+      name: r.title ?? r.name ?? "",
+      severity: capitalize(r.level ?? r.severity ?? "Medium") as SigmaRule["severity"],
+      status: r.enabled === false ? "Disabled" as const : (r.status === "Disabled" ? "Disabled" as const : "Active" as const),
+      matches: r.matches ?? r.match_count ?? 0,
+      lastMatch: r.last_match ?? r.lastMatch ?? "Never",
+      playbook: r.response_playbook ?? r.playbook ?? null,
+      builtIn: !(r.is_custom ?? false),
+      sigmaYaml: r.sigma_yaml ?? r.sigmaYaml ?? "",
+    }));
+  }, []);
+
+  const { data: fetchedRules, loading, error, refetch } = useWidgetData<SigmaRule[]>({
+    endpoint: "/api/watch/v1/rules",
+    transform: transformRules,
+  });
+
+  const [rules, setRules] = useState<SigmaRule[]>([]);
+  useEffect(() => {
+    if (fetchedRules) setRules(fetchedRules);
+  }, [fetchedRules]);
+
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
+  const [ruleDetails, setRuleDetails] = useState<Record<string, string>>({});
+  const [loadingDetail, setLoadingDetail] = useState<string | null>(null);
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRuleName, setNewRuleName] = useState("");
   const [newRuleSeverity, setNewRuleSeverity] = useState<SigmaRule["severity"]>("Medium");
   const [newRuleYaml, setNewRuleYaml] = useState(SIGMA_TEMPLATE);
   const [newRuleActive, setNewRuleActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [testRuleId, setTestRuleId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
 
+  // Edit state
+  const [editRule, setEditRule] = useState<SigmaRule | null>(null);
+  const [editYaml, setEditYaml] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   const activeCount = rules.filter((r) => r.status === "Active").length;
 
-  const handleCreateRule = () => {
+  /** Fetch rule detail (full YAML) when expanding a row. */
+  const handleExpand = async (ruleId: string) => {
+    if (expandedRule === ruleId) {
+      setExpandedRule(null);
+      return;
+    }
+    setExpandedRule(ruleId);
+
+    // If we already have detail cached, skip fetch
+    if (ruleDetails[ruleId]) return;
+
+    setLoadingDetail(ruleId);
+    try {
+      const detail = await api.get<RuleDetail>(`/api/watch/v1/rules/${ruleId}`);
+      const yaml = detailToYaml(detail);
+      setRuleDetails((prev) => ({ ...prev, [ruleId]: yaml }));
+    } catch {
+      setRuleDetails((prev) => ({ ...prev, [ruleId]: "# Failed to load rule detail" }));
+    } finally {
+      setLoadingDetail(null);
+    }
+  };
+
+  /** Create a new rule via the API. */
+  const handleCreateRule = async () => {
     if (!newRuleName.trim()) return;
-    const newRule: SigmaRule = {
-      id: `rule_${++idCounter.current}`,
-      name: newRuleName.trim(),
-      severity: newRuleSeverity,
-      status: newRuleActive ? "Active" : "Disabled",
-      matches: 0,
-      lastMatch: "Never",
-      playbook: null,
-      builtIn: false,
-      sigmaYaml: newRuleYaml,
-    };
-    setRules((prev) => [newRule, ...prev]);
-    setShowCreateModal(false);
-    resetCreateForm();
+    setSaving(true);
+    setSaveError(null);
+    try {
+      // The backend POST expects raw YAML as text/yaml body
+      const yamlBody = newRuleYaml
+        .replace(/^title:.*$/m, `title: ${newRuleName.trim()}`)
+        .replace(/^level:.*$/m, `level: ${newRuleSeverity.toLowerCase()}`)
+        .replace(/^status:.*$/m, `status: ${newRuleActive ? "experimental" : "disabled"}`);
+
+      await fetch("/api/watch/v1/rules", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: yamlBody,
+      }).then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error || body?.detail || `HTTP ${res.status}`);
+        }
+        return res.json();
+      });
+
+      setShowCreateModal(false);
+      resetCreateForm();
+      refetch();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save rule");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const resetCreateForm = () => {
@@ -215,26 +216,115 @@ export default function RulesPage() {
     setNewRuleSeverity("Medium");
     setNewRuleYaml(SIGMA_TEMPLATE);
     setNewRuleActive(true);
+    setSaveError(null);
   };
 
-  const toggleRuleStatus = (id: string) => {
-    setRules((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: r.status === "Active" ? "Disabled" : "Active" } : r))
-    );
+  /** Toggle enabled/disabled via PUT. */
+  const toggleRuleStatus = async (id: string) => {
+    const rule = rules.find((r) => r.id === id);
+    if (!rule) return;
+    const newEnabled = rule.status !== "Active";
+    try {
+      await api.put(`/api/watch/v1/rules/${id}`, { enabled: newEnabled });
+      setRules((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: newEnabled ? "Active" : "Disabled" } : r))
+      );
+    } catch {
+      // Revert optimistically or just refetch
+      refetch();
+    }
   };
 
-  const deleteRule = (id: string) => {
-    setRules((prev) => prev.filter((r) => r.id !== id));
+  /** Delete a custom rule via the API. */
+  const deleteRule = async (id: string) => {
+    try {
+      await api.delete(`/api/watch/v1/rules/${id}`);
+      setRules((prev) => prev.filter((r) => r.id !== id));
+      setDeleteConfirmId(null);
+      if (expandedRule === id) setExpandedRule(null);
+      // Clear cached detail
+      setRuleDetails((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    } catch {
+      refetch();
+    }
     setDeleteConfirmId(null);
-    if (expandedRule === id) setExpandedRule(null);
   };
 
-  const handleTestRule = (id: string) => {
+  /** Test a rule against sample data via the API. */
+  const handleTestRule = async (id: string) => {
     setTestRuleId(id);
     setTestResult(null);
-    setTimeout(() => {
-      setTestResult("Test complete: 3 matches found in last 24h of historical data. Rule syntax valid.");
-    }, 1500);
+    try {
+      const res = await api.post<{ matched: boolean; matched_fields: Record<string, unknown> }>(
+        `/api/watch/v1/rules/${id}/test`,
+        { event: { event_type: "EVALUATE", decision: "deny", soulkey_id: "test-key" } }
+      );
+      setTestResult(
+        res.matched
+          ? `Test complete: Rule matched. Fields: ${JSON.stringify(res.matched_fields)}`
+          : "Test complete: No match against sample event."
+      );
+    } catch {
+      setTestResult("Test failed: Could not reach the detection engine.");
+    }
+  };
+
+  /** Open edit modal for a rule. */
+  const openEditModal = async (rule: SigmaRule) => {
+    setEditRule(rule);
+    setEditError(null);
+    // Load the YAML from cached detail or fetch
+    if (ruleDetails[rule.id]) {
+      setEditYaml(ruleDetails[rule.id]);
+    } else {
+      try {
+        const detail = await api.get<RuleDetail>(`/api/watch/v1/rules/${rule.id}`);
+        const yaml = detailToYaml(detail);
+        setRuleDetails((prev) => ({ ...prev, [rule.id]: yaml }));
+        setEditYaml(yaml);
+      } catch {
+        setEditYaml("# Failed to load rule detail");
+      }
+    }
+  };
+
+  /** Save edits via PUT (update fields from YAML). */
+  const handleSaveEdit = async () => {
+    if (!editRule) return;
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      // Parse basic fields from the YAML for the update request
+      const titleMatch = editYaml.match(/^title:\s*(.+)$/m);
+      const levelMatch = editYaml.match(/^level:\s*(.+)$/m);
+      const descMatch = editYaml.match(/^description:\s*>?\s*\n([\s\S]*?)(?=\n\w|\n$)/m);
+      const statusMatch = editYaml.match(/^status:\s*(.+)$/m);
+
+      const updateBody: Record<string, unknown> = {};
+      if (titleMatch) updateBody.title = titleMatch[1].trim();
+      if (levelMatch) updateBody.level = levelMatch[1].trim();
+      if (statusMatch) updateBody.status = statusMatch[1].trim();
+      if (descMatch) updateBody.description = descMatch[1].trim();
+
+      await api.put(`/api/watch/v1/rules/${editRule.id}`, updateBody);
+
+      // Clear cached detail so it re-fetches
+      setRuleDetails((prev) => {
+        const next = { ...prev };
+        delete next[editRule.id];
+        return next;
+      });
+      setEditRule(null);
+      refetch();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to save changes");
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   return (
@@ -255,7 +345,22 @@ export default function RulesPage() {
         </button>
       </div>
 
+      {/* Loading / Error */}
+      {loading && (
+        <div className="text-center py-12 text-foreground-muted text-sm">Loading detection rules...</div>
+      )}
+      {error && (
+        <div className="text-center py-12 text-red-400 text-sm">Failed to load rules: {error}</div>
+      )}
+      {!loading && !error && rules.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-foreground-muted text-sm">No detection rules configured</p>
+          <p className="text-foreground-subtle text-xs mt-1">Click &quot;+ Add Rule&quot; to create your first Sigma detection rule.</p>
+        </div>
+      )}
+
       {/* Rules Table */}
+      {!loading && !error && rules.length > 0 && (
       <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -279,7 +384,7 @@ export default function RulesPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      onClick={() => setExpandedRule(expandedRule === rule.id ? null : rule.id)}
+                      onClick={() => handleExpand(rule.id)}
                       className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all duration-200"
                     >
                       <td className="px-4 py-3">
@@ -325,6 +430,14 @@ export default function RulesPage() {
                           >
                             Test
                           </button>
+                          {!rule.builtIn && (
+                            <button
+                              onClick={() => openEditModal(rule)}
+                              className="px-2 py-1 rounded text-xs text-foreground-muted hover:bg-white/5 transition-all"
+                            >
+                              Edit
+                            </button>
+                          )}
                           <button
                             onClick={() => toggleRuleStatus(rule.id)}
                             className={`px-2 py-1 rounded text-xs transition-all ${
@@ -360,14 +473,18 @@ export default function RulesPage() {
                               className="overflow-hidden"
                             >
                               <div className="px-4 py-4 bg-of-surface-container-high/50 space-y-3">
-                                <pre className="font-mono text-xs leading-relaxed text-of-primary bg-of-surface-container-lowest rounded-lg p-4 border border-white/5 overflow-x-auto whitespace-pre">
-                                  {rule.sigmaYaml}
-                                </pre>
+                                {loadingDetail === rule.id ? (
+                                  <div className="text-xs text-foreground-muted py-4 text-center">Loading rule detail...</div>
+                                ) : (
+                                  <pre className="font-mono text-xs leading-relaxed text-of-primary bg-of-surface-container-lowest rounded-lg p-4 border border-white/5 overflow-x-auto whitespace-pre">
+                                    {ruleDetails[rule.id] || rule.sigmaYaml || "# No rule content available"}
+                                  </pre>
+                                )}
                                 {testRuleId === rule.id && (
                                   <div className={`p-3 rounded-lg border text-xs ${
                                     testResult ? "bg-green-500/5 border-green-500/20 text-green-400" : "bg-of-surface-container-lowest border-white/5 text-foreground-muted"
                                   }`}>
-                                    {testResult || "Running test against historical data..."}
+                                    {testResult || "Running test against sample event..."}
                                   </div>
                                 )}
                                 <div className="flex items-center gap-4 text-[10px] text-foreground-subtle">
@@ -388,6 +505,7 @@ export default function RulesPage() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Create Rule Modal */}
       <AnimatePresence>
@@ -452,15 +570,76 @@ export default function RulesPage() {
                       className="w-full px-4 py-3 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-of-primary font-mono leading-relaxed focus:outline-none focus:border-of-primary/50 transition-all resize-y"
                       spellCheck={false} />
                   </div>
+                  {saveError && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                      {saveError}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
                   <button onClick={() => { setShowCreateModal(false); resetCreateForm(); }}
                     className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">
                     Cancel
                   </button>
-                  <button onClick={handleCreateRule} disabled={!newRuleName.trim()}
+                  <button onClick={handleCreateRule} disabled={!newRuleName.trim() || saving}
                     className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                    Save Rule
+                    {saving ? "Saving..." : "Save Rule"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Rule Modal */}
+      <AnimatePresence>
+        {editRule && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditRule(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl shadow-black/50" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                  <h2 className="text-lg font-semibold text-foreground">Edit Rule: {editRule.name}</h2>
+                  <button onClick={() => setEditRule(null)} className="text-foreground-subtle hover:text-foreground transition-colors">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="px-6 py-5 space-y-5">
+                  <div>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Rule YAML</label>
+                    <textarea value={editYaml} onChange={(e) => setEditYaml(e.target.value)} rows={20}
+                      className="w-full px-4 py-3 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-of-primary font-mono leading-relaxed focus:outline-none focus:border-of-primary/50 transition-all resize-y"
+                      spellCheck={false} />
+                  </div>
+                  {editError && (
+                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                      {editError}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
+                  <button onClick={() => setEditRule(null)}
+                    className="px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all">
+                    Cancel
+                  </button>
+                  <button onClick={handleSaveEdit} disabled={editSaving}
+                    className="px-5 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    {editSaving ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </div>

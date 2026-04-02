@@ -5,7 +5,8 @@ import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
-import { Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, FileCode } from "lucide-react";
+import { TENANT_NAMES } from "@/lib/display";
+import { Play, RefreshCw, CheckCircle, XCircle, AlertTriangle, FileCode, ChevronDown, ChevronRight } from "lucide-react";
 
 /** Aletheia policy management -- CoT policy editor with dry-run evaluation. Uses live API via useWidgetData. */
 
@@ -21,6 +22,9 @@ interface ToolInvocation {
   agent_id: string;
   timestamp: string;
   policy_verdict?: string | null;
+  args?: unknown[];
+  matched_rule?: string;
+  working_directory?: string;
 }
 
 interface InvocationsData {
@@ -42,6 +46,7 @@ export default function PoliciesPage() {
   const [yamlContent, setYamlContent] = useState("# Paste your tool policy YAML here\n# See docs for policy schema\n");
   const [reloadStatus, setReloadStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [reloadLoading, setReloadLoading] = useState(false);
+  const [expandedEvalId, setExpandedEvalId] = useState<string | null>(null);
 
   // Evaluation simulator state
   const [evalAgentId, setEvalAgentId] = useState("");
@@ -53,7 +58,7 @@ export default function PoliciesPage() {
   const [evalLoading, setEvalLoading] = useState(false);
 
   const { data: recentData, loading: recentLoading } = useWidgetData<InvocationsData>({
-    endpoint: "/watch/v1/aletheia/tools/invocations?limit=20",
+    endpoint: "/api/watch/v1/aletheia/tools/invocations?limit=20",
     refreshInterval: 30000,
   });
 
@@ -160,21 +165,29 @@ export default function PoliciesPage() {
             </p>
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">Agent ID</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">Agent</label>
                 <input
                   value={evalAgentId}
                   onChange={(e) => setEvalAgentId(e.target.value)}
-                  placeholder="agent-001"
+                  placeholder="Agent name, role, or ID"
                   className="w-full h-9 px-3 bg-of-surface-container-high border border-of-outline-variant/10 rounded-lg text-sm text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/40"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">Tenant ID</label>
-                <input
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">Tenant</label>
+                <select
                   value={evalTenantId}
                   onChange={(e) => setEvalTenantId(e.target.value)}
-                  className="w-full h-9 px-3 bg-of-surface-container-high border border-of-outline-variant/10 rounded-lg text-sm font-mono text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/40"
-                />
+                  className="w-full h-9 px-3 bg-of-surface-container-high border border-of-outline-variant/10 rounded-lg text-sm text-of-on-surface focus:outline-none focus:border-of-primary/40"
+                >
+                  <option value="">Select tenant...</option>
+                  {Object.entries(TENANT_NAMES).map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
+                  ))}
+                  {evalTenantId && !TENANT_NAMES[evalTenantId] && (
+                    <option value={evalTenantId}>{evalTenantId}</option>
+                  )}
+                </select>
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">Command</label>
@@ -264,18 +277,68 @@ export default function PoliciesPage() {
           )}
           {!recentLoading && recentEvals.length > 0 && (
             <div className="space-y-1.5">
-              {recentEvals.map((inv) => (
-                <div key={inv.id} className="flex items-center gap-3 px-3 py-2 bg-of-surface-container-high rounded-lg">
-                  <span className="text-[10px] text-of-on-surface-variant shrink-0">{relativeTime(inv.timestamp)}</span>
-                  <span className="text-xs text-of-on-surface-variant truncate">{inv.agent_id}</span>
-                  <span className="font-mono text-xs text-of-on-surface truncate">{inv.command}</span>
-                  <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${
-                    verdictStyles[inv.policy_verdict ?? ""] ?? "bg-of-surface-container text-of-on-surface-variant"
-                  }`}>
-                    {inv.policy_verdict}
-                  </span>
-                </div>
-              ))}
+              {recentEvals.map((inv) => {
+                const isExpanded = expandedEvalId === inv.id;
+                return (
+                  <div key={inv.id}>
+                    <button
+                      onClick={() => setExpandedEvalId(isExpanded ? null : inv.id)}
+                      className="w-full flex items-center gap-3 px-3 py-2 bg-of-surface-container-high rounded-lg hover:bg-of-surface-container-highest transition-colors cursor-pointer text-left"
+                    >
+                      {isExpanded
+                        ? <ChevronDown className="h-3 w-3 text-of-on-surface-variant shrink-0" />
+                        : <ChevronRight className="h-3 w-3 text-of-on-surface-variant shrink-0" />
+                      }
+                      <span className="text-[10px] text-of-on-surface-variant shrink-0">{relativeTime(inv.timestamp)}</span>
+                      <span className="text-xs text-of-on-surface-variant truncate">{inv.agent_id}</span>
+                      <span className="font-mono text-xs text-of-on-surface truncate">{inv.command}</span>
+                      <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 ${
+                        verdictStyles[inv.policy_verdict ?? ""] ?? "bg-of-surface-container text-of-on-surface-variant"
+                      }`}>
+                        {inv.policy_verdict}
+                      </span>
+                    </button>
+                    {isExpanded && (
+                      <div className="ml-6 mt-1 mb-2 px-3 py-2.5 bg-of-surface-container rounded-lg border border-of-outline-variant/10 space-y-1.5">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Command</span>
+                            <p className="font-mono text-of-on-surface">{inv.command}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Agent</span>
+                            <p className="text-of-on-surface">{inv.agent_id}</p>
+                          </div>
+                          {inv.args && (
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Args</span>
+                              <p className="font-mono text-of-on-surface truncate">{JSON.stringify(inv.args)}</p>
+                            </div>
+                          )}
+                          {inv.matched_rule && (
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Matched Rule</span>
+                              <p className="font-mono text-of-on-surface">{inv.matched_rule}</p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Verdict</span>
+                            <p className={`font-bold uppercase ${
+                              inv.policy_verdict === "allow" ? "text-emerald-400" :
+                              inv.policy_verdict === "audit" ? "text-yellow-400" :
+                              "text-of-error"
+                            }`}>{inv.policy_verdict}</p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Timestamp</span>
+                            <p className="font-mono text-of-on-surface">{new Date(inv.timestamp).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

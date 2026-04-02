@@ -18,7 +18,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Search, Bell, Settings, LogOut } from "lucide-react";
+import { Search, Bell, Settings, LogOut, User, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { tierMeets } from "@/components/dashboard/TierGate";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -206,31 +206,69 @@ export default function DashboardHeader() {
             title="Account menu"
           >
             <span className="text-xs font-bold text-of-primary">
-              {session?.tenant_name?.slice(0, 1).toUpperCase() ?? "T"}
+              {session?.user_name?.slice(0, 1).toUpperCase() ?? session?.tenant_name?.slice(0, 1).toUpperCase() ?? "U"}
             </span>
           </button>
 
           {avatarMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-of-outline-variant/20 bg-of-surface-container shadow-xl py-1 z-50">
-              {/* Tenant / user info */}
-              <div className="px-4 py-2.5 border-b border-of-outline-variant/10">
+            <div className="absolute right-0 top-full mt-2 w-64 rounded-lg border border-of-outline-variant/20 bg-of-surface-container shadow-xl py-1 z-50">
+              {/* User identity section */}
+              <div className="px-4 py-3 border-b border-of-outline-variant/10">
                 <p className="text-sm font-semibold text-of-on-surface truncate">
-                  {session?.tenant_name ?? "Tenant"}
+                  {session?.user_name ?? session?.persona_id ?? "User"}
                 </p>
-                <p className="text-xs text-of-on-surface-variant truncate">
-                  {session?.tenant_id ?? ""}
-                </p>
+                {session?.user_email && (
+                  <p className="text-xs text-of-on-surface-variant truncate mt-0.5">
+                    {session.user_email}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="px-1.5 py-0.5 rounded bg-of-primary/10 text-[9px] font-semibold text-of-primary tracking-wide uppercase border border-of-primary/15">
+                    {session?.tenant_name ?? "Tenant"}
+                  </span>
+                  <span className="text-[10px] text-of-on-surface-variant">
+                    {session?.tier ?? "community"}
+                  </span>
+                </div>
               </div>
 
-              {/* Settings link */}
+              {/* User Settings link */}
+              <Link
+                href="/dashboard/settings?tab=preferences"
+                onClick={() => setAvatarMenuOpen(false)}
+                className="flex items-center gap-2.5 px-4 py-2 text-sm text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container-high transition-colors"
+              >
+                <User className="h-3.5 w-3.5" />
+                User Settings
+              </Link>
+
+              {/* System Settings link */}
               <Link
                 href="/dashboard/settings"
                 onClick={() => setAvatarMenuOpen(false)}
                 className="flex items-center gap-2.5 px-4 py-2 text-sm text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container-high transition-colors"
               >
                 <Settings className="h-3.5 w-3.5" />
-                Settings
+                System Settings
               </Link>
+
+              {/* Switch Tenant (MSSP users) */}
+              {(session?.tier === "mssp" || session?.tier === "saas") && (
+                <button
+                  onClick={() => {
+                    setAvatarMenuOpen(false);
+                    // Navigate to MSSP tenant switcher
+                    window.location.href = "/dashboard/mssp?action=switch-tenant";
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-of-on-surface-variant hover:text-of-on-surface hover:bg-of-surface-container-high transition-colors"
+                >
+                  <ArrowLeftRight className="h-3.5 w-3.5" />
+                  Switch Tenant
+                </button>
+              )}
+
+              {/* Divider */}
+              <div className="my-1 border-t border-of-outline-variant/10" />
 
               {/* Logout */}
               <button
@@ -241,7 +279,7 @@ export default function DashboardHeader() {
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-of-surface-container-high transition-colors"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                Log out
+                Sign Out
               </button>
             </div>
           )}

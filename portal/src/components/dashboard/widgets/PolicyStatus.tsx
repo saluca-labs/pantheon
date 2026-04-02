@@ -29,6 +29,19 @@ function formatTimeAgo(iso: string): string {
 function transformPolicy(raw: unknown): PolicyData {
   const data = raw as Record<string, unknown>;
 
+  // API returns { detail: "No cached policy found" } when no policy is synced yet
+  if (data.detail && typeof data.detail === "string") {
+    return {
+      version: "N/A",
+      synced: false,
+      last_sync: new Date().toISOString(),
+      rules_count: 0,
+      resources_count: 0,
+      personas_count: 0,
+      recent_changes: [],
+    };
+  }
+
   // Handle various response shapes
   const policies = (data.policies as unknown[]) || [];
   const policy = (data.policy as Record<string, unknown>) || data;
@@ -51,38 +64,52 @@ export default function PolicyStatus() {
   const tenantId = typeof window !== "undefined" ? getStoredTenantId() : null;
 
   const { data, loading, error, refetch } = useWidgetData({
-    endpoint: `/v1/soulauth/admin/policies/${tenantId || "default"}`,
+    endpoint: `/v1/soulauth/admin/policy/current?tenant_id=${encodeURIComponent(tenantId || "default")}&persona_id=default`,
     transform: transformPolicy,
     skip: !tenantId,
   });
 
+  // 404 means no cached policy yet -- show empty state instead of an error
+  const is404 = error?.startsWith("404");
+  const emptyPolicy: PolicyData = {
+    version: "N/A",
+    synced: false,
+    last_sync: new Date().toISOString(),
+    rules_count: 0,
+    resources_count: 0,
+    personas_count: 0,
+    recent_changes: [],
+  };
+  const displayData = is404 ? emptyPolicy : data;
+  const displayError = is404 ? null : error;
+
   return (
-    <WidgetShell title="Policy Status" loading={loading && !!tenantId} error={error} onRetry={refetch}>
-      {data && (
+    <WidgetShell title="Policy Status" loading={loading && !!tenantId} error={displayError} onRetry={refetch}>
+      {displayData && (
         <>
           {/* Version and sync */}
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-lg font-bold font-mono text-foreground">{data.version}</div>
+              <div className="text-lg font-bold font-mono text-foreground">{displayData.version}</div>
               <div className="text-[10px] text-of-outline">Current Version</div>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1.5 justify-end">
-                <span className={`h-2 w-2 rounded-full ${data.synced ? "bg-green-400" : "bg-yellow-400"}`} />
-                <span className={`text-xs ${data.synced ? "text-green-400" : "text-yellow-400"}`}>
-                  {data.synced ? "Synced" : "Pending"}
+                <span className={`h-2 w-2 rounded-full ${displayData.synced ? "bg-green-400" : "bg-yellow-400"}`} />
+                <span className={`text-xs ${displayData.synced ? "text-green-400" : "text-yellow-400"}`}>
+                  {displayData.synced ? "Synced" : "Pending"}
                 </span>
               </div>
-              <div className="text-[10px] text-of-outline">{formatTimeAgo(data.last_sync)}</div>
+              <div className="text-[10px] text-of-outline">{formatTimeAgo(displayData.last_sync)}</div>
             </div>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
-              { label: "Rules", value: data.rules_count.toString() },
-              { label: "Resources", value: data.resources_count.toString() },
-              { label: "Personas", value: data.personas_count.toString() },
+              { label: "Rules", value: displayData.rules_count.toString() },
+              { label: "Resources", value: displayData.resources_count.toString() },
+              { label: "Personas", value: displayData.personas_count.toString() },
             ].map((s) => (
               <div key={s.label} className="text-center bg-of-background/50 rounded-lg py-1.5">
                 <div className="text-sm font-bold font-mono text-of-primary">{s.value}</div>
@@ -95,10 +122,10 @@ export default function PolicyStatus() {
           <div className="flex-1 min-h-0">
             <div className="text-[10px] text-of-outline uppercase mb-2">Recent Changes</div>
             <div className="space-y-2">
-              {data.recent_changes.length === 0 && (
+              {displayData.recent_changes.length === 0 && (
                 <p className="text-xs text-of-outline">No recent changes.</p>
               )}
-              {data.recent_changes.map((c, i) => (
+              {displayData.recent_changes.map((c, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
                   <span className="text-of-primary mt-0.5 shrink-0">&#8226;</span>
                   <span className="text-of-on-surface-variant flex-1">{c.message}</span>

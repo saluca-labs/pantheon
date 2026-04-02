@@ -36,8 +36,13 @@ class AnthropicProvider(BaseProvider):
             else:
                 non_system.append({"role": msg["role"], "content": msg.get("content", "")})
 
+        # Strip provider prefix (e.g. "anthropic/claude-sonnet-4-6" -> "claude-sonnet-4-6")
+        model = body.get("model", "claude-3-5-sonnet-20241022")
+        if model.startswith("anthropic/"):
+            model = model[len("anthropic/"):]
+
         provider_body: dict = {
-            "model": body.get("model", "claude-3-5-sonnet-20241022"),
+            "model": model,
             "messages": non_system,
             "max_tokens": body.get("max_tokens", 1024),
         }

@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { truncateSoulkey } from "@/lib/display";
 
 /** SoulWatch overview -- anomaly detection metrics and alert summary. Fetches live data with mock fallback. */
 
@@ -46,6 +48,29 @@ interface SoulWatchDashboard {
   detections: Detection[] | null;
   anomalies: Anomaly[] | null;
   quarantines: { id: string }[] | null;
+  anomalies_total: number | null;
+  quarantines_total: number | null;
+  detections_total: number | null;
+  fetched_at: string;
+}
+
+interface LlmModelStats {
+  model: string;
+  provider?: string;
+  calls: number;
+  tokens: number;
+  cost: number;
+}
+
+interface LlmDashboard {
+  llm: {
+    total_calls_24h: number;
+    total_tokens_24h: number;
+    total_cost_24h: number;
+    by_model: LlmModelStats[];
+    by_provider: { provider: string; calls: number; tokens: number; cost: number }[];
+    hourly_trend: { hour: string; calls: number; tokens: number }[];
+  } | null;
   fetched_at: string;
 }
 
@@ -57,29 +82,29 @@ const MOCK_HOURLY_ANOMALIES = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 const MOCK_TOP_AGENTS: AgentRisk[] = [
-  { persona: "analytics-agent", soulkey: "sk_a3f1...", riskScore: 87, trend: "up", evaluations: 3420, anomalies: 12, status: "warning" },
-  { persona: "data-pipeline", soulkey: "sk_5c8e...", riskScore: 67, trend: "down", evaluations: 5890, anomalies: 8, status: "warning" },
-  { persona: "customer-support-ai", soulkey: "sk_9d2b...", riskScore: 45, trend: "stable", evaluations: 8120, anomalies: 3, status: "healthy" },
-  { persona: "compliance-checker", soulkey: "sk_8a1c...", riskScore: 92, trend: "up", evaluations: 1240, anomalies: 15, status: "critical" },
-  { persona: "monitoring-agent", soulkey: "sk_b7e4...", riskScore: 12, trend: "stable", evaluations: 9820, anomalies: 0, status: "healthy" },
-  { persona: "cost-optimizer", soulkey: "sk_2f9a...", riskScore: 34, trend: "down", evaluations: 2180, anomalies: 2, status: "healthy" },
-  { persona: "security-scanner", soulkey: "sk_e1c5...", riskScore: 23, trend: "stable", evaluations: 6100, anomalies: 1, status: "healthy" },
-  { persona: "test-agent-beta", soulkey: "sk_f2b9...", riskScore: 98, trend: "up", evaluations: 340, anomalies: 18, status: "critical" },
-  { persona: "email-processor", soulkey: "sk_4a7d...", riskScore: 28, trend: "stable", evaluations: 4560, anomalies: 1, status: "healthy" },
-  { persona: "report-generator", soulkey: "sk_c3e8...", riskScore: 41, trend: "down", evaluations: 1890, anomalies: 4, status: "healthy" },
+  { persona: "agent-001", soulkey: "sk_demo_001", riskScore: 87, trend: "up", evaluations: 3420, anomalies: 12, status: "warning" },
+  { persona: "agent-002", soulkey: "sk_demo_002", riskScore: 67, trend: "down", evaluations: 5890, anomalies: 8, status: "warning" },
+  { persona: "agent-003", soulkey: "sk_demo_003", riskScore: 45, trend: "stable", evaluations: 8120, anomalies: 3, status: "healthy" },
+  { persona: "agent-004", soulkey: "sk_demo_004", riskScore: 92, trend: "up", evaluations: 1240, anomalies: 15, status: "critical" },
+  { persona: "agent-005", soulkey: "sk_demo_005", riskScore: 12, trend: "stable", evaluations: 9820, anomalies: 0, status: "healthy" },
+  { persona: "agent-006", soulkey: "sk_demo_006", riskScore: 34, trend: "down", evaluations: 2180, anomalies: 2, status: "healthy" },
+  { persona: "agent-007", soulkey: "sk_demo_007", riskScore: 23, trend: "stable", evaluations: 6100, anomalies: 1, status: "healthy" },
+  { persona: "agent-008", soulkey: "sk_demo_008", riskScore: 98, trend: "up", evaluations: 340, anomalies: 18, status: "critical" },
+  { persona: "agent-009", soulkey: "sk_demo_009", riskScore: 28, trend: "stable", evaluations: 4560, anomalies: 1, status: "healthy" },
+  { persona: "agent-010", soulkey: "sk_demo_010", riskScore: 41, trend: "down", evaluations: 1890, anomalies: 4, status: "healthy" },
 ];
 
 const MOCK_RECENT_DETECTIONS: Detection[] = [
-  { id: "det_001", rule: "Cross-Tenant Access Attempt", agent: "test-agent-beta", severity: "Critical", timestamp: "03:14:22", ago: "12 min ago" },
-  { id: "det_002", rule: "Excessive Permission Requests", agent: "compliance-checker", severity: "High", timestamp: "03:08:45", ago: "18 min ago" },
-  { id: "det_003", rule: "Off-Hours Activity", agent: "analytics-agent", severity: "Medium", timestamp: "02:55:10", ago: "31 min ago" },
-  { id: "det_004", rule: "Unusual Data Volume", agent: "data-pipeline", severity: "Medium", timestamp: "02:41:33", ago: "45 min ago" },
-  { id: "det_005", rule: "Rapid Key Rotation", agent: "compliance-checker", severity: "High", timestamp: "02:30:00", ago: "56 min ago" },
-  { id: "det_006", rule: "Failed Auth Spike", agent: "test-agent-beta", severity: "High", timestamp: "02:12:18", ago: "1 hour ago" },
-  { id: "det_007", rule: "Off-Hours Activity", agent: "data-pipeline", severity: "Medium", timestamp: "01:48:55", ago: "1.4 hours ago" },
-  { id: "det_008", rule: "Excessive Permission Requests", agent: "analytics-agent", severity: "High", timestamp: "01:22:40", ago: "1.9 hours ago" },
-  { id: "det_009", rule: "Unusual Data Volume", agent: "report-generator", severity: "Medium", timestamp: "00:55:12", ago: "2.3 hours ago" },
-  { id: "det_010", rule: "Off-Hours Activity", agent: "cost-optimizer", severity: "Low", timestamp: "00:30:05", ago: "2.8 hours ago" },
+  { id: "det_001", rule: "Cross-Tenant Access Attempt", agent: "agent-008", severity: "Critical", timestamp: "03:14:22", ago: "12 min ago" },
+  { id: "det_002", rule: "Excessive Permission Requests", agent: "agent-004", severity: "High", timestamp: "03:08:45", ago: "18 min ago" },
+  { id: "det_003", rule: "Off-Hours Activity", agent: "agent-001", severity: "Medium", timestamp: "02:55:10", ago: "31 min ago" },
+  { id: "det_004", rule: "Unusual Data Volume", agent: "agent-002", severity: "Medium", timestamp: "02:41:33", ago: "45 min ago" },
+  { id: "det_005", rule: "Rapid Key Rotation", agent: "agent-004", severity: "High", timestamp: "02:30:00", ago: "56 min ago" },
+  { id: "det_006", rule: "Failed Auth Spike", agent: "agent-008", severity: "High", timestamp: "02:12:18", ago: "1 hour ago" },
+  { id: "det_007", rule: "Off-Hours Activity", agent: "agent-002", severity: "Medium", timestamp: "01:48:55", ago: "1.4 hours ago" },
+  { id: "det_008", rule: "Excessive Permission Requests", agent: "agent-001", severity: "High", timestamp: "01:22:40", ago: "1.9 hours ago" },
+  { id: "det_009", rule: "Unusual Data Volume", agent: "agent-010", severity: "Medium", timestamp: "00:55:12", ago: "2.3 hours ago" },
+  { id: "det_010", rule: "Off-Hours Activity", agent: "agent-006", severity: "Low", timestamp: "00:30:05", ago: "2.8 hours ago" },
 ];
 
 /* ---- Helpers ---- */
@@ -132,8 +157,8 @@ function buildAgentRisks(anomalies: Anomaly[]): AgentRisk[] {
     const highCount = val.severities.filter((s) => s.toLowerCase() === "high").length;
     const riskScore = Math.min(100, critCount * 25 + highCount * 15 + val.count * 5);
     return {
-      persona: key.substring(0, 20),
-      soulkey: `${key.substring(0, 8)}...`,
+      persona: truncateSoulkey(key),
+      soulkey: truncateSoulkey(key),
       riskScore,
       trend: "stable",
       evaluations: 0,
@@ -198,11 +223,18 @@ function AnimatedCount({ target, className }: { target: number; className?: stri
 }
 
 export default function SoulWatchDashboardPage() {
+  const router = useRouter();
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
   /* ---- Live data fetch ---- */
   const { data: dashData, loading } = useWidgetData<SoulWatchDashboard>({
     endpoint: "/api/soulwatch/dashboard",
+    refreshInterval: 30000,
+  });
+
+  /* ---- LLM data fetch ---- */
+  const { data: llmData } = useWidgetData<LlmDashboard>({
+    endpoint: "/api/soulwatch/llm",
     refreshInterval: 30000,
   });
 
@@ -234,6 +266,10 @@ export default function SoulWatchDashboardPage() {
   }, [isLive, dashData]);
 
   const openAnomalyCount = useMemo(() => {
+    // Prefer the server-side total (covers all pages) over counting the local array
+    if (dashData?.anomalies_total != null) {
+      return dashData.anomalies_total;
+    }
     if (dashData?.anomalies && dashData.anomalies.length > 0) {
       return dashData.anomalies.filter((a) => a.status === "open").length;
     }
@@ -241,10 +277,14 @@ export default function SoulWatchDashboardPage() {
   }, [dashData]);
 
   const quarantineCount = useMemo(() => {
+    // Prefer the server-side total for accuracy
+    if (dashData?.quarantines_total != null) {
+      return dashData.quarantines_total;
+    }
     if (dashData?.quarantines && dashData.quarantines.length > 0) {
       return dashData.quarantines.length;
     }
-    return 3;
+    return 0;
   }, [dashData]);
 
   const rulesFiring = useMemo(() => {
@@ -252,7 +292,7 @@ export default function SoulWatchDashboardPage() {
       const rules = new Set(dashData.detections.map((d) => d.rule_id || d.rule));
       return rules.size;
     }
-    return 47;
+    return 0;
   }, [isLive, dashData]);
 
   const agentsMonitored = useMemo(() => {
@@ -260,10 +300,22 @@ export default function SoulWatchDashboardPage() {
       const agents = new Set(dashData.anomalies.map((a) => a.soulkey_id));
       return agents.size;
     }
-    return 47;
+    return 0;
   }, [isLive, dashData]);
 
   const maxAnomaly = Math.max(...hourlyAnomalies.map((h) => h.count), 1);
+
+  /* ---- LLM derived state ---- */
+  const llmCalls = llmData?.llm?.total_calls_24h ?? 0;
+  const llmTokens = llmData?.llm?.total_tokens_24h ?? 0;
+  const llmCost = llmData?.llm?.total_cost_24h ?? 0;
+  const llmByModel: LlmModelStats[] = useMemo(() => {
+    if (llmData?.llm?.by_model && llmData.llm.by_model.length > 0) {
+      return [...llmData.llm.by_model].sort((a, b) => b.calls - a.calls);
+    }
+    return [];
+  }, [llmData]);
+  const hasLlmData = llmData?.llm !== null && llmData?.llm !== undefined;
 
   return (
     <div className="space-y-6">
@@ -340,6 +392,90 @@ export default function SoulWatchDashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* LLM Activity */}
+      {hasLlmData && (
+        <>
+          <div className="flex items-center gap-2 mt-2">
+            <h2 className="text-lg font-semibold text-foreground tracking-tight">LLM Activity</h2>
+            <span className="text-[10px] text-foreground-subtle px-2 py-0.5 rounded bg-white/5 border border-white/10">24h</span>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { label: "Total Calls", value: llmCalls, format: (v: number) => v.toLocaleString(), color: "text-of-primary", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                </svg>
+              )},
+              { label: "Total Tokens", value: llmTokens, format: (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(1)}K` : v.toString(), color: "text-blue-400", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                </svg>
+              )},
+              { label: "Total Cost", value: llmCost, format: (v: number) => `$${v.toFixed(2)}`, color: "text-green-400", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )},
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">{stat.label}</p>
+                  <div className={`${stat.color} opacity-50`}>{stat.icon}</div>
+                </div>
+                <p className={`text-3xl font-bold ${stat.color}`}>
+                  {stat.format(stat.value)}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Top Models by Call Count */}
+          {llmByModel.length > 0 && (
+            <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/10">
+                <h3 className="text-sm font-semibold text-foreground">Top Models by Call Count</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Model</th>
+                      <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Provider</th>
+                      <th className="text-right px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Calls</th>
+                      <th className="text-right px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Tokens</th>
+                      <th className="text-right px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {llmByModel.slice(0, 10).map((model, i) => (
+                      <motion.tr
+                        key={model.model}
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.3 }}
+                        className="border-b border-white/5 hover:bg-white/[0.03] transition-all duration-200"
+                      >
+                        <td className="px-4 py-3 text-foreground font-medium font-mono text-xs">{model.model}</td>
+                        <td className="px-4 py-3 text-foreground-muted text-xs">{model.provider || "—"}</td>
+                        <td className="px-4 py-3 text-right text-foreground-muted font-mono text-xs">{model.calls.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-foreground-muted font-mono text-xs">{model.tokens.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-green-400 font-mono text-xs">${model.cost.toFixed(2)}</td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -450,7 +586,8 @@ export default function SoulWatchDashboardPage() {
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3 }}
-                  className="border-b border-white/5 hover:bg-white/[0.03] transition-all duration-200"
+                  onClick={() => router.push(`/dashboard/agents?expand=${encodeURIComponent(agent.soulkey)}`)}
+                  className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all duration-200"
                 >
                   <td className="px-4 py-3">
                     <div>
@@ -539,18 +676,24 @@ export default function SoulWatchDashboardPage() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.04, duration: 0.3 }}
-              className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
+              onClick={() => router.push(`/dashboard/detection#${det.id}`)}
+              className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.04] transition-colors cursor-pointer group"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className={`shrink-0 inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${severityColor[det.severity] || severityColor["Medium"]}`}>
                   {det.severity}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm text-foreground truncate">{det.rule}</p>
+                  <p className="text-sm text-foreground truncate group-hover:text-of-primary transition-colors">{det.rule}</p>
                   <p className="text-xs text-foreground-subtle mt-0.5">{det.agent}</p>
                 </div>
               </div>
-              <span className="text-xs text-foreground-subtle font-mono shrink-0 ml-4">{det.ago}</span>
+              <div className="flex items-center gap-2 shrink-0 ml-4">
+                <span className="text-xs text-foreground-subtle font-mono">{det.ago}</span>
+                <svg className="w-4 h-4 text-foreground-subtle opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </div>
             </motion.div>
           ))}
         </div>

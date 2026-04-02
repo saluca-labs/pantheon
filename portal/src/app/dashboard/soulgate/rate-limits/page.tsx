@@ -3,38 +3,213 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/** SoulGate rate limits -- per-tenant, per-key, and per-IP rate policy editor. Uses hardcoded mock data. */
+/** SoulGate rate limits -- per-tenant, per-key, and per-IP rate policy editor with template policies. */
 
 interface RateLimitPolicy {
   id: string;
   name: string;
+  category: "department" | "role" | "agent" | "special";
   target: "tenant_wide" | "per_soulkey" | "per_ip";
-  rpm: number;
-  burst: number;
+  requests_per_hour: number;
+  tokens_per_hour: number;
+  burst_multiplier: number;
+  description: string;
   currentUsage: number;
   enabled: boolean;
   hitCount24h: number;
   lastHit: string;
 }
 
-const INITIAL_POLICIES: RateLimitPolicy[] = [
+const SEED_POLICIES: RateLimitPolicy[] = [
+  // ── Department templates ──
   {
-    id: "rl_1", name: "Standard Agent Limit", target: "per_soulkey", rpm: 120, burst: 20,
-    currentUsage: 87, enabled: true, hitCount24h: 1842, lastHit: "2 min ago",
+    id: "tmpl_dept_eng",
+    name: "Engineering",
+    category: "department",
+    target: "tenant_wide",
+    requests_per_hour: 1000,
+    tokens_per_hour: 500_000,
+    burst_multiplier: 1.5,
+    description: "Standard limit for the engineering department",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
   },
   {
-    id: "rl_2", name: "Premium Agent Limit", target: "per_soulkey", rpm: 500, burst: 50,
-    currentUsage: 234, enabled: true, hitCount24h: 312, lastHit: "15 min ago",
+    id: "tmpl_dept_eng_mgmt",
+    name: "Engineering Management",
+    category: "department",
+    target: "tenant_wide",
+    requests_per_hour: 500,
+    tokens_per_hour: 250_000,
+    burst_multiplier: 1.2,
+    description: "Management-tier limit for engineering leadership",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
   },
   {
-    id: "rl_3", name: "Tenant Global Cap", target: "tenant_wide", rpm: 5000, burst: 500,
-    currentUsage: 2847, enabled: true, hitCount24h: 89, lastHit: "1 hour ago",
+    id: "tmpl_dept_marketing",
+    name: "Marketing",
+    category: "department",
+    target: "tenant_wide",
+    requests_per_hour: 200,
+    tokens_per_hour: 100_000,
+    burst_multiplier: 1.0,
+    description: "Standard limit for the marketing department",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
   },
   {
-    id: "rl_4", name: "IP Abuse Prevention", target: "per_ip", rpm: 60, burst: 10,
-    currentUsage: 12, enabled: true, hitCount24h: 456, lastHit: "5 min ago",
+    id: "tmpl_dept_legal",
+    name: "Legal",
+    category: "department",
+    target: "tenant_wide",
+    requests_per_hour: 300,
+    tokens_per_hour: 150_000,
+    burst_multiplier: 1.0,
+    description: "Standard limit for the legal department",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  {
+    id: "tmpl_dept_exec",
+    name: "Executive",
+    category: "department",
+    target: "tenant_wide",
+    requests_per_hour: 100,
+    tokens_per_hour: 50_000,
+    burst_multiplier: 1.0,
+    description: "Conservative limit for executive-level access",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  // ── Role templates ──
+  {
+    id: "tmpl_role_sr_eng",
+    name: "Senior Engineer",
+    category: "role",
+    target: "per_soulkey",
+    requests_per_hour: 800,
+    tokens_per_hour: 400_000,
+    burst_multiplier: 1.5,
+    description: "Elevated limit for senior individual contributors",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  {
+    id: "tmpl_role_jr_eng",
+    name: "Junior Engineer",
+    category: "role",
+    target: "per_soulkey",
+    requests_per_hour: 400,
+    tokens_per_hour: 200_000,
+    burst_multiplier: 1.0,
+    description: "Standard limit for junior engineers",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  {
+    id: "tmpl_role_analyst",
+    name: "Analyst",
+    category: "role",
+    target: "per_soulkey",
+    requests_per_hour: 250,
+    tokens_per_hour: 125_000,
+    burst_multiplier: 1.0,
+    description: "Standard limit for analyst roles",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  // ── Agent-specific templates ──
+  {
+    id: "tmpl_agent_cicd",
+    name: "CI/CD Pipeline Agent",
+    category: "agent",
+    target: "per_soulkey",
+    requests_per_hour: 2000,
+    tokens_per_hour: 1_000_000,
+    burst_multiplier: 3.0,
+    description: "High-throughput limit for CI/CD automation with large burst allowance",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  {
+    id: "tmpl_agent_support",
+    name: "Customer Support Bot",
+    category: "agent",
+    target: "per_soulkey",
+    requests_per_hour: 500,
+    tokens_per_hour: 250_000,
+    burst_multiplier: 1.5,
+    description: "Moderate limit for customer-facing support agents",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  {
+    id: "tmpl_agent_codereview",
+    name: "Code Review Agent",
+    category: "agent",
+    target: "per_soulkey",
+    requests_per_hour: 300,
+    tokens_per_hour: 150_000,
+    burst_multiplier: 1.2,
+    description: "Standard limit for automated code review agents",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
+  },
+  // ── Special ──
+  {
+    id: "tmpl_special_whitelist",
+    name: "Whitelisted (No Limits)",
+    category: "special",
+    target: "per_soulkey",
+    requests_per_hour: 0,
+    tokens_per_hour: 0,
+    burst_multiplier: 0,
+    description: "Exempt from all rate limits -- use sparingly for trusted internal agents",
+    currentUsage: 0,
+    enabled: false,
+    hitCount24h: 0,
+    lastHit: "Never",
   },
 ];
+
+const INITIAL_POLICIES: RateLimitPolicy[] = [...SEED_POLICIES];
+
+const categoryLabel: Record<string, string> = {
+  department: "Department",
+  role: "Role",
+  agent: "Agent",
+  special: "Special",
+};
+
+const categoryBadge: Record<string, string> = {
+  department: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
+  role: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20",
+  agent: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+  special: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
+};
 
 const targetLabel: Record<string, string> = {
   tenant_wide: "Tenant-Wide",
@@ -54,9 +229,12 @@ export default function RateLimitsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState<RateLimitPolicy["category"]>("department");
   const [newTarget, setNewTarget] = useState<RateLimitPolicy["target"]>("per_soulkey");
-  const [newRpm, setNewRpm] = useState("120");
-  const [newBurst, setNewBurst] = useState("20");
+  const [newReqPerHour, setNewReqPerHour] = useState("500");
+  const [newTokensPerHour, setNewTokensPerHour] = useState("250000");
+  const [newBurstMult, setNewBurstMult] = useState("1.0");
+  const [newDescription, setNewDescription] = useState("");
 
   const activeCount = policies.filter((p) => p.enabled).length;
 
@@ -65,9 +243,12 @@ export default function RateLimitsPage() {
     const policy: RateLimitPolicy = {
       id: `rl_${++idCounter.current}`,
       name: newName.trim(),
+      category: newCategory,
       target: newTarget,
-      rpm: parseInt(newRpm) || 120,
-      burst: parseInt(newBurst) || 20,
+      requests_per_hour: parseInt(newReqPerHour) || 500,
+      tokens_per_hour: parseInt(newTokensPerHour) || 250_000,
+      burst_multiplier: parseFloat(newBurstMult) || 1.0,
+      description: newDescription.trim(),
       currentUsage: 0,
       enabled: true,
       hitCount24h: 0,
@@ -83,7 +264,16 @@ export default function RateLimitsPage() {
     setPolicies((prev) =>
       prev.map((p) =>
         p.id === editingId
-          ? { ...p, name: newName.trim(), target: newTarget, rpm: parseInt(newRpm) || 120, burst: parseInt(newBurst) || 20 }
+          ? {
+              ...p,
+              name: newName.trim(),
+              category: newCategory,
+              target: newTarget,
+              requests_per_hour: parseInt(newReqPerHour) || 500,
+              tokens_per_hour: parseInt(newTokensPerHour) || 250_000,
+              burst_multiplier: parseFloat(newBurstMult) || 1.0,
+              description: newDescription.trim(),
+            }
           : p
       )
     );
@@ -94,17 +284,23 @@ export default function RateLimitsPage() {
 
   const resetForm = () => {
     setNewName("");
+    setNewCategory("department");
     setNewTarget("per_soulkey");
-    setNewRpm("120");
-    setNewBurst("20");
+    setNewReqPerHour("500");
+    setNewTokensPerHour("250000");
+    setNewBurstMult("1.0");
+    setNewDescription("");
   };
 
   const openEditModal = (policy: RateLimitPolicy) => {
     setEditingId(policy.id);
     setNewName(policy.name);
+    setNewCategory(policy.category);
     setNewTarget(policy.target);
-    setNewRpm(String(policy.rpm));
-    setNewBurst(String(policy.burst));
+    setNewReqPerHour(String(policy.requests_per_hour));
+    setNewTokensPerHour(String(policy.tokens_per_hour));
+    setNewBurstMult(String(policy.burst_multiplier));
+    setNewDescription(policy.description);
     setShowAddModal(true);
   };
 
@@ -137,11 +333,19 @@ export default function RateLimitsPage() {
       </div>
 
       {/* Policies */}
+      {policies.length === 0 && (
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-12 text-center">
+          <p className="text-foreground-muted text-sm">No rate limit policies configured</p>
+          <p className="text-foreground-subtle text-xs mt-1">Click &quot;+ Add Policy&quot; to create your first rate limit policy</p>
+        </div>
+      )}
       <div className="space-y-4">
         {policies.map((policy, i) => {
-          const usagePct = Math.min((policy.currentUsage / policy.rpm) * 100, 100);
+          const rpm = Math.round(policy.requests_per_hour / 60);
+          const usagePct = rpm > 0 ? Math.min((policy.currentUsage / rpm) * 100, 100) : 0;
           const isHot = usagePct > 80;
           const isWarm = usagePct > 50;
+          const isWhitelisted = policy.category === "special" && policy.requests_per_hour === 0;
 
           return (
             <motion.div
@@ -154,8 +358,11 @@ export default function RateLimitsPage() {
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                 {/* Info */}
                 <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-sm font-semibold text-foreground">{policy.name}</h3>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${categoryBadge[policy.category]}`}>
+                      {categoryLabel[policy.category]}
+                    </span>
                     <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${targetBadge[policy.target]}`}>
                       {targetLabel[policy.target]}
                     </span>
@@ -166,15 +373,29 @@ export default function RateLimitsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-6 text-xs">
+                  {policy.description && (
+                    <p className="text-xs text-foreground-subtle">{policy.description}</p>
+                  )}
+
+                  <div className="flex items-center gap-6 text-xs flex-wrap">
                     <div>
-                      <span className="text-foreground-subtle">RPM: </span>
-                      <span className="text-foreground font-mono font-bold">{policy.rpm}</span>
+                      <span className="text-foreground-subtle">Req/hr: </span>
+                      <span className="text-foreground font-mono font-bold">
+                        {isWhitelisted ? "Unlimited" : policy.requests_per_hour.toLocaleString()}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-foreground-subtle">Burst: </span>
-                      <span className="text-foreground font-mono font-bold">{policy.burst}</span>
+                      <span className="text-foreground-subtle">Tokens/hr: </span>
+                      <span className="text-foreground font-mono font-bold">
+                        {isWhitelisted ? "Unlimited" : policy.tokens_per_hour.toLocaleString()}
+                      </span>
                     </div>
+                    {policy.burst_multiplier > 0 && !isWhitelisted && (
+                      <div>
+                        <span className="text-foreground-subtle">Burst: </span>
+                        <span className="text-foreground font-mono font-bold">{policy.burst_multiplier}x</span>
+                      </div>
+                    )}
                     <div>
                       <span className="text-foreground-subtle">Hits (24h): </span>
                       <span className="text-foreground-muted font-mono">{policy.hitCount24h.toLocaleString()}</span>
@@ -186,28 +407,30 @@ export default function RateLimitsPage() {
                   </div>
 
                   {/* Live Usage Bar */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-foreground-subtle">Current usage</span>
-                      <span className={`font-mono font-bold ${
-                        isHot ? "text-red-400" : isWarm ? "text-yellow-400" : "text-green-400"
-                      }`}>
-                        {policy.currentUsage} / {policy.rpm} RPM
-                      </span>
+                  {!isWhitelisted && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-foreground-subtle">Current usage</span>
+                        <span className={`font-mono font-bold ${
+                          isHot ? "text-red-400" : isWarm ? "text-yellow-400" : "text-green-400"
+                        }`}>
+                          {policy.currentUsage} / {rpm} RPM
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-of-surface-container-high rounded-full overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${
+                            isHot ? "bg-gradient-to-r from-red-600 to-red-400" :
+                            isWarm ? "bg-gradient-to-r from-yellow-600 to-yellow-400" :
+                            "bg-gradient-to-r from-green-600 to-green-400"
+                          }`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${usagePct}%` }}
+                          transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2.5 bg-of-surface-container-high rounded-full overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-full ${
-                          isHot ? "bg-gradient-to-r from-red-600 to-red-400" :
-                          isWarm ? "bg-gradient-to-r from-yellow-600 to-yellow-400" :
-                          "bg-gradient-to-r from-green-600 to-green-400"
-                        }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${usagePct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -274,23 +497,46 @@ export default function RateLimitsPage() {
                       className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Target</label>
-                    <select value={newTarget} onChange={(e) => setNewTarget(e.target.value as RateLimitPolicy["target"])}
-                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
-                      <option value="per_soulkey">Per Soulkey</option>
-                      <option value="tenant_wide">Tenant-Wide</option>
-                      <option value="per_ip">Per IP</option>
-                    </select>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Description</label>
+                    <input type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)}
+                      placeholder="Brief description of this policy"
+                      className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Requests Per Minute</label>
-                      <input type="number" value={newRpm} onChange={(e) => setNewRpm(e.target.value)}
+                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Category</label>
+                      <select value={newCategory} onChange={(e) => setNewCategory(e.target.value as RateLimitPolicy["category"])}
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
+                        <option value="department">Department</option>
+                        <option value="role">Role</option>
+                        <option value="agent">Agent</option>
+                        <option value="special">Special</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Target</label>
+                      <select value={newTarget} onChange={(e) => setNewTarget(e.target.value as RateLimitPolicy["target"])}
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all">
+                        <option value="per_soulkey">Per Soulkey</option>
+                        <option value="tenant_wide">Tenant-Wide</option>
+                        <option value="per_ip">Per IP</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Requests / Hour</label>
+                      <input type="number" value={newReqPerHour} onChange={(e) => setNewReqPerHour(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Burst Allowance</label>
-                      <input type="number" value={newBurst} onChange={(e) => setNewBurst(e.target.value)}
+                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Tokens / Hour</label>
+                      <input type="number" value={newTokensPerHour} onChange={(e) => setNewTokensPerHour(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Burst Multiplier</label>
+                      <input type="number" step="0.1" value={newBurstMult} onChange={(e) => setNewBurstMult(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground focus:outline-none focus:border-of-primary/50 transition-all font-mono" />
                     </div>
                   </div>

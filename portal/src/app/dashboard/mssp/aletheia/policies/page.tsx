@@ -9,7 +9,7 @@ import { CheckCircle, XCircle, Upload } from "lucide-react";
 /** MSSP Aletheia policies -- bulk policy push to child tenants. Uses live API via useWidgetData. */
 
 interface ChildTenant {
-  id: string;
+  tenant_id: string;
   name: string;
   slug: string;
   tier: string;
@@ -40,22 +40,24 @@ function MsspPolicyPushContent() {
     refreshInterval: 60000,
   });
 
-  const tenants: ChildTenant[] = Array.isArray(tenantsData) ? tenantsData : [];
+  const tenants: ChildTenant[] = Array.isArray(tenantsData)
+    ? tenantsData
+    : (tenantsData as unknown as { tenants?: ChildTenant[] })?.tenants ?? [];
 
-  function toggleTenant(id: string) {
+  function toggleTenant(tid: string) {
     setSelectedTenants((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(tid)) {
+        next.delete(tid);
       } else {
-        next.add(id);
+        next.add(tid);
       }
       return next;
     });
   }
 
   function selectAll() {
-    setSelectedTenants(new Set(tenants.map((t) => t.id)));
+    setSelectedTenants(new Set(tenants.map((t) => t.tenant_id)));
   }
 
   function deselectAll() {
@@ -136,10 +138,10 @@ function MsspPolicyPushContent() {
           {!tenantsLoading && tenants.length > 0 && (
             <div className="space-y-1.5 max-h-[400px] overflow-y-auto scrollbar-thin">
               {tenants.map((tenant) => {
-                const isSelected = selectedTenants.has(tenant.id);
+                const isSelected = selectedTenants.has(tenant.tenant_id);
                 return (
                   <label
-                    key={tenant.id}
+                    key={tenant.tenant_id}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
                       isSelected
                         ? "bg-of-primary/10 border border-of-primary/20"
@@ -149,12 +151,12 @@ function MsspPolicyPushContent() {
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleTenant(tenant.id)}
+                      onChange={() => toggleTenant(tenant.tenant_id)}
                       className="w-4 h-4 rounded border-of-outline-variant/30 text-of-primary focus:ring-of-primary/30"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-of-on-surface truncate">{tenant.name}</p>
-                      <p className="text-[10px] font-mono text-of-on-surface-variant truncate">{tenant.id}</p>
+                      <p className="text-[10px] font-mono text-of-on-surface-variant truncate">{tenant.tenant_id}</p>
                     </div>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-of-primary/10 text-of-primary border border-of-primary/20 shrink-0">
                       {tenant.tier}

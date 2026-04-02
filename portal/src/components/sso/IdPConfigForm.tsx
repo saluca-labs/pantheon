@@ -189,7 +189,7 @@ export function IdPConfigForm({
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="e.g. Acme Corp SSO"
+          placeholder="e.g. Corporate SSO"
           className={inputClass}
           required
         />

@@ -13,19 +13,26 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [
-        // Analytics endpoints → Tiresias proxy (bypasses SoulAuth license gate)
-        {
-          source: "/v1/analytics/:path*",
-          destination: `${tiresiasProxyUrl}/v1/analytics/:path*`,
-        },
-      ],
+      beforeFiles: [],
       afterFiles: [
+        // SoulAuth health & metrics (DASH-003/004)
         {
-          source: "/dash/:path*",
-          destination: `${tiresiasProxyUrl}/dash/:path*`,
+          source: "/metrics",
+          destination: `${soulAuthApiUrl}/metrics`,
         },
         {
+          source: "/health",
+          destination: `${soulAuthApiUrl}/health`,
+        },
+        // /dash/* handled by API route at /api/dash/[...path] which injects API key server-side
+        // MSSP endpoints now served by /api/mssp/* routes directly (no rewrite needed)
+        {
+          // Support tickets handled by local API route, not SoulAuth
+          source: "/v1/support/:path*",
+          destination: "/api/support/:path*",
+        },
+        {
+          // Analytics + all other /v1/* → SoulAuth (CROSS-002/DASH-009: analytics no longer misrouted to tiresias-proxy)
           source: "/v1/:path*",
           destination: `${soulAuthApiUrl}/v1/:path*`,
         },
