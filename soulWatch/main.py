@@ -32,6 +32,7 @@ from soulWatch.src.websocket.live import router as ws_router, init_ws_manager
 from soulWatch.src.monitoring.metrics import metrics_router, MetricsMiddleware
 from soulWatch.src.security_headers import SecurityHeadersMiddleware
 from soulWatch.src.aletheia.router import router as aletheia_router
+from soulWatch.src.aletheia.cot_router import router as cot_router
 from soulWatch.src.pipeline.processor import set_quarantine_engine as set_pipeline_quarantine, set_ws_manager
 
 settings = get_settings()
@@ -187,6 +188,7 @@ async def lifespan(app: FastAPI):
 
     # Start event pipeline (sidecar mode: audit table poller)
     poller = None
+    llm_poller = None
     if settings.mode == "sidecar":
         try:
             from soulWatch.src.pipeline.ingestion import AuditTablePoller
@@ -200,6 +202,19 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("soulwatch.poller_start_failed", error=str(e))
 
+        # LLM call poller — polls tiresias_audit_log for usage telemetry
+        try:
+            from soulWatch.src.pipeline.llm_ingestion import LLMCallPoller
+            llm_poller = LLMCallPoller(
+                session_factory=async_session_factory,
+                poll_interval=settings.poll_interval_seconds,
+                batch_size=settings.pipeline_batch_size,
+            )
+            llm_poller.start()
+            logger.info("soulwatch.llm_poller_started", interval=settings.poll_interval_seconds)
+        except Exception as e:
+            logger.warning("soulwatch.llm_poller_start_failed", error=str(e))
+
     logger.info("soulwatch.started", mode=settings.mode)
 
     yield
@@ -207,9 +222,11 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("soulwatch.shutting_down")
 
-    # Stop poller
+    # Stop pollers
     if poller:
         await poller.stop()
+    if llm_poller:
+        await llm_poller.stop()
 
     # Stop baseline rebuild
     baseline_engine.stop_background_rebuild()
@@ -275,6 +292,7 @@ app.include_router(reports_router)
 app.include_router(ws_router)
 app.include_router(metrics_router)
 app.include_router(aletheia_router)
+app.include_router(cot_router)
 
 
 # Standalone mode: event ingestion endpoint

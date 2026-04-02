@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-/** Alert feed -- live security alert stream with severity indicators. Uses hardcoded mock data. */
+/** Alert feed -- live security alert stream with severity indicators. Fetches from SoulWatch anomalies API. */
 
 interface Alert {
   id: string;
@@ -12,19 +12,6 @@ interface Alert {
   agentKey: string;
 }
 
-const mockAlerts: Alert[] = [
-  { id: "1", timestamp: "14:32:01", severity: "critical", message: "Anomalous access pattern detected for agent", agentKey: "sk_a3f2" },
-  { id: "2", timestamp: "14:28:45", severity: "high", message: "Policy violation: unauthorized resource access", agentKey: "sk_b7d1" },
-  { id: "3", timestamp: "14:25:12", severity: "critical", message: "Quarantine triggered: behavioral drift threshold exceeded", agentKey: "sk_c9e4" },
-  { id: "4", timestamp: "14:19:33", severity: "medium", message: "Elevated permission request frequency detected", agentKey: "sk_d2a8" },
-  { id: "5", timestamp: "14:15:07", severity: "high", message: "Cross-tenant access attempt blocked", agentKey: "sk_e5f3" },
-  { id: "6", timestamp: "14:10:22", severity: "low", message: "Scheduled key rotation completed", agentKey: "sk_f1b9" },
-  { id: "7", timestamp: "14:05:48", severity: "medium", message: "Unusual data volume in outbound requests", agentKey: "sk_g8c7" },
-  { id: "8", timestamp: "14:01:15", severity: "high", message: "Sigma rule match: rapid privilege escalation", agentKey: "sk_h4d6" },
-  { id: "9", timestamp: "13:55:30", severity: "low", message: "Agent heartbeat resumed after timeout", agentKey: "sk_j2e1" },
-  { id: "10", timestamp: "13:50:44", severity: "medium", message: "Off-hours activity detected for restricted persona", agentKey: "sk_k7a5" },
-];
-
 const severityConfig = {
   critical: { color: "bg-red-500", text: "text-red-400", border: "border-red-500/30", label: "CRIT" },
   high: { color: "bg-orange-500", text: "text-orange-400", border: "border-orange-500/20", label: "HIGH" },
@@ -32,16 +19,64 @@ const severityConfig = {
   low: { color: "bg-foreground-subtle", text: "text-of-on-surface-variant", border: "border-foreground-subtle/20", label: "LOW" },
 };
 
+function mapSeverity(s: string): Alert["severity"] {
+  if (s === "critical") return "critical";
+  if (s === "high") return "high";
+  if (s === "medium") return "medium";
+  return "low";
+}
+
+function formatTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  } catch {
+    return "??:??:??";
+  }
+}
+
 export default function AlertFeed() {
-  const [alerts] = useState<Alert[]>(mockAlerts);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAlerts() {
+      try {
+        const res = await fetch("/api/soulwatch/dashboard");
+        if (!res.ok) throw new Error("fetch failed");
+        const data = await res.json();
+        const anomalies = data.anomalies?.anomalies || [];
+        const mapped: Alert[] = anomalies.slice(0, 20).map((a: Record<string, unknown>) => ({
+          id: a.id as string,
+          timestamp: formatTime(a.created_at as string),
+          severity: mapSeverity(a.severity as string),
+          message: (a.description as string) || `${a.anomaly_type} anomaly detected`,
+          agentKey: ((a.soulkey_id as string) || "unknown").slice(0, 8),
+        }));
+        setAlerts(mapped);
+      } catch {
+        setAlerts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl glow-teal rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-of-primary uppercase tracking-wider">Alert Feed</h3>
-        <span className="text-xs text-of-on-surface-variant">{alerts.length} events</span>
+        <span className="text-xs text-of-on-surface-variant">
+          {loading ? "Loading..." : `${alerts.length} events`}
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 min-h-0 pr-1">
+        {alerts.length === 0 && !loading && (
+          <div className="text-of-outline text-center py-4 text-xs">No anomalies detected</div>
+        )}
         {alerts.map((alert) => {
           const cfg = severityConfig[alert.severity];
           return (

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 function getSoulAuthUrl(): string {
   return (
     process.env.SOULAUTH_INTERNAL_URL ||
-    process.env.NEXT_PUBLIC_SOULAUTH_API_URL ||
+    process.env.SOULAUTH_INTERNAL_URL ||
     "http://soulauth.tiresias.svc.cluster.local"
   );
 }
@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
       name: display_name,
       picture: null,
       role,
+      tier: data.tier || "mssp",
       tenant_id,
       tenant_name,
       expires_at,

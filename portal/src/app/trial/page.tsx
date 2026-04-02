@@ -320,7 +320,7 @@ export default function WaitlistPage() {
                           required
                           value={formData.company_name}
                           onChange={handleChange}
-                          placeholder="Acme Corp"
+                          placeholder="Your Company"
                           className="w-full rounded-lg bg-navy-950 border border-border px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-colors"
                         />
                       </div>
@@ -335,7 +335,7 @@ export default function WaitlistPage() {
                           required
                           value={formData.company_domain}
                           onChange={handleChange}
-                          placeholder="acme.com"
+                          placeholder="example.com"
                           className="w-full rounded-lg bg-navy-950 border border-border px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-colors"
                         />
                       </div>

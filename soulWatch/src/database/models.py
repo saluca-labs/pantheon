@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import (
-    String, Text, Boolean, DateTime, Float, Integer,
+    String, Text, Boolean, DateTime, Float, Integer, BigInteger,
     Index, ForeignKey, Uuid, JSON, LargeBinary,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -177,6 +177,46 @@ class SoulWatchCustomRule(Base):
     )
 
 
+# ---------------------------------------------------------------------------
+# Read-only Tiresias Proxy tables (shared PostgreSQL database)
+# ---------------------------------------------------------------------------
+
+
+class TiresiasAuditLog(Base):
+    """Read-only view of tiresias_audit_log — LLM call telemetry.
+
+    SoulWatch intentionally excludes encrypted_prompt / encrypted_completion;
+    only metadata fields are mapped for cost and usage analytics.
+    """
+    __tablename__ = "tiresias_audit_log"
+    __table_args__ = {"extend_existing": True}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(36))
+    model: Mapped[Optional[str]] = mapped_column(String(128))
+    provider: Mapped[Optional[str]] = mapped_column(String(64))
+    token_count: Mapped[Optional[int]] = mapped_column(Integer)
+    cost_usd: Mapped[Optional[float]] = mapped_column(Float)
+    session_id: Mapped[Optional[str]] = mapped_column(String(128))
+    request_hash: Mapped[Optional[str]] = mapped_column(String(128))
+    response_hash: Mapped[Optional[str]] = mapped_column(String(128))
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class TiresiasUsageBucket(Base):
+    """Read-only view of tiresias_usage_buckets — pre-aggregated hourly usage."""
+    __tablename__ = "tiresias_usage_buckets"
+    __table_args__ = {"extend_existing": True}
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(36))
+    bucket_hour: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    token_count: Mapped[int] = mapped_column(Integer, default=0)
+    request_count: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    error_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class AletheiaToolInvocation(Base):
     """Aletheia tool invocation telemetry from tiresias-exec."""
     __tablename__ = "aletheia_tool_invocations"
@@ -240,4 +280,56 @@ class AletheiaBlockedOutput(Base):
     __table_args__ = (
         Index("idx_blocked_output_tenant", "tenant_id"),
         Index("idx_blocked_output_created", "created_at"),
+    )
+
+
+class AletheiaCotChain(Base):
+    """Aletheia chain-of-thought hash chain entries."""
+    __tablename__ = "aletheia_cot_chain"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id"), nullable=False,
+    )
+    chain_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    entry_index: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    request_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    model: Mapped[str] = mapped_column(String(100), nullable=False)
+    provider: Mapped[str] = mapped_column(String(50), nullable=False)
+    agent_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    cot_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    cot_token_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    cot_byte_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    prev_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    entry_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_stored: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    content_ref: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        Index("idx_cot_chain_tenant_time", "tenant_id", "timestamp"),
+        Index("idx_cot_chain_request", "request_id"),
+        Index("idx_cot_chain_chain_id", "chain_id"),
+        Index("idx_cot_chain_entry_index", "tenant_id", "entry_index"),
+    )
+
+
+class AletheiaCotContent(Base):
+    """Encrypted chain-of-thought content (AES-256-GCM)."""
+    __tablename__ = "aletheia_cot_content"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    chain_entry_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("aletheia_cot_chain.id", ondelete="CASCADE"), nullable=False,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    encrypted_content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    content_nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    content_tag: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        Index("idx_cot_content_chain_entry", "chain_entry_id"),
+        Index("idx_cot_content_tenant", "tenant_id"),
     )

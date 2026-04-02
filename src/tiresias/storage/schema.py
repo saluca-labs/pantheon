@@ -37,6 +37,8 @@ class TiresiasAuditLog(Base):
     model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
     token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cost_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
     session_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)

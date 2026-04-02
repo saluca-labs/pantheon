@@ -3,13 +3,15 @@
 import { useState, useMemo } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
-import { Link2, Users, Clock } from "lucide-react";
+import { Link2, Users, Clock, ChevronRight, FileText } from "lucide-react";
 
 /** MSSP Aletheia -- cross-tenant CoT chain viewer for managed providers. Uses live API via useWidgetData. */
 
 interface CrossTenantCoTEntry {
   id: string;
   chain_id: string;
+  chain_hash?: string;
+  prev_hash?: string;
   entry_index: number;
   request_id: string;
   tenant_id: string;
@@ -20,6 +22,7 @@ interface CrossTenantCoTEntry {
   agent_id: string | null;
   cot_hash: string;
   cot_token_count: number;
+  cot_byte_count?: number;
   entry_hash: string;
   content_stored: boolean;
 }
@@ -53,6 +56,7 @@ const TENANT_COLORS = [
 
 function MsspAletheiaContent() {
   const [tenantFilter, setTenantFilter] = useState<string>("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data, loading, error } = useWidgetData<CrossTenantCoTResponse>({
     endpoint: "/v1/mssp/aletheia/cot?limit=50",
@@ -161,8 +165,8 @@ function MsspAletheiaContent() {
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[140px_1fr_120px_100px_80px_100px] gap-4 px-5 py-2.5 border-b border-of-outline-variant/10">
-          {["Tenant", "Request ID", "Model", "Provider", "Tokens", "Time"].map((h) => (
+        <div className="grid grid-cols-[140px_1fr_120px_100px_80px_100px_28px] gap-4 px-5 py-2.5 border-b border-of-outline-variant/10">
+          {["Tenant", "Request ID", "Model", "Provider", "Tokens", "Time", ""].map((h) => (
             <span key={h} className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">{h}</span>
           ))}
         </div>
@@ -181,22 +185,101 @@ function MsspAletheiaContent() {
           </div>
         )}
 
-        {!loading && filteredEntries.map((entry) => (
-          <div
-            key={entry.id}
-            className={`grid grid-cols-[140px_1fr_120px_100px_80px_100px] gap-4 px-5 py-3 border-b border-of-outline-variant/5 items-center ${tenantColorMap.get(entry.tenant_id) ?? ""}`}
-            title={`Tenant: ${entry.tenant_id}`}
-          >
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-of-on-surface truncate">{entry.tenant_name ?? "Unknown"}</p>
+        {!loading && filteredEntries.map((entry) => {
+          const entryKey = `${entry.chain_id}-${entry.entry_index}`;
+          const isExpanded = expandedId === entryKey;
+          return (
+            <div key={entryKey}>
+              <div
+                className={`grid grid-cols-[140px_1fr_120px_100px_80px_100px_28px] gap-4 px-5 py-3 border-b border-of-outline-variant/5 items-center cursor-pointer hover:bg-of-surface-container-high transition-colors ${tenantColorMap.get(entry.tenant_id) ?? ""}`}
+                title={`Tenant: ${entry.tenant_id}`}
+                onClick={() => setExpandedId(isExpanded ? null : entryKey)}
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-of-on-surface truncate">{entry.tenant_name ?? "Unknown"}</p>
+                </div>
+                <p className="font-mono text-xs text-of-on-surface-variant truncate">{entry.request_id}</p>
+                <p className="text-xs text-of-on-surface truncate">{entry.model}</p>
+                <p className="text-xs text-of-on-surface-variant">{entry.provider}</p>
+                <p className="text-xs font-mono tabular-nums text-of-on-surface">{entry.cot_token_count}</p>
+                <p className="text-[10px] text-of-on-surface-variant">{relativeTime(entry.timestamp)}</p>
+                <ChevronRight
+                  className={`h-4 w-4 text-of-on-surface-variant transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                />
+              </div>
+
+              {/* Expanded detail panel */}
+              {isExpanded && (
+                <div className="bg-of-surface-container-low border-b border-of-outline-variant/10 px-8 py-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Chain Hash</span>
+                      <p className="font-mono text-of-on-surface mt-0.5 break-all">{entry.chain_hash ?? entry.chain_id}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Previous Hash</span>
+                      <p className="font-mono text-of-on-surface mt-0.5 break-all">{entry.prev_hash ?? "\u2014"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Entry Hash</span>
+                      <p className="font-mono text-of-on-surface mt-0.5 break-all">{entry.entry_hash}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">CoT Hash</span>
+                      <p className="font-mono text-of-on-surface mt-0.5 break-all">{entry.cot_hash}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Model</span>
+                      <p className="text-of-on-surface mt-0.5">{entry.model}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Provider</span>
+                      <p className="text-of-on-surface mt-0.5">{entry.provider}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Agent</span>
+                      <p className="font-mono text-of-on-surface mt-0.5">{entry.agent_id ?? "\u2014"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Tenant</span>
+                      <p className="text-of-on-surface mt-0.5">{entry.tenant_name ?? "Unknown"}</p>
+                      <p className="font-mono text-[10px] text-of-on-surface-variant">{entry.tenant_id}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Token Count</span>
+                      <p className="font-mono text-of-on-surface mt-0.5">{entry.cot_token_count.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Byte Count</span>
+                      <p className="font-mono text-of-on-surface mt-0.5">{entry.cot_byte_count != null ? entry.cot_byte_count.toLocaleString() : "\u2014"}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Entry Index</span>
+                      <p className="font-mono text-of-on-surface mt-0.5">{entry.entry_index}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Timestamp</span>
+                      <p className="font-mono text-of-on-surface mt-0.5">{new Date(entry.timestamp).toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {entry.content_stored && (
+                    <button
+                      className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg bg-of-primary/10 text-of-primary text-xs font-bold hover:bg-of-primary/20 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`/api/proxy?endpoint=${encodeURIComponent(`/v1/aletheia/cot/${entry.chain_id}/${entry.entry_index}/content`)}`, "_blank");
+                      }}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      View Content
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <p className="font-mono text-xs text-of-on-surface-variant truncate">{entry.request_id}</p>
-            <p className="text-xs text-of-on-surface truncate">{entry.model}</p>
-            <p className="text-xs text-of-on-surface-variant">{entry.provider}</p>
-            <p className="text-xs font-mono tabular-nums text-of-on-surface">{entry.cot_token_count}</p>
-            <p className="text-[10px] text-of-on-surface-variant">{relativeTime(entry.timestamp)}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Tenant Distribution */}

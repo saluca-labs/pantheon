@@ -72,7 +72,7 @@ export default function QuarantineStatus() {
           </div>
 
           {/* Agent list */}
-          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2 min-h-0 max-h-[260px]">
             {agents.length === 0 && (
               <div className="text-center py-4 text-xs text-of-outline">
                 No agents currently quarantined.

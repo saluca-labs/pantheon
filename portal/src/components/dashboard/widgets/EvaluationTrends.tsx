@@ -74,7 +74,7 @@ function transformAudit(raw: unknown): TrendData {
 
 export default function EvaluationTrends() {
   const { data, loading, error, refetch } = useWidgetData({
-    endpoint: "/v1/soulauth/admin/audit?event_type=access_evaluated",
+    endpoint: "/v1/soulauth/admin/audit/report",
     transform: transformAudit,
   });
 

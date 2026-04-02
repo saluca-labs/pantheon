@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWidgetData } from "@/lib/useWidgetData";
 
-/** SoulGate upstreams -- backend target management with health checks. Uses hardcoded mock data. */
+/** SoulGate upstreams -- agent keys as backend targets with health checks. Fetches live data from SoulAuth. */
 
 interface Upstream {
   id: string;
@@ -17,40 +18,19 @@ interface Upstream {
   requestsToday: number;
   errorsToday: number;
   lastCheck: string;
+  persona_id?: string;
+  key_status?: string;
 }
 
-const INITIAL_UPSTREAMS: Upstream[] = [
-  {
-    id: "ups_1", name: "analytics-api", baseUrl: "https://analytics.internal:8080",
-    status: "healthy", latency: 42, circuitBreaker: "closed", timeout: 5000, retries: 3,
-    requestsToday: 48200, errorsToday: 12, lastCheck: "30 sec ago",
-  },
-  {
-    id: "ups_2", name: "auth-service", baseUrl: "https://auth.internal:9090",
-    status: "healthy", latency: 18, circuitBreaker: "closed", timeout: 3000, retries: 2,
-    requestsToday: 92400, errorsToday: 3, lastCheck: "30 sec ago",
-  },
-  {
-    id: "ups_3", name: "data-lake", baseUrl: "https://datalake.internal:7070",
-    status: "degraded", latency: 340, circuitBreaker: "closed", timeout: 10000, retries: 5,
-    requestsToday: 15600, errorsToday: 234, lastCheck: "30 sec ago",
-  },
-  {
-    id: "ups_4", name: "ml-inference", baseUrl: "https://ml.internal:8443",
-    status: "healthy", latency: 128, circuitBreaker: "closed", timeout: 15000, retries: 2,
-    requestsToday: 22100, errorsToday: 8, lastCheck: "30 sec ago",
-  },
-  {
-    id: "ups_5", name: "notification-svc", baseUrl: "https://notify.internal:6060",
-    status: "down", latency: 0, circuitBreaker: "open", timeout: 5000, retries: 3,
-    requestsToday: 1200, errorsToday: 1200, lastCheck: "30 sec ago",
-  },
-  {
-    id: "ups_6", name: "billing-api", baseUrl: "https://billing.internal:8888",
-    status: "healthy", latency: 65, circuitBreaker: "closed", timeout: 5000, retries: 3,
-    requestsToday: 8900, errorsToday: 2, lastCheck: "30 sec ago",
-  },
-];
+interface UpstreamsResponse {
+  upstreams: Upstream[];
+  total: number;
+  healthy: number;
+  degraded: number;
+  down: number;
+  source: string;
+  fetched_at: string;
+}
 
 const statusBadge: Record<string, string> = {
   healthy: "bg-green-500/15 text-green-400 border border-green-500/20",
@@ -71,7 +51,14 @@ const cbBadge: Record<string, string> = {
 };
 
 export default function UpstreamsPage() {
-  const [upstreams, setUpstreams] = useState(INITIAL_UPSTREAMS);
+  const { data: response, loading, refetch } = useWidgetData<UpstreamsResponse>({
+    endpoint: "/api/soulgate/upstreams",
+    refreshInterval: 30000,
+  });
+
+  const upstreams = response?.upstreams ?? [];
+  const isLive = response?.source === "soulauth-live";
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
@@ -79,25 +66,20 @@ export default function UpstreamsPage() {
   const [newRetries, setNewRetries] = useState("3");
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [checkResults, setCheckResults] = useState<Record<string, string>>({});
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const healthyCount = upstreams.filter((u) => u.status === "healthy").length;
+  const healthyCount = response?.healthy ?? upstreams.filter((u) => u.status === "healthy").length;
+  const totalCount = response?.total ?? upstreams.length;
+
+  const filteredUpstreams = upstreams.filter((u) => {
+    if (filterStatus !== "all" && u.status !== filterStatus) return false;
+    if (searchTerm && !u.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
 
   const handleAddUpstream = () => {
-    if (!newName.trim() || !newUrl.trim()) return;
-    const upstream: Upstream = {
-      id: `ups_${Date.now()}`,
-      name: newName.trim(),
-      baseUrl: newUrl.trim(),
-      status: "healthy",
-      latency: 0,
-      circuitBreaker: "closed",
-      timeout: parseInt(newTimeout) || 5000,
-      retries: parseInt(newRetries) || 3,
-      requestsToday: 0,
-      errorsToday: 0,
-      lastCheck: "Never",
-    };
-    setUpstreams((prev) => [...prev, upstream]);
+    // In a full implementation, this would POST to SoulAuth to create a new soulkey
     setShowAddModal(false);
     setNewName("");
     setNewUrl("");
@@ -105,33 +87,47 @@ export default function UpstreamsPage() {
     setNewRetries("3");
   };
 
-  const handleHealthCheck = (id: string) => {
+  const handleHealthCheck = async (id: string) => {
     setCheckingId(id);
     setCheckResults((prev) => ({ ...prev, [id]: "checking" }));
-    setTimeout(() => {
-      const upstream = upstreams.find((u) => u.id === id);
-      if (upstream?.status === "down") {
-        setCheckResults((prev) => ({ ...prev, [id]: "Health check failed - connection refused (ECONNREFUSED)" }));
+
+    try {
+      // Check SoulGate health as a proxy for upstream connectivity
+      const res = await fetch("/api/soulgate/dashboard");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.gateway_healthy) {
+          setCheckResults((prev) => ({
+            ...prev,
+            [id]: `Health check passed - gateway healthy (${data.fetched_at})`,
+          }));
+        } else {
+          setCheckResults((prev) => ({
+            ...prev,
+            [id]: "Health check warning - gateway status unknown",
+          }));
+        }
       } else {
-        setCheckResults((prev) => ({ ...prev, [id]: `Health check passed - 200 OK (${Math.floor(Math.random() * 80 + 10)}ms)` }));
+        setCheckResults((prev) => ({
+          ...prev,
+          [id]: "Health check failed - gateway unreachable",
+        }));
       }
-      setCheckingId(null);
-    }, 1500);
+    } catch {
+      setCheckResults((prev) => ({
+        ...prev,
+        [id]: "Health check failed - connection error",
+      }));
+    }
+    setCheckingId(null);
   };
 
   const handleResetCircuitBreaker = (id: string) => {
-    setUpstreams((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, circuitBreaker: "half_open" as const } : u))
-    );
-    setTimeout(() => {
-      setUpstreams((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, circuitBreaker: "closed" as const, status: "degraded" as const } : u))
-      );
-    }, 2000);
-  };
-
-  const handleRemoveUpstream = (id: string) => {
-    setUpstreams((prev) => prev.filter((u) => u.id !== id));
+    // In a full implementation, this would POST to SoulAuth to reinstate a suspended key
+    setCheckResults((prev) => ({
+      ...prev,
+      [id]: "Circuit breaker reset requested - reinstate key via SoulAuth admin",
+    }));
   };
 
   return (
@@ -141,25 +137,92 @@ export default function UpstreamsPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Upstreams</h1>
           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/20">
-            {healthyCount}/{upstreams.length} healthy
+            {healthyCount}/{totalCount} healthy
           </span>
+          {isLive && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-[10px] font-medium text-green-400">Live</span>
+            </div>
+          )}
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
-        >
-          + Add Upstream
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            className="px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-sm text-foreground-muted hover:text-foreground hover:bg-white/10 transition-all"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors"
+          >
+            + Add Upstream
+          </button>
+        </div>
       </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          placeholder="Search upstreams..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 px-4 py-2 rounded-lg bg-of-surface-container-high border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-of-primary/50 transition-all"
+        />
+        <div className="flex gap-2">
+          {["all", "healthy", "degraded", "down"].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                filterStatus === status
+                  ? "bg-of-primary/20 text-of-primary border border-of-primary/30"
+                  : "bg-white/5 text-foreground-muted border border-white/10 hover:bg-white/10"
+              }`}
+            >
+              {status === "all" ? `All (${totalCount})` : `${status.charAt(0).toUpperCase() + status.slice(1)} (${
+                status === "healthy" ? response?.healthy ?? 0 :
+                status === "degraded" ? response?.degraded ?? 0 :
+                response?.down ?? 0
+              })`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && upstreams.length === 0 && (
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-12 text-center">
+          <div className="inline-block w-6 h-6 border-2 border-of-primary/30 border-t-of-primary rounded-full animate-spin mb-3" />
+          <p className="text-foreground-muted text-sm">Loading upstreams from SoulAuth...</p>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && upstreams.length === 0 && (
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-12 text-center">
+          <p className="text-foreground-muted text-sm">No upstreams found</p>
+          <p className="text-foreground-subtle text-xs mt-1">SoulAuth returned no active keys for this tenant</p>
+        </div>
+      )}
+
+      {/* No results from filter */}
+      {!loading && upstreams.length > 0 && filteredUpstreams.length === 0 && (
+        <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-8 text-center">
+          <p className="text-foreground-muted text-sm">No upstreams match your filter</p>
+        </div>
+      )}
 
       {/* Upstreams Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {upstreams.map((upstream, i) => (
+        {filteredUpstreams.map((upstream, i) => (
           <motion.div
             key={upstream.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.03 }}
             className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-4"
           >
             <div className="flex items-start justify-between">
@@ -214,12 +277,12 @@ export default function UpstreamsPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-foreground-subtle">Errors</span>
-                  <span className={`font-mono ${upstream.errorsToday > 100 ? "text-red-400" : "text-foreground-muted"}`}>
+                  <span className={`font-mono ${upstream.errorsToday > 10 ? "text-red-400" : "text-foreground-muted"}`}>
                     {upstream.errorsToday.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-foreground-subtle">Last Check</span>
+                  <span className="text-foreground-subtle">Last Seen</span>
                   <span className="text-foreground-muted">{upstream.lastCheck}</span>
                 </div>
               </div>
@@ -247,13 +310,16 @@ export default function UpstreamsPage() {
               <div className={`p-2 rounded-lg border text-xs ${
                 checkResults[upstream.id].includes("passed")
                   ? "bg-green-500/5 border-green-500/20 text-green-400"
-                  : "bg-red-500/5 border-red-500/20 text-red-400"
+                  : checkResults[upstream.id].includes("warning")
+                    ? "bg-yellow-500/5 border-yellow-500/20 text-yellow-400"
+                    : "bg-red-500/5 border-red-500/20 text-red-400"
               }`}>
                 {checkResults[upstream.id]}
               </div>
             )}
             {checkResults[upstream.id] === "checking" && (
-              <div className="p-2 rounded-lg bg-of-surface-container-lowest border border-white/5 text-xs text-foreground-muted">
+              <div className="p-2 rounded-lg bg-of-surface-container-lowest border border-white/5 text-xs text-foreground-muted flex items-center gap-2">
+                <div className="w-3 h-3 border border-of-primary/30 border-t-of-primary rounded-full animate-spin" />
                 Running health check...
               </div>
             )}
@@ -265,12 +331,6 @@ export default function UpstreamsPage() {
                 className="flex-1 px-3 py-2 rounded-lg border border-of-primary/30 text-of-primary hover:bg-of-primary/10 text-xs font-medium transition-all disabled:opacity-40"
               >
                 Health Check
-              </button>
-              <button
-                onClick={() => handleRemoveUpstream(upstream.id)}
-                className="px-3 py-2 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 text-xs font-medium transition-all"
-              >
-                Remove
               </button>
             </div>
           </motion.div>
@@ -300,6 +360,9 @@ export default function UpstreamsPage() {
                   </button>
                 </div>
                 <div className="px-6 py-5 space-y-5">
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
+                    Upstreams are managed via SoulAuth soulkeys. To add a new upstream, provision a new soulkey via the SoulAuth admin API.
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Name</label>
                     <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}

@@ -8,7 +8,7 @@
  * (ApiError status codes surfaced), and an optional `transform` callback
  * to reshape the raw API response before it reaches the widget component.
  *
- * @param endpoint  - API path to poll (e.g. `/dash/v1/spend`)
+ * @param endpoint  - API path to poll (e.g. `/api/dash/v1/spend`)
  * @param transform - Optional function to reshape the raw response into `T`
  * @param refreshInterval - Polling interval in ms (default: `config.refreshInterval`)
  * @param skip      - When true, suppresses all fetching (e.g. unauthenticated state)

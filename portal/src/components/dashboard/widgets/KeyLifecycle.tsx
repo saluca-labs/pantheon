@@ -77,7 +77,7 @@ function transformKeys(raw: unknown): KeyStats {
 
 export default function KeyLifecycle() {
   const { data, loading, error, refetch } = useWidgetData({
-    endpoint: "/v1/soulauth/admin/soulkeys",
+    endpoint: "/v1/soulauth/admin/keys",
     transform: transformKeys,
   });
 

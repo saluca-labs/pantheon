@@ -57,22 +57,22 @@ function relativeTime(ts: string): string {
 
 export default function AletheiaOverviewPage() {
   const { data: chainData, loading: chainLoading, error: chainError } = useWidgetData<ChainData>({
-    endpoint: "/v1/aletheia/cot/chain?limit=10",
+    endpoint: "/api/watch/v1/aletheia/cot/chain?limit=10",
     refreshInterval: 30000,
   });
 
   const { data: invocationsData, loading: invLoading, error: invError } = useWidgetData<InvocationsData>({
-    endpoint: "/watch/v1/aletheia/tools/invocations?limit=20",
+    endpoint: "/api/watch/v1/aletheia/tools/invocations?limit=20",
     refreshInterval: 30000,
   });
 
   const { data: statsData, loading: statsLoading } = useWidgetData<StatsData>({
-    endpoint: "/watch/v1/aletheia/tools/invocations/stats",
+    endpoint: "/api/watch/v1/aletheia/tools/summary",
     refreshInterval: 60000,
   });
 
   const { data: violationsData, loading: violLoading } = useWidgetData<InvocationsData>({
-    endpoint: "/watch/v1/aletheia/tools/invocations?limit=50",
+    endpoint: "/api/watch/v1/aletheia/tools/invocations?limit=50",
     refreshInterval: 30000,
   });
 

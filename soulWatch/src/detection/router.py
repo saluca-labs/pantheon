@@ -316,6 +316,17 @@ async def list_detections(
     result = await db.execute(query.offset(offset).limit(page_size))
     detections = result.scalars().all()
 
+    def _build_description(d: SoulWatchDetection) -> str:
+        desc = f"Sigma rule '{d.rule_title}' (level: {d.level}) matched"
+        if d.soulkey_id:
+            desc += f" for agent {d.soulkey_id}"
+        if d.matched_fields:
+            field_summary = ", ".join(
+                f"{k}={v}" for k, v in (d.matched_fields or {}).items()
+            )
+            desc += f" on fields: {field_summary}"
+        return desc
+
     return {
         "detections": [
             {
@@ -325,8 +336,10 @@ async def list_detections(
                 "level": d.level,
                 "soulkey_id": str(d.soulkey_id) if d.soulkey_id else None,
                 "matched_fields": d.matched_fields,
+                "event_data": d.event_data,
                 "response_playbook": d.response_playbook,
                 "created_at": d.created_at.isoformat() if d.created_at else None,
+                "description": _build_description(d),
             }
             for d in detections
         ],
