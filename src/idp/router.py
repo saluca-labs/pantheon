@@ -7,6 +7,7 @@ import structlog
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, update, delete
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.rbac import require_permission
@@ -59,7 +60,14 @@ async def create_idp_config(
         status="active",
     )
     db.add(config)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"IdP config for provider '{body.provider_type}' already exists for this tenant",
+        )
     await db.refresh(config)
     logger.info("idp.created", idp_id=str(config.id), provider=config.provider_type, tenant_id=str(tenant_id))
     return IdPConfigResponse.from_orm_model(config)

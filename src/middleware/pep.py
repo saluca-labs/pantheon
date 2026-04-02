@@ -4,9 +4,9 @@ Implements SPEC.md section 6.2 — validates capability tokens on protected endp
 """
 
 import structlog
-from fastapi import Request, HTTPException
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from src.tokens.capability import (
     validate_capability_token,
@@ -99,20 +99,20 @@ class SoulAuthPEPMiddleware(BaseHTTPMiddleware):
         capability_token = request.headers.get("X-Capability-Token")
         if not capability_token:
             logger.warning("pep.missing_token", path=path)
-            raise HTTPException(status_code=401, detail="Missing capability token")
+            return JSONResponse(status_code=401, content={"detail": "Missing capability token"})
 
         # Validate token
         try:
             claims = validate_capability_token(capability_token)
         except TokenExpiredError:
             logger.warning("pep.token_expired", path=path)
-            raise HTTPException(status_code=401, detail="Capability token expired")
+            return JSONResponse(status_code=401, content={"detail": "Capability token expired"})
         except TokenRevokedError:
             logger.warning("pep.token_revoked", path=path)
-            raise HTTPException(status_code=401, detail="Capability token revoked")
+            return JSONResponse(status_code=401, content={"detail": "Capability token revoked"})
         except TokenInvalidError as e:
             logger.warning("pep.token_invalid", path=path, error=str(e))
-            raise HTTPException(status_code=401, detail="Invalid capability token")
+            return JSONResponse(status_code=401, content={"detail": "Invalid capability token"})
 
         # Derive required scope from request
         required_scope = _derive_scope_from_request(request)
@@ -125,9 +125,9 @@ class SoulAuthPEPMiddleware(BaseHTTPMiddleware):
                 required=required_scope,
                 granted=claims.get("scp"),
             )
-            raise HTTPException(
+            return JSONResponse(
                 status_code=403,
-                detail=f"Scope {required_scope} not in capability token",
+                content={"detail": f"Scope {required_scope} not in capability token"},
             )
 
         # Validate session binding
@@ -135,8 +135,8 @@ class SoulAuthPEPMiddleware(BaseHTTPMiddleware):
         token_sid = claims.get("sid", "")
         if token_sid and token_sid != session_id:
             logger.warning("pep.session_mismatch", path=path)
-            raise HTTPException(
-                status_code=403, detail="Session binding mismatch"
+            return JSONResponse(
+                status_code=403, content={"detail": "Session binding mismatch"}
             )
 
         # Inject auth context for downstream handlers

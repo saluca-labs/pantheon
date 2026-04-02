@@ -9,9 +9,9 @@ import uuid
 from typing import Optional
 
 import structlog
-from fastapi import Request, HTTPException
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -92,8 +92,8 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             try:
                 tenant_id = uuid.UUID(tenant_id_header)
             except ValueError:
-                raise HTTPException(
-                    status_code=400, detail="Invalid X-Tenant-ID format"
+                return JSONResponse(
+                    status_code=400, content={"detail": "Invalid X-Tenant-ID format"}
                 )
 
             # For now, create a lightweight context from the header
