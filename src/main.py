@@ -203,6 +203,14 @@ async def lifespan(app: FastAPI):
                 TelegramAlertSink(settings.telegram_bot_token, settings.telegram_chat_id),
                 min_severity="critical",
             )
+        # DB-backed notification channels (Slack, PagerDuty, Teams, etc.)
+        try:
+            from src.notifications.sink import ChannelNotificationSink
+            channel_sink = ChannelNotificationSink(async_session_factory)
+            alert_router_inst.add_sink(channel_sink, min_severity="low")
+            logger.info("soulauth.channel_notifications_enabled")
+        except Exception as e:
+            logger.warning("soulauth.channel_notifications_failed", error=str(e))
         init_analytics(baseline_engine, detector, alert_router_inst)
         baseline_engine.start_background_rebuild(async_session_factory)
         logger.info("soulauth.analytics_started")
@@ -273,6 +281,25 @@ async def lifespan(app: FastAPI):
             logger.info("soulauth.siem_forwarder_started", destinations=len(dest_configs))
         except Exception as e:
             logger.warning("soulauth.siem_forwarder_start_failed", error=str(e))
+
+    # Load DB-configured SIEM connectors into the in-memory SIEMManager
+    try:
+        from src.siem._state import get_siem_manager, init_siem
+        from src.siem.router import _row_to_config
+        from src.database.models import SIEMConnector
+        from sqlalchemy import select as _select
+
+        init_siem()
+        async with async_session_factory() as siem_db:
+            rows = (await siem_db.execute(_select(SIEMConnector))).scalars().all()
+            mgr = get_siem_manager()
+            for row in rows:
+                if row.enabled:
+                    mgr.add_connector(_row_to_config(row))
+            if rows:
+                logger.info("soulauth.siem_connectors_loaded", count=len(rows))
+    except Exception as e:
+        logger.warning("soulauth.siem_connectors_load_failed", error=str(e))
 
     # Start grace period enforcement sweep (hourly)
     import asyncio
