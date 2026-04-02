@@ -37,7 +37,12 @@ export function SSOSettingsTab() {
       const data = await api.get<{ idps: IdPConfig[] }>("/v1/idp");
       setIdps(data.idps ?? []);
     } catch (err) {
-      setFetchError(err instanceof ApiError ? err.message : "Failed to load identity providers.");
+      // 404 means no IdP endpoint configured yet — treat as empty, not error
+      if (err instanceof ApiError && err.message.startsWith("404")) {
+        setIdps([]);
+      } else {
+        setFetchError(err instanceof ApiError ? err.message : "Failed to load identity providers.");
+      }
     } finally {
       setLoading(false);
     }
