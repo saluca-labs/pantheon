@@ -40,6 +40,9 @@ from src.investigation.router import router as investigation_router
 from src.saas.router import router as saas_router
 from src.partner.router import router as partner_router
 from src.contracts.router import router as contracts_router
+from src.siem.router import router as siem_router
+from src.idp.router import router as idp_router
+from src.notifications.router import router as notifications_router
 
 settings = get_settings()
 
@@ -271,10 +274,37 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("soulauth.siem_forwarder_start_failed", error=str(e))
 
+    # Start grace period enforcement sweep (hourly)
+    import asyncio
+    _grace_task = None
+
+    async def _grace_sweep_loop():
+        """Periodically downgrade tenants whose grace period has expired."""
+        from src.billing.grace import run_grace_period_check
+        while True:
+            try:
+                async with async_session_factory() as sweep_db:
+                    downgraded = await run_grace_period_check(sweep_db)
+                    if downgraded:
+                        logger.info("billing.grace_sweep_complete", downgraded=len(downgraded))
+            except Exception as e:
+                logger.warning("billing.grace_sweep_failed", error=str(e))
+            await asyncio.sleep(3600)  # 1 hour
+
+    try:
+        _grace_task = asyncio.create_task(_grace_sweep_loop())
+        logger.info("billing.grace_sweep_started")
+    except Exception as e:
+        logger.warning("billing.grace_sweep_start_failed", error=str(e))
+
     yield
 
     # Shutdown
     logger.info("soulauth.shutting_down")
+
+    # Cancel grace sweep
+    if _grace_task and not _grace_task.done():
+        _grace_task.cancel()
 
     # Stop analytics engine
     try:
@@ -427,6 +457,9 @@ app.include_router(investigation_router)
 app.include_router(saas_router)
 app.include_router(partner_router)
 app.include_router(contracts_router)
+app.include_router(siem_router)
+app.include_router(idp_router)
+app.include_router(notifications_router)
 
 
 @app.get(

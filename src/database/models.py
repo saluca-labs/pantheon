@@ -381,3 +381,50 @@ class SoulPartner(Base):
         Index("idx_soul_partners_status", "status"),
         Index("idx_soul_partners_parent", "parent_partner_id"),
     )
+
+
+class SIEMConnector(Base):
+    """_siem_connectors - Persistent SIEM connector configuration per tenant."""
+    __tablename__ = "_siem_connectors"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)  # syslog | webhook
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    config: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    filter_severity: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    filter_event_kind: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_siem_connectors_tenant", "tenant_id"),
+        Index("idx_siem_connectors_kind", "kind"),
+    )
+
+
+class NotificationChannel(Base):
+    """_notification_channels - Per-tenant alert delivery channel config."""
+    __tablename__ = "_notification_channels"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    channel_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    config_encrypted: Mapped[str] = mapped_column(Text, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    severity_threshold: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
+    test_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    last_tested_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_notification_channels_tenant", "tenant_id"),
+        Index("idx_notification_channels_type", "channel_type"),
+    )

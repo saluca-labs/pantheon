@@ -451,9 +451,25 @@ function SettingsPageInner() {
   const [tenantName, setTenantName] = useState(session?.tenant_name || oidcData?.tenant_name || "");
   const [contactEmail, setContactEmail] = useState(oidcData?.email || "");
   const [copied, setCopied] = useState(false);
-  const [channels, setChannels] = useState(NOTIFICATION_CHANNELS);
+  const [channels, setChannels] = useState<{id: string; name: string; channel_type: string; enabled: boolean; severity_threshold: string; test_status: string | null; config: Record<string, unknown>}[]>([]);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testSuccess, setTestSuccess] = useState<string | null>(null);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [showAddChannel, setShowAddChannel] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelType, setNewChannelType] = useState("slack");
+  const [newChannelWebhook, setNewChannelWebhook] = useState("");
+  const [newChannelSeverity, setNewChannelSeverity] = useState("medium");
+
+  // Fetch notification channels from API
+  useEffect(() => {
+    if (activeTab !== "notifications") return;
+    setChannelsLoading(true);
+    api.get<{id: string; name: string; channel_type: string; enabled: boolean; severity_threshold: string; test_status: string | null; config: Record<string, unknown>}[]>("/v1/notifications/channels")
+      .then((data) => setChannels(Array.isArray(data) ? data : []))
+      .catch(() => setChannels([]))
+      .finally(() => setChannelsLoading(false));
+  }, [activeTab]);
 
   // White Label state (WL-06 — unchanged)
   const { branding, saveBranding, previewBranding, resetPreview, loading: brandingLoading } = useBranding();
@@ -1288,59 +1304,175 @@ function SettingsPageInner() {
         </motion.div>
       )}
 
-      {/* Notifications Tab — Coming Soon */}
+      {/* Notifications Tab — Live */}
       {activeTab === "notifications" && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
         >
-          <ComingSoonBanner message="Notification channels will be configurable once the alerting backend is live." />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-60 pointer-events-none">
-            {channels.map((channel) => (
-              <div key={channel.id} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-of-surface-container-highest flex items-center justify-center text-lg font-bold text-foreground-muted">
-                      {channel.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{channel.name}</p>
-                      <p className="text-[10px] text-foreground-subtle">Notification Channel</p>
-                    </div>
-                  </div>
-                  {/* Toggle — disabled */}
-                  <div
-                    className={`relative w-11 h-6 rounded-full cursor-not-allowed ${
-                      channel.enabled
-                        ? "bg-green-500/50"
-                        : "bg-of-surface-container-high"
-                    }`}
-                  >
-                    <div
-                      className="absolute top-0.5 w-5 h-5 rounded-full bg-white/70 shadow-sm"
-                      style={{ left: channel.enabled ? "calc(100% - 1.375rem)" : "0.125rem" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">
-                    {channel.name === "Email" ? "Recipient" : channel.name === "PagerDuty" ? "Integration" : "Webhook URL"}
-                  </label>
-                  <p className="text-xs text-foreground-muted font-mono bg-of-surface-container-lowest rounded-lg px-3 py-2 border border-white/5 truncate">
-                    {channel.config}
-                  </p>
-                </div>
-
-                <button
-                  disabled
-                  className="w-full px-3 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted cursor-not-allowed opacity-50"
-                >
-                  Send Test
-                </button>
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Notification Channels</h3>
+            <button
+              onClick={() => setShowAddChannel(!showAddChannel)}
+              className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500"
+            >
+              {showAddChannel ? "Cancel" : "+ Add Channel"}
+            </button>
           </div>
+
+          {/* Add Channel Form */}
+          {showAddChannel && (
+            <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">Name</label>
+                  <input
+                    value={newChannelName} onChange={(e) => setNewChannelName(e.target.value)}
+                    placeholder="e.g. prod-slack"
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">Type</label>
+                  <select
+                    value={newChannelType} onChange={(e) => setNewChannelType(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-foreground"
+                  >
+                    <option value="slack">Slack</option>
+                    <option value="pagerduty">PagerDuty</option>
+                    <option value="email">Email</option>
+                    <option value="teams">Teams</option>
+                    <option value="webhook">Webhook</option>
+                    <option value="opsgenie">OpsGenie</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">
+                  {newChannelType === "email" ? "SMTP Host" : newChannelType === "pagerduty" ? "Routing Key" : "Webhook URL"}
+                </label>
+                <input
+                  value={newChannelWebhook} onChange={(e) => setNewChannelWebhook(e.target.value)}
+                  placeholder={newChannelType === "pagerduty" ? "pd_routing_key_..." : "https://..."}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-foreground font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">Min Severity</label>
+                <select
+                  value={newChannelSeverity} onChange={(e) => setNewChannelSeverity(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-xs text-foreground"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <button
+                onClick={async () => {
+                  const configKey = newChannelType === "pagerduty" ? "routing_key" : "webhook_url";
+                  await api.post("/v1/notifications/channels", {
+                    name: newChannelName,
+                    channel_type: newChannelType,
+                    config: { [configKey]: newChannelWebhook },
+                    severity_threshold: newChannelSeverity,
+                  });
+                  setShowAddChannel(false);
+                  setNewChannelName(""); setNewChannelWebhook("");
+                  // Refresh
+                  const data = await api.get<typeof channels>("/v1/notifications/channels");
+                  setChannels(Array.isArray(data) ? data : []);
+                }}
+                disabled={!newChannelName || !newChannelWebhook}
+                className="w-full px-3 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Create Channel
+              </button>
+            </div>
+          )}
+
+          {channelsLoading ? (
+            <p className="text-xs text-foreground-muted">Loading channels...</p>
+          ) : channels.length === 0 ? (
+            <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-8 text-center">
+              <p className="text-sm text-foreground-muted">No notification channels configured.</p>
+              <p className="text-xs text-foreground-subtle mt-1">Add a channel to receive alerts for anomalies and detections.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {channels.map((channel) => (
+                <div key={channel.id} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-of-surface-container-highest flex items-center justify-center text-lg font-bold text-foreground-muted uppercase">
+                        {channel.channel_type.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{channel.name}</p>
+                        <p className="text-[10px] text-foreground-subtle">{channel.channel_type} &middot; {channel.severity_threshold}+</p>
+                      </div>
+                    </div>
+                    <div
+                      className={`relative w-11 h-6 rounded-full cursor-pointer ${
+                        channel.enabled ? "bg-green-500/50" : "bg-of-surface-container-high"
+                      }`}
+                      onClick={async () => {
+                        await api.put(`/v1/notifications/channels/${channel.id}`, { enabled: !channel.enabled });
+                        const data = await api.get<typeof channels>("/v1/notifications/channels");
+                        setChannels(Array.isArray(data) ? data : []);
+                      }}
+                    >
+                      <div
+                        className="absolute top-0.5 w-5 h-5 rounded-full bg-white/70 shadow-sm transition-all"
+                        style={{ left: channel.enabled ? "calc(100% - 1.375rem)" : "0.125rem" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {channel.test_status && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                        channel.test_status === "passed" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                      }`}>
+                        {channel.test_status}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      disabled={testingId === channel.id}
+                      onClick={async () => {
+                        setTestingId(channel.id);
+                        setTestSuccess(null);
+                        try {
+                          const res = await api.post<{test_status: string}>(`/v1/notifications/channels/${channel.id}/test`, {});
+                          setTestSuccess(res.test_status === "passed" ? channel.id : null);
+                          const data = await api.get<typeof channels>("/v1/notifications/channels");
+                          setChannels(Array.isArray(data) ? data : []);
+                        } finally { setTestingId(null); }
+                      }}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted hover:bg-of-surface-container-high"
+                    >
+                      {testingId === channel.id ? "Testing..." : "Send Test"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await api.delete(`/v1/notifications/channels/${channel.id}`);
+                        const data = await api.get<typeof channels>("/v1/notifications/channels");
+                        setChannels(Array.isArray(data) ? data : []);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-red-500/30 text-xs text-red-400 hover:bg-red-500/10"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
 
