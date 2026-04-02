@@ -25,6 +25,7 @@ import { TierGate } from "@/components/dashboard/TierGate";
 import { api, ApiError } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 import { SSOSettingsTab } from "@/components/sso/SSOSettingsTab";
+import SiemConnectorsTab from "@/components/siem/SiemConnectorsTab";
 import { useAuth } from "@/lib/auth";
 import { useUserPreferences, ALL_SIDEBAR_SECTIONS } from "@/lib/useUserPreferences";
 
@@ -1258,50 +1259,9 @@ function SettingsPageInner() {
         </motion.div>
       )}
 
-      {/* SIEM Tab — Syslog live, others Coming Soon */}
+      {/* SIEM Tab — Connectors + Syslog */}
       {activeTab === "siem" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* ── Syslog Configuration (LIVE) ── */}
-          <SyslogConfigSection />
-
-          {/* ── Other SIEM destinations (Coming Soon) ── */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">Other Destinations</h3>
-            <ComingSoonBanner message="Splunk HEC, Elastic, and Azure Sentinel integrations are under development." />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 opacity-60 pointer-events-none">
-              {SIEM_DESTINATIONS.map((dest) => (
-                <div key={dest.id} className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                        dest.type === "Splunk" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"
-                      }`}>
-                        {dest.type[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{dest.type}</p>
-                        <p className="text-[10px] text-foreground-subtle">SIEM Integration</p>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-of-surface-container-high text-foreground-muted border border-white/10">
-                      Pending
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-foreground-subtle uppercase tracking-wider">Endpoint</label>
-                    <p className="text-xs text-foreground-muted font-mono bg-of-surface-container-lowest rounded-lg px-3 py-2 border border-white/5 truncate">
-                      {dest.endpoint}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+        <SiemConnectorsTab />
       )}
 
       {/* Notifications Tab — Live */}
@@ -1599,30 +1559,26 @@ function SettingsPageInner() {
       )}
 
 
-      {/* SSO / Identity Providers Tab — Coming Soon */}
+      {/* SSO / Identity Providers Tab */}
       {activeTab === "sso" && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <TierGate requiredTier="enterprise" featureLabel="SSO / Identity Providers">
-            <ComingSoonBanner message="SSO integration requires backend configuration. Contact your administrator." />
-            <div className="opacity-60 pointer-events-none">
-              <SSOSettingsTab />
-            </div>
+            <SSOSettingsTab />
           </TierGate>
         </motion.div>
       )}
 
-      {/* White Label Tab (WL-06) — Coming Soon */}
+      {/* White Label Tab (WL-06) */}
       {activeTab === "white-label" && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <TierGate requiredTier="mssp" featureLabel="White Label Branding">
-            <ComingSoonBanner message="White label branding configuration is under development." />
-            <div className="space-y-8 opacity-60 pointer-events-none">
+            <div className="space-y-8">
               <div>
                 <h2 className="text-sm font-bold text-of-on-surface mb-1">White Label Branding</h2>
                 <p className="text-xs text-of-on-surface-variant">
