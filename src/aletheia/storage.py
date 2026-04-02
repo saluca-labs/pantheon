@@ -9,7 +9,8 @@ import structlog
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from src.aletheia.encryption import get_master_key, derive_tenant_dek, encrypt_content, decrypt_content
+from src.tiresias.encryption.envelope import EnvelopeEncryption
+from src.tiresias.encryption.aead import encrypt_field, decrypt_field
 from src.aletheia.models import AletheiaCoTChain, AletheiaCoTContent
 
 logger = structlog.get_logger(__name__)
@@ -22,7 +23,7 @@ async def is_content_storage_enabled(session: AsyncSession, tenant_id: uuid.UUID
     Defaults to False (hash-only mode) if not set or tenant not found.
     """
     try:
-        from src.database.models import Tenant
+        from src.database.models import SoulTenant as Tenant
         result = await session.execute(
             select(Tenant.metadata_).where(Tenant.id == tenant_id)
         )
@@ -41,8 +42,9 @@ async def is_content_storage_enabled(session: AsyncSession, tenant_id: uuid.UUID
 class CotContentStorage:
     """Manages encrypted CoT content storage and retrieval."""
 
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession], envelope: EnvelopeEncryption):
         self.session_factory = session_factory
+        self._envelope = envelope
 
     async def store_content(
         self,
@@ -61,9 +63,15 @@ class CotContentStorage:
             True on success, False on failure.
         """
         try:
-            master_key = get_master_key()
-            dek = derive_tenant_dek(master_key, str(tenant_id))
-            ciphertext, nonce, tag = encrypt_content(dek, reasoning_text.encode("utf-8"))
+            async with self.session_factory() as dek_session:
+                dek = await self._envelope.get_or_create_dek(str(tenant_id), dek_session)
+            # Use the same AES-256-GCM as the proxy (nonce || ciphertext+tag format)
+            blob = encrypt_field(reasoning_text, dek)
+            # Split into components for the existing DB schema
+            nonce = blob[:12]
+            ct_with_tag = blob[12:]
+            ciphertext = ct_with_tag[:-16]
+            tag = ct_with_tag[-16:]
 
             async with self.session_factory() as session:
                 async with session.begin():
@@ -125,15 +133,11 @@ class CotContentStorage:
             if content_row is None:
                 return None
 
-            master_key = get_master_key()
-            dek = derive_tenant_dek(master_key, str(tenant_id))
-            plaintext = decrypt_content(
-                dek,
-                content_row.encrypted_content,
-                content_row.content_nonce,
-                content_row.content_tag,
-            )
-            return plaintext.decode("utf-8")
+            async with self.session_factory() as dek_session:
+                dek = await self._envelope.get_or_create_dek(str(tenant_id), dek_session)
+            # Reassemble blob: nonce || ciphertext || tag
+            blob = content_row.content_nonce + content_row.encrypted_content + content_row.content_tag
+            return decrypt_field(blob, dek)
 
         except Exception:
             logger.error(

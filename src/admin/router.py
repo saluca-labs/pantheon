@@ -43,6 +43,13 @@ from src.middleware.tenant import (
 )
 from src.auth.rbac import require_permission
 from config.settings import get_settings
+from src.tenant.offboard import offboard_tenant
+from src.license.issuer import issue_license, revoke_license, get_licenses_for_tenant
+from src.license.schemas import (
+    IssueLicenseRequest, IssueLicenseResponse,
+    LicenseDetail, RevokeLicenseRequest, RevokeLicenseResponse,
+    KEKRotateRequest, KEKRotateResponse,
+)
 
 router = APIRouter(prefix="/v1/soulauth/admin", tags=["Admin"])
 
@@ -102,6 +109,10 @@ async def admin_create_tenant(
         tier=request.tier,
         metadata=request.metadata,
     )
+
+    # Eagerly provision DEK for envelope encryption
+    from src.middleware.tenant import provision_tenant_encryption
+    await provision_tenant_encryption(db, str(tenant.id), tier=request.tier if hasattr(request, 'tier') else "community")
 
     return TenantDetail(
         id=tenant.id,
@@ -793,3 +804,205 @@ async def admin_audit_report(
             for e in events
         ],
     }
+
+
+# --- License Management (BILL-LIC) ---
+
+@router.post(
+    "/licenses/issue",
+    response_model=IssueLicenseResponse,
+    summary="Issue a signed license JWT (BILL-LIC-01)",
+    dependencies=[Depends(require_permission("licenses:create"))],
+)
+async def admin_issue_license(
+    request: Request,
+    body: IssueLicenseRequest,
+    db: AsyncSession = Depends(get_db),
+) -> IssueLicenseResponse:
+    """
+    Issue a new signed license JWT and persist to _soul_licenses.
+    The JWT is returned once — store it securely.
+    """
+    caller_tenant_id = _get_caller_tenant_id(request)
+    soulkey = getattr(request.state, "rbac_soulkey", None)
+    issued_by = f"soulkey:{soulkey.id}" if soulkey else "admin"
+
+    try:
+        result = await issue_license(
+            db,
+            tier=body.tier,
+            tenant_id=body.tenant_id,
+            features=body.features,
+            is_nfr=body.is_nfr,
+            partner_id=body.partner_id,
+            validity_days=body.validity_days,
+            issued_by=issued_by,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    return IssueLicenseResponse(**result)
+
+
+@router.get(
+    "/licenses/{tenant_id}",
+    response_model=list[LicenseDetail],
+    summary="List licenses for a tenant (BILL-LIC-02)",
+    dependencies=[Depends(require_permission("licenses:read"))],
+)
+async def admin_list_licenses(
+    tenant_id: uuid.UUID,
+    include_revoked: bool = Query(False),
+    db: AsyncSession = Depends(get_db),
+) -> list[LicenseDetail]:
+    """Query all licenses for a given tenant."""
+    licenses = await get_licenses_for_tenant(db, tenant_id, include_revoked=include_revoked)
+    return [LicenseDetail(**lic) for lic in licenses]
+
+
+@router.post(
+    "/licenses/{license_id}/revoke",
+    response_model=RevokeLicenseResponse,
+    summary="Revoke a license (BILL-LIC-03)",
+    dependencies=[Depends(require_permission("licenses:revoke"))],
+)
+async def admin_revoke_license(
+    license_id: uuid.UUID,
+    request: Request,
+    body: RevokeLicenseRequest = None,
+    db: AsyncSession = Depends(get_db),
+) -> RevokeLicenseResponse:
+    """Revoke a license. This is permanent — the JWT will no longer validate."""
+    soulkey = getattr(request.state, "rbac_soulkey", None)
+    revoked_by = f"soulkey:{soulkey.id}" if soulkey else "admin"
+
+    try:
+        result = await revoke_license(db, license_id, revoked_by=revoked_by)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return RevokeLicenseResponse(**result)
+
+
+@router.post(
+    "/tenants/{tenant_id}/kek/rotate",
+    response_model=KEKRotateResponse,
+    summary="Rotate customer KEK for BYOK envelope encryption",
+    dependencies=[Depends(require_permission("encryption:manage"))],
+)
+async def admin_rotate_kek(
+    tenant_id: uuid.UUID,
+    body: KEKRotateRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> KEKRotateResponse:
+    """
+    Customer-held KEK rotation ceremony.
+
+    The customer provides a new 32-byte KEK (hex or base64). The system:
+    1. Unwraps the existing DEK with the current KEK
+    2. Re-wraps the DEK with the new customer KEK
+    3. Updates tiresias_licenses.wrapped_dek and kek_provider
+    4. Audit-logs the rotation event
+
+    The DEK itself does NOT change — existing encrypted data remains readable.
+    Only the wrapping key changes.
+    """
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="confirm must be true to proceed with KEK rotation")
+
+    from src.tiresias.encryption.providers import resolve_kek_provider
+    from src.tiresias.encryption.providers.local import LocalKEKProvider
+    from src.tiresias.encryption.envelope import EnvelopeEncryption
+    from src.tiresias.config import TiresiasSettings
+    from datetime import datetime, timezone
+
+    t_settings = TiresiasSettings()
+
+    # Resolve current KEK provider
+    try:
+        old_provider = resolve_kek_provider(t_settings)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Failed to resolve current KEK provider: {exc}")
+
+    # Create new provider from customer-provided KEK
+    try:
+        new_provider = LocalKEKProvider.from_explicit_value(body.new_kek)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid KEK value: {exc}")
+
+    # Perform rotation
+    envelope = EnvelopeEncryption(old_provider)
+    try:
+        await envelope.rotate_dek(
+            tenant_id=str(tenant_id),
+            old_provider=old_provider,
+            new_provider=new_provider,
+            session=db,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    now = datetime.now(timezone.utc)
+
+    # Audit log the rotation event
+    try:
+        from src.audit.logger import log_auth_event
+        soulkey = getattr(request.state, "rbac_soulkey", None)
+        await log_auth_event(
+            tenant_id=str(tenant_id),
+            event_type="kek_rotated",
+            soulkey_id=str(soulkey.id) if soulkey else None,
+            persona_id="admin",
+            resource="encryption",
+            action="kek_rotate",
+            scope="tenant",
+            decision="allow",
+            reason="Customer KEK rotation ceremony",
+            context={
+                "old_provider": old_provider.provider_name,
+                "new_provider": new_provider.provider_name,
+            },
+        )
+    except Exception:
+        pass  # Audit failure is non-fatal
+
+    return KEKRotateResponse(
+        tenant_id=str(tenant_id),
+        old_provider=old_provider.provider_name,
+        new_provider=new_provider.provider_name,
+        status="rotated",
+        rotated_at=now.isoformat(),
+    )
+
+
+@router.post(
+    "/tenants/{tenant_id}/offboard",
+    summary="Offboard tenant — revoke keys, destroy DEK, scrub data",
+    dependencies=[Depends(require_permission("tenants:delete"))],
+)
+async def admin_offboard_tenant(
+    tenant_id: uuid.UUID,
+    request: Request,
+    purge_dek: bool = Query(True, description="Destroy wrapped DEK (crypto-shred)"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Full tenant offboarding cascade:
+    1. Revoke all soulkeys
+    2. Destroy wrapped DEK (crypto-shred)
+    3. NULL all encrypted audit fields
+    4. Set tenant status to 'deactivated'
+    5. Audit-log the cascade
+    """
+    soulkey = getattr(request.state, "rbac_soulkey", None)
+    offboarded_by = f"soulkey:{soulkey.id}" if soulkey else "admin"
+
+    try:
+        result = await offboard_tenant(db, tenant_id, offboarded_by=offboarded_by, purge_dek=purge_dek)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Offboard failed: {exc}")
+
+    return result

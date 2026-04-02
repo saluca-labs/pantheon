@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import AuditLog, Soulkey, SoulTenant
 from src.saas.metering import get_tenant_usage
+from src.tier import Tier, VALID_TIERS as _VALID_TIERS, DEFAULT_TIER
 
 logger = structlog.get_logger(__name__)
 

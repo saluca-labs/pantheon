@@ -1,0 +1,22 @@
+title: License Integrity Violation - Tier Mismatch
+id: sa-rule-008-license-integrity
+status: stable
+level: high
+description: >
+  Detects when the running license tier does not match the tier stored in the
+  database, or when TIRESIAS_LICENSE_KEY / TIRESIAS_TIER env vars have changed
+  since startup. This indicates runtime tampering with license configuration.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type: license_integrity_violation
+  condition: selection
+  timeframe: 5m
+tags:
+  - attack.defense_evasion
+  - attack.t1562
+  - tiresias.license_tampering
+response_playbook: pb-auto-quarantine
+enabled: true

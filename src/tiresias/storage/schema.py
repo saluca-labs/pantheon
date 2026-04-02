@@ -54,7 +54,7 @@ class TiresiasLicense(Base):
     __tablename__ = "tiresias_licenses"
 
     tenant_id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    tier: Mapped[str] = mapped_column(String(32), default="free", nullable=False)
+    tier: Mapped[str] = mapped_column(String(32), default="community", nullable=False)
     feature_flags: Mapped[str | None] = mapped_column(Text, nullable=True)
     kek_provider: Mapped[str] = mapped_column(String(32), default="local", nullable=False)
     retention_days: Mapped[int] = mapped_column(Integer, default=30, nullable=False)
