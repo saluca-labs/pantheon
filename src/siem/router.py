@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -112,6 +112,20 @@ def _row_to_config(row: SIEMConnector) -> ConnectorConfig:
     )
 
 
+def _get_tenant_id(request: Request) -> uuid.UUID:
+    """Extract tenant_id from RBAC context or header."""
+    rbac_key = getattr(request.state, "rbac_soulkey", None)
+    if rbac_key:
+        return rbac_key.tenant_id
+    tid = request.headers.get("X-Tenant-ID")
+    if tid:
+        try:
+            return uuid.UUID(tid)
+        except ValueError:
+            pass
+    raise HTTPException(status_code=400, detail="Tenant ID not resolved")
+
+
 def _build_config_json(req) -> dict:
     """Extract kind-specific fields into a config JSON blob."""
     return {
@@ -139,12 +153,15 @@ def _build_config_json(req) -> dict:
 )
 async def create_connector(
     req: ConnectorCreateRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     try:
         req.validate_kind_fields()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+    tenant_id = _get_tenant_id(request)
 
     row = SIEMConnector(
         name=req.name,
@@ -153,9 +170,7 @@ async def create_connector(
         config=_build_config_json(req),
         filter_severity=req.filter_severity,
         filter_event_kind=req.filter_event_kind,
-        # tenant_id will be set from middleware context in production;
-        # for now default to a placeholder if not available
-        tenant_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+        tenant_id=tenant_id,
     )
     db.add(row)
     await db.commit()
@@ -172,8 +187,11 @@ async def create_connector(
     "/connectors",
     summary="List all SIEM connectors",
 )
-async def list_connectors(db: AsyncSession = Depends(get_db)) -> dict:
-    result = await db.execute(select(SIEMConnector))
+async def list_connectors(request: Request, db: AsyncSession = Depends(get_db)) -> dict:
+    tenant_id = _get_tenant_id(request)
+    result = await db.execute(
+        select(SIEMConnector).where(SIEMConnector.tenant_id == tenant_id)
+    )
     rows = result.scalars().all()
     connectors = [_row_to_config(r).to_dict() for r in rows]
     return {"connectors": connectors, "total": len(connectors)}
@@ -185,10 +203,15 @@ async def list_connectors(db: AsyncSession = Depends(get_db)) -> dict:
 )
 async def get_connector(
     connector_id: str,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    tenant_id = _get_tenant_id(request)
     result = await db.execute(
-        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+        select(SIEMConnector).where(
+            SIEMConnector.id == uuid.UUID(connector_id),
+            SIEMConnector.tenant_id == tenant_id,
+        )
     )
     row = result.scalar_one_or_none()
     if row is None:
@@ -203,10 +226,15 @@ async def get_connector(
 async def update_connector(
     connector_id: str,
     req: ConnectorUpdateRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    tenant_id = _get_tenant_id(request)
     result = await db.execute(
-        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+        select(SIEMConnector).where(
+            SIEMConnector.id == uuid.UUID(connector_id),
+            SIEMConnector.tenant_id == tenant_id,
+        )
     )
     row = result.scalar_one_or_none()
     if row is None:
@@ -254,17 +282,25 @@ async def update_connector(
 )
 async def delete_connector(
     connector_id: str,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    tenant_id = _get_tenant_id(request)
     result = await db.execute(
-        select(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+        select(SIEMConnector).where(
+            SIEMConnector.id == uuid.UUID(connector_id),
+            SIEMConnector.tenant_id == tenant_id,
+        )
     )
     row = result.scalar_one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail=f"Connector '{connector_id}' not found")
 
     await db.execute(
-        delete(SIEMConnector).where(SIEMConnector.id == uuid.UUID(connector_id))
+        delete(SIEMConnector).where(
+            SIEMConnector.id == uuid.UUID(connector_id),
+            SIEMConnector.tenant_id == tenant_id,
+        )
     )
     await db.commit()
 

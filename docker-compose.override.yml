@@ -24,6 +24,11 @@ services:
       SOULAUTH_DATABASE_URL_SYNC: postgresql://tiresias:tiresias@tiresias-pg:5432/tiresias
       SOULAUTH_DEBUG: "true"
       SOULAUTH_LICENSE_REQUIRED: "false"
+      SOULAUTH_AUTH_MODE: "local,oidc"
+      SOULAUTH_TESTING: "true"
+      ENVIRONMENT: "development"
+      SOULAUTH_OIDC_SECRET_KEY: "iVhXcOrg_bmBzsYStXfUze2BII3gUqGtumxD8Vxo9tA="
+      SOULAUTH_OIDC_STATE_SECRET: "e2e-test-state-secret-key-32chars!"
     networks:
       - tiresias-net
       - saluca-net

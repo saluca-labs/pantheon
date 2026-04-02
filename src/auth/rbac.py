@@ -153,7 +153,15 @@ def _extract_tenant_id_from_request(request: Request) -> uuid.UUID:
     """
     _fallback = uuid.UUID("11111111-1111-1111-1111-111111111111")
 
-    # Try query params first (e.g. ?tenant_id=...)
+    # Try X-Tenant-ID header first (most common in testing)
+    tid = request.headers.get("X-Tenant-ID")
+    if tid:
+        try:
+            return uuid.UUID(tid)
+        except ValueError:
+            pass
+
+    # Try query params (e.g. ?tenant_id=...)
     tid = request.query_params.get("tenant_id")
     if tid:
         try:
