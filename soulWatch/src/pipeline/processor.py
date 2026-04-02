@@ -207,7 +207,7 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
             except Exception as e:
                 logger.error("pipeline.quarantine_evaluation_failed", error=str(e))
 
-    # 5. Forward to SIEM
+    # 5. Forward to SIEM (env-var configured destinations)
     forwarder = get_event_forwarder()
     if forwarder:
         try:
@@ -216,6 +216,46 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
             result["forwarded"] = True
         except Exception as e:
             logger.error("pipeline.siem_forward_failed", error=str(e))
+
+    # 5b. Route detection events to DB-configured SIEM connectors
+    if anomalies or matches:
+        try:
+            from src.siem._state import get_siem_manager
+            from src.siem.cef import DetectionEvent, EventKind
+            siem_mgr = get_siem_manager()
+            if siem_mgr.list_connectors():
+                tenant_id = str(event.get("tenant_id", ""))
+                for anomaly in anomalies:
+                    det_event = DetectionEvent(
+                        kind=EventKind.ANOMALY,
+                        event_id=str(uuid.uuid4()),
+                        tenant_id=tenant_id,
+                        timestamp=anomaly.timestamp.isoformat(),
+                        sig_id=anomaly.type.value,
+                        name=f"Anomaly: {anomaly.type.value}",
+                        severity_label=anomaly.severity,
+                        soulkey_id=str(anomaly.soulkey_id),
+                        description=anomaly.description,
+                        evidence=anomaly.evidence,
+                    )
+                    await siem_mgr.route(det_event)
+                for match in matches:
+                    det_event = DetectionEvent(
+                        kind=EventKind.DETECTION,
+                        event_id=str(uuid.uuid4()),
+                        tenant_id=tenant_id,
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        sig_id=match.rule.id if hasattr(match, "rule") else "unknown",
+                        name=match.rule.title if hasattr(match, "rule") else str(match),
+                        severity_label=match.rule.level if hasattr(match, "rule") else "medium",
+                        soulkey_id=str(event.get("soulkey_id", "")),
+                        description=match.rule.title if hasattr(match, "rule") else "",
+                        evidence=match.to_dict() if hasattr(match, "to_dict") else {},
+                    )
+                    await siem_mgr.route(det_event)
+                result["siem_routed"] = True
+        except Exception as e:
+            logger.debug("pipeline.siem_dynamic_route_failed", error=str(e))
 
     # 6. Broadcast via WebSocket
     if _ws_manager and (anomalies or matches):
