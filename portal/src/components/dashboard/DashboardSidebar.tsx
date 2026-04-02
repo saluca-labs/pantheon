@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { tierMeets } from "@/components/dashboard/TierGate";
@@ -31,7 +31,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "enterprise";
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -331,6 +331,25 @@ const NAV_ITEMS: NavItem[] = [
     group: "mssp",
     icon: <FileCode className="w-5 h-5" />,
   },
+  {
+    label: "Partner",
+    href: "/dashboard/partner",
+    group: "mssp",
+    icon: <Users className="w-5 h-5" />,
+  },
+  // Enterprise nav items -- only rendered when tier is enterprise+ (ENT-01)
+  {
+    label: "Investigation",
+    href: "/dashboard/investigation",
+    group: "enterprise",
+    icon: <Search className="w-5 h-5" />,
+  },
+  {
+    label: "Contracts",
+    href: "/dashboard/contracts",
+    group: "enterprise",
+    icon: <FileText className="w-5 h-5" />,
+  },
   // Aletheia nav items -- only rendered when tier is enterprise+ (ALETH-14)
   {
     label: "Overview",
@@ -376,8 +395,9 @@ const BASE_GROUPS = [
 
 const MSSP_GROUP = { key: "mssp", label: "MSSP" } as const;
 const ALETHEIA_GROUP = { key: "aletheia", label: "Aletheia" } as const;
+const ENTERPRISE_GROUP = { key: "enterprise", label: "Enterprise" } as const;
 
-type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp" | "aletheia";
+type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp" | "aletheia" | "enterprise";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -400,6 +420,8 @@ export default function DashboardSidebar() {
       } else {
         base.push(ALETHEIA_GROUP);
       }
+      // Enterprise group after system
+      base.push(ENTERPRISE_GROUP);
     }
     if (isMsspTier) {
       base.push(MSSP_GROUP);
@@ -513,6 +535,8 @@ export default function DashboardSidebar() {
                         ? "text-of-primary"
                         : group.key === "aletheia"
                         ? "text-of-accent"
+                        : group.key === "enterprise"
+                        ? "text-purple-400"
                         : "text-of-outline"
                     }`}
                   >

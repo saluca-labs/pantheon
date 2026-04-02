@@ -27,6 +27,24 @@ from src.database.connection import async_session_factory
 
 logger = structlog.get_logger(__name__)
 
+_envelope_instance = None
+
+
+def _get_envelope():
+    global _envelope_instance
+    if _envelope_instance is None:
+        from src.tiresias.encryption.providers import resolve_kek_provider
+        from src.tiresias.encryption.envelope import EnvelopeEncryption
+        from src.tiresias.config import TiresiasSettings
+        try:
+            settings = TiresiasSettings()
+            provider = resolve_kek_provider(settings)
+            _envelope_instance = EnvelopeEncryption(provider)
+        except Exception:
+            return None
+    return _envelope_instance
+
+
 router = APIRouter(prefix="/v1/aletheia/cot", tags=["Aletheia CoT"])
 
 
@@ -245,7 +263,7 @@ async def get_chain_content(
         )
 
     # Decrypt content
-    storage = CotContentStorage(async_session_factory)
+    storage = CotContentStorage(async_session_factory, _get_envelope())
     plaintext = await storage.retrieve_content(entry.id, tid)
 
     if plaintext is None:
@@ -356,7 +374,7 @@ async def export_proof(body: ProofExportRequest):
 
         # Build proof entries
         proof_entries = []
-        storage = CotContentStorage(async_session_factory) if body.include_content else None
+        storage = CotContentStorage(async_session_factory, _get_envelope()) if body.include_content else None
 
         for entry in entries:
             proof_entry = {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useAuth } from "@/lib/auth";
 
 /** Billing management page -- displays current plan, usage, and Stripe portal link. */
 
@@ -14,54 +15,116 @@ interface BillingInfo {
   status: string;
   current_period_end: string | null;
   stripe_customer_id: string | null;
+  grace_active?: boolean;
+  grace_expires_at?: string | null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const SOULAUTH_API_URL =
-  process.env.NEXT_PUBLIC_SOULAUTH_API_URL || "http://localhost:8000";
+/** Map raw tier slug to a display-friendly plan name. */
+function formatPlanName(tier: string): string {
+  const names: Record<string, string> = {
+    community: "Community (Free)",
+    starter: "Starter",
+    pro: "Platform Pro",
+    enterprise: "Enterprise",
+  };
+  return names[tier] ?? tier.charAt(0).toUpperCase() + tier.slice(1);
+}
 
 export default function BillingPage() {
+  const { session, loading: authLoading } = useAuth();
   const [billing, setBilling] = useState<BillingInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In production, fetch billing info from the backend
-    // For now, show placeholder data from local storage / session
-    const timer = setTimeout(() => {
-      setBilling({
-        plan: "Platform Pro",
-        tier: "pro",
-        agent_count: 10,
-        status: "active",
-        current_period_end: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        stripe_customer_id: null,
-      });
+    if (authLoading) return;
+
+    if (!session) {
       setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+      setError("You must be logged in to view billing information.");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchBillingData() {
+      try {
+        // Fetch agent count and grace status in parallel
+        const [agentsRes, graceRes] = await Promise.allSettled([
+          fetch("/api/soulauth/agents"),
+          fetch("/api/partner/grace-status"),
+        ]);
+
+        let agentCount = 0;
+        if (agentsRes.status === "fulfilled" && agentsRes.value.ok) {
+          const agentsData = await agentsRes.value.json();
+          agentCount = Array.isArray(agentsData)
+            ? agentsData.length
+            : (agentsData.count ?? agentsData.agent_count ?? 0);
+        }
+
+        let graceActive = false;
+        let graceExpiresAt: string | null = null;
+        let stripeCustomerId: string | null = null;
+        let periodEnd: string | null = null;
+        if (graceRes.status === "fulfilled" && graceRes.value.ok) {
+          const graceData = await graceRes.value.json();
+          graceActive = graceData.grace_active ?? false;
+          graceExpiresAt = graceData.grace_expires_at ?? null;
+          stripeCustomerId = graceData.stripe_customer_id ?? null;
+          periodEnd = graceData.current_period_end ?? null;
+        }
+
+        const tier = session!.tier || "community";
+        const status =
+          tier === "community" ? "free" : graceActive ? "grace" : "active";
+
+        if (!cancelled) {
+          setBilling({
+            plan: formatPlanName(tier),
+            tier,
+            agent_count: agentCount,
+            status,
+            current_period_end: periodEnd,
+            stripe_customer_id: stripeCustomerId,
+            grace_active: graceActive,
+            grace_expires_at: graceExpiresAt,
+          });
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load billing data", err);
+          setError("Failed to load billing information. Please try again.");
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchBillingData();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, authLoading]);
 
   const handleManageBilling = async () => {
-    // In production, create a Stripe Customer Portal session
-    // and redirect the user to manage their subscription
     try {
-      const response = await fetch("/api/billing/portal", {
+      const res = await fetch("/api/billing/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer_id: billing?.stripe_customer_id,
+          stripe_customer_id: billing?.stripe_customer_id,
+          return_url: window.location.href,
         }),
       });
-      if (response.ok) {
-        const data = await response.json();
-        window.location.href = data.url;
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, "_blank");
+      } else {
+        console.error("No portal URL returned", data);
       }
-    } catch {
-      // Stripe portal not yet configured - show upgrade options
+    } catch (err) {
+      console.error("Failed to open billing portal", err);
     }
   };
 
@@ -101,12 +164,31 @@ export default function BillingPage() {
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
                       billing.status === "active"
                         ? "bg-of-primary/20 text-of-primary"
-                        : "bg-amber-500/20 text-amber-400"
+                        : billing.status === "free"
+                          ? "bg-of-outline/20 text-of-outline"
+                          : "bg-amber-500/20 text-amber-400"
                     }`}
                   >
                     {billing.status}
                   </span>
                 </div>
+
+                {billing.grace_active && (
+                  <div className="mt-4 rounded-lg bg-amber-500/10 border border-amber-500/30 px-4 py-3">
+                    <p className="text-amber-400 text-sm font-medium">
+                      Grace period active
+                      {billing.grace_expires_at && (
+                        <span className="font-normal text-amber-400/80">
+                          {" "}— expires{" "}
+                          {new Date(billing.grace_expires_at).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric", year: "numeric" }
+                          )}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
 
                 <div className="mt-6 grid sm:grid-cols-3 gap-6">
                   <div>
