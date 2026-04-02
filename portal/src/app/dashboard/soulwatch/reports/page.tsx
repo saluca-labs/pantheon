@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 /** SoulWatch reports -- compliance framework report generation. Uses hardcoded mock data. */
 
@@ -21,6 +21,15 @@ interface ReportSection {
   status: "pass" | "partial" | "fail";
   description: string;
   evidence: string;
+}
+
+interface EvidenceModalData {
+  control: string;
+  title: string;
+  status: string;
+  description: string;
+  evidence: string;
+  framework: string;
 }
 
 const FRAMEWORKS: Framework[] = [
@@ -80,13 +89,130 @@ const statusLabel: Record<string, string> = {
   fail: "Fail",
 };
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function ReportsPage() {
   const [selectedFramework, setSelectedFramework] = useState<string>("soc2");
   const [expandedControl, setExpandedControl] = useState<string | null>(null);
+  const [evidenceModal, setEvidenceModal] = useState<EvidenceModalData | null>(null);
 
   const currentFramework = FRAMEWORKS.find((f) => f.id === selectedFramework)!;
   const sections = REPORT_SECTIONS[selectedFramework] || [];
   const passRate = Math.round((currentFramework.passingControls / currentFramework.controls) * 100);
+
+  function handleDownloadEvidence(section: ReportSection) {
+    const evidencePayload = {
+      framework: currentFramework.name,
+      frameworkId: currentFramework.id,
+      control: section.control,
+      title: section.title,
+      status: section.status,
+      description: section.description,
+      evidence: section.evidence,
+      exportedAt: new Date().toISOString(),
+      coveragePeriod: "Last 30 days",
+    };
+    const json = JSON.stringify(evidencePayload, null, 2);
+    const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+    const date = new Date().toISOString().split("T")[0];
+    downloadBlob(blob, `${currentFramework.id}-${section.control}-evidence-${date}.json`);
+  }
+
+  function handleExportCSV() {
+    const header = "Control,Title,Status,Description,Evidence";
+    const rows = sections.map((s) =>
+      [s.control, s.title, s.status, s.description, s.evidence]
+        .map((v) => `"${v.replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const date = new Date().toISOString().split("T")[0];
+    downloadBlob(blob, `${currentFramework.id}-compliance-report-${date}.csv`);
+  }
+
+  function handleExportPDF() {
+    const date = new Date().toISOString().split("T")[0];
+    const passCount = sections.filter((s) => s.status === "pass").length;
+    const partialCount = sections.filter((s) => s.status === "partial").length;
+    const failCount = sections.filter((s) => s.status === "fail").length;
+
+    const statusColor: Record<string, string> = {
+      pass: "#22c55e",
+      partial: "#eab308",
+      fail: "#ef4444",
+    };
+
+    const controlRows = sections
+      .map(
+        (s) => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;color:#fff;background:${statusColor[s.status]};">
+            ${s.status.toUpperCase()}
+          </span>
+        </td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:13px;color:#374151;">${s.control}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#111827;">${s.title}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#6b7280;">${s.description}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;color:#6b7280;">${s.evidence}</td>
+      </tr>`,
+      )
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html><head><title>${currentFramework.name} Compliance Report</title>
+<style>
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { size: landscape; margin: 0.5in; }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #111827; margin: 0; padding: 40px; background: #fff; }
+  .header { border-bottom: 3px solid #1e293b; padding-bottom: 16px; margin-bottom: 24px; }
+  .header h1 { margin: 0 0 4px; font-size: 24px; color: #0f172a; }
+  .header p { margin: 0; font-size: 13px; color: #64748b; }
+  .summary { display: flex; gap: 16px; margin-bottom: 24px; }
+  .summary-card { flex: 1; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; text-align: center; }
+  .summary-card .value { font-size: 28px; font-weight: 700; margin: 0; }
+  .summary-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th { padding: 8px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; border-bottom: 2px solid #1e293b; background: #f9fafb; }
+  .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
+</style></head><body>
+<div class="header">
+  <h1>${currentFramework.name} - Compliance Report</h1>
+  <p>${currentFramework.description} | Generated: ${date} | Covering last 30 days</p>
+</div>
+<div class="summary">
+  <div class="summary-card"><p class="value" style="color:#0f172a;">${passRate}%</p><p class="label">Overall Pass Rate</p></div>
+  <div class="summary-card"><p class="value" style="color:#22c55e;">${passCount}</p><p class="label">Passing</p></div>
+  <div class="summary-card"><p class="value" style="color:#eab308;">${partialCount}</p><p class="label">Partial</p></div>
+  <div class="summary-card"><p class="value" style="color:#ef4444;">${failCount}</p><p class="label">Failing</p></div>
+</div>
+<h2 style="font-size:16px;margin-bottom:8px;">Control Mapping</h2>
+<table>
+  <thead><tr><th>Status</th><th>Control</th><th>Title</th><th>Description</th><th>Evidence</th></tr></thead>
+  <tbody>${controlRows}</tbody>
+</table>
+<div class="footer">Tiresias SoulWatch Compliance Report | Generated ${new Date().toISOString()} | ${currentFramework.passingControls} of ${currentFramework.controls} controls passing</div>
+<script>window.onload=function(){window.print();}</script>
+</body></html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -94,13 +220,13 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-foreground tracking-tight">Compliance Reports</h1>
         <div className="flex items-center gap-3">
-          <button className="group px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all flex items-center gap-2">
+          <button onClick={handleExportPDF} className="group px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             Export PDF
           </button>
-          <button className="group px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all flex items-center gap-2">
+          <button onClick={handleExportCSV} className="group px-4 py-2 rounded-lg bg-of-surface-container-highest text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
@@ -226,6 +352,40 @@ export default function ReportsPage() {
                       <span className="text-[10px] text-foreground-subtle uppercase tracking-wider">Evidence: </span>
                       <span className="text-xs text-foreground-muted">{section.evidence}</span>
                     </div>
+                    <div className="pl-[72px] flex items-center gap-2 pt-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEvidenceModal({
+                            control: section.control,
+                            title: section.title,
+                            status: section.status,
+                            description: section.description,
+                            evidence: section.evidence,
+                            framework: currentFramework.name,
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-md bg-of-primary/10 text-of-primary border border-of-primary/20 text-xs font-medium hover:bg-of-primary/20 transition-colors flex items-center gap-1.5"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        View Evidence
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadEvidence(section);
+                        }}
+                        className="px-3 py-1.5 rounded-md bg-of-surface-container-high text-foreground-muted border border-white/10 text-xs font-medium hover:text-foreground transition-colors flex items-center gap-1.5"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Download JSON
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -233,6 +393,105 @@ export default function ReportsPage() {
           ))}
         </div>
       </div>
+
+      {/* Evidence Detail Modal */}
+      <AnimatePresence>
+        {evidenceModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setEvidenceModal(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.2 }}
+              className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Evidence: {evidenceModal.control} - {evidenceModal.title}
+                  </h3>
+                  <p className="text-xs text-foreground-subtle mt-0.5">{evidenceModal.framework}</p>
+                </div>
+                <button
+                  onClick={() => setEvidenceModal(null)}
+                  className="p-1 rounded-md hover:bg-white/10 transition-colors text-foreground-subtle"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="px-5 py-4 space-y-4">
+                <div>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadge[evidenceModal.status]}`}>
+                    {statusLabel[evidenceModal.status]}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mb-1">Control Description</p>
+                  <p className="text-sm text-foreground-muted leading-relaxed">{evidenceModal.description}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mb-1">Evidence Summary</p>
+                  <div className="p-3 rounded-lg bg-of-surface-container-lowest border border-white/5">
+                    <p className="text-sm text-foreground leading-relaxed">{evidenceModal.evidence}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mb-1">Collection Metadata</p>
+                  <div className="p-3 rounded-lg bg-of-surface-container-lowest border border-white/5 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-foreground-subtle">Source</span>
+                      <span className="text-foreground-muted">SoulWatch Telemetry</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-foreground-subtle">Coverage Period</span>
+                      <span className="text-foreground-muted">Last 30 days</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-foreground-subtle">Collected At</span>
+                      <span className="text-foreground-muted font-mono">{new Date().toISOString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-3 border-t border-white/10 flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    const section: ReportSection = {
+                      control: evidenceModal.control,
+                      title: evidenceModal.title,
+                      status: evidenceModal.status as ReportSection["status"],
+                      description: evidenceModal.description,
+                      evidence: evidenceModal.evidence,
+                    };
+                    handleDownloadEvidence(section);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-of-surface-container-high text-foreground-muted border border-white/10 text-xs font-medium hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Download JSON
+                </button>
+                <button
+                  onClick={() => setEvidenceModal(null)}
+                  className="px-3 py-1.5 rounded-md bg-of-primary/10 text-of-primary border border-of-primary/20 text-xs font-medium hover:bg-of-primary/20 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

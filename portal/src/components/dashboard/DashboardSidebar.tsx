@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { tierMeets } from "@/components/dashboard/TierGate";
@@ -407,6 +407,27 @@ export default function DashboardSidebar() {
     return base;
   })();
 
+  // Section collapse state -- persisted to localStorage
+  const [sectionCollapsed, setSectionCollapsed] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const stored = localStorage.getItem("tiresias_sidebar_sections");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleSection = (key: string) => {
+    setSectionCollapsed((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem("tiresias_sidebar_sections", JSON.stringify(next));
+      } catch { /* noop */ }
+      return next;
+    });
+  };
+
   // Auto-collapse at lg breakpoint (1024px)
   useEffect(() => {
     const handleResize = () => {
@@ -472,6 +493,7 @@ export default function DashboardSidebar() {
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
         {groups.map((group, groupIdx) => {
           const items = NAV_ITEMS.filter((item) => item.group === group.key);
+          const isSectionCollapsed = !!sectionCollapsed[group.key];
           return (
             <div key={group.key}>
               {groupIdx > 0 && (
@@ -479,12 +501,14 @@ export default function DashboardSidebar() {
               )}
               <AnimatePresence>
                 {!collapsed && (
-                  <motion.p
+                  <motion.button
+                    type="button"
+                    onClick={() => toggleSection(group.key)}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -8 }}
                     transition={{ duration: 0.2 }}
-                    className={`px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest ${
+                    className={`w-full flex items-center justify-between px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest cursor-pointer select-none hover:opacity-80 transition-opacity ${
                       group.key === "mssp"
                         ? "text-of-primary"
                         : group.key === "aletheia"
@@ -493,73 +517,88 @@ export default function DashboardSidebar() {
                     }`}
                   >
                     {group.label}
-                  </motion.p>
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform duration-200 ${isSectionCollapsed ? "-rotate-90" : ""}`}
+                    />
+                  </motion.button>
                 )}
               </AnimatePresence>
 
-              <div className="space-y-0.5">
-                {items.map((item) => {
-                  const isActive = pathname === item.href;
+              <AnimatePresence initial={false}>
+                {!isSectionCollapsed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-0.5">
+                      {items.map((item) => {
+                        const isActive = pathname === item.href;
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`
-                        group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
-                        transition-all duration-200 ease-out relative overflow-hidden
-                        ${isActive
-                          ? "text-of-on-surface"
-                          : "text-of-on-surface-variant hover:text-of-on-surface"
-                        }
-                      `}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      {!isActive && (
-                        <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
-                      )}
-
-                      {isActive && (
-                        <motion.div
-                          layoutId="sidebar-active-bg"
-                          className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
-                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                        />
-                      )}
-
-                      {isActive && (
-                        <motion.div
-                          layoutId="sidebar-active-indicator"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
-                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                        />
-                      )}
-
-                      <motion.div
-                        className={`relative shrink-0 ${isActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
-                        animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                      >
-                        {item.icon}
-                      </motion.div>
-
-                      <AnimatePresence>
-                        {!collapsed && (
-                          <motion.span
-                            initial={{ opacity: 0, x: -4 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -4 }}
-                            transition={{ duration: 0.15 }}
-                            className="relative text-sm font-medium truncate"
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`
+                              group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
+                              transition-all duration-200 ease-out relative overflow-hidden
+                              ${isActive
+                                ? "text-of-on-surface"
+                                : "text-of-on-surface-variant hover:text-of-on-surface"
+                              }
+                            `}
+                            title={collapsed ? item.label : undefined}
                           >
-                            {item.label}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </Link>
-                  );
-                })}
-              </div>
+                            {!isActive && (
+                              <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
+                            )}
+
+                            {isActive && (
+                              <motion.div
+                                layoutId="sidebar-active-bg"
+                                className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
+                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                              />
+                            )}
+
+                            {isActive && (
+                              <motion.div
+                                layoutId="sidebar-active-indicator"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
+                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                              />
+                            )}
+
+                            <motion.div
+                              className={`relative shrink-0 ${isActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
+                              animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                              transition={{ duration: 0.3, ease: "easeOut" }}
+                            >
+                              {item.icon}
+                            </motion.div>
+
+                            <AnimatePresence>
+                              {!collapsed && (
+                                <motion.span
+                                  initial={{ opacity: 0, x: -4 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -4 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="relative text-sm font-medium truncate"
+                                >
+                                  {item.label}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           );
         })}
@@ -639,11 +678,16 @@ export default function DashboardSidebar() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-of-on-surface truncate">
-                  {session?.tenant_name ?? "Acme Corp"}
+                  {session?.tenant_name ?? "Tenant"}
                 </p>
+                {session?.user_name && (
+                  <p className="text-xs text-of-on-surface-variant truncate mt-0.5">
+                    {session.user_name}
+                  </p>
+                )}
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="px-1.5 py-0.5 rounded bg-of-primary/10 text-[9px] font-semibold text-of-primary tracking-wide uppercase border border-of-primary/15">
-                    {session?.tier ?? "starter"}
+                    {session?.tier ?? "community"}
                   </span>
                 </div>
               </div>

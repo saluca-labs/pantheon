@@ -32,9 +32,10 @@ class SyslogConfig(BaseModel):
     type: Literal["syslog"] = "syslog"
     host: str = Field(...)
     port: int = Field(default=514)
-    protocol: Literal["tcp", "udp"] = Field(default="tcp")
+    protocol: Literal["tcp", "udp", "tls"] = Field(default="udp")
     facility: int = Field(default=13)  # RFC 5424 facility 13 = "log audit" (security/auth)
     use_cef: bool = Field(default=True)
+    enabled: bool = Field(default=True)
 
 
 class WebhookConfig(BaseModel):

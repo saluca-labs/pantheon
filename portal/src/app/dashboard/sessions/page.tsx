@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { Search, ExternalLink } from "lucide-react";
+import { Search, ExternalLink, Lock } from "lucide-react";
 
 /** Session explorer -- search and inspect agent sessions with cost/request detail. Uses live API via useWidgetData. */
 
@@ -28,6 +28,18 @@ interface Turn {
   timestamp: string;
   prompt: string;
   completion: string;
+  request_hash?: string;
+  response_hash?: string;
+}
+
+/** Generate a deterministic placeholder hash from content for display when API doesn't provide one. */
+function contentHash(content: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < content.length; i++) {
+    h ^= content.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, "0") + "..." + content.length.toString(16);
 }
 
 interface ReplayData {
@@ -38,6 +50,23 @@ interface ReplayData {
   duration_ms?: number;
 }
 
+function timeAgo(iso: string): string {
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 0) return "just now";
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  } catch {
+    return iso;
+  }
+}
+
 export default function SessionsPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null
@@ -46,13 +75,13 @@ export default function SessionsPage() {
 
   const { data: sessionsData, loading: sessionsLoading } =
     useWidgetData<SessionsData>({
-      endpoint: "/dash/v1/sessions/top",
+      endpoint: "/api/dash/v1/sessions/top",
     });
 
   const { data: replayData, loading: replayLoading } =
     useWidgetData<ReplayData>({
       endpoint: selectedSessionId
-        ? `/dash/v1/sessions/${selectedSessionId}/replay`
+        ? `/api/dash/v1/sessions/${selectedSessionId}/replay`
         : "",
       skip: !selectedSessionId,
     });
@@ -111,8 +140,8 @@ export default function SessionsPage() {
                 <span className="text-[10px] text-of-on-surface-variant">
                   {session.requests} turns
                 </span>
-                <span className="text-[10px] text-of-on-surface-variant ml-auto">
-                  {session.last_active}
+                <span className="text-[10px] text-of-on-surface-variant ml-auto" title={session.last_active}>
+                  {timeAgo(session.last_active)}
                 </span>
               </div>
             </button>
@@ -241,18 +270,42 @@ export default function SessionsPage() {
                       <p className="text-[10px] font-bold uppercase tracking-wider text-of-primary mb-2">
                         Prompt
                       </p>
-                      <pre className="text-xs text-of-on-surface font-mono whitespace-pre-wrap leading-relaxed">
-                        {turn.prompt}
-                      </pre>
+                      <div className="space-y-2">
+                        <p className="text-xs font-mono text-of-on-surface-variant bg-of-surface-container rounded px-2 py-1.5 break-all">
+                          {turn.request_hash || contentHash(turn.prompt ?? "")}
+                        </p>
+                        <div className="flex items-center gap-2 text-of-on-surface-variant/60">
+                          <Lock className="h-3 w-3" />
+                          <span className="text-[10px]">Content hidden -- viewing requires audit role with MFA verification</span>
+                        </div>
+                        <button
+                          disabled
+                          className="px-3 py-1.5 rounded-lg border border-of-outline-variant/20 text-[10px] font-medium text-of-on-surface-variant/40 bg-of-surface-container-high cursor-not-allowed"
+                        >
+                          Request Viewing Access
+                        </button>
+                      </div>
                     </div>
                     {/* Completion */}
                     <div className="p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-2">
                         Completion
                       </p>
-                      <pre className="text-xs text-of-on-surface font-mono whitespace-pre-wrap leading-relaxed">
-                        {turn.completion}
-                      </pre>
+                      <div className="space-y-2">
+                        <p className="text-xs font-mono text-of-on-surface-variant bg-of-surface-container rounded px-2 py-1.5 break-all">
+                          {turn.response_hash || contentHash(turn.completion ?? "")}
+                        </p>
+                        <div className="flex items-center gap-2 text-of-on-surface-variant/60">
+                          <Lock className="h-3 w-3" />
+                          <span className="text-[10px]">Content hidden -- viewing requires audit role with MFA verification</span>
+                        </div>
+                        <button
+                          disabled
+                          className="px-3 py-1.5 rounded-lg border border-of-outline-variant/20 text-[10px] font-medium text-of-on-surface-variant/40 bg-of-surface-container-high cursor-not-allowed"
+                        >
+                          Request Viewing Access
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

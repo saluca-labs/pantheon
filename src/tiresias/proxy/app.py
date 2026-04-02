@@ -70,6 +70,18 @@ def _detect_provider(upstream_url: str) -> str:
     return "openai"
 
 
+def _resolve_provider_for_model(model: str, cfg: TiresiasSettings):
+    """If the model name has a provider prefix matching a configured provider,
+    build and return that provider instance.  Otherwise return None."""
+    if "/" not in model:
+        return None
+    prefix = model.split("/", 1)[0].lower()
+    cascade = parse_providers(cfg.providers)
+    if prefix not in cascade:
+        return None
+    return build_provider(prefix, dict(os.environ))
+
+
 def _build_router(
     cfg: TiresiasSettings, http_client: httpx.AsyncClient
 ) -> tuple[ProviderRouter, HealthTracker]:
@@ -149,15 +161,24 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         }
 
         if is_streaming:
-            upstream_url = cfg.upstream_url.rstrip("/")
-            target_url = f"{upstream_url}/v1/chat/completions"
-            upstream_provider = _detect_provider(upstream_url)
+            # Model-prefix routing: if the model has a known provider prefix
+            # (e.g. ollama/llama3.1:8b), use that provider's URL directly.
+            resolved_provider = _resolve_provider_for_model(model, cfg)
+            if resolved_provider:
+                target_url, provider_headers, stream_body = resolved_provider.format_request(body)
+                upstream_headers.update(provider_headers)
+                upstream_provider = resolved_provider.name
+            else:
+                upstream_url = cfg.upstream_url.rstrip("/")
+                target_url = f"{upstream_url}/v1/chat/completions"
+                upstream_provider = _detect_provider(upstream_url)
+                stream_body = body
             client = get_http_client()
             return await _handle_streaming(
                 client=client,
                 target_url=target_url,
                 upstream_headers=upstream_headers,
-                body=body,
+                body=stream_body,
                 tenant_id=cfg.tenant_id,
                 model=model,
                 provider=upstream_provider,
@@ -386,7 +407,9 @@ async def _handle_non_streaming_router(
     from sqlalchemy.ext.asyncio import AsyncSession as _AS
     from tiresias.storage.engine import get_engine as _get_engine
     import json as _json
+    import time as _time
 
+    _t0 = _time.monotonic()
     try:
         response_json, provider_name = await router.execute(body, upstream_headers)
     except ProviderCascadeExhausted as exc:
@@ -400,19 +423,27 @@ async def _handle_non_streaming_router(
             await record_error_turn(tenant_id, model, db_session)
         raise HTTPException(status_code=502, detail=str(exc))
 
-    engine = await _get_engine(tenant_id, settings.data_root)
-    async with _AS(engine) as db_session:
-        await record_turn(
-            tenant_id=tenant_id,
-            model=model,
-            provider=provider_name,
-            request_body=body,
-            response_body=response_json,
-            session_id=session_id,
-            metadata=extra_metadata,
-            envelope=envelope,
-            db_session=db_session,
-        )
+    _latency_ms = round((_time.monotonic() - _t0) * 1000)
+    _merged_meta = dict(extra_metadata) if extra_metadata else {}
+    _merged_meta["latency_ms"] = _latency_ms
+    _merged_meta["status_code"] = 200
+
+    try:
+        engine = await _get_engine(tenant_id, settings.data_root)
+        async with _AS(engine) as db_session:
+            await record_turn(
+                tenant_id=tenant_id,
+                model=model,
+                provider=provider_name,
+                request_body=body,
+                response_body=response_json,
+                session_id=session_id,
+                metadata=_merged_meta,
+                envelope=envelope,
+                db_session=db_session,
+            )
+    except Exception as audit_exc:
+        logger.warning("Audit record_turn failed (non-fatal): %s", audit_exc)
 
     response_bytes = _json.dumps(response_json).encode()
     return Response(
@@ -455,19 +486,22 @@ async def _handle_non_streaming(
             response_json = upstream_resp.json()
         except Exception:
             response_json = {}
-        engine = await _get_engine(tenant_id, settings.data_root)
-        async with _AS(engine) as db_session:
-            await record_turn(
-                tenant_id=tenant_id,
-                model=model,
-                provider=provider,
-                request_body=body,
-                response_body=response_json,
-                session_id=session_id,
-                metadata=extra_metadata,
-                envelope=envelope,
-                db_session=db_session,
-            )
+        try:
+            engine = await _get_engine(tenant_id, settings.data_root)
+            async with _AS(engine) as db_session:
+                await record_turn(
+                    tenant_id=tenant_id,
+                    model=model,
+                    provider=provider,
+                    request_body=body,
+                    response_body=response_json,
+                    session_id=session_id,
+                    metadata=extra_metadata,
+                    envelope=envelope,
+                    db_session=db_session,
+                )
+        except Exception as audit_exc:
+            logger.warning("Audit record_turn failed (non-fatal): %s", audit_exc)
     else:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
@@ -498,7 +532,9 @@ async def _handle_streaming(
     settings,
 ):
     import json as _json
+    import time as _time2
 
+    _t0_stream = _time2.monotonic()
     accumulated_chunks = []
     accumulated_response = {}
 
@@ -523,6 +559,10 @@ async def _handle_streaming(
         full_text = "".join(accumulated_chunks)
         assembled = _assemble_sse_response(full_text, model)
         accumulated_response.update(assembled)
+        _latency_ms_stream = round((_time2.monotonic() - _t0_stream) * 1000)
+        _merged_meta_stream = dict(extra_metadata) if extra_metadata else {}
+        _merged_meta_stream["latency_ms"] = _latency_ms_stream
+        _merged_meta_stream["status_code"] = 200
         try:
             from sqlalchemy.ext.asyncio import AsyncSession as _AS2
             from tiresias.storage.engine import get_engine as _ge
@@ -536,7 +576,7 @@ async def _handle_streaming(
                     request_body=body,
                     response_body=accumulated_response,
                     session_id=session_id,
-                    metadata=extra_metadata,
+                    metadata=_merged_meta_stream,
                     envelope=envelope,
                     db_session=db_session,
                 )

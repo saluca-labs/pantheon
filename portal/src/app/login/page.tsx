@@ -204,8 +204,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-background pt-16 flex items-center justify-center">
+      <main className="min-h-screen bg-background flex items-center justify-center">
         <section className="relative w-full max-w-md mx-auto px-6 py-20">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,168,83,0.06),transparent_60%)]" />
           <Suspense>

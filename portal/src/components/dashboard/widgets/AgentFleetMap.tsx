@@ -44,7 +44,7 @@ export default function AgentFleetMap() {
   const [hoveredAgent, setHoveredAgent] = useState<AgentNode | null>(null);
 
   const { data: agents, loading, error, refetch } = useWidgetData({
-    endpoint: "/v1/soulauth/admin/soulkeys",
+    endpoint: "/v1/soulauth/admin/keys",
     transform: transformKeys,
   });
 

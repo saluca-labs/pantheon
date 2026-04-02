@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 function getSoulAuthUrl(): string {
   return (
     process.env.SOULAUTH_INTERNAL_URL ||
-    process.env.NEXT_PUBLIC_SOULAUTH_API_URL ||
+    process.env.SOULAUTH_INTERNAL_URL ||
     "http://soulauth.tiresias.svc.cluster.local"
   );
 }

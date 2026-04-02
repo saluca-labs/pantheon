@@ -171,40 +171,6 @@ response_actions:
     notify: [soc-team, security-lead, tenant-admin]
     log_level: critical`,
   },
-  {
-    name: "custom.yaml",
-    description: "Custom tenant-specific rules",
-    lastModified: "2026-03-14 14:00",
-    content: `version: "2.4.1"
-description: "Custom rules for Acme Corp tenant"
-
-rules:
-  - id: acme-data-pipeline
-    persona: data-pipeline
-    action: [read, write, execute]
-    resource: data-lake/*
-    conditions:
-      tenant: acme-corp
-      time_window: "00:00-06:00"
-    effect: allow
-
-  - id: acme-support-read
-    persona: customer-support-ai
-    action: read
-    resource: [tickets/*, knowledge-base/*]
-    conditions:
-      tenant: acme-corp
-    effect: allow
-
-  - id: acme-support-respond
-    persona: customer-support-ai
-    action: write
-    resource: responses/*
-    conditions:
-      tenant: acme-corp
-      requires_review: true
-    effect: allow`,
-  },
 ];
 
 const NEW_POLICY_TEMPLATE = `version: "2.4.1"

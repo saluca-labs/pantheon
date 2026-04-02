@@ -1,15 +1,26 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { getStoredTenantId } from "@/lib/api";
+
+/** Format a Date as YYYY-MM-DD for date input value */
+function toDateString(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Format a Date as HH:MM for time input value */
+function toTimeString(d: Date): string {
+  return d.toISOString().slice(11, 16);
+}
 
 /** Audit log viewer -- filterable event stream with type and severity columns. Fetches live data from SoulAuth audit endpoint. */
 
 interface AuditEvent {
   id: string;
   timestamp: string;
+  rawTimestamp: string;
   eventType: "EVALUATE" | "KEY_EVENT" | "POLICY" | "ANOMALY";
   agentPrefix: string;
   action: string;
@@ -76,6 +87,20 @@ const resultColor: Record<AuditEvent["result"], string> = {
 };
 
 export default function AuditPage() {
+  // Default date range: now - 24h to now
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() - 24);
+    return toDateString(d);
+  });
+  const [startTime, setStartTime] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() - 24);
+    return toTimeString(d);
+  });
+  const [endDate, setEndDate] = useState(() => toDateString(new Date()));
+  const [endTime, setEndTime] = useState(() => toTimeString(new Date()));
+
   const [eventTypeFilter, setEventTypeFilter] = useState("All");
   const [resultFilter, setResultFilter] = useState("All");
   const [agentFilter, setAgentFilter] = useState("");
@@ -89,6 +114,7 @@ export default function AuditPage() {
       if (!resp || !resp.events || !Array.isArray(resp.events)) return [];
       return resp.events.map((e) => ({
         id: e.id,
+        rawTimestamp: e.timestamp || "",
         timestamp: e.timestamp
           ? new Date(e.timestamp).toLocaleString("en-CA", {
               year: "numeric",
@@ -101,11 +127,7 @@ export default function AuditPage() {
             })
           : "—",
         eventType: mapEventType(e.event_type),
-        agentPrefix: e.persona_id
-          ? e.persona_id.length > 10
-            ? `${e.persona_id.slice(0, 8)}...`
-            : e.persona_id
-          : "system",
+        agentPrefix: e.persona_id || "system",
         action: e.action || e.event_type || "—",
         resource: e.resource || "—",
         result: mapDecision(e.decision, e.event_type),
@@ -129,12 +151,26 @@ export default function AuditPage() {
   const allEvents = events || [];
   const totalEvents = allEvents.length;
 
+  const pageSize = 25;
+
+  // Compute date range boundaries for filtering
+  const rangeStart = useMemo(() => new Date(`${startDate}T${startTime}`), [startDate, startTime]);
+  const rangeEnd = useMemo(() => new Date(`${endDate}T${endTime}`), [endDate, endTime]);
+
   const filtered = allEvents.filter((e) => {
+    // Date range filter
+    if (e.rawTimestamp) {
+      const ts = new Date(e.rawTimestamp);
+      if (ts < rangeStart || ts > rangeEnd) return false;
+    }
     if (eventTypeFilter !== "All" && e.eventType !== eventTypeFilter) return false;
     if (resultFilter !== "All" && e.result !== resultFilter) return false;
     if (agentFilter && !e.agentPrefix.toLowerCase().includes(agentFilter.toLowerCase())) return false;
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedEvents = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const filterChips = [
     eventTypeFilter !== "All" && { label: `Type: ${eventTypeFilter}`, onClear: () => setEventTypeFilter("All") },
@@ -152,7 +188,26 @@ export default function AuditPage() {
             {loading ? "..." : totalEvents.toLocaleString()} events
           </span>
         </div>
-        <button className="group px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200 flex items-center gap-2">
+        <button
+          onClick={() => {
+            const csv =
+              "timestamp,event_type,agent,action,resource,result,details\n" +
+              filtered
+                .map(
+                  (e) =>
+                    `"${e.timestamp}","${e.eventType}","${e.agentPrefix}","${e.action}","${e.resource}","${e.result}","${(e.details ?? "").replace(/"/g, '""')}"`
+                )
+                .join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "audit-trail.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="group px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200 flex items-center gap-2"
+        >
           <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
           </svg>
@@ -164,9 +219,11 @@ export default function AuditPage() {
       <div className="glass-card rounded-xl p-4 flex flex-col lg:flex-row gap-3">
         <div className="flex items-center gap-2">
           <label className="text-xs text-foreground-subtle whitespace-nowrap">Date Range</label>
-          <input type="date" defaultValue="2026-03-18" className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
+          <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }} className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
+          <input type="time" value={startTime} onChange={(e) => { setStartTime(e.target.value); setCurrentPage(1); }} className="px-2 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
           <span className="text-foreground-subtle text-xs">to</span>
-          <input type="date" defaultValue="2026-03-18" className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
+          <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }} className="px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
+          <input type="time" value={endTime} onChange={(e) => { setEndTime(e.target.value); setCurrentPage(1); }} className="px-2 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -188,7 +245,7 @@ export default function AuditPage() {
           <label className="text-xs text-foreground-subtle whitespace-nowrap">Agent</label>
           <input
             type="text"
-            placeholder="sk_..."
+            placeholder="agent name..."
             value={agentFilter}
             onChange={(e) => setAgentFilter(e.target.value)}
             className="w-28 px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-xs text-foreground font-mono placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:shadow-[0_0_0_1px_rgba(212,168,83,0.15)] transition-all duration-200"
@@ -236,7 +293,7 @@ export default function AuditPage() {
               <tr className="border-b border-white/10">
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Timestamp</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Event Type</th>
-                <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Agent</th>
+                <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Agent Name</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Action</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Resource</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Result</th>
@@ -269,7 +326,7 @@ export default function AuditPage() {
                 </tr>
               )}
               {!loading &&
-                filtered.map((event, index) => (
+                paginatedEvents.map((event, index) => (
                   <motion.tr
                     key={event.id}
                     initial={{ opacity: 0 }}
@@ -303,7 +360,7 @@ export default function AuditPage() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
           <span className="text-xs text-foreground-subtle">
-            Showing {filtered.length} of {totalEvents.toLocaleString()} events
+            Showing {Math.min((currentPage - 1) * pageSize + 1, filtered.length)}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length} events
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -313,7 +370,7 @@ export default function AuditPage() {
             >
               Previous
             </button>
-            {[1, 2, 3].map((p) => (
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
                 onClick={() => setCurrentPage(p)}
@@ -326,10 +383,11 @@ export default function AuditPage() {
                 {p}
               </button>
             ))}
-            <span className="text-foreground-subtle text-xs px-1">...</span>
+            {totalPages > 5 && <span className="text-foreground-subtle text-xs px-1">...</span>}
             <button
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="px-3 py-1.5 rounded-lg bg-navy-800 text-foreground-muted text-xs border border-white/10 hover:text-foreground hover:border-white/15 transition-all duration-200"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage >= totalPages}
+              className="px-3 py-1.5 rounded-lg bg-navy-800 text-foreground-muted text-xs border border-white/10 hover:text-foreground hover:border-white/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
             >
               Next
             </button>

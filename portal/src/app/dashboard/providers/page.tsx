@@ -19,13 +19,13 @@ interface HealthData { providers: ProviderHealth[]; }
 interface LatencyProvider { name: string; p50: number; p95: number; p99: number; }
 interface LatencyData { providers: LatencyProvider[]; }
 
-interface ErrorProvider { name: string; error_rate: number; status_codes: { code: number; count: number }[]; }
+interface ErrorProvider { name: string; error_rate: number; total_requests?: number; status_codes: { code: number; count: number }[]; }
 interface ErrorsData { providers: ErrorProvider[]; }
 
 export default function ProvidersPage() {
-  const { data: health, loading: healthLoading } = useWidgetData<HealthData>({ endpoint: "/dash/v1/providers/health" });
-  const { data: latency, loading: latencyLoading } = useWidgetData<LatencyData>({ endpoint: "/dash/v1/latency" });
-  const { data: errors, loading: errorsLoading } = useWidgetData<ErrorsData>({ endpoint: "/dash/v1/errors" });
+  const { data: health, loading: healthLoading } = useWidgetData<HealthData>({ endpoint: "/api/dash/v1/providers/health" });
+  const { data: latency, loading: latencyLoading } = useWidgetData<LatencyData>({ endpoint: "/api/dash/v1/latency" });
+  const { data: errors, loading: errorsLoading } = useWidgetData<ErrorsData>({ endpoint: "/api/dash/v1/errors" });
 
   const statusStyles: Record<string, string> = {
     UP: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
@@ -33,9 +33,21 @@ export default function ProvidersPage() {
     DOWN: "bg-of-error/15 text-of-error border border-of-error/20",
   };
 
-  // Max latency for bar chart normalization
+  // Merge health + latency + errors into enriched provider cards
   const latencyProviders = latency?.providers ?? [];
   const maxLatency = latencyProviders.reduce((mx, p) => Math.max(mx, p.p99), 1);
+
+  const latencyMap = Object.fromEntries(latencyProviders.map(p => [p.name, p]));
+  const errorMap = Object.fromEntries((errors?.providers ?? []).map(p => [p.name, p]));
+
+  const enrichedProviders = (health?.providers ?? []).map(p => ({
+    ...p,
+    p50: latencyMap[p.name]?.p50,
+    p95: latencyMap[p.name]?.p95,
+    p99: latencyMap[p.name]?.p99,
+    error_rate: errorMap[p.name]?.error_rate,
+    total_requests: errorMap[p.name]?.total_requests,
+  }));
 
   return (
     <div className="space-y-6 max-w-7xl">
@@ -49,50 +61,63 @@ export default function ProvidersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {(health?.providers ?? []).map(p => (
-              <div key={p.name} className="bg-of-surface-container rounded-xl p-5 border border-of-outline-variant/5">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-bold text-of-on-surface">{p.name}</p>
-                    {p.consecutive_errors > 0 && (
-                      <p className="text-[10px] text-of-error mt-0.5">{p.consecutive_errors} consecutive errors</p>
+            {enrichedProviders.map(p => {
+              const isHealthy = p.status === "UP" && (p.error_rate ?? 0) <= 0.01;
+              const borderColor = isHealthy
+                ? "border-emerald-500/20"
+                : p.status === "DEGRADED"
+                ? "border-warning/20"
+                : p.status === "DOWN"
+                ? "border-of-error/20"
+                : "border-of-outline-variant/5";
+              return (
+                <div key={p.name} className={`bg-of-surface-container rounded-xl p-5 border ${borderColor}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-bold text-of-on-surface">{p.name}</p>
+                      {p.total_requests !== undefined && (
+                        <p className="text-[10px] text-of-on-surface-variant mt-0.5">{p.total_requests.toLocaleString()} requests</p>
+                      )}
+                      {p.consecutive_errors > 0 && (
+                        <p className="text-[10px] text-of-error mt-0.5">{p.consecutive_errors} consecutive errors</p>
+                      )}
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyles[p.status] ?? statusStyles.DOWN}`}>
+                      {p.status}
+                    </span>
+                  </div>
+                  {isHealthy && (
+                    <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/15">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase">Healthy</span>
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    {p.p50 !== undefined && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-of-on-surface-variant">p50</span>
+                        <span className={`tabular-nums font-bold ${p.p50 < 2000 ? "text-emerald-400" : p.p50 < 4000 ? "text-warning" : "text-of-error"}`}>{Math.round(p.p50)}ms</span>
+                      </div>
+                    )}
+                    {p.p95 !== undefined && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-of-on-surface-variant">p95</span>
+                        <span className={`tabular-nums font-bold ${p.p95 < 3000 ? "text-emerald-400" : p.p95 < 5000 ? "text-warning" : "text-of-error"}`}>{Math.round(p.p95)}ms</span>
+                      </div>
+                    )}
+                    {p.error_rate !== undefined && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-of-on-surface-variant">Error Rate</span>
+                        <span className={`tabular-nums font-bold ${p.error_rate > 0.05 ? "text-of-error" : p.error_rate > 0.01 ? "text-warning" : "text-emerald-400"}`}>
+                          {(p.error_rate * 100).toFixed(1)}%
+                        </span>
+                      </div>
                     )}
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusStyles[p.status] ?? statusStyles.DOWN}`}>
-                    {p.status}
-                  </span>
                 </div>
-                <div className="space-y-1.5">
-                  {p.p50_ms !== undefined && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-of-on-surface-variant">p50</span>
-                      <span className="text-of-on-surface tabular-nums font-bold">{p.p50_ms}ms</span>
-                    </div>
-                  )}
-                  {p.p95_ms !== undefined && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-of-on-surface-variant">p95</span>
-                      <span className="text-of-on-surface tabular-nums font-bold">{p.p95_ms}ms</span>
-                    </div>
-                  )}
-                  {p.error_rate !== undefined && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-of-on-surface-variant">Error Rate</span>
-                      <span className={`tabular-nums font-bold ${p.error_rate > 0.05 ? "text-of-error" : p.error_rate > 0.01 ? "text-warning" : "text-emerald-400"}`}>
-                        {(p.error_rate * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
-                  {p.cost_per_1k !== undefined && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-of-on-surface-variant">Cost/1K</span>
-                      <span className="text-of-on-surface tabular-nums">${p.cost_per_1k.toFixed(3)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {(!health?.providers || health.providers.length === 0) && (
+              );
+            })}
+            {enrichedProviders.length === 0 && (
               <div className="col-span-4 text-center py-8 text-sm text-of-on-surface-variant">No provider data available</div>
             )}
           </div>

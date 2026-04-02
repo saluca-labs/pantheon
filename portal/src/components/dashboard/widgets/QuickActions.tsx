@@ -16,7 +16,7 @@ interface ActionDef {
 const actions: ActionDef[] = [
   {
     label: "Issue New Soulkey",
-    endpoint: "/v1/soulauth/admin/soulkeys",
+    endpoint: "/v1/soulauth/admin/keys",
     method: "POST",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -26,7 +26,7 @@ const actions: ActionDef[] = [
   },
   {
     label: "Sync Policies",
-    endpoint: "/v1/soulauth/admin/policies/sync",
+    endpoint: "/v1/soulauth/admin/policy/sync",
     method: "POST",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

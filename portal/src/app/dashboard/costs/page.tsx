@@ -30,8 +30,8 @@ interface SessionsData { sessions: Session[]; }
 
 export default function CostsPage() {
   const [budgetAlertOpen, setBudgetAlertOpen] = useState(false);
-  const { data: spend, loading: spendLoading } = useWidgetData<SpendData>({ endpoint: "/dash/v1/spend" });
-  const { data: sessions, loading: sessionsLoading } = useWidgetData<SessionsData>({ endpoint: "/dash/v1/sessions/top" });
+  const { data: spend, loading: spendLoading } = useWidgetData<SpendData>({ endpoint: "/api/dash/v1/spend" });
+  const { data: sessions, loading: sessionsLoading } = useWidgetData<SessionsData>({ endpoint: "/api/dash/v1/sessions/top" });
 
   // Derived values — graceful fallback when optional fields absent
   const totalCost = spend?.total_cost ?? 0;

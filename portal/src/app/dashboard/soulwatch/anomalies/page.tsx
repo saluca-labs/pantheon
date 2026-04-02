@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWidgetData } from "@/lib/useWidgetData";
 
-/** SoulWatch anomaly list -- detailed anomaly inspection with severity and type filters. Uses hardcoded mock data. */
+/** SoulWatch anomaly list -- detailed anomaly inspection with severity and type filters. */
 
 interface Anomaly {
   id: string;
@@ -54,58 +55,18 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-const INITIAL_ANOMALIES: Anomaly[] = [
-  {
-    id: "anom_001", type: "cross_tenant", description: "Cross-tenant resource access attempt - tried to read globex-inc/customer-data", severity: "Critical",
-    agent: "test-agent-beta", soulkey: "sk_f2b9...", timestamp: "2026-03-18 03:14:22", ago: "12 min ago", status: "open", riskScore: 98,
-    baselineValue: "0 cross-tenant attempts", observedValue: "1 cross-tenant attempt", evidence: { resource_path: "globex-inc/customer-data/exports", source_tenant: "acme-corp", agent_soulkey: "sk_f2b93a5c..." },
-  },
-  {
-    id: "anom_002", type: "rate_anomaly", description: "Excessive permission requests - 67 evaluations in 5 minutes", severity: "High",
-    agent: "compliance-checker", soulkey: "sk_8a1c...", timestamp: "2026-03-18 03:08:45", ago: "18 min ago", status: "open", riskScore: 92,
-    baselineValue: "8 evals/5min", observedValue: "67 evals/5min", evidence: { action: "evaluate", resource: "compliance-reports/*", window: "5m", count: 67 },
-  },
-  {
-    id: "anom_003", type: "temporal_anomaly", description: "Off-hours activity - analytics queries running at 02:55 UTC", severity: "Medium",
-    agent: "analytics-agent", soulkey: "sk_a3f1...", timestamp: "2026-03-18 02:55:10", ago: "31 min ago", status: "open", riskScore: 45,
-    baselineValue: "Active 09:00-18:00 UTC", observedValue: "Active at 02:55 UTC", evidence: { action: "read", resource: "customer-data/reports", business_hours: "09:00-18:00" },
-  },
-  {
-    id: "anom_004", type: "data_exfiltration", description: "Unusual data volume - 3.2x baseline transfer rate", severity: "Medium",
-    agent: "data-pipeline", soulkey: "sk_5c8e...", timestamp: "2026-03-18 02:41:33", ago: "45 min ago", status: "acknowledged", riskScore: 67,
-    baselineValue: "2.4 GB/hour", observedValue: "7.7 GB/hour (3.2x)", evidence: { baseline_rate: "2.4 GB/hr", observed_rate: "7.7 GB/hr", multiplier: 3.2, resource: "data-lake/raw/events" },
-  },
-  {
-    id: "anom_005", type: "privilege_escalation", description: "Rapid key rotation - 4 rotations in 24 hours", severity: "High",
-    agent: "compliance-checker", soulkey: "sk_8a1c...", timestamp: "2026-03-18 02:30:00", ago: "56 min ago", status: "open", riskScore: 78,
-    baselineValue: "1 rotation/week", observedValue: "4 rotations/24h", evidence: { event_type: "KEY_EVENT", action: "key_rotate", count: 4, window: "24h" },
-  },
-  {
-    id: "anom_006", type: "rate_anomaly", description: "Failed auth spike - 28 denied requests in 5 minutes", severity: "High",
-    agent: "test-agent-beta", soulkey: "sk_f2b9...", timestamp: "2026-03-18 02:12:18", ago: "1 hour ago", status: "open", riskScore: 85,
-    baselineValue: "2 denials/5min", observedValue: "28 denials/5min", evidence: { event_type: "EVALUATE", result: "DENY", count: 28, window: "5m" },
-  },
-  {
-    id: "anom_007", type: "temporal_anomaly", description: "Off-hours data pipeline activity at 01:48 UTC", severity: "Medium",
-    agent: "data-pipeline", soulkey: "sk_5c8e...", timestamp: "2026-03-18 01:48:55", ago: "1.4 hours ago", status: "resolved", riskScore: 32,
-    baselineValue: "Active 06:00-22:00 UTC", observedValue: "Active at 01:48 UTC", evidence: { action: "execute", resource: "etl/daily-ingest", business_hours: "06:00-22:00" },
-  },
-  {
-    id: "anom_008", type: "rate_anomaly", description: "Excessive permission requests - analytics agent burst", severity: "High",
-    agent: "analytics-agent", soulkey: "sk_a3f1...", timestamp: "2026-03-18 01:22:40", ago: "1.9 hours ago", status: "false_positive", riskScore: 52,
-    baselineValue: "12 evals/5min", observedValue: "55 evals/5min", evidence: { action: "evaluate", resource: "reports/*", window: "5m", count: 55, note: "Batch report generation" },
-  },
-  {
-    id: "anom_009", type: "behavioral_drift", description: "Report generator accessing unusual resources", severity: "Medium",
-    agent: "report-generator", soulkey: "sk_c3e8...", timestamp: "2026-03-18 00:55:12", ago: "2.3 hours ago", status: "open", riskScore: 41,
-    baselineValue: "reports/*, analytics/*", observedValue: "config/secrets, admin/*", evidence: { baseline_resources: ["reports/*", "analytics/*"], observed_resources: ["config/secrets", "admin/users"] },
-  },
-  {
-    id: "anom_010", type: "temporal_anomaly", description: "Cost optimizer running weekend batch at midnight", severity: "Low",
-    agent: "cost-optimizer", soulkey: "sk_2f9a...", timestamp: "2026-03-18 00:30:05", ago: "2.8 hours ago", status: "resolved", riskScore: 18,
-    baselineValue: "Active weekdays 08:00-20:00", observedValue: "Active Sunday 00:30", evidence: { action: "read", resource: "billing/cost-data", day: "Sunday" },
-  },
-];
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function timeAgo(ts: string): string {
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = (diff / 3600000).toFixed(1);
+  return `${hrs} hours ago`;
+}
 
 const severityColor: Record<string, string> = {
   Critical: "bg-red-500/15 text-red-400 border border-red-500/20",
@@ -139,7 +100,49 @@ const typeLabel: Record<string, string> = {
 };
 
 export default function AnomaliesPage() {
-  const [anomalies, setAnomalies] = useState(INITIAL_ANOMALIES);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformAnomalies = useCallback((raw: unknown): Anomaly[] => {
+    const envelope = raw as any;
+    const items = Array.isArray(raw) ? raw : (envelope?.items ?? envelope?.anomalies ?? []);
+    // Capture total from API envelope
+    if (envelope?.total != null) {
+      setTotalCount(envelope.total);
+    } else if (Array.isArray(raw)) {
+      setTotalCount(raw.length);
+    }
+    return items.map((a: any) => ({
+      id: a.id ?? a.anomaly_id ?? "",
+      type: a.type ?? "rate_anomaly",
+      description: a.description ?? "",
+      severity: capitalize(a.severity ?? a.level ?? "Medium") as Anomaly["severity"],
+      agent: a.agent ?? a.agent_name ?? "",
+      soulkey: a.soulkey ?? a.agent_soulkey ?? "",
+      timestamp: a.timestamp ?? a.created_at ?? "",
+      ago: a.ago ?? timeAgo(a.timestamp ?? a.created_at ?? ""),
+      status: a.status ?? "open",
+      riskScore: a.risk_score ?? a.riskScore ?? 0,
+      baselineValue: a.baseline_value ?? a.baselineValue ?? "",
+      observedValue: a.observed_value ?? a.observedValue ?? "",
+      evidence: a.evidence ?? {},
+    }));
+  }, []);
+
+  const { data: fetchedAnomalies, loading, error } = useWidgetData<Anomaly[]>({
+    endpoint: `/api/watch/v1/anomalies?page_size=${pageSize}&page=${currentPage}`,
+    transform: transformAnomalies,
+  });
+
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  useEffect(() => {
+    if (fetchedAnomalies) setAnomalies(fetchedAnomalies);
+  }, [fetchedAnomalies]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -238,11 +241,26 @@ export default function AnomaliesPage() {
           <option value="cross_tenant">Cross-Tenant</option>
         </select>
         <span className="text-xs text-foreground-subtle self-center ml-auto">
-          Showing {filtered.length} of {anomalies.length} anomalies
+          Showing {filtered.length} of {anomalies.length} on page {currentPage} -- {totalCount} total anomalies
         </span>
       </div>
 
+      {/* Loading / Error */}
+      {loading && (
+        <div className="text-center py-12 text-foreground-muted text-sm">Loading anomalies...</div>
+      )}
+      {error && (
+        <div className="text-center py-12 text-red-400 text-sm">Failed to load anomalies: {error}</div>
+      )}
+      {!loading && !error && anomalies.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-foreground-muted text-sm">No anomalies detected</p>
+          <p className="text-foreground-subtle text-xs mt-1">SoulWatch is monitoring -- anomalies will appear here when detected.</p>
+        </div>
+      )}
+
       {/* Anomaly List */}
+      {!loading && !error && anomalies.length > 0 && (
       <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -408,6 +426,64 @@ export default function AnomaliesPage() {
           </table>
         </div>
       </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && !error && totalCount > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-of-surface-container border border-of-outline-variant/20 rounded-xl">
+          <span className="text-xs text-foreground-muted">
+            Page {currentPage} of {totalPages} ({totalCount} total anomalies)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage <= 1}
+              className="px-2.5 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              First
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="px-2.5 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+              const page = startPage + i;
+              if (page > totalPages) return null;
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                    page === currentPage
+                      ? "border-of-primary/50 bg-of-primary/10 text-of-primary"
+                      : "border-white/10 text-foreground-muted hover:bg-white/5"
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="px-2.5 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage >= totalPages}
+              className="px-2.5 py-1.5 rounded-lg border border-white/10 text-xs text-foreground-muted hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              Last
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

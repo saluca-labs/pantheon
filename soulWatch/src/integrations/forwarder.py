@@ -102,7 +102,10 @@ class EventForwarder:
                     if hasattr(dest, "url"):
                         async with httpx.AsyncClient(timeout=10) as client:
                             payload = [e.to_dict() for e in batch]
-                            resp = await client.post(dest.url, json=payload)
+                            headers = {}
+                            if hasattr(dest, "headers"):
+                                headers = dest.headers or {}
+                            resp = await client.post(dest.url, json=payload, headers=headers)
                             if resp.status_code < 300:
                                 self.metrics.events_forwarded += len(batch)
                             else:
@@ -116,6 +119,19 @@ class EventForwarder:
                     self.metrics.events_failed += len(batch)
                     for e in batch:
                         self._dead_letter.append(e)
+
+            # Forward via syslog transport (if active)
+            try:
+                from soulWatch.src.integrations.syslog_forwarder import get_syslog_transport
+                syslog = get_syslog_transport()
+                if syslog:
+                    ok, fail = syslog.send_batch(batch)
+                    self.metrics.events_forwarded += ok
+                    self.metrics.events_failed += fail
+                    if fail:
+                        logger.warning("forwarder.syslog_partial_fail", ok=ok, fail=fail)
+            except Exception as exc:
+                logger.error("forwarder.syslog_flush_failed", error=str(exc))
 
             self.metrics.dead_letter_size = len(self._dead_letter)
             self.metrics.last_forward_time = time.time()

@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-/** SoulGate access rules -- IP/geo allow/block list management. Uses hardcoded mock data. */
+/** SoulGate access rules -- IP/geo allow/block list management.
+ *  Ships with default geo-block rules (disabled) based on OFAC embargoed
+ *  nations, high-risk CTI origins, and a catch-all allow rule.
+ */
 
 interface AccessRule {
   id: string;
@@ -14,16 +17,134 @@ interface AccessRule {
   hitCount: number;
   lastHit: string;
   note: string;
+  /** ISO 3166-1 alpha-2 country code (geo rules only) */
+  country_code?: string;
+  /** Rule category for grouping in the UI */
+  category?: "embargoed" | "high-risk" | "default" | "custom";
+  /** Human-readable description of why this rule exists */
+  description?: string;
 }
 
 const INITIAL_RULES: AccessRule[] = [
-  { id: "acr_1", type: "ip_allow", value: "10.0.0.0/8", priority: 1, enabled: true, hitCount: 92400, lastHit: "1 sec ago", note: "Internal network" },
-  { id: "acr_2", type: "ip_allow", value: "172.16.0.0/12", priority: 2, enabled: true, hitCount: 48200, lastHit: "3 sec ago", note: "Private range" },
-  { id: "acr_3", type: "ip_block", value: "45.227.0.0/16", priority: 3, enabled: true, hitCount: 1234, lastHit: "12 min ago", note: "Known bot farm" },
-  { id: "acr_4", type: "ip_block", value: "103.21.244.0/22", priority: 4, enabled: true, hitCount: 567, lastHit: "1 hour ago", note: "Suspicious CIDR" },
-  { id: "acr_5", type: "geo_allow", value: "US, CA, GB, DE, FR, JP, AU", priority: 5, enabled: true, hitCount: 148000, lastHit: "1 sec ago", note: "Permitted countries" },
-  { id: "acr_6", type: "geo_deny", value: "CN, RU, KP, IR", priority: 6, enabled: true, hitCount: 548, lastHit: "5 min ago", note: "Restricted regions" },
-  { id: "acr_7", type: "ip_block", value: "198.51.100.0/24", priority: 7, enabled: false, hitCount: 0, lastHit: "Never", note: "Test range (disabled)" },
+  // ── Embargoed nations (OFAC) — Block + Alert, disabled by default ──
+  {
+    id: "geo_emb_kp",
+    type: "geo_deny",
+    value: "KP",
+    country_code: "KP",
+    priority: 10,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "North Korea — Block + Alert",
+    category: "embargoed",
+    description: "OFAC fully embargoed. All traffic blocked and alerts generated.",
+  },
+  {
+    id: "geo_emb_ir",
+    type: "geo_deny",
+    value: "IR",
+    country_code: "IR",
+    priority: 11,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Iran — Block + Alert",
+    category: "embargoed",
+    description: "OFAC fully embargoed. All traffic blocked and alerts generated.",
+  },
+  {
+    id: "geo_emb_sy",
+    type: "geo_deny",
+    value: "SY",
+    country_code: "SY",
+    priority: 12,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Syria — Block + Alert",
+    category: "embargoed",
+    description: "OFAC fully embargoed. All traffic blocked and alerts generated.",
+  },
+  {
+    id: "geo_emb_cu",
+    type: "geo_deny",
+    value: "CU",
+    country_code: "CU",
+    priority: 13,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Cuba — Block + Alert",
+    category: "embargoed",
+    description: "OFAC fully embargoed. All traffic blocked and alerts generated.",
+  },
+  {
+    id: "geo_emb_ru",
+    type: "geo_deny",
+    value: "RU",
+    country_code: "RU",
+    priority: 14,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Russia — Block + Alert",
+    category: "embargoed",
+    description: "OFAC sectoral sanctions / Executive Orders. Block and alert on all inbound.",
+  },
+  {
+    id: "geo_emb_by",
+    type: "geo_deny",
+    value: "BY",
+    country_code: "BY",
+    priority: 15,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Belarus — Block + Alert",
+    category: "embargoed",
+    description: "OFAC sanctions program. Block and alert on all inbound.",
+  },
+  // ── High-risk CTI origins — Alert only, disabled by default ──
+  {
+    id: "geo_cti_cn",
+    type: "geo_deny",
+    value: "CN",
+    country_code: "CN",
+    priority: 20,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "China — Alert Only",
+    category: "high-risk",
+    description: "High-volume CTI source. Alert on traffic for SOC review; not blocked by default.",
+  },
+  {
+    id: "geo_cti_ve",
+    type: "geo_deny",
+    value: "VE",
+    country_code: "VE",
+    priority: 21,
+    enabled: false,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Venezuela — Alert Only",
+    category: "high-risk",
+    description: "Elevated CTI risk. Alert on traffic for SOC review; not blocked by default.",
+  },
+  // ── Default catch-all — Allow all other countries ──
+  {
+    id: "geo_default_allow",
+    type: "geo_allow",
+    value: "*",
+    priority: 999,
+    enabled: true,
+    hitCount: 0,
+    lastHit: "Never",
+    note: "Allow all other countries",
+    category: "default",
+    description: "Default permissive rule. All geo-origins not matched by a higher-priority rule are allowed.",
+  },
 ];
 
 const typeBadge: Record<string, string> = {
@@ -31,6 +152,20 @@ const typeBadge: Record<string, string> = {
   ip_block: "bg-red-500/15 text-red-400 border border-red-500/20",
   geo_allow: "bg-teal-500/15 text-of-primary border border-of-primary/20",
   geo_deny: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
+};
+
+const categoryBadge: Record<string, string> = {
+  embargoed: "bg-red-500/10 text-red-400 border border-red-500/20",
+  "high-risk": "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+  default: "bg-green-500/10 text-green-400 border border-green-500/20",
+  custom: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+};
+
+const categoryLabel: Record<string, string> = {
+  embargoed: "Embargoed",
+  "high-risk": "High Risk CTI",
+  default: "Default",
+  custom: "Custom",
 };
 
 const typeLabel: Record<string, string> = {
@@ -175,6 +310,7 @@ export default function AccessPage() {
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider w-12">Pri</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Type</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Value</th>
+                <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Category</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Note</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Hits</th>
                 <th className="text-left px-4 py-3 text-foreground-muted font-medium text-xs uppercase tracking-wider">Status</th>
@@ -205,7 +341,16 @@ export default function AccessPage() {
                     <span className="text-foreground font-mono text-xs">{rule.value}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-foreground-muted text-xs">{rule.note || "-"}</span>
+                    {rule.category ? (
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${categoryBadge[rule.category] || categoryBadge.custom}`}>
+                        {categoryLabel[rule.category] || rule.category}
+                      </span>
+                    ) : (
+                      <span className="text-foreground-subtle text-xs">-</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-foreground-muted text-xs" title={rule.description || ""}>{rule.note || "-"}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-foreground-muted font-mono text-xs">{rule.hitCount.toLocaleString()}</span>
@@ -233,6 +378,14 @@ export default function AccessPage() {
                   </td>
                 </motion.tr>
               ))}
+              {rules.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center">
+                    <p className="text-foreground-muted text-sm">No access rules configured</p>
+                    <p className="text-foreground-subtle text-xs mt-1">Click &quot;+ Add Rule&quot; to create your first access rule</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

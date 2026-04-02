@@ -4,9 +4,9 @@
  * Dashboard overview page -- the primary landing view after login.
  *
  * Fetches data from 4 API endpoints:
- *  1. `/dash/v1/spend`            -- total cost, request count, and token usage (30d)
- *  2. `/dash/v1/requests`         -- daily request counts for sparklines and bar charts
- *  3. `/dash/v1/providers/health` -- per-provider UP/DOWN/DEGRADED status with error counts
+ *  1. `/api/dash/v1/spend`            -- total cost, request count, and token usage (30d)
+ *  2. `/api/dash/v1/requests`         -- daily request counts for sparklines and bar charts
+ *  3. `/api/dash/v1/providers/health` -- per-provider UP/DOWN/DEGRADED status with error counts
  *  4. `/v1/usage/alerts`          -- tier usage percentage and alert level (warning/critical)
  *
  * Renders KPI cards, request/cost bar charts with 7d/30d toggle, a usage
@@ -36,6 +36,10 @@ interface HealthData {
     p50_ms?: number;
     error_rate?: number;
   }[];
+}
+
+interface LatencyData {
+  providers: { name: string; p50: number; p95: number; p99: number; sample_count: number }[];
 }
 
 function KpiCard({
@@ -98,15 +102,19 @@ export default function OverviewPage() {
   const [timePeriod, setTimePeriod] = useState<"7d" | "30d">("7d");
 
   const { data: spend, loading: spendLoading } = useWidgetData<SpendData>({
-    endpoint: "/dash/v1/spend",
+    endpoint: "/api/dash/v1/spend",
   });
 
   const { data: requests, loading: reqLoading } = useWidgetData<RequestsData>({
-    endpoint: "/dash/v1/requests",
+    endpoint: "/api/dash/v1/requests",
   });
 
   const { data: health, loading: healthLoading } = useWidgetData<HealthData>({
-    endpoint: "/dash/v1/providers/health",
+    endpoint: "/api/dash/v1/providers/health",
+  });
+
+  const { data: latency } = useWidgetData<LatencyData>({
+    endpoint: "/api/dash/v1/latency",
   });
 
   const { data: usageAlerts } = useWidgetData<{
@@ -180,8 +188,25 @@ export default function OverviewPage() {
               value={spend?.request_count?.toLocaleString() ?? "\u2014"}
               sparkline={sparklineCounts}
             />
-            <KpiCard label="Avg Latency (p50)" value="\u2014" />
-            <KpiCard label="Error Rate" value="\u2014" />
+            <KpiCard
+              label="Avg Latency (p50)"
+              value={
+                latency?.providers?.length
+                  ? `${Math.round(
+                      latency.providers.reduce((sum, p) => sum + p.p50 * p.sample_count, 0) /
+                      latency.providers.reduce((sum, p) => sum + p.sample_count, 0)
+                    )}ms`
+                  : "\u2014"
+              }
+            />
+            <KpiCard
+              label="Cost / 1K Tokens"
+              value={
+                spend && spend.total_tokens > 0
+                  ? `$${((spend.total_cost / spend.total_tokens) * 1000).toFixed(4)}`
+                  : "\u2014"
+              }
+            />
             <KpiCard
               label="Active Providers"
               value={

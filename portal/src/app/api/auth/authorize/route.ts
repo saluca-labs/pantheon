@@ -15,7 +15,7 @@ function getBaseUrl(request: NextRequest): string {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const provider = searchParams.get("provider") || "google";
-  const backendUrl = process.env.NEXT_PUBLIC_SOULAUTH_API_URL || "http://soulauth.tiresias.svc.cluster.local";
+  const backendUrl = process.env.SOULAUTH_INTERNAL_URL || "http://soulauth.tiresias.svc.cluster.local";
 
   try {
     const res = await fetch(

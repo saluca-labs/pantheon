@@ -1,0 +1,20 @@
+title: Sanitizer Blocked Tool Output
+id: aletheia-tool-004
+status: stable
+level: high
+description: >
+  The output sanitizer blocked tool invocation output, indicating
+  potential sensitive data exfiltration or injection in command output.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+    sanitizer_verdict: block
+  condition: selection
+tags:
+  - aletheia.sanitizer_block
+  - attack.exfiltration
+response_playbook: investigate
+enabled: true

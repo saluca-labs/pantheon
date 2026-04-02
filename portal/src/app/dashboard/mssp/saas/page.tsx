@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
-import { Plus, PauseCircle, PlayCircle, RefreshCw } from "lucide-react";
+import { Plus, PauseCircle, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
 
 /** MSSP SaaS tenant management -- provision, pause, and refresh child tenants. Uses live API via useWidgetData. */
 
@@ -41,26 +42,28 @@ function formatBytes(bytes: number): string {
 }
 
 function SaasAdminContent() {
+  const router = useRouter();
   const [provisionForm, setProvisionForm] = useState({ name: "", email: "", tier: "starter" });
   const [provisioning, setProvisioning] = useState(false);
   const [provisionResult, setProvisionResult] = useState<{ tenant_id?: string; error?: string } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("7d");
 
-  const fromDate = (() => {
-    const d = new Date();
+  const { fromDate, toDate } = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now);
     const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 1;
-    d.setDate(d.getDate() - days);
-    return d.toISOString();
-  })();
+    from.setDate(from.getDate() - days);
+    return { fromDate: from.toISOString(), toDate: now.toISOString() };
+  }, [timeRange]);
 
   const { data: tenantsData, loading: tenantsLoading, error: tenantsError } = useWidgetData<MsspTenantsResponse>({
-    endpoint: "/v1/mssp/tenants",
+    endpoint: "/api/mssp/tenants",
     refreshInterval: 30000,
   });
 
   const { data: usageData, loading: usageLoading } = useWidgetData<UsageResponse>({
-    endpoint: `/v1/saas/usage?from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(new Date().toISOString())}`,
+    endpoint: `/api/mssp/usage?from=${encodeURIComponent(fromDate)}&to=${encodeURIComponent(toDate)}`,
     refreshInterval: 60000,
   });
 
@@ -79,7 +82,7 @@ function SaasAdminContent() {
     setProvisioning(true);
     setProvisionResult(null);
     try {
-      const result = await api.post<{ tenant_id: string }>("/v1/saas/provision", provisionForm);
+      const result = await api.post<{ tenant_id: string }>("/api/mssp/provision", provisionForm);
       setProvisionResult({ tenant_id: result.tenant_id });
       setProvisionForm({ name: "", email: "", tier: "starter" });
     } catch (e) {
@@ -92,7 +95,7 @@ function SaasAdminContent() {
   async function handleSuspend(tenantId: string) {
     setActionLoading(tenantId + ":suspend");
     try {
-      await api.post(`/v1/saas/tenants/${tenantId}/suspend`, {});
+      await api.post(`/api/mssp/tenants/${tenantId}/suspend`, {});
     } catch {
       // Ignore — tenant list will refresh
     } finally {
@@ -103,7 +106,7 @@ function SaasAdminContent() {
   async function handleReactivate(tenantId: string) {
     setActionLoading(tenantId + ":reactivate");
     try {
-      await api.post(`/v1/saas/tenants/${tenantId}/reactivate`, {});
+      await api.post(`/api/mssp/tenants/${tenantId}/reactivate`, {});
     } catch {
       // Ignore
     } finally {
@@ -130,7 +133,7 @@ function SaasAdminContent() {
               type="text"
               value={provisionForm.name}
               onChange={(e) => setProvisionForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Acme Corp"
+              placeholder="Company Name"
               className="w-full h-9 px-3 rounded-lg bg-of-surface-container-high border border-of-outline-variant/20 text-sm text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/40 transition-colors"
             />
           </div>
@@ -142,7 +145,7 @@ function SaasAdminContent() {
               type="email"
               value={provisionForm.email}
               onChange={(e) => setProvisionForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder="admin@acme.com"
+              placeholder="admin@example.com"
               className="w-full h-9 px-3 rounded-lg bg-of-surface-container-high border border-of-outline-variant/20 text-sm text-of-on-surface placeholder:text-of-on-surface-variant/40 focus:outline-none focus:border-of-primary/40 transition-colors"
             />
           </div>
@@ -215,8 +218,8 @@ function SaasAdminContent() {
 
         {!tenantsLoading && !tenantsError && tenants.length > 0 && (
           <div className="bg-of-surface-container rounded-xl border border-of-outline-variant/5 overflow-hidden">
-            <div className="grid grid-cols-[1fr_100px_100px_100px_100px_120px_120px] gap-4 px-5 py-3 border-b border-of-outline-variant/10">
-              {["Tenant", "Status", "Requests", "Tokens", "Anomalies", "Storage", "Actions"].map((h) => (
+            <div className="grid grid-cols-[1fr_100px_100px_100px_100px_120px_120px_32px] gap-4 px-5 py-3 border-b border-of-outline-variant/10">
+              {["Tenant", "Status", "Active Keys", "Tokens", "Anomalies", "Storage", "Actions", ""].map((h) => (
                 <span key={h} className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">
                   {h}
                 </span>
@@ -231,7 +234,8 @@ function SaasAdminContent() {
               return (
                 <div
                   key={tenant.tenant_id}
-                  className="grid grid-cols-[1fr_100px_100px_100px_100px_120px_120px] gap-4 px-5 py-4 border-b border-of-outline-variant/5 hover:bg-of-surface-container-high transition-colors items-center"
+                  onClick={() => router.push(`/dashboard/mssp/saas/${tenant.tenant_id}`)}
+                  className="grid grid-cols-[1fr_100px_100px_100px_100px_120px_120px_32px] gap-4 px-5 py-4 border-b border-of-outline-variant/5 hover:bg-of-surface-container-high transition-colors items-center cursor-pointer"
                 >
                   {/* Tenant name */}
                   <div className="min-w-0">
@@ -265,7 +269,7 @@ function SaasAdminContent() {
                   </span>
 
                   {/* Suspend / Reactivate */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {isSuspended ? (
                       <button
                         onClick={() => handleReactivate(tenant.tenant_id)}
@@ -294,6 +298,9 @@ function SaasAdminContent() {
                       </button>
                     )}
                   </div>
+
+                  {/* Drill-down */}
+                  <ChevronRight className="h-4 w-4 text-of-on-surface-variant/50" />
                 </div>
               );
             })}

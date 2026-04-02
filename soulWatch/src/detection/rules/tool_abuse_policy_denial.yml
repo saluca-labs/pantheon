@@ -1,0 +1,20 @@
+title: Tool Policy Denial
+id: aletheia-tool-003
+status: stable
+level: high
+description: >
+  Agent attempted a tool invocation that was denied by the execution
+  policy engine. May indicate sandbox escape attempts or unauthorized
+  tooling access.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+    policy_verdict: deny
+  condition: selection
+tags:
+  - aletheia.policy_violation
+response_playbook: investigate
+enabled: true

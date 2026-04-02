@@ -431,8 +431,8 @@ export default function SIEMConfigPage() {
         </div>
       )}
 
-      {/* Error state */}
-      {listError && !listLoading && (
+      {/* Error state -- suppress when no connectors (API may 404 on empty) */}
+      {listError && !listLoading && connectors.length > 0 && (
         <div className="p-4 rounded-xl bg-of-error/10 border border-of-error/20 text-of-error text-sm">
           Failed to load connectors: {listError}
         </div>

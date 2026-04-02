@@ -14,6 +14,8 @@ from soulWatch.src.database.models import (
     SoulWatchDetection,
     SoulWatchQuarantine,
     SoulWatchBaseline,
+    TiresiasAuditLog,
+    TiresiasUsageBucket,
 )
 from soulWatch.src.analytics.risk import compute_all_agent_risks
 
@@ -126,6 +128,100 @@ async def anomaly_timeline(
         "period": period,
         "bucket_format": bucket_format,
         "data": list(timeline.values()),
+    }
+
+
+@router.get("/llm")
+async def llm_metrics(
+    db: AsyncSession = Depends(get_db),
+):
+    """LLM usage dashboard: calls, tokens, cost, breakdowns by model/provider, hourly trend."""
+    now = datetime.now(timezone.utc)
+    last_24h = now - timedelta(hours=24)
+
+    # --- Totals from tiresias_audit_log (last 24h) ---
+    totals_result = await db.execute(
+        text(
+            "SELECT COUNT(*) AS total_calls, "
+            "COALESCE(SUM(token_count), 0) AS total_tokens, "
+            "COALESCE(SUM(cost_usd), 0) AS total_cost "
+            "FROM tiresias_audit_log "
+            "WHERE created_at >= :cutoff"
+        ),
+        {"cutoff": last_24h},
+    )
+    totals = totals_result.fetchone()
+
+    # --- By model ---
+    model_result = await db.execute(
+        text(
+            "SELECT COALESCE(model, 'unknown') AS model, "
+            "COUNT(*) AS calls, "
+            "COALESCE(SUM(token_count), 0) AS tokens, "
+            "COALESCE(SUM(cost_usd), 0) AS cost "
+            "FROM tiresias_audit_log "
+            "WHERE created_at >= :cutoff "
+            "GROUP BY model "
+            "ORDER BY cost DESC"
+        ),
+        {"cutoff": last_24h},
+    )
+    by_model = [
+        {"model": row[0], "calls": row[1], "tokens": row[2], "cost": float(row[3])}
+        for row in model_result.fetchall()
+    ]
+
+    # --- By provider ---
+    provider_result = await db.execute(
+        text(
+            "SELECT COALESCE(provider, 'unknown') AS provider, "
+            "COUNT(*) AS calls, "
+            "COALESCE(SUM(token_count), 0) AS tokens, "
+            "COALESCE(SUM(cost_usd), 0) AS cost "
+            "FROM tiresias_audit_log "
+            "WHERE created_at >= :cutoff "
+            "GROUP BY provider "
+            "ORDER BY cost DESC"
+        ),
+        {"cutoff": last_24h},
+    )
+    by_provider = [
+        {"provider": row[0], "calls": row[1], "tokens": row[2], "cost": float(row[3])}
+        for row in provider_result.fetchall()
+    ]
+
+    # --- Hourly trend (last 24h) from usage buckets if available, else audit log ---
+    trend_result = await db.execute(
+        text(
+            "SELECT date_trunc('hour', created_at) AS hour, "
+            "COUNT(*) AS calls, "
+            "COALESCE(SUM(token_count), 0) AS tokens, "
+            "COALESCE(SUM(cost_usd), 0) AS cost "
+            "FROM tiresias_audit_log "
+            "WHERE created_at >= :cutoff "
+            "GROUP BY hour "
+            "ORDER BY hour ASC"
+        ),
+        {"cutoff": last_24h},
+    )
+    hourly_trend = [
+        {
+            "hour": row[0].isoformat() if row[0] else None,
+            "calls": row[1],
+            "tokens": row[2],
+            "cost": float(row[3]),
+        }
+        for row in trend_result.fetchall()
+    ]
+
+    return {
+        "total_calls_24h": totals[0] if totals else 0,
+        "total_tokens_24h": totals[1] if totals else 0,
+        "total_cost_24h": float(totals[2]) if totals else 0.0,
+        "by_model": by_model,
+        "by_provider": by_provider,
+        "hourly_trend": hourly_trend,
+        "timestamp": now.isoformat(),
     }
 
 

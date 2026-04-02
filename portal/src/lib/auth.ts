@@ -43,6 +43,10 @@ export interface AuthSession {
   tenant_name?: string;
   expires_at: number; // epoch ms
   auth_method: AuthMethod;
+  /** User display name (from OIDC or persona_id fallback) */
+  user_name?: string;
+  /** User email (from OIDC, if available) */
+  user_email?: string;
 }
 
 interface WhoamiResponse {
@@ -146,10 +150,12 @@ function getSessionFromCookies(): AuthSession | null {
           soulkey: "httponly-oidc-protected",
           tenant_id: data.tenant_id,
           persona_id: data.role ?? "member",
-          tier: "enterprise", // OIDC users are always enterprise+
+          tier: (data as unknown as Record<string, string>).tier || "enterprise",
           tenant_name: data.tenant_name ?? undefined,
           expires_at: data.expires_at,
           auth_method: "oidc",
+          user_name: data.name ?? data.email?.split("@")[0] ?? undefined,
+          user_email: data.email ?? undefined,
         };
       }
     } catch {
@@ -175,6 +181,8 @@ function getSessionFromCookies(): AuthSession | null {
       tenant_name: data.tenant_name,
       expires_at: data.expires_at,
       auth_method: "soulkey",
+      user_name: data.user_name ?? data.persona_id ?? undefined,
+      user_email: data.user_email ?? undefined,
     };
   } catch {
     return null;
@@ -273,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         soulkey,
         tenant_id: data.tenant_id,
         persona_id: data.persona_id,
-        tier: data.tier || "starter",
+        tier: data.tier || "community",
         tenant_name: data.tenant_name,
       });
 
@@ -281,7 +289,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         soulkey: serverSession.session_token,
         tenant_id: data.tenant_id,
         persona_id: data.persona_id,
-        tier: data.tier || "starter",
+        tier: data.tier || "community",
         tenant_name: data.tenant_name,
         expires_at: serverSession.expires_at,
         auth_method: "soulkey",

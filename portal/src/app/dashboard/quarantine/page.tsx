@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { truncateSoulkey } from "@/lib/display";
 import { ShieldAlert, ShieldCheck, ChevronDown, ChevronRight, X, Plus } from "lucide-react";
 
 /** Quarantine management -- view, release, and add agent quarantine entries. Uses live API via useWidgetData. */
 
 interface QuarantineEntry {
+  id: string;
   soulkey_id: string;
-  status: "active" | "released";
-  triggered_by: string;
-  triggered_by_type?: string;
-  actions: string[];
+  persona_id?: string | null;
+  status: "active" | "released" | "expired" | "pending_approval";
+  triggered_by_type: string;
+  actions_taken: string[];
   reason: string;
   quarantined_at: string;
-  released_at?: string;
-  auto_release_after?: string;
-  flagged_prompt?: string | null;
-  flagged_completion?: string | null;
+  released_at?: string | null;
+  auto_release_at?: string | null;
+  released_by?: string | null;
+  approved_by?: string | null;
 }
 
 interface QuarantineListData {
@@ -26,7 +28,21 @@ interface QuarantineListData {
 }
 
 interface QuarantineHistoryData {
-  history?: QuarantineEntry[];
+  quarantines?: QuarantineEntry[];
+}
+
+/** Parse a duration string like "1h", "24h", "7d", or plain minutes into minutes. */
+function parseDurationToMinutes(input: string): number {
+  const trimmed = input.trim().toLowerCase();
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(h|d|m)?$/);
+  if (!match) return parseInt(trimmed, 10) || 0;
+  const value = parseFloat(match[1]);
+  const unit = match[2] ?? "m";
+  switch (unit) {
+    case "d": return Math.round(value * 24 * 60);
+    case "h": return Math.round(value * 60);
+    default:  return Math.round(value);
+  }
 }
 
 export default function QuarantinePage() {
@@ -35,24 +51,25 @@ export default function QuarantinePage() {
   const [showQuarantineModal, setShowQuarantineModal] = useState(false);
   const [modalSoulkeyId, setModalSoulkeyId] = useState("");
   const [modalReason, setModalReason] = useState("");
-  const [modalActions, setModalActions] = useState<string[]>(["rate_limit"]);
+  const [modalActions, setModalActions] = useState<string[]>(["suspend_key"]);
   const [modalAutoRelease, setModalAutoRelease] = useState("");
   const [actionResult, setActionResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const queryParams = statusFilter ? `?status=${statusFilter}&limit=100` : "?limit=100";
+  const queryParams = statusFilter ? `?status=${statusFilter}&page_size=100` : "?page_size=100";
   const { data, loading, error, refetch } = useWidgetData<QuarantineListData>({
-    endpoint: `/v1/enforcement/quarantine${queryParams}`,
-    refreshInterval: 30000,
+    endpoint: `/api/watch/v1/quarantines${queryParams}`,
+    refreshInterval: 15000,
   });
 
   const { data: historyData, loading: historyLoading } = useWidgetData<QuarantineHistoryData>({
-    endpoint: expandedId ? `/v1/enforcement/quarantine/${expandedId}` : "",
+    endpoint: expandedId ? `/api/watch/v1/quarantines?soulkey_id=${expandedId}&page_size=50` : "",
     skip: !expandedId,
   });
 
-  // Normalize API response — handle both { quarantined: [] } and direct array shapes
+  // Normalize API response — SoulWatch returns { quarantines: [...] }
   const entries: QuarantineEntry[] =
+    (data as unknown as { quarantines?: QuarantineEntry[] })?.quarantines ??
     data?.quarantined ??
     data?.items ??
     (Array.isArray(data) ? (data as QuarantineEntry[]) : []);
@@ -62,12 +79,12 @@ export default function QuarantinePage() {
     setActionResult(null);
     try {
       const { api } = await import("@/lib/api");
-      await api.post(`/v1/enforcement/quarantine/${soulkeyId}/release`, {
+      await api.post(`/api/watch/v1/quarantines/${soulkeyId}/release`, {
         released_by: "analyst",
       });
       setActionResult({
         type: "success",
-        message: `Soulkey ${soulkeyId.slice(0, 12)}… released successfully.`,
+        message: `Agent ${truncateSoulkey(soulkeyId)} released successfully.`,
       });
       refetch();
     } catch (err: unknown) {
@@ -84,19 +101,20 @@ export default function QuarantinePage() {
     setActionResult(null);
     try {
       const { api } = await import("@/lib/api");
-      await api.post(`/v1/enforcement/quarantine/${modalSoulkeyId.trim()}`, {
+      await api.post(`/api/watch/v1/quarantines`, {
+        soulkey_id: modalSoulkeyId.trim(),
         actions: modalActions,
         reason: modalReason.trim(),
-        ...(modalAutoRelease && { auto_release_after: modalAutoRelease }),
+        ...(modalAutoRelease && { auto_release_after: parseDurationToMinutes(modalAutoRelease) }),
       });
       setActionResult({
         type: "success",
-        message: `Soulkey ${modalSoulkeyId.slice(0, 12)}… quarantined successfully.`,
+        message: `Agent ${truncateSoulkey(modalSoulkeyId)} quarantined successfully.`,
       });
       setShowQuarantineModal(false);
       setModalSoulkeyId("");
       setModalReason("");
-      setModalActions(["rate_limit"]);
+      setModalActions(["suspend_key"]);
       setModalAutoRelease("");
       refetch();
     } catch (err: unknown) {
@@ -179,7 +197,7 @@ export default function QuarantinePage() {
         <div className="bg-of-surface-container rounded-xl border border-of-outline-variant/5 overflow-hidden">
           {/* Table header */}
           <div className="grid grid-cols-[1fr_120px_160px_160px_160px_auto] gap-4 px-5 py-3 border-b border-of-outline-variant/10">
-            {["Soulkey ID", "Status", "Triggered By", "Actions Taken", "Quarantined At", ""].map(
+            {["Agent Name", "Status", "Triggered By", "Actions Taken", "Quarantined At", ""].map(
               (h, i) => (
                 <span
                   key={i}
@@ -200,10 +218,10 @@ export default function QuarantinePage() {
           )}
 
           {entries.map((entry) => (
-            <div key={entry.soulkey_id}>
+            <div key={entry.id}>
               {/* Main row */}
               <div className="grid grid-cols-[1fr_120px_160px_160px_160px_auto] gap-4 px-5 py-4 border-b border-of-outline-variant/5 hover:bg-of-surface-container-high transition-colors items-center">
-                {/* Soulkey ID with expand toggle */}
+                {/* Agent name with expand toggle */}
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     onClick={() =>
@@ -217,9 +235,17 @@ export default function QuarantinePage() {
                       <ChevronRight className="h-3.5 w-3.5" />
                     )}
                   </button>
-                  <span className="font-mono text-xs text-of-on-surface truncate">
-                    {entry.soulkey_id}
-                  </span>
+                  <div className="min-w-0">
+                    <span className="text-xs text-of-on-surface font-medium truncate block">
+                      {entry.persona_id || truncateSoulkey(entry.soulkey_id)}
+                    </span>
+                    <span className="text-[10px] font-mono text-of-on-surface-variant truncate block" title={entry.soulkey_id}>
+                      {truncateSoulkey(entry.soulkey_id)}
+                    </span>
+                    {entry.reason?.includes("QUARANTINE TESTING") && (
+                      <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">TEST</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Status badge (QUAR-01) */}
@@ -236,14 +262,14 @@ export default function QuarantinePage() {
                 {/* Triggered by */}
                 <span
                   className="text-xs text-of-on-surface-variant truncate"
-                  title={entry.triggered_by}
+                  title={entry.triggered_by_type}
                 >
-                  {entry.triggered_by}
+                  {entry.triggered_by_type}
                 </span>
 
                 {/* Actions taken */}
                 <div className="flex flex-wrap gap-1">
-                  {(entry.actions ?? []).map((a) => (
+                  {(entry.actions_taken ?? []).map((a) => (
                     <span
                       key={a}
                       className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-warning/10 text-warning border border-warning/20"
@@ -262,7 +288,7 @@ export default function QuarantinePage() {
                 <div className="flex items-center gap-2 justify-end">
                   {entry.status === "active" && (
                     <button
-                      onClick={() => handleRelease(entry.soulkey_id)}
+                      onClick={() => handleRelease(entry.id)}
                       disabled={submitting}
                       className="flex items-center gap-1 px-2.5 h-7 rounded-lg text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-40 transition-colors"
                     >
@@ -295,13 +321,13 @@ export default function QuarantinePage() {
                   </div>
 
                   {/* Auto-release info */}
-                  {entry.auto_release_after && (
+                  {entry.auto_release_at && (
                     <div className="mb-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-warning mb-1.5">
-                        Auto-Release After
+                        Auto-Release At
                       </p>
                       <p className="text-xs font-mono text-of-on-surface-variant">
-                        {entry.auto_release_after}
+                        {new Date(entry.auto_release_at).toLocaleString()}
                       </p>
                     </div>
                   )}
@@ -318,41 +344,13 @@ export default function QuarantinePage() {
                     </div>
                   )}
 
-                  {/* Flagged prompt (GAP-01) */}
-                  {entry.flagged_prompt != null ? (
-                    <div className="mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-error mb-1.5">
-                        Flagged Prompt
-                      </p>
-                      <pre className="text-xs font-mono text-of-on-surface bg-of-surface-container rounded-lg px-3 py-2 border border-of-error/20 whitespace-pre-wrap break-all overflow-auto max-h-48">
-                        {entry.flagged_prompt}
-                      </pre>
-                    </div>
-                  ) : (
+                  {/* Released by */}
+                  {entry.released_by && (
                     <div className="mb-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
-                        Flagged Prompt
+                        Released By
                       </p>
-                      <p className="text-xs text-of-on-surface-variant italic">Not available</p>
-                    </div>
-                  )}
-
-                  {/* Flagged completion (GAP-01) */}
-                  {entry.flagged_completion != null ? (
-                    <div className="mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-error mb-1.5">
-                        Flagged Completion
-                      </p>
-                      <pre className="text-xs font-mono text-of-on-surface bg-of-surface-container rounded-lg px-3 py-2 border border-of-error/20 whitespace-pre-wrap break-all overflow-auto max-h-48">
-                        {entry.flagged_completion}
-                      </pre>
-                    </div>
-                  ) : (
-                    <div className="mb-4">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1.5">
-                        Flagged Completion
-                      </p>
-                      <p className="text-xs text-of-on-surface-variant italic">Not available</p>
+                      <p className="text-xs text-of-on-surface-variant">{entry.released_by}</p>
                     </div>
                   )}
 
@@ -364,9 +362,9 @@ export default function QuarantinePage() {
                     {historyLoading && (
                       <div className="h-20 rounded-lg bg-of-surface-container animate-pulse" />
                     )}
-                    {!historyLoading && historyData?.history && historyData.history.length > 0 && (
+                    {!historyLoading && historyData?.quarantines && historyData.quarantines.length > 0 && (
                       <div className="space-y-2">
-                        {historyData.history.map((h, i) => (
+                        {historyData.quarantines.map((h, i) => (
                           <div
                             key={i}
                             className="flex items-center gap-4 text-xs py-2 border-b border-of-outline-variant/5 last:border-0"
@@ -391,13 +389,13 @@ export default function QuarantinePage() {
                               </span>
                             )}
                             <span className="text-of-on-surface-variant truncate">
-                              {h.triggered_by}
+                              {h.triggered_by_type}
                             </span>
                           </div>
                         ))}
                       </div>
                     )}
-                    {!historyLoading && (!historyData?.history || historyData.history.length === 0) && (
+                    {!historyLoading && (!historyData?.quarantines || historyData.quarantines.length === 0) && (
                       <p className="text-xs text-of-on-surface-variant py-2">
                         No additional history
                       </p>
@@ -461,7 +459,7 @@ export default function QuarantinePage() {
                   Actions
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {["rate_limit", "block", "alert"].map((action) => (
+                  {["suspend_key", "kill_session", "reset_context", "isolate"].map((action) => (
                     <label key={action} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"

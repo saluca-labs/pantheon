@@ -115,7 +115,7 @@ async def latency_endpoint(
     _key: AuthDep,
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
-) -> list:
+) -> dict:
     from tiresias.dashboard.analytics import get_latency_percentiles
     cfg = _get_proxy_settings()
     default_start, default_end = _default_window()
@@ -123,7 +123,8 @@ async def latency_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
-        return await get_latency_percentiles(session, cfg.tenant_id, t_start, t_end)
+        data = await get_latency_percentiles(session, cfg.tenant_id, t_start, t_end)
+    return {"providers": data}
 
 
 @router.get("/dash/v1/errors")
@@ -131,7 +132,7 @@ async def errors_endpoint(
     _key: AuthDep,
     start: str | None = Query(default=None),
     end: str | None = Query(default=None),
-) -> list:
+) -> dict:
     from tiresias.dashboard.analytics import get_error_rates
     cfg = _get_proxy_settings()
     default_start, default_end = _default_window()
@@ -139,7 +140,8 @@ async def errors_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
-        return await get_error_rates(session, cfg.tenant_id, t_start, t_end)
+        data = await get_error_rates(session, cfg.tenant_id, t_start, t_end)
+    return {"providers": data}
 
 
 @router.get("/dash/v1/sessions/top")
@@ -163,18 +165,47 @@ async def top_sessions_endpoint(
 async def session_replay_endpoint(
     session_id: str,
     _key: AuthDep,
-) -> list:
+) -> dict:
     from tiresias.dashboard.analytics import get_session_replay
     from tiresias.proxy.app import get_envelope
     cfg = _get_proxy_settings()
     envelope = get_envelope()
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
-        turns = await get_session_replay(session, cfg.tenant_id, session_id, envelope)
-    if not turns:
+        result = await get_session_replay(session, cfg.tenant_id, session_id, envelope)
+    if not result["turns"]:
         raise HTTPException(status_code=404, detail=f"Session {session_id!r} not found.")
-    return turns
+    return result
 
+
+
+
+@router.get('/dash/v1/traces')
+async def traces_endpoint(
+    _key: AuthDep,
+    start: str | None = Query(default=None),
+    end: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    provider: str | None = Query(default=None),
+    model: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    date: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+) -> dict:
+    from tiresias.dashboard.analytics import get_traces
+    cfg = _get_proxy_settings()
+    default_start, default_end = _default_window()
+    t_start = _parse_dt_param(start, default_start)
+    t_end = _parse_dt_param(end, default_end)
+    engine = await _get_proxy_engine()
+    async with AsyncSession(engine) as session:
+        return await get_traces(
+            session, cfg.tenant_id, t_start, t_end,
+            page=page, limit=limit,
+            provider=provider, model=model, status=status,
+            date=date, search=search,
+        )
 
 @router.get("/dash/v1/providers/health")
 async def provider_health_endpoint(_key: AuthDep) -> dict:

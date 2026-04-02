@@ -65,7 +65,7 @@ function MiniSparkline({ data, highlight }: { data: number[]; highlight: boolean
 
 export default function TopAgents() {
   const { data: agents, loading, error, refetch } = useWidgetData({
-    endpoint: "/v1/soulauth/admin/soulkeys",
+    endpoint: "/v1/soulauth/admin/keys",
     transform: transformSoulkeys,
   });
 

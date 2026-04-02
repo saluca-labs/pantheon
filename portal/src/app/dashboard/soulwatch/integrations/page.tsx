@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWidgetData } from "@/lib/useWidgetData";
 
-/** SoulWatch integrations -- SIEM/webhook destination management. Uses hardcoded mock data. */
+/** SoulWatch integrations -- SIEM/webhook destination management. */
 
 interface Destination {
   id: string;
@@ -31,25 +32,6 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   sentinel: <span className="text-xs font-bold text-cyan-400">Az</span>,
 };
 
-const INITIAL_DESTINATIONS: Destination[] = [
-  {
-    id: "1", name: "Production Splunk", type: "splunk", url: "https://splunk.internal:8088/services/collector",
-    status: "healthy", lastEvent: "2 sec ago", eventsForwarded: 128450,
-  },
-  {
-    id: "2", name: "Security Elastic", type: "elastic", url: "https://elastic.internal:9200/soulwatch-events",
-    status: "healthy", lastEvent: "5 sec ago", eventsForwarded: 98320,
-  },
-  {
-    id: "3", name: "SOC Syslog", type: "syslog", url: "syslog://10.0.1.50:514",
-    status: "degraded", lastEvent: "2 min ago", eventsForwarded: 45600,
-  },
-  {
-    id: "4", name: "PagerDuty Webhook", type: "webhook", url: "https://events.pagerduty.com/integration/...",
-    status: "healthy", lastEvent: "1 hour ago", eventsForwarded: 342,
-  },
-];
-
 const statusBadge: Record<string, string> = {
   healthy: "bg-green-500/15 text-green-400 border border-green-500/20",
   degraded: "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20",
@@ -63,7 +45,30 @@ const statusDot: Record<string, string> = {
 };
 
 export default function IntegrationsPage() {
-  const [destinations, setDestinations] = useState(INITIAL_DESTINATIONS);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformIntegrations = useCallback((raw: unknown): Destination[] => {
+    const items = Array.isArray(raw) ? raw : ((raw as any)?.items ?? (raw as any)?.integrations ?? []);
+    return items.map((d: any) => ({
+      id: d.id ?? "",
+      name: d.name ?? "",
+      type: (d.type ?? "webhook") as Destination["type"],
+      url: d.url ?? d.endpoint ?? "",
+      status: (d.status ?? "healthy") as Destination["status"],
+      lastEvent: d.last_event ?? d.lastEvent ?? "Never",
+      eventsForwarded: d.events_forwarded ?? d.eventsForwarded ?? 0,
+    }));
+  }, []);
+
+  const { data: fetchedDestinations, loading, error } = useWidgetData<Destination[]>({
+    endpoint: "/api/watch/v1/integrations",
+    transform: transformIntegrations,
+  });
+
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  useEffect(() => {
+    if (fetchedDestinations) setDestinations(fetchedDestinations);
+  }, [fetchedDestinations]);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<Destination["type"]>("splunk");
@@ -121,7 +126,22 @@ export default function IntegrationsPage() {
         </button>
       </div>
 
+      {/* Loading / Error */}
+      {loading && (
+        <div className="text-center py-12 text-foreground-muted text-sm">Loading integrations...</div>
+      )}
+      {error && (
+        <div className="text-center py-12 text-red-400 text-sm">Failed to load integrations: {error}</div>
+      )}
+      {!loading && !error && destinations.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-foreground-muted text-sm">No integrations configured</p>
+          <p className="text-foreground-subtle text-xs mt-1">Click &quot;+ Add Destination&quot; to connect a SIEM or webhook endpoint.</p>
+        </div>
+      )}
+
       {/* Destinations Grid */}
+      {!loading && !error && destinations.length > 0 && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {destinations.map((dest, i) => (
           <motion.div
@@ -191,6 +211,7 @@ export default function IntegrationsPage() {
           </motion.div>
         ))}
       </div>
+      )}
 
       {/* Dead Letter Queue */}
       <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">

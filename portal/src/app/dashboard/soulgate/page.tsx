@@ -67,20 +67,20 @@ const MOCK_BLOCK_REASONS = [
 ];
 
 const MOCK_TOP_BLOCKED_AGENTS = [
-  { agent: "test-agent-beta", soulkey: "sk_f2b9...", blocked: 312, reason: "rate_limit", lastBlocked: "2 min ago" },
-  { agent: "scraper-unknown", soulkey: "sk_0000...", blocked: 287, reason: "token_invalid", lastBlocked: "5 min ago" },
-  { agent: "data-pipeline", soulkey: "sk_5c8e...", blocked: 156, reason: "rate_limit", lastBlocked: "12 min ago" },
-  { agent: "external-bot", soulkey: "sk_none...", blocked: 134, reason: "injection", lastBlocked: "18 min ago" },
-  { agent: "compliance-checker", soulkey: "sk_8a1c...", blocked: 89, reason: "geo_block", lastBlocked: "31 min ago" },
+  { agent: "agent-008", soulkey: "sk_demo_008", blocked: 312, reason: "rate_limit", lastBlocked: "2 min ago" },
+  { agent: "agent-011", soulkey: "sk_demo_011", blocked: 287, reason: "token_invalid", lastBlocked: "5 min ago" },
+  { agent: "agent-002", soulkey: "sk_demo_002", blocked: 156, reason: "rate_limit", lastBlocked: "12 min ago" },
+  { agent: "agent-012", soulkey: "sk_demo_012", blocked: 134, reason: "injection", lastBlocked: "18 min ago" },
+  { agent: "agent-004", soulkey: "sk_demo_004", blocked: 89, reason: "geo_block", lastBlocked: "31 min ago" },
 ];
 
 const MOCK_UPSTREAMS: Upstream[] = [
-  { name: "analytics-api", status: "healthy", latency: 42, circuitBreaker: "closed" },
-  { name: "auth-service", status: "healthy", latency: 18, circuitBreaker: "closed" },
-  { name: "data-lake", status: "degraded", latency: 340, circuitBreaker: "closed" },
-  { name: "ml-inference", status: "healthy", latency: 128, circuitBreaker: "closed" },
-  { name: "notification-svc", status: "down", latency: 0, circuitBreaker: "open" },
-  { name: "billing-api", status: "healthy", latency: 65, circuitBreaker: "closed" },
+  { name: "upstream-alpha", status: "healthy", latency: 42, circuitBreaker: "closed" },
+  { name: "upstream-bravo", status: "healthy", latency: 18, circuitBreaker: "closed" },
+  { name: "upstream-charlie", status: "degraded", latency: 340, circuitBreaker: "closed" },
+  { name: "upstream-delta", status: "healthy", latency: 128, circuitBreaker: "closed" },
+  { name: "upstream-echo", status: "down", latency: 0, circuitBreaker: "open" },
+  { name: "upstream-foxtrot", status: "healthy", latency: 65, circuitBreaker: "closed" },
 ];
 
 /* ---- Helpers ---- */
@@ -104,6 +104,14 @@ const REASON_COLOR_MAP: Record<string, string> = {
   "geo_block": "bg-blue-500",
   "IP Blocked": "bg-orange-500",
   "ip_block": "bg-orange-500",
+  "Scope Violation": "bg-purple-500",
+  "scope_violation": "bg-purple-500",
+  "No Active Session": "bg-red-500",
+  "no_session": "bg-red-500",
+  "Key Suspended": "bg-orange-500",
+  "key_suspended": "bg-orange-500",
+  "Policy Denied": "bg-blue-500",
+  "policy_denied": "bg-blue-500",
 };
 
 const reasonBadge: Record<string, string> = {
@@ -112,6 +120,11 @@ const reasonBadge: Record<string, string> = {
   injection: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
   geo_block: "bg-blue-500/15 text-blue-400 border border-blue-500/20",
   ip_block: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
+  scope_violation: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
+  no_session: "bg-red-500/15 text-red-400 border border-red-500/20",
+  key_suspended: "bg-orange-500/15 text-orange-400 border border-orange-500/20",
+  policy_denied: "bg-blue-500/15 text-blue-400 border border-blue-500/20",
+  unknown: "bg-gray-500/15 text-gray-400 border border-gray-500/20",
 };
 
 const reasonLabel: Record<string, string> = {
@@ -120,6 +133,11 @@ const reasonLabel: Record<string, string> = {
   injection: "Injection",
   geo_block: "Geo Block",
   ip_block: "IP Block",
+  scope_violation: "Scope Violation",
+  no_session: "No Session",
+  key_suspended: "Key Suspended",
+  policy_denied: "Policy Denied",
+  unknown: "Unknown",
 };
 
 const statusColor: Record<string, string> = {
@@ -165,6 +183,8 @@ function AnimatedCount({ target, className, suffix = "" }: { target: number; cla
 
 export default function SoulGateDashboardPage() {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   /* ---- Live data fetch ---- */
   const { data: dashData, loading } = useWidgetData<SoulGateDashboard>({
@@ -310,7 +330,7 @@ export default function SoulGateDashboardPage() {
         <div className="lg:col-span-2 bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Request Volume (Last 24 Hours)</h3>
           <div className="flex items-end gap-1 h-48">
-            {hourlyRequests.map((h, i) => {
+            {!mounted ? <div className="w-full h-full animate-pulse bg-white/5 rounded" /> : hourlyRequests.map((h, i) => {
               const height = maxRequests > 0 ? (h.total / maxRequests) * 100 : 0;
               const blockedHeight = maxRequests > 0 ? (h.blocked / maxRequests) * 100 : 0;
               const isHovered = hoveredBar === i;
@@ -503,9 +523,9 @@ export default function SoulGateDashboardPage() {
         <h3 className="text-sm font-semibold text-foreground mb-2">Quick Navigation</h3>
         {[
           { label: "Upstreams", href: "/dashboard/soulgate/upstreams", count: `${upstreams.length} registered`, color: "text-of-primary" },
-          { label: "Rate Limits", href: "/dashboard/soulgate/rate-limits", count: "4 policies", color: "text-amber-400" },
-          { label: "Access Rules", href: "/dashboard/soulgate/access", count: "12 rules", color: "text-blue-400" },
-          { label: "API Keys", href: "/dashboard/soulgate/keys", count: "8 active", color: "text-of-primary" },
+          { label: "Rate Limits", href: "/dashboard/soulgate/rate-limits", count: `${activeUpstreams} active`, color: "text-amber-400" },
+          { label: "Access Rules", href: "/dashboard/soulgate/access", count: `${blockReasons.length} rule types`, color: "text-blue-400" },
+          { label: "API Keys", href: "/dashboard/settings?tab=api-keys", count: `${activeUpstreams} active`, color: "text-of-primary" },
           { label: "Audit Log", href: "/dashboard/soulgate/audit", count: `${blocked24h.toLocaleString()} blocked`, color: "text-red-400" },
         ].map((item, i) => (
           <motion.div
