@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import SoulTenant
+from src.tier import DEFAULT_TIER
 
 logger = structlog.get_logger(__name__)
 
@@ -129,7 +130,7 @@ async def create_tenant(
     db: AsyncSession,
     name: str,
     slug: str,
-    tier: str = "free",
+    tier: str = DEFAULT_TIER,
     metadata: Optional[dict] = None,
 ) -> SoulTenant:
     """Create a new tenant."""
@@ -144,6 +145,30 @@ async def create_tenant(
     await db.flush()
     await db.refresh(tenant)
     return tenant
+
+
+async def provision_tenant_encryption(
+    db: AsyncSession,
+    tenant_id: str,
+    tier: str = DEFAULT_TIER,
+) -> None:
+    """
+    Eagerly create tiresias_licenses row and generate wrapped DEK for a new tenant.
+    Called after create_tenant() to ensure encryption is ready before first proxy request.
+    """
+    try:
+        from src.tiresias.encryption.providers import resolve_kek_provider
+        from src.tiresias.encryption.envelope import EnvelopeEncryption
+        from src.tiresias.config import TiresiasSettings
+
+        t_settings = TiresiasSettings()
+        provider = resolve_kek_provider(t_settings)
+        envelope = EnvelopeEncryption(provider)
+        await envelope.create_dek_for_tenant(tenant_id, db)
+        logger.info("tenant.dek_provisioned", tenant_id=tenant_id)
+    except Exception as e:
+        # Non-fatal: DEK will be created lazily on first proxy request
+        logger.warning("tenant.dek_provision_failed", tenant_id=tenant_id, error=str(e))
 
 
 async def update_tenant_status(

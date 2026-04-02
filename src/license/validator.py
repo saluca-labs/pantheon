@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from src.tier import VALID_TIERS
+
 logger = structlog.get_logger(__name__)
 
 
@@ -141,9 +143,8 @@ def _validate_claims_structure(claims: dict) -> None:
     if missing:
         raise ValueError(f"Missing required license claims: {', '.join(missing)}")
 
-    valid_tiers = {"community", "starter", "pro", "enterprise", "mssp", "saas"}
-    if claims["tier"] not in valid_tiers:
-        raise ValueError(f"Invalid tier '{claims['tier']}', must be one of {valid_tiers}")
+    if claims["tier"] not in VALID_TIERS:
+        raise ValueError(f"Invalid tier '{claims['tier']}', must be one of {VALID_TIERS}")
 
     if not isinstance(claims["exp"], (int, float)):
         raise ValueError("Invalid 'exp' claim: must be a numeric timestamp")

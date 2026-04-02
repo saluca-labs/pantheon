@@ -64,6 +64,13 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/aletheia/tool-activity": "Tool Activity",
   "/dashboard/aletheia/sanitizer": "Sanitizer",
   "/dashboard/aletheia/policies": "Policy Editor",
+  // Partner routes
+  "/dashboard/partner": "Partner Dashboard",
+  "/dashboard/partner/connect": "Stripe Connect",
+  "/dashboard/partner/promos": "Promo Codes",
+  // Investigation & Contracts routes
+  "/dashboard/investigation": "Investigation",
+  "/dashboard/contracts": "Contracts",
   // MSSP routes (Phase 13)
   "/dashboard/mssp": "MSSP Overview",
   "/dashboard/mssp/detection": "Cross-Tenant Detection",

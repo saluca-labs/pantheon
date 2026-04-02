@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tiresias.encryption.providers.base import KEKProvider
-from tiresias.encryption.providers.local import LocalKEKProvider
+try:
+    from tiresias.encryption.providers.base import KEKProvider
+    from tiresias.encryption.providers.local import LocalKEKProvider
+except ModuleNotFoundError:
+    from src.tiresias.encryption.providers.base import KEKProvider
+    from src.tiresias.encryption.providers.local import LocalKEKProvider
 
 if TYPE_CHECKING:
     from tiresias.config import TiresiasSettings

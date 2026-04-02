@@ -140,6 +140,10 @@ async def verify_and_activate_trial(
         },
     )
 
+    # Eagerly provision DEK for envelope encryption
+    from src.middleware.tenant import provision_tenant_encryption
+    await provision_tenant_encryption(db, str(tenant.id), tier=tenant.tier)
+
     # Issue a soulkey for the trial admin persona
     raw_key, soulkey = await issue_soulkey(
         db=db,
@@ -251,6 +255,10 @@ async def activate_trial(
             "use_case": trial.use_case,
         },
     )
+
+    # Eagerly provision DEK for envelope encryption
+    from src.middleware.tenant import provision_tenant_encryption
+    await provision_tenant_encryption(db, str(tenant.id), tier=tenant.tier)
 
     # Issue a soulkey for the trial admin persona
     raw_key, soulkey = await issue_soulkey(

@@ -8,7 +8,6 @@ keys/
 venv/
 __pycache__/
 *.pyc
-tests/
 monitoring/
 portal/
 sales/

@@ -20,31 +20,69 @@ import structlog
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import SoulTenant
+from src.database.models import SoulTenant, PolicyCache, AuditLog
 from src.billing.grace import handle_payment_failed, resolve_payment
+from src.tier import VALID_TIERS, DEFAULT_TIER
+from src.middleware.tenant import create_tenant, provision_tenant_encryption
+from src.auth.soulkey import issue_soulkey
 
 logger = structlog.get_logger(__name__)
 
-# Stripe plan/product -> Tiresias tier mapping
-# Extend this dict when new Stripe products are created
-STRIPE_TIER_MAP: dict[str, str] = {
-    "starter": "starter",
-    "pro": "pro",
-    "enterprise": "enterprise",
-    "mssp": "mssp",
-    "saas": "saas",
-    # Stripe price IDs or product names can be mapped here
-    "price_1TDMSlBkXMYmrc2L29W09pQl": "starter",
-    "price_1TDMSlBkXMYmrc2LuuaUN5Cp": "starter",
-    "price_starter": "starter",
-    "price_1TDMT2BkXMYmrc2Lhf1whQpi": "pro",
-    "price_1TDMT2BkXMYmrc2LnBUoJEww": "pro",
-    "price_pro": "pro",
-    "price_1TDjH4BkXMYmrc2LBA1vL1qs": "enterprise",
-    "price_1TDjH4BkXMYmrc2LeWPVTZT0": "enterprise",
-    "price_mssp": "mssp",
-    "price_saas": "saas",
-}
+# Stripe Price ID -> Tiresias tier mapping.
+# Price IDs are configured via env vars (set in k8s/compose) or fallback to hardcoded defaults.
+# Separate Stripe products per tier enables per-tier coupon targeting.
+import os as _os
+
+def _build_tier_map() -> dict[str, str]:
+    """Build tier map from env vars + hardcoded defaults."""
+    mapping: dict[str, str] = {
+        # Tier name aliases (for metadata.tiresias_tier)
+        "community": "community",
+        "starter": "starter",
+        "pro": "pro",
+        "enterprise": "enterprise",
+        "mssp": "mssp",
+        "saas": "saas",
+    }
+
+    # Env-var-configured price IDs (set in k8s deployment or .env)
+    _PRICE_ENV_MAP = {
+        "STRIPE_PRICE_STARTER_MONTHLY": "starter",
+        "STRIPE_PRICE_STARTER_ANNUAL": "starter",
+        "STRIPE_PRICE_PRO_MONTHLY": "pro",
+        "STRIPE_PRICE_PRO_ANNUAL": "pro",
+        "STRIPE_PRICE_ENTERPRISE_MONTHLY": "enterprise",
+        "STRIPE_PRICE_ENTERPRISE_ANNUAL": "enterprise",
+        "STRIPE_PRICE_MSSP_MONTHLY": "mssp",
+        "STRIPE_PRICE_MSSP_ANNUAL": "mssp",
+        "STRIPE_PRICE_SAAS_MONTHLY": "saas",
+        "STRIPE_PRICE_SAAS_ANNUAL": "saas",
+    }
+
+    for env_key, tier in _PRICE_ENV_MAP.items():
+        price_id = _os.environ.get(env_key, "")
+        if price_id:
+            mapping[price_id] = tier
+            mapping[price_id.lower()] = tier
+
+    # Hardcoded fallback price IDs (production Stripe account)
+    _HARDCODED = {
+        "price_1TDMSlBkXMYmrc2L29W09pQl": "starter",
+        "price_1TDMSlBkXMYmrc2LuuaUN5Cp": "starter",
+        "price_1TDMT2BkXMYmrc2Lhf1whQpi": "pro",
+        "price_1TDMT2BkXMYmrc2LnBUoJEww": "pro",
+        "price_1TDjH4BkXMYmrc2LBA1vL1qs": "enterprise",
+        "price_1TDjH4BkXMYmrc2LeWPVTZT0": "enterprise",
+    }
+
+    for price_id, tier in _HARDCODED.items():
+        if price_id not in mapping:
+            mapping[price_id] = tier
+
+    return mapping
+
+
+STRIPE_TIER_MAP: dict[str, str] = _build_tier_map()
 
 
 def verify_stripe_signature(raw_body: bytes, signature_header: str) -> bool:
@@ -197,16 +235,25 @@ async def handle_stripe_event(
             pass
 
     if tenant is None and customer_id:
-        # Look up by stripe_customer_id stored in metadata
-        result = await db.execute(select(SoulTenant))
-        all_tenants = result.scalars().all()
-        for t in all_tenants:
-            meta = t.metadata_ or {}
-            if meta.get("stripe_customer_id") == customer_id:
-                tenant = t
-                break
+        # Indexed lookup by stripe_customer_id column
+        result = await db.execute(
+            select(SoulTenant).where(SoulTenant.stripe_customer_id == customer_id)
+        )
+        tenant = result.scalar_one_or_none()
 
-    if tenant is None:
+        # Fallback: check metadata_ JSONB for pre-migration tenants
+        if tenant is None:
+            from sqlalchemy import text
+            result = await db.execute(
+                text("SELECT id FROM _soul_tenants WHERE metadata_->>'stripe_customer_id' = :cid LIMIT 1"),
+                {"cid": customer_id},
+            )
+            row = result.first()
+            if row:
+                result = await db.execute(select(SoulTenant).where(SoulTenant.id == row[0]))
+                tenant = result.scalar_one_or_none()
+
+    if tenant is None and event_type != "customer.subscription.created":
         logger.warning(
             "saas.billing.tenant_not_found",
             event_type=event_type,
@@ -215,22 +262,170 @@ async def handle_stripe_event(
         )
         return {"action": "tenant_not_found", "customer_id": customer_id}
 
-    if event_type in ("customer.subscription.updated", "customer.subscription.created"):
+    if event_type == "customer.subscription.created":
+        new_tier = _resolve_tier_from_stripe(event_data) or DEFAULT_TIER
+
+        if tenant is None and customer_id:
+            # Auto-provision: new subscription with no existing tenant
+            sub_meta = subscription.get("metadata", {})
+            company_name = sub_meta.get("company_name", f"Tenant {customer_id[:8]}")
+            slug = sub_meta.get("slug") or f"t-{customer_id[-8:].lower()}"
+
+            try:
+                tenant = await create_tenant(db, name=company_name, slug=slug, tier=new_tier)
+
+                # Set stripe_customer_id on the new tenant
+                tenant.stripe_customer_id = customer_id
+                meta = tenant.metadata_ or {}
+                meta["stripe_customer_id"] = customer_id
+                meta["stripe_subscription_id"] = subscription.get("id")
+                tenant.metadata_ = meta
+                await db.flush()
+
+                # Provision DEK for encryption
+                await provision_tenant_encryption(db, str(tenant.id), tier=new_tier)
+
+                # Issue admin soulkey
+                raw_key, soulkey = await issue_soulkey(
+                    db=db,
+                    tenant_id=tenant.id,
+                    persona_id="admin",
+                    tenant_short=slug[:8],
+                    label=f"Auto-provisioned admin key for {company_name}",
+                    metadata={"provisioned_by": "stripe_webhook", "tier": new_tier},
+                )
+
+                # Default policy
+                policy = PolicyCache(
+                    tenant_id=tenant.id,
+                    persona_id="admin",
+                    policy_version="1.0",
+                    resolved_policy={
+                        "version": "1.0",
+                        "persona_id": "admin",
+                        "tenant_id": str(tenant.id),
+                        "rules": [{"resource": "*", "action": "*", "scope": "*", "effect": "allow"}],
+                        "created_by": "stripe_auto_provision",
+                    },
+                )
+                db.add(policy)
+
+                # Audit log
+                audit = AuditLog(
+                    tenant_id=tenant.id,
+                    event_type="saas.auto_provision",
+                    soulkey_id=soulkey.id,
+                    persona_id="admin",
+                    resource="tenant",
+                    action="provision",
+                    scope="admin",
+                    decision="allow",
+                    reason="Auto-provisioned via Stripe subscription.created webhook",
+                    context={
+                        "stripe_customer_id": customer_id,
+                        "tier": new_tier,
+                        "source": "stripe_webhook",
+                    },
+                )
+                db.add(audit)
+                await db.commit()
+
+                logger.info(
+                    "saas.billing.auto_provisioned",
+                    tenant_id=str(tenant.id),
+                    slug=slug,
+                    tier=new_tier,
+                    customer_id=customer_id,
+                )
+                return {
+                    "action": "auto_provisioned",
+                    "tenant_id": str(tenant.id),
+                    "tier": new_tier,
+                    "raw_key_issued": True,
+                }
+
+            except Exception as e:
+                logger.error("saas.billing.auto_provision_failed", error=str(e), customer_id=customer_id)
+                return {"action": "auto_provision_failed", "error": str(e)}
+
+        elif tenant is not None:
+            # Existing tenant, subscription.created = update tier
+            old_tier = tenant.tier
+            now = datetime.now(timezone.utc)
+            update_values = {"tier": new_tier, "updated_at": now}
+            if customer_id and not tenant.stripe_customer_id:
+                update_values["stripe_customer_id"] = customer_id
+            await db.execute(
+                update(SoulTenant).where(SoulTenant.id == tenant.id).values(**update_values)
+            )
+            # Store subscription ID in metadata
+            meta = dict(tenant.metadata_ or {})
+            meta["stripe_subscription_id"] = subscription.get("id")
+            if customer_id:
+                meta["stripe_customer_id"] = customer_id
+            await db.execute(
+                update(SoulTenant).where(SoulTenant.id == tenant.id).values(metadata_=meta)
+            )
+
+            # Emit tier_changed audit event with legitimate source tag
+            try:
+                audit = AuditLog(
+                    tenant_id=tenant.id,
+                    event_type="tier_changed",
+                    resource="tenant",
+                    action="tier_update",
+                    scope="admin",
+                    decision="allow",
+                    reason=f"Tier changed from {old_tier} to {new_tier} via Stripe subscription",
+                    context={"source": "stripe_webhook", "old_tier": old_tier, "new_tier": new_tier},
+                )
+                db.add(audit)
+            except Exception:
+                pass
+
+            logger.info(
+                "saas.billing.tier_updated",
+                tenant_id=str(tenant.id),
+                old_tier=old_tier,
+                new_tier=new_tier,
+            )
+            return {"action": "tier_updated", "tenant_id": str(tenant.id), "old_tier": old_tier, "new_tier": new_tier}
+
+        return {"action": "tenant_not_found", "customer_id": customer_id}
+
+    elif event_type == "customer.subscription.updated":
         new_tier = _resolve_tier_from_stripe(event_data)
         if not new_tier:
-            logger.warning(
-                "saas.billing.tier_unresolvable",
-                event_type=event_type,
-                tenant_id=str(tenant.id),
-            )
-            return {"action": "tier_unresolvable", "tenant_id": str(tenant.id)}
+            logger.warning("saas.billing.tier_unresolvable", tenant_id=str(tenant.id) if tenant else None)
+            return {"action": "tier_unresolvable", "tenant_id": str(tenant.id) if tenant else None}
 
         old_tier = tenant.tier
+        now = datetime.now(timezone.utc)
+
+        update_values = {"tier": new_tier, "updated_at": now}
+        if customer_id and not tenant.stripe_customer_id:
+            update_values["stripe_customer_id"] = customer_id
         await db.execute(
-            update(SoulTenant)
-            .where(SoulTenant.id == tenant.id)
-            .values(tier=new_tier, updated_at=datetime.now(timezone.utc))
+            update(SoulTenant).where(SoulTenant.id == tenant.id).values(**update_values)
         )
+
+        # Emit tier_changed audit event with legitimate source tag
+        if old_tier != new_tier:
+            try:
+                audit = AuditLog(
+                    tenant_id=tenant.id,
+                    event_type="tier_changed",
+                    resource="tenant",
+                    action="tier_update",
+                    scope="admin",
+                    decision="allow",
+                    reason=f"Tier changed from {old_tier} to {new_tier} via Stripe subscription update",
+                    context={"source": "stripe_webhook", "old_tier": old_tier, "new_tier": new_tier},
+                )
+                db.add(audit)
+            except Exception:
+                pass
+
         logger.info(
             "saas.billing.tier_updated",
             tenant_id=str(tenant.id),
@@ -238,20 +433,33 @@ async def handle_stripe_event(
             new_tier=new_tier,
             event_type=event_type,
         )
-        return {
-            "action": "tier_updated",
-            "tenant_id": str(tenant.id),
-            "old_tier": old_tier,
-            "new_tier": new_tier,
-        }
+        return {"action": "tier_updated", "tenant_id": str(tenant.id), "old_tier": old_tier, "new_tier": new_tier}
 
     elif event_type == "customer.subscription.deleted":
         old_tier = tenant.tier
+        now = datetime.now(timezone.utc)
         await db.execute(
             update(SoulTenant)
             .where(SoulTenant.id == tenant.id)
-            .values(tier="community", updated_at=datetime.now(timezone.utc))
+            .values(tier=DEFAULT_TIER, updated_at=now)
         )
+
+        # Emit tier_changed audit event
+        try:
+            audit = AuditLog(
+                tenant_id=tenant.id,
+                event_type="tier_changed",
+                resource="tenant",
+                action="tier_update",
+                scope="admin",
+                decision="allow",
+                reason=f"Subscription cancelled. Tier downgraded from {old_tier} to {DEFAULT_TIER}",
+                context={"source": "stripe_webhook", "old_tier": old_tier, "new_tier": DEFAULT_TIER},
+            )
+            db.add(audit)
+        except Exception:
+            pass
+
         logger.info(
             "saas.billing.subscription_cancelled",
             tenant_id=str(tenant.id),
@@ -261,7 +469,7 @@ async def handle_stripe_event(
             "action": "subscription_cancelled",
             "tenant_id": str(tenant.id),
             "old_tier": old_tier,
-            "new_tier": "community",
+            "new_tier": DEFAULT_TIER,
         }
 
     elif event_type == "invoice.paid":
@@ -328,6 +536,19 @@ async def handle_stripe_event(
         # Trigger grace period -- delegate to billing.grace module (BILL-04)
         if tenant:
             await handle_payment_failed(db, tenant.id)
+
+            # Check if this is a repeated failure — escalate to suspension after 3 attempts
+            if attempt_count >= 3:
+                try:
+                    from src.tenant.offboard import offboard_tenant
+                    await offboard_tenant(db, tenant.id, offboarded_by="payment_cascade", purge_dek=False)
+                    logger.warning(
+                        "saas.billing.tenant_suspended_payment_failure",
+                        tenant_id=str(tenant.id),
+                        attempt_count=attempt_count,
+                    )
+                except Exception as e:
+                    logger.error("saas.billing.suspension_cascade_failed", error=str(e))
 
         return {
             "action": "payment_failed",

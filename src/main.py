@@ -34,6 +34,12 @@ from src.auth.local_bootstrap import bootstrap_local_admin
 from src.auth.ldap_router import router as ldap_auth_router
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
+from src.middleware.usage_limit import UsageLimitMiddleware
+from src.billing.router import router as billing_router
+from src.investigation.router import router as investigation_router
+from src.saas.router import router as saas_router
+from src.partner.router import router as partner_router
+from src.contracts.router import router as contracts_router
 
 settings = get_settings()
 
@@ -77,11 +83,44 @@ async def lifespan(app: FastAPI):
 
     # --- License JWT Validation (Track B1) ---
     import os
-    from src.license.validator import LicenseValidator, LicenseStatus
+    import hashlib
+    from src.license.validator import LicenseValidator, LicenseStatus, LicenseToken
+    from src.license.issuer import get_active_license
 
     license_key = os.environ.get("TIRESIAS_LICENSE_KEY", "") or settings.license_key
     validator = LicenseValidator(grace_hours=settings.license_grace_hours)
+
+    # Primary: validate from env var / settings
     license_token = validator.validate_with_grace(license_key)
+
+    # Fallback: if no env var license, check DB for an active install-level license
+    if license_token.status == LicenseStatus.MISSING:
+        try:
+            async with async_session_factory() as license_db:
+                db_license = await get_active_license(license_db, tenant_id=None)
+                if db_license and db_license.jwt_claims:
+                    import json, time as _time
+                    # Reconstruct and validate the stored JWT claims
+                    stored_claims = db_license.jwt_claims
+                    if stored_claims.get("exp", 0) > _time.time():
+                        license_token = LicenseToken(
+                            status=LicenseStatus.VALID,
+                            tier=stored_claims.get("tier", "community"),
+                            features=stored_claims.get("features", []),
+                            is_nfr=stored_claims.get("is_nfr", False),
+                            partner_id=stored_claims.get("partner_id"),
+                            tenant_id=stored_claims.get("sub"),
+                            issued_at=stored_claims.get("iat"),
+                            expires_at=stored_claims.get("exp"),
+                            raw_claims=stored_claims,
+                        )
+                        logger.info(
+                            "soulauth.license_loaded_from_db",
+                            tier=license_token.tier,
+                            license_id=str(db_license.id),
+                        )
+        except Exception as e:
+            logger.warning("soulauth.license_db_fallback_failed", error=str(e))
 
     if license_token.status == LicenseStatus.INVALID and settings.license_required:
         logger.critical(
@@ -93,7 +132,7 @@ async def lifespan(app: FastAPI):
     if license_token.status == LicenseStatus.MISSING and settings.license_required:
         logger.critical(
             "soulauth.license_missing",
-            message="No license key provided. Set TIRESIAS_LICENSE_KEY or set SOULAUTH_LICENSE_REQUIRED=false.",
+            message="No license key provided. Set TIRESIAS_LICENSE_KEY, issue via admin API, or set SOULAUTH_LICENSE_REQUIRED=false.",
         )
         raise SystemExit(2)
 
@@ -116,6 +155,20 @@ async def lifespan(app: FastAPI):
 
     # Store license state for middleware access
     app.state.license = license_token
+
+    # Store startup tier fingerprint for tamper detection (T2.3)
+    app.state.license_tier_at_startup = license_token.tier if license_token.is_valid else None
+    app.state.license_env_hash = hashlib.sha256(
+        (os.environ.get("TIRESIAS_LICENSE_KEY", "") + os.environ.get("TIRESIAS_TIER", "")).encode()
+    ).hexdigest() if license_token.is_valid else None
+
+    # Start license integrity watchdog (T2.3)
+    from src.license.watchdog import start_watchdog, stop_watchdog
+    start_watchdog(app, interval_seconds=300)
+
+    # Start config integrity watchdog (T5.1)
+    from src.security.config_watchdog import start_config_watchdog, stop_config_watchdog
+    start_config_watchdog(app_root="/app", interval_seconds=60)
 
     # Start background gauge updater
     try:
@@ -244,6 +297,8 @@ async def lifespan(app: FastAPI):
             logger.warning("soulauth.siem_forwarder_stop_failed", error=str(e))
 
     stop_gauge_updater()
+    stop_watchdog()
+    stop_config_watchdog()
 
     if settings.policy_repo_path:
         try:
@@ -342,6 +397,9 @@ app.add_middleware(ModelRoutingMiddleware)
 
 app.add_middleware(FeatureGateMiddleware)
 
+# Usage limit middleware — enforces tier request quotas (429 at 110%+)
+app.add_middleware(UsageLimitMiddleware)
+
 # PEP middleware — validates capability tokens on protected endpoints
 app.add_middleware(SoulAuthPEPMiddleware)
 
@@ -364,6 +422,11 @@ app.include_router(detection_router)
 app.include_router(oidc_router)
 app.include_router(local_auth_router)
 app.include_router(ldap_auth_router)
+app.include_router(billing_router)
+app.include_router(investigation_router)
+app.include_router(saas_router)
+app.include_router(partner_router)
+app.include_router(contracts_router)
 
 
 @app.get(

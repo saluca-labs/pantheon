@@ -44,7 +44,7 @@ class TestTenantCreation:
             name="Startup XYZ",
             slug="startup-xyz",
         )
-        assert tenant.tier == "free"
+        assert tenant.tier == "community"
         assert tenant.status == "active"
 
     @pytest.mark.asyncio

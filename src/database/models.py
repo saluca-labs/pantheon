@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import (
-    String, Text, Boolean, DateTime, Float, Index, ForeignKey,
+    String, Text, Boolean, DateTime, Float, Integer, Index, ForeignKey,
     CheckConstraint, UniqueConstraint, Uuid, JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -32,8 +32,13 @@ class SoulTenant(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(63), nullable=False, unique=True)
-    tier: Mapped[str] = mapped_column(String(50), nullable=False, default="free")
+    tier: Mapped[str] = mapped_column(String(50), nullable=False, default="community")
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    parent_tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="SET NULL"), nullable=True
+    )
+    hierarchy_depth: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
@@ -314,4 +319,65 @@ class SoulOIDCSession(Base):
         UniqueConstraint("session_token", name="uq_soul_oidc_sessions_token"),
         Index("idx_soul_oidc_sessions_token", "session_token"),
         Index("idx_soul_oidc_sessions_user_expires", "user_id", "expires_at"),
+    )
+
+
+class SoulLicense(Base):
+    """_soul_licenses - Persistent license records for tier enforcement."""
+    __tablename__ = "_soul_licenses"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=True
+    )
+    license_key_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    tier: Mapped[str] = mapped_column(String(50), nullable=False)
+    features: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    is_nfr: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    partner_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    grace_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
+    jwt_claims: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    issued_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_soul_licenses_tenant", "tenant_id"),
+        Index("idx_soul_licenses_status", "status"),
+    )
+
+
+class SoulPartner(Base):
+    """_soul_partners - Channel partner/reseller records."""
+    __tablename__ = "_soul_partners"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    stripe_connect_account_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True)
+    stripe_connect_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
+    commission_rate: Mapped[float] = mapped_column(Float, default=0.40, nullable=False)
+    referral_code: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    parent_partner_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_partners.id", ondelete="SET NULL"), nullable=True
+    )
+    override_commission_rate: Mapped[float] = mapped_column(Float, default=0.10, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
+    contract_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    approved_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_soul_partners_referral_code", "referral_code"),
+        Index("idx_soul_partners_status", "status"),
+        Index("idx_soul_partners_parent", "parent_partner_id"),
     )

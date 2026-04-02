@@ -115,6 +115,18 @@ async def process_request(
             BLOCKS_TOTAL.labels(reason="auth_failed").inc()
             return _block_response(401, auth_result.error or "Authentication required")
 
+        # 1b. Validate tenant tier for this path
+        if auth_result.tenant_id:
+            from soulGate.src.auth.tier_validator import validate_tier_for_path
+            tier_ok, tier_reason = await validate_tier_for_path(
+                auth_result.tenant_id, path, db
+            )
+            if not tier_ok:
+                blocked = True
+                block_reason = f"tier_denied: {tier_reason}"
+                BLOCKS_TOTAL.labels(reason="tier_denied").inc()
+                return _block_response(402, tier_reason or "Feature not available for your tier")
+
         # 2. Check IP access rules
         ip_allowed, ip_reason = await check_ip_access(
             source_ip, auth_result.tenant_id, db

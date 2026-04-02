@@ -145,6 +145,10 @@ async def saas_provision(
         db.add(tenant)
         await db.flush()  # get tenant.id without committing
 
+        # 1b. Eagerly provision DEK for envelope encryption
+        from src.middleware.tenant import provision_tenant_encryption
+        await provision_tenant_encryption(db, str(tenant.id), tier=request.tier)
+
         # 2. Issue admin soulkey (uses db.flush() internally — stays in same txn)
         raw_key, soulkey = await issue_soulkey(
             db=db,

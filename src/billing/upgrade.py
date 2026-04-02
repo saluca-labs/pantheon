@@ -20,7 +20,8 @@ logger = structlog.get_logger(__name__)
 
 STRIPE_API_BASE = "https://api.stripe.com/v1"
 
-VALID_TIERS = {"starter", "pro", "enterprise", "mssp", "saas"}
+from src.tier import VALID_TIERS as ALL_TIERS
+UPGRADE_TIERS = ALL_TIERS - {"community"}
 
 
 def _stripe_key() -> str:
@@ -42,8 +43,8 @@ async def upgrade_tenant_tier(
     2. Updates tenant.tier in DB
     Returns dict with old_tier, new_tier, stripe_subscription_id.
     """
-    if new_tier not in VALID_TIERS:
-        raise ValueError(f"Invalid tier: {new_tier}. Must be one of {VALID_TIERS}")
+    if new_tier not in UPGRADE_TIERS:
+        raise ValueError(f"Invalid tier: {new_tier}. Must be one of {UPGRADE_TIERS}")
 
     result = await db.execute(select(SoulTenant).where(SoulTenant.id == tenant_id))
     tenant = result.scalar_one_or_none()

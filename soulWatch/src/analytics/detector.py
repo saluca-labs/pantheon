@@ -34,6 +34,18 @@ class AnomalyType(str, Enum):
     IMPOSSIBLE_TRAVEL = "impossible_travel"
     CREDENTIAL_STUFFING = "credential_stuffing"
 
+    # Phase 7 — advanced threat detection
+    SESSION_HIJACK = "session_hijack"
+    MODEL_ABUSE = "model_abuse"
+    TOKEN_HARVESTING = "token_harvesting"
+    DATA_POISONING = "data_poisoning"
+    LATERAL_MOVEMENT = "lateral_movement"
+    PERSISTENCE = "persistence"
+    EVASION = "evasion"
+    SUPPLY_CHAIN = "supply_chain"
+    RESOURCE_ABUSE = "resource_abuse"
+    CREDENTIAL_ROTATION = "credential_rotation"
+
 
 # Severity levels for anomalies
 SEVERITY_LOW = "low"
@@ -100,6 +112,16 @@ class AnomalyDetector:
         AnomalyType.BURST: 2.0,
         AnomalyType.IMPOSSIBLE_TRAVEL: 1,
         AnomalyType.CREDENTIAL_STUFFING: 5,
+        AnomalyType.SESSION_HIJACK: 1,
+        AnomalyType.MODEL_ABUSE: 1,
+        AnomalyType.TOKEN_HARVESTING: 3.0,
+        AnomalyType.DATA_POISONING: 1,
+        AnomalyType.LATERAL_MOVEMENT: 1,
+        AnomalyType.PERSISTENCE: 1,
+        AnomalyType.EVASION: 2.0,
+        AnomalyType.SUPPLY_CHAIN: 1,
+        AnomalyType.RESOURCE_ABUSE: 5.0,
+        AnomalyType.CREDENTIAL_ROTATION: 3,
     }
 
     def __init__(
@@ -317,6 +339,14 @@ class AnomalyDetector:
                             source_event_id=event_id,
                         ))
 
+        # Phase 7 advanced detectors
+        anomalies.extend(await self._check_session_hijack(soulkey_id, event, baseline, tenant_id, event_id))
+        anomalies.extend(await self._check_model_abuse(soulkey_id, event, baseline, tenant_id, event_id))
+        anomalies.extend(await self._check_token_harvesting(soulkey_id, event, baseline, tenant_id, event_id))
+        anomalies.extend(await self._check_lateral_movement(soulkey_id, event, baseline, tenant_id, event_id))
+        anomalies.extend(await self._check_resource_abuse(soulkey_id, event, baseline, tenant_id, event_id))
+        anomalies.extend(await self._check_credential_rotation(soulkey_id, event, baseline, tenant_id, event_id))
+
         # Persist all anomalies to database
         if anomalies:
             await self._persist_anomalies(anomalies, db)
@@ -425,6 +455,8 @@ class AnomalyDetector:
             "scope": event.get("scope"),
             "decision": event.get("decision"),
             "node": (event.get("context") or {}).get("node") if isinstance(event.get("context"), dict) else None,
+            "context": event.get("context") if isinstance(event.get("context"), dict) else {},
+            "tenant_id": event.get("tenant_id"),
         }
         self._event_windows[soulkey_id].append((now, event_data))
 
@@ -432,3 +464,161 @@ class AnomalyDetector:
         cutoff = now - timedelta(seconds=self._window_size)
         while self._event_windows[soulkey_id] and self._event_windows[soulkey_id][0][0] < cutoff:
             self._event_windows[soulkey_id].popleft()
+
+    # ── Phase 7 advanced threat detectors ──────────────────────────────
+
+    async def _check_session_hijack(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """SESSION_HIJACK: session used from a different node/IP than established."""
+        anomalies = []
+        session_id = event.get("context", {}).get("session_id") if isinstance(event.get("context"), dict) else None
+        source_node = event.get("context", {}).get("node_id") if isinstance(event.get("context"), dict) else None
+
+        if not session_id or not source_node:
+            return anomalies
+
+        window = self._event_windows.get(soulkey_id, deque())
+        session_nodes = set()
+        for ts, ev in window:
+            ctx = ev.get("context", {}) if isinstance(ev.get("context"), dict) else {}
+            if ctx.get("session_id") == session_id:
+                node = ctx.get("node_id")
+                if node:
+                    session_nodes.add(node)
+
+        if len(session_nodes) > 1 and source_node not in session_nodes:
+            anomalies.append(Anomaly(
+                type=AnomalyType.SESSION_HIJACK,
+                severity=SEVERITY_CRITICAL,
+                soulkey_id=soulkey_id,
+                description=f"Session {session_id[:8]} used from unexpected node {source_node}",
+                evidence={"session_id": session_id, "expected_nodes": sorted(session_nodes), "actual_node": source_node},
+                tenant_id=tenant_id,
+                source_event_id=event_id,
+            ))
+        return anomalies
+
+    async def _check_model_abuse(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """MODEL_ABUSE: agent requests models outside its typical set."""
+        anomalies = []
+        model = event.get("context", {}).get("model") if isinstance(event.get("context"), dict) else None
+        if not model:
+            return anomalies
+
+        typical_models = getattr(baseline, "typical_models", set())
+        if typical_models and model not in typical_models:
+            anomalies.append(Anomaly(
+                type=AnomalyType.MODEL_ABUSE,
+                severity=SEVERITY_HIGH,
+                soulkey_id=soulkey_id,
+                description=f"Agent requested model '{model}' outside typical set",
+                evidence={"model": model, "typical_models": sorted(typical_models)},
+                baseline_value=sorted(typical_models),
+                observed_value=model,
+                tenant_id=tenant_id,
+                source_event_id=event_id,
+            ))
+        return anomalies
+
+    async def _check_token_harvesting(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """TOKEN_HARVESTING: accumulates input tokens without proportional output."""
+        anomalies = []
+        ctx = event.get("context", {}) if isinstance(event.get("context"), dict) else {}
+        input_tokens = ctx.get("prompt_tokens", 0)
+        output_tokens = ctx.get("completion_tokens", 0)
+
+        if input_tokens > 0 and output_tokens > 0:
+            ratio = output_tokens / input_tokens
+            if ratio < 0.1 and input_tokens > 1000:
+                anomalies.append(Anomaly(
+                    type=AnomalyType.TOKEN_HARVESTING,
+                    severity=SEVERITY_HIGH,
+                    soulkey_id=soulkey_id,
+                    description=f"Low output/input token ratio ({ratio:.3f}) with {input_tokens} input tokens",
+                    evidence={"input_tokens": input_tokens, "output_tokens": output_tokens, "ratio": ratio},
+                    tenant_id=tenant_id,
+                    source_event_id=event_id,
+                ))
+        return anomalies
+
+    async def _check_lateral_movement(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """LATERAL_MOVEMENT: agent accesses resources across tenant boundaries."""
+        anomalies = []
+        event_tenant = event.get("tenant_id")
+        resource_tenant = event.get("context", {}).get("target_tenant_id") if isinstance(event.get("context"), dict) else None
+
+        if resource_tenant and event_tenant and str(resource_tenant) != str(event_tenant):
+            anomalies.append(Anomaly(
+                type=AnomalyType.LATERAL_MOVEMENT,
+                severity=SEVERITY_CRITICAL,
+                soulkey_id=soulkey_id,
+                description=f"Cross-tenant resource access: source {str(event_tenant)[:8]} → target {str(resource_tenant)[:8]}",
+                evidence={"source_tenant": str(event_tenant), "target_tenant": str(resource_tenant)},
+                tenant_id=tenant_id,
+                source_event_id=event_id,
+            ))
+        return anomalies
+
+    async def _check_resource_abuse(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """RESOURCE_ABUSE: excessive cost or token consumption vs baseline."""
+        anomalies = []
+        ctx = event.get("context", {}) if isinstance(event.get("context"), dict) else {}
+        cost = ctx.get("cost_usd", 0)
+
+        typical_cost = getattr(baseline, "typical_cost_per_request", 0)
+        threshold = self._thresholds.get(AnomalyType.RESOURCE_ABUSE, 5.0)
+
+        if typical_cost > 0 and cost > typical_cost * threshold:
+            anomalies.append(Anomaly(
+                type=AnomalyType.RESOURCE_ABUSE,
+                severity=SEVERITY_HIGH,
+                soulkey_id=soulkey_id,
+                description=f"Request cost ${cost:.4f} is {cost/typical_cost:.1f}x typical (${typical_cost:.4f})",
+                evidence={"cost_usd": cost, "typical_cost": typical_cost, "multiplier": cost / typical_cost},
+                baseline_value=typical_cost,
+                observed_value=cost,
+                tenant_id=tenant_id,
+                source_event_id=event_id,
+            ))
+        return anomalies
+
+    async def _check_credential_rotation(
+        self, soulkey_id: uuid.UUID, event: dict, baseline: AgentBaseline,
+        tenant_id: Optional[uuid.UUID], event_id: Optional[uuid.UUID],
+    ) -> list[Anomaly]:
+        """CREDENTIAL_ROTATION: rapid key issuance/revocation cycles."""
+        anomalies = []
+        event_type = event.get("event_type", "")
+
+        if event_type not in ("key_issued", "key_revoked", "key_suspended"):
+            return anomalies
+
+        window = self._event_windows.get(soulkey_id, deque())
+        key_events = [ev for ts, ev in window if ev.get("event_type") in ("key_issued", "key_revoked", "key_suspended")]
+
+        threshold = int(self._thresholds.get(AnomalyType.CREDENTIAL_ROTATION, 3))
+        if len(key_events) >= threshold:
+            anomalies.append(Anomaly(
+                type=AnomalyType.CREDENTIAL_ROTATION,
+                severity=SEVERITY_HIGH,
+                soulkey_id=soulkey_id,
+                description=f"{len(key_events)} credential lifecycle events in detection window",
+                evidence={"count": len(key_events), "threshold": threshold, "events": [e.get("event_type") for e in key_events[-5:]]},
+                tenant_id=tenant_id,
+                source_event_id=event_id,
+            ))
+        return anomalies

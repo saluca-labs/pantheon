@@ -352,15 +352,83 @@ class QuarantineEngine:
                         status=resp.status_code, body=resp.text[:200],
                     )
         elif action == QuarantineAction.KILL_SESSION:
-            logger.info("quarantine.kill_session", soulkey_id=str(soulkey_id))
+            # Kill active sessions by revoking all capability tokens for this key
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/revoke-tokens",
+                    json={"reason": reason, "revoked_by": "soulwatch_quarantine"},
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204):
+                    logger.warning("quarantine.kill_session_failed", status=resp.status_code, body=resp.text[:200])
+                else:
+                    logger.info("quarantine.kill_session.success", soulkey_id=str(soulkey_id))
+
         elif action == QuarantineAction.FORCE_REAUTH:
-            logger.info("quarantine.force_reauth", soulkey_id=str(soulkey_id))
+            # Invalidate cached capability tokens, forcing re-authentication on next request
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/force-reauth",
+                    json={"reason": reason, "forced_by": "soulwatch_quarantine"},
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204):
+                    logger.warning("quarantine.force_reauth_failed", status=resp.status_code, body=resp.text[:200])
+                else:
+                    logger.info("quarantine.force_reauth.success", soulkey_id=str(soulkey_id))
+
         elif action == QuarantineAction.RATE_LIMIT:
-            logger.info("quarantine.rate_limit", soulkey_id=str(soulkey_id), rpm=self._default_rate_limit)
+            # Apply restrictive rate limit via SoulGate
+            soulgate_url = self._settings.soulgate_base_url.rstrip("/") if hasattr(self._settings, 'soulgate_base_url') else base_url.replace(":8000", ":8002")
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    f"{soulgate_url}/gate/admin/rate-limit",
+                    json={
+                        "soulkey_id": str(soulkey_id),
+                        "requests_per_minute": self._default_rate_limit,
+                        "burst_size": 1,
+                        "reason": reason,
+                        "applied_by": "soulwatch_quarantine",
+                        "ttl_minutes": 30,
+                    },
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204):
+                    logger.warning("quarantine.rate_limit_failed", status=resp.status_code, body=resp.text[:200])
+                else:
+                    logger.info("quarantine.rate_limit.success", soulkey_id=str(soulkey_id), rpm=self._default_rate_limit)
+
         elif action == QuarantineAction.ISOLATE:
-            logger.info("quarantine.isolate", soulkey_id=str(soulkey_id))
+            # Suspend key + apply network isolation (restrict to health endpoints only)
+            async with httpx.AsyncClient(timeout=10) as client:
+                # Suspend first
+                await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/suspend",
+                    json={"reason": f"ISOLATED: {reason}", "suspended_by": "soulwatch_quarantine"},
+                )
+                # Mark isolation in metadata
+                resp = await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/metadata",
+                    json={"isolated": True, "isolated_at": datetime.now(timezone.utc).isoformat(), "isolation_reason": reason},
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204):
+                    logger.warning("quarantine.isolate_failed", status=resp.status_code)
+                else:
+                    logger.info("quarantine.isolate.success", soulkey_id=str(soulkey_id))
+
         elif action == QuarantineAction.RESET_CONTEXT:
-            logger.info("quarantine.reset_context", soulkey_id=str(soulkey_id))
+            # Clear cached context/session state for this key
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/reset-context",
+                    json={"reason": reason, "reset_by": "soulwatch_quarantine"},
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204):
+                    logger.warning("quarantine.reset_context_failed", status=resp.status_code, body=resp.text[:200])
+                else:
+                    logger.info("quarantine.reset_context.success", soulkey_id=str(soulkey_id))
 
     async def _reverse_action(self, soulkey_id: uuid.UUID, action_str: str):
         """Reverse a quarantine action."""
@@ -374,4 +442,23 @@ class QuarantineEngine:
                 )
                 if resp.status_code not in (200, 204):
                     logger.warning("quarantine.reinstate_failed", status=resp.status_code)
-        # Other actions are state flags that clear on release
+        elif action_str == QuarantineAction.RATE_LIMIT.value:
+            # Remove rate limit override
+            soulgate_url = self._settings.soulgate_base_url.rstrip("/") if hasattr(self._settings, 'soulgate_base_url') else base_url.replace(":8000", ":8002")
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.delete(
+                    f"{soulgate_url}/gate/admin/rate-limit/{soulkey_id}",
+                    headers={"X-Internal-Key": self._settings.internal_api_key},
+                )
+                if resp.status_code not in (200, 204, 404):
+                    logger.warning("quarantine.reverse_rate_limit_failed", status=resp.status_code)
+        elif action_str == QuarantineAction.ISOLATE.value:
+            # Reinstate key + clear isolation metadata
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.post(
+                    f"{base_url}/v1/soulauth/admin/keys/{soulkey_id}/reinstate",
+                    json={"reinstated_by": "soulwatch_quarantine"},
+                )
+        elif action_str in (QuarantineAction.KILL_SESSION.value, QuarantineAction.FORCE_REAUTH.value, QuarantineAction.RESET_CONTEXT.value):
+            # These are one-time actions — no reversal needed
+            logger.debug("quarantine.reverse_noop", action=action_str, soulkey_id=str(soulkey_id))

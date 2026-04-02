@@ -4,6 +4,10 @@ Per-tenant Data Encryption Keys (DEKs) derived via HKDF-SHA256 from a master key
 Master key loaded from ALETHEIA_MASTER_KEY env var (base64-encoded 32 bytes).
 """
 
+# DEPRECATED: This module is retained for backward compatibility with data encrypted
+# before the envelope encryption migration. New code should use
+# src.tiresias.encryption.envelope.EnvelopeEncryption instead.
+
 import os
 import base64
 

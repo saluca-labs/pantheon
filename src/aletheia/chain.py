@@ -24,6 +24,23 @@ logger = structlog.get_logger(__name__)
 
 GENESIS_PREFIX = "genesis::"
 
+_envelope_instance = None
+
+
+def _get_envelope():
+    global _envelope_instance
+    if _envelope_instance is None:
+        from src.tiresias.encryption.providers import resolve_kek_provider
+        from src.tiresias.encryption.envelope import EnvelopeEncryption
+        from src.tiresias.config import TiresiasSettings
+        try:
+            settings = TiresiasSettings()
+            provider = resolve_kek_provider(settings)
+            _envelope_instance = EnvelopeEncryption(provider)
+        except Exception:
+            return None
+    return _envelope_instance
+
 
 # ---------------------------------------------------------------------------
 # Pure hash functions (no I/O, deterministic, easily testable)
@@ -196,7 +213,7 @@ class CotChainWriter:
                 # Optionally store encrypted content (ALETH-10)
                 if extraction.reasoning_text and await is_content_storage_enabled(session, self.tenant_id):
                     try:
-                        storage = CotContentStorage(self.session_factory)
+                        storage = CotContentStorage(self.session_factory, _get_envelope())
                         stored = await storage.store_content(entry.id, self.tenant_id, extraction.reasoning_text)
                         if stored:
                             logger.debug("cot_chain.content_stored", entry_id=str(entry.id))

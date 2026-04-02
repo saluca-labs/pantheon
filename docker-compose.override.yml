@@ -1,0 +1,62 @@
+## Local development override — uses existing tiresias-pg instance.
+## Remaps host ports to avoid conflicts with running saluca stack.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    entrypoint: ["sh", "-c", "while true; do sleep 3600; done"]
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 2s
+      retries: 1
+    read_only: false
+    cap_drop: []
+    security_opt: []
+    volumes: []
+    ports: !override
+      - "127.0.0.1:5433:5432"
+
+  soulauth:
+    ports: !override
+      - "127.0.0.1:8100:8000"
+    environment:
+      SOULAUTH_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+      SOULAUTH_DATABASE_URL_SYNC: postgresql://tiresias:tiresias@tiresias-pg:5432/tiresias
+      SOULAUTH_DEBUG: "true"
+      SOULAUTH_LICENSE_REQUIRED: "false"
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  soulgate:
+    environment:
+      SOULGATE_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  soulwatch:
+    environment:
+      SOULWATCH_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  portal:
+    ports: !override
+      - "127.0.0.1:3100:3000"
+    environment:
+      SOULAUTH_INTERNAL_URL: http://soulauth:8000
+      SOULWATCH_INTERNAL_URL: http://soulwatch:8001
+      NEXT_PUBLIC_SOULGATE_API_URL: http://soulgate:8002
+
+  prometheus:
+    profiles: ["monitoring"]
+
+  alertmanager:
+    profiles: ["monitoring"]
+
+networks:
+  saluca-net:
+    external: true
+    name: saluca-deploy_saluca-net
