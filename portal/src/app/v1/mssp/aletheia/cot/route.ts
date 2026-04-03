@@ -7,21 +7,13 @@
  *   ALETHEIA-002 — Iterates child tenants so each query includes tenant_id.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { tenantName } from "@/lib/display";
+import { config } from "@/lib/server-config";
 
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth-mssp:8000";
 const SOULWATCH_URL =
   process.env.SOULWATCH_INTERNAL_URL || "http://soulwatch-mssp:8001";
 const SOULWATCH_KEY =
-  process.env.SOULWATCH_INTERNAL_KEY || "sw_metrics_scrape_2026";
-
-/** Known tenant UUID → human-readable name mapping. */
-const TENANT_NAMES: Record<string, string> = {
-  "0c2515c2-1612-4a1a-bf72-47e760ccca51": "Alfred Local",
-  "d4a853e2-twin-alpha-0001-000000000001": "Twin Alpha",
-  "d4a853e2-twin-ivory-0001-000000000001": "Twin Ivory",
-  "00000000-0000-0000-0000-000000000000": "Bootstrap Admin",
-};
+  process.env.SOULWATCH_INTERNAL_KEY || "";
 
 interface CotEntry {
   request_id: string;
@@ -54,7 +46,7 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Fetch child tenant IDs from SoulAuth
     const tenantsRes = await fetch(
-      `${SOULAUTH_URL}/v1/soulauth/admin/tenants`,
+      `${config.soulauth.url}/v1/soulauth/admin/tenants`,
       { signal: AbortSignal.timeout(5000) }
     );
     if (!tenantsRes.ok) return NextResponse.json({ entries: [], total: 0 });
@@ -90,7 +82,7 @@ export async function GET(request: NextRequest) {
           return entries.map((e) => ({
             ...e,
             tenant_id: tenant.id,
-            tenant_name: TENANT_NAMES[tenant.id] || undefined,
+            tenant_name: tenantName(tenant.id),
           }));
         } catch {
           return [];

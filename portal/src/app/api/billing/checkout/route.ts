@@ -26,8 +26,16 @@ const PLANS: Record<
     type: string;
   }
 > = {
+  open: {
+    name: "Tiresias Open",
+    stripe_price_id: "",
+    stripe_price_id_annual: "",
+    price_cents: 0,
+    type: "free",
+  },
   community: {
-    name: "Tiresias Community",
+    // Legacy alias — maps to "open"
+    name: "Tiresias Open",
     stripe_price_id: "",
     stripe_price_id_annual: "",
     price_cents: 0,
@@ -36,31 +44,28 @@ const PLANS: Record<
   starter: {
     name: "Tiresias Starter",
     stripe_price_id:
-      process.env.STRIPE_PRICE_STARTER_MONTHLY || "price_tiresias_starter_monthly",
+      process.env.STRIPE_PRICE_STARTER_MONTHLY || "price_1TDMSlBkXMYmrc2L29W09pQl",
     stripe_price_id_annual:
-      process.env.STRIPE_PRICE_STARTER_ANNUAL || "price_tiresias_starter_annual",
+      process.env.STRIPE_PRICE_STARTER_ANNUAL || "price_1TDMSlBkXMYmrc2LuuaUN5Cp",
     price_cents: 4900,
     type: "recurring",
   },
   pro: {
     name: "Tiresias Pro",
     stripe_price_id:
-      process.env.STRIPE_PRICE_PRO_MONTHLY || "price_tiresias_pro_monthly",
+      process.env.STRIPE_PRICE_PRO_MONTHLY || "price_1TDMT2BkXMYmrc2Lhf1whQpi",
     stripe_price_id_annual:
-      process.env.STRIPE_PRICE_PRO_ANNUAL || "price_tiresias_pro_annual",
+      process.env.STRIPE_PRICE_PRO_ANNUAL || "price_1TDMT2BkXMYmrc2LnBUoJEww",
     price_cents: 19900,
     type: "recurring",
   },
   enterprise: {
+    // Custom invoicing ($999-4,999/mo) — not self-serve
     name: "Tiresias Enterprise",
-    stripe_price_id:
-      process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY ||
-      "price_tiresias_enterprise_monthly",
-    stripe_price_id_annual:
-      process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL ||
-      "price_tiresias_enterprise_annual",
-    price_cents: 79900,
-    type: "recurring",
+    stripe_price_id: "",
+    stripe_price_id_annual: "",
+    price_cents: 0,
+    type: "sales",
   },
 };
 
@@ -93,13 +98,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Free/community plans skip Stripe — redirect straight to trial page
+    // Free/open plans skip Stripe — redirect straight to trial page
     if (plan.type === "free") {
       return NextResponse.json(
         {
           error: "free_plan",
-          detail: "Community plan is free. No checkout required.",
+          detail: "Open plan is free. No checkout required.",
           redirect_url: "/trial",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Enterprise uses custom invoicing — redirect to sales
+    if (plan.type === "sales") {
+      return NextResponse.json(
+        {
+          error: "enterprise_contact_sales",
+          detail:
+            "Enterprise plans ($999-4,999/mo) require custom invoicing. Contact sales.",
+          redirect_url: "mailto:contact@saluca.com?subject=Tiresias%20Enterprise%20Inquiry",
         },
         { status: 400 }
       );

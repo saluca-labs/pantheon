@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { truncateSoulkey } from "@/lib/display";
+import { truncateSoulkey, timeAgo } from "@/lib/display";
 
 /** SoulWatch overview -- anomaly detection metrics and alert summary. Fetches live data with mock fallback. */
 
@@ -74,48 +74,8 @@ interface LlmDashboard {
   fetched_at: string;
 }
 
-/* ---- Mock Fallback Data ---- */
-
-const MOCK_HOURLY_ANOMALIES = Array.from({ length: 24 }, (_, i) => ({
-  hour: `${String(i).padStart(2, "0")}:00`,
-  count: Math.floor(Math.random() * 18) + (i >= 2 && i <= 5 ? 12 : 2),
-}));
-
-const MOCK_TOP_AGENTS: AgentRisk[] = [
-  { persona: "agent-001", soulkey: "sk_demo_001", riskScore: 87, trend: "up", evaluations: 3420, anomalies: 12, status: "warning" },
-  { persona: "agent-002", soulkey: "sk_demo_002", riskScore: 67, trend: "down", evaluations: 5890, anomalies: 8, status: "warning" },
-  { persona: "agent-003", soulkey: "sk_demo_003", riskScore: 45, trend: "stable", evaluations: 8120, anomalies: 3, status: "healthy" },
-  { persona: "agent-004", soulkey: "sk_demo_004", riskScore: 92, trend: "up", evaluations: 1240, anomalies: 15, status: "critical" },
-  { persona: "agent-005", soulkey: "sk_demo_005", riskScore: 12, trend: "stable", evaluations: 9820, anomalies: 0, status: "healthy" },
-  { persona: "agent-006", soulkey: "sk_demo_006", riskScore: 34, trend: "down", evaluations: 2180, anomalies: 2, status: "healthy" },
-  { persona: "agent-007", soulkey: "sk_demo_007", riskScore: 23, trend: "stable", evaluations: 6100, anomalies: 1, status: "healthy" },
-  { persona: "agent-008", soulkey: "sk_demo_008", riskScore: 98, trend: "up", evaluations: 340, anomalies: 18, status: "critical" },
-  { persona: "agent-009", soulkey: "sk_demo_009", riskScore: 28, trend: "stable", evaluations: 4560, anomalies: 1, status: "healthy" },
-  { persona: "agent-010", soulkey: "sk_demo_010", riskScore: 41, trend: "down", evaluations: 1890, anomalies: 4, status: "healthy" },
-];
-
-const MOCK_RECENT_DETECTIONS: Detection[] = [
-  { id: "det_001", rule: "Cross-Tenant Access Attempt", agent: "agent-008", severity: "Critical", timestamp: "03:14:22", ago: "12 min ago" },
-  { id: "det_002", rule: "Excessive Permission Requests", agent: "agent-004", severity: "High", timestamp: "03:08:45", ago: "18 min ago" },
-  { id: "det_003", rule: "Off-Hours Activity", agent: "agent-001", severity: "Medium", timestamp: "02:55:10", ago: "31 min ago" },
-  { id: "det_004", rule: "Unusual Data Volume", agent: "agent-002", severity: "Medium", timestamp: "02:41:33", ago: "45 min ago" },
-  { id: "det_005", rule: "Rapid Key Rotation", agent: "agent-004", severity: "High", timestamp: "02:30:00", ago: "56 min ago" },
-  { id: "det_006", rule: "Failed Auth Spike", agent: "agent-008", severity: "High", timestamp: "02:12:18", ago: "1 hour ago" },
-  { id: "det_007", rule: "Off-Hours Activity", agent: "agent-002", severity: "Medium", timestamp: "01:48:55", ago: "1.4 hours ago" },
-  { id: "det_008", rule: "Excessive Permission Requests", agent: "agent-001", severity: "High", timestamp: "01:22:40", ago: "1.9 hours ago" },
-  { id: "det_009", rule: "Unusual Data Volume", agent: "agent-010", severity: "Medium", timestamp: "00:55:12", ago: "2.3 hours ago" },
-  { id: "det_010", rule: "Off-Hours Activity", agent: "agent-006", severity: "Low", timestamp: "00:30:05", ago: "2.8 hours ago" },
-];
 
 /* ---- Helpers ---- */
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = (mins / 60).toFixed(1);
-  return `${hrs} hours ago`;
-}
 
 function mapSeverity(level: string | undefined): string {
   if (!level) return "Medium";
@@ -238,32 +198,29 @@ export default function SoulWatchDashboardPage() {
     refreshInterval: 30000,
   });
 
-  /* ---- Derived state: live data or mock fallback ---- */
-  const isLive = dashData !== null && (
-    (dashData.anomalies && dashData.anomalies.length > 0) ||
-    (dashData.detections && dashData.detections.length > 0)
-  );
+  /* ---- Derived state: live data with empty-state fallback ---- */
+  const isLive = dashData !== null;
 
   const hourlyAnomalies = useMemo(() => {
-    if (isLive && dashData?.anomalies && dashData.anomalies.length > 0) {
+    if (dashData?.anomalies) {
       return buildHourlyFromAnomalies(dashData.anomalies);
     }
-    return MOCK_HOURLY_ANOMALIES;
-  }, [isLive, dashData]);
+    return buildHourlyFromAnomalies([]);
+  }, [dashData]);
 
   const topAgents = useMemo(() => {
-    if (isLive && dashData?.anomalies && dashData.anomalies.length > 0) {
+    if (dashData?.anomalies) {
       return buildAgentRisks(dashData.anomalies);
     }
-    return MOCK_TOP_AGENTS;
-  }, [isLive, dashData]);
+    return [];
+  }, [dashData]);
 
   const recentDetections = useMemo(() => {
-    if (isLive && dashData?.detections && dashData.detections.length > 0) {
+    if (dashData?.detections) {
       return dashData.detections.map(normalizeDetection);
     }
-    return MOCK_RECENT_DETECTIONS.map(normalizeDetection);
-  }, [isLive, dashData]);
+    return [];
+  }, [dashData]);
 
   const openAnomalyCount = useMemo(() => {
     // Prefer the server-side total (covers all pages) over counting the local array
@@ -273,7 +230,7 @@ export default function SoulWatchDashboardPage() {
     if (dashData?.anomalies && dashData.anomalies.length > 0) {
       return dashData.anomalies.filter((a) => a.status === "open").length;
     }
-    return 14;
+    return 0;
   }, [dashData]);
 
   const quarantineCount = useMemo(() => {
@@ -288,20 +245,20 @@ export default function SoulWatchDashboardPage() {
   }, [dashData]);
 
   const rulesFiring = useMemo(() => {
-    if (isLive && dashData?.detections) {
+    if (dashData?.detections) {
       const rules = new Set(dashData.detections.map((d) => d.rule_id || d.rule));
       return rules.size;
     }
     return 0;
-  }, [isLive, dashData]);
+  }, [dashData]);
 
   const agentsMonitored = useMemo(() => {
-    if (isLive && dashData?.anomalies) {
+    if (dashData?.anomalies) {
       const agents = new Set(dashData.anomalies.map((a) => a.soulkey_id));
       return agents.size;
     }
     return 0;
-  }, [isLive, dashData]);
+  }, [dashData]);
 
   const maxAnomaly = Math.max(...hourlyAnomalies.map((h) => h.count), 1);
 
@@ -531,7 +488,7 @@ export default function SoulWatchDashboardPage() {
           <h3 className="text-sm font-semibold text-foreground mb-2">Quick Navigation</h3>
           {[
             { label: "Anomalies", href: "/dashboard/soulwatch/anomalies", count: `${openAnomalyCount} open`, color: "text-red-400" },
-            { label: "Detection Rules", href: "/dashboard/soulwatch/rules", count: `${rulesFiring > 0 ? rulesFiring : 6} active`, color: "text-of-primary" },
+            { label: "Detection Rules", href: "/dashboard/soulwatch/rules", count: `${rulesFiring} active`, color: "text-of-primary" },
             { label: "Quarantines", href: "/dashboard/soulwatch/quarantines", count: `${quarantineCount} active`, color: "text-orange-400" },
             { label: "Integrations", href: "/dashboard/soulwatch/integrations", count: "4 connected", color: "text-of-primary" },
             { label: "Reports", href: "/dashboard/soulwatch/reports", count: "3 frameworks", color: "text-blue-400" },

@@ -18,8 +18,9 @@ export async function GET(request: NextRequest) {
   const backendUrl = process.env.SOULAUTH_INTERNAL_URL || "http://soulauth.tiresias.svc.cluster.local";
 
   try {
+    const baseUrl = getBaseUrl(request);
     const res = await fetch(
-      `${backendUrl}/v1/auth/oidc/authorize?provider_type=${encodeURIComponent(provider)}`,
+      `${backendUrl}/v1/auth/oidc/authorize?provider_type=${encodeURIComponent(provider)}&portal_base_url=${encodeURIComponent(baseUrl)}`,
       { method: "GET" }
     );
 

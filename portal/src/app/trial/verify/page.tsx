@@ -89,7 +89,7 @@ function VerifyContent() {
                 </svg>
               </div>
               <h1 className="text-3xl font-bold mb-4">Verifying your email...</h1>
-              <p className="text-of-on-surface-variant">Activating your SoulAuth Pro trial. This takes just a moment.</p>
+              <p className="text-of-on-surface-variant">Activating your Tiresias platform trial. This takes just a moment.</p>
             </div>
           )}
 
@@ -103,7 +103,7 @@ function VerifyContent() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">Trial Activated</h1>
-                  <p className="text-sm text-of-on-surface-variant">Your 14-day SoulAuth Pro trial is live.</p>
+                  <p className="text-sm text-of-on-surface-variant">Your 14-day Tiresias platform trial is live.</p>
                 </div>
               </div>
 

@@ -4,42 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth:8000";
-
-async function verifySession(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
 /** Fetch keys for a single tenant. Returns an array of soulkey objects. */
 async function fetchKeysForTenant(
@@ -51,9 +17,13 @@ async function fetchKeysForTenant(
   if (status) params.set("status", status);
   if (personaId) params.set("persona_id", personaId);
 
-  const url = `${SOULAUTH_URL}/v1/soulauth/admin/keys?${params.toString()}`;
+  const url = `${config.soulauth.url}/v1/soulauth/admin/keys?${params.toString()}`;
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Internal-Key": config.internalApiKey,
+      "X-Tenant-ID": tenantId,
+    },
     signal: AbortSignal.timeout(10000),
   });
 
@@ -63,8 +33,8 @@ async function fetchKeysForTenant(
 }
 
 export async function GET(request: NextRequest) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   // When ?all=true is set, fetch keys across every tenant (agents overview)
   const fetchAll = request.nextUrl.searchParams.get("all") === "true";
@@ -88,9 +58,13 @@ export async function GET(request: NextRequest) {
 
     // No tenant specified: fetch ALL tenants and merge their keys
     const tenantsRes = await fetch(
-      `${SOULAUTH_URL}/v1/soulauth/admin/tenants`,
+      `${config.soulauth.url}/v1/soulauth/admin/tenants`,
       {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Key": config.internalApiKey,
+          "X-Tenant-ID": "7f561f93-8a90-46c3-a757-dad9ce1fdb23",
+        },
         signal: AbortSignal.timeout(10000),
       },
     );

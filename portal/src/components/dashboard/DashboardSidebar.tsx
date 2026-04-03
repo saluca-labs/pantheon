@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { tierMeets } from "@/components/dashboard/TierGate";
@@ -31,7 +31,9 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "enterprise";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "platform-admin";
+  /** When true, only visible for saas-tier tenants. */
+  saasOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -337,17 +339,17 @@ const NAV_ITEMS: NavItem[] = [
     group: "mssp",
     icon: <Users className="w-5 h-5" />,
   },
-  // Enterprise nav items -- only rendered when tier is enterprise+ (ENT-01)
+  // Platform Admin group items -- only visible to @saluca.com users
   {
-    label: "Investigation",
-    href: "/dashboard/investigation",
-    group: "enterprise",
-    icon: <Search className="w-5 h-5" />,
+    label: "Platform Admin",
+    href: "/dashboard/mssp/master",
+    group: "platform-admin",
+    icon: <Crown className="w-5 h-5" />,
   },
   {
     label: "Contracts",
     href: "/dashboard/contracts",
-    group: "enterprise",
+    group: "platform-admin",
     icon: <FileText className="w-5 h-5" />,
   },
   // Aletheia nav items -- only rendered when tier is enterprise+ (ALETH-14)
@@ -395,9 +397,8 @@ const BASE_GROUPS = [
 
 const MSSP_GROUP = { key: "mssp", label: "MSSP" } as const;
 const ALETHEIA_GROUP = { key: "aletheia", label: "Aletheia" } as const;
-const ENTERPRISE_GROUP = { key: "enterprise", label: "Enterprise" } as const;
-
-type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp" | "aletheia" | "enterprise";
+const PLATFORM_ADMIN_GROUP = { key: "platform-admin", label: "Platform Admin" } as const;
+type GroupKey = (typeof BASE_GROUPS)[number]["key"] | "mssp" | "aletheia" | "platform-admin";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -405,7 +406,10 @@ export default function DashboardSidebar() {
   const { session } = useAuth();
   const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
+  const isSaasTier = (session?.tier ?? "") === "saas";
   const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
+  const isSalucaUser = session?.user_email?.endsWith("@saluca.com") ?? false;
+  const isInvestigationActive = pathname === "/dashboard/investigation";
   const isSupportActive = pathname === "/dashboard/support";
 
   // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
@@ -420,11 +424,12 @@ export default function DashboardSidebar() {
       } else {
         base.push(ALETHEIA_GROUP);
       }
-      // Enterprise group after system
-      base.push(ENTERPRISE_GROUP);
     }
     if (isMsspTier) {
       base.push(MSSP_GROUP);
+    }
+    if (isSalucaUser) {
+      base.push(PLATFORM_ADMIN_GROUP);
     }
     return base;
   })();
@@ -514,7 +519,7 @@ export default function DashboardSidebar() {
       {/* Nav items */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
         {groups.map((group, groupIdx) => {
-          const items = NAV_ITEMS.filter((item) => item.group === group.key);
+          const items = NAV_ITEMS.filter((item) => item.group === group.key && (!item.saasOnly || isSaasTier));
           const isSectionCollapsed = !!sectionCollapsed[group.key];
           return (
             <div key={group.key}>
@@ -531,12 +536,12 @@ export default function DashboardSidebar() {
                     exit={{ opacity: 0, x: -8 }}
                     transition={{ duration: 0.2 }}
                     className={`w-full flex items-center justify-between px-3 pt-2 pb-1.5 text-[10px] font-semibold uppercase tracking-widest cursor-pointer select-none hover:opacity-80 transition-opacity ${
-                      group.key === "mssp"
+                      group.key === "platform-admin"
+                        ? "text-amber-400"
+                        : group.key === "mssp"
                         ? "text-of-primary"
                         : group.key === "aletheia"
                         ? "text-of-accent"
-                        : group.key === "enterprise"
-                        ? "text-purple-400"
                         : "text-of-outline"
                     }`}
                   >
@@ -629,8 +634,65 @@ export default function DashboardSidebar() {
       </nav>
 
 
-      {/* Support link -- pinned above user info */}
+      {/* Investigation + Support links -- pinned above user info */}
       <div className="px-2 pb-1 border-t border-of-outline-variant/15 pt-2">
+        {isEnterprisePlus && (
+          <Link
+            href="/dashboard/investigation"
+            className={`
+              group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
+              transition-all duration-200 ease-out relative overflow-hidden
+              ${isInvestigationActive
+                ? "text-of-on-surface"
+                : "text-of-on-surface-variant hover:text-of-on-surface"
+              }
+            `}
+            title={collapsed ? "Investigation" : undefined}
+          >
+            {!isInvestigationActive && (
+              <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
+            )}
+
+            {isInvestigationActive && (
+              <motion.div
+                layoutId="sidebar-active-bg"
+                className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              />
+            )}
+
+            {isInvestigationActive && (
+              <motion.div
+                layoutId="sidebar-active-indicator"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              />
+            )}
+
+            <motion.div
+              className={`relative shrink-0 ${isInvestigationActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
+              animate={isInvestigationActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <Search className="w-5 h-5" />
+            </motion.div>
+
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0, x: -4 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="relative text-sm font-medium truncate"
+                >
+                  Investigation
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        )}
+
         <Link
           href="/dashboard/support"
           className={`

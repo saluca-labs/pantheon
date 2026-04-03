@@ -6,62 +6,31 @@
  * Includes status, metadata, and recent activity from the audit log.
  */
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL ||
-  process.env.SOULAUTH_INTERNAL_URL ||
-  "http://localhost:8000";
-
-async function tryFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-function resolveTenant(request: NextRequest): string {
-  const fromCookie = request.cookies.get("tiresias_tenant")?.value;
-  if (fromCookie) return fromCookie;
-
-  const sessionData = request.cookies.get("tiresias_session_data")?.value;
-  if (sessionData) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(sessionData));
-      if (parsed.tenant_id) return parsed.tenant_id;
-    } catch {
-      // ignore
-    }
-  }
-
-  return "00000001-0000-4000-a000-000000000001";
-}
+import { verifySession, isAuthError, resolveTenant } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
+import { tryFetch, fetchAllTenantIds } from "@/lib/server-fetch";
+import { timeAgo } from "@/lib/display";
 
 export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
+
   const tenantId = resolveTenant(request);
 
-  // Fetch keys from all known tenants for a full view
-  const tenantIds = [
-    tenantId,
-    "00000001-0000-4000-a001-000000000001",
-    "0c2515c2-1612-4a1a-bf72-47e760ccca51",
-  ];
+  // Fetch keys from all tenants for a full view
+  const dynamicTenants = await fetchAllTenantIds();
+  const tenantIds = [...new Set([tenantId, ...dynamicTenants])];
 
   const keyResults = await Promise.all(
-    [...new Set(tenantIds)].map((t) =>
-      tryFetch(`${SOULAUTH_URL}/v1/soulauth/admin/keys?tenant_id=${t}`)
+    tenantIds.map((t) =>
+      tryFetch(`${config.soulauth.url}/v1/soulauth/admin/keys?tenant_id=${t}`)
     )
   );
 
   // Also fetch recent audit events for activity counts
   const auditResults = await Promise.all(
-    [...new Set(tenantIds)].map((t) =>
-      tryFetch(`${SOULAUTH_URL}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=500`)
+    tenantIds.map((t) =>
+      tryFetch(`${config.soulauth.url}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=500`)
     )
   );
 
@@ -143,16 +112,6 @@ export async function GET(request: NextRequest) {
   });
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
 
 interface KeyEntry {
   id: string;

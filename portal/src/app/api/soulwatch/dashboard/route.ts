@@ -10,37 +10,23 @@
  * This route unwraps those envelopes so the frontend receives flat arrays
  * plus _total counts for accurate dashboard widgets.
  */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
+import { tryFetch } from "@/lib/server-fetch";
 
-const SOULWATCH_URL =
-  process.env.SOULWATCH_INTERNAL_URL ||
-  process.env.SOULWATCH_INTERNAL_URL ||
-  "http://localhost:8001";
+export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
-const SOULWATCH_KEY =
-  process.env.SOULWATCH_INTERNAL_KEY || "sw_metrics_scrape_2026";
+  const swHeaders = config.soulwatch.key
+    ? { "X-Internal-Key": config.soulwatch.key }
+    : undefined;
 
-async function tryFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-Internal-Key": SOULWATCH_KEY,
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function GET() {
   const [detectionsRes, anomaliesRes, quarantinesRes] = await Promise.all([
-    tryFetch(`${SOULWATCH_URL}/watch/v1/detections?page_size=10`),
-    tryFetch(`${SOULWATCH_URL}/watch/v1/anomalies?status=open&page_size=50`),
-    tryFetch(`${SOULWATCH_URL}/watch/v1/quarantines?status=active`),
+    tryFetch(`${config.soulwatch.url}/watch/v1/detections?page_size=10`, swHeaders, 5000),
+    tryFetch(`${config.soulwatch.url}/watch/v1/anomalies?status=open&page_size=50`, swHeaders, 5000),
+    tryFetch(`${config.soulwatch.url}/watch/v1/quarantines?status=active`, swHeaders, 5000),
   ]);
 
   // Unwrap paginated envelopes into flat arrays + totals

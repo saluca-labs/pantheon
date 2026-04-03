@@ -88,6 +88,7 @@ def _get_caller_tenant_id(request) -> Optional[uuid.UUID]:
 )
 async def admin_create_tenant(
     request: CreateTenantRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -96,18 +97,71 @@ async def admin_create_tenant(
     Each tenant is an isolated namespace with its own SoulKeys, policies,
     and audit trail. The slug must be unique and is used in policy file paths.
     Requires `tenants:create` permission.
+
+    If parent_tenant_id is provided, the new tenant is created as a child
+    in the hierarchy. Tier creation rules and depth limits are enforced.
     """
     # Check for slug uniqueness
     existing = await resolve_tenant_by_slug(db, request.slug)
     if existing:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
 
+    parent_tenant_id = request.parent_tenant_id
+    hierarchy_depth = 0
+
+    if parent_tenant_id:
+        # 1. Validate parent exists
+        parent = await resolve_tenant(db, parent_tenant_id)
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent tenant not found")
+
+        # 2. Validate caller owns the parent (or is within the parent's hierarchy)
+        caller_tenant_id = _get_caller_tenant_id(http_request)
+        if caller_tenant_id and caller_tenant_id != parent_tenant_id:
+            from src.mssp.isolation import assert_in_hierarchy
+            await assert_in_hierarchy(db, caller_tenant_id, parent_tenant_id)
+
+        # 3. Tier creation rules
+        from src.tier import TIER_ALLOWED_CHILDREN, TIER_MAX_CHILDREN, can_create_child
+        if not can_create_child(parent.tier, request.tier):
+            allowed = TIER_ALLOWED_CHILDREN.get(parent.tier, [])
+            raise HTTPException(
+                status_code=422,
+                detail=f"Tier '{parent.tier}' cannot create child tier '{request.tier}'. "
+                       f"Allowed: {allowed}",
+            )
+
+        # 4. Depth validation
+        from src.mssp.isolation import validate_depth_for_new_child
+        try:
+            hierarchy_depth = await validate_depth_for_new_child(db, parent_tenant_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+
+        # 5. Max children check
+        max_children = TIER_MAX_CHILDREN.get(parent.tier, 0)
+        if max_children > 0:
+            from src.mssp.isolation import get_child_tenant_ids
+            existing_children = await get_child_tenant_ids(db, parent_tenant_id, include_root=False)
+            if len(existing_children) >= max_children:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Parent tenant has reached max children ({max_children})",
+                )
+
+    # Build metadata with provenance
+    metadata = request.metadata or {}
+    if parent_tenant_id:
+        metadata["provisioned_by"] = str(parent_tenant_id)
+
     tenant = await create_tenant(
         db=db,
         name=request.name,
         slug=request.slug,
         tier=request.tier,
-        metadata=request.metadata,
+        metadata=metadata,
+        parent_tenant_id=parent_tenant_id,
+        hierarchy_depth=hierarchy_depth,
     )
 
     # Eagerly provision DEK for envelope encryption
@@ -120,6 +174,8 @@ async def admin_create_tenant(
         slug=tenant.slug,
         tier=tenant.tier,
         status=tenant.status,
+        parent_tenant_id=tenant.parent_tenant_id,
+        hierarchy_depth=tenant.hierarchy_depth,
         metadata=tenant.metadata_,
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,
@@ -146,6 +202,8 @@ async def admin_list_tenants(
             slug=t.slug,
             tier=t.tier,
             status=t.status,
+            parent_tenant_id=t.parent_tenant_id,
+            hierarchy_depth=t.hierarchy_depth,
             metadata=t.metadata_,
             created_at=t.created_at,
             updated_at=t.updated_at,
@@ -178,6 +236,8 @@ async def admin_get_tenant(
         slug=tenant.slug,
         tier=tenant.tier,
         status=tenant.status,
+        parent_tenant_id=tenant.parent_tenant_id,
+        hierarchy_depth=tenant.hierarchy_depth,
         metadata=tenant.metadata_,
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,
@@ -227,6 +287,8 @@ async def admin_update_tenant(
         slug=tenant.slug,
         tier=tenant.tier,
         status=tenant.status,
+        parent_tenant_id=tenant.parent_tenant_id,
+        hierarchy_depth=tenant.hierarchy_depth,
         metadata=tenant.metadata_,
         created_at=tenant.created_at,
         updated_at=tenant.updated_at,

@@ -238,7 +238,7 @@ export default function SecurityPage() {
                 <p className="text-sm text-of-on-surface-variant leading-relaxed">
                   Customer-controlled data residency. Choose where your
                   policy evaluations and audit logs reside. On-premise
-                  deployment available for Enterprise tier.
+                  deployment available on Enterprise plans and above.
                 </p>
               </div>
               <div>

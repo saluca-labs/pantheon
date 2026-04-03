@@ -26,10 +26,11 @@ import { api, ApiError } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 import { SSOSettingsTab } from "@/components/sso/SSOSettingsTab";
 import SiemConnectorsTab from "@/components/siem/SiemConnectorsTab";
+import { TeamSettingsTab } from "@/components/team/TeamSettingsTab";
 import { useAuth } from "@/lib/auth";
 import { useUserPreferences, ALL_SIDEBAR_SECTIONS } from "@/lib/useUserPreferences";
 
-type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences";
+type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
 
 // Tiers with time-based license (show expiration, no Stripe)
 const LICENSE_TIERS = new Set(["enterprise", "mssp"]);
@@ -112,6 +113,7 @@ const NOTIFICATION_CHANNELS: NotificationChannel[] = [
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "general", label: "General" },
+  { id: "team", label: "Team" },
   { id: "api-keys", label: "API Keys" },
   { id: "siem", label: "SIEM Integration" },
   { id: "notifications", label: "Notifications" },
@@ -435,9 +437,10 @@ function SettingsPageInner() {
   // Determine the effective tier for billing visibility
   const sessionTier = session?.tier || "starter";
 
-  // Filter tabs based on tier (hide billing for NDA)
+  // Filter tabs based on tier (hide billing for NDA, team for community)
   const visibleTabs = TABS.filter((tab) => {
     if (tab.id === "billing" && HIDDEN_BILLING_TIERS.has(sessionTier)) return false;
+    if (tab.id === "team" && sessionTier === "community") return false;
     return true;
   });
 
@@ -480,7 +483,7 @@ function SettingsPageInner() {
 
   // --- API Keys state (KEY-01..04) ---
   const [allTenants, setAllTenants] = useState<TenantItem[]>([]);
-  const [selectedKeysTenant, setSelectedKeysTenant] = useState(session?.tenant_id || "0c2515c2-1612-4a1a-bf72-47e760ccca51");
+  const [selectedKeysTenant, setSelectedKeysTenant] = useState(session?.tenant_id || "");
   const [keys, setKeys] = useState<SoulkeyItem[]>([]);
   const [keysLoading, setKeysLoading] = useState(false);
   const [keysError, setKeysError] = useState<string | null>(null);
@@ -511,8 +514,8 @@ function SettingsPageInner() {
   const [upgrading, setUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
-  const [tenantId, setTenantId] = useState(session?.tenant_id || "0c2515c2-1612-4a1a-bf72-47e760ccca51");
-  const [tenantIdDraft, setTenantIdDraft] = useState(session?.tenant_id || "0c2515c2-1612-4a1a-bf72-47e760ccca51");
+  const [tenantId, setTenantId] = useState(session?.tenant_id || "");
+  const [tenantIdDraft, setTenantIdDraft] = useState(session?.tenant_id || "");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Fetch tenant list for the keys tab tenant selector
@@ -546,7 +549,7 @@ function SettingsPageInner() {
       );
       setKeyUsage(usageMap);
     } catch (err) {
-      setKeysError(err instanceof ApiError ? err.message : typeof err === "object" ? JSON.stringify(err) : "Failed to load keys");
+      setKeysError(err instanceof Error ? err.message : "Failed to load keys");
     } finally {
       setKeysLoading(false);
     }
@@ -1558,6 +1561,18 @@ function SettingsPageInner() {
         </motion.div>
       )}
 
+
+      {/* Team Management Tab */}
+      {activeTab === "team" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <TierGate requiredTier="starter" featureLabel="Team Management">
+            <TeamSettingsTab />
+          </TierGate>
+        </motion.div>
+      )}
 
       {/* SSO / Identity Providers Tab */}
       {activeTab === "sso" && (

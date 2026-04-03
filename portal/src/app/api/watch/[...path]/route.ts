@@ -4,76 +4,34 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
-const DEFAULT_TENANT_ID = "0c2515c2-1612-4a1a-bf72-47e760ccca51"; // Alfred Local
-
-const SOULWATCH_URL =
-  process.env.SOULWATCH_INTERNAL_URL || "http://localhost:8001";
-
-const SOULWATCH_KEY =
-  process.env.SOULWATCH_INTERNAL_KEY || "sw_metrics_scrape_2026";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth:8000";
-
-async function verifySession(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   const { path } = await params;
   const subpath = path.join("/");
   const searchParams = new URLSearchParams(request.nextUrl.searchParams);
 
   // SoulWatch aletheia endpoints require tenant_id as a query parameter.
-  // Fall back to default tenant so local dev works without a session cookie.
-  const tenantId = request.headers.get("x-tenant-id") || DEFAULT_TENANT_ID;
+  // Use tenant from the verified session; fall back to dev default.
+  const tenantId = request.headers.get("x-tenant-id") || session.tenantId;
   if (!searchParams.has("tenant_id")) {
     searchParams.set("tenant_id", tenantId);
   }
 
   const search = searchParams.toString();
-  const url = `${SOULWATCH_URL}/watch/${subpath}${search ? `?${search}` : ""}`;
+  const url = `${config.soulwatch.url}/watch/${subpath}${search ? `?${search}` : ""}`;
 
   try {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-Internal-Key": SOULWATCH_KEY,
+      "X-Internal-Key": config.soulwatch.key,
       "X-Tenant-ID": tenantId,
     };
 
@@ -107,25 +65,25 @@ async function proxyWithBody(
   request: NextRequest,
   params: Promise<{ path: string[] }>,
 ) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   const { path } = await params;
   const subpath = path.join("/");
   const searchParams = new URLSearchParams(request.nextUrl.searchParams);
 
-  // Fall back to default tenant so local dev works without a session cookie.
-  const tenantId = request.headers.get("x-tenant-id") || DEFAULT_TENANT_ID;
+  // Use tenant from the verified session; fall back to dev default.
+  const tenantId = request.headers.get("x-tenant-id") || session.tenantId;
   if (!searchParams.has("tenant_id")) {
     searchParams.set("tenant_id", tenantId);
   }
 
   const search = searchParams.toString();
-  const url = `${SOULWATCH_URL}/watch/${subpath}${search ? `?${search}` : ""}`;
+  const url = `${config.soulwatch.url}/watch/${subpath}${search ? `?${search}` : ""}`;
 
   try {
     const headers: Record<string, string> = {
-      "X-Internal-Key": SOULWATCH_KEY,
+      "X-Internal-Key": config.soulwatch.key,
       "X-Tenant-ID": tenantId,
     };
 

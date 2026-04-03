@@ -110,6 +110,20 @@ class CommissionSplitResponse(BaseModel):
     is_cascading: bool
 
 
+class PromoCodeDetail(BaseModel):
+    promo_code_id: str
+    code: str
+    coupon_id: str | None
+    percent_off: float | None
+    active: bool
+    times_redeemed: int
+    max_redemptions: int | None
+
+
+class DashboardLinkResponse(BaseModel):
+    url: str
+
+
 # --- Endpoints ---
 
 @router.post(
@@ -469,3 +483,51 @@ async def partner_commission_split(
         recruiter_rate=split.recruiter_rate,
         is_cascading=split.is_cascading,
     )
+
+
+@router.get(
+    "/promo/list",
+    response_model=list[PromoCodeDetail],
+    summary="List partner promo codes",
+)
+async def partner_list_promos(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> list[PromoCodeDetail]:
+    """List all promo codes created by this partner."""
+    tenant_id_header = request.headers.get("X-Tenant-ID")
+    if not tenant_id_header:
+        raise HTTPException(status_code=403, detail="X-Tenant-ID required")
+
+    tid = uuid.UUID(tenant_id_header)
+    result = await db.execute(select(SoulPartner).where(SoulPartner.tenant_id == tid))
+    partner = result.scalar_one_or_none()
+    if not partner:
+        raise HTTPException(status_code=404, detail="No partner record found")
+
+    codes = await list_partner_promo_codes(str(partner.id))
+    return [PromoCodeDetail(**c) for c in codes]
+
+
+@router.get(
+    "/connect/dashboard-link",
+    response_model=DashboardLinkResponse,
+    summary="Get Stripe Express dashboard login link",
+)
+async def partner_connect_dashboard(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> DashboardLinkResponse:
+    """Generate a login link for the partner's Stripe Express dashboard."""
+    tenant_id_header = request.headers.get("X-Tenant-ID")
+    if not tenant_id_header:
+        raise HTTPException(status_code=403, detail="X-Tenant-ID required")
+
+    tid = uuid.UUID(tenant_id_header)
+    result = await db.execute(select(SoulPartner).where(SoulPartner.tenant_id == tid))
+    partner = result.scalar_one_or_none()
+    if not partner or not partner.stripe_connect_account_id:
+        raise HTTPException(status_code=404, detail="No Connect account found")
+
+    url = await create_dashboard_link(partner.stripe_connect_account_id)
+    return DashboardLinkResponse(url=url)

@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession, isAuthError } from "@/lib/server-auth";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -54,12 +55,18 @@ function writeTickets(tickets: StoredTicket[]): void {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
+
   const tickets = readTickets();
   return NextResponse.json(tickets);
 }
 
 export async function POST(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
+
   try {
     const body = await request.json();
     const { subject, description, severity, category } = body;

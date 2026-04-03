@@ -64,6 +64,26 @@ def _verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
+@router.get("/session/verify")
+async def verify_session(http_request: Request, db: AsyncSession = Depends(get_db)):
+    """Verify a session token (works for both local and OIDC sessions)."""
+    auth_header = http_request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return {"valid": False, "reason": "No session token"}
+    raw_token = auth_header[7:]
+    result = await validate_session(db, raw_token)
+    if not result:
+        return {"valid": False, "reason": "Invalid or expired session"}
+    _s, user = result
+    return {
+        "valid": True,
+        "user_id": str(user.id),
+        "tenant_id": str(user.tenant_id),
+        "email": user.email,
+        "admin_role": user.admin_role,
+    }
+
+
 @router.post("/login", response_model=LoginResponse)
 async def local_login(request: LoginRequest, http_request: Request, db: AsyncSession = Depends(get_db)):
     """

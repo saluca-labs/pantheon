@@ -50,7 +50,17 @@ async def exchange_code_for_tokens(
         payload["code_verifier"] = code_verifier
 
     async with httpx.AsyncClient(timeout=15.0) as client:
+        logger.info("oidc_exchange.token_request",
+                     redirect_uri=redirect_uri,
+                     client_id=idp_config.client_id,
+                     token_endpoint=token_endpoint,
+                     has_code_verifier=code_verifier is not None)
         resp = await client.post(token_endpoint, data=payload)
+        if not resp.is_success:
+            logger.error("oidc_exchange.token_error",
+                         status=resp.status_code,
+                         body=resp.text[:500],
+                         redirect_uri=redirect_uri)
         resp.raise_for_status()
         return resp.json()
 

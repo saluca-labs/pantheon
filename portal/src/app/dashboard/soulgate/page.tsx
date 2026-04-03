@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { timeAgo } from "@/lib/display";
 
 /** SoulGate overview -- API gateway metrics, routing rules, and rate limit summary. Fetches live data with mock fallback. */
 
@@ -50,48 +51,9 @@ interface SoulGateDashboard {
   fetched_at: string;
 }
 
-/* ---- Mock Fallback Data ---- */
 
-const MOCK_HOURLY_REQUESTS = Array.from({ length: 24 }, (_, i) => ({
-  hour: `${String(i).padStart(2, "0")}:00`,
-  total: Math.floor(Math.random() * 8000) + 2000 + (i >= 9 && i <= 17 ? 5000 : 0),
-  blocked: Math.floor(Math.random() * 400) + 50 + (i >= 2 && i <= 5 ? 200 : 0),
-}));
-
-const MOCK_BLOCK_REASONS = [
-  { reason: "Rate Limit", count: 1842, color: "bg-amber-500", pct: 42 },
-  { reason: "Token Invalid", count: 876, color: "bg-red-500", pct: 20 },
-  { reason: "Injection Detected", count: 657, color: "bg-purple-500", pct: 15 },
-  { reason: "Geo Blocked", count: 548, color: "bg-blue-500", pct: 13 },
-  { reason: "IP Blocked", count: 438, color: "bg-orange-500", pct: 10 },
-];
-
-const MOCK_TOP_BLOCKED_AGENTS = [
-  { agent: "agent-008", soulkey: "sk_demo_008", blocked: 312, reason: "rate_limit", lastBlocked: "2 min ago" },
-  { agent: "agent-011", soulkey: "sk_demo_011", blocked: 287, reason: "token_invalid", lastBlocked: "5 min ago" },
-  { agent: "agent-002", soulkey: "sk_demo_002", blocked: 156, reason: "rate_limit", lastBlocked: "12 min ago" },
-  { agent: "agent-012", soulkey: "sk_demo_012", blocked: 134, reason: "injection", lastBlocked: "18 min ago" },
-  { agent: "agent-004", soulkey: "sk_demo_004", blocked: 89, reason: "geo_block", lastBlocked: "31 min ago" },
-];
-
-const MOCK_UPSTREAMS: Upstream[] = [
-  { name: "upstream-alpha", status: "healthy", latency: 42, circuitBreaker: "closed" },
-  { name: "upstream-bravo", status: "healthy", latency: 18, circuitBreaker: "closed" },
-  { name: "upstream-charlie", status: "degraded", latency: 340, circuitBreaker: "closed" },
-  { name: "upstream-delta", status: "healthy", latency: 128, circuitBreaker: "closed" },
-  { name: "upstream-echo", status: "down", latency: 0, circuitBreaker: "open" },
-  { name: "upstream-foxtrot", status: "healthy", latency: 65, circuitBreaker: "closed" },
-];
 
 /* ---- Helpers ---- */
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = (mins / 60).toFixed(1);
-  return `${hrs} hours ago`;
-}
 
 const REASON_COLOR_MAP: Record<string, string> = {
   "Rate Limit": "bg-amber-500",
@@ -193,31 +155,27 @@ export default function SoulGateDashboardPage() {
   });
 
   /* ---- Derived state: live data or mock fallback ---- */
-  const isLive = dashData !== null && (
-    (dashData.metrics !== null) ||
-    (dashData.upstreams && dashData.upstreams.length > 0) ||
-    (dashData.blocks && dashData.blocks.length > 0)
-  );
+  const isLive = dashData !== null;
 
   const hourlyRequests = useMemo(() => {
-    if (isLive && dashData?.metrics?.hourly_requests && dashData.metrics.hourly_requests.length > 0) {
+    if (isLive && dashData?.metrics?.hourly_requests) {
       return dashData.metrics.hourly_requests;
     }
-    return MOCK_HOURLY_REQUESTS;
+    return [];
   }, [isLive, dashData]);
 
   const blockReasons = useMemo(() => {
-    if (isLive && dashData?.metrics?.block_reasons && dashData.metrics.block_reasons.length > 0) {
+    if (isLive && dashData?.metrics?.block_reasons) {
       return dashData.metrics.block_reasons.map((r) => ({
         ...r,
         color: REASON_COLOR_MAP[r.reason] || "bg-gray-500",
       }));
     }
-    return MOCK_BLOCK_REASONS;
+    return [];
   }, [isLive, dashData]);
 
   const topBlockedAgents = useMemo(() => {
-    if (isLive && dashData?.blocks && dashData.blocks.length > 0) {
+    if (isLive && dashData?.blocks) {
       return dashData.blocks.map((b) => ({
         agent: b.agent || b.persona_id || "unknown",
         soulkey: b.soulkey || (b.soulkey_id ? `${b.soulkey_id.substring(0, 8)}...` : "unknown"),
@@ -226,11 +184,11 @@ export default function SoulGateDashboardPage() {
         lastBlocked: b.lastBlocked || (b.created_at ? timeAgo(b.created_at) : "unknown"),
       }));
     }
-    return MOCK_TOP_BLOCKED_AGENTS;
+    return [];
   }, [isLive, dashData]);
 
   const upstreams = useMemo(() => {
-    if (isLive && dashData?.upstreams && dashData.upstreams.length > 0) {
+    if (isLive && dashData?.upstreams) {
       return dashData.upstreams.map((u) => ({
         name: u.name,
         status: u.status || "healthy" as const,
@@ -238,7 +196,7 @@ export default function SoulGateDashboardPage() {
         circuitBreaker: u.circuitBreaker || (u.circuit_breaker_enabled ? "closed" : "closed") as "closed" | "open" | "half_open",
       }));
     }
-    return MOCK_UPSTREAMS;
+    return [];
   }, [isLive, dashData]);
 
   const requestsPerMin = dashData?.metrics?.requests_per_min ?? 2847;

@@ -7,19 +7,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
-const TIRESIAS_PROXY_URL =
-  process.env.TIRESIAS_PROXY_URL || "http://tiresias-proxy:8080";
-const TIRESIAS_API_KEY = process.env.TIRESIAS_API_KEY || "";
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth:8000";
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
 /** Cost per 1K tokens by model family (rough estimates). */
 const COST_PER_1K: Record<string, { input: number; output: number }> = {
-  "claude-sonnet-4-6":        { input: 0.003,  output: 0.015  },
-  "claude-3-5-sonnet":        { input: 0.003,  output: 0.015  },
-  "claude-3-haiku":           { input: 0.00025, output: 0.00125 },
-  "claude-haiku-4-5":         { input: 0.00025, output: 0.00125 },
+  "claude-sonnet-4":          { input: 0.003,  output: 0.015  },
+  "claude-opus-4":            { input: 0.015,  output: 0.075  },
+  "claude-haiku-4":           { input: 0.0008, output: 0.004  },
   "gpt-4o":                   { input: 0.005,  output: 0.015  },
   "gpt-4o-mini":              { input: 0.00015, output: 0.0006 },
   "llama":                    { input: 0.0,    output: 0.0    },
@@ -31,37 +26,9 @@ function estimateCost(model: string, promptTokens: number, completionTokens: num
   return (promptTokens / 1000) * rates.input + (completionTokens / 1000) * rates.output;
 }
 
-async function verifySession(request: NextRequest): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
-
 export async function POST(request: NextRequest) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   let body: {
     prompt: string;
@@ -108,8 +75,8 @@ export async function POST(request: NextRequest) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  if (TIRESIAS_API_KEY) {
-    headers["X-Tiresias-Api-Key"] = TIRESIAS_API_KEY;
+  if (config.proxy.apiKey) {
+    headers["X-Tiresias-Api-Key"] = config.proxy.apiKey;
   }
   // Forward tenant context
   const tenantId = request.headers.get("x-tenant-id");
@@ -120,7 +87,7 @@ export async function POST(request: NextRequest) {
   const startMs = Date.now();
 
   try {
-    const res = await fetch(`${TIRESIAS_PROXY_URL}/v1/chat/completions`, {
+    const res = await fetch(`${config.proxy.url}/v1/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify(chatBody),

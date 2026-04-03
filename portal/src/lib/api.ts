@@ -11,10 +11,8 @@ export class ApiError extends Error {
     public statusText: string,
     public body: Record<string, unknown> | null,
   ) {
-    const detail =
-      (body?.detail as string) ||
-      (body?.message as string) ||
-      `${status} ${statusText}`;
+    const raw = body?.detail ?? body?.message ?? `${status} ${statusText}`;
+    const detail = typeof raw === "string" ? raw : JSON.stringify(raw);
     super(detail);
     this.name = "ApiError";
   }

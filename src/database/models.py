@@ -247,6 +247,18 @@ class SoulUser(Base):
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+    is_account_admin: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+        comment="Tenant-wide account admin; can manage all users/teams/billing"
+    )
+    is_secondary_admin: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+        comment="Secondary admin; full user/team management but cannot remove primary admin"
+    )
+    primary_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_teams.id", ondelete="SET NULL"), nullable=True,
+        comment="User's primary/default team for scoping dashboards"
+    )
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
 
     __table_args__ = (
@@ -428,4 +440,104 @@ class NotificationChannel(Base):
     __table_args__ = (
         Index("idx_notification_channels_tenant", "tenant_id"),
         Index("idx_notification_channels_type", "channel_type"),
+    )
+
+
+class SoulTeam(Base):
+    """_soul_teams - Logical team/group within a tenant."""
+    __tablename__ = "_soul_teams"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(63), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False,
+        comment="Exactly one default team per tenant; new users land here")
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="SET NULL"), nullable=True
+    )
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "slug", name="uq_soul_teams_tenant_slug"),
+        Index("idx_soul_teams_tenant", "tenant_id"),
+    )
+
+
+class SoulTeamMember(Base):
+    """_soul_team_members - User membership in a team with team-scoped role."""
+    __tablename__ = "_soul_team_members"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    team_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_teams.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="CASCADE"), nullable=False
+    )
+    team_role: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="member",
+        comment="Team-scoped role: team_admin, analyst, member"
+    )
+    joined_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    added_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("team_id", "user_id", name="uq_soul_team_members_team_user"),
+        CheckConstraint("team_role IN ('team_admin', 'analyst', 'member')", name="ck_soul_team_members_role"),
+        Index("idx_soul_team_members_team", "team_id"),
+        Index("idx_soul_team_members_user", "user_id"),
+    )
+
+
+class SoulUserInvite(Base):
+    """_soul_user_invites - Pending invitations to join a tenant/team."""
+    __tablename__ = "_soul_user_invites"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_teams.id", ondelete="SET NULL"), nullable=True,
+        comment="Target team; NULL = default team"
+    )
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    invited_role: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="viewer",
+        comment="Portal-level admin_role to assign on acceptance"
+    )
+    invited_team_role: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="member",
+        comment="Team-level role to assign on acceptance"
+    )
+    token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True,
+        comment="SHA-256 hash of the invite token sent via email"
+    )
+    invited_by: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="pending",
+        comment="pending | accepted | expired | revoked"
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    accepted_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('pending', 'accepted', 'expired', 'revoked')", name="ck_soul_user_invites_status"),
+        Index("idx_soul_user_invites_tenant", "tenant_id"),
+        Index("idx_soul_user_invites_email", "email"),
+        Index("idx_soul_user_invites_token", "token_hash"),
     )

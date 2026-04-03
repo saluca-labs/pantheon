@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import SoulUser, SoulIdPConfig
+from src.database.models import SoulUser, SoulIdPConfig, SoulUserInvite, SoulTeam, SoulTeamMember
 
 logger = structlog.get_logger(__name__)
 
@@ -161,4 +161,109 @@ async def jit_provision_user(
             role=user.admin_role,
         )
 
+    # --- Invite matching & default team assignment ---
+    await _apply_invite_or_default_team(db, user, tenant_id, email, now)
+
     return user
+
+
+async def _get_default_team_id(db: AsyncSession, tenant_id: UUID) -> Optional[UUID]:
+    """Return the ID of the tenant's default team, or None."""
+    result = await db.execute(
+        select(SoulTeam.id).where(
+            SoulTeam.tenant_id == tenant_id,
+            SoulTeam.is_default == True,  # noqa: E712
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def _add_to_team(
+    db: AsyncSession,
+    team_id: UUID,
+    user_id: UUID,
+    team_role: str,
+    added_by: Optional[UUID] = None,
+) -> None:
+    """Add a user to a team if not already a member."""
+    from sqlalchemy import select as _sel
+    exists = await db.execute(
+        _sel(SoulTeamMember.id).where(
+            SoulTeamMember.team_id == team_id,
+            SoulTeamMember.user_id == user_id,
+        )
+    )
+    if exists.scalar_one_or_none():
+        return  # already a member
+    membership = SoulTeamMember(
+        team_id=team_id,
+        user_id=user_id,
+        team_role=team_role,
+        added_by=added_by,
+    )
+    db.add(membership)
+    await db.flush()
+
+
+async def _apply_invite_or_default_team(
+    db: AsyncSession,
+    user: SoulUser,
+    tenant_id: UUID,
+    email: str,
+    now,
+) -> None:
+    """
+    After JIT provisioning, check for a pending invite matching the user's email.
+    If found: apply the invite's role/team settings and mark it accepted.
+    If not found: add the user to the tenant's default team as 'member'.
+    """
+    from datetime import datetime as _dt, timezone as _tz
+
+    invite_result = await db.execute(
+        select(SoulUserInvite).where(
+            SoulUserInvite.tenant_id == tenant_id,
+            SoulUserInvite.email == email,
+            SoulUserInvite.status == "pending",
+            SoulUserInvite.expires_at > _dt.now(_tz.utc),
+        )
+    )
+    invite = invite_result.scalar_one_or_none()
+
+    if invite:
+        # Apply invite's portal role (overrides group_role_map)
+        await db.execute(
+            update(SoulUser)
+            .where(SoulUser.id == user.id)
+            .values(admin_role=invite.invited_role, updated_at=now)
+        )
+        user.admin_role = invite.invited_role
+
+        # Add to the invite's target team (or default)
+        target_team_id = invite.team_id or await _get_default_team_id(db, tenant_id)
+        if target_team_id:
+            await _add_to_team(db, target_team_id, user.id, invite.invited_team_role, invite.invited_by)
+
+        # Mark invite accepted
+        await db.execute(
+            update(SoulUserInvite)
+            .where(SoulUserInvite.id == invite.id)
+            .values(
+                status="accepted",
+                accepted_at=now,
+                accepted_user_id=user.id,
+            )
+        )
+        await db.flush()
+
+        logger.info(
+            "jit.invite_applied",
+            user_id=str(user.id),
+            invite_id=str(invite.id),
+            role=invite.invited_role,
+            team_role=invite.invited_team_role,
+        )
+    else:
+        # No invite — add to default team as member
+        default_team_id = await _get_default_team_id(db, tenant_id)
+        if default_team_id:
+            await _add_to_team(db, default_team_id, user.id, "member")

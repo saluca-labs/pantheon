@@ -37,3 +37,31 @@ def effective_tier(install_tier: str, tenant_tier: str) -> str:
     Install license caps the ceiling; tenant subscription sets what they paid for.
     """
     return TIER_ORDER[min(tier_rank(install_tier), tier_rank(tenant_tier))]
+
+
+# ---------------------------------------------------------------------------
+# Tier-based child creation rules (tenant hierarchy)
+# ---------------------------------------------------------------------------
+
+TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
+    "saas": ["saas", "mssp", "enterprise", "pro", "community"],
+    "mssp": ["enterprise", "pro", "community"],
+    "enterprise": ["pro", "community"],
+    "pro": ["community"],
+    "community": [],
+    "starter": [],
+}
+
+TIER_MAX_CHILDREN: dict[str, int] = {
+    "saas": 0,       # 0 = unlimited
+    "mssp": 500,
+    "enterprise": 50,
+    "pro": 10,
+    "community": 0,
+    "starter": 0,
+}
+
+
+def can_create_child(parent_tier: str, child_tier: str) -> bool:
+    """Check whether a parent tier is allowed to create a child of the given tier."""
+    return child_tier in TIER_ALLOWED_CHILDREN.get(parent_tier, [])

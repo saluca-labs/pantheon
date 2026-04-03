@@ -237,6 +237,10 @@ class Settings(BaseSettings):
         default="https://tiresias.network",
         description="Public base URL for OAuth redirect_uri construction",
     )
+    allowed_origins: list[str] = Field(
+        default=["https://tiresias.network"],
+        description="Allowlist of portal origins for OIDC redirect_uri",
+    )
     oidc_enabled: bool = Field(
         default=False,
         description="Feature flag: enable SSO/OIDC portal authentication",

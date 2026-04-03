@@ -614,7 +614,7 @@ tags:
                 Pricing
               </h2>
               <p className="text-foreground-muted mb-8 leading-relaxed">
-                SoulWatch is included with SoulAuth Pro plans at no additional cost.
+                SoulWatch is included with every Tiresias platform tier at no additional cost.
                 Standalone pricing for teams using third-party authorization is coming soon.
               </p>
               <div className="glass-card rounded-xl p-8 inline-block">
@@ -625,8 +625,8 @@ tags:
                     </svg>
                   </div>
                   <div className="text-left">
-                    <p className="font-semibold text-foreground">Included with SoulAuth Pro</p>
-                    <p className="text-sm text-foreground-muted">Full SoulWatch access, no extra charge</p>
+                    <p className="font-semibold text-foreground">Included with Tiresias platform</p>
+                    <p className="text-sm text-foreground-muted">Full SoulWatch access on every tier</p>
                   </div>
                 </div>
                 <ul className="text-left space-y-2 mb-6">
@@ -663,7 +663,7 @@ tags:
                 Monitor your agents today
               </h2>
               <p className="text-foreground-muted mb-8 leading-relaxed">
-                SoulWatch is production-ready and included with every SoulAuth Pro trial.
+                SoulWatch is production-ready and included on the Open tier.
                 Start monitoring your agent fleet in minutes - no credit card required.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
