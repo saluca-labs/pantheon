@@ -5,83 +5,13 @@
  * SoulAuth audit report for real data when SoulGate returns empty.
  */
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULGATE_URL =
-  process.env.SOULGATE_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_SOULGATE_API_URL ||
-  "http://localhost:8002";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL ||
-  process.env.SOULAUTH_INTERNAL_URL ||
-  "http://localhost:8000";
-
-async function verifySession(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
-
-async function tryFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-function resolveTenant(request: NextRequest): string {
-  const fromCookie = request.cookies.get("tiresias_tenant")?.value;
-  if (fromCookie) return fromCookie;
-
-  const sessionData = request.cookies.get("tiresias_session_data")?.value;
-  if (sessionData) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(sessionData));
-      if (parsed.tenant_id) return parsed.tenant_id;
-    } catch {
-      // ignore
-    }
-  }
-
-  return "00000001-0000-4000-a000-000000000001";
-}
+import { verifySession, isAuthError, resolveTenant } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
+import { tryFetch, fetchAllTenantIds } from "@/lib/server-fetch";
 
 export async function GET(request: NextRequest) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   const limit = request.nextUrl.searchParams.get("limit") || "100";
   const blocked = request.nextUrl.searchParams.get("blocked");
@@ -91,7 +21,7 @@ export async function GET(request: NextRequest) {
   if (blocked) params.set("blocked", blocked);
 
   const logs = await tryFetch(
-    `${SOULGATE_URL}/gate/v1/audit/logs?${params.toString()}`
+    `${config.soulgate.url}/gate/v1/audit/logs?${params.toString()}`
   );
 
   // If SoulGate returned real data, use it
@@ -107,16 +37,13 @@ export async function GET(request: NextRequest) {
 
   // Fall back to SoulAuth audit report
   const tenantId = resolveTenant(request);
-  const tenantIds = [
-    tenantId,
-    "00000001-0000-4000-a001-000000000001",
-    "0c2515c2-1612-4a1a-bf72-47e760ccca51",
-  ];
+  const dynamicTenants = await fetchAllTenantIds();
+  const tenantIds = [...new Set([tenantId, ...dynamicTenants])];
 
   const auditResults = await Promise.all(
-    [...new Set(tenantIds)].map((t) =>
+    tenantIds.map((t) =>
       tryFetch(
-        `${SOULAUTH_URL}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=${limit}`
+        `${config.soulauth.url}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=${limit}`
       )
     )
   );

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { tenantName, truncateSoulkey } from "@/lib/display";
+import { tenantName, truncateSoulkey, timeAgo } from "@/lib/display";
 
 /** Agent fleet management -- soulkey generation, agent CRUD, and status controls. */
 
@@ -65,15 +65,6 @@ function mapStatus(s: string): Agent["status"] {
   return "Active";
 }
 
-/** Format an ISO timestamp to a human-friendly relative string */
-function timeAgo(iso: string | null): string {
-  if (!iso) return "Never";
-  const diff = Date.now() - new Date(iso).getTime();
-  if (diff < 60_000) return "Just now";
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} hour${Math.floor(diff / 3_600_000) > 1 ? "s" : ""} ago`;
-  return `${Math.floor(diff / 86_400_000)} day${Math.floor(diff / 86_400_000) > 1 ? "s" : ""} ago`;
-}
 
 /** Derive capabilities from metadata fields and persona_id prefix */
 function deriveCapabilities(k: SoulkeyDetail): string[] {

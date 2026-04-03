@@ -4,57 +4,21 @@
  * Suspends a tenant via SoulAuth admin API.
  */
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL ||
-  process.env.SOULAUTH_INTERNAL_URL ||
-  "http://soulauth:8000";
-
-async function verifySession(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ tenantId: string }> },
 ) {
-  const denied = await verifySession(request);
-  if (denied) return denied;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   const { tenantId } = await params;
 
   try {
     const res = await fetch(
-      `${SOULAUTH_URL}/v1/soulauth/admin/tenants/${tenantId}/suspend`,
+      `${config.soulauth.url}/v1/soulauth/admin/tenants/${tenantId}/suspend`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

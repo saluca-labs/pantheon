@@ -10,96 +10,47 @@
  *   { metrics, upstreams, blocks, fetched_at }
  */
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL ||
-  process.env.SOULAUTH_INTERNAL_URL ||
-  "http://localhost:8000";
-
-const SOULGATE_URL =
-  process.env.SOULGATE_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_SOULGATE_API_URL ||
-  "http://localhost:8002";
-
-/* ---- helpers ---- */
-
-async function tryFetch(url: string, headers?: Record<string, string>) {
-  try {
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...headers },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Resolve tenant_id from the request cookies.
- * Falls back to a known default for local dev.
- */
-function resolveTenant(request: NextRequest): string {
-  const fromCookie = request.cookies.get("tiresias_tenant")?.value;
-  if (fromCookie) return fromCookie;
-
-  // Try session data cookie
-  const sessionData = request.cookies.get("tiresias_session_data")?.value;
-  if (sessionData) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(sessionData));
-      if (parsed.tenant_id) return parsed.tenant_id;
-    } catch {
-      // ignore
-    }
-  }
-
-  const oidcData = request.cookies.get("tiresias_oidc_data")?.value;
-  if (oidcData) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(oidcData));
-      if (parsed.tenant_id) return parsed.tenant_id;
-    } catch {
-      // ignore
-    }
-  }
-
-  // Dev fallback: main admin tenant
-  return "00000001-0000-4000-a000-000000000001";
-}
+import { verifySession, isAuthError, resolveTenant } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
+import { tryFetch, fetchAllTenantIds } from "@/lib/server-fetch";
 
 /* ---- route handler ---- */
 
 export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
+
   const tenantId = resolveTenant(request);
 
   // Fetch all sources in parallel
+  const soulAuthHeaders = config.internalApiKey
+    ? { "X-Internal-Key": config.internalApiKey, "X-Tenant-ID": tenantId }
+    : undefined;
+
   const [auditReport, allKeys, gateHealth] = await Promise.all([
     // SoulAuth audit report — last 100 events for this tenant
     tryFetch(
-      `${SOULAUTH_URL}/v1/soulauth/admin/audit/report?tenant_id=${tenantId}&limit=500`
+      `${config.soulauth.url}/v1/soulauth/admin/audit/report?tenant_id=${tenantId}&limit=500`,
+      soulAuthHeaders,
     ),
     // SoulAuth admin keys — used to derive "upstreams" (agent keys)
     tryFetch(
-      `${SOULAUTH_URL}/v1/soulauth/admin/keys?tenant_id=${tenantId}`
+      `${config.soulauth.url}/v1/soulauth/admin/keys?tenant_id=${tenantId}`,
+      soulAuthHeaders,
     ),
     // SoulGate health
-    tryFetch(`${SOULGATE_URL}/health`),
+    tryFetch(`${config.soulgate.url}/health`),
   ]);
 
   // Also fetch audit events from all tenants for broader view
-  const allTenantIds = [
-    tenantId,
-    "00000001-0000-4000-a001-000000000001",
-    "0c2515c2-1612-4a1a-bf72-47e760ccca51",
-  ];
+  const allTenantIds = await fetchAllTenantIds();
   const additionalAudits = await Promise.all(
     allTenantIds
       .filter((t) => t !== tenantId)
       .map((t) =>
         tryFetch(
-          `${SOULAUTH_URL}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=500`
+          `${config.soulauth.url}/v1/soulauth/admin/audit/report?tenant_id=${t}&limit=500`,
+          soulAuthHeaders,
         )
       )
   );

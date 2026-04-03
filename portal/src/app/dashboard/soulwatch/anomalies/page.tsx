@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { timeAgo } from "@/lib/display";
 
 /** SoulWatch anomaly list -- detailed anomaly inspection with severity and type filters. */
 
@@ -59,14 +60,6 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-function timeAgo(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = (diff / 3600000).toFixed(1);
-  return `${hrs} hours ago`;
-}
 
 const severityColor: Record<string, string> = {
   Critical: "bg-red-500/15 text-red-400 border border-red-500/20",

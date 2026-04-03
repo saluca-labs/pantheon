@@ -88,9 +88,17 @@ def _build_router(
     cascade = parse_providers(cfg.providers)
     health = HealthTracker(cascade)
 
+    # Only use the upstream_url override when it was explicitly set (i.e. not
+    # the default OpenAI URL) AND the single provider matches the URL.
+    # Without this guard, TIRESIAS_PROVIDERS=anthropic + the default
+    # upstream_url=https://api.openai.com would send Anthropic requests to
+    # OpenAI's domain, resulting in 404.
     single_provider_base: str | None = None
     if len(cascade) == 1:
-        single_provider_base = cfg.upstream_url.rstrip("/")
+        upstream = cfg.upstream_url.rstrip("/")
+        detected = _detect_provider(upstream)
+        if detected == cascade[0]:
+            single_provider_base = upstream
 
     def builder(name: str):
         base = single_provider_base if (single_provider_base and len(cascade) == 1) else None
@@ -417,6 +425,9 @@ async def _handle_non_streaming_router(
         async with _AS(engine) as db_session:
             await record_error_turn(tenant_id, model, db_session)
         raise HTTPException(status_code=502, detail=str(exc))
+    except HTTPException:
+        # Re-raise provider client errors (4xx) with their original status code
+        raise
     except Exception as exc:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:

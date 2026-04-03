@@ -15,6 +15,7 @@ from sqlalchemy import select
 
 from src.database.connection import get_db
 from src.database.models import Soulkey
+from src.auth.oidc_session import validate_session
 
 logger = structlog.get_logger(__name__)
 
@@ -37,11 +38,16 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "audit:read",
         "tenants:read",
         "tenants:update",
+        "tenants:create",
         "detection:*",
         "enforcement:*",
         "analytics:*",
         "aletheia:*",
+        "users:*",
+        "teams:*",
+        "invites:*",
         "multi_tenant",
+        "hierarchy:manage",
     ],
     "operator": [
         "keys:read",
@@ -53,18 +59,46 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "enforcement:read",
         "analytics:read",
         "aletheia:read",
+        "users:read",
+        "teams:read",
     ],
     "viewer": [
         "audit:read",
         "tenants:read",
+        "policy:read",
         "detection:read",
         "analytics:read",
         "aletheia:read",
+        "keys:read",
+        "enforcement:read",
+        "users:read",
+        "teams:read",
     ],
 }
 
 # Role hierarchy: higher roles include all lower role permissions
 ROLE_HIERARCHY = ["viewer", "operator", "admin", "owner"]
+
+# Account admin permissions (checked via is_account_admin flag, not role)
+ACCOUNT_ADMIN_PERMISSIONS = [
+    "users:create", "users:read", "users:update", "users:delete",
+    "teams:create", "teams:read", "teams:update", "teams:delete",
+    "invites:create", "invites:read", "invites:revoke",
+    "account:secondary_admin",
+]
+
+SECONDARY_ADMIN_PERMISSIONS = [
+    "users:create", "users:read", "users:update", "users:delete",
+    "teams:create", "teams:read", "teams:update", "teams:delete",
+    "invites:create", "invites:read", "invites:revoke",
+]
+
+# Team-level permissions
+TEAM_ROLE_PERMISSIONS = {
+    "team_admin": ["team_members:*", "team:update", "team:read"],
+    "analyst": ["team:read", "investigations:*", "detections:create", "detections:update"],
+    "member": ["team:read", "investigations:read", "detections:read"],
+}
 
 
 def _permission_matches(granted: str, required: str) -> bool:
@@ -216,6 +250,23 @@ def require_permission(permission: str):
             request.state.rbac_role = "owner"
             return
 
+        # Service-to-service auth via X-Internal-Key (portal → soulwatch/soulgate)
+        _internal_key = request.headers.get("X-Internal-Key")
+        if _internal_key:
+            _expected = os.environ.get("SOULWATCH_INTERNAL_API_KEY") or os.environ.get("INTERNAL_API_KEY", "")
+            if _internal_key == _expected and _expected:
+                _mock_tenant_id = _extract_tenant_id_from_request(request)
+
+                class _ServiceSoulkey:
+                    id = uuid.UUID("00000000-0000-0000-0000-000000000001")
+                    tenant_id = _mock_tenant_id
+                    persona_id = "service-internal"
+                    metadata_ = {"admin_role": "admin"}
+
+                request.state.rbac_soulkey = _ServiceSoulkey()
+                request.state.rbac_role = "admin"
+                return
+
         # Extract soulkey from request headers
         soulkey_header = (
             request.headers.get("X-SoulKey")
@@ -231,10 +282,25 @@ def require_permission(permission: str):
         soulkey, role = await resolve_soulkey_role(db, soulkey_header)
 
         if soulkey is None:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid or inactive soulkey.",
-            )
+            # Fallback: try OIDC/local session token
+            session_result = await validate_session(db, soulkey_header)
+            if session_result:
+                _session, user = session_result
+                role = user.admin_role or "viewer"
+                _mock_tenant_id = _extract_tenant_id_from_request(request)
+
+                class _OIDCSoulkey:
+                    id = user.id
+                    tenant_id = _mock_tenant_id or user.tenant_id
+                    persona_id = "oidc-session"
+                    metadata_ = {"admin_role": role}
+
+                soulkey = _OIDCSoulkey()
+            else:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid or inactive soulkey.",
+                )
 
         if not role_has_permission(role, permission):
             logger.warning(
@@ -279,3 +345,35 @@ async def resolve_oidc_user_role(request: Request) -> tuple:
     except ValueError:
         role = "viewer"
     return oidc_user, role
+
+
+# ---------------------------------------------------------------------------
+# Hierarchy permission check for delegated admin
+# ---------------------------------------------------------------------------
+
+async def check_hierarchy_permission(
+    db: AsyncSession,
+    caller_tenant_id: uuid.UUID,
+    target_tenant_id: uuid.UUID,
+    permission: str,
+) -> bool:
+    """
+    Check if caller_tenant_id has permission over target_tenant_id.
+    Returns True if:
+    1. caller == target (same tenant), OR
+    2. target is a descendant of caller in the hierarchy
+    """
+    if caller_tenant_id == target_tenant_id:
+        return True
+    try:
+        from src.mssp.isolation import get_child_tenant_ids
+        child_ids = await get_child_tenant_ids(db, caller_tenant_id, include_root=False)
+        return target_tenant_id in child_ids
+    except Exception:
+        logger.warning(
+            "rbac.hierarchy_check_failed",
+            caller_tenant_id=str(caller_tenant_id),
+            target_tenant_id=str(target_tenant_id),
+            permission=permission,
+        )
+        return False

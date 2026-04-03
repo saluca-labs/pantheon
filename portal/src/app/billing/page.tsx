@@ -22,10 +22,15 @@ interface BillingInfo {
 /** Map raw tier slug to a display-friendly plan name. */
 function formatPlanName(tier: string): string {
   const names: Record<string, string> = {
-    community: "Community (Free)",
-    starter: "Starter",
-    pro: "Platform Pro",
+    open: "Open (Free)",
+    community: "Open (Free)",
+    starter: "Starter ($49/mo)",
+    pro: "Pro ($199/mo)",
     enterprise: "Enterprise",
+    platform: "Platform",
+    mssp: "Platform",
+    oem: "OEM",
+    saas: "OEM",
   };
   return names[tier] ?? tier.charAt(0).toUpperCase() + tier.slice(1);
 }
@@ -75,9 +80,9 @@ export default function BillingPage() {
           periodEnd = graceData.current_period_end ?? null;
         }
 
-        const tier = session!.tier || "community";
+        const tier = session!.tier || "open";
         const status =
-          tier === "community" ? "free" : graceActive ? "grace" : "active";
+          tier === "open" || tier === "community" ? "free" : graceActive ? "grace" : "active";
 
         if (!cancelled) {
           setBilling({
@@ -269,7 +274,12 @@ export default function BillingPage() {
                         className="h-full bg-gradient-to-r from-of-primary to-of-primary rounded-full"
                         style={{
                           width: `${Math.min(
-                            (billing.agent_count / 50) * 100,
+                            (billing.agent_count / (
+                              billing.tier === "pro" ? 250 :
+                              billing.tier === "starter" ? 50 :
+                              billing.tier === "enterprise" || billing.tier === "platform" || billing.tier === "oem" ? 1000 :
+                              25
+                            )) * 100,
                             100
                           )}%`,
                         }}
@@ -285,7 +295,7 @@ export default function BillingPage() {
                   Cancel Subscription
                 </h2>
                 <p className="text-of-on-surface-variant text-sm mb-4">
-                  Canceling will downgrade your account to SoulAuth Community
+                  Canceling will downgrade your account to the Open tier
                   (free) at the end of your current billing period.
                 </p>
                 <button

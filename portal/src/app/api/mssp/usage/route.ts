@@ -5,12 +5,16 @@
  * Accepts `from` and `to` query params for time range filtering.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession, isAuthError } from "@/lib/server-auth";
 
 const SOULAUTH_URL =
   process.env.SOULAUTH_INTERNAL_URL ||
-  "http://soulauth:8000";
+  "http://soulauth.tiresias.svc.cluster.local";
 
 export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
+
 
   const from = request.nextUrl.searchParams.get("from") || "";
   const to = request.nextUrl.searchParams.get("to") || "";

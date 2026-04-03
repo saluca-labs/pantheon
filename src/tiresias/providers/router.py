@@ -96,6 +96,29 @@ class ProviderRouter:
                 )
                 continue
 
+            if provider.is_client_error(resp.status_code):
+                # Client errors (4xx except 429) should not cascade -- the
+                # request itself is invalid (e.g. deprecated model, bad params).
+                # Surface the upstream error instead of silently returning empty.
+                try:
+                    error_body = resp.json()
+                except Exception:
+                    error_body = {"error": resp.text}
+                error_detail = error_body.get("error", {})
+                if isinstance(error_detail, dict):
+                    msg = error_detail.get("message", str(error_detail))
+                else:
+                    msg = str(error_detail)
+                logger.warning(
+                    "Provider %s returned client error %s: %s",
+                    provider_name, resp.status_code, msg,
+                )
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=resp.status_code,
+                    detail=f"Provider {provider_name}: {msg}",
+                )
+
             # Success
             self._health.record_success(provider_name)
             try:

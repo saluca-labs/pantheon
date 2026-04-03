@@ -181,6 +181,25 @@ async def provision_child_tenant(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
+    # Tier creation rules -- validate child tier against parent's allowed children
+    from src.tier import TIER_ALLOWED_CHILDREN, TIER_MAX_CHILDREN, can_create_child
+    if not can_create_child(caller.tier, body.tier):
+        allowed = TIER_ALLOWED_CHILDREN.get(caller.tier, [])
+        raise HTTPException(
+            status_code=422,
+            detail=f"Tier '{caller.tier}' cannot create child tier '{body.tier}'. Allowed: {allowed}",
+        )
+
+    # Max children check
+    max_children = TIER_MAX_CHILDREN.get(caller.tier, 0)
+    if max_children > 0:
+        existing_children = await get_child_tenant_ids(db, caller_id, include_root=False)
+        if len(existing_children) >= max_children:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Tenant has reached max children ({max_children})",
+            )
+
     # Slug uniqueness check
     existing = await db.execute(
         select(SoulTenant).where(SoulTenant.slug == body.slug)

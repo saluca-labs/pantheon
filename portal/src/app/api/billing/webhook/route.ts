@@ -306,7 +306,8 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      case "invoice.paid": {
+      case "invoice.paid":
+      case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         // Stripe 2026-02-25 API: subscription lives under invoice.parent.subscription_details.subscription
         const subRef = invoice.parent?.subscription_details?.subscription;
@@ -320,8 +321,8 @@ export async function POST(request: NextRequest) {
             " subscription=" +
             subscriptionId
         );
-        // Forward to SoulAuth for audit log
-        await forwardToSoulAuth(event.type, event.data);
+        // Forward to SoulAuth for audit log + partner commission processing
+        await forwardToSoulAuth("invoice.paid", event.data);
         break;
       }
 

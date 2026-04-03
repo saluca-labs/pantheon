@@ -132,13 +132,17 @@ async def create_tenant(
     slug: str,
     tier: str = DEFAULT_TIER,
     metadata: Optional[dict] = None,
+    parent_tenant_id: Optional[uuid.UUID] = None,
+    hierarchy_depth: int = 0,
 ) -> SoulTenant:
-    """Create a new tenant."""
+    """Create a new tenant, optionally as a child of parent_tenant_id."""
     tenant = SoulTenant(
         name=name,
         slug=slug,
         tier=tier,
         status="active",
+        parent_tenant_id=parent_tenant_id,
+        hierarchy_depth=hierarchy_depth,
         metadata_=metadata or {},
     )
     db.add(tenant)

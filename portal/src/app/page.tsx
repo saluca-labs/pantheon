@@ -854,7 +854,7 @@ function FinalCTA() {
           </div>
 
           <p className="mt-8 text-xs text-foreground-subtle">
-            Free tier includes 1,000 agent authentications/month.
+            Free for individuals, students, and startups under $1M ARR — 25 managed agents, 7-day retention.
             Enterprise plans available.
           </p>
         </motion.div>

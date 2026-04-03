@@ -7,14 +7,10 @@
  * DELETE — remove syslog config
  */
 import { NextRequest, NextResponse } from "next/server";
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
-const SOULWATCH_URL =
-  process.env.SOULWATCH_INTERNAL_URL || "http://localhost:8001";
-
-const SOULWATCH_KEY =
-  process.env.SOULWATCH_INTERNAL_KEY || "sw_metrics_scrape_2026";
-
-const UPSTREAM = `${SOULWATCH_URL}/watch/v1/integrations/syslog`;
+const UPSTREAM = `${config.soulwatch.url}/watch/v1/integrations/syslog`;
 
 async function upstream(
   method: string,
@@ -25,7 +21,7 @@ async function upstream(
       method,
       headers: {
         "Content-Type": "application/json",
-        "X-Internal-Key": SOULWATCH_KEY,
+        "X-Internal-Key": config.soulwatch.key,
       },
       signal: AbortSignal.timeout(10_000),
     };
@@ -44,19 +40,27 @@ async function upstream(
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
   return upstream("GET");
 }
 
 export async function PUT(req: NextRequest) {
+  const session = await verifySession(req);
+  if (isAuthError(session)) return session;
   const body = await req.json();
   return upstream("PUT", body);
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
   return upstream("POST");
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
   return upstream("DELETE");
 }

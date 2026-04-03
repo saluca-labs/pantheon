@@ -38,11 +38,14 @@ from src.middleware.usage_limit import UsageLimitMiddleware
 from src.billing.router import router as billing_router
 from src.investigation.router import router as investigation_router
 from src.saas.router import router as saas_router
+from src.saas.master import router as saas_master_router
 from src.partner.router import router as partner_router
 from src.contracts.router import router as contracts_router
 from src.siem.router import router as siem_router
 from src.idp.router import router as idp_router
 from src.notifications.router import router as notifications_router
+from src.usage.router import router as usage_router
+from src.teams.router import router as teams_router
 
 settings = get_settings()
 
@@ -482,11 +485,14 @@ app.include_router(ldap_auth_router)
 app.include_router(billing_router)
 app.include_router(investigation_router)
 app.include_router(saas_router)
+app.include_router(saas_master_router)
 app.include_router(partner_router)
 app.include_router(contracts_router)
 app.include_router(siem_router)
 app.include_router(idp_router)
 app.include_router(notifications_router)
+app.include_router(usage_router)
+app.include_router(teams_router)
 
 
 @app.get(

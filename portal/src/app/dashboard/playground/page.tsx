@@ -38,13 +38,8 @@ interface ChatMessage {
 }
 
 const MODELS = [
-  "claude-sonnet-4-6",
-  "claude-haiku-4-5",
-  "claude-3-5-sonnet-20241022",
-  "claude-3-haiku-20240307",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "llama-3.1-70b-instruct",
+  "claude-sonnet-4-20250514",
+  "claude-opus-4-20250514",
 ];
 
 export default function PlaygroundPage() {
