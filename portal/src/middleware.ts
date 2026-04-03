@@ -60,10 +60,9 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const validSession = isSessionValid(request);
 
-  // On-prem: root path redirects to /dashboard (authenticated) or /login
-  if (pathname === "/") {
-    const target = validSession ? "/dashboard" : "/login";
-    return NextResponse.redirect(new URL(target, request.url));
+  // Root: authenticated users go to dashboard, unauthenticated see landing page
+  if (pathname === "/" && validSession) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Protect /platform/* and /dashboard/* routes

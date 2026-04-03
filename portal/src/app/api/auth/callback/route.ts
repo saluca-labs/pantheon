@@ -31,27 +31,29 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const backendUrl = config.apiUrl;
+    const backendUrl = process.env.SOULAUTH_INTERNAL_URL || "http://soulauth.tiresias.svc.cluster.local";
     const res = await fetch(`${backendUrl}/v1/auth/oidc/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, state, redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || "https://tiresias.network"}/api/auth/callback` }),
+      body: JSON.stringify({ code, state, redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || getBaseUrl(request)}/api/auth/callback` }),
     });
 
     if (!res.ok) {
-      console.error("[OIDC callback] backend error:", res.status, await res.text());
-      return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
+      const errBody = await res.text();
+      console.error("[OIDC callback] backend error:", res.status, errBody);
+      return NextResponse.redirect(new URL(`/login?error=sso_failed&detail=${encodeURIComponent(errBody.slice(0, 200))}`, getBaseUrl(request)));
     }
 
     const data = await res.json();
     const session_token = data.session_token;
     const tenant_id = data.tenant_id;
     const tenant_name = data.tenant_name || null;
+    const tier = data.tier || "enterprise";
     const role = data.admin_role || "viewer";
     const email = data.email;
     const display_name = data.display_name;
     const expires_in = data.expires_in || 28800;
-    const expires_at = new Date(Date.now() + expires_in * 1000).toISOString();
+    const expires_at = Date.now() + expires_in * 1000; // epoch ms — matches OIDCSession type
 
     if (!session_token || !tenant_id || !email) {
       return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
@@ -76,6 +78,7 @@ export async function GET(request: NextRequest) {
       name: display_name ?? null,
       picture: null,
       role,
+      tier,
       tenant_id,
       tenant_name,
       expires_at,
@@ -99,8 +102,9 @@ export async function GET(request: NextRequest) {
     });
 
     return response;
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("[OIDC callback] unexpected error:", err);
-    return NextResponse.redirect(new URL("/login?error=sso_failed", getBaseUrl(request)));
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.redirect(new URL(`/login?error=sso_failed&detail=${encodeURIComponent(message.slice(0, 200))}`, getBaseUrl(request)));
   }
 }

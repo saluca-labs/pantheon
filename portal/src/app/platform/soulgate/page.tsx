@@ -615,7 +615,7 @@ for entry in resp.json()["entries"]:
                 Pricing
               </h2>
               <p className="text-foreground-muted mb-8 leading-relaxed">
-                SoulGate is included with SoulAuth Pro plans at no additional cost.
+                SoulGate is included with every Tiresias platform tier at no additional cost.
                 Standalone gateway pricing for teams using third-party auth is available on request.
               </p>
               <div className="glass-card rounded-xl p-8 inline-block">
@@ -626,8 +626,8 @@ for entry in resp.json()["entries"]:
                     </svg>
                   </div>
                   <div className="text-left">
-                    <p className="font-semibold text-foreground">Included with SoulAuth Pro</p>
-                    <p className="text-sm text-foreground-muted">Full SoulGate access, no extra charge</p>
+                    <p className="font-semibold text-foreground">Included with Tiresias platform</p>
+                    <p className="text-sm text-foreground-muted">Full SoulGate access on every tier</p>
                   </div>
                 </div>
                 <ul className="text-left space-y-2 mb-6">
@@ -664,7 +664,7 @@ for entry in resp.json()["entries"]:
                 Secure your agent APIs today
               </h2>
               <p className="text-foreground-muted mb-8 leading-relaxed">
-                SoulGate is production-ready and included with every SoulAuth Pro trial.
+                SoulGate is production-ready and included on the Open tier.
                 Start protecting your APIs in minutes - no credit card required.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">

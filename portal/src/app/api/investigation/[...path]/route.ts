@@ -4,52 +4,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-
-const SOULAUTH_URL =
-  process.env.SOULAUTH_INTERNAL_URL || "http://soulauth:8000";
-
-const INTERNAL_KEY = process.env.INTERNAL_API_KEY || "";
-
-async function verifySession(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  const sessionToken =
-    request.cookies.get("tiresias_session")?.value ||
-    request.cookies.get("tiresias_oidc_session")?.value;
-  if (!sessionToken) {
-    return NextResponse.json({ error: "No session token" }, { status: 401 });
-  }
-
-  try {
-    const res = await fetch(`${SOULAUTH_URL}/v1/auth/local/session/verify`, {
-      headers: { Authorization: `Bearer ${sessionToken}` },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const data = await res.json();
-    if (!data.valid) {
-      return NextResponse.json(
-        { error: data.reason || "Invalid session" },
-        { status: 401 },
-      );
-    }
-
-    return null;
-  } catch {
-    return NextResponse.json(
-      { error: "Session verification failed" },
-      { status: 502 },
-    );
-  }
-}
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
 
 async function proxyToSoulAuth(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
   method: string,
 ) {
-  const authError = await verifySession(request);
-  if (authError) return authError;
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
   const { path } = await params;
   const subpath = path.join("/");
@@ -60,7 +24,7 @@ async function proxyToSoulAuth(
     "Content-Type": "application/json",
     "X-Tenant-ID": tenantId,
   };
-  if (INTERNAL_KEY) headers["X-Internal-Key"] = INTERNAL_KEY;
+  if (config.internalApiKey) headers["X-Internal-Key"] = config.internalApiKey;
 
   const fetchOpts: RequestInit = {
     method,
@@ -79,7 +43,7 @@ async function proxyToSoulAuth(
 
   try {
     const res = await fetch(
-      `${SOULAUTH_URL}/v1/investigation/${subpath}${search}`,
+      `${config.soulauth.url}/v1/investigation/${subpath}${search}`,
       fetchOpts,
     );
 

@@ -20,8 +20,9 @@ import structlog
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.models import SoulTenant, PolicyCache, AuditLog
+from src.database.models import SoulTenant, SoulPartner, PolicyCache, AuditLog
 from src.billing.grace import handle_payment_failed, resolve_payment
+from src.partner.commissions import calculate_split, execute_transfers
 from src.tier import VALID_TIERS, DEFAULT_TIER
 from src.middleware.tenant import create_tenant, provision_tenant_encryption
 from src.auth.soulkey import issue_soulkey
@@ -164,6 +165,150 @@ def verify_stripe_signature(raw_body: bytes, signature_header: str) -> bool:
         expected_prefix=expected[:8],
     )
     return False
+
+
+async def _process_partner_commission(
+    db: AsyncSession,
+    tenant: SoulTenant,
+    invoice_id: str,
+    amount_paid: int,
+    charge_id: str,
+    currency: str = "usd",
+) -> Optional[dict]:
+    """
+    Check if a paying tenant was referred by a partner, and if so,
+    calculate the commission split and execute Stripe Connect transfers.
+
+    Flow:
+      1. Tenant has parent_tenant_id -> look up partner record for the parent
+      2. Partner must be active with a verified stripe_connect_account_id
+      3. Calculate split (handles 2-party and 3-party cascading)
+      4. Execute transfers via Stripe Connect
+      5. Audit log the commission event
+
+    Returns transfer details dict or None if no partner commission applies.
+    """
+    if not tenant.parent_tenant_id:
+        return None
+
+    # Look up the partner record for the referring tenant
+    result = await db.execute(
+        select(SoulPartner).where(
+            SoulPartner.tenant_id == tenant.parent_tenant_id,
+            SoulPartner.status == "active",
+        )
+    )
+    partner = result.scalar_one_or_none()
+    if not partner:
+        logger.debug(
+            "saas.billing.commission_skip_no_partner",
+            tenant_id=str(tenant.id),
+            parent_tenant_id=str(tenant.parent_tenant_id),
+        )
+        return None
+
+    if not partner.stripe_connect_account_id:
+        logger.warning(
+            "saas.billing.commission_skip_no_connect_account",
+            partner_id=str(partner.id),
+            partner_name=partner.name,
+        )
+        return None
+
+    if partner.stripe_connect_status != "active":
+        logger.warning(
+            "saas.billing.commission_skip_connect_not_active",
+            partner_id=str(partner.id),
+            connect_status=partner.stripe_connect_status,
+        )
+        return None
+
+    if amount_paid <= 0:
+        return None
+
+    # Calculate the split
+    try:
+        split = await calculate_split(db, partner.id)
+    except Exception as e:
+        logger.error(
+            "saas.billing.commission_split_failed",
+            partner_id=str(partner.id),
+            error=str(e),
+        )
+        return None
+
+    # Execute transfers via Stripe Connect
+    transfer_group = f"inv_{invoice_id}"
+    try:
+        transfers = await execute_transfers(
+            charge_id=charge_id,
+            amount_cents=amount_paid,
+            split=split,
+            transfer_group=transfer_group,
+        )
+    except Exception as e:
+        logger.error(
+            "saas.billing.commission_transfer_failed",
+            partner_id=str(partner.id),
+            invoice_id=invoice_id,
+            error=str(e),
+        )
+        return None
+
+    if not transfers:
+        return None
+
+    total_transferred = sum(t["amount_cents"] for t in transfers)
+
+    # Audit log the commission event
+    try:
+        audit = AuditLog(
+            tenant_id=tenant.id,
+            event_type="partner.commission_transferred",
+            resource="billing",
+            action="commission_transfer",
+            scope="system",
+            decision="allow",
+            reason=f"Partner commission for invoice {invoice_id}",
+            context={
+                "source": "stripe_webhook",
+                "invoice_id": invoice_id,
+                "partner_id": str(partner.id),
+                "partner_name": partner.name,
+                "amount_paid": amount_paid,
+                "currency": currency,
+                "total_transferred": total_transferred,
+                "is_cascading": split.is_cascading,
+                "platform_rate": split.platform_rate,
+                "seller_rate": split.seller_rate,
+                "seller_net_rate": split.seller_net_rate,
+                "recruiter_rate": split.recruiter_rate,
+                "transfers": transfers,
+                "transfer_group": transfer_group,
+            },
+        )
+        db.add(audit)
+    except Exception:
+        pass
+
+    logger.info(
+        "saas.billing.commission_transferred",
+        tenant_id=str(tenant.id),
+        partner_id=str(partner.id),
+        invoice_id=invoice_id,
+        amount_paid=amount_paid,
+        total_transferred=total_transferred,
+        is_cascading=split.is_cascading,
+        transfer_count=len(transfers),
+    )
+
+    return {
+        "partner_id": str(partner.id),
+        "partner_name": partner.name,
+        "total_transferred": total_transferred,
+        "is_cascading": split.is_cascading,
+        "transfers": transfers,
+    }
 
 
 def _resolve_tier_from_stripe(event_data: dict) -> Optional[str]:
@@ -514,12 +659,48 @@ async def handle_stripe_event(
             except Exception:
                 pass
 
-        return {
+        # --- Partner commission transfers (PARTNER-COMM) ---
+        # If the paying tenant was referred by a partner, calculate and execute
+        # commission transfers via Stripe Connect.
+        commission_result = None
+        if tenant and amount_paid > 0:
+            # Extract charge ID from the invoice for source_transaction on transfers.
+            # Stripe 2023+: invoice.charge is the charge ID string.
+            # Stripe 2024+: may be under payment_intent -> latest_charge.
+            charge_id = invoice.get("charge")
+            if not charge_id:
+                # Fallback: try payment_intent.latest_charge
+                pi = invoice.get("payment_intent")
+                if isinstance(pi, dict):
+                    charge_id = pi.get("latest_charge")
+                elif isinstance(pi, str) and pi.startswith("pi_"):
+                    # We only have the PI ID, not the charge. Transfers require a charge.
+                    # Log and skip -- charge will be available on the charge.succeeded event.
+                    logger.debug(
+                        "saas.billing.commission_deferred_no_charge",
+                        invoice_id=invoice_id,
+                        payment_intent=pi,
+                    )
+
+            if charge_id:
+                commission_result = await _process_partner_commission(
+                    db=db,
+                    tenant=tenant,
+                    invoice_id=invoice_id,
+                    amount_paid=amount_paid,
+                    charge_id=charge_id,
+                    currency=currency,
+                )
+
+        result = {
             "action": "invoice_paid",
             "tenant_id": str(tenant.id) if tenant else None,
             "invoice_id": invoice_id,
             "amount_paid": amount_paid,
         }
+        if commission_result:
+            result["commission"] = commission_result
+        return result
 
     elif event_type == "invoice.payment_failed":
         invoice = event_data.get("object", {})

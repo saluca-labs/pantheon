@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { timeAgo } from "@/lib/display";
 
 /** Sigma matches -- recent Sigma detection rule match table. Fetches from SoulWatch detections API. */
 
@@ -28,19 +29,6 @@ const statusColors: Record<string, string> = {
   New: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
 };
 
-function timeAgo(iso: string): string {
-  try {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  } catch {
-    return "unknown";
-  }
-}
 
 function mapSeverity(level: string): SigmaMatch["severity"] {
   if (level === "critical") return "critical";

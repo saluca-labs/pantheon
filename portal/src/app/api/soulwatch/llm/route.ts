@@ -6,28 +6,16 @@
  * total_cost_24h, by_model, by_provider, hourly_trend.
  * Falls back to null on backend failure.
  */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifySession, isAuthError } from "@/lib/server-auth";
+import { config } from "@/lib/server-config";
+import { tryFetch } from "@/lib/server-fetch";
 
-const SOULWATCH_URL =
-  process.env.SOULWATCH_INTERNAL_URL ||
-  process.env.SOULWATCH_INTERNAL_URL ||
-  "http://localhost:8001";
+export async function GET(request: NextRequest) {
+  const session = await verifySession(request);
+  if (isAuthError(session)) return session;
 
-async function tryFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-export async function GET() {
-  const llm = await tryFetch(`${SOULWATCH_URL}/watch/v1/dashboard/llm`);
+  const llm = await tryFetch(`${config.soulwatch.url}/watch/v1/dashboard/llm`, undefined, 5000);
 
   return NextResponse.json({
     llm: llm ?? null,

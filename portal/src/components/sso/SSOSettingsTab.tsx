@@ -34,8 +34,8 @@ export function SSOSettingsTab() {
     setLoading(true);
     setFetchError(null);
     try {
-      const data = await api.get<{ idps: IdPConfig[] }>("/v1/idp");
-      setIdps(data.idps ?? []);
+      const data = await api.get<IdPConfig[] | { idps: IdPConfig[] }>("/v1/idp");
+      setIdps(Array.isArray(data) ? data : (data.idps ?? []));
     } catch (err) {
       // 404 means no IdP endpoint configured yet — treat as empty, not error
       if (err instanceof ApiError && err.message.startsWith("404")) {

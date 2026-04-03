@@ -31,10 +31,10 @@ export function StructuredData() {
     offers: [
       {
         "@type": "Offer",
-        name: "Free Tier",
+        name: "Open Tier",
         price: "0",
         priceCurrency: "USD",
-        description: "1,000 agent authentications per month",
+        description: "25 managed agents, 7-day retention — free for individuals, students, and startups under $1M ARR",
       },
       {
         "@type": "Offer",

@@ -137,6 +137,7 @@ class CreateTenantRequest(BaseModel):
     name: str
     slug: str = Field(pattern=r"^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$")
     tier: str = "free"
+    parent_tenant_id: Optional[uuid.UUID] = None
     metadata: Optional[dict] = None
 
 
@@ -146,6 +147,8 @@ class TenantDetail(BaseModel):
     slug: str
     tier: str
     status: str
+    parent_tenant_id: Optional[uuid.UUID] = None
+    hierarchy_depth: int = 0
     metadata: Optional[dict] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

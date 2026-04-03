@@ -13,7 +13,7 @@ const SOULWATCH_URL =
   "http://soulwatch-mssp:8001";
 
 const SOULWATCH_KEY =
-  process.env.SOULWATCH_INTERNAL_KEY || "sw_metrics_scrape_2026";
+  process.env.SOULWATCH_INTERNAL_KEY || "";
 
 interface SoulWatchDetection {
   id: string;
