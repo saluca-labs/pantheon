@@ -1328,7 +1328,7 @@ psql -c "SELECT count(*) FROM _audit_logs WHERE event_type = 'anomaly%' AND time
 ```bash
 # Build with required NEXT_PUBLIC_* build args for Portal
 docker build \
-  --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.tiresias.network \
+  --build-arg NEXT_PUBLIC_API_BASE_URL=https://tiresias.network \
   --build-arg NEXT_PUBLIC_PORTAL_URL=https://tiresias.network \
   -t tiresias-portal:v3.0.1 \
   -f portal/Dockerfile .

@@ -36,6 +36,16 @@ FEATURE_TIERS: dict[str, list[str]] = {
     "audit_export": ["enterprise", "mssp", "saas"],
     "multi_tenant": ["enterprise", "mssp", "saas"],
     "custom_detection": ["enterprise", "mssp", "saas"],
+    "partner_channels": ["enterprise", "mssp", "saas"],
+    "contract_management": ["enterprise", "mssp", "saas"],
+    # Pro features (additional)
+    "investigation_access": ["pro", "enterprise", "mssp", "saas"],
+    "prh_engine": ["pro", "enterprise", "mssp", "saas"],
+    # Starter features (additional)
+    "team_management": ["starter", "pro", "enterprise", "mssp", "saas"],
+    "billing_management": ["starter", "pro", "enterprise", "mssp", "saas"],
+    # SaaS-only features
+    "saas_management": ["saas"],
 }
 
 # Map URL path prefixes to features
@@ -49,6 +59,13 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/soulauth/admin/audit": "audit_export",
     # MSSP multi-tenant endpoints
     "/v1/mssp": "multi_tenant",
+    "/v1/partner": "partner_channels",
+    "/v1/investigation": "investigation_access",
+    "/v1/teams": "team_management",
+    "/v1/contracts": "contract_management",
+    "/v1/billing": "billing_management",
+    "/v1/saas": "saas_management",
+    "/v1/prh": "prh_engine",
 }
 
 # Paths that are always allowed regardless of license
