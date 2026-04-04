@@ -44,6 +44,11 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/detection": "detection_rules",
     "/v1/enforcement": "enforcement",
     "/v1/integrations": "siem_forwarding",
+    # Audit export lives under the admin router (/v1/soulauth/admin/audit/report)
+    # but audit_export is enterprise-gated, so we map it explicitly here.
+    "/v1/soulauth/admin/audit": "audit_export",
+    # MSSP multi-tenant endpoints
+    "/v1/mssp": "multi_tenant",
 }
 
 # Paths that are always allowed regardless of license
@@ -124,14 +129,17 @@ class FeatureGateMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         path = request.url.path
 
-        # Always allow exempt paths
-        if _is_always_allowed(path):
-            return await call_next(request)
-
-        # Determine which feature this path requires
+        # Determine which feature this path requires.
+        # Check this BEFORE always-allowed so that explicitly gated sub-paths
+        # (e.g. /v1/soulauth/admin/audit under the /v1/soulauth/admin/ exemption)
+        # are still enforced.
         feature = _get_feature_for_path(path)
+
         if feature is None:
-            # Path not mapped to any feature - allow through
+            # No explicit feature gate — fall through to always-allowed / pass-through
+            if _is_always_allowed(path):
+                return await call_next(request)
+            # Path not mapped to any feature and not exempt - allow through
             return await call_next(request)
 
         # --- Install-level tier (license JWT) ---
