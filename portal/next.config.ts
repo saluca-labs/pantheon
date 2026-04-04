@@ -8,6 +8,9 @@ const tiresiasProxyUrl =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    ppr: false,
+  },
   turbopack: {
     root: ".",
   },
