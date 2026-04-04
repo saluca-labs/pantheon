@@ -71,7 +71,7 @@ async def trial_register(
         await db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"A trial already exists for {request.company_domain}. Check your email or contact support.",
+            detail=f"A trial already exists for this email. Check your inbox or contact support@tiresias.network.",
         )
 
     # Send verification email via Resend
