@@ -31,8 +31,8 @@ const products = [
   {
     name: "SoulWatch",
     tagline: "AI Runtime Security Monitoring",
-    status: "Coming Soon",
-    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
+    status: "Generally Available",
+    statusColor: "bg-teal-600/20 text-teal-400 border-teal-500/30",
     accent: "gold",
     href: "/platform/soulwatch",
     description:
@@ -49,8 +49,8 @@ const products = [
   {
     name: "SoulGate",
     tagline: "API Security Gateway",
-    status: "Coming Soon",
-    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
+    status: "Generally Available",
+    statusColor: "bg-teal-600/20 text-teal-400 border-teal-500/30",
     accent: "gold",
     href: "/platform/soulgate",
     description:
