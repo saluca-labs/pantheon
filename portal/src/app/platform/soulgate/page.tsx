@@ -326,7 +326,7 @@ export default function SoulGatePage() {
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
@@ -672,7 +672,7 @@ for entry in resp.json()["entries"]:
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 cta-breathe"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
