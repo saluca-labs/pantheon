@@ -300,7 +300,7 @@ export default function LegalPage() {
               <ul className="list-disc pl-6 space-y-2 text-of-on-surface-variant">
                 <li><span className="text-foreground font-medium">In transit:</span> All data transmitted between you and our services is encrypted using TLS 1.2 or higher.</li>
                 <li><span className="text-foreground font-medium">At rest:</span> All stored data is encrypted using AES-256-GCM.</li>
-                <li><span className="text-foreground font-medium">Bring Your Own Key (BYOK):</span> Enterprise and Platform tier customers may supply their own encryption keys via Google Cloud KMS. When BYOK is enabled, Saluca cannot access the encrypted data without the customer&apos;s key.</li>
+                <li><span className="text-foreground font-medium">Envelope Encryption:</span> Per-tenant data encryption keys (DEKs) are wrapped using AES-256-GCM envelope encryption. Enterprise and Platform tier customers may provide their own Key Encryption Key (KEK) via environment configuration. When customers provide their own KEK, decryption requires the customer-supplied key. Cloud KMS integration (AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault) is on the roadmap.</li>
               </ul>
             </div>
 
@@ -553,7 +553,7 @@ export default function LegalPage() {
                 We implement comprehensive security measures to protect your data:
               </p>
               <ul className="list-disc pl-6 space-y-2 text-of-on-surface-variant">
-                <li><span className="text-foreground font-medium">Encryption:</span> TLS 1.2+ in transit, AES-256-GCM at rest, BYOK for Enterprise/Platform tiers.</li>
+                <li><span className="text-foreground font-medium">Encryption:</span> TLS 1.2+ in transit, AES-256-GCM envelope encryption at rest with per-tenant data encryption keys, customer-supplied KEK option for Enterprise/Platform tiers.</li>
                 <li><span className="text-foreground font-medium">Access Controls:</span> Role-based access control (RBAC) with principle of least privilege across all internal systems.</li>
                 <li><span className="text-foreground font-medium">Authentication:</span> Passwords are hashed using bcrypt. API keys are hashed using SHA-512. No plaintext credentials are stored.</li>
                 <li><span className="text-foreground font-medium">Per-Tenant Isolation:</span> Customer data is logically isolated at the database level. No cross-tenant data access is possible.</li>
@@ -770,7 +770,7 @@ export default function LegalPage() {
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Enterprise</td>
-                      <td className="py-2 pr-4">Custom SLA, dedicated support, BYOK, data residency, custom integrations</td>
+                      <td className="py-2 pr-4">Custom SLA, dedicated support, envelope encryption with customer-supplied KEK, data residency, custom integrations</td>
                       <td className="py-2">Large organizations</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
@@ -899,7 +899,7 @@ export default function LegalPage() {
               <ul className="list-disc pl-6 space-y-2 text-of-on-surface-variant">
                 <li><span className="text-foreground font-medium">In transit:</span> TLS 1.2 or higher for all communications.</li>
                 <li><span className="text-foreground font-medium">At rest:</span> AES-256-GCM encryption for all stored data.</li>
-                <li><span className="text-foreground font-medium">BYOK:</span> Enterprise and Platform customers may supply their own encryption keys via Google Cloud KMS.</li>
+                <li><span className="text-foreground font-medium">Customer-Supplied KEK:</span> Enterprise and Platform customers may provide their own Key Encryption Key (KEK) for envelope encryption. Cloud KMS provider integration is on the roadmap.</li>
               </ul>
 
               <h4 className="text-foreground font-medium mt-6 mb-2">5.6 No Data Mining</h4>
@@ -1432,7 +1432,7 @@ export default function LegalPage() {
                 <li><span className="text-foreground font-medium">Authentication:</span> Passwords hashed with bcrypt, API keys hashed with SHA-512</li>
                 <li><span className="text-foreground font-medium">Per-tenant isolation:</span> Logical data separation at the database level</li>
                 <li><span className="text-foreground font-medium">Audit logging:</span> Immutable logs of all administrative actions</li>
-                <li><span className="text-foreground font-medium">BYOK:</span> Customer-managed encryption keys via Google Cloud KMS (Enterprise/Platform tiers)</li>
+                <li><span className="text-foreground font-medium">Customer-Supplied KEK:</span> Envelope encryption with customer-provided Key Encryption Key (Enterprise/Platform tiers). Cloud KMS integration planned.</li>
                 <li><span className="text-foreground font-medium">Vulnerability management:</span> Regular security assessments and patching</li>
               </ul>
             </div>
