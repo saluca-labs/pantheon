@@ -11,6 +11,24 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: ".",
   },
+  async headers() {
+    return [
+      {
+        source: "/trial",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          { key: "CDN-Cache-Control", value: "no-store" },
+        ],
+      },
+      {
+        source: "/pricing",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          { key: "CDN-Cache-Control", value: "no-store" },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [],
