@@ -140,6 +140,8 @@ spec:
               value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
             - name: STRIPE_PRICE_ENTERPRISE_ANNUAL  # Intentionally empty — Enterprise is contact-sales only (no self-serve annual checkout)
               value: ""
+            - name: SOULAUTH_TRIAL_FROM_EMAIL
+              value: "Tiresias <tiresias.onboarding@saluca.com>"
             - name: SOULAUTH_LOG_LEVEL
               value: "INFO"
             - name: SOULAUTH_DEBUG
