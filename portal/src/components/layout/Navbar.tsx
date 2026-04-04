@@ -204,7 +204,7 @@ export default function Navbar() {
                     href="/trial"
                     className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-2 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
                   >
-                    Join Waitlist
+                    Start Free Trial
                   </Link>
                 </>
               )}
@@ -326,7 +326,7 @@ export default function Navbar() {
                         className="block w-full text-center rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-5 py-3 text-sm font-medium text-navy-950"
                         onClick={() => setMobileOpen(false)}
                       >
-                        Join Waitlist
+                        Start Free Trial
                       </Link>
                     </>
                   )}
