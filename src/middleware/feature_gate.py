@@ -176,6 +176,6 @@ class FeatureGateMiddleware(BaseHTTPMiddleware):
                 "feature": feature,
                 "tier_required": required_tier,
                 "tier_current": current_tier,
-                "upgrade_url": "https://tiresias.saluca.com/pricing",
+                "upgrade_url": "https://tiresias.network/pricing",
             },
         )

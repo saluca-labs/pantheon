@@ -14,7 +14,7 @@ Three products. One platform:
 - **SoulGate** - API security gateway with prompt injection protection
 
 **Company**: Saluca LLC (sole founder: Cristian)
-**Website**: tiresias.saluca.com
+**Website**: tiresias.network
 **Contact**: contact@saluca.com
 
 ---
@@ -170,7 +170,7 @@ Three products. One platform:
 - **Credit card**: Not required
 - **Deployment**: Docker Compose, under 15 minutes
 - **After trial**: Subscribe to individual products or bundle, or downgrade to SoulAuth Community (free)
-- **Trial URL**: tiresias.saluca.com/trial
+- **Trial URL**: tiresias.network/trial
 
 ---
 
@@ -195,8 +195,8 @@ Three products. One platform:
 | SoulGate Datasheet | 04-datasheet-soulgate.md |
 | Pricing Reference | 05-pricing-reference.md |
 | Technical Architecture | 06-technical-architecture-brief.md |
-| Website | tiresias.saluca.com |
-| Trial | tiresias.saluca.com/trial |
+| Website | tiresias.network |
+| Trial | tiresias.network/trial |
 | Contact | contact@saluca.com |
 
 ---

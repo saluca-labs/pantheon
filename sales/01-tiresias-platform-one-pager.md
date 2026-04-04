@@ -90,10 +90,10 @@ Annual billing: 20% discount. Startup program available (Platform Pro free for 1
 ## Get Started
 
 - **Free Trial**: 14 days, full Pro access to all three products, no credit card required
-- **Website**: tiresias.saluca.com
+- **Website**: tiresias.network
 - **Contact**: contact@saluca.com
-- **Developer Docs**: tiresias.saluca.com/developers
+- **Developer Docs**: tiresias.network/developers
 
 ---
 
-*Saluca LLC | tiresias.saluca.com*
+*Saluca LLC | tiresias.network*

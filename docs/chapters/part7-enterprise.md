@@ -307,7 +307,7 @@ When a request targets a feature not included in the effective tier, the middlew
   "feature": "enforcement",
   "tier_required": "enterprise",
   "tier_current": "pro",
-  "upgrade_url": "https://tiresias.saluca.com/pricing"
+  "upgrade_url": "https://tiresias.network/pricing"
 }
 ```
 

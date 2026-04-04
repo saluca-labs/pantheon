@@ -51,6 +51,13 @@ async def upgrade_tenant_tier(
     if not tenant:
         raise ValueError(f"Tenant {tenant_id} not found")
 
+    # Block partner sub-tenants from upgrading to mssp/saas tiers
+    if tenant.parent_tenant_id and new_tier in {"mssp", "saas"}:
+        raise ValueError(
+            f"Partner sub-tenants cannot be upgraded to '{new_tier}'. "
+            f"Only top-level tenants may hold mssp/saas tier."
+        )
+
     old_tier = tenant.tier
     meta = tenant.metadata_ or {}
     stripe_subscription_id = meta.get("stripe_subscription_id")

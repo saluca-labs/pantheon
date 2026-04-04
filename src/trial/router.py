@@ -187,10 +187,10 @@ def _verify_page_html(status: str, **kwargs) -> str:
 export SOULAUTH_API_KEY="{a['raw_key'][:12]}..."
 
 curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
-  https://tiresias.saluca.com/v1/auth/whoami</pre>
+  https://tiresias.network/v1/auth/whoami</pre>
           </div>
           <div style="display:flex;gap:12px;">
-            <a href="https://tiresias.saluca.com/docs" style="flex:1;text-align:center;padding:12px 20px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">API Docs</a>
+            <a href="https://tiresias.network/docs" style="flex:1;text-align:center;padding:12px 20px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">API Docs</a>
           </div>
         </div>"""
     elif status == "error":

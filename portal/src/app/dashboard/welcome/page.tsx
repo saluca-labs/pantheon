@@ -114,7 +114,7 @@ export default function WelcomePage() {
 
   const soulkeyDisplay = session?.soulkey ?? "<YOUR_SOULKEY>";
   const curlExample = [
-    "curl -X POST https://tiresias.saluca.com/v1/chat/completions \\",
+    "curl -X POST https://tiresias.network/v1/chat/completions \\",
     '  -H "Authorization: Bearer ' + soulkeyDisplay + '" \\',
     '  -H "Content-Type: application/json" \\',
     "  -d '{\"model\": \"gpt-4o\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'",
