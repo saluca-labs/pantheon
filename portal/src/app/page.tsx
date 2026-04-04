@@ -376,24 +376,24 @@ function PlatformOverview() {
       tagline: "AI Runtime Security Monitoring",
       description:
         "Real-time behavioral analytics for your agent fleet. Sigma-compatible detection rules, anomaly scoring, and automated alerting - without reading agent payloads.",
-      badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badge: "GA",
+      badgeColor: "bg-teal-600/20 text-teal-400",
       accentColor: "teal",
       icon: EyeIcon,
       href: "/platform/soulwatch",
-      cta: "Join Waitlist",
+      cta: "Explore SoulWatch",
     },
     {
       name: "SoulGate",
       tagline: "API Security Gateway",
       description:
         "Secure the perimeter between your agents and the outside world. Rate limiting, schema validation, and threat detection at the API layer.",
-      badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badge: "GA",
+      badgeColor: "bg-teal-600/20 text-teal-400",
       accentColor: "teal",
       icon: GateIcon,
       href: "/platform/soulgate",
-      cta: "Join Waitlist",
+      cta: "Explore SoulGate",
     },
   ];
 

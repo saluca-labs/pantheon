@@ -67,6 +67,8 @@ upsert_secret "tiresias-internal-api-key"   "${TIRESIAS_INTERNAL_API_KEY}"
 upsert_secret "tiresias-metrics-auth-token" "${TIRESIAS_METRICS_AUTH_TOKEN}"
 upsert_secret "tiresias-license-secret"     "${TIRESIAS_LICENSE_SECRET}"
 upsert_secret "tiresias-license-key"        "${TIRESIAS_LICENSE_KEY}"
+upsert_secret "tiresias-oidc-secret-key"  "${SOULAUTH_OIDC_SECRET_KEY}"
+upsert_secret "tiresias-oidc-state-secret" "${SOULAUTH_OIDC_STATE_SECRET}"
 
 # Keys from files
 if [[ -n "${TIRESIAS_JWT_PRIVATE_KEY_FILE:-}" ]]; then

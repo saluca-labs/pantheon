@@ -23,7 +23,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: migrate
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.4
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.5
           imagePullPolicy: Always
           command: ["alembic", "upgrade", "head"]
           securityContext:
