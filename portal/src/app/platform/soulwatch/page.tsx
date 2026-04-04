@@ -80,7 +80,7 @@ const features = [
   {
     title: "Compliance Reporting",
     description:
-      "Auto-generated reports mapped to SOC2, ISO 27001, and NIST 800-53 controls. Export to PDF or CSV. Built to support your compliance journey, not block it.",
+      "Auto-generated compliance-ready reports mapped to SOC 2, ISO 27001, and NIST 800-53 control frameworks. Export to PDF or CSV. Certifications in progress (SOC 2 Type I targeted Q3 2026).",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />

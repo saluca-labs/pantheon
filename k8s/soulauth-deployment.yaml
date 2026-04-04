@@ -123,10 +123,8 @@ spec:
               value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
             - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
               value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
-            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
-              value: "price_1TDjH4BkXMYmrc2LeWPVTZT0"
-            - name: SOULAUTH_LICENSE_REQUIRED
-              value: "false"
+            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL  # TODO: Replace with correct Stripe annual price ID
+              value: "REPLACE_WITH_ANNUAL_PRICE_ID"
             - name: SOULAUTH_LOG_LEVEL
               value: "INFO"
             - name: SOULAUTH_DEBUG
