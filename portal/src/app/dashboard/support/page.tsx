@@ -200,12 +200,12 @@ export default function SupportPage() {
       setSuccessData(result);
       // Refresh ticket list
       const updatedRaw = await api.get<SupportTicket[]>("/v1/support/tickets");
-      const updated = (updatedRaw ?? []).map((t: Record<string, unknown>) => ({
+      const updated = (updatedRaw ?? []).map((t) => ({
         ...t,
-        id: (t.id || t.ticket_id) as string,
-        severity: ((t.severity as string) ?? "P2").toUpperCase() as Severity,
+        id: t.id || (t as unknown as Record<string, string>).ticket_id || "",
+        severity: (t.severity ?? "P2").toUpperCase() as Severity,
         status: ((t.status as string) === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
-      })) as SupportTicket[];
+      }));
       setTickets(updated);
     } catch (err: unknown) {
       setSubmitError(err instanceof Error ? err.message : "Failed to submit ticket");
