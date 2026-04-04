@@ -7,8 +7,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy source and build
+# Copy source and clean stale build cache
 COPY . .
+RUN rm -rf .next
 
 # Build-time env vars (override at build or runtime)
 ARG NEXT_PUBLIC_SOULAUTH_API_URL=http://soulauth.tiresias.svc.cluster.local
