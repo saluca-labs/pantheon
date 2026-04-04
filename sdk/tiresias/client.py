@@ -38,7 +38,7 @@ class TiresiasClient:
 
     Usage::
 
-        async with TiresiasClient("https://tiresias.saluca.com") as client:
+        async with TiresiasClient("https://tiresias.network") as client:
             health = await client.get_health()
             identity = await client.resolve_identity("sk_agent_...")
             result = await client.evaluate_access(
@@ -61,7 +61,7 @@ class TiresiasClient:
         Initialize the Tiresias client.
 
         Args:
-            base_url: Base URL of the Tiresias API (e.g. "https://tiresias.saluca.com").
+            base_url: Base URL of the Tiresias API (e.g. "https://tiresias.network").
             api_key: Optional API key for Authorization header.
             timeout: HTTP request timeout in seconds.
         """

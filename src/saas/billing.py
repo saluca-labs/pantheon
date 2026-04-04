@@ -495,6 +495,22 @@ async def handle_stripe_event(
 
         elif tenant is not None:
             # Existing tenant, subscription.created = update tier
+
+            # Block partner sub-tenants from being set to mssp/saas via Stripe
+            if tenant.parent_tenant_id and new_tier in {"mssp", "saas"}:
+                logger.warning(
+                    "saas.billing.blocked_partner_tier_escalation",
+                    tenant_id=str(tenant.id),
+                    parent_tenant_id=str(tenant.parent_tenant_id),
+                    blocked_tier=new_tier,
+                    event_type=event_type,
+                )
+                return {
+                    "action": "tier_update_blocked",
+                    "tenant_id": str(tenant.id),
+                    "reason": f"Partner sub-tenant cannot be set to '{new_tier}' tier",
+                }
+
             old_tier = tenant.tier
             now = datetime.now(timezone.utc)
             update_values = {"tier": new_tier, "updated_at": now}
@@ -543,6 +559,21 @@ async def handle_stripe_event(
         if not new_tier:
             logger.warning("saas.billing.tier_unresolvable", tenant_id=str(tenant.id) if tenant else None)
             return {"action": "tier_unresolvable", "tenant_id": str(tenant.id) if tenant else None}
+
+        # Block partner sub-tenants from being set to mssp/saas via Stripe
+        if tenant.parent_tenant_id and new_tier in {"mssp", "saas"}:
+            logger.warning(
+                "saas.billing.blocked_partner_tier_escalation",
+                tenant_id=str(tenant.id),
+                parent_tenant_id=str(tenant.parent_tenant_id),
+                blocked_tier=new_tier,
+                event_type=event_type,
+            )
+            return {
+                "action": "tier_update_blocked",
+                "tenant_id": str(tenant.id),
+                "reason": f"Partner sub-tenant cannot be set to '{new_tier}' tier",
+            }
 
         old_tier = tenant.tier
         now = datetime.now(timezone.utc)

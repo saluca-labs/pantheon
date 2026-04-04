@@ -5,7 +5,7 @@ Usage::
 
     from soulauth.sdk import SoulAuthClient
 
-    async with SoulAuthClient("https://tiresias.saluca.com") as client:
+    async with SoulAuthClient("https://tiresias.network") as client:
         health = await client.get_health()
         reg = await client.register_agent(
             tenant_id="...", agent_id="alfred", agent_type="orchestrator"

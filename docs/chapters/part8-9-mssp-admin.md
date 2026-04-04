@@ -781,7 +781,7 @@ X-Tenant-ID: <tenant_id>
 - The tenant must have a `stripe_customer_id` in its metadata.
 - The Stripe Customer Portal must be configured in the Stripe Dashboard (Settings > Billing > Customer portal).
 
-The endpoint returns a session URL. Redirect the customer to this URL in a new browser tab. The default return URL is `https://tiresias.saluca.com/dashboard/settings?tab=billing`.
+The endpoint returns a session URL. Redirect the customer to this URL in a new browser tab. The default return URL is `https://tiresias.network/dashboard/settings?tab=billing`.
 
 #### Webhook Configuration
 

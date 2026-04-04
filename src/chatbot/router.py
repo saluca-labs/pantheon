@@ -149,7 +149,7 @@ async def _stream_openrouter(messages: list, api_key: str) -> AsyncGenerator[str
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://tiresias.saluca.com",
+        "HTTP-Referer": "https://tiresias.network",
         "X-Title": "Tiresias Support Bot",
     }
     payload = {

@@ -25,7 +25,7 @@ def _stripe_key() -> str:
 
 async def create_portal_session(
     stripe_customer_id: str,
-    return_url: str = "https://tiresias.saluca.com/dashboard/settings?tab=billing",
+    return_url: str = "https://tiresias.network/dashboard/settings?tab=billing",
 ) -> str:
     """
     Create a Stripe Customer Portal session.
