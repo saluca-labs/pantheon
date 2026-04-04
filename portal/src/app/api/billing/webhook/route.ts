@@ -26,14 +26,18 @@ const SOULAUTH_INTERNAL_URL =
   process.env.SOULAUTH_INTERNAL_URL || "http://localhost:8000";
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
-const PRICE_TO_TIER: Record<string, string> = {
-  [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: "starter",
-  [process.env.STRIPE_PRICE_STARTER_ANNUAL || ""]: "starter",
-  [process.env.STRIPE_PRICE_PRO_MONTHLY || ""]: "pro",
-  [process.env.STRIPE_PRICE_PRO_ANNUAL || ""]: "pro",
-  [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || ""]: "enterprise",
-  [process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || ""]: "enterprise",
-};
+// Build price-to-tier mapping, filtering out empty/undefined price IDs
+// (e.g. Enterprise Annual is intentionally empty — contact-sales only)
+const PRICE_TO_TIER: Record<string, string> = Object.fromEntries(
+  [
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY, "starter"],
+    [process.env.STRIPE_PRICE_STARTER_ANNUAL, "starter"],
+    [process.env.STRIPE_PRICE_PRO_MONTHLY, "pro"],
+    [process.env.STRIPE_PRICE_PRO_ANNUAL, "pro"],
+    [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY, "enterprise"],
+    [process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL, "enterprise"],
+  ].filter(([key]) => key && key !== "")
+);
 
 const LOOKUP_KEY_TO_TIER: Record<string, string> = {
   tiresias_starter_monthly: "starter",
@@ -44,7 +48,7 @@ const LOOKUP_KEY_TO_TIER: Record<string, string> = {
   tiresias_enterprise_annual: "enterprise",
 };
 
-function resolveTier(subscription: Stripe.Subscription): string {
+function resolveTier(subscription: Stripe.Subscription): string | null {
   const item = subscription.items.data[0];
   if (!item) return "community";
   const priceId = item.price.id;
@@ -53,8 +57,11 @@ function resolveTier(subscription: Stripe.Subscription): string {
   if (lookupKey && LOOKUP_KEY_TO_TIER[lookupKey]) return LOOKUP_KEY_TO_TIER[lookupKey];
   const metaTier = subscription.metadata?.tiresias_tier;
   if (metaTier) return metaTier.toLowerCase();
-  console.warn("Could not resolve tier for price " + priceId + ", defaulting to starter");
-  return "starter";
+  console.warn(
+    "webhook.resolveTier: no tier mapping for price " + priceId +
+    " (lookup_key=" + lookupKey + "). Skipping tier update."
+  );
+  return null;
 }
 
 async function forwardToSoulAuth(eventType: string, eventData: object) {
@@ -279,6 +286,15 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const tenantId = subscription.metadata?.tenant_id;
         const tier = resolveTier(subscription);
+
+        if (!tier) {
+          // No tier mapping found — log and skip (e.g. unmapped enterprise annual price)
+          console.warn(
+            "Skipping tier update for subscription " + subscription.id +
+            " — no tier could be resolved"
+          );
+          break;
+        }
 
         if (tenantId) {
           await updateTenantTier(tenantId, tier, {
