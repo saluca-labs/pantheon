@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { TierGate } from "@/components/dashboard/TierGate";
 import { Server, Plus, Trash2, CheckCircle, XCircle, MinusCircle, ToggleLeft, ToggleRight, X, Activity } from "lucide-react";
 
 /** SIEM connectors -- syslog/webhook connector management and health. Uses live API via useWidgetData. */
@@ -216,6 +217,7 @@ export default function SIEMConfigPage() {
   // ---- Render ----
 
   return (
+    <TierGate requiredTier="enterprise" featureLabel="SIEM Configuration">
     <div className="max-w-7xl space-y-6">
 
       {/* Page header */}
@@ -557,5 +559,6 @@ export default function SIEMConfigPage() {
       )}
 
     </div>
+    </TierGate>
   );
 }

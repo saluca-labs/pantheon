@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { TierGate } from "@/components/dashboard/TierGate";
 import { Plus, Trash2, FlaskConical, ChevronDown, ChevronRight, X, ToggleLeft, ToggleRight, Pencil, Loader2 } from "lucide-react";
 
 /** Detection rules -- Sigma rule CRUD with test and toggle controls. Uses live API via useWidgetData. */
@@ -280,6 +281,7 @@ export default function RuleEditorPage() {
   const selectedRuleTitle = rules.find((r) => r.id === testRuleId)?.title ?? null;
 
   return (
+    <TierGate requiredTier="pro" featureLabel="Sigma Rule Editor">
     <div className="max-w-7xl space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
@@ -805,5 +807,6 @@ export default function RuleEditorPage() {
         </div>
       )}
     </div>
+    </TierGate>
   );
 }
