@@ -172,7 +172,7 @@ export default function SupportPage() {
           ...t,
           id: t.id || (t as unknown as Record<string, string>).ticket_id || "",
           severity: (t.severity ?? "P2").toUpperCase() as Severity,
-          status: (t.status === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
+          status: ((t.status as string) === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
         }));
         setTickets(normalized);
       } catch (err: unknown) {
