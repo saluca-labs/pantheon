@@ -1,12 +1,11 @@
-import { headers } from "next/headers";
+import { unstable_noStore as noStore } from "next/cache";
 import TrialForm from "./TrialForm";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
-export default async function TrialPage() {
-  // Force dynamic rendering by reading request headers
-  const h = await headers();
-  void h.get("x-request-id");
+export default function TrialPage() {
+  noStore();
   return <TrialForm />;
 }
