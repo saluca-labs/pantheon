@@ -33,6 +33,8 @@ declare -A SECRET_MAP=(
   ["tiresias-license-key"]="tiresias-license-key"
   ["oidc-secret-key"]="tiresias-oidc-secret-key"
   ["oidc-state-secret"]="tiresias-oidc-state-secret"
+  ["linear-api-key"]="tiresias-linear-api-key"
+  ["openrouter-api-key"]="tiresias-openrouter-api-key"
 )
 
 echo "==> Fetching secrets from GCP Secret Manager (project: ${PROJECT})"

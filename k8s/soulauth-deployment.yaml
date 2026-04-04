@@ -108,6 +108,16 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: internal-api-key
+            - name: LINEAR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: linear-api-key
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: openrouter-api-key
             - name: METRICS_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
