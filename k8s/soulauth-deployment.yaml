@@ -103,6 +103,11 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: resend-api-key
+            - name: SOULAUTH_RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: resend-api-key
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
