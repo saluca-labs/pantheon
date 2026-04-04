@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LifeBuoy, AlertTriangle, CheckCircle2, Clock, ChevronDown } from "lucide-react";
+import { LifeBuoy, AlertTriangle, CheckCircle2, Clock, ChevronDown, MessageCircle } from "lucide-react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 
 /** Support ticket system -- create, track, and manage support tickets. Uses live API. */
@@ -13,6 +14,7 @@ type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
 interface SupportTicket {
   id: string;
+  ticket_id?: string;
   subject: string;
   severity: Severity;
   category: Category;
@@ -36,7 +38,7 @@ const SEVERITY_OPTIONS: { value: Severity; label: string; sla: string; warning?:
   },
   { value: "P1", label: "P1 — High", sla: "24-hour SLA" },
   { value: "P2", label: "P2 — Medium", sla: "72-hour SLA" },
-  { value: "P3", label: "P3 — Low", sla: "7-day SLA" },
+  { value: "P3", label: "P3 — Low", sla: "72-hour SLA" },
 ];
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
@@ -148,6 +150,7 @@ function OFSelect<T extends string>({
 export default function SupportPage() {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [severity, setSeverity] = useState<Severity | "">("");
   const [category, setCategory] = useState<Category | "">("");
   const [submitting, setSubmitting] = useState(false);
@@ -163,8 +166,15 @@ export default function SupportPage() {
   useEffect(() => {
     async function loadTickets() {
       try {
-        const data = await api.get<SupportTicket[]>("/v1/support/tickets");
-        setTickets(data ?? []);
+        const raw = await api.get<SupportTicket[]>("/v1/support/tickets");
+        // Normalize backend response: ticket_id → id, lowercase severity → uppercase
+        const normalized = (raw ?? []).map((t: Record<string, unknown>) => ({
+          ...t,
+          id: (t.id || t.ticket_id) as string,
+          severity: ((t.severity as string) ?? "P2").toUpperCase() as Severity,
+          status: ((t.status as string) === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
+        })) as SupportTicket[];
+        setTickets(normalized);
       } catch (err: unknown) {
         setTicketsError(err instanceof Error ? err.message : "Failed to load tickets");
       } finally {
@@ -185,11 +195,18 @@ export default function SupportPage() {
         description: description.trim(),
         severity,
         category,
+        ...(contactEmail.trim() && { contact_email: contactEmail.trim() }),
       });
       setSuccessData(result);
       // Refresh ticket list
-      const updated = await api.get<SupportTicket[]>("/v1/support/tickets");
-      setTickets(updated ?? []);
+      const updatedRaw = await api.get<SupportTicket[]>("/v1/support/tickets");
+      const updated = (updatedRaw ?? []).map((t: Record<string, unknown>) => ({
+        ...t,
+        id: (t.id || t.ticket_id) as string,
+        severity: ((t.severity as string) ?? "P2").toUpperCase() as Severity,
+        status: ((t.status as string) === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
+      })) as SupportTicket[];
+      setTickets(updated);
     } catch (err: unknown) {
       setSubmitError(err instanceof Error ? err.message : "Failed to submit ticket");
     } finally {
@@ -201,6 +218,7 @@ export default function SupportPage() {
     setSuccessData(null);
     setSubject("");
     setDescription("");
+    setContactEmail("");
     setSeverity("");
     setCategory("");
   }
@@ -211,16 +229,25 @@ export default function SupportPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Page header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-of-primary/10 border border-of-primary/20 flex items-center justify-center">
-          <LifeBuoy className="w-5 h-5 text-of-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-of-primary/10 border border-of-primary/20 flex items-center justify-center">
+            <LifeBuoy className="w-5 h-5 text-of-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-of-on-surface tracking-tight">Support</h1>
+            <p className="text-sm text-of-on-surface-variant mt-0.5">
+              Report issues, track tickets, and get help from the Tiresias team.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-of-on-surface tracking-tight">Support</h1>
-          <p className="text-sm text-of-on-surface-variant mt-0.5">
-            Report issues, track tickets, and get help from the Tiresias team.
-          </p>
-        </div>
+        <Link
+          href="/dashboard/support/chat"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-of-primary/10 border border-of-primary/20 text-sm font-semibold text-of-primary hover:bg-of-primary/15 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Chat with Support
+        </Link>
       </div>
 
       {/* Report Issue Form */}
@@ -292,6 +319,21 @@ export default function SupportPage() {
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="Brief summary of the issue"
                     required
+                    maxLength={200}
+                    className="w-full px-3 py-2.5 rounded-lg bg-of-surface-container border border-of-outline-variant/25 text-sm text-of-on-surface placeholder:text-of-on-surface-variant/50 focus:outline-none focus:border-of-primary/40 transition-colors"
+                  />
+                </div>
+
+                {/* Contact Email */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-of-on-surface-variant uppercase tracking-wider">
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="your@email.com (for ticket updates)"
                     maxLength={200}
                     className="w-full px-3 py-2.5 rounded-lg bg-of-surface-container border border-of-outline-variant/25 text-sm text-of-on-surface placeholder:text-of-on-surface-variant/50 focus:outline-none focus:border-of-primary/40 transition-colors"
                   />

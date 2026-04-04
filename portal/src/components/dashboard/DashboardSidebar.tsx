@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown, MessageCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { tierMeets, type Tier } from "@/components/dashboard/TierGate";
@@ -104,6 +104,12 @@ const NAV_ITEMS: NavItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
       </svg>
     ),
+  },
+  {
+    label: "Documentation",
+    href: "/dashboard/docs",
+    group: "main",
+    icon: <BookOpen className="w-5 h-5" />,
   },
   {
     label: "Audit Trail",
@@ -417,7 +423,8 @@ export default function DashboardSidebar() {
   const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
   const isSalucaUser = session?.user_email?.endsWith("@saluca.com") ?? false;
   const isInvestigationActive = pathname === "/dashboard/investigation";
-  const isSupportActive = pathname === "/dashboard/support";
+  const isSupportActive = pathname === "/dashboard/support" || pathname === "/dashboard/support/chat";
+  const isChatActive = pathname === "/dashboard/support/chat";
 
   // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
   // Aletheia group only for enterprise+ tier (ALETH-14)
@@ -750,6 +757,61 @@ export default function DashboardSidebar() {
                 className="relative text-sm font-medium truncate"
               >
                 Support
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+
+        <Link
+          href="/dashboard/support/chat"
+          className={`
+            group/nav flex items-center gap-3 px-3 py-2.5 rounded-lg
+            transition-all duration-200 ease-out relative overflow-hidden
+            ${isChatActive
+              ? "text-of-on-surface"
+              : "text-of-on-surface-variant hover:text-of-on-surface"
+            }
+          `}
+          title={collapsed ? "Chat" : undefined}
+        >
+          {!isChatActive && (
+            <div className="absolute inset-0 bg-of-surface-container-high translate-x-[-100%] group-hover/nav:translate-x-0 transition-transform duration-300 ease-out rounded-lg" />
+          )}
+
+          {isChatActive && (
+            <motion.div
+              layoutId="sidebar-active-bg"
+              className="absolute inset-0 bg-of-surface-container-highest rounded-lg"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            />
+          )}
+
+          {isChatActive && (
+            <motion.div
+              layoutId="sidebar-active-indicator"
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-of-primary shadow-[0_0_8px_rgba(90,218,206,0.4)]"
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            />
+          )}
+
+          <motion.div
+            className={`relative shrink-0 ${isChatActive ? "text-of-primary" : "group-hover/nav:text-of-primary"}`}
+            animate={isChatActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <MessageCircle className="w-5 h-5" />
+          </motion.div>
+
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.15 }}
+                className="relative text-sm font-medium truncate"
+              >
+                Chat
               </motion.span>
             )}
           </AnimatePresence>
