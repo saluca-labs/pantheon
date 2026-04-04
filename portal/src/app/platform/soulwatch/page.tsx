@@ -465,7 +465,7 @@ import websockets
 import json
 
 async def watch_agents():
-    uri = "wss://tiresias.saluca.com/watch/v1/stream"
+    uri = "wss://tiresias.network/watch/v1/stream"
     headers = {"Authorization": "Bearer sk_watch_live_..."}
 
     async with websockets.connect(uri, extra_headers=headers) as ws:
@@ -482,7 +482,7 @@ asyncio.run(watch_agents())`}
               <TerminalBlock
                 filename="query_anomalies.sh"
                 code={`# Get open anomalies for the last 24 hours
-curl -s https://tiresias.saluca.com/watch/v1/anomalies \\
+curl -s https://tiresias.network/watch/v1/anomalies \\
   -H "Authorization: Bearer sk_watch_live_..." \\
   -d '{"status": "open", "hours": 24}' | jq
 

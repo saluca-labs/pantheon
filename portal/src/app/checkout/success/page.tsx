@@ -45,7 +45,7 @@ const QUICKSTART_STEPS = [
   {
     step: "3",
     title: "Send your first request",
-    code: 'curl -H "X-SoulKey: $TIRESIAS_API_KEY" \\\n  https://tiresias.saluca.com/v1/auth/whoami',
+    code: 'curl -H "X-SoulKey: $TIRESIAS_API_KEY" \\\n  https://tiresias.network/v1/auth/whoami',
     note: "Returns your tenant and persona details",
   },
 ];
@@ -289,7 +289,7 @@ function SuccessContent() {
           Open Dashboard
         </Link>
         <Link
-          href="https://tiresias.saluca.com/docs"
+          href="https://tiresias.network/docs"
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 text-center rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover hover:bg-of-surface-container/50 transition-all"

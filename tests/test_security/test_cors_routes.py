@@ -28,10 +28,10 @@ class TestCORSConfiguration:
     def test_production_origins_defined(self):
         """Verify production origins are properly defined."""
         production_origins = [
-            "https://tiresias.saluca.com",
-            "https://www.tiresias.saluca.com",
+            "https://tiresias.network",
+            "https://www.tiresias.network",
         ]
-        assert "https://tiresias.saluca.com" in production_origins
+        assert "https://tiresias.network" in production_origins
         assert "*" not in production_origins
 
     def test_wildcard_not_allowed(self):

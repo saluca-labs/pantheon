@@ -133,7 +133,7 @@ Request -> Auth -> IP Check -> Rate Limit -> Circuit Breaker -> Inspect -> Proxy
          |
   Cloudflare Tunnel
          |
-  tiresias.saluca.com (HTTPS)
+  tiresias.network (HTTPS)
 ```
 
 ### Container Stack
@@ -198,4 +198,4 @@ SoulWatch generates exportable compliance reports mapped to each framework.
 
 ---
 
-*Saluca LLC | contact@saluca.com | tiresias.saluca.com*
+*Saluca LLC | contact@saluca.com | tiresias.network*

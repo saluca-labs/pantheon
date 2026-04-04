@@ -109,7 +109,7 @@ class Settings(BaseSettings):
         description="OpenRouter API key for chatbot LLM (OPENROUTER_API_KEY env var)",
     )
     trial_from_email: str = "Tiresias <onboarding@resend.dev>"
-    trial_verify_base_url: str = "https://tiresias.saluca.com/trial/verify"
+    trial_verify_base_url: str = "https://tiresias.network/trial/verify"
 
     # Detection Engine (Sigma rules + playbooks)
     detection_enabled: bool = True

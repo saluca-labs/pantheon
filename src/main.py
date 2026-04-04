@@ -393,7 +393,7 @@ app = FastAPI(
         "- **Pro**: Analytics, detection rules, delegation, policy git-sync\n"
         "- **Enterprise**: Enforcement, SIEM forwarding, audit export, multi-tenant, custom detection\n\n"
         "## Resources\n\n"
-        "- [Documentation](https://tiresias.saluca.com/docs)\n"
+        "- [Documentation](https://tiresias.network/docs)\n"
         "- [SDK (PyPI)](https://pypi.org/project/tiresias-sdk/)\n"
         "- [Support](mailto:support@saluca.com)\n"
     ),
@@ -432,8 +432,8 @@ app = FastAPI(
 
 # CORS middleware — production origins only; dev origins conditional on debug mode
 _PRODUCTION_ORIGINS = [
-    "https://tiresias.saluca.com",
-    "https://www.tiresias.saluca.com",
+    "https://tiresias.network",
+    "https://www.tiresias.network",
 ]
 _DEV_ORIGINS = [
     "http://localhost:3000",
