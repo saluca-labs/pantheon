@@ -1,6 +1,6 @@
 # Tiresias Administrator Guide
 
-**Version:** 1.0
+**Version:** v3.4.4
 **Last Updated:** 2026-03-22
 **Audience:** Platform administrators responsible for deploying, configuring, and operating Tiresias
 

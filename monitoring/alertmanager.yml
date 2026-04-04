@@ -19,17 +19,13 @@ route:
 
 receivers:
   - name: 'default'
-    # Configure webhook, email, or Slack receivers here.
-    # Example webhook:
-    # webhook_configs:
-    #   - url: 'http://soulauth:8000/webhooks/alertmanager'
-    #     send_resolved: true
-
+    webhook_configs:
+      - url: 'http://placeholder.local/webhook'  # TODO: Replace with actual Slack/PagerDuty webhook
+        send_resolved: true
   - name: 'critical'
-    # High-priority channel for critical alerts.
-    # webhook_configs:
-    #   - url: 'http://soulauth:8000/webhooks/alertmanager'
-    #     send_resolved: true
+    webhook_configs:
+      - url: 'http://placeholder.local/critical'  # TODO: Replace with actual PagerDuty webhook
+        send_resolved: true
 
 inhibit_rules:
   - source_match:

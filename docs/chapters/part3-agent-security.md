@@ -49,7 +49,7 @@ For programmatic agent provisioning, use the SoulAuth admin API. This is the pre
 **Issue a SoulKey via API**
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/issue \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/issue \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -119,7 +119,7 @@ The following metadata keys have platform-level significance:
 #### Set Metadata via API
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/metadata \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/metadata \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -139,7 +139,7 @@ curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/me
 The `label` field is a human-readable identifier separate from metadata, designed for quick identification in dashboards and logs.
 
 ```bash
-curl -X PATCH https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id} \
+curl -X PATCH https://tiresias.network/v1/soulauth/admin/keys/{soulkey_id} \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -190,7 +190,7 @@ SoulKeys follow a deterministic state machine with four states and defined trans
 Suspension is a reversible action used for temporary access restriction during investigations, maintenance windows, or automated quarantine responses.
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/suspend \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/suspend \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -206,7 +206,7 @@ The system records `suspended_at` (UTC timestamp) and `suspended_by` (identity s
 #### Reinstate a Suspended Agent
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/reinstate \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/reinstate \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -225,7 +225,7 @@ Reinstatement clears the `suspended_at` and `suspended_by` fields and returns th
 Revocation is a permanent, terminal action. Use it when an agent is decommissioned, a key is compromised, or a key has expired (the system auto-revokes expired keys).
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/revoke \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/{soulkey_id}/revoke \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -275,7 +275,7 @@ code-reviewer,Code review agent,,engineering,production,"tier-1,ci-cd"
 ```
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/bulk-import \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/bulk-import \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@agents.csv"
@@ -290,7 +290,7 @@ The response includes the raw keys for all successfully created agents. Save thi
 Export all agent records (excluding raw keys and key hashes) for inventory management or migration.
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/admin/keys?format=csv" \
+curl -X GET "https://tiresias.network/v1/soulauth/admin/keys?format=csv" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -o agents_export.csv
 ```
@@ -300,7 +300,7 @@ curl -X GET "https://api.tiresias.network/v1/soulauth/admin/keys?format=csv" \
 Update the status of multiple agents simultaneously. This is useful for maintenance windows or coordinated incident response.
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/admin/keys/bulk-update \
+curl -X POST https://tiresias.network/v1/soulauth/admin/keys/bulk-update \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -345,11 +345,11 @@ The inventory supports the following filters:
 
 ```bash
 # List all active agents
-curl -X GET "https://api.tiresias.network/v1/soulauth/admin/keys?status=active" \
+curl -X GET "https://tiresias.network/v1/soulauth/admin/keys?status=active" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 
 # List agents for a specific persona
-curl -X GET "https://api.tiresias.network/v1/soulauth/admin/keys?persona_id=research-assistant" \
+curl -X GET "https://tiresias.network/v1/soulauth/admin/keys?persona_id=research-assistant" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -492,7 +492,7 @@ The engine does not enforce a minimum sample size -- it will build a baseline fr
 
 ```bash
 # Check baseline quality via API
-curl -X GET "https://api.tiresias.network/watch/v1/baselines/{soulkey_id}" \
+curl -X GET "https://tiresias.network/watch/v1/baselines/{soulkey_id}" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -553,7 +553,7 @@ The maximum number of events in any one-minute bucket during the lookback window
 #### View All Baselines for a Tenant
 
 ```bash
-curl -X GET "https://api.tiresias.network/watch/v1/baselines" \
+curl -X GET "https://tiresias.network/watch/v1/baselines" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -564,7 +564,7 @@ Baselines should be rebuilt when an agent's behavior has legitimately changed --
 #### Rebuild a Single Agent's Baseline
 
 ```bash
-curl -X POST "https://api.tiresias.network/watch/v1/baselines/{soulkey_id}/rebuild" \
+curl -X POST "https://tiresias.network/watch/v1/baselines/{soulkey_id}/rebuild" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -581,7 +581,7 @@ This triggers an immediate baseline rebuild for the specified agent using the pr
 Force a rebuild of all agent baselines. This queries `_soulauth_audit` for all distinct `soulkey_id` values within the lookback window and rebuilds each one sequentially.
 
 ```bash
-curl -X POST "https://api.tiresias.network/watch/v1/baselines/rebuild-all" \
+curl -X POST "https://tiresias.network/watch/v1/baselines/rebuild-all" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -637,7 +637,7 @@ The anomaly detector uses per-type threshold multipliers to control detection se
 #### Override Thresholds via API
 
 ```bash
-curl -X PUT "https://api.tiresias.network/watch/v1/detection/thresholds" \
+curl -X PUT "https://tiresias.network/watch/v1/detection/thresholds" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -655,7 +655,7 @@ curl -X PUT "https://api.tiresias.network/watch/v1/detection/thresholds" \
 For agents with known unusual patterns (e.g., batch processing agents that legitimately spike), configure per-agent threshold overrides:
 
 ```bash
-curl -X PUT "https://api.tiresias.network/watch/v1/detection/thresholds/{soulkey_id}" \
+curl -X PUT "https://tiresias.network/watch/v1/detection/thresholds/{soulkey_id}" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -673,7 +673,7 @@ Certain agent behaviors are expected but would otherwise trigger anomalies. Conf
 During scheduled maintenance, agents may exhibit atypical behavior. Define maintenance windows to suppress anomaly detection:
 
 ```bash
-curl -X POST "https://api.tiresias.network/watch/v1/detection/exclusions" \
+curl -X POST "https://tiresias.network/watch/v1/detection/exclusions" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -698,7 +698,7 @@ curl -X POST "https://api.tiresias.network/watch/v1/detection/exclusions" \
 For agents that permanently operate outside normal patterns:
 
 ```bash
-curl -X POST "https://api.tiresias.network/watch/v1/detection/exclusions" \
+curl -X POST "https://tiresias.network/watch/v1/detection/exclusions" \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -716,7 +716,7 @@ curl -X POST "https://api.tiresias.network/watch/v1/detection/exclusions" \
 #### List Active Exclusions
 
 ```bash
-curl -X GET "https://api.tiresias.network/watch/v1/detection/exclusions" \
+curl -X GET "https://tiresias.network/watch/v1/detection/exclusions" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -807,7 +807,7 @@ Trust policies define which agents can delegate to which other agents and under 
 #### Create a Delegation
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/delegations \
+curl -X POST https://tiresias.network/v1/soulauth/delegations \
   -H "Authorization: Bearer $GRANTOR_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -843,7 +843,7 @@ curl -X POST https://api.tiresias.network/v1/soulauth/delegations \
 Active delegations can be revoked before their TTL expires. This immediately terminates the grantee's expanded access.
 
 ```bash
-curl -X POST https://api.tiresias.network/v1/soulauth/delegations/{delegation_id}/revoke \
+curl -X POST https://tiresias.network/v1/soulauth/delegations/{delegation_id}/revoke \
   -H "Authorization: Bearer $ADMIN_SOULKEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -888,7 +888,7 @@ escalation:
 Retrieve all active (non-expired, non-revoked) delegations for a tenant:
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/delegations?status=active" \
+curl -X GET "https://tiresias.network/v1/soulauth/delegations?status=active" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -920,14 +920,14 @@ curl -X GET "https://api.tiresias.network/v1/soulauth/delegations?status=active"
 View all delegations where a specific agent is the grantee:
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/delegations?grantee_persona=research-assistant" \
+curl -X GET "https://tiresias.network/v1/soulauth/delegations?grantee_persona=research-assistant" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
 View all delegations where a specific agent is the grantor:
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/delegations?grantor_id={soulkey_id}" \
+curl -X GET "https://tiresias.network/v1/soulauth/delegations?grantor_id={soulkey_id}" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -969,7 +969,7 @@ Expired delegations are cleaned up by a background housekeeping task. The `clean
 
 ```bash
 # Manually trigger cleanup
-curl -X POST "https://api.tiresias.network/v1/soulauth/delegations/cleanup" \
+curl -X POST "https://tiresias.network/v1/soulauth/delegations/cleanup" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -1009,7 +1009,7 @@ An agent attempts to delegate a permission it does not possess. The system rejec
 **Detection:** Failed delegation attempts produce audit events of type `escalation_denied`. Filter the audit log for these events:
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/audit?event_type=escalation_denied&limit=100" \
+curl -X GET "https://tiresias.network/v1/soulauth/audit?event_type=escalation_denied&limit=100" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 
@@ -1029,7 +1029,7 @@ An agent creates short-lived delegations in rapid succession to maintain persist
 **Detection:** The `credential_rotation` anomaly type fires when 3 or more key lifecycle events (including delegation creates/revokes) occur within the detection window. Review the delegation history for patterns of rapid create/expire cycles:
 
 ```bash
-curl -X GET "https://api.tiresias.network/v1/soulauth/delegations?grantee_persona={persona_id}&include_expired=true&limit=100" \
+curl -X GET "https://tiresias.network/v1/soulauth/delegations?grantee_persona={persona_id}&include_expired=true&limit=100" \
   -H "Authorization: Bearer $ADMIN_SOULKEY"
 ```
 

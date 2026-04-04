@@ -487,7 +487,7 @@ If using Cloudflare, create proxied A records pointing to the Google-managed IP 
 | Domain | Target | Purpose |
 |--------|--------|---------|
 | `tiresias.network` | Cloud Run (portal) | Management dashboard |
-| `api.tiresias.network` | Cloud Run (soulauth) | Public API endpoint |
+| `tiresias.network` | Cloud Run (soulauth) | Public API endpoint |
 | `portal.tiresias.network` | Cloud Run (portal) | Alternative portal URL |
 
 ### 3.3 Deploy Tiresias with Docker Compose
@@ -927,7 +927,7 @@ Set the Resend API key for transactional email:
 
 ```ini
 RESEND_API_KEY=re_<your_api_key>
-TRIAL_VERIFY_BASE_URL=https://api.tiresias.network
+TRIAL_VERIFY_BASE_URL=https://tiresias.network
 ```
 
 #### Telegram Alerts

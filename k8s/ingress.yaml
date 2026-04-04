@@ -99,6 +99,14 @@ spec:
                 name: soulauth
                 port:
                   number: 80
+          # SoulAuth v1 API routes (partner, contracts, investigation, teams, etc.)
+          - path: /v1/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
           # Next.js API routes (billing webhook, etc.)
           - path: /api/*
             pathType: ImplementationSpecific
