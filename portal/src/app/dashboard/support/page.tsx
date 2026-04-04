@@ -168,12 +168,12 @@ export default function SupportPage() {
       try {
         const raw = await api.get<SupportTicket[]>("/v1/support/tickets");
         // Normalize backend response: ticket_id → id, lowercase severity → uppercase
-        const normalized = (raw ?? []).map((t: Record<string, unknown>) => ({
+        const normalized = (raw ?? []).map((t) => ({
           ...t,
-          id: (t.id || t.ticket_id) as string,
-          severity: ((t.severity as string) ?? "P2").toUpperCase() as Severity,
-          status: ((t.status as string) === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
-        })) as SupportTicket[];
+          id: t.id || (t as unknown as Record<string, string>).ticket_id || "",
+          severity: (t.severity ?? "P2").toUpperCase() as Severity,
+          status: (t.status === "acknowledged" ? "in_progress" : t.status) as TicketStatus,
+        }));
         setTickets(normalized);
       } catch (err: unknown) {
         setTicketsError(err instanceof Error ? err.message : "Failed to load tickets");
