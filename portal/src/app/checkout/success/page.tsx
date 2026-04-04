@@ -4,8 +4,8 @@
  * /checkout/success
  *
  * Post-Stripe Checkout success page.
- * Retrieves soulkey from /api/billing/session (raw_key cleared after first fetch).
- * Shows soulkey with copy button + 3-step quickstart. (TRIAL-03)
+ * Retrieves session metadata from /api/billing/session, then claims the
+ * raw SoulKey once via /api/billing/claim-key (ephemeral, one-time). (TRIAL-03)
  */
 
 import { Suspense, useEffect, useState } from "react";
@@ -18,9 +18,14 @@ interface SessionData {
   plan_id: string;
   tenant_id: string | null;
   soulkey_id: string | null;
-  raw_key: string | null;
   customer_email: string | null;
   payment_status: string;
+}
+
+interface ClaimKeyData {
+  raw_key: string;
+  tenant_id: string;
+  soulkey_id: string;
 }
 
 const TIER_LABELS: Record<string, string> = {
@@ -100,6 +105,7 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [session, setSession] = useState<SessionData | null>(null);
+  const [rawKey, setRawKey] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -110,17 +116,41 @@ function SuccessContent() {
       return;
     }
 
-    const fetchSession = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/billing/session?session_id=${sessionId}`);
-        if (!res.ok) {
-          const data = await res.json();
+        // Fetch session metadata (plan, tenant, email)
+        const sessionRes = await fetch(`/api/billing/session?session_id=${sessionId}`);
+        if (!sessionRes.ok) {
+          const data = await sessionRes.json();
           setErrorMsg(data.detail || "Could not verify your payment.");
           setStatus("error");
           return;
         }
-        const data: SessionData = await res.json();
-        setSession(data);
+        const sessionData: SessionData = await sessionRes.json();
+        setSession(sessionData);
+
+        // Claim raw key (one-time retrieval, auto-deleted after)
+        try {
+          const keyRes = await fetch("/api/billing/claim-key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId }),
+          });
+          if (keyRes.ok) {
+            const keyData: ClaimKeyData = await keyRes.json();
+            setRawKey(keyData.raw_key);
+            // Backfill IDs from claim if session didn't have them
+            if (!sessionData.tenant_id && keyData.tenant_id) {
+              setSession((prev) =>
+                prev ? { ...prev, tenant_id: keyData.tenant_id, soulkey_id: keyData.soulkey_id } : prev
+              );
+            }
+          }
+          // 404 = already claimed, that's fine — show "already retrieved" message
+        } catch {
+          // Key claim failed — non-fatal, session data still available
+        }
+
         setStatus("success");
       } catch {
         setErrorMsg("Network error. Please refresh or contact support.");
@@ -128,7 +158,7 @@ function SuccessContent() {
       }
     };
 
-    fetchSession();
+    fetchData();
   }, [sessionId]);
 
   if (status === "loading") {
@@ -166,7 +196,6 @@ function SuccessContent() {
   }
 
   const planLabel = TIER_LABELS[session?.plan_id || ""] || session?.plan_id || "Starter";
-  const rawKey = session?.raw_key;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
@@ -197,7 +226,7 @@ function SuccessContent() {
           <div>
             <h2 className="font-semibold text-sm text-foreground">Your API Key (SoulKey)</h2>
             <p className="text-xs text-of-outline mt-0.5">
-              This key is shown once only. Save it now.
+              This key is shown once and cannot be retrieved again. Save it now.
             </p>
           </div>
           {rawKey && <CopyButton text={rawKey} label="Copy API key" />}
