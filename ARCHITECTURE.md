@@ -808,3 +808,12 @@ All services use `structlog` with:
 - Contextvar-based correlation IDs
 - Stack info and exception rendering
 - Configurable log level via `SOULAUTH_LOG_LEVEL`
+
+---
+
+## Roadmap
+
+- **Cloud KMS BYOK**: AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault providers for customer-managed encryption keys
+- **Granular data access**: Field-level masking, role-based data filtering, access levels (full, read-only, hash-only, report-download)
+- **Team-scoped queries**: Detection events, investigations, and quarantine records filtered by team membership
+- **Admin-configurable RBAC**: Per-tenant role customization and permission policies

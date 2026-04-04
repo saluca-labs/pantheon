@@ -112,6 +112,15 @@ See [QUICKSTART.md](QUICKSTART.md) for setup instructions.
 - Production: [https://tiresias.network](https://tiresias.network)
 - Company: [https://www.saluca.com](https://www.saluca.com)
 
+## Roadmap
+
+- Cloud KMS BYOK providers (AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault)
+- Granular data access levels (read-only, hash-only, report-download)
+- Team-scoped data filtering (detection events, investigations, quarantine)
+- Admin-configurable role permissions per tenant
+- GitHub and Okta OAuth providers
+- LDAP group-based auto-provisioning enhancements
+
 ## License
 
 [Business Source License 1.1](LICENSE) -- See LICENSE for details.

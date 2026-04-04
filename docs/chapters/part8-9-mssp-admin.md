@@ -50,7 +50,7 @@ Despite the management hierarchy, Tiresias enforces strict data isolation betwee
 | Isolation Boundary | Enforcement Mechanism |
 |--------------------|-----------------------|
 | **Data partitioning** | Every database query includes a `WHERE tenant_id = :tid` clause. There is no shared data namespace between tenants. |
-| **Encryption isolation** | Each tenant receives a dedicated Data Encryption Key (DEK) provisioned via `provision_tenant_encryption()`. DEKs are envelope-encrypted under the platform KEK or a customer-supplied BYOK key. |
+| **Encryption isolation** | Each tenant receives a dedicated Data Encryption Key (DEK) provisioned via `provision_tenant_encryption()`. DEKs are envelope-encrypted under the platform KEK or a customer-supplied KEK (local provider). Cloud KMS providers planned. |
 | **SoulKey scoping** | SoulKeys are issued per-tenant. An agent authenticated with Tenant A's SoulKey cannot access Tenant B's resources. |
 | **Policy isolation** | Each tenant has an independent `PolicyCache` entry. Policy evaluation is always scoped to the calling tenant. |
 | **Audit log separation** | Audit log entries are tagged with `tenant_id`. Cross-tenant audit queries are restricted to MSSP-tier operators with the `mssp:read` permission. |
@@ -243,7 +243,7 @@ Tiresias defines six subscription tiers in ascending order of capability. Each t
 | 0 | Community | `community` | Free tier with basic agent identity and limited detection |
 | 1 | Starter | `starter` | Small teams: up to 10 agents, basic anomaly detection, email alerts |
 | 2 | Professional | `pro` | Mid-market: unlimited agents, Sigma rules, SIEM integration, automated response |
-| 3 | Enterprise | `enterprise` | Full platform: SSO, RBAC, compliance reporting, customer-held encryption, priority support |
+| 3 | Enterprise | `enterprise` | Full platform: SSO, RBAC, compliance reporting, envelope encryption with customer-supplied KEK (local provider; Cloud KMS planned), priority support |
 | 4 | MSSP | `mssp` | Multi-tenant management, cross-tenant dashboards, partner revenue share, white-label reporting |
 | 5 | SaaS | `saas` | Platform operator tier: full administrative access to all platform capabilities |
 
@@ -724,7 +724,7 @@ Tiresias uses a six-tier subscription model. Tier definitions are the canonical 
 | RBAC | None | None | Basic roles | Custom roles | Custom + delegation | Full |
 | Compliance reporting | None | None | None | SOC 2, ISO 27001, GDPR | All + white-label | All |
 | Multi-tenancy | None | None | None | Single tenant | Multi-tenant | Platform |
-| Customer-held encryption | None | None | None | BYOK | BYOK per customer | BYOK |
+| Customer-supplied KEK | None | None | None | Local KEK | Local KEK per customer | Local KEK |
 | Support | Community | Email | Priority email | Dedicated + phone | Dedicated + SLA | Platform support |
 
 #### Tier Rank Function
@@ -925,7 +925,7 @@ result = await issue_license(
     db,
     tier="enterprise",
     tenant_id=uuid.UUID("a1b2c3d4-..."),
-    features=["sso", "byok", "compliance"],
+    features=["sso", "customer_kek", "compliance"],
     is_nfr=False,
     partner_id="partner-123",
     validity_days=365,
