@@ -250,7 +250,7 @@ if child_tier not in PARTNER_ALLOWED_CHILD_TIERS:
 ```
 
 **Point 2: `POST /v1/partners/tenants` (new partner-specific provisioning endpoint)**
-- File: `src/partners/router.py` (new file)
+- File: `src/partner/router.py` (new file)
 - Must enforce the same tier constraint before calling the shared provisioning logic
 
 **Point 3: Depth enforcement in `src/mssp/isolation.py`**
@@ -384,7 +384,7 @@ Each sub-tenant has their own Stripe subscription. The partner earns a percentag
 - Each partner onboards to Stripe Connect (Standard or Express account).
 - Sub-tenant subscriptions include `metadata.partner_id`.
 - Monthly cron calculates rev-share per partner and creates Stripe Transfer.
-- File: New module `src/partners/revshare.py`.
+- File: New module `src/partner/revshare.py`.
 
 ### 6.2 Rev-Share Configuration
 
@@ -415,7 +415,7 @@ These are stored per-partner in `_partner_revshare_config` and can be overridden
   3. Log reconciliation results, alert on anomalies
 ```
 
-File: `src/partners/reconciliation.py` (new)
+File: `src/partner/reconciliation.py` (new)
 
 ### 6.4 Stripe Integration Points
 
@@ -616,7 +616,7 @@ CREATE INDEX idx_partner_audit_created ON _partner_audit_log(created_at);
 | 1 | `001_add_tenant_hierarchy_columns.sql` -- add `parent_tenant_id`, `hierarchy_depth`, `partner_id` to `_soul_tenants` | Nothing |
 | 2 | Update `src/database/models.py` `SoulTenant` class | Step 1 |
 | 3 | `002_create_partner_tables.sql` -- create all 6 new tables | Step 1 |
-| 4 | Add SQLAlchemy models for new tables in `src/partners/models.py` | Step 3 |
+| 4 | Add SQLAlchemy models for new tables in `src/partner/models.py` | Step 3 |
 | 5 | Backfill `parent_tenant_id` for any existing MSSP sub-tenants (if any) | Step 1 |
 
 ---
@@ -625,7 +625,7 @@ CREATE INDEX idx_partner_audit_created ON _partner_audit_log(created_at);
 
 **Status:** To Build
 
-All partner endpoints live in a new router: `src/partners/router.py`, mounted at `/v1/partners`.
+All partner endpoints live in a new router: `src/partner/router.py`, mounted at `/v1/partners`.
 
 ### 8.1 POST /v1/partners/apply -- Public Application
 
@@ -936,7 +936,7 @@ React form component posting to `POST /v1/partners/apply`.
 
 ### 9.4 /dashboard/partner -- Dashboard
 
-Requires NextAuth session with `partner` role. Fetches data from `GET /v1/partners/me`.
+Requires authenticated session with `partner` role. Fetches data from `GET /v1/partners/me`.
 
 Layout:
 ```
@@ -1003,7 +1003,7 @@ Layout:
 
 **Scope:**
 - Database migrations (sections 7.1-7.3)
-- SQLAlchemy models for new tables (`src/partners/models.py`)
+- SQLAlchemy models for new tables (`src/partner/models.py`)
 - Partner application endpoint (`POST /v1/partners/apply`)
 - Admin approval/rejection endpoints
 - Tier constraint enforcement in `src/mssp/router.py` (Section 5.2, Point 1)
@@ -1028,11 +1028,11 @@ Layout:
 **New files:**
 | File | Purpose |
 |---|---|
-| `src/partners/__init__.py` | Package init |
-| `src/partners/router.py` | FastAPI router for `/v1/partners/*` |
-| `src/partners/models.py` | SQLAlchemy models + Pydantic schemas |
-| `src/partners/service.py` | Business logic (create partner, approve, etc.) |
-| `src/partners/notifications.py` | Slack webhook + email notifications |
+| `src/partner/__init__.py` | Package init |
+| `src/partner/router.py` | FastAPI router for `/v1/partners/*` |
+| `src/partner/models.py` | SQLAlchemy models + Pydantic schemas |
+| `src/partner/service.py` | Business logic (create partner, approve, etc.) |
+| `src/partner/notifications.py` | Slack webhook + email notifications |
 | `migrations/001_add_tenant_hierarchy_columns.sql` | Schema migration |
 | `migrations/002_create_partner_tables.sql` | Schema migration |
 
@@ -1052,7 +1052,7 @@ Layout:
 
 **Scope:**
 - Stripe Connect onboarding for partners (Express accounts)
-- Automated monthly reconciliation cron (`src/partners/reconciliation.py`)
+- Automated monthly reconciliation cron (`src/partner/reconciliation.py`)
 - Stripe Transfer creation for payouts
 - Portal: `/dashboard/partner/billing` with real payout data
 - Portal: Stripe Connect onboarding flow in settings
@@ -1070,9 +1070,9 @@ Layout:
 **New files:**
 | File | Purpose |
 |---|---|
-| `src/partners/revshare.py` | Rev-share calculation logic |
-| `src/partners/reconciliation.py` | Monthly reconciliation cron job |
-| `src/partners/stripe_connect.py` | Stripe Connect onboarding + transfers |
+| `src/partner/revshare.py` | Rev-share calculation logic |
+| `src/partner/reconciliation.py` | Monthly reconciliation cron job |
+| `src/partner/stripe_connect.py` | Stripe Connect onboarding + transfers |
 
 ### Phase 3: Self-Service Provisioning + White-Label
 
@@ -1095,8 +1095,8 @@ Layout:
 **New files:**
 | File | Purpose |
 |---|---|
-| `src/partners/whitelabel.py` | White-label configuration service |
-| `src/partners/agreements.py` | Digital agreement/signature flow |
+| `src/partner/whitelabel.py` | White-label configuration service |
+| `src/partner/agreements.py` | Digital agreement/signature flow |
 
 ---
 
