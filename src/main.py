@@ -404,7 +404,7 @@ app = FastAPI(
         "## Resources\n\n"
         "- [Documentation](https://tiresias.network/docs)\n"
         "- [SDK (PyPI)](https://pypi.org/project/tiresias-sdk/)\n"
-        "- [Support](mailto:support@saluca.com)\n"
+        f"- [Support](mailto:{settings.support_email})\n"
     ),
     lifespan=lifespan,
     openapi_tags=[

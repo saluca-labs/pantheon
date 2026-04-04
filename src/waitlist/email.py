@@ -47,7 +47,7 @@ WAITLIST_CONFIRMATION_HTML = """
                 SoulAuth, SoulWatch, and SoulGate.
               </p>
               <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">
-                Questions? Reply to this email or reach us at <a href="mailto:contact@saluca.com" style="color:#2dd4bf;">contact@saluca.com</a>.
+                Questions? Reply to this email or reach us at <a href="mailto:contact@tiresias.network" style="color:#2dd4bf;">contact@tiresias.network</a>.
               </p>
             </td>
           </tr>

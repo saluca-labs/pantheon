@@ -216,6 +216,20 @@ class Settings(BaseSettings):
         description="JSON mapping of LDAP group DNs to SoulAuth roles",
     )
 
+    # Contact emails (shown to customers — override via env vars)
+    support_email: str = Field(
+        default="support@tiresias.network",
+        description="Support contact email shown to customers",
+    )
+    billing_email: str = Field(
+        default="billing@tiresias.network",
+        description="Billing contact email shown to customers",
+    )
+    contact_email: str = Field(
+        default="contact@tiresias.network",
+        description="General contact email shown to customers",
+    )
+
     # OIDC / SSO Settings
     oidc_secret_key: Optional[str] = Field(
         default=None,

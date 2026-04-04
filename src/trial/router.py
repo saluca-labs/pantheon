@@ -201,7 +201,7 @@ curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
           </div>
           <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#e5e7eb;">Verification Failed</h1>
           <p style="margin:0 0 32px;font-size:15px;color:#9ca3af;">{kwargs.get('message', 'Invalid or expired verification link.')}</p>
-          <a href="mailto:support@saluca.com" style="padding:12px 24px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Contact Support</a>
+          <a href="mailto:support@tiresias.network" style="padding:12px 24px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Contact Support</a>
         </div>"""
     else:
         body = ""
