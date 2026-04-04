@@ -6,11 +6,10 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { config } from "@/lib/config";
 
-/** Free trial signup -- product selection and waitlist registration form. */
+/** Free trial signup — 14-day full Pro access, no credit card required. */
 
-interface WaitlistResponse {
-  waitlist_id?: string;
-  position?: number;
+interface TrialResponse {
+  trial_id?: string;
   message?: string;
   detail?: string;
 }
@@ -44,7 +43,7 @@ const platformProducts = [
       "Response playbooks with auto-quarantine",
       "Agent risk scoring (0-100 composite)",
       "Real-time WebSocket event feed",
-      "SOC2, ISO 27001, NIST compliance reports",
+      "Compliance-ready reporting",
       "SIEM forwarding (Splunk, Elastic, Syslog)",
     ],
   },
@@ -73,8 +72,8 @@ const trustSignals = [
         <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
     ),
-    title: "Early access",
-    desc: "Beta users get hands-on access before general availability.",
+    title: "14-day free trial",
+    desc: "Full Pro access for 14 days. No credit card required.",
   },
   {
     icon: (
@@ -92,20 +91,19 @@ const trustSignals = [
       </svg>
     ),
     title: "Direct line to the team",
-    desc: "Beta users get direct access to the engineering team for feedback.",
+    desc: "Trial users get direct access to the engineering team for feedback.",
   },
 ];
 
-export default function WaitlistPage() {
+export default function TrialPage() {
   const [formData, setFormData] = useState({
     contact_name: "",
     contact_email: "",
     company_name: "",
     company_domain: "",
-    use_case: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState<WaitlistResponse | null>(null);
+  const [success, setSuccess] = useState<TrialResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
@@ -136,7 +134,7 @@ export default function WaitlistPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${config.apiUrl}/v1/waitlist/join`, {
+      const res = await fetch(`${config.apiUrl}/v1/trial/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,13 +142,12 @@ export default function WaitlistPage() {
           contact_email: formData.contact_email,
           company_name: formData.company_name,
           company_domain: formData.company_domain || formData.contact_email.split("@")[1] || "",
-          use_case: formData.use_case,
         }),
       });
 
       if (res.status === 409) {
         throw new Error(
-          "This email is already on the waitlist. We'll be in touch soon!"
+          "This email already has an active trial. Check your inbox for the verification email."
         );
       }
 
@@ -162,7 +159,7 @@ export default function WaitlistPage() {
         );
       }
 
-      const data: WaitlistResponse = await res.json();
+      const data: TrialResponse = await res.json();
 
       if (!res.ok) {
         const msg = data.detail || data.message || `Something went wrong (${res.status})`;
@@ -177,7 +174,7 @@ export default function WaitlistPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -190,16 +187,16 @@ export default function WaitlistPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,168,83,0.08),transparent_60%)]" />
           <div className="relative mx-auto max-w-7xl px-6 lg:px-8 py-20 lg:py-28">
             <div className="text-center max-w-3xl mx-auto">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold-500/20 bg-gold-500/5 px-4 py-1.5 text-sm text-gold-400 mb-6">
-                Limited beta &mdash; invites going out in waves
+              <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/5 px-4 py-1.5 text-sm text-teal-400 mb-6">
+                14-day free trial &mdash; no credit card required
               </div>
               <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
-                Join the{" "}
-                <span className="text-gradient-gold">Tiresias beta</span>
+                Start your{" "}
+                <span className="text-gradient-gold">free trial</span>
               </h1>
               <p className="mt-6 text-lg text-foreground-muted leading-relaxed max-w-2xl mx-auto">
-                Be among the first to secure your AI agents with the full Tiresias platform &mdash;
-                SoulAuth, SoulWatch, and SoulGate. Request early access below.
+                Get full Pro access to the Tiresias platform for 14 days &mdash;
+                SoulAuth, SoulWatch, and SoulGate. No credit card. No commitment.
               </p>
             </div>
           </div>
@@ -218,21 +215,14 @@ export default function WaitlistPage() {
                         <path d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h2 className="text-2xl font-bold">You&apos;re on the list!</h2>
+                    <h2 className="text-2xl font-bold">Check your email</h2>
                   </div>
                   <p className="text-foreground-muted mb-6 leading-relaxed">
-                    We&apos;ve saved your spot. Check your email for a confirmation.
-                    We review every application and send invites in waves.
+                    We&apos;ve sent a verification link to <span className="text-foreground font-medium">{formData.contact_email}</span>.
+                    Click the link to activate your 14-day trial. Your SoulKey and tenant will be provisioned automatically.
                   </p>
-                  {success.position && (
-                    <div className="rounded-xl bg-navy-950 border border-border p-6 mb-6 text-center">
-                      <p className="text-xs text-foreground-subtle uppercase tracking-wide mb-2">Your position</p>
-                      <p className="text-4xl font-bold text-gold-400">#{success.position}</p>
-                      <p className="text-sm text-foreground-muted mt-2">in the waitlist</p>
-                    </div>
-                  )}
                   <div className="rounded-xl bg-navy-950 border border-border p-4 mb-6">
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wide mb-3">When you&apos;re invited, you&apos;ll get access to</p>
+                    <p className="text-xs text-foreground-subtle uppercase tracking-wide mb-3">Your trial includes</p>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center">
                         <p className="text-sm font-semibold text-gold-400">SoulAuth</p>
@@ -248,25 +238,20 @@ export default function WaitlistPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-8 flex gap-4">
-                    <Link
-                      href="/developers"
-                      className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-6 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all"
+                  <p className="text-sm text-foreground-subtle">
+                    Didn&apos;t get the email? Check your spam folder or{" "}
+                    <button
+                      onClick={() => { setSuccess(null); setError(null); }}
+                      className="text-gold-400 hover:underline"
                     >
-                      Explore the Docs
-                    </Link>
-                    <Link
-                      href="/platform"
-                      className="rounded-lg border border-border px-6 py-3 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-border-hover transition-colors"
-                    >
-                      Platform Overview
-                    </Link>
-                  </div>
+                      try again
+                    </button>.
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 sm:p-10">
-                  <h2 className="text-2xl font-bold mb-2">Request early access</h2>
-                  <p className="text-sm text-foreground-muted mb-8">Tell us about your team and we&apos;ll get you in as soon as we can.</p>
+                  <h2 className="text-2xl font-bold mb-2">Start your free trial</h2>
+                  <p className="text-sm text-foreground-muted mb-8">14 days of full Pro access. We&apos;ll send a verification email to get you started.</p>
 
                   {error && (
                     <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
@@ -341,21 +326,6 @@ export default function WaitlistPage() {
                       </div>
                     </div>
 
-                    <div>
-                      <label htmlFor="use_case" className="block text-sm font-medium text-foreground-muted mb-2">
-                        How will you use Tiresias?
-                      </label>
-                      <textarea
-                        id="use_case"
-                        name="use_case"
-                        rows={3}
-                        value={formData.use_case}
-                        onChange={handleChange}
-                        placeholder="Tell us about your AI agents and what you're building..."
-                        className="w-full rounded-lg bg-navy-950 border border-border px-4 py-3 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 focus:ring-1 focus:ring-gold-500/20 transition-colors resize-none"
-                      />
-                    </div>
-
                     <button
                       type="submit"
                       disabled={isSubmitting || cooldown > 0}
@@ -369,10 +339,10 @@ export default function WaitlistPage() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          Submitting...
+                          Starting trial...
                         </span>
                       ) : (
-                        "Join Waitlist"
+                        "Start Free Trial"
                       )}
                     </button>
                   </div>
@@ -395,19 +365,20 @@ export default function WaitlistPage() {
             {/* Sidebar */}
             <div className="lg:col-span-2 space-y-6">
               <div className="glass-card rounded-2xl p-6 sm:p-8">
-                <h3 className="text-lg font-semibold mb-4">Why join the beta?</h3>
+                <h3 className="text-lg font-semibold mb-4">How it works</h3>
                 <div className="space-y-4 text-sm text-foreground-muted leading-relaxed">
-                  <p>
-                    Tiresias is the first platform purpose-built for <span className="text-foreground font-medium">AI agent security</span> &mdash;
-                    identity, monitoring, and gateway protection in one stack.
-                  </p>
-                  <p>
-                    Beta users get full platform access, direct feedback channels with the engineering team,
-                    and priority onboarding when we launch.
-                  </p>
-                  <p>
-                    We&apos;re reviewing applications and sending invites in waves. Tell us what you&apos;re building and we&apos;ll fast-track you.
-                  </p>
+                  <div className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center text-xs font-bold">1</span>
+                    <p>Enter your work email and company details above.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center text-xs font-bold">2</span>
+                    <p>Click the verification link in your email.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gold-500/10 text-gold-400 flex items-center justify-center text-xs font-bold">3</span>
+                    <p>Your tenant and SoulKey are provisioned instantly. Start securing your agents.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -417,8 +388,8 @@ export default function WaitlistPage() {
         {/* Per-product feature breakdown */}
         <section className="mx-auto max-w-7xl px-6 lg:px-8 pb-20">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold">What you&apos;ll get access to</h2>
-            <p className="mt-3 text-foreground-muted">Three products, one platform. Here&apos;s what each one does.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">What&apos;s included in your trial</h2>
+            <p className="mt-3 text-foreground-muted">Three products, one platform. Full Pro access for 14 days.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {platformProducts.map((product) => (
