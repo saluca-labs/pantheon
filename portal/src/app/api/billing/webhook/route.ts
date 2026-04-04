@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { storePendingKey } from "../_keystore";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -114,9 +115,8 @@ async function updateTenantTier(
 
 /**
  * Provision a new tenant via SoulAuth and return the raw_key + tenant_id.
- * raw_key is stored in Stripe subscription metadata temporarily so the
- * /api/billing/session endpoint can surface it to the success page.
- * Note: raw_key exposure is ephemeral — it will be cleared after first retrieval.
+ * raw_key is stored in an ephemeral in-memory keystore (not Stripe metadata)
+ * and retrieved once by the /api/billing/claim-key endpoint on the success page.
  */
 async function provisionTenant(
   companyName: string,
@@ -240,19 +240,27 @@ export async function POST(request: NextRequest) {
             subscriptionId,
             email
           );
-          if (result && subscriptionId) {
-            // Store tenant_id + raw_key in subscription metadata for success page retrieval
-            // raw_key is sensitive — cleared by success page after display
-            try {
-              await getStripe().subscriptions.update(subscriptionId, {
-                metadata: {
-                  tenant_id: result.tenant_id,
-                  soulkey_id: result.soulkey_id,
-                  raw_key: result.raw_key,
-                },
-              });
-            } catch (e) {
-              console.error("Failed to update subscription metadata:", e);
+          if (result) {
+            // Store raw_key in ephemeral in-memory keystore for one-time retrieval
+            // via /api/billing/claim-key (never stored in Stripe metadata)
+            storePendingKey(session.id, {
+              raw_key: result.raw_key,
+              tenant_id: result.tenant_id,
+              soulkey_id: result.soulkey_id,
+            });
+
+            // Store non-sensitive IDs in subscription metadata for lifecycle management
+            if (subscriptionId) {
+              try {
+                await getStripe().subscriptions.update(subscriptionId, {
+                  metadata: {
+                    tenant_id: result.tenant_id,
+                    soulkey_id: result.soulkey_id,
+                  },
+                });
+              } catch (e) {
+                console.error("Failed to update subscription metadata:", e);
+              }
             }
             console.log(
               "Checkout: provisioned new tenant " +
