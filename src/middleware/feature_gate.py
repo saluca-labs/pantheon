@@ -19,37 +19,37 @@ logger = structlog.get_logger(__name__)
 # Which tiers can access each feature
 FEATURE_TIERS: dict[str, list[str]] = {
     # Starter (all tiers including community)
-    "auth_identity": ["community", "starter", "pro", "enterprise", "mssp", "saas"],
-    "auth_evaluate": ["community", "starter", "pro", "enterprise", "mssp", "saas"],
-    "trial": ["community", "starter", "pro", "enterprise", "mssp", "saas"],
-    "health": ["community", "starter", "pro", "enterprise", "mssp", "saas"],
-    "admin_read": ["community", "starter", "pro", "enterprise", "mssp", "saas"],
+    "auth_identity": ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    "auth_evaluate": ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    "trial": ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    "health": ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    "admin_read": ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"],
     # Pro features
-    "analytics": ["pro", "enterprise", "mssp", "saas"],
-    "detection_rules": ["pro", "enterprise", "mssp", "saas"],
-    "sigma_rules": ["pro", "enterprise", "mssp", "saas"],
-    "investigation": ["pro", "enterprise", "mssp", "saas"],
-    "byok": ["pro", "enterprise", "mssp", "saas"],
-    "pii_scanning": ["pro", "enterprise", "mssp", "saas"],
-    "delegation": ["pro", "enterprise", "mssp", "saas"],
-    "policy_git_sync": ["pro", "enterprise", "mssp", "saas"],
-    "admin_write": ["pro", "enterprise", "mssp", "saas"],
+    "analytics": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "detection_rules": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "sigma_rules": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "investigation": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "byok": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "pii_scanning": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "delegation": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "policy_git_sync": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "admin_write": ["pro", "enterprise", "mssp", "saas", "owner"],
     # Enterprise features
-    "enforcement": ["enterprise", "mssp", "saas"],
-    "siem_forwarding": ["enterprise", "mssp", "saas"],
-    "audit_export": ["enterprise", "mssp", "saas"],
-    "multi_tenant": ["enterprise", "mssp", "saas"],
-    "custom_detection": ["enterprise", "mssp", "saas"],
-    "partner_channels": ["enterprise", "mssp", "saas"],
-    "contract_management": ["enterprise", "mssp", "saas"],
+    "enforcement": ["enterprise", "mssp", "saas", "owner"],
+    "siem_forwarding": ["enterprise", "mssp", "saas", "owner"],
+    "audit_export": ["enterprise", "mssp", "saas", "owner"],
+    "multi_tenant": ["enterprise", "mssp", "saas", "owner"],
+    "custom_detection": ["enterprise", "mssp", "saas", "owner"],
+    "partner_channels": ["enterprise", "mssp", "saas", "owner"],
+    "contract_management": ["enterprise", "mssp", "saas", "owner"],
     # Pro features (additional)
-    "investigation_access": ["pro", "enterprise", "mssp", "saas"],
-    "prh_engine": ["pro", "enterprise", "mssp", "saas"],
+    "investigation_access": ["pro", "enterprise", "mssp", "saas", "owner"],
+    "prh_engine": ["pro", "enterprise", "mssp", "saas", "owner"],
     # Starter features (additional)
-    "team_management": ["starter", "pro", "enterprise", "mssp", "saas"],
-    "billing_management": ["starter", "pro", "enterprise", "mssp", "saas"],
-    # SaaS-only features
-    "saas_management": ["saas"],
+    "team_management": ["starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    "billing_management": ["starter", "pro", "enterprise", "mssp", "saas", "owner"],
+    # SaaS platform management — saas + mssp tenants can manage the hierarchy
+    "saas_management": ["mssp", "saas", "owner"],
 }
 
 # Map URL path prefixes to features
@@ -94,7 +94,7 @@ ALWAYS_ALLOWED_PREFIXES = [
 FEATURE_MIN_TIER: dict[str, str] = {}
 for _feature, _tiers in FEATURE_TIERS.items():
     # The minimum tier is the first in the ordered tier list that appears
-    for _t in ["community", "starter", "pro", "enterprise", "mssp", "saas"]:
+    for _t in ["community", "starter", "pro", "enterprise", "mssp", "saas", "owner"]:
         if _t in _tiers:
             FEATURE_MIN_TIER[_feature] = _t
             break
@@ -120,7 +120,9 @@ def _is_always_allowed(path: str) -> bool:
 
 
 def _tier_has_feature(tier: str, feature: str) -> bool:
-    """Check if a tier includes a given feature."""
+    """Check if a tier includes a given feature. Owner tier passes all gates."""
+    if tier == "owner":
+        return True
     allowed_tiers = FEATURE_TIERS.get(feature, [])
     return tier in allowed_tiers
 
@@ -180,6 +182,10 @@ class FeatureGateMiddleware(BaseHTTPMiddleware):
             tenant_tier = await _resolve_tenant_tier(tenant_ctx.tenant_id)
         else:
             tenant_tier = install_tier  # No tenant context → use install tier only
+
+        # Owner tier bypasses install-license ceiling and all feature gates
+        if tenant_tier == "owner":
+            return await call_next(request)
 
         # Effective tier = min(install, tenant) — install caps the ceiling
         current_tier = effective_tier(install_tier, tenant_tier)

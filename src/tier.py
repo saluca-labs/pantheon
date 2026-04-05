@@ -13,6 +13,7 @@ class Tier(str, Enum):
     ENTERPRISE = "enterprise"
     MSSP = "mssp"
     SAAS = "saas"
+    OWNER = "owner"
 
 
 # Ordered list for rank comparisons (index = rank, higher = more capable)
@@ -35,7 +36,10 @@ def effective_tier(install_tier: str, tenant_tier: str) -> str:
     """
     Compute effective tier = min(install_license_tier, tenant_subscription_tier).
     Install license caps the ceiling; tenant subscription sets what they paid for.
+    Owner tier bypasses the install-license ceiling entirely.
     """
+    if tenant_tier == "owner" or install_tier == "owner":
+        return "owner"
     return TIER_ORDER[min(tier_rank(install_tier), tier_rank(tenant_tier))]
 
 
@@ -44,6 +48,7 @@ def effective_tier(install_tier: str, tenant_tier: str) -> str:
 # ---------------------------------------------------------------------------
 
 TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
+    "owner": ["saas", "mssp", "enterprise", "pro", "starter", "community"],
     "saas": ["saas", "mssp", "enterprise", "pro", "starter", "community"],
     "mssp": ["enterprise", "pro", "starter", "community"],
     "enterprise": ["pro", "starter", "community"],
@@ -53,6 +58,7 @@ TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
 }
 
 TIER_MAX_CHILDREN: dict[str, int] = {
+    "owner": 0,      # 0 = unlimited
     "saas": 0,       # 0 = unlimited
     "mssp": 500,
     "enterprise": 50,

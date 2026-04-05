@@ -31,6 +31,7 @@ TIER_RPM: dict[str, int] = {
     "pro": 300,
     "enterprise": 1000,
     "mssp": 2000,
+    "owner": 10000,
 }
 
 _DEFAULT_RPM = 60

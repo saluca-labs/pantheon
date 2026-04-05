@@ -1325,6 +1325,256 @@ curl -X DELETE https://tiresias.network/v1/soulgate/admin/api-keys/{key_id} \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
+### Action Pipeline Configuration
+
+Agent actions flow through an inline pipeline before execution: the cognition layer (MiroShark) emits a structured action, SoulGate authenticates and evaluates policy, logs the decision, and forwards to the action execution layer (PicoClaw). This creates a single chokepoint for all agent-initiated actions across the platform.
+
+```
+MiroShark (cognition) ──> SoulGate (auth + policy + audit) ──> PicoClaw (execution)
+```
+
+The pipeline is currently deployed in **monitor-only mode**: all actions are permitted, every decision is logged, and behavioral baselines are built from production traffic. No enforcement rules are active.
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SOULGATE_PICOCLAW_BASE_URL` | `http://picoclaw-saluca:18790` | Base URL of the PicoClaw action execution API |
+| `SOULGATE_PICOCLAW_ACTION_TOKEN` | (empty) | Shared secret for authenticating forwarded action requests to PicoClaw |
+
+Set these in the SoulGate environment. In Docker Compose, add them to the `soulgate` service `env_file` or inline under `environment`. The token value must match the `TIRESIAS_ACTION_TOKEN` configured on the PicoClaw side.
+
+#### Endpoint Reference: POST /gate/v1/actions/submit
+
+**Authentication:** Every request must include a valid SoulKey in the `X-SoulKey` header. SoulGate validates the key against SoulAuth before processing the action.
+
+**Request Schema (TiresiasActionRequest):**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `action_id` | UUID | Yes | Unique identifier for this action |
+| `tenant_id` | string | Yes | Tenant that owns the acting agent |
+| `persona_id` | string | Yes | Persona performing the action |
+| `action_type` | enum | Yes | One of the supported action types (see below) |
+| `target` | object | Yes | Destination for the action |
+| `target.platform` | string | Yes | Target platform (e.g., `slack`) |
+| `target.channel` | string | Yes | Target channel identifier |
+| `target.thread_ts` | string | No | Thread timestamp for threaded replies |
+| `content` | object | Yes | Action payload |
+| `content.text` | string | No | Message text |
+| `content.emoji` | string | No | Emoji name (for reactions) |
+| `content.link_url` | string | No | URL to share |
+| `simulation_context` | object | No | Metadata for simulation runs (includes `simulation_id`) |
+| `timestamp` | ISO 8601 | No | Defaults to current UTC time |
+
+**Action Types:**
+
+| Type | Description |
+|------|-------------|
+| `POST_MESSAGE` | Post a new message to a channel |
+| `REPLY_IN_THREAD` | Reply within an existing thread |
+| `REACT` | Add an emoji reaction |
+| `DM` | Send a direct message |
+| `SHARE_LINK` | Share a link in a channel |
+| `PIN_MESSAGE` | Pin a message |
+| `CREATE_CHANNEL` | Create a new channel |
+| `DO_NOTHING` | No-op (used for logging cognition decisions that result in no action) |
+
+**Response Schema (TiresiasActionResponse):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `action_id` | UUID | Echo of the submitted action ID |
+| `status` | string | `executed`, `failed`, or `denied` |
+| `result` | object | Downstream execution result (present on success) |
+| `error` | string | Error message (present on failure) |
+| `denied_by` | object | Denial details (present when policy denies the action) |
+| `denied_by.policy_name` | string | Name of the policy that denied the action |
+| `denied_by.rule_name` | string | Specific rule within the policy |
+| `denied_by.policy_level` | string | Policy scope (e.g., `action`) |
+| `denied_by.reason` | string | Human-readable denial reason |
+
+**Error Codes:**
+
+| Code | Meaning | Cause |
+|------|---------|-------|
+| 401 | Authentication failed | Missing or invalid SoulKey |
+| 403 | Policy denied | Action blocked by an active policy rule |
+| 429 | Rate limited | Agent or tenant exceeded rate limit; `Retry-After` header included |
+| 502 | Action layer unreachable | PicoClaw is down or `SOULGATE_PICOCLAW_BASE_URL` is misconfigured |
+| 504 | Action layer timeout | PicoClaw did not respond within 15 seconds |
+
+**Example: Submit an action**
+
+```bash
+curl -X POST https://tiresias.network/gate/v1/actions/submit \
+  -H "X-SoulKey: $AGENT_SOULKEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "tenant_id": "ab789b06-6624-4f92-a89b-fec960991d01",
+    "persona_id": "miroshark-analyst-01",
+    "action_type": "POST_MESSAGE",
+    "target": {
+      "platform": "slack",
+      "channel": "#soc-alerts"
+    },
+    "content": {
+      "text": "ALERT: Anomalous login pattern detected for user jdoe@acme.com"
+    }
+  }'
+```
+
+**Example: Successful response**
+
+```json
+{
+  "action_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "executed",
+  "result": {
+    "ok": true,
+    "ts": "1711234567.890123",
+    "channel": "C0123456789"
+  }
+}
+```
+
+**Example: Policy denial response**
+
+```json
+{
+  "action_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "denied",
+  "denied_by": {
+    "policy_name": "channel-access",
+    "rule_name": "restrict-exec-channel",
+    "policy_level": "action",
+    "reason": "Persona miroshark-analyst-01 is not authorized to post in #executive"
+  }
+}
+```
+
+#### Monitor-Only Mode
+
+The action pipeline ships in monitor-only mode. Every action that passes authentication and rate limiting is **permitted** regardless of type, target, or content. The policy evaluator returns `allowed: true` with reason `monitor-only` for every request.
+
+This is intentional. The monitor phase builds behavioral baselines from real production traffic before enforcement rules go live:
+
+- Which personas submit the most actions and what types they use
+- Which channels receive the most agent-originated traffic
+- Typical response times from the execution layer
+- Action volume patterns by time of day and tenant
+
+All decisions are written to the `_soulgate_action_log` audit table (see below). Review this data to understand normal agent behavior before defining enforcement policies.
+
+#### Action Audit Log
+
+Every action processed through the pipeline is recorded in the `_soulgate_action_log` table, regardless of whether it was permitted, denied, or failed downstream.
+
+**Table Schema:**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `tenant_id` | UUID | Tenant that owns the acting agent |
+| `soulkey_id` | UUID | SoulKey used for authentication |
+| `persona_id` | string(128) | Persona that submitted the action |
+| `action_id` | UUID | Action identifier from the request |
+| `action_type` | string(64) | Action type enum value |
+| `target_platform` | string(32) | Target platform |
+| `target_channel` | string(128) | Target channel |
+| `decision` | string(16) | `permit` or `deny` |
+| `policy_name` | string(128) | Policy that produced the decision (null in monitor mode) |
+| `rule_name` | string(128) | Specific rule within the policy (null in monitor mode) |
+| `downstream_status` | integer | HTTP status code from PicoClaw |
+| `response_time_ms` | float | End-to-end pipeline latency in milliseconds |
+| `simulation_id` | string(128) | Simulation run identifier (null for live traffic) |
+| `source_ip` | string(45) | Client IP address |
+| `created_at` | timestamptz | When the log entry was written |
+
+**Indexes:** `tenant_id`, `persona_id`, `created_at`, `action_type`
+
+**Useful Queries:**
+
+```sql
+-- Actions by persona (last 24 hours)
+SELECT persona_id, action_type, COUNT(*) AS action_count
+FROM _soulgate_action_log
+WHERE created_at > NOW() - INTERVAL '24 hours'
+GROUP BY persona_id, action_type
+ORDER BY action_count DESC;
+
+-- Actions by type (last 7 days)
+SELECT action_type, decision, COUNT(*) AS total
+FROM _soulgate_action_log
+WHERE created_at > NOW() - INTERVAL '7 days'
+GROUP BY action_type, decision
+ORDER BY total DESC;
+
+-- Denied actions (useful before enforcement goes live — should be empty in monitor mode)
+SELECT action_id, persona_id, action_type, policy_name, rule_name, created_at
+FROM _soulgate_action_log
+WHERE decision = 'deny'
+ORDER BY created_at DESC
+LIMIT 50;
+
+-- Response time percentiles (execution layer health)
+SELECT
+  PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY response_time_ms) AS p50,
+  PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY response_time_ms) AS p90,
+  PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY response_time_ms) AS p99
+FROM _soulgate_action_log
+WHERE created_at > NOW() - INTERVAL '1 hour'
+  AND downstream_status IS NOT NULL;
+```
+
+#### Enforcement Mode (Future)
+
+The `policy.py` module provides the seam where enforcement logic will plug in. When enforcement is enabled, the `evaluate_action` function will query policy rules from the database instead of returning `monitor-only` for every request.
+
+Action policies use a three-level intersection model:
+
+| Level | Scope | Example |
+|-------|-------|---------|
+| Organization | Org-wide rules that apply to every agent in the tenant | "No agent may create channels" |
+| Project | Rules scoped to a project or department | "SOC agents may only post in `#soc-*` channels" |
+| Agent | Per-persona rules | "miroshark-analyst-01 is limited to 10 POST_MESSAGE actions per minute" |
+
+A request must be permitted by **all three levels** to proceed. If any level denies, the action is blocked and the denial is recorded with the specific policy and rule that triggered it.
+
+Planned enforcement capabilities:
+
+- **Channel access rules** -- restrict which channels each persona or role can target
+- **Per-agent rate limits** -- cap action volume per persona independent of SoulKey rate limits
+- **Content policies** -- block or flag actions containing specific patterns or exceeding length thresholds
+- **Time-of-day restrictions** -- limit agent actions to business hours or maintenance windows
+
+#### Troubleshooting
+
+**502 -- PicoClaw unreachable:**
+The SoulGate proxy cannot connect to the action execution layer. Verify that `SOULGATE_PICOCLAW_BASE_URL` is correct and that the PicoClaw container is running and healthy. Check network connectivity between the SoulGate and PicoClaw containers (they must share a Docker network or be routable via the configured URL).
+
+```bash
+# Check PicoClaw health from the SoulGate container
+docker compose exec soulgate curl -sf http://picoclaw-saluca:18790/health
+```
+
+**504 -- PicoClaw timeout:**
+The execution layer did not respond within 15 seconds. Check downstream latency and PicoClaw logs for slow operations. If actions consistently approach the timeout threshold, investigate the platform API (e.g., Slack) for rate limits or outages.
+
+**401 -- Authentication failed:**
+The `X-SoulKey` header is missing or contains an invalid key. Verify the SoulKey is active and not expired. Check SoulAuth connectivity from the SoulGate container.
+
+```bash
+# Verify SoulAuth is reachable from SoulGate
+docker compose exec soulgate curl -sf http://soulauth:8000/health
+```
+
+**Token mismatch (actions forwarded but rejected by PicoClaw):**
+The `SOULGATE_PICOCLAW_ACTION_TOKEN` on SoulGate must match the `TIRESIAS_ACTION_TOKEN` on the PicoClaw side. A mismatch results in PicoClaw rejecting forwarded requests. Rotate both values simultaneously and restart both containers.
+
+> **Customer deployment:** For step-by-step installation of the action pipeline in production, see `deploy/INSTALL.md` Section 5 (Action Pipeline Setup) and `deploy/TROUBLESHOOTING.md` Section 4 (Action Pipeline Issues).
+
 ---
 
 ## 9. Monitoring & Observability

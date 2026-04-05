@@ -82,6 +82,10 @@ spec:
               value: ""
             - name: NODE_ENV
               value: "production"
+            # Phase 3 — Portal Split Spec: cross-domain cookies for tiresias.network + platform.tiresias.network
+            # Setting this causes a one-time session reset: all users must re-login.
+            - name: COOKIE_DOMAIN
+              value: ".tiresias.network"
           resources:
             requests:
               cpu: 250m

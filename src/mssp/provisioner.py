@@ -23,6 +23,17 @@ logger = structlog.get_logger(__name__)
 
 # Resource defaults per tier
 TIER_RESOURCES = {
+    "owner": {
+        "proxy_replicas": 2,
+        "proxy_cpu_request": "250m",
+        "proxy_cpu_limit": "1",
+        "proxy_mem_request": "512Mi",
+        "proxy_mem_limit": "1Gi",
+        "include_soulauth": True,
+        "include_soulwatch": True,
+        "resource_quota_cpu": "8",
+        "resource_quota_mem": "16Gi",
+    },
     "enterprise": {
         "proxy_replicas": 1,
         "proxy_cpu_request": "200m",

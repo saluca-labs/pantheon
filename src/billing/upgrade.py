@@ -21,7 +21,8 @@ logger = structlog.get_logger(__name__)
 STRIPE_API_BASE = "https://api.stripe.com/v1"
 
 from src.tier import VALID_TIERS as ALL_TIERS
-UPGRADE_TIERS = ALL_TIERS - {"community"}
+# Owner tier is not available for self-service upgrade — it is assigned manually.
+UPGRADE_TIERS = ALL_TIERS - {"community", "owner"}
 
 
 def _stripe_key() -> str:
@@ -52,7 +53,7 @@ async def upgrade_tenant_tier(
         raise ValueError(f"Tenant {tenant_id} not found")
 
     # Block partner sub-tenants from upgrading to mssp/saas tiers
-    if tenant.parent_tenant_id and new_tier in {"mssp", "saas"}:
+    if tenant.parent_tenant_id and new_tier in {"mssp", "saas", "owner"}:
         raise ValueError(
             f"Partner sub-tenants cannot be upgraded to '{new_tier}'. "
             f"Only top-level tenants may hold mssp/saas tier."

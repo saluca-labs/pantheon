@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "SoulAuth"
-    app_version: str = "3.4.4"
+    app_version: str = "3.6.0"
     debug: bool = False
     log_level: str = "INFO"
 

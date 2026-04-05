@@ -119,14 +119,14 @@ def _get_caller_tenant_id(request: Request) -> uuid.UUID:
 
 
 async def _require_saas_master(db: AsyncSession, request: Request) -> SoulTenant:
-    """Verify caller is the SaaS master (tier=saas, depth=0, no parent)."""
+    """Verify caller is a platform master (tier saas or mssp, depth=0, no parent)."""
     tenant_id = _get_caller_tenant_id(request)
     result = await db.execute(select(SoulTenant).where(SoulTenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
     if not tenant:
         raise HTTPException(status_code=404, detail="Caller tenant not found")
-    if tenant.tier != "saas" or tenant.hierarchy_depth != 0 or tenant.parent_tenant_id is not None:
-        raise HTTPException(status_code=403, detail="Only the SaaS master can access this endpoint")
+    if tenant.tier not in ("saas", "mssp", "owner") or tenant.hierarchy_depth != 0 or tenant.parent_tenant_id is not None:
+        raise HTTPException(status_code=403, detail="Only the platform master can access this endpoint")
     return tenant
 
 
@@ -194,11 +194,12 @@ async def create_tenant(
     """
     master = await _require_saas_master(db, request)
 
-    # Validate tier
-    if body.tier not in VALID_TIERS:
+    # Validate tier — owner tier is internal-only, not assignable via API
+    customer_tiers = VALID_TIERS - {"owner"}
+    if body.tier not in customer_tiers:
         raise HTTPException(
             status_code=422,
-            detail=f"Invalid tier '{body.tier}'. Valid tiers: {sorted(VALID_TIERS)}",
+            detail=f"Invalid tier '{body.tier}'. Valid tiers: {sorted(customer_tiers)}",
         )
 
     # Determine parent: explicit parent_tenant_id or default to SaaS master
@@ -429,10 +430,12 @@ async def override_tier(
     """
     master = await _require_saas_master(db, request)
 
-    if body.new_tier not in VALID_TIERS:
+    # Owner tier is internal-only and cannot be assigned via API
+    customer_tiers = VALID_TIERS - {"owner"}
+    if body.new_tier not in customer_tiers:
         raise HTTPException(
             status_code=422,
-            detail=f"Invalid tier '{body.new_tier}'. Valid tiers: {sorted(VALID_TIERS)}",
+            detail=f"Invalid tier '{body.new_tier}'. Valid tiers: {sorted(customer_tiers)}",
         )
 
     result = await db.execute(

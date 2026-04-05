@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE = "tiresias_session";
 const SESSION_DATA_COOKIE = "tiresias_session_data";
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 /** Routes that require authentication */
 const PROTECTED_PREFIXES = ["/dashboard"];
@@ -65,7 +66,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Protect /platform/* and /dashboard/* routes
+  // Protect /dashboard/* routes
   const isProtected = PROTECTED_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),
   );
@@ -78,9 +79,9 @@ export function middleware(request: NextRequest) {
 
     // If cookies exist but are invalid, clear them
     if (request.cookies.has(SESSION_COOKIE) || request.cookies.has(SESSION_DATA_COOKIE)) {
-      response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-      response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0 });
-      response.cookies.set("tiresias_tenant", "", { path: "/", maxAge: 0 });
+      response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+      response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+      response.cookies.set("tiresias_tenant", "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
     }
 
     return response;

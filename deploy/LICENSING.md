@@ -49,6 +49,7 @@ Tiers are cumulative. Each tier includes everything from the tier below it plus 
 | `detection_rules` | — | — | Yes | Yes | Yes | Yes |
 | `delegation` | — | — | Yes | Yes | Yes | Yes |
 | `policy_git_sync` | — | — | Yes | Yes | Yes | Yes |
+| `action_pipeline` | — | Monitor | Monitor | Active | Active | Active |
 | `audit_export` | — | — | — | Yes | Yes | Yes |
 | `custom_detection` | — | — | — | Yes | Yes | Yes |
 | `enforcement` | — | — | — | Yes | Yes | Yes |

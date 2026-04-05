@@ -19,6 +19,7 @@ const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
 const TENANT_COOKIE = "tiresias_tenant";
 const SESSION_TTL = 28800; // 8 hours
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 export async function POST(request: NextRequest) {
   try {
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Regular cookie: user profile data for UI
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Non-HttpOnly session cookie: allows client-side api.ts to read the
@@ -132,6 +135,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Tenant cookie
@@ -141,6 +145,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     return response;

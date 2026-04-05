@@ -12,15 +12,20 @@ export const TIER_ORDER = [
   "enterprise",
   "mssp",
   "saas",
+  "owner",
 ] as const;
 
 export type Tier = (typeof TIER_ORDER)[number];
 
+/** Customer-visible tiers (owner is internal-only). */
+export const CUSTOMER_TIERS = TIER_ORDER.filter((t) => t !== "owner");
+
 /**
  * Returns true if `actualTier` meets the `requiredTier` threshold.
- * Unknown tiers fall back to index 0 (community = lowest).
+ * Owner tier always passes. Unknown tiers fall back to index 0 (community = lowest).
  */
 export function tierMeets(actualTier: string, requiredTier: Tier): boolean {
+  if (actualTier === "owner") return true;
   const actualIdx = TIER_ORDER.indexOf(actualTier as Tier);
   const requiredIdx = TIER_ORDER.indexOf(requiredTier);
   return actualIdx >= requiredIdx;

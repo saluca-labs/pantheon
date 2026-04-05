@@ -133,6 +133,10 @@ services:
       SOULGATE_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
       # SOULGATE_LOG_LEVEL — Logging verbosity (default: info)
       SOULGATE_LOG_LEVEL: ${LOG_LEVEL:-info}
+      # SOULGATE_PICOCLAW_BASE_URL — Action execution layer URL (leave empty for monitor-only)
+      SOULGATE_PICOCLAW_BASE_URL: ${SOULGATE_PICOCLAW_BASE_URL:-}
+      # SOULGATE_PICOCLAW_ACTION_TOKEN — Shared secret for action pipeline auth
+      SOULGATE_PICOCLAW_ACTION_TOKEN: ${SOULGATE_PICOCLAW_ACTION_TOKEN:-}
     depends_on:
       soulauth:
         condition: service_healthy

@@ -306,6 +306,61 @@ A successful response confirms that LLM traffic is flowing through Tiresias. All
 
 ---
 
+## Action Pipeline Setup
+
+The action pipeline connects SoulGate (the API gateway) to an external action execution layer. By default, the pipeline is **monitor-only** -- SoulGate logs action requests but does not forward them until the pipeline is configured.
+
+### Generate the shared action token
+
+Both SoulGate and the action execution endpoint must share the same secret token:
+
+```bash
+openssl rand -hex 32
+```
+
+Set this value in `.env` for both sides:
+
+```
+SOULGATE_PICOCLAW_ACTION_TOKEN=<the token you generated>
+```
+
+### Set the action execution URL
+
+Point SoulGate at the action execution endpoint:
+
+```
+SOULGATE_PICOCLAW_BASE_URL=http://picoclaw:18790
+```
+
+Replace `picoclaw:18790` with the hostname and port of your action execution layer. If the execution layer runs on the same Docker network, use the container service name. If it runs externally, use the full URL.
+
+### Verify the pipeline
+
+After starting the stack, confirm SoulGate can reach the action layer:
+
+```bash
+curl -s http://localhost:8002/health | jq '.components.action_pipeline'
+```
+
+Expected response when configured:
+
+```json
+{
+  "status": "connected",
+  "upstream": "http://picoclaw:18790"
+}
+```
+
+If the action token or URL is not set, the health check reports `"status": "disabled"` -- this is normal for monitor-only deployments.
+
+### Monitor-only mode
+
+If you do not set `SOULGATE_PICOCLAW_BASE_URL`, SoulGate operates in monitor-only mode. Action requests are logged to the audit trail but not forwarded. This is the default and is suitable for deployments that only need detection and alerting without automated response.
+
+See `docs/ADMIN_GUIDE.md` Section 8 (SoulGate Configuration) for advanced action pipeline options including rate limiting, circuit breaker settings, and action approval workflows.
+
+---
+
 ## Upgrading
 
 To upgrade Tiresias to the latest version:

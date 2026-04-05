@@ -25,6 +25,7 @@ TIER_LIMITS: dict[str, dict[str, int]] = {
     "enterprise": {"agents": -1,          "requests": -1,          "storage_bytes": -1},
     "mssp":       {"agents": -1,          "requests": -1,          "storage_bytes": -1},
     "saas":       {"agents": -1,          "requests": -1,          "storage_bytes": -1},
+    "owner":      {"agents": -1,          "requests": -1,          "storage_bytes": -1},
 }
 
 # Thresholds

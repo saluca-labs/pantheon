@@ -884,6 +884,216 @@ Every request -- whether allowed or blocked -- is recorded in the audit log with
 - Response status code and latency
 - Any anomalies or detections triggered
 
+### Submitting Agent Actions Through SoulGate
+
+In addition to proxying API requests, SoulGate provides a dedicated action pipeline for agent actions -- posting messages, reacting, creating channels, and other platform operations. Every action submitted through this pipeline is authenticated, evaluated against policy, forwarded for execution, and logged to the action audit table. This gives you a single chokepoint where every agent side-effect is recorded and controllable.
+
+#### Why Use the Action Pipeline
+
+If your agents interact with external platforms (Slack, email, ticketing systems), routing those actions through SoulGate gives you:
+
+- **Authentication**: every action is tied to a SoulKey identity
+- **Policy evaluation**: actions are checked against tenant-level and persona-level rules before execution
+- **Audit trail**: every action -- permitted, denied, or failed -- is recorded with full context
+- **Idempotency**: use the `action_id` field to prevent duplicate execution
+
+#### Endpoint
+
+```
+POST /gate/v1/actions/submit
+```
+
+#### Request Schema
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `action_id` | UUID | Yes | Unique identifier for this action. Use a UUID v4. Enables idempotency. |
+| `tenant_id` | string | Yes | Your tenant identifier |
+| `persona_id` | string | Yes | The persona submitting the action (must match the SoulKey) |
+| `action_type` | enum | Yes | One of: `POST_MESSAGE`, `REPLY_IN_THREAD`, `REACT`, `DM`, `SHARE_LINK`, `PIN_MESSAGE`, `CREATE_CHANNEL`, `DO_NOTHING` |
+| `target.platform` | string | Yes | Target platform (e.g., `slack`) |
+| `target.channel` | string | Yes | Target channel or conversation |
+| `target.thread_ts` | string | No | Thread timestamp (for threaded replies) |
+| `content.text` | string | No | Text content of the action |
+| `content.emoji` | string | No | Emoji (for reactions) |
+| `content.link_url` | string | No | URL (for link sharing) |
+| `simulation_context` | object | No | Optional simulation metadata (include `simulation_id` for test runs) |
+
+#### curl Example
+
+Post a message to a Slack channel:
+
+```bash
+curl -X POST https://tiresias.network/gate/v1/actions/submit \
+  -H "X-Soulkey: sk_agent_acme_alfred_a1b2c3d4..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action_id": "550e8400-e29b-41d4-a716-446655440000",
+    "tenant_id": "acme",
+    "persona_id": "alfred",
+    "action_type": "POST_MESSAGE",
+    "target": {
+      "platform": "slack",
+      "channel": "#general"
+    },
+    "content": {
+      "text": "Daily security summary: 0 anomalies, 142 actions processed."
+    }
+  }'
+```
+
+#### Response Handling
+
+The response always includes an `action_id` and a `status` field. There are three possible outcomes:
+
+**Executed** -- the action was permitted and successfully forwarded:
+
+```json
+{
+  "action_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "executed",
+  "result": {
+    "ok": true,
+    "ts": "1711108800.000100"
+  }
+}
+```
+
+**Failed** -- the action was permitted but the downstream service returned an error:
+
+```json
+{
+  "action_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "failed",
+  "error": "PicoClaw returned 400: channel_not_found"
+}
+```
+
+**Denied** -- the action was blocked by a policy rule:
+
+```json
+{
+  "action_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "denied",
+  "denied_by": {
+    "policy_name": "production-safety",
+    "rule_name": "no-dm-to-external",
+    "policy_level": "action",
+    "reason": "DM actions are restricted to internal channels"
+  }
+}
+```
+
+#### Error Handling Patterns
+
+Your agent should handle the following HTTP-level errors from the action endpoint:
+
+| Status | Meaning | Recommended Action |
+|---|---|---|
+| `401` | Invalid or missing SoulKey | Check your key configuration. Do not retry. |
+| `403` | Action denied by policy | Read the `denied_by` field. Do not retry the same action -- the policy will deny it again. |
+| `429` | Rate limited | Read the `Retry-After` header. Back off for that many seconds before retrying. |
+| `502` | Downstream service unreachable | Retry with exponential backoff (1s, 2s, 4s). The execution service may be temporarily down. |
+| `504` | Downstream service timed out | Retry once after a brief delay. If the timeout persists, the downstream is likely overloaded. |
+
+#### Python SDK Example
+
+Here is a minimal example of submitting an action inside an agent loop:
+
+```python
+import uuid
+import httpx
+
+SOULGATE_URL = "https://tiresias.network/gate/v1/actions/submit"
+SOULKEY = "sk_agent_acme_alfred_a1b2c3d4..."
+
+async def submit_action(client: httpx.AsyncClient, action_type: str,
+                        channel: str, text: str) -> dict:
+    """Submit an action through SoulGate and handle the response."""
+    payload = {
+        "action_id": str(uuid.uuid4()),
+        "tenant_id": "acme",
+        "persona_id": "alfred",
+        "action_type": action_type,
+        "target": {"platform": "slack", "channel": channel},
+        "content": {"text": text},
+    }
+
+    response = await client.post(
+        SOULGATE_URL,
+        json=payload,
+        headers={"X-Soulkey": SOULKEY, "Content-Type": "application/json"},
+    )
+
+    if response.status_code == 429:
+        retry_after = int(response.headers.get("Retry-After", 10))
+        raise RetryableError(f"Rate limited. Retry after {retry_after}s")
+
+    if response.status_code in (502, 504):
+        raise RetryableError("Downstream unavailable. Retry with backoff.")
+
+    result = response.json()
+
+    if result.get("status") == "denied":
+        denial = result["denied_by"]
+        print(f"Action denied by {denial['policy_name']}: {denial['reason']}")
+        return result
+
+    if result.get("status") == "failed":
+        print(f"Action failed: {result['error']}")
+        return result
+
+    return result  # status == "executed"
+
+
+# In your agent loop:
+async def agent_loop():
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        result = await submit_action(
+            client,
+            action_type="POST_MESSAGE",
+            channel="#security-alerts",
+            text="Anomaly detected in agent researcher-7. Investigating.",
+        )
+        if result["status"] == "executed":
+            print("Message posted successfully.")
+```
+
+#### Best Practices
+
+- **Always generate a UUID v4 for `action_id`.** This enables idempotency checks and makes action tracing unambiguous across the audit log.
+- **Always check the `status` field in the response.** Do not assume success based on a 200 HTTP status alone -- the response body may indicate a downstream failure.
+- **Handle denials gracefully.** A `denied` status means the policy engine intentionally blocked the action. Log it, notify the operator, and move on. Do not retry denied actions in a loop.
+- **Use `simulation_context` for testing.** Include a `simulation_id` in the simulation context to tag test actions. This makes it easy to filter them out of production audit queries.
+
+### Monitor-Only Mode
+
+The action pipeline currently operates in **monitor-only mode**. This means:
+
+- **All actions are permitted.** The policy engine evaluates every action but always returns a `permit` decision. No legitimate action will be blocked.
+- **Everything is logged.** Every action flows through the full audit pipeline. The `decision` field in the audit log will read `permit` for all actions during this phase.
+- **Baselines are being built.** The audit data collected during monitor-only mode becomes the behavioral baseline for your agents. When enforcement is enabled, the platform will use this data to distinguish normal from anomalous action patterns.
+
+#### Verifying Your Actions Are Flowing
+
+To confirm your agent's actions are reaching the pipeline and being recorded, query the audit log:
+
+```bash
+curl -H "X-Soulkey: sk_agent_acme_admin_..." \
+  "https://tiresias.network/v1/soulauth/admin/audit?event_type=action_submit&since=1h"
+```
+
+Look for entries matching your agent's `persona_id` and the `action_type` you submitted.
+
+#### Preparing for Enforcement
+
+When the platform transitions from monitor-only to enforcement mode, the policy engine will begin denying actions that violate configured rules. To prepare:
+
+1. **Review your action patterns.** Check the audit log to understand what actions your agents submit, how frequently, and to which targets.
+2. **Understand the policy model.** Action policies evaluate the same dimensions as access policies: who (persona), what (action type), where (target platform and channel), and when (time constraints).
+3. **Test with `DO_NOTHING` actions.** Submit `DO_NOTHING` actions to verify your error handling for denials without producing any side-effects.
+4. **Watch for policy announcements.** When enforcement is enabled, tenant admins will receive advance notice with the specific policies that will be applied.
+
 ---
 
 ## 5. API Reference Quick Start

@@ -260,7 +260,7 @@ export default function DashboardHeader() {
               </Link>
 
               {/* Switch Tenant (MSSP users) */}
-              {(session?.tier === "mssp" || session?.tier === "saas") && (
+              {(session?.tier === "mssp" || session?.tier === "saas" || session?.tier === "owner") && (
                 <button
                   onClick={() => {
                     setAvatarMenuOpen(false);

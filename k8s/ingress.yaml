@@ -29,12 +29,42 @@ metadata:
     app.kubernetes.io/part-of: tiresias
   annotations:
     kubernetes.io/ingress.class: "gce"
-    networking.gke.io/managed-certificates: "tiresias-cert,tiresias-proxy-cert"
+    networking.gke.io/managed-certificates: "tiresias-cert,tiresias-proxy-cert,tiresias-platform-cert"
     kubernetes.io/ingress.global-static-ip-name: "tiresias-ip"
     networking.gke.io/v1beta1.FrontendConfig: "tiresias-frontend"
 spec:
   rules:
+    # ---- tiresias.network (marketing site) ----
     - host: tiresias.network
+      http:
+        paths:
+          # Stripe billing webhooks must keep working on tiresias.network
+          - path: /api/billing/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: marketing-portal
+                port:
+                  number: 80
+          # Marketing site catch-all (must be last)
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: marketing-portal
+                port:
+                  number: 80
+    - host: proxy.tiresias.network
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tiresias-proxy
+                port:
+                  number: 80
+    - host: platform.tiresias.network
       http:
         paths:
           # SoulGate routes
@@ -132,16 +162,6 @@ spec:
             backend:
               service:
                 name: portal
-                port:
-                  number: 80
-    - host: proxy.tiresias.network
-      http:
-        paths:
-          - path: /*
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: tiresias-proxy
                 port:
                   number: 80
 ---

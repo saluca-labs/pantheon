@@ -287,6 +287,100 @@ The `-v` flag removes all named volumes including the database. Only use this as
 
 ---
 
+## Action Pipeline Issues
+
+The action pipeline routes requests from SoulGate to the action execution layer. These issues only apply when the pipeline is enabled (both `SOULGATE_PICOCLAW_BASE_URL` and `SOULGATE_PICOCLAW_ACTION_TOKEN` are set).
+
+### Actions not reaching the execution layer (502/504)
+
+**Symptoms:**
+- Action requests return HTTP 502 or 504
+- SoulGate logs show `upstream_connect_error` or `upstream_timeout`
+
+**Resolution:**
+
+1. Confirm the action execution endpoint is reachable from the SoulGate container:
+   ```bash
+   docker compose exec soulgate python -c \
+     "import httpx; print(httpx.get('${SOULGATE_PICOCLAW_BASE_URL}/health').status_code)"
+   ```
+
+2. If the execution layer is on a different Docker network, verify network connectivity. Services on `tiresias-net` cannot reach external containers unless explicitly connected.
+
+3. Check for DNS resolution issues. If using a hostname, confirm it resolves:
+   ```bash
+   docker compose exec soulgate python -c \
+     "import socket; print(socket.gethostbyname('picoclaw'))"
+   ```
+
+4. If timeouts are occurring, the execution layer may be under load. Check its logs and resource usage.
+
+### Auth failures on action submit (401)
+
+**Symptoms:**
+- Action requests return HTTP 401
+- Execution layer logs show `invalid_token` or `authentication_failed`
+
+**Resolution:**
+
+1. Verify the token matches on both sides. The value of `SOULGATE_PICOCLAW_ACTION_TOKEN` in your `.env` must be identical to the token configured on the action execution endpoint.
+
+2. Check for trailing whitespace or newlines in the token value. A common cause is copy-paste errors:
+   ```bash
+   grep SOULGATE_PICOCLAW_ACTION_TOKEN .env | cat -A
+   # The line should end with the token, no trailing spaces or ^M characters
+   ```
+
+3. Regenerate and re-deploy both sides if the token is compromised or uncertain:
+   ```bash
+   NEW_TOKEN=$(openssl rand -hex 32)
+   echo "New token: $NEW_TOKEN"
+   # Set this value in .env and restart both SoulGate and the execution layer
+   ```
+
+### Token mismatch between SoulGate and action layer
+
+**Symptoms:**
+- SoulGate health check shows `"action_pipeline": {"status": "connected"}` but action requests fail with 401
+- This occurs after rotating the token on one side but not the other
+
+**Resolution:**
+
+Both SoulGate and the action execution layer must be restarted after a token change. The token is read at startup and cached in memory.
+
+1. Update `SOULGATE_PICOCLAW_ACTION_TOKEN` in `.env`
+2. Update the same token on the action execution endpoint
+3. Restart both services:
+   ```bash
+   docker compose -f deploy/docker-compose.production.yml restart soulgate
+   # Also restart the action execution layer per its own procedures
+   ```
+
+### Checking the action audit log
+
+All action pipeline activity is recorded in the audit log, regardless of whether the pipeline is in monitor-only or active mode.
+
+```bash
+# Query recent action events via the SoulAuth audit API
+curl -s "https://tiresias.network/v1/soulauth/admin/audit/report?event_type=action_pipeline&limit=20" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq .
+```
+
+Each audit entry includes:
+
+| Field | Description |
+|-------|-------------|
+| `event_type` | `action_pipeline` |
+| `action` | The action that was requested (e.g. `quarantine`, `notify`, `block`) |
+| `status` | `forwarded`, `failed`, `monitor_only` |
+| `upstream_status` | HTTP status returned by the execution layer (null if monitor-only) |
+| `latency_ms` | Round-trip time to the execution layer |
+| `soulkey_id` | The agent that triggered the action |
+
+If you see `"status": "monitor_only"` for all entries, the pipeline is not configured for active forwarding. Set `SOULGATE_PICOCLAW_BASE_URL` and restart SoulGate to enable it.
+
+---
+
 ## Log Locations
 
 **Stream all logs in real time:**

@@ -11,6 +11,7 @@ const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
 const TENANT_COOKIE = "tiresias_tenant";
 const OIDC_SESSION_TTL = 28800; // 8 hours in seconds
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 
 function getBaseUrl(request: NextRequest): string {
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: OIDC_SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Regular cookie: stores non-sensitive OIDC user profile (readable by client for UI)
@@ -90,6 +92,7 @@ export async function GET(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: OIDC_SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Tenant cookie: used by the API client for X-Tenant-ID header
@@ -99,6 +102,7 @@ export async function GET(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: OIDC_SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     return response;

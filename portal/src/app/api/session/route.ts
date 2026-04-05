@@ -16,6 +16,7 @@ const TENANT_COOKIE = "tiresias_tenant";
 const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
 const SESSION_TTL = 86400; // 24 hours in seconds
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 /**
  * POST /api/session - Create a new session
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: 28800, // 8h
+        domain: COOKIE_DOMAIN,
       });
 
       const oidcData = JSON.stringify({
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: 28800,
+        domain: COOKIE_DOMAIN,
       });
 
       return response;
@@ -98,9 +101,10 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, soulkey, {
       httpOnly: true,
       secure: isSecure,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     const sessionData = JSON.stringify({
@@ -115,17 +119,19 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_DATA_COOKIE, sessionData, {
       httpOnly: false,
       secure: isSecure,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     response.cookies.set(TENANT_COOKIE, tenant_id, {
       httpOnly: false,
       secure: isSecure,
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     return response;
@@ -150,12 +156,13 @@ export async function DELETE() {
   response.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: 0,
+    domain: COOKIE_DOMAIN,
   });
-  response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0 });
-  response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+  response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
 
   // Clear OIDC cookies
   response.cookies.set(OIDC_SESSION_COOKIE, "", {
@@ -164,8 +171,9 @@ export async function DELETE() {
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    domain: COOKIE_DOMAIN,
   });
-  response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
 
   return response;
 }
@@ -187,8 +195,8 @@ export async function GET(_request: NextRequest) {
       const oidcData = JSON.parse(oidcDataCookie.value);
       if (oidcData.expires_at && Date.now() > oidcData.expires_at) {
         const response = NextResponse.json({ error: "Session expired" }, { status: 401 });
-        response.cookies.set(OIDC_SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-        response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0 });
+        response.cookies.set(OIDC_SESSION_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+        response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
         return response;
       }
       return NextResponse.json({
@@ -214,9 +222,9 @@ export async function GET(_request: NextRequest) {
 
     if (sessionData.expires_at && Date.now() > sessionData.expires_at) {
       const response = NextResponse.json({ error: "Session expired" }, { status: 401 });
-      response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-      response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0 });
-      response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0 });
+      response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+      response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+      response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
       return response;
     }
 

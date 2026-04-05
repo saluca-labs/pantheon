@@ -13,6 +13,7 @@ const OIDC_SESSION_COOKIE = "tiresias_oidc_session";
 const OIDC_DATA_COOKIE = "tiresias_oidc_data";
 const TENANT_COOKIE = "tiresias_tenant";
 const SESSION_TTL = 86400;
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
+      domain: COOKIE_DOMAIN,
     });
 
     // Check if OIDC session is active — update it in place
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
           sameSite: "lax",
           path: "/",
           maxAge: SESSION_TTL,
+          domain: COOKIE_DOMAIN,
         });
       } catch {
         // malformed cookie — create fresh
@@ -71,6 +74,7 @@ export async function POST(request: NextRequest) {
           sameSite: "lax",
           path: "/",
           maxAge: SESSION_TTL,
+          domain: COOKIE_DOMAIN,
         });
       } catch {
         // malformed
@@ -87,6 +91,7 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: SESSION_TTL,
+        domain: COOKIE_DOMAIN,
       });
 
       response.cookies.set(SESSION_DATA_COOKIE, JSON.stringify({
@@ -101,6 +106,7 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: SESSION_TTL,
+        domain: COOKIE_DOMAIN,
       });
     }
 
@@ -115,10 +121,10 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE() {
   const response = NextResponse.json({ status: "ok" });
-  response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-  response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0 });
-  response.cookies.set(OIDC_SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-  response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0 });
-  response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+  response.cookies.set(SESSION_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+  response.cookies.set(OIDC_SESSION_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+  response.cookies.set(OIDC_DATA_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
+  response.cookies.set(TENANT_COOKIE, "", { path: "/", maxAge: 0, domain: COOKIE_DOMAIN });
   return response;
 }

@@ -1,0 +1,10 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: tiresias-platform-cert
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+spec:
+  domains:
+    - platform.tiresias.network
