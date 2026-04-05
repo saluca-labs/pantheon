@@ -42,6 +42,7 @@ class AuditLogger:
         approval_status: Optional[str] = None,
         session_id: Optional[str] = None,
         dispatch_latency_ms: Optional[float] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> str:
         """Insert a new audit record and return its *audit_ref* (row id).
 

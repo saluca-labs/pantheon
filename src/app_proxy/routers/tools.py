@@ -16,6 +16,7 @@ from app_proxy.auth.middleware import verify_request
 from app_proxy.config import Settings
 from app_proxy.main import (
     get_audit_logger,
+    get_behavioral_analyzer,
     get_cedar_engine,
     get_db_engine,
     get_plugin_registry,
@@ -24,10 +25,15 @@ from app_proxy.main import (
 from app_proxy.mcp.client import MCPClient, MCPResult
 from app_proxy.plugins.registry import PluginRegistry
 from app_proxy.policy.engine import CedarDecision as RealCedarDecision
+from app_proxy.risk.analyzer import BehavioralAlert, BehavioralAnalyzer, ToolEvent
+from app_proxy.risk.scorer import RiskAssessment, RiskContext, RiskScorer
 
 logger = structlog.stdlib.get_logger("app_proxy.routers.tools")
 
 router = APIRouter(prefix="/v1/tools", tags=["tools"])
+
+# Module-level risk scorer — stateless, safe to share across requests.
+_risk_scorer = RiskScorer()
 
 
 # ---------------------------------------------------------------------------
@@ -59,11 +65,20 @@ class ToolCallRequest(BaseModel):
     session_id: str | None = None
 
 
+class BehavioralAlertEntry(BaseModel):
+    """Serializable representation of a behavioral alert in API responses."""
+    pattern_name: str
+    severity: str
+    description: str
+    recommendation: str
+
+
 class ToolCallSuccess(BaseModel):
     status: str = "ok"
     tool_name: str
     result: Any = None
     audit_ref: str
+    behavioral_alerts: list[BehavioralAlertEntry] = Field(default_factory=list)
 
 
 class ToolCallDenied(BaseModel):
@@ -71,6 +86,7 @@ class ToolCallDenied(BaseModel):
     tool_name: str
     reason: str
     audit_ref: str
+    behavioral_alerts: list[BehavioralAlertEntry] = Field(default_factory=list)
 
 
 class ToolCallPending(BaseModel):
@@ -145,6 +161,7 @@ def _authorize(
     tool_name: str,
     request: ToolCallRequest,
     tool_def: Any = None,
+    risk_score: int = 0,
 ) -> RealCedarDecision:
     """Evaluate Cedar policies for the tool call via the real CedarPolicyEngine.
 
@@ -174,6 +191,7 @@ def _authorize(
                 "has_approval": False,
                 "estimated_cost_usd": 0,
                 "input_keys": list(request.arguments.keys()),
+                "risk_score": risk_score,
             },
         )
         return decision
@@ -235,6 +253,35 @@ def _get_approval_service() -> Any:
 
 
 # ---------------------------------------------------------------------------
+# Behavioral analysis helpers
+# ---------------------------------------------------------------------------
+def _get_analyzer() -> BehavioralAnalyzer:
+    """Resolve the BehavioralAnalyzer from app state."""
+    analyzer = get_behavioral_analyzer()
+    if not isinstance(analyzer, BehavioralAnalyzer):
+        raise HTTPException(status_code=503, detail="Behavioral analyzer not available")
+    return analyzer
+
+
+def _alerts_to_entries(alerts: list[BehavioralAlert]) -> list[BehavioralAlertEntry]:
+    """Convert internal BehavioralAlert objects to API response entries."""
+    return [
+        BehavioralAlertEntry(
+            pattern_name=a.pattern_name,
+            severity=a.severity,
+            description=a.description,
+            recommendation=a.recommendation,
+        )
+        for a in alerts
+    ]
+
+
+def _has_critical_alert(alerts: list[BehavioralAlert]) -> bool:
+    """Return True if any alert has critical severity."""
+    return any(a.severity == "critical" for a in alerts)
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @router.post("/list", response_model=ToolListResponse)
@@ -257,9 +304,11 @@ async def call_tool(
     _auth: dict[str, Any] = Depends(_get_auth_context),
     registry: PluginRegistry = Depends(_get_registry),
 ) -> ToolCallSuccess | ToolCallDenied | ToolCallPending:
-    """Dispatch a tool call through Cedar policy evaluation, MCP plugin dispatch, and DB audit."""
+    """Dispatch a tool call through Cedar policy evaluation, behavioral analysis, MCP plugin dispatch, and DB audit."""
     call_id = str(uuid.uuid4())
     audit = _get_audit_logger()
+    analyzer = _get_analyzer()
+    settings = get_settings()
     t_start = time.perf_counter()
 
     # 1. Resolve plugin
@@ -288,9 +337,94 @@ async def call_tool(
             )
             raise HTTPException(status_code=422, detail={"validation_errors": errors})
 
-    # 3. Cedar policy authorization (synchronous — engine is thread-safe)
+    # 3. Risk scoring (runs BEFORE Cedar — adds context for policy decisions)
+    risk_ctx = RiskContext(
+        tool_name=body.tool_name,
+        plugin_name=plugin.name,
+        agent_id=body.agent_id,
+        tenant_id=body.tenant_id,
+        arguments=body.arguments,
+        tool_annotations=tool_def.annotations if tool_def.annotations else {},
+        hour_of_day=datetime.now(timezone.utc).hour,
+        agent_call_count=0,  # TODO: wire session-level call counter
+    )
+    risk_assessment = _risk_scorer.score(risk_ctx)
+
+    logger.info(
+        "risk.scored",
+        tool=body.tool_name,
+        risk_score=risk_assessment.score,
+        risk_level=risk_assessment.level,
+        recommendation=risk_assessment.recommendation,
+    )
+
+    # 3a. Critical risk in strict mode — auto-deny without Cedar eval
+    if risk_assessment.level == "critical" and getattr(settings, "strict_risk_enforcement", False):
+        reason = f"Auto-denied: critical risk score {risk_assessment.score}"
+        audit_ref = await audit.record_call(
+            tenant_id=body.tenant_id, agent_id=body.agent_id,
+            plugin_name=plugin.name, tool_name=body.tool_name, call_id=call_id,
+            arguments=body.arguments, policy_decision="deny",
+            policy_reason=reason, session_id=body.session_id,
+            metadata={"risk": risk_assessment.to_dict()},
+        )
+        await audit.record_result(audit_ref, status="denied", error_message=reason)
+        # Record denied event to behavioral analyzer
+        analyzer.record(ToolEvent(
+            agent_id=body.agent_id, tool_name=body.tool_name,
+            plugin_name=plugin.name, arguments_keys=list(body.arguments.keys()),
+            risk_score=risk_assessment.score, status="denied",
+        ))
+        return ToolCallDenied(
+            tool_name=body.tool_name,
+            reason=reason,
+            audit_ref=audit_ref,
+        )
+
+    # 3b. Behavioral analysis — check cross-tool patterns BEFORE dispatch
+    pre_event = ToolEvent(
+        agent_id=body.agent_id,
+        tool_name=body.tool_name,
+        plugin_name=plugin.name,
+        arguments_keys=list(body.arguments.keys()),
+        risk_score=risk_assessment.score,
+        status="pending",
+    )
+    behavioral_alerts = analyzer.check_and_record(pre_event)
+    alert_entries = _alerts_to_entries(behavioral_alerts)
+
+    # 3c. Critical behavioral alert in strict mode — auto-deny
+    is_strict = settings.policy_enforcement_mode == "strict"
+    if _has_critical_alert(behavioral_alerts) and is_strict:
+        critical_alert = next(a for a in behavioral_alerts if a.severity == "critical")
+        reason = f"Behavioral pattern '{critical_alert.pattern_name}' detected: {critical_alert.description}"
+        audit_ref = await audit.record_call(
+            tenant_id=body.tenant_id, agent_id=body.agent_id,
+            plugin_name=plugin.name, tool_name=body.tool_name, call_id=call_id,
+            arguments=body.arguments, policy_decision="deny",
+            policy_reason=reason, session_id=body.session_id,
+            metadata={"risk": risk_assessment.to_dict()},
+        )
+        await audit.record_result(audit_ref, status="denied", error_message=reason)
+        logger.warning(
+            "behavioral.auto_deny",
+            agent_id=body.agent_id,
+            tool=body.tool_name,
+            pattern=critical_alert.pattern_name,
+        )
+        return ToolCallDenied(
+            tool_name=body.tool_name,
+            reason=reason,
+            audit_ref=audit_ref,
+            behavioral_alerts=alert_entries,
+        )
+
+    # 4. Cedar policy authorization (synchronous — engine is thread-safe)
     cedar_engine = get_cedar_engine()
-    decision = _authorize(cedar_engine, plugin.name, body.tool_name, body, tool_def=tool_def)
+    decision = _authorize(
+        cedar_engine, plugin.name, body.tool_name, body,
+        tool_def=tool_def, risk_score=risk_assessment.score,
+    )
 
     # Map CedarDecision to policy_decision string
     if decision.allowed:
@@ -308,29 +442,34 @@ async def call_tool(
         plugin_name=plugin.name, tool_name=body.tool_name, call_id=call_id,
         arguments=body.arguments, policy_decision=policy_decision,
         policy_reason=policy_reason, session_id=body.session_id,
+        metadata={"risk": risk_assessment.to_dict()},
     )
 
-    # 4. Handle deny
+    # 5. Handle deny
     if not decision.allowed and not decision.needs_approval:
         await audit.record_result(audit_ref, status="denied", error_message=policy_reason)
+        # Update the behavioral event status to denied
+        pre_event.status = "denied"
         return ToolCallDenied(
             tool_name=body.tool_name,
             reason=policy_reason or "Denied by policy",
             audit_ref=audit_ref,
+            behavioral_alerts=alert_entries,
         )
 
-    # 5. Handle needs_approval
+    # 6. Handle needs_approval
     if decision.needs_approval:
-        settings = get_settings()
         if not settings.enable_approval_queue:
             await audit.record_result(
                 audit_ref, status="denied",
                 error_message="Approval required but queue disabled",
             )
+            pre_event.status = "denied"
             return ToolCallDenied(
                 tool_name=body.tool_name,
                 reason="Action requires approval but approval queue is disabled",
                 audit_ref=audit_ref,
+                behavioral_alerts=alert_entries,
             )
 
         approval_service = _get_approval_service()
@@ -359,6 +498,7 @@ async def call_tool(
         await audit.record_approval(
             audit_ref, approval_id=approval_id, approval_status="pending",
         )
+        pre_event.status = "pending"
         return ToolCallPending(
             tool_name=body.tool_name,
             approval_id=approval_id,
@@ -367,7 +507,7 @@ async def call_tool(
             priority=priority,
         )
 
-    # 6. Dispatch to plugin via real MCP client
+    # 7. Dispatch to plugin via real MCP client
     try:
         mcp_result: MCPResult = await _dispatch_to_plugin(
             registry, plugin.name, body.tool_name, body.arguments,
@@ -377,26 +517,30 @@ async def call_tool(
         await audit.record_result(
             audit_ref, status="error", error_message=str(exc), total_latency_ms=total_ms,
         )
+        pre_event.status = "denied"
         raise HTTPException(status_code=502, detail=f"Plugin dispatch failed: {exc}")
 
     total_ms = (time.perf_counter() - t_start) * 1000
 
-    # 7. Record result and return
+    # 8. Record result, update behavioral event status, and return
     if mcp_result.success:
         await audit.record_result(
             audit_ref, status="success", result=mcp_result.result,
             plugin_latency_ms=mcp_result.latency_ms, total_latency_ms=total_ms,
         )
+        pre_event.status = "success"
         return ToolCallSuccess(
             tool_name=body.tool_name,
             result=mcp_result.result,
             audit_ref=audit_ref,
+            behavioral_alerts=alert_entries,
         )
     else:
         await audit.record_result(
             audit_ref, status="error", error_message=mcp_result.error,
             plugin_latency_ms=mcp_result.latency_ms, total_latency_ms=total_ms,
         )
+        pre_event.status = "denied"
         raise HTTPException(
             status_code=502,
             detail=f"Plugin returned error: {mcp_result.error}",

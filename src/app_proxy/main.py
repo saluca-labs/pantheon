@@ -26,6 +26,8 @@ _audit_logger: object | None = None
 _approval_service: object | None = None
 _approval_sweeper_task: object | None = None
 _scheduler: object | None = None
+_risk_scorer: object | None = None
+_behavioral_analyzer: object | None = None
 
 
 def get_settings() -> Settings:
@@ -64,13 +66,23 @@ def get_scheduler() -> object:
     return _scheduler
 
 
+def get_risk_scorer() -> object:
+    assert _risk_scorer is not None, "Risk scorer not initialised."
+    return _risk_scorer
+
+
+def get_behavioral_analyzer() -> object:
+    assert _behavioral_analyzer is not None, "Behavioral analyzer not initialised."
+    return _behavioral_analyzer
+
+
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle for the App Proxy."""
-    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler
+    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler, _risk_scorer, _behavioral_analyzer
 
     # ---- startup ----
     _settings = Settings()
@@ -126,6 +138,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _plugin_registry = PluginRegistry(_settings.plugins_dir)
     await _plugin_registry.load()
     logger.info("plugin.registry.ready", plugins=len(_plugin_registry.list_tools()))
+
+    # Risk scorer + behavioral analyzer
+    from app_proxy.risk.analyzer import BehavioralAnalyzer
+
+    try:
+        from app_proxy.risk.scorer import RiskScorer
+        _risk_scorer = RiskScorer()
+    except ImportError:
+        _risk_scorer = None
+        logger.warning("risk.scorer.unavailable", reason="module not found")
+
+    _behavioral_analyzer = BehavioralAnalyzer(window_minutes=30, max_history=100)
+    logger.info("behavioral.analyzer.ready")
 
     # Scheduler engine (needs cedar, registry, audit, DB)
     from app_proxy.scheduler.engine import SchedulerEngine
