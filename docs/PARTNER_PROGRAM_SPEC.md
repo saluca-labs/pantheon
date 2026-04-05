@@ -340,7 +340,7 @@ The partner is the Stripe customer. Sub-tenant usage is metered on the partner's
 ```
   Stripe
     |
-    +-- Partner subscription ($2,499/mo MSSP base)
+    +-- Partner subscription ($4,999/mo MSSP base)
     |     |
     |     +-- Metered item: sub-tenant count x $199/tenant
     |     +-- Metered item: agent overage (if applicable)
@@ -366,7 +366,7 @@ Each sub-tenant has their own Stripe subscription. The partner earns a percentag
 ```
   Stripe
     |
-    +-- Partner subscription ($2,499/mo MSSP base)
+    +-- Partner subscription ($4,999/mo MSSP base)
     |
     +-- Sub-tenant A subscription ($799/mo enterprise)
     |     +-- 25% rev-share -> $199.75/mo to partner
@@ -921,7 +921,7 @@ Static content page. Key sections:
 - Hero: "Build your security practice on Tiresias"
 - Partner types explained (Reseller vs MSSP)
 - Benefits: rev-share, white-label, API access, dedicated support
-- Pricing: MSSP base ($2,499/mo), reseller (free to join)
+- Pricing: MSSP base ($4,999/mo + $199/tenant), reseller (free to join)
 - CTA: "Apply Now" button -> `/partners/apply`
 - FAQ
 

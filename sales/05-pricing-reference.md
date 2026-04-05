@@ -14,8 +14,8 @@ All tiers include unlimited users. Pricing matches what is shown on tiresias.net
 | **Community** | **Free** | Free | 25 agents | 7 days |
 | **Starter** | **$49/mo** | $39/mo | 50 agents | 30 days |
 | **Pro** | **$199/mo** | $169/mo | 250 agents | 90 days |
-| **Enterprise** | **$799/mo** | $699/mo | Unlimited | Custom |
-| **MSSP** | $2,499/mo base | Contact us | Unlimited | Per-tenant |
+| **Enterprise** | **$2,499/mo** | $1,999/mo | Unlimited | Custom |
+| **MSSP** | $4,999/mo base + $199/tenant | Contact us | Unlimited | Per-tenant |
 | **SaaS** | Custom | Custom | Unlimited | Managed |
 
 ---
@@ -31,7 +31,7 @@ For a team running 10 agents:
 | Observability only | Community | $0/agent | Free |
 | Production security | Starter ($49/mo) | ~$5/agent | SoulAuth Pro alone would be $150/mo |
 | Full detection + response | Pro ($199/mo) | ~$20/agent | SIEM + EDR equivalents start at $500+/mo |
-| Enterprise compliance | Enterprise ($799/mo) | ~$80/agent | Custom SLAs, dedicated support |
+| Enterprise compliance | Enterprise ($2,499/mo) | ~$250/agent | Custom SLAs, dedicated support |
 
 ---
 
@@ -59,7 +59,7 @@ For a team running 10 agents:
 - Delegation + RBAC
 - Priority support (24h)
 
-### Enterprise ($799/mo)
+### Enterprise ($2,499/mo)
 - Everything in Pro
 - SIEM connectors (CEF/syslog/webhook)
 - Policy enforcement (audit -> warn -> enforce)
@@ -67,7 +67,7 @@ For a team running 10 agents:
 - Audit log export (tamper-evident)
 - Dedicated support (8h SLA)
 
-### MSSP ($2,499/mo base)
+### MSSP ($4,999/mo base + $199/tenant)
 - Everything in Enterprise
 - Multi-tenant hierarchy (parent-child)
 - Cross-tenant detection + quarantine views
@@ -90,7 +90,7 @@ For a team running 10 agents:
 Annual billing saves approximately 20%:
 - Starter: $39/mo vs $49/mo (billed annually as $468/yr)
 - Pro: $169/mo vs $199/mo (billed annually as $2,028/yr)
-- Enterprise: $699/mo vs $799/mo (billed annually as $8,388/yr)
+- Enterprise: $1,999/mo vs $2,499/mo (billed annually as $23,988/yr)
 
 ---
 
@@ -101,8 +101,8 @@ Annual billing saves approximately 20%:
 | Indie dev / hobbyist | Community | Free |
 | Small team, production | Starter | $49/mo |
 | AI-native security team | Pro | $199/mo |
-| Compliance-driven enterprise | Enterprise | $799/mo |
-| MSSP / managed security | MSSP | $2,499/mo + per-tenant |
+| Compliance-driven enterprise | Enterprise | $2,499/mo |
+| MSSP / managed security | MSSP | $4,999/mo + $199/tenant |
 | Evaluation / trial | Free Trial | $0 for 14 days |
 
 ---
