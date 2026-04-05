@@ -46,6 +46,10 @@ class ProvisionResponse(BaseModel):
     tenant_id: uuid.UUID
     soulkey_id: uuid.UUID
     raw_key: str = Field(description="Admin soulkey — shown once. Save immediately.")
+    proxy_api_key: str | None = Field(
+        default=None,
+        description="Tiresias proxy API key — shown once. Point agents at proxy.tiresias.network with this key.",
+    )
     slug: str
     tier: str
     status: str
@@ -169,7 +173,18 @@ async def saas_provision(
         db.add(policy)
         await db.flush()
 
-        # 4. Write provision audit log entry
+        # 4. Generate Tiresias proxy API key for SaaS customers
+        proxy_api_key = None
+        if request.tier in ("starter", "pro", "saas"):
+            from src.saas.proxy_keys import provision_proxy_key
+            proxy_api_key = await provision_proxy_key(
+                db=db,
+                tenant_id=str(tenant.id),
+                tenant_slug=request.slug,
+                tier=request.tier,
+            )
+
+        # 5. Write provision audit log entry
         audit = AuditLog(
             tenant_id=tenant.id,
             event_type="saas.provision",
@@ -200,6 +215,7 @@ async def saas_provision(
             tenant_id=tenant.id,
             soulkey_id=soulkey.id,
             raw_key=raw_key,
+            proxy_api_key=proxy_api_key,
             slug=tenant.slug,
             tier=tenant.tier,
             status=tenant.status,
