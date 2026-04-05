@@ -194,6 +194,10 @@ class TrialActivationResponse(BaseModel):
         default=None,
         description="Tiresias proxy API key — shown once. Point agents at proxy.tiresias.network with this key.",
     )
+    license_key: Optional[str] = Field(
+        default=None,
+        description="License JWT for on-prem deployment. Install via TIRESIAS_LICENSE_KEY env var.",
+    )
     status: str
     expires_at: datetime
 
