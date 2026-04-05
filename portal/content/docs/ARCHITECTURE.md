@@ -1,946 +1,819 @@
-# Tiresias Platform: Architecture Overview
+# Tiresias Platform Architecture
 
-> **Version:** 1.0
-> **Date:** March 2026
-> **Classification:** Public - Technical Audience
-> **Audience:** Security architects, CISOs, technical evaluators, compliance officers
+Enterprise Agent Identity, Zero-Trust Authorization, and Runtime Security Platform.
+
+**Deployed at:** https://tiresias.network
+**Current version:** v3.4.4
 
 ---
 
 ## Table of Contents
 
-1. [Platform Overview](#1-platform-overview)
-2. [System Architecture](#2-system-architecture)
-3. [SoulAuth: Identity & Authorization Engine](#3-soulauth-identity--authorization-engine)
-4. [SoulWatch: Detection & Response Engine](#4-soulwatch-detection--response-engine)
-5. [SoulGate: API Security Gateway](#5-soulgate-api-security-gateway)
-6. [Data Flow: The Closed Loop](#6-data-flow-the-closed-loop)
-7. [Security Properties](#7-security-properties)
-8. [Deployment Models](#8-deployment-models)
-9. [Integration Points](#9-integration-points)
-10. [Compliance & Audit](#10-compliance--audit)
+1. [High-Level Architecture](#high-level-architecture)
+2. [Service Overview](#service-overview)
+3. [SoulAuth (Identity and Authorization)](#soulauth-identity-and-authorization)
+4. [SoulGate (API Security Gateway)](#soulgate-api-security-gateway)
+5. [SoulWatch (Runtime Security Monitoring)](#soulwatch-runtime-security-monitoring)
+6. [Portal (Web Dashboard)](#portal-web-dashboard)
+7. [tiresias-exec (CLI Shim)](#tiresias-exec-cli-shim)
+8. [Python SDK](#python-sdk)
+9. [Middleware Pipeline](#middleware-pipeline)
+10. [Data Flow Diagrams](#data-flow-diagrams)
+11. [Authentication Architecture](#authentication-architecture)
+12. [Database Schema](#database-schema)
+13. [Deployment Architecture](#deployment-architecture)
+14. [Security Architecture](#security-architecture)
+15. [Monitoring Architecture](#monitoring-architecture)
 
 ---
 
-## 1. Platform Overview
+## High-Level Architecture
 
-**Tiresias** is an AI agent security platform purpose-built for organizations deploying autonomous AI agents in production. Named after the blind prophet of Greek mythology, Tiresias embodies its namesake's paradox: it *sees threats without seeing data*. The platform operates on metadata, behavioral patterns, and policy decisions - never on the content of agent communications.
+```
+                              tiresias.network
+                                    |
+                          +---------+---------+
+                          |   GKE Ingress     |
+                          |  (Google L7 LB)   |
+                          |  TLS termination  |
+                          +---+---+---+---+---+
+                              |   |   |   |
+              +---------------+   |   |   +----------------+
+              |                   |   |                    |
+         /gate/*             /auth/*  /watch/*         /* (catch-all)
+         /gate/*             /tokens/* /watch/*         /api/*
+              |              /policies/*                    |
+              |              /tenants/*                     |
+              |              /admin/*                       |
+              |              /sdk/*                         |
+              |              /health                        |
+              |              /metrics                       |
+              |                   |                         |
+     +--------v------+   +-------v--------+   +------v----------+
+     |   SoulGate    |   |   SoulAuth     |   |    Portal       |
+     |   :8002       |   |   :8000        |   |    :3000        |
+     |   API Gateway |   |   Identity &   |   |    Next.js 16   |
+     |               |   |   AuthZ        |   |    React 19     |
+     +-------+-------+   +-------+--------+   +--------+-------+
+             |                    |                      |
+             +--------+-----------+----------------------+
+                      |
+             +--------v---------+
+             |  Cloud SQL Proxy |
+             |  :3307 sidecar   |
+             +--------+---------+
+                      |
+             +--------v---------+
+             |  PostgreSQL 16   |
+             |  Cloud SQL       |
+             +------------------+
 
-### The Problem
+     +--------v------+
+     |   SoulWatch   |
+     |   :8001       |
+     |   Behavioral  |
+     |   Analytics   |
+     +---------------+
+```
 
-AI agents are proliferating across enterprises - orchestrating workflows, accessing APIs, managing infrastructure, and making decisions at machine speed. Traditional security tooling was designed for human users with human-speed interactions. It cannot address:
-
-- **Agent identity**: How do you authenticate a process that has no password, no biometric, no MFA device?
-- **Agent authorization**: How do you enforce least privilege when an agent's scope changes dynamically?
-- **Agent behavior**: How do you detect a compromised agent when it operates at 1,000 requests per second?
-- **Agent-to-agent trust**: How do you govern delegation chains between autonomous systems?
-
-### The Platform
-
-Tiresias answers these questions with three integrated products:
-
-| Product | Function | Analogy |
-|---------|----------|---------|
-| **SoulAuth** | Identity, authentication, and fine-grained authorization for AI agents | "IAM for agents" |
-| **SoulWatch** | Behavioral anomaly detection, rule-based threat detection, and automated response | "SIEM/SOAR for agents" |
-| **SoulGate** | API security gateway with prompt injection detection and traffic inspection | "WAF for agent APIs" |
-
-Each product is independently deployable and valuable on its own. Together, they form a closed-loop security system where detection triggers enforcement, enforcement generates audit events, and audit events feed back into detection.
-
-### Design Principles
-
-- **Zero trust**: Every request is evaluated. There is no implicit trust, no ambient authority, no "trusted network."
-- **Policy as code**: All authorization rules are defined in version-controlled YAML, reviewed like application code.
-- **Deterministic security**: Detection and enforcement use rule-based, auditable logic - not opaque ML models.
-- **Tenant isolation**: Every data path is scoped by tenant. No cross-tenant access is architecturally possible.
-- **Graceful degradation**: Component failures reduce capability, never create false positives or security gaps.
+All four services share the same PostgreSQL 16 instance via Cloud SQL Proxy sidecars.
+Inter-service communication uses cluster-internal DNS (`*.tiresias.svc.cluster.local`).
 
 ---
 
-## 2. System Architecture
+## Service Overview
 
-Tiresias follows a microservices architecture. Each service is stateless (with the exception of short-lived baseline caches), independently deployable, and horizontally scalable.
-
-### High-Level Architecture
-
-```
-                         ┌──────────────────────┐
-                         │    Portal (Web UI)    │
-                         │   React + TypeScript  │
-                         └──────────┬───────────┘
-                                    │ HTTPS
-            ┌───────────────────────┼───────────────────────┐
-            │                       │                       │
-     ┌──────▼──────┐        ┌──────▼──────┐        ┌──────▼──────┐
-     │             │        │             │        │             │
-     │  SoulAuth   │        │  SoulWatch  │        │  SoulGate   │
-     │  Identity   │◄──────►│  Detection  │        │  Gateway    │
-     │  & Auth     │        │  & Response │◄───────│  & Proxy    │
-     │             │        │             │        │             │
-     └──────┬──────┘        └──────┬──────┘        └──────┬──────┘
-            │                       │                       │
-            │   ┌───────────────────┤                       │
-            │   │                   │                       │
-            ▼   ▼                   ▼                       ▼
-     ┌─────────────────────────────────────────────────────────┐
-     │                    PostgreSQL                           │
-     │              (per-tenant isolation)                     │
-     └─────────────────────────────────────────────────────────┘
-```
-
-### Service Responsibilities
-
-| Service | Port | Protocol | State | Scaling |
-|---------|------|----------|-------|---------|
-| **Portal** | 443 | HTTPS | Stateless | CDN + horizontal |
-| **SoulAuth** | Internal | gRPC / REST | Stateless | Horizontal (policy cache) |
-| **SoulWatch** | Internal | gRPC / REST | Near-stateless* | Horizontal (partitioned baselines) |
-| **SoulGate** | 443 | HTTPS reverse proxy | Stateless | Horizontal (per-region) |
-| **PostgreSQL** | Internal | TCP | Stateful | Vertical + read replicas |
-
-*SoulWatch maintains in-memory behavioral baselines (7-day sliding window). These are rebuilt from the database on cold start, making the service effectively stateless for deployment purposes.
-
-### Inter-Service Communication
-
-```
-  ┌──────────┐    Auth request     ┌──────────┐
-  │ SoulGate │ ──────────────────► │ SoulAuth │
-  └──────────┘    Capability token └──────────┘
-       │                                │
-       │ Audit events                   │ Audit events
-       ▼                                ▼
-  ┌──────────┐    Enforcement      ┌──────────┐
-  │ SoulWatch│ ──────────────────► │ SoulAuth │
-  └──────────┘    (suspend/revoke) └──────────┘
-```
-
-- **SoulGate → SoulAuth**: Token validation and policy evaluation on every proxied request.
-- **SoulGate → SoulWatch**: Audit events emitted asynchronously on every request.
-- **SoulWatch → SoulAuth**: Enforcement callbacks when threats are detected (key suspension, session termination).
-- **All services → PostgreSQL**: Shared database with row-level tenant isolation.
+| Service     | Language   | Port | Role                              |
+|-------------|------------|------|-----------------------------------|
+| SoulAuth    | Python/FastAPI | 8000 | Identity, PDP, tokens, policy, audit, billing, partners, contracts, teams, SIEM config, notifications |
+| SoulGate    | Python/FastAPI | 8002 | API proxy, rate limiting, circuit breaker, prompt injection scanning |
+| SoulWatch   | Python/FastAPI | 8001 | Anomaly detection, Sigma rules, quarantine, dashboards, WebSocket |
+| Portal      | Next.js 16 / React 19 | 3000 | Web dashboard, Stripe billing, local/LDAP/OIDC auth |
+| tiresias-exec | Go        | --   | CLI shim (policy gate, sanitizer, telemetry, offline mode) |
+| SDK         | Python     | --   | `tiresias-sdk` PyPI package        |
 
 ---
 
-## 3. SoulAuth: Identity & Authorization Engine
+## SoulAuth (Identity and Authorization)
 
-SoulAuth provides the identity layer for AI agents. It answers two questions for every request: *Who is this agent?* and *What is it allowed to do right now?*
+Core platform service. FastAPI application in `src/`.
 
-### 3.1 Identity Model
+### Module Inventory
 
-#### SoulKeys
+| Directory | Modules | Responsibility |
+|-----------|---------|---------------|
+| `auth/` | soulkey.py, pdp.py, rbac.py, oidc_provider.py, oidc_router.py, oidc_exchange.py, identity.py, delegation.py, jit_provisioning.py, oidc_session.py, domain_resolution.py, local_router.py, local_bootstrap.py, ldap_router.py, rate_limit.py, router.py, schemas.py, user_context.py, coexistence.py | SoulKey identity resolution, PDP evaluation, RBAC, OIDC provider, JIT provisioning, domain-based IdP resolution, delegation/escalation, local email/password auth, LDAP/AD auth, login rate limiting |
+| `aletheia/` | chain.py, cot_enforcer.py, cot_policy.py, encryption.py, extractors.py, models.py, sanitizer_engine.py, sanitizer_patterns.py, sanitizer_decoder.py, storage.py, tool_evaluate_router.py, tool_policy.py, tool_policy_engine.py, router.py | Chain-of-thought audit trail, CoT policy enforcement, secret sanitization, tool evaluation, encrypted CoT storage |
+| `analytics/` | detector.py (AnomalyDetector), baseline.py (BaselineEngine, 7-day sliding window), alerts.py (AlertRouter: Prometheus, Telegram, Slack), router.py | Behavioral anomaly detection, baseline computation, multi-channel alerting |
+| `detection/` | sigma_engine.py (SigmaEngine), playbooks.py (PlaybookEngine), router.py | Sigma-based threat detection, automated response playbooks |
+| `enforcement/` | quarantine.py (QuarantineEngine), router.py | Automated and manual agent quarantine |
+| `tokens/` | capability.py | ES256 JWT capability token issuance and validation |
+| `database/` | connection.py (asyncpg/aiosqlite), models.py (SQLAlchemy ORM), local_schema.py, local.py, session.py | Async database layer, ORM models, local dev SQLite fallback |
+| `audit/` | logger.py | Immutable hash-chained audit log with encrypted columns |
+| `mssp/` | isolation.py, models.py, router.py | Multi-tenant MSSP isolation and hierarchy |
+| `policy/` | loader.py, git_sync.py | Policy-as-code loading, Git repository sync |
+| `email/` | sender.py, templates.py, triggers.py | Transactional email (trial verification, notifications) |
+| `siem/` | _state.py, cef.py, syslog_transport.py, webhook.py, router.py | CEF formatting, syslog transport, webhook forwarding, per-tenant SIEM connector configuration |
+| `integrations/` | cef.py, config.py, forwarder.py, notifications.py, siem.py | SIEM event forwarding (Splunk, Elastic, Syslog, Webhook, Azure Sentinel) |
+| `notifications/` | router.py, sink.py | Per-tenant notification channel configuration and delivery |
+| `trial/` | service.py, email.py, router.py | Self-service trial registration and verification |
+| `saas/` | billing.py, metering.py, trial_expiry.py, master.py, router.py | Stripe billing, usage metering, trial expiry automation, SaaS master router |
+| `billing/` | portal.py, grace.py, upgrade.py, router.py | Billing portal, grace periods, tier upgrade flows |
+| `partner/` | commissions.py, connect.py, invitation.py, promo.py, router.py | Partner program with Stripe Connect, commission calculations, invitation management, promo codes |
+| `contracts/` | chain.py, review.py, router.py | Contract management with hash chain verification and review workflow |
+| `teams/` | router.py | Team RBAC management (create, assign roles, membership) |
+| `investigation/` | router.py, schemas.py, tokens.py | Investigation tokens for forensic audit access |
+| `license/` | validator.py, relay.py | License JWT validation, relay/phone-home for non-NFR licenses |
+| `middleware/` | pep.py, tenant.py, feature_gate.py, model_router.py, rbac.py, rate_limit.py, security_headers.py, usage_limit.py | Full middleware stack (see [Middleware Pipeline](#middleware-pipeline)) |
+| `monitoring/` | health.py, metrics.py | Health check endpoints, Prometheus metrics, gauge updater |
+| `support/` | linear.py, models.py, notifications.py, router.py | Support ticket integration (Linear), notification routing |
+| `chatbot/` | actions.py, context.py, escalation.py, history.py, knowledge.py, router.py | In-app support chatbot with knowledge base and escalation |
+| `admin/` | router.py | Tenant admin API (SoulKey lifecycle, policy sync, audit reports) |
+| `tenant/` | router.py, schemas.py | Tenant CRUD and configuration |
+| `idp/` | encryption.py, router.py, schemas.py, wellknown.py | Identity provider management, OIDC well-known endpoints |
+| `sdk/` | client.py, exceptions.py, models.py | Embedded SDK client library |
+| `waitlist/` | email.py, router.py | Waitlist registration and notification |
+| `usage/` | router.py | Usage tracking and reporting |
+| `compatibility/` | adapter.py | Backward compatibility adapter for API versioning |
+| `keys/` | router.py | SoulKey management API |
+| `security/` | -- | Security utilities |
+| `prh/` | -- | Prompt risk heuristics engine |
+| `tiresias/` | -- | Core platform utilities |
+| `main.py` | -- | FastAPI app init, lifespan (license, analytics, detection, SIEM, policy sync), middleware setup, 23 routers |
+| `cli.py` | -- | Click CLI: health, register, token, audit, policy test, whoami, init, dev, playground, status |
+| `tier.py` | -- | Tier definitions (community, starter, pro, enterprise, mssp, saas) |
 
-A **SoulKey** is the durable credential that establishes an agent's identity. It is conceptually similar to an API key but designed specifically for the agent lifecycle.
+### CLI Commands
 
 ```
-Format:  sk_agent_<tenant_prefix>_<persona>_<random_suffix>
-Example: sk_agent_acme_orchestrator_x7k2m9p4q1
+soulauth health                           # Service health check
+soulauth register --tenant-id ... --agent-id ...  # Register SoulKey
+soulauth token request --soulkey ...      # Request capability token
+soulauth token validate --soulkey ...     # Validate token
+soulauth audit --tenant-id ... --limit N  # Query audit log
+soulauth policy test --soulkey ...        # Test policy evaluation
+soulauth whoami                           # Inspect current identity
+soulauth init                             # One-command local setup
+soulauth dev                              # Start local dev server
+soulauth playground                       # Interactive agent REPL
+soulauth status                           # Local instance status
 ```
 
-**Credential Security:**
+---
 
-| Property | Implementation |
-|----------|---------------|
-| Storage | SHA-512 hash only - raw key is never persisted |
-| Issuance | Key shown exactly once at creation, then discarded |
-| Rotation | New key issued, old key enters grace period, then revoked |
-| Transmission | TLS-only, never logged, never included in error responses |
+## SoulGate (API Security Gateway)
 
-**Key Lifecycle:**
+Security proxy in `soulGate/src/`. Sits in front of upstream LLM providers and internal services. Supports configurable Postgres/SQLite dual-backend database.
+
+### Module Inventory
+
+| Directory | Responsibility |
+|-----------|---------------|
+| `proxy/` | Upstream configuration, request routing, HTTP client management |
+| `ratelimit/` | Policy-driven rate limiting engine and management API |
+| `auth/` | API key validation and management |
+| `access/` | Access control lists and IP allowlisting |
+| `circuit/` | Circuit breaker for upstream fault tolerance |
+| `audit/` | Request/response audit logging |
+| `inspection/` | **Prompt injection detection** (prompt_guard.py, sanitizer.py, scanner.py) |
+| `monitoring/` | Prometheus metrics and MetricsMiddleware |
+| `security_headers.py` | OWASP security headers middleware |
+| `database/` | Database connection (Postgres or SQLite) |
+
+### Key Capabilities
+
+- Reverse proxy with configurable upstream routing
+- Per-key and per-IP rate limiting
+- Circuit breaker pattern for upstream resilience
+- Real-time prompt injection scanning (pattern-based and heuristic)
+- Request/response audit trail
+- API key lifecycle management
+
+---
+
+## SoulWatch (Runtime Security Monitoring)
+
+Behavioral analytics and threat detection in `soulWatch/src/`.
+
+### Module Inventory
+
+| Directory | Responsibility |
+|-----------|---------------|
+| `analytics/` | AnomalyDetector, BaselineEngine (7-day sliding window), AlertRouter (Prometheus, Telegram, Slack) |
+| `detection/` | SigmaEngine (YAML rule loading and matching), PlaybookEngine (automated response) |
+| `enforcement/` | QuarantineEngine (automatic and manual agent quarantine) |
+| `integrations/` | SIEM event forwarding to external systems |
+| `pipeline/` | Event ingestion (ingestion.py) and processing pipeline (processor.py) |
+| `dashboard/` | Precomputed dashboard data and API |
+| `reports/` | Scheduled and on-demand security reports |
+| `websocket/` | Live event streaming via WebSocket |
+| `aletheia/` | Chain-of-thought audit relay |
+| `monitoring/` | Prometheus metrics and MetricsMiddleware |
+| `security_headers.py` | OWASP security headers middleware |
+| `database/` | Database connection (shared Postgres) |
+
+---
+
+## Portal (Web Dashboard)
+
+Next.js 16 application with React 19 and Stripe integration. Located in `portal/`.
+
+### Dashboard Pages (`portal/src/app/dashboard/`)
 
 ```
-  ┌────────┐     suspend()     ┌───────────┐     revoke()     ┌─────────┐
-  │ Active │ ────────────────► │ Suspended │ ────────────────► │ Revoked │
-  └────────┘                   └───────────┘                   └─────────┘
-       │                            │
-       │         reactivate()       │
-       │◄───────────────────────────┘
-       │
-       │         revoke()
-       └──────────────────────────────────────────────────────► ┌─────────┐
-                                                                │ Revoked │
-                                                                └─────────┘
+overview/          # Main dashboard
+agents/            # Agent inventory and status
+aletheia/          # CoT audit trail viewer
+analytics/         # Behavioral analytics charts
+audit/             # Audit log explorer
+contracts/         # Contract management and verification
+costs/             # Cost tracking and metering
+detection/         # Sigma rule matches and management
+investigation/     # Forensic investigation tools
+mssp/              # MSSP multi-tenant management
+partner/           # Partner program management
+playground/        # Interactive agent testing
+policies/          # Policy editor and viewer
+providers/         # IdP configuration (OIDC, LDAP)
+quarantine/        # Quarantine management
+sessions/          # Active session browser
+settings/          # User, org, SIEM, SSO, notification, billing settings
+soulgate/          # Gateway metrics and config
+soulwatch/         # SoulWatch dashboard
+support/           # Support ticket management
+traces/            # Distributed trace viewer
+welcome/           # Onboarding flow
 ```
 
-- **Active**: Key authenticates normally.
-- **Suspended**: Key is temporarily disabled. All requests are rejected. Reversible by an administrator or auto-release timer.
-- **Revoked**: Terminal state. Key is permanently invalidated. Irreversible.
-
-#### Agent Personas
-
-Each SoulKey is bound to a **persona**: a named identity with metadata describing the agent's purpose, owner, and operational context. Personas enable policy decisions based on *what an agent is*, not just *what key it presents*.
-
-### 3.2 Policy Decision Point (PDP)
-
-Every authorization request passes through an **8-stage evaluation pipeline**:
+### Portal API Routes (`portal/src/app/api/`)
 
 ```
-  Request
-    │
-    ▼
-  ┌─────────────────────────────────────────────────┐
-  │  Stage 1: Authentication                        │
-  │  Validate SoulKey hash, check lifecycle state   │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 2: Tenant Resolution                     │
-  │  Resolve tenant context, load tenant policies   │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 3: Policy Lookup                         │
-  │  Match request against policy-as-code rules     │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 4: JIT Constraint Evaluation             │
-  │  Time windows, node restrictions, concurrency   │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 5: Delegation Chain Validation           │
-  │  Verify delegation authority and depth limits   │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 6: Scope Computation                     │
-  │  Calculate minimum necessary permissions        │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 7: Capability Token Issuance             │
-  │  Mint short-lived ES256 JWT with computed scope │
-  ├─────────────────────────────────────────────────┤
-  │  Stage 8: Audit Emission                        │
-  │  Log decision to hash-chained audit trail       │
-  └─────────────────────────────────────────────────┘
-    │
-    ▼
-  Capability Token (or denial + reason)
+auth/              # Authentication endpoints (local, LDAP, OIDC)
+billing/           # Stripe webhook handlers
+session/           # Backend session management
 ```
 
-#### Policy-as-Code
+---
 
-Authorization policies are defined in YAML and managed through Git:
+## tiresias-exec (CLI Shim)
+
+Go binary in `cmd/tiresias-exec/`. Wraps CLI agent invocations with policy enforcement.
+
+| File | Responsibility |
+|------|---------------|
+| main.go | Entry point, command dispatch |
+| config.go | Configuration loading |
+| executor.go | Process execution wrapper |
+| identity.go | SoulKey identity resolution |
+| policy.go | Policy gate (pre-execution check) |
+| sanitizer.go | Output sanitization |
+| reporter.go | Telemetry reporting |
+| offline.go | Offline mode (cached policies) |
+
+---
+
+## Python SDK
+
+Standalone package in `sdk/` (published as `tiresias-sdk` on PyPI).
+
+| File | Responsibility |
+|------|---------------|
+| client.py | SoulAuthClient -- async HTTP client for all SoulAuth endpoints |
+| exceptions.py | Typed exception hierarchy (SoulAuthError, etc.) |
+| models.py | Pydantic request/response models |
+
+---
+
+## Middleware Pipeline
+
+Middleware executes in reverse registration order (last registered runs first on the request path). The actual stack from `src/main.py`:
+
+```
+Request
+  |
+  v
+[1] MetricsMiddleware          # Request duration tracking (Prometheus histograms)
+  |
+  v
+[2] TenantContextMiddleware    # Extracts tenant from X-Tenant-ID header or SoulKey
+  |
+  v
+[3] SoulAuthPEPMiddleware      # Policy Enforcement Point -- validates capability tokens
+  |                             # on protected prefixes (/v1/memory/, /v1/vault/, /v1/mesh/)
+  v
+[4] FeatureGateMiddleware      # Tier-based feature access enforcement (HTTP 402)
+  |
+  v
+[5] ModelRoutingMiddleware     # Per-persona model access policy enforcement
+  |
+  v
+[6] UsageLimitMiddleware       # Tier request limits (soft block at 100-109%, hard block at 110%+, HTTP 429)
+  |
+  v
+[7] CORSMiddleware             # Origin validation (production + dev origins)
+  |
+  v
+  Route Handler
+  |
+  v
+Response (reverse order)
+```
+
+Additional middleware modules (used conditionally or by companion services):
+- `rate_limit.py` -- IP-based sliding window rate limiter (trial registration anti-abuse, disposable email blocking, configurable login rate limiting)
+- `security_headers.py` -- OWASP headers (HSTS, CSP, X-Content-Type-Options, X-Frame-Options)
+- `rbac.py` -- Re-exports RBAC functions (AdminRole, require_permission, resolve_soulkey_role)
+
+---
+
+## Data Flow Diagrams
+
+### Authentication Flow (SoulKey)
+
+```
+Agent/CLI                     SoulAuth                        Database
+   |                             |                               |
+   |-- X-SoulKey header -------->|                               |
+   |                             |-- SHA-512 lookup ------------>|
+   |                             |<-- tenant_id, persona, status-|
+   |                             |                               |
+   |                             |-- Check active/suspended      |
+   |                             |-- Resolve RBAC role           |
+   |                             |-- Load policy (cache/git)     |
+   |                             |                               |
+   |                             |-- PDP evaluate:               |
+   |                             |   resource + action + context |
+   |                             |                               |
+   |                             |-- Issue ES256 capability JWT  |
+   |<-- Capability token --------|                               |
+   |                             |-- Audit log (hash-chained) -->|
+```
+
+### Authentication Flow (Local)
+
+```
+Browser                    Portal                    SoulAuth             Database
+   |                          |                          |                    |
+   |-- email + password ----->|                          |                    |
+   |                          |-- POST /auth/local/login |                    |
+   |                          |------------------------>|                    |
+   |                          |                          |-- bcrypt verify -->|
+   |                          |                          |<-- user record ----|
+   |                          |                          |-- Issue session    |
+   |                          |<-- session token --------|                    |
+   |<-- Set cookie -----------|                          |                    |
+```
+
+### Authentication Flow (LDAP)
+
+```
+Browser                    Portal                    SoulAuth        LDAP/AD Server
+   |                          |                          |                |
+   |-- username + password -->|                          |                |
+   |                          |-- POST /auth/ldap/login  |                |
+   |                          |------------------------>|                |
+   |                          |                          |-- LDAP bind -->|
+   |                          |                          |<-- bind OK ----|
+   |                          |                          |-- search user->|
+   |                          |                          |<-- user attrs--|
+   |                          |                          |-- JIT provision|
+   |                          |<-- session token --------|                |
+   |<-- Set cookie -----------|                          |                |
+```
+
+### Authentication Flow (Portal / OIDC)
+
+```
+Browser                    Portal                    SoulAuth            Google/IdP
+   |                          |                          |                    |
+   |-- /login --------------->|                          |                    |
+   |                          |-- OIDC redirect -------->|                    |
+   |                          |                          |-- authorize ------>|
+   |<-- IdP consent screen ---|                          |                    |
+   |-- OAuth callback ------->|                          |                    |
+   |                          |-- token exchange ------->|                    |
+   |                          |                          |-- PKCE verify      |
+   |                          |                          |-- JIT provision    |
+   |                          |<-- session token --------|                    |
+   |<-- Set cookie -----------|                          |                    |
+```
+
+### Policy Evaluation
+
+```
+Request (with capability token)
+   |
+   v
+PEP Middleware
+   |-- Validate JWT signature (ES256 public key)
+   |-- Check expiration, jti replay
+   |-- Extract scopes, targets, tenant_id
+   |
+   v
+PDP (/v1/auth/evaluate)
+   |-- Load policy from cache or git-synced YAML
+   |-- Evaluate against:
+   |     - resource (memory, vault, mesh, api)
+   |     - action (read, write, execute)
+   |     - context (IP, user-agent, node affinity, time)
+   |     - conditions and approval chains
+   |
+   +-- GRANT --> issue short-lived capability token (5-15 min TTL)
+   +-- DENY  --> HTTP 403 + audit log entry
+```
+
+### Anomaly Detection Pipeline
+
+```
+SoulAuth Events           SoulWatch Pipeline         Alert Sinks
+       |                         |                        |
+       |-- audit events -------->|                        |
+       |                         |-- BaselineEngine       |
+       |                         |   (7-day sliding       |
+       |                         |    window rebuild      |
+       |                         |    every 6h)           |
+       |                         |                        |
+       |                         |-- AnomalyDetector      |
+       |                         |   (compare vs baseline)|
+       |                         |                        |
+       |                         |-- SigmaEngine          |
+       |                         |   (YAML rule matching) |
+       |                         |                        |
+       |                         |-- PlaybookEngine       |
+       |                         |   (automated response) |
+       |                         |                        |
+       |                         |-- AlertRouter -------->|
+       |                         |     |                  |-- Prometheus
+       |                         |     |                  |-- Telegram
+       |                         |     |                  |-- Slack
+       |                         |     |                  |-- SIEM connectors
+       |                         |     |                  |-- Notification channels
+       |                         |                        |
+       |                         |-- QuarantineEngine     |
+       |                         |   (auto-quarantine     |
+       |                         |    on critical match)  |
+       |                         |                        |
+       |                         |-- WebSocket push ----->| Live dashboard
+```
+
+### Chain-of-Thought (Aletheia) Audit
+
+```
+Agent Execution              SoulAuth Aletheia           Database
+       |                         |                          |
+       |-- CoT submission ------>|                          |
+       |                         |-- cot_enforcer.py        |
+       |                         |   (policy check)         |
+       |                         |                          |
+       |                         |-- sanitizer_engine.py    |
+       |                         |   (pattern-based secret  |
+       |                         |    scrubbing + decoder)  |
+       |                         |                          |
+       |                         |-- encryption.py          |
+       |                         |   (encrypt CoT payload)  |
+       |                         |                          |
+       |                         |-- chain.py               |
+       |                         |   (append to hash chain) |
+       |                         |                          |
+       |                         |-- storage.py ----------->|
+       |                         |   (persist to            |
+       |                         |    _soul_aletheia_cot)   |
+       |                         |                          |
+       |-- tool_evaluate ------->|                          |
+       |                         |-- tool_policy_engine.py  |
+       |                         |   (pre-exec tool policy) |
+       |                         |                          |
+       |<-- allow/deny + audit --|                          |
+```
+
+### Partner and Commissions Flow
+
+```
+Partner                      SoulAuth                      Stripe
+   |                            |                             |
+   |-- Accept invitation ------>|                             |
+   |                            |-- Create Stripe Connect --->|
+   |                            |<-- Connected account -------|
+   |                            |                             |
+   |   (customer referred)      |                             |
+   |                            |-- Calculate commission      |
+   |                            |-- Create transfer --------->|
+   |                            |                             |
+   |                            |-- Contract hash chain       |
+   |                            |   (immutable record)        |
+```
+
+---
+
+## Authentication Architecture
+
+### Current State (v3.4.4)
+
+| Method | Status | Details |
+|--------|--------|---------|
+| Local accounts (email/password) | **LIVE** | bcrypt hashing, bootstrap admin, self-service password reset, configurable login rate limiter |
+| LDAP / Active Directory | **LIVE** | Full LDAP adapter, LDAPS with self-signed cert support, JIT provisioning |
+| Google OAuth / OIDC (Portal + Backend) | **LIVE** | Generic OIDC provider. PKCE, JIT provisioning, domain-based IdP resolution, session management. |
+| SoulKey (API) | **LIVE** | SHA-512 hashed keys in `_soulkeys`. X-SoulKey header. ES256 capability tokens. |
+
+### Auth Module Structure
+
+```
+src/auth/
+  soulkey.py              # SoulKey identity resolution (SHA-512 lookup)
+  pdp.py                  # Policy Decision Point evaluation
+  rbac.py                 # Role-based access control (7 roles)
+  local_router.py         # Local email/password login, password reset
+  local_bootstrap.py      # Bootstrap admin account on first startup
+  ldap_router.py          # LDAP/AD authentication adapter
+  rate_limit.py           # Configurable login rate limiter
+  oidc_provider.py        # OIDC provider configuration and discovery
+  oidc_router.py          # /authorize, /token, /userinfo, /callback endpoints
+  oidc_exchange.py        # Token exchange (authorization code -> access token)
+  oidc_session.py         # OIDC session lifecycle management
+  jit_provisioning.py     # Just-in-time user creation on first login
+  domain_resolution.py    # Map email domain -> IdP configuration
+  coexistence.py          # Parallel operation with SoulKey auth
+  identity.py             # Identity resolution utilities
+  delegation.py           # Delegation and escalation
+  user_context.py         # User context extraction
+  router.py               # Core auth router
+  schemas.py              # Pydantic schemas
+```
+
+### Database IdP Enum
+
+The `_soul_idp_configs` table supports provider types: `google`, `okta`, `azure_ad`, `oidc`.
+
+---
+
+## Database Schema
+
+PostgreSQL 16 on Cloud SQL. 20 Alembic migrations in `alembic/versions/`.
+
+### Migration History
+
+| Migration | Tables/Changes |
+|-----------|---------------|
+| `0001_initial_schema` | `_soul_tenants`, `_soulkeys`, `_soul_policies`, `_soul_audit_log`, `_soul_capabilities`, `_soulwatch_events` |
+| `0002_add_waitlist_table` | `_soul_waitlist` |
+| `0002_mssp_tenant_hierarchy` | MSSP parent/child tenant relationships |
+| `0003_add_aletheia_cot_tables` | `_soul_aletheia_cot`, `_soul_aletheia_chains` (CoT storage and hash chains) |
+| `0004_audit_prev_hash_column` | `prev_hash` column on `_soul_audit_log` (immutable hash chain integrity) |
+| `0005_oidc_sso` | `_soul_users`, `_soul_idp_configs`, `_soul_oidc_sessions` |
+| `0006_local_auth` | `password_hash` column on `_soul_users`, local auth settings |
+| `0007_standardize_metadata_column` | Standardize `metadata_` column mapping across tables |
+| `0008_add_split_token_columns` | Split token columns for session management |
+| `0009_normalize_tier_default` | Normalize tier default values across tenants |
+| `0010_add_licenses_table` | `_soul_licenses` table for JWT license validation |
+| `0011_add_investigation_tokens` | `_soul_investigation_tokens` for forensic audit access |
+| `0012_add_stripe_customer_id_column` | `stripe_customer_id` on tenant records |
+| `0013_add_partners_table` | `_soul_partners` for partner program (Stripe Connect, commissions) |
+| `0014_add_contracts_table` | `_soul_contracts` with hash chain verification |
+| `0015_add_siem_connectors_table` | `_soul_siem_connectors` per-tenant SIEM configuration |
+| `0016_add_notification_channels_table` | `_soul_notification_channels` per-tenant notification config |
+| `0017_drop_jwt_signature_column` | Remove vestigial `jwt_signature` column from licenses |
+| `0018_add_encrypted_columns_to_audit_log` | Encrypted payload columns on `_soul_audit_log` |
+| `0019_team_rbac` | `_soul_teams`, `_soul_team_members` with role assignments |
+
+### Core Tables
+
+```
+_soul_tenants              Tenant registry (id, name, tier, status, config, stripe_customer_id)
+_soulkeys                  Agent identity keys (SHA-512 hash, tenant_id, persona_id, status, role)
+_soul_policies             Policy-as-code cache (tenant_id, policy YAML, version, hash)
+_soul_audit_log            Immutable audit trail (event_type, tenant_id, soulkey_id, prev_hash, encrypted payload)
+_soul_capabilities         Issued capability tokens (jti, soulkey_id, scopes, targets, expires_at)
+_soulwatch_events          Security events from SoulWatch pipeline
+_soul_waitlist             Trial waitlist registrations
+_soul_aletheia_cot         Encrypted chain-of-thought records
+_soul_aletheia_chains      CoT hash chain heads per agent
+_soul_users                User accounts (local, LDAP, OIDC-provisioned, password_hash)
+_soul_idp_configs          IdP configurations per tenant (provider type, client_id, discovery URL)
+_soul_oidc_sessions        Active OIDC sessions (token, refresh, expiry)
+_soul_licenses             JWT license records
+_soul_investigation_tokens Investigation tokens for forensic access
+_soul_partners             Partner program records (Stripe Connect account, commission rate, status)
+_soul_contracts            Contracts with hash chain verification
+_soul_siem_connectors      Per-tenant SIEM connector configuration
+_soul_notification_channels Per-tenant notification channel configuration
+_soul_teams                Team definitions within tenants
+_soul_team_members         Team membership and role assignments (7 roles)
+```
+
+---
+
+## Deployment Architecture
+
+### GKE Cluster
+
+- **Project:** salucainfrastructure (GCP)
+- **Cluster:** tiresias-v2
+- **Region:** us-central1
+- **Namespace:** tiresias
+- **Container Registry:** us-central1-docker.pkg.dev/salucainfrastructure/tiresias/
+
+### Service Topology
+
+```
+Namespace: tiresias
++------------------------------------------------------------------+
+|                                                                  |
+|  Deployment: soulauth (2 replicas)     Service: soulauth:80     |
+|    image: .../soulauth:v3.4.4          -> :8000                  |
+|    + cloud-sql-proxy sidecar (:3307)                             |
+|                                                                  |
+|  Deployment: soulgate (2 replicas)     Service: soulgate:80     |
+|    image: .../soulgate:v3.4.4          -> :8002                  |
+|    + cloud-sql-proxy sidecar (:3307)                             |
+|                                                                  |
+|  Deployment: soulwatch (2 replicas)    Service: soulwatch:80    |
+|    image: .../soulwatch:v3.4.4         -> :8001                  |
+|    + cloud-sql-proxy sidecar (:3307)                             |
+|                                                                  |
+|  Deployment: portal (2 replicas)       Service: portal:80       |
+|    image: .../portal:v3.4.4            -> :3000                  |
+|                                                                  |
++------------------------------------------------------------------+
+```
+
+### Ingress Routing
+
+GKE Ingress with Google-managed TLS certificate at `tiresias.network`.
+HTTP-to-HTTPS redirect via FrontendConfig (`MOVED_PERMANENTLY_DEFAULT`).
+
+| Path | Backend Service | Port |
+|------|----------------|------|
+| `/gate/*` | soulgate | 80 |
+| `/watch/*` | soulwatch | 80 |
+| `/health` | soulauth | 80 |
+| `/auth/*` | soulauth | 80 |
+| `/tokens/*` | soulauth | 80 |
+| `/policies/*` | soulauth | 80 |
+| `/tenants/*` | soulauth | 80 |
+| `/admin/*` | soulauth | 80 |
+| `/sdk/*` | soulauth | 80 |
+| `/metrics` | soulauth | 80 |
+| `/api/*` | portal | 80 |
+| `/*` (catch-all) | portal | 80 |
+
+### Autoscaling (HPA)
+
+All four services use identical HPA configuration:
+
+| Parameter | Value |
+|-----------|-------|
+| Min replicas | 2 |
+| Max replicas | 10 |
+| CPU target | 70% average utilization |
+| Scale-up | +2 pods per 60s, 60s stabilization |
+| Scale-down | -1 pod per 120s, 300s stabilization |
+
+### Pod Disruption Budgets
+
+All services: `minAvailable: 1` (at least one pod always available during voluntary disruptions).
+
+### Rolling Update Strategy
+
+All services: `maxSurge: 0`, `maxUnavailable: 1` (replace one pod at a time, never exceed desired count).
+
+---
+
+## Security Architecture
+
+### Container Hardening
+
+Every container in the platform runs with identical security constraints:
 
 ```yaml
-# Example policy definition (illustrative)
-policy:
-  name: data-pipeline-readonly
-  version: "1.2"
-  effect: allow
-  agents:
-    personas: [etl-worker, data-validator]
-  resources:
-    - "storage:read:*"
-    - "database:select:analytics.*"
-  constraints:
-    time_window: "06:00-22:00 UTC"
-    max_concurrency: 5
-    session_binding: required
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  seccompProfile:
+    type: RuntimeDefault
 ```
 
-Policies are synced from a Git repository, versioned, and applied atomically. Every policy change generates an audit event.
+Writable paths: `/tmp` only (emptyDir backed by Memory, 64Mi limit).
+Portal additionally mounts `/app/.next/cache` for ISR caching.
 
-#### Capability Tokens
+### Network Policy
 
-When a request is authorized, SoulAuth issues a **capability token**: a short-lived JWT that encodes exactly what the agent is allowed to do:
+Strict NetworkPolicy per service. All services share the same pattern:
 
-| Property | Value |
-|----------|-------|
-| Format | ES256-signed JWT |
-| TTL | 300–900 seconds (configurable per policy) |
-| Contents | Tenant, agent, scope, constraints, issuance metadata |
-| Refresh | New evaluation required - no silent renewal |
+**SoulAuth** (`soulauth-netpol`):
+- Ingress: port 8000 from tiresias namespace pods + GCE health probers (130.211.0.0/22, 35.191.0.0/16)
+- Egress: DNS (53/UDP+TCP), Cloud SQL Proxy (3307/TCP), GKE metadata (169.254.0.0/16:80), HTTPS (443/TCP)
 
-Capability tokens are the *only* mechanism for accessing protected resources. They cannot be forged (asymmetric signature), cannot be reused beyond their TTL, and encode the exact scope granted - not the full set of permissions the agent *could* have.
+**SoulGate** (`soulgate-netpol`):
+- Ingress: port 8002 from tiresias namespace pods + GCE health probers
+- Egress: DNS, Cloud SQL Proxy, GKE metadata, SoulAuth (8000), SoulWatch (8001), HTTPS
 
-#### JIT Constraints
+**SoulWatch** (`soulwatch-netpol`):
+- Ingress: port 8001 from tiresias namespace pods + GCE health probers
+- Egress: DNS, Cloud SQL Proxy, GKE metadata, SoulAuth (8000), HTTPS
 
-Just-in-time constraints add temporal and contextual restrictions to authorization decisions:
+**Portal** (`portal-netpol`):
+- Ingress: port 3000 (open) + GCE health probers
+- Egress: DNS, GKE metadata, all tiresias services (8000, 8001, 8002), HTTPS
 
-| Constraint | Description |
-|------------|-------------|
-| **Operating windows** | Restrict agent activity to specific time ranges |
-| **Node restrictions** | Limit which infrastructure nodes an agent can operate from |
-| **Session binding** | Tie authorization to a specific session identifier |
-| **Concurrency limits** | Cap the number of simultaneous active tokens per agent |
+### Secret Management
 
-#### Delegation Model
+Kubernetes Secrets mounted as environment variables (never files):
+- `database-url` -- Cloud SQL connection string
+- `jwt-private-key` / `jwt-public-key` -- ES256 key pair for capability tokens
+- Per-service secrets (SIEM credentials, Stripe keys, OAuth client secrets, LDAP bind credentials)
 
-Agents can delegate a subset of their privileges to other agents:
+Secrets reference: `k8s/secrets.yaml.example`
 
-```
-  Agent A (orchestrator)
-    │
-    │  delegate(scope=subset, ttl=300s, depth=1)
-    ▼
-  Agent B (worker)
-    │
-    ✗ Agent B cannot further delegate (depth limit reached)
-```
+### HTTP Security Headers
 
-Delegation is:
-- **Scoped**: A delegator cannot grant more than it possesses.
-- **Time-limited**: Delegated authority expires independently of the delegator's session.
-- **Depth-limited**: Configurable maximum delegation chain depth prevents unbounded privilege propagation.
-- **Audited**: Every delegation event is recorded in the hash-chained log.
-
-### 3.3 Audit Trail
-
-Every authorization decision - grant, denial, key operation, policy change, delegation, enforcement action - is recorded in a **tamper-evident audit log**.
+Applied by `SecurityHeadersMiddleware` on SoulGate and SoulWatch (and available for SoulAuth):
 
 ```
-  Event N-1                    Event N                     Event N+1
-  ┌───────────┐               ┌───────────┐               ┌───────────┐
-  │ payload   │               │ payload   │               │ payload   │
-  │ hash: H1  │──── H1 ─────►│ prev: H1  │──── H2 ─────►│ prev: H2  │
-  │           │               │ hash: H2  │               │ hash: H3  │
-  └───────────┘               └───────────┘               └───────────┘
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+                         img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'
 ```
 
-- **Algorithm**: SHA-256 hash chain - each event includes the hash of the previous event.
-- **Tamper evidence**: Modifying any event breaks the chain, detectable by integrity verification.
-- **Queryable**: Filter by tenant, event type, agent identity, time range, severity.
-- **Exportable**: CEF-formatted events for SIEM integration.
+### License Validation
+
+On startup, SoulAuth validates `TIRESIAS_LICENSE_KEY` (ES256-signed JWT):
+- **INVALID** + `license_required=true` -> hard exit (code 2)
+- **MISSING** + `license_required=true` -> hard exit (code 2)
+- **Valid non-NFR** -> license relay phone-home for renewal verification
+- **Valid NFR** -> no phone-home
+
+License state stored on `app.state.license` for middleware access.
 
 ---
 
-## 4. SoulWatch: Detection & Response Engine
+## Monitoring Architecture
 
-SoulWatch is the platform's detection and response layer. It continuously analyzes agent behavior, applies detection rules, and executes automated response playbooks.
+### Prometheus Metrics
 
-### 4.1 Detection Pipeline
+Each service exposes `/metrics` with `MetricsMiddleware`:
 
-SoulWatch operates three detection engines in parallel:
+**Request metrics (per-service prefixed):**
+- `soulauth_request_duration_seconds` (histogram, labels: method, path_template, status_code)
+- `soulgate_request_duration_seconds` (histogram, labels: method, upstream, status)
+- `soulgate_requests_total` (counter, labels: method, upstream, status, blocked)
 
-```
-  Audit Events
-    │
-    ├──────────────────┬──────────────────┐
-    ▼                  ▼                  ▼
-  ┌──────────┐   ┌──────────┐   ┌──────────┐
-  │ Anomaly  │   │  Sigma   │   │   Risk   │
-  │ Detector │   │  Engine  │   │  Scorer  │
-  └────┬─────┘   └────┬─────┘   └────┬─────┘
-       │               │              │
-       └───────────────┼──────────────┘
-                       ▼
-                 ┌───────────┐
-                 │  Alert    │
-                 │  Router   │
-                 └─────┬─────┘
-                       │
-            ┌──────────┼──────────┐
-            ▼          ▼          ▼
-       ┌─────────┐ ┌────────┐ ┌──────────┐
-       │Playbook │ │Quarant.│ │  Notify  │
-       │ Engine  │ │ Engine │ │  Router  │
-       └─────────┘ └────────┘ └──────────┘
-```
+**Business metrics (SoulAuth):**
+- Authentication success/failure counters
+- Policy evaluation latency histogram
+- Token issuance volume
+- Anomaly detection alert counters
 
-#### Behavioral Anomaly Detection
+**Background gauges:**
+- Updated every 60 seconds via `start_gauge_updater()`
+- Active SoulKeys, tenant counts, policy cache size
 
-SoulWatch maintains a **7-day rolling behavioral baseline** for each agent. Incoming activity is compared against this baseline to detect deviations.
+### Prometheus Stack
 
-**8 Anomaly Types:**
+- **Prometheus 2.51.0** -- scrapes all pods via `prometheus.io/*` annotations
+- **Alertmanager 0.27.0** -- alert routing to Telegram, Slack, PagerDuty
 
-| # | Anomaly Type | What It Detects |
-|---|-------------|-----------------|
-| 1 | **Rate spike** | Request volume exceeds baseline by configurable threshold |
-| 2 | **Off-hours activity** | Requests outside the agent's established operating window |
-| 3 | **New resource access** | Agent accessing a resource it has never accessed before |
-| 4 | **Scope escalation** | Agent requesting higher privileges than its historical pattern |
-| 5 | **Denial spike** | Sudden increase in authorization denials (probing indicator) |
-| 6 | **Burst pattern** | High-frequency request bursts inconsistent with baseline rhythm |
-| 7 | **Credential stuffing** | Multiple failed authentications across different keys |
-| 8 | **Lateral movement** | Agent accessing resources in a pattern suggesting compromise |
+### Health Checks
 
-Baselines are rebuilt from audit data on service restart. When no baseline exists (new agent), SoulWatch operates in **learning mode**: it collects data without generating anomaly alerts for a configurable warm-up period. This prevents false positives during onboarding.
+All services expose health endpoints used by Kubernetes probes:
 
-#### Sigma Rule Engine
+**SoulAuth:**
+- Liveness: `GET /health` (initialDelaySeconds: 10, period: 30s)
+- Readiness: `GET /health` (initialDelaySeconds: 5, period: 10s)
+- Detailed: `GET /health?detail=true` -- returns component status (database latency, JWT key status, policy sync state)
 
-SoulWatch includes a **Sigma-compatible rule engine** for pattern-based detection. Sigma is an open standard for describing log event patterns, widely used in the security community.
+**SoulGate / SoulWatch / Portal:** Equivalent health endpoints on their respective ports.
 
-**Rule capabilities:**
+### Alert Routing
 
-| Feature | Description |
-|---------|-------------|
-| Field matching | Exact, wildcard, and regex matching on event fields |
-| Boolean logic | AND/OR/NOT combinations of conditions |
-| Aggregation | Count, distinct count, sum over time windows |
-| Time windows | Sliding and tumbling window support |
-| Correlation | Multi-event sequence detection |
+The `AlertRouter` in SoulAuth and SoulWatch supports pluggable sinks:
+- `PrometheusAlertSink` -- always enabled, exposes alert metrics
+- `TelegramAlertSink` -- enabled when `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set (critical-only threshold)
+- `SlackAlertSink` -- available for Slack workspace integration
+- SIEM connector sinks -- wired to per-tenant SIEM connectors
+- Notification channel sinks -- wired to per-tenant notification channels
 
-**Built-in rule library:**
+### Structured Logging
 
-The platform ships with detection rules for common AI agent attack patterns:
-
-- Prompt injection via authentication headers
-- Agent impersonation (key reuse from new source)
-- Privilege escalation via delegation chain manipulation
-- Data exfiltration patterns (high-volume reads followed by outbound transfer)
-- Model extraction (systematic API probing)
-
-Organizations can upload custom Sigma rules via the API or Portal UI.
-
-#### Risk Scoring
-
-Every detection event is assigned a severity level:
-
-| Severity | Score Range | Description |
-|----------|-----------|-------------|
-| **Low** | 0.0–0.3 | Informational - logged but no action |
-| **Medium** | 0.3–0.6 | Suspicious - alert generated |
-| **High** | 0.6–0.8 | Likely threat - playbook triggered |
-| **Critical** | 0.8–1.0 | Active compromise - immediate enforcement |
-
-**Automatic escalation**: If the same anomaly type occurs **3 times within a 15-minute window**, its severity is automatically bumped one level. This catches slow, persistent attacks that individually register as low-severity events.
-
-### 4.2 Response Pipeline
-
-#### Playbook Engine
-
-Detection events trigger **response playbooks**: automated sequences of actions executed without human intervention (unless an approval gate is configured).
-
-**Available actions:**
-
-| Action | Description |
-|--------|-------------|
-| `quarantine` | Invoke the quarantine engine (see below) |
-| `notify` | Send alert to configured notification sinks |
-| `escalate` | Bump severity and re-route to higher-priority channels |
-| `rate_limit` | Apply temporary rate limit to the offending agent |
-| `webhook` | Call an external URL with event payload |
-| `reset_context` | Force the agent to discard its current session context |
-
-**Cooldown windows**: Each playbook action has a configurable cooldown period. If the same trigger fires within the cooldown window, the action is suppressed. This prevents **response storms**: cascading automated actions that amplify an incident rather than containing it.
-
-**Approval gates**: For critical actions (key revocation, full quarantine), playbooks can be configured to require human approval before execution. The pending action is held in queue with a configurable timeout.
-
-#### Quarantine Engine
-
-The quarantine engine provides **policy-driven incident response** with 7 enforcement levels:
-
-| # | Enforcement Action | Reversible | Description |
-|---|-------------------|------------|-------------|
-| 1 | **Suspend key** | Yes | Temporarily disable a SoulKey |
-| 2 | **Revoke key** | No | Permanently invalidate a SoulKey |
-| 3 | **Kill session** | N/A | Terminate all active sessions for an agent |
-| 4 | **Force re-auth** | N/A | Invalidate all capability tokens, require new auth |
-| 5 | **Rate limit** | Yes | Apply restrictive rate limit |
-| 6 | **Isolate** | Yes | Restrict agent to a minimal resource set |
-| 7 | **Reset context** | N/A | Force context window reset (anti-poisoning) |
-
-**Auto-release timers**: Reversible enforcement actions can be configured with automatic release timers. This prevents a misconfigured detection rule from permanently locking out a legitimate agent. Example: suspend a key for 30 minutes, then automatically reactivate.
-
-**Per-tenant policies**: Each tenant configures their own quarantine policies - which enforcement actions are available, which require approval, and what auto-release timers to apply.
-
-### 4.3 Alert Routing
-
-SoulWatch routes alerts to **8 notification sinks**, each with independent configuration:
-
-| Sink | Protocol | Use Case |
-|------|----------|----------|
-| PagerDuty | REST API | On-call escalation |
-| Slack | Webhook | Team channels |
-| Microsoft Teams | Webhook | Enterprise collaboration |
-| OpsGenie | REST API | Incident management |
-| Email | SMTP | Compliance notifications |
-| Amazon SNS | AWS SDK | Cloud-native alerting |
-| Telegram | Bot API | Mobile push |
-| Webhook | HTTPS POST | Custom integrations |
-
-**Routing logic:**
-
-- **Default routing**: Severity-based - critical alerts go to PagerDuty, high to Slack, medium to email.
-- **Per-tenant overrides**: Tenants configure their own routing rules.
-- **Circuit breakers**: Each sink has an independent circuit breaker. If a sink fails repeatedly, it is temporarily disabled to prevent alert delivery delays to other sinks.
-- **Rate limiting**: Per-sink rate limits prevent notification floods.
-- **Deduplication**: Identical alerts within a configurable window are deduplicated. Repeated occurrences trigger escalation rather than repeated notifications.
+All services use `structlog` with:
+- JSON output in production, console rendering in debug mode
+- ISO timestamps
+- Contextvar-based correlation IDs
+- Stack info and exception rendering
+- Configurable log level via `SOULAUTH_LOG_LEVEL`
 
 ---
 
-## 5. SoulGate: API Security Gateway
-
-SoulGate is a reverse proxy that sits between AI agents and their upstream API providers. Every request passes through a 7-stage security pipeline before reaching the upstream service.
-
-### 5.1 The 7-Stage Security Pipeline
-
-```
-  Agent Request
-    │
-    ▼
-  ┌─────────────────────────────────────────────┐
-  │  Stage 1: AUTHENTICATION                    │
-  │  Validate Bearer token or API key           │
-  │  Reject: 401 Unauthorized                   │
-  ├─────────────────────────────────────────────┤
-  │  Stage 2: ACCESS CONTROL                    │
-  │  IP allowlist/denylist, geo-restrictions     │
-  │  Reject: 403 Forbidden                      │
-  ├─────────────────────────────────────────────┤
-  │  Stage 3: RATE LIMITING                     │
-  │  Sliding window: per-tenant, per-agent,     │
-  │  per-endpoint                               │
-  │  Reject: 429 Too Many Requests              │
-  ├─────────────────────────────────────────────┤
-  │  Stage 4: CIRCUIT BREAKER                   │
-  │  Upstream health check, failure ratio        │
-  │  Reject: 503 Service Unavailable            │
-  ├─────────────────────────────────────────────┤
-  │  Stage 5: PAYLOAD INSPECTION                │
-  │  Prompt injection detection, content policy  │
-  │  Reject: 422 with risk assessment           │
-  ├─────────────────────────────────────────────┤
-  │  Stage 6: UPSTREAM FORWARDING               │
-  │  Reverse proxy with connection pooling       │
-  │  Pass: Forward request, return response     │
-  ├─────────────────────────────────────────────┤
-  │  Stage 7: AUDIT LOGGING                     │
-  │  Non-blocking event emission                 │
-  │  Always: Log request metadata (never body)  │
-  └─────────────────────────────────────────────┘
-    │
-    ▼
-  Response to Agent
-```
-
-Each stage can independently reject a request. Rejections include machine-readable error codes and human-readable explanations, but never leak information about downstream services or internal state.
-
-### 5.2 Prompt Injection Detection
-
-SoulGate's payload inspection stage includes a **deterministic prompt injection detector**. This is not an ML classifier - it is a rule-based pattern matching engine that produces auditable, explainable results.
-
-#### Detection Approach
-
-```
-  Request Body
-    │
-    ▼
-  ┌─────────────────────┐
-  │  Pattern Matching    │     40+ regex patterns
-  │  (OWASP LLM Top 10) │     across 5 categories
-  └──────────┬──────────┘
-             │
-             ▼
-  ┌─────────────────────┐
-  │  Risk Aggregation   │     Individual severities
-  │                     │     combined into score
-  └──────────┬──────────┘
-             │
-             ▼
-  ┌─────────────────────┐     score < warn:  pass
-  │  Threshold Decision │     score < block: warn + log
-  │  (warn / block)     │     score >= block: reject 422
-  └─────────────────────┘
-```
-
-#### Detection Categories
-
-| Category | Examples | Count |
-|----------|----------|-------|
-| **Direct injection** | "Ignore previous instructions", "You are now..." | 12 patterns |
-| **Jailbreak** | DAN prompts, character roleplay exploits, mode switching | 10 patterns |
-| **System prompt extraction** | "Repeat your instructions", "What is your system prompt?" | 6 patterns |
-| **Encoding evasion** | Base64-encoded instructions, Unicode homoglyphs, tokenizer tricks | 7 patterns |
-| **Data exfiltration** | "Send this to", "Output all", extraction via structured output | 8 patterns |
-
-#### Why Regex, Not ML?
-
-This is a deliberate design choice:
-
-1. **Auditability**: Every detection can be traced to a specific pattern. SOC analysts can understand *why* a request was flagged.
-2. **Determinism**: The same input always produces the same result. No model drift, no retraining, no unexplained behavior.
-3. **Performance**: Pattern matching runs in microseconds, adding negligible latency to the proxy pipeline.
-4. **Extensibility**: Organizations add custom patterns via the API. No ML expertise required.
-5. **Transparency**: The full pattern library is inspectable. No black box.
-
-The trade-off is that novel injection techniques may evade regex detection. SoulGate is designed as **one layer** in a defense-in-depth strategy - behavioral detection in SoulWatch catches attacks that bypass pattern matching.
-
-### 5.3 Circuit Breaker Design
-
-SoulGate's circuit breaker protects upstream services from cascading failures. However, naive circuit breaker implementations create a security vulnerability: an attacker can deliberately send malformed requests to trip the circuit breaker, effectively DoS-ing the upstream service for all agents.
-
-**Anti-weaponization design:**
-
-```
-  Standard Circuit Breaker:        SoulGate Circuit Breaker:
-  ─────────────────────────        ─────────────────────────
-  failures > threshold             failures > threshold
-    → OPEN circuit                   AND total_requests > minimum
-                                     AND failure_ratio checked PER SOURCE
-                                       → OPEN circuit
-
-  Attacker sends 50 bad            Attacker sends 50 bad requests:
-  requests → circuit opens          - Their source ratio: 50/50 = 100%
-  for ALL agents                    - Overall ratio: 50/1000 = 5%
-                                    → Circuit stays CLOSED
-                                    → Attacker is rate-limited individually
-```
-
-| Property | Value |
-|----------|-------|
-| Minimum request threshold | Configurable (default: 100 requests before breaker can trip) |
-| Failure ratio | Per-source AND global - both must exceed threshold |
-| Half-open probe | Single request forwarded to test upstream recovery |
-| Recovery | Automatic with exponential backoff |
-
-### 5.4 Rate Limiting
-
-SoulGate implements **sliding window rate limiting** at three granularities:
-
-| Level | Scope | Purpose |
-|-------|-------|---------|
-| **Tenant** | All agents in a tenant | Prevent one tenant from starving others |
-| **Agent** | Single agent identity | Prevent runaway agents |
-| **Endpoint** | Specific upstream path | Protect sensitive endpoints |
-
-Rate limits are applied from broadest to narrowest. A request that passes tenant limits can still be rejected by agent-level or endpoint-level limits.
-
----
-
-## 6. Data Flow: The Closed Loop
-
-The three Tiresias products form a **closed feedback loop** where detection drives enforcement, enforcement generates audit events, and audit events feed detection. This is the platform's core architectural insight.
-
-### Complete Request Lifecycle
-
-```
-                                    ┌─────────────────┐
-                              ┌────►│  SIEM Forward   │
-                              │     │  (Splunk, ELK,  │
-                              │     │  Sentinel, etc) │
-                              │     └─────────────────┘
-                              │
-  ┌─────────┐   1. Request    │     ┌─────────────────┐
-  │  Agent  │ ──────────────► │ ───►│  Notification   │
-  └─────────┘                 │     │  (PagerDuty,    │
-       ▲                      │     │  Slack, etc)    │
-       │                      │     └─────────────────┘
-       │ 8. Response          │
-       │                      │
-  ┌────┴──────────────────────┴──────────────────────────────┐
-  │                                                          │
-  │   2. SoulGate              3. SoulAuth                   │
-  │   ┌───────────┐            ┌───────────┐                 │
-  │   │ Inspect   │──auth?───► │ Evaluate  │                 │
-  │   │ payload   │◄──token──  │ policy    │                 │
-  │   │ proxy req │            │ issue tok │                 │
-  │   └─────┬─────┘            └─────┬─────┘                 │
-  │         │                        │                       │
-  │    4. Audit events          4. Audit events              │
-  │         │                        │                       │
-  │         └────────┬───────────────┘                       │
-  │                  ▼                                       │
-  │            5. SoulWatch                                  │
-  │            ┌───────────┐                                 │
-  │            │ Anomaly   │                                 │
-  │            │ Sigma     │                                 │
-  │            │ Playbook  │                                 │
-  │            │ Quarant.  │                                 │
-  │            └─────┬─────┘                                 │
-  │                  │                                       │
-  │        6. Threat detected?                               │
-  │           ┌──────┴──────┐                                │
-  │           │ YES         │ NO                             │
-  │           ▼             ▼                                │
-  │    7a. Enforcement   7b. Continue                        │
-  │    ┌───────────┐    monitoring                           │
-  │    │ Suspend   │                                         │
-  │    │ Revoke    │──── Generates new ──── Back to step 4   │
-  │    │ Kill sess │     audit events                        │
-  │    └───────────┘                                         │
-  │                                                          │
-  └──────────────────────────────────────────────────────────┘
-```
-
-### Step-by-Step Flow
-
-| Step | Action | Component |
-|------|--------|-----------|
-| **1** | Agent sends API request to SoulGate | SoulGate |
-| **2** | SoulGate runs 7-stage pipeline: authenticate, check access, rate limit, inspect payload | SoulGate |
-| **3** | Auth requests evaluated by SoulAuth PDP: policy lookup, JIT constraints, scope computation | SoulAuth |
-| **4** | Every decision (grant, deny, inspect, forward) emits an audit event to the hash-chained log | All |
-| **5** | SoulWatch consumes audit events: anomaly detection against baselines, Sigma rule matching | SoulWatch |
-| **6** | If threat detected: risk scoring, severity assignment, automatic escalation if repeated | SoulWatch |
-| **7a** | Enforcement: playbook triggers action (suspend key, kill session, rate limit) via SoulAuth | SoulWatch → SoulAuth |
-| **7b** | No threat: event contributes to baseline, monitoring continues | SoulWatch |
-| **8** | Enforcement action generates its own audit event - the loop continues | All |
-
-### Why the Closed Loop Matters
-
-Traditional security architectures separate detection from enforcement. A SIEM detects, a human investigates, a human remediates. This works for human-speed threats.
-
-AI agents operate at machine speed. A compromised agent can exfiltrate data, escalate privileges, or pivot laterally in seconds - faster than any human can respond. The closed loop enables:
-
-- **Machine-speed response**: Detection to enforcement in milliseconds, not minutes.
-- **Continuous verification**: Every enforcement action is itself audited and analyzed.
-- **Self-limiting errors**: Auto-release timers and cooldown windows prevent automated overreaction.
-- **Complete traceability**: The hash-chained audit log captures the entire detection-enforcement sequence.
-
----
-
-## 7. Security Properties
-
-### Summary
-
-| Property | Implementation |
-|----------|---------------|
-| **Zero trust** | Every request evaluated by the PDP. No ambient authority. No trusted networks. |
-| **Least privilege** | Capability tokens grant minimum necessary scope with short TTLs (300–900s). |
-| **Defense in depth** | 5 detection layers: gateway inspection, auth evaluation, anomaly detection, Sigma rules, behavioral baselines. |
-| **Tamper evidence** | SHA-256 hash-chained audit log. Any modification breaks the chain. |
-| **Credential security** | SHA-512 hashed keys (never stored plaintext). ES256-signed tokens. TLS in transit. |
-| **Tenant isolation** | All database queries scoped by `tenant_id`. No cross-tenant data access path exists. |
-| **Graceful degradation** | Component failures reduce capability without creating false positives (see below). |
-| **Anti-weaponization** | Circuit breaker requires per-source failure ratio check. Cannot be deliberately tripped. |
-
-### Graceful Degradation Guarantees
-
-Security systems must fail safely. Tiresias guarantees the following degradation behaviors:
-
-| Failure | Degraded Behavior | What Does NOT Happen |
-|---------|-------------------|---------------------|
-| SIEM integration down | Events queued in dead-letter queue, replayed on recovery | Events are not lost |
-| Notification sink down | Circuit breaker disables sink, alerts routed to remaining sinks | Alert storm against failed sink |
-| Baseline missing (new agent) | Learning mode - reduced anomaly detection | False positive alerts |
-| Database read replica down | Queries routed to primary | Service outage |
-| SoulWatch down | SoulGate and SoulAuth continue operating; detection paused | Auth failures or gateway outage |
-| SoulAuth down | SoulGate rejects all auth-required requests (fail-closed) | Unauthenticated access granted |
-
-The critical property: **SoulAuth fails closed**. If the authorization service is unavailable, requests are denied - never silently permitted.
-
----
-
-## 8. Deployment Models
-
-Tiresias supports four deployment topologies to match different organizational requirements:
-
-### 8.1 SaaS (Managed)
-
-```
-  Your Infrastructure              Tiresias Cloud (tiresias.network)
-  ┌─────────────────┐              ┌──────────────────────────────┐
-  │  Your Agents    │──── HTTPS ──►│  SoulGate + SoulAuth +      │
-  │                 │              │  SoulWatch + Portal          │
-  └─────────────────┘              └──────────────────────────────┘
-```
-
-- Fully managed by Saluca LLC
-- Multi-tenant with cryptographic isolation
-- Automatic updates, scaling, and monitoring
-- SOC2-audited infrastructure
-
-### 8.2 Self-Hosted
-
-```
-  Your Infrastructure
-  ┌──────────────────────────────────────────────┐
-  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-  │  │ SoulGate │  │ SoulAuth │  │SoulWatch │  │
-  │  └──────────┘  └──────────┘  └──────────┘  │
-  │  ┌──────────┐  ┌──────────┐                 │
-  │  │  Portal  │  │PostgreSQL│                 │
-  │  └──────────┘  └──────────┘                 │
-  └──────────────────────────────────────────────┘
-```
-
-- Docker Compose or Kubernetes (Helm chart provided)
-- Your infrastructure, your data sovereignty
-- License key activation
-- You manage updates and scaling
-
-### 8.3 Hybrid
-
-```
-  Your Infrastructure              Tiresias Cloud
-  ┌─────────────────┐              ┌──────────────────┐
-  │  ┌──────────┐   │              │  ┌──────────┐    │
-  │  │ SoulGate │   │── policy ───►│  │ SoulAuth │    │
-  │  │ (local)  │   │◄── tokens ──│  │ (SaaS)   │    │
-  │  └──────────┘   │              │  └──────────┘    │
-  │                 │              │  ┌──────────┐    │
-  │  Your Agents    │              │  │SoulWatch │    │
-  │                 │              │  │ (SaaS)   │    │
-  └─────────────────┘              └──────────────────┘
-```
-
-- SoulGate deployed on-premise (gateway close to your workloads, minimal latency)
-- SoulAuth and SoulWatch managed in Tiresias Cloud
-- Agent traffic stays in your network; only auth decisions and audit events traverse the boundary
-- Best of both: local data path performance with managed security intelligence
-
-### 8.4 Local Development
-
-```bash
-export SOULAUTH_MODE=local
-./tiresias serve
-# → SQLite database, zero external dependencies
-# → Single binary, localhost:8080
-```
-
-- Zero-config single binary for development and testing
-- SQLite storage (no PostgreSQL required)
-- Full API compatibility with production
-- Not for production use
-
----
-
-## 9. Integration Points
-
-### SIEM Integration
-
-| Platform | Protocol | Format |
-|----------|----------|--------|
-| Splunk | HTTP Event Collector (HEC) | JSON + CEF |
-| Elasticsearch | REST API (Bulk) | ECS-compatible JSON |
-| Azure Sentinel | Log Analytics API | CEF |
-| Syslog | RFC 5424 (TCP/TLS) | CEF |
-
-All SIEM integrations include:
-- Configurable event filtering (by severity, type, tenant)
-- Dead-letter queue for delivery failures
-- Automatic retry with exponential backoff
-- Integrity verification metadata (hash chain references)
-
-### Notification Sinks
-
-| Sink | Setup |
-|------|-------|
-| PagerDuty | Integration key |
-| Slack | Incoming webhook URL |
-| Microsoft Teams | Incoming webhook URL |
-| OpsGenie | API key |
-| Email | SMTP credentials |
-| Amazon SNS | Topic ARN + IAM credentials |
-| Telegram | Bot token + chat ID |
-| Custom Webhook | HTTPS endpoint URL |
-
-### Policy Source
-
-Policies are synced from a Git repository:
-
-| Provider | Authentication |
-|----------|---------------|
-| GitHub | App installation or PAT |
-| GitLab | Project access token |
-| Bitbucket | App password |
-
-Policy sync is pull-based with configurable intervals or webhook-triggered on push.
-
-### Billing
-
-| Provider | Model |
-|----------|-------|
-| Stripe | Usage-based, per-agent pricing |
-
-Metered billing tracks active agent count per billing period. No per-request charges.
-
-### Identity Provider (SSO)
-
-| Provider | Protocol |
-|----------|----------|
-| Google Workspace | OIDC |
-| Azure AD | OIDC (roadmap) |
-| Okta | SAML 2.0 (roadmap) |
-
-SSO governs access to the Portal (human users). Agent authentication uses SoulKeys exclusively.
-
-### Observability
-
-| Endpoint | Format | Content |
-|----------|--------|---------|
-| `/metrics` | Prometheus | Request rates, latencies, error rates, active agents, queue depths |
-| `/healthz` | JSON | Service health, dependency status |
-
----
-
-## 10. Compliance & Audit
-
-### Audit Log Retention
-
-| Tier | Retention | Storage |
-|------|-----------|---------|
-| **Starter** | 7 days | Hot storage |
-| **Professional** | 30 days | Hot storage, 90 days cold |
-| **Enterprise** | 90 days hot, 1 year cold | Configurable |
-
-### Hash-Chain Integrity Verification
-
-The audit log supports on-demand integrity verification:
-
-```
-  Verification Request
-    │
-    ▼
-  ┌─────────────────────────────┐
-  │  1. Select event range      │
-  │  2. Recompute hash chain    │
-  │  3. Compare against stored  │
-  │  4. Report: PASS or TAMPER  │
-  └─────────────────────────────┘
-```
-
-Verification can be triggered via API, scheduled as a recurring job, or run on-demand from the Portal. Results are themselves audit-logged (the verification event is part of the chain).
-
-### Compliance Framework Support
-
-| Framework | Tiresias Contribution |
-|-----------|----------------------|
-| **SOC 2 Type II** | Continuous monitoring evidence, access control logs, incident response records |
-| **ISO 27001** | A.9 (Access Control), A.12 (Operations Security), A.16 (Incident Management) |
-| **NIST CSF** | Identify (asset inventory), Protect (access control), Detect (anomaly detection), Respond (playbooks) |
-| **NIST 800-53** | AC (Access Control), AU (Audit), IR (Incident Response), SI (System Integrity) |
-
-### Report Generation
-
-Tiresias generates compliance-ready reports on demand:
-
-- **Access control report**: All agents, their permissions, and policy bindings
-- **Incident report**: Detection events, response actions, resolution timeline
-- **Audit trail export**: CEF-formatted event stream for external audit tools
-- **Policy change log**: Version-controlled history of all authorization policy modifications
-
-### Event Format
-
-All events follow the **Common Event Format (CEF)** standard for interoperability with enterprise security tooling:
-
-```
-CEF:0|Tiresias|SoulAuth|1.0|AUTH_GRANT|Agent Authorized|3|
-  src=agent:orchestrator-01
-  dst=resource:storage:read:analytics
-  outcome=success
-  reason=policy:data-pipeline-readonly
-  chain_hash=sha256:a1b2c3...
-```
-
----
-
-## Appendix A: Glossary
-
-| Term | Definition |
-|------|------------|
-| **SoulKey** | Durable agent credential - the agent equivalent of an API key |
-| **Capability token** | Short-lived JWT encoding specific authorized actions |
-| **PDP** | Policy Decision Point - the evaluation engine in SoulAuth |
-| **Persona** | Named agent identity with metadata (purpose, owner, context) |
-| **Baseline** | 7-day rolling behavioral profile for anomaly detection |
-| **Playbook** | Automated response sequence triggered by detection events |
-| **Quarantine** | Enforcement action that restricts or disables an agent |
-| **Hash chain** | Linked sequence of SHA-256 hashes providing tamper evidence |
-| **Tenant** | Isolated organizational unit - all data scoped by tenant_id |
-| **CEF** | Common Event Format - standard log format for SIEM integration |
-
----
-
-## Appendix B: API Surface Summary
-
-| Service | Endpoint Category | Auth Required | Description |
-|---------|------------------|---------------|-------------|
-| SoulAuth | `/v1/auth/*` | SoulKey | Authentication, token issuance |
-| SoulAuth | `/v1/keys/*` | Portal session | Key management (CRUD, rotate, suspend) |
-| SoulAuth | `/v1/policies/*` | Portal session | Policy management |
-| SoulAuth | `/v1/audit/*` | Portal session | Audit log queries |
-| SoulWatch | `/v1/detections/*` | Portal session | Detection event queries |
-| SoulWatch | `/v1/playbooks/*` | Portal session | Playbook configuration |
-| SoulWatch | `/v1/rules/*` | Portal session | Sigma rule management |
-| SoulGate | `/v1/proxy/*` | Capability token | Proxied upstream requests |
-| SoulGate | `/v1/routes/*` | Portal session | Route configuration |
-| Portal | `/api/*` | Session cookie | Portal backend API |
-| All | `/metrics` | None (internal) | Prometheus metrics |
-| All | `/healthz` | None | Health check |
-
----
-
-*Tiresias is developed by Saluca LLC. For technical questions, contact security@saluca.com.*
-*Document version 1.0 - March 2026*
+## Roadmap
+
+- **Cloud KMS BYOK**: AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault providers for customer-managed encryption keys
+- **Granular data access**: Field-level masking, role-based data filtering, access levels (full, read-only, hash-only, report-download)
+- **Team-scoped queries**: Detection events, investigations, and quarantine records filtered by team membership
+- **Admin-configurable RBAC**: Per-tenant role customization and permission policies

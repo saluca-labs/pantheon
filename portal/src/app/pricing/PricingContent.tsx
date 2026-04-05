@@ -24,7 +24,7 @@ interface Tier {
 
 const tiers: Tier[] = [
   {
-    name: "Open",
+    name: "Community",
     priceMonthly: "Free",
     priceAnnual: "Free",
     period: "",
@@ -46,7 +46,7 @@ const tiers: Tier[] = [
   {
     name: "Starter",
     priceMonthly: "$49",
-    priceAnnual: "$488",
+    priceAnnual: "$468",
     period: "/mo",
     tagline: "For growing teams with production agents",
     highlight: false,
@@ -69,7 +69,7 @@ const tiers: Tier[] = [
   {
     name: "Pro",
     priceMonthly: "$199",
-    priceAnnual: "$1,982",
+    priceAnnual: "$2,028",
     period: "/mo",
     tagline: "For security teams running at scale",
     highlight: true,
@@ -95,8 +95,8 @@ const tiers: Tier[] = [
   },
   {
     name: "Enterprise",
-    priceMonthly: "$999",
-    priceAnnual: "Negotiated",
+    priceMonthly: "$2,499",
+    priceAnnual: "$1,999",
     period: "/mo",
     tagline: "For security-critical and regulated environments",
     highlight: false,
@@ -152,15 +152,15 @@ const faqs = [
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Open (free) tier.",
+    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Community (free) tier.",
   },
   {
     q: "What is your refund policy?",
     a: "All purchases are final \u2014 there are no refunds. You can cancel your subscription at any time to prevent future charges. Monthly plans stop at the end of the current billing period. Annual plans stop auto-renewal at the end of the term. Enterprise multi-year contracts have separate cancellation terms negotiated at signing.",
   },
   {
-    q: "Who qualifies for the free Open tier?",
-    a: "The Open tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
+    q: "Who qualifies for the free Community tier?",
+    a: "The Community tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
   },
   {
     q: "Can I self-host Tiresias?",
@@ -172,7 +172,7 @@ const faqs = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Open (free) tier automatically.",
+    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Community (free) tier automatically.",
   },
   {
     q: "Do you offer annual discounts?",
@@ -321,10 +321,10 @@ export default function PricingContent() {
                 displayPeriod = "";
               } else if (isEnterprise) {
                 if (annual) {
-                  displayPrice = "Negotiated";
-                  displayPeriod = "";
+                  displayPrice = "$1,999";
+                  displayPeriod = "/mo";
                 } else {
-                  displayPrice = "$999\u2013$4,999";
+                  displayPrice = "$2,499";
                   displayPeriod = "/mo";
                 }
               } else if (annual) {
@@ -436,7 +436,7 @@ export default function PricingContent() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left p-4 font-semibold text-foreground-muted">Feature</th>
-                    <th className="text-center p-4 font-semibold">Open</th>
+                    <th className="text-center p-4 font-semibold">Community</th>
                     <th className="text-center p-4 font-semibold">Starter</th>
                     <th className="text-center p-4 font-semibold text-gold-400">Pro</th>
                     <th className="text-center p-4 font-semibold">Enterprise</th>
@@ -533,7 +533,7 @@ export default function PricingContent() {
               Ready to secure your AI agents?
             </h2>
             <p className="text-foreground-muted mb-8 max-w-xl mx-auto">
-              Start free with the Open tier. No credit card required.
+              Start free with the Community tier. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
