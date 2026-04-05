@@ -24,6 +24,7 @@ from soulGate.src.audit.router import router as audit_router
 from soulGate.src.monitoring.metrics import metrics_router, MetricsMiddleware
 from soulGate.src.security_headers import SecurityHeadersMiddleware
 from soulGate.src.proxy.gateway import close_http_client
+from soulGate.src.actions.router import router as actions_router, close_picoclaw_client
 
 settings = get_settings()
 
@@ -87,7 +88,8 @@ async def lifespan(app: FastAPI):
     # Stop audit logger
     await stop_audit_logger()
 
-    # Close httpx client
+    # Close httpx clients
+    await close_picoclaw_client()
     await close_http_client()
 
     # Close database
@@ -139,6 +141,7 @@ app.include_router(access_router)
 app.include_router(circuit_router)
 app.include_router(audit_router)
 app.include_router(metrics_router)
+app.include_router(actions_router)
 
 
 @app.get("/health")

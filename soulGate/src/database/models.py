@@ -181,6 +181,35 @@ class SoulGateCircuitState(Base):
     )
 
 
+class SoulGateActionLog(Base):
+    """Audit log for actions routed through the action pipeline."""
+    __tablename__ = "_soulgate_action_log"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
+    soulkey_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
+    persona_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    action_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    action_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_platform: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    target_channel: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    decision: Mapped[str] = mapped_column(String(16), nullable=False, default="permit")
+    policy_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    rule_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    downstream_status: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    response_time_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    simulation_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    source_ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_soulgate_action_log_tenant", "tenant_id"),
+        Index("idx_soulgate_action_log_persona", "persona_id"),
+        Index("idx_soulgate_action_log_created", "created_at"),
+        Index("idx_soulgate_action_log_action_type", "action_type"),
+    )
+
+
 class SoulGateThreatPattern(Base):
     """Custom threat detection patterns (regex or keyword)."""
     __tablename__ = "_soulgate_threat_patterns"
