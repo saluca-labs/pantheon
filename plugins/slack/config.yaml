@@ -1,0 +1,32 @@
+name: slack
+version: 1.0.0
+description: "Slack integration — read channels, post messages, manage reactions"
+capabilities:
+  - slack:read
+  - slack:post
+  - slack:react
+required_secrets:
+  - SLACK_BOT_TOKEN
+  - SLACK_APP_TOKEN
+tools_from: manifest.json
+mcp_server:
+  type: stdio
+  command: ["python", "-m", "plugins.slack"]
+  env:
+    SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+    SLACK_APP_TOKEN: "${SLACK_APP_TOKEN}"
+  timeout_seconds: 30
+policies:
+  default_enforcement: strict
+  rules:
+    - tool: slack_list_channels
+      requires_approval: false
+    - tool: slack_read_messages
+      requires_approval: false
+    - tool: slack_send_message
+      requires_approval: false
+      rate_limit: "10/hour"
+    - tool: slack_add_reaction
+      requires_approval: false
+    - tool: slack_delete_message
+      requires_approval: true

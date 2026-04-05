@@ -1,0 +1,17 @@
+{
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echo input back",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["message"]
+      }
+    }
+  ]
+}
