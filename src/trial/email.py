@@ -50,6 +50,28 @@ VERIFICATION_EMAIL_HTML = """
                 Or copy this link: <br>
                 <span style="color:#2dd4bf;word-break:break-all;">{verify_url}</span>
               </p>
+              <!-- What you'll get -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e1a;border-radius:8px;border:1px solid rgba(45,212,191,0.3);padding:20px;margin-bottom:16px;">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#2dd4bf;">After verifying, you'll receive:</p>
+                    <p style="margin:0 0 4px;font-size:13px;color:#e5e7eb;">&#x2713; Your Tiresias API keys (shown once &mdash; save them!)</p>
+                    <p style="margin:0 0 4px;font-size:13px;color:#e5e7eb;">&#x2713; Docker Compose deployment files (pre-configured)</p>
+                    <p style="margin:0;font-size:13px;color:#e5e7eb;">&#x2713; Your license key (14-day trial)</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- Deploy quickstart -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e1a;border-radius:8px;border:1px solid #1f2937;padding:20px;margin-bottom:16px;">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#d4a853;">Deploy in 60 seconds:</p>
+                    <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">1. Download the files from the verification page</p>
+                    <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">2. <span style="font-family:'Courier New',monospace;color:#2dd4bf;">docker compose up -d</span></p>
+                    <p style="margin:0;font-size:13px;color:#9ca3af;">3. Point your AI agents at <span style="font-family:'Courier New',monospace;color:#2dd4bf;">http://localhost:8080/v1</span></p>
+                  </td>
+                </tr>
+              </table>
               <!-- What's included -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e1a;border-radius:8px;border:1px solid #1f2937;padding:20px;margin-bottom:24px;">
                 <tr>

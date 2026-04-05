@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.models import Trial, SoulTenant, Soulkey
 from src.auth.soulkey import issue_soulkey
 from src.middleware.tenant import create_tenant
+from src.license.issuer import issue_license
 
 logger = structlog.get_logger(__name__)
 
@@ -164,6 +165,26 @@ async def verify_and_activate_trial(
         tier="trial",
     )
 
+    # Issue license JWT for on-prem deployment
+    license_jwt = None
+    try:
+        license_result = await issue_license(
+            db=db,
+            tier="starter",
+            tenant_id=tenant.id,
+            features=["basic"],
+            is_nfr=True,
+            validity_days=TRIAL_DURATION_DAYS,
+            issued_by="trial_activation",
+        )
+        license_jwt = license_result["jwt"]
+    except Exception as e:
+        logger.warning(
+            "trial.license_jwt_failed",
+            trial_id=str(trial_id),
+            error=str(e),
+        )
+
     # Update trial with tenant and soulkey references
     trial.tenant_id = tenant.id
     trial.soulkey_id = soulkey.id
@@ -184,6 +205,7 @@ async def verify_and_activate_trial(
         "soulkey_id": soulkey.id,
         "raw_key": raw_key,
         "proxy_api_key": proxy_api_key,
+        "license_key": license_jwt,
         "status": "active",
         "expires_at": trial.expires_at,
         "contact_name": trial.contact_name,
@@ -290,6 +312,26 @@ async def activate_trial(
         tier="trial",
     )
 
+    # Issue license JWT for on-prem deployment
+    license_jwt = None
+    try:
+        license_result = await issue_license(
+            db=db,
+            tier="starter",
+            tenant_id=tenant.id,
+            features=["basic"],
+            is_nfr=True,
+            validity_days=TRIAL_DURATION_DAYS,
+            issued_by="trial_activation",
+        )
+        license_jwt = license_result["jwt"]
+    except Exception as e:
+        logger.warning(
+            "trial.license_jwt_failed",
+            trial_id=str(trial_id),
+            error=str(e),
+        )
+
     # Update trial with tenant and soulkey references
     trial.tenant_id = tenant.id
     trial.soulkey_id = soulkey.id
@@ -310,6 +352,7 @@ async def activate_trial(
         "soulkey_id": soulkey.id,
         "raw_key": raw_key,
         "proxy_api_key": proxy_api_key,
+        "license_key": license_jwt,
         "status": "active",
         "expires_at": trial.expires_at,
     }
