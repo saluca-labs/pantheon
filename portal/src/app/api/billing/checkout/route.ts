@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           error: "enterprise_contact_sales",
           detail:
             "Enterprise plans ($999-4,999/mo) require custom invoicing. Contact sales.",
-          redirect_url: "mailto:contact@saluca.com?subject=Tiresias%20Enterprise%20Inquiry",
+          redirect_url: "mailto:contact@tiresias.network?subject=Tiresias%20Enterprise%20Inquiry",
         },
         { status: 400 }
       );

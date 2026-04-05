@@ -78,8 +78,8 @@ spec:
               value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
             - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
               value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
-            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
-              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
+            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL  # Intentionally empty — Enterprise is contact-sales only (no self-serve annual checkout)
+              value: ""
             - name: NODE_ENV
               value: "production"
           resources:

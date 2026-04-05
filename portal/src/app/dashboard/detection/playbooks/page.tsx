@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { TierGate } from "@/components/dashboard/TierGate";
 import { BookOpen, CheckCircle, XCircle, Clock, Shield, Plus, Pencil, X, Loader2, ChevronDown, ChevronRight, ToggleLeft, ToggleRight } from "lucide-react";
 import { getStoredSoulKey, getStoredTenantId } from "@/lib/api";
 
@@ -260,6 +261,7 @@ export default function PlaybooksPage() {
   }
 
   return (
+    <TierGate requiredTier="pro" featureLabel="Response Playbooks">
     <div className="max-w-7xl space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
@@ -647,5 +649,6 @@ export default function PlaybooksPage() {
         </div>
       )}
     </div>
+    </TierGate>
   );
 }

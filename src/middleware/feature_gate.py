@@ -40,9 +40,16 @@ FEATURE_TIERS: dict[str, list[str]] = {
     "audit_export": ["enterprise", "mssp", "saas"],
     "multi_tenant": ["enterprise", "mssp", "saas"],
     "custom_detection": ["enterprise", "mssp", "saas"],
-    # MSSP features
-    "multi_tenant_mgmt": ["mssp", "saas"],
-    "white_label": ["mssp", "saas"],
+    "partner_channels": ["enterprise", "mssp", "saas"],
+    "contract_management": ["enterprise", "mssp", "saas"],
+    # Pro features (additional)
+    "investigation_access": ["pro", "enterprise", "mssp", "saas"],
+    "prh_engine": ["pro", "enterprise", "mssp", "saas"],
+    # Starter features (additional)
+    "team_management": ["starter", "pro", "enterprise", "mssp", "saas"],
+    "billing_management": ["starter", "pro", "enterprise", "mssp", "saas"],
+    # SaaS-only features
+    "saas_management": ["saas"],
 }
 
 # Map URL path prefixes to features
@@ -55,9 +62,18 @@ ROUTE_FEATURES: dict[str, str] = {
     "/v1/pii": "pii_scanning",
     "/v1/enforcement": "enforcement",
     "/v1/integrations": "siem_forwarding",
-    "/v1/audit/export": "audit_export",
-    "/v1/tenants/manage": "multi_tenant_mgmt",
-    "/v1/white-label": "white_label",
+    # Audit export lives under the admin router (/v1/soulauth/admin/audit/report)
+    # but audit_export is enterprise-gated, so we map it explicitly here.
+    "/v1/soulauth/admin/audit": "audit_export",
+    # MSSP multi-tenant endpoints
+    "/v1/mssp": "multi_tenant",
+    "/v1/partner": "partner_channels",
+    "/v1/investigation": "investigation_access",
+    "/v1/teams": "team_management",
+    "/v1/contracts": "contract_management",
+    "/v1/billing": "billing_management",
+    "/v1/saas": "saas_management",
+    "/v1/prh": "prh_engine",
 }
 
 # Paths that are always allowed regardless of license
@@ -138,14 +154,17 @@ class FeatureGateMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         path = request.url.path
 
-        # Always allow exempt paths
-        if _is_always_allowed(path):
-            return await call_next(request)
-
-        # Determine which feature this path requires
+        # Determine which feature this path requires.
+        # Check this BEFORE always-allowed so that explicitly gated sub-paths
+        # (e.g. /v1/soulauth/admin/audit under the /v1/soulauth/admin/ exemption)
+        # are still enforced.
         feature = _get_feature_for_path(path)
+
         if feature is None:
-            # Path not mapped to any feature - allow through
+            # No explicit feature gate — fall through to always-allowed / pass-through
+            if _is_always_allowed(path):
+                return await call_next(request)
+            # Path not mapped to any feature and not exempt - allow through
             return await call_next(request)
 
         # --- Install-level tier (license JWT) ---
@@ -190,6 +209,6 @@ class FeatureGateMiddleware(BaseHTTPMiddleware):
                 "feature": feature,
                 "tier_required": required_tier,
                 "tier_current": current_tier,
-                "upgrade_url": "https://tiresias.saluca.com/pricing",
+                "upgrade_url": "https://tiresias.network/pricing",
             },
         )

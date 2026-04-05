@@ -39,7 +39,7 @@ Tiresias enforces tenant isolation at three layers:
 
 **API Layer.** The `_get_caller_tenant_id()` function resolves the authenticated SoulKey from `request.state.rbac_soulkey` and returns its `tenant_id`. This value is used as a mandatory filter on all tenant-scoped queries. The function returns `None` only in testing mode (when `SOULAUTH_TESTING=true` and `ENVIRONMENT != production`), which disables tenant scoping for integration tests.
 
-**Encryption Layer.** Each tenant receives a dedicated Data Encryption Key (DEK) provisioned during tenant creation via `provision_tenant_encryption()`. The DEK is wrapped (envelope encryption) and stored per-tenant. Prompt and completion data is encrypted at rest with the tenant's DEK, ensuring that even database-level access cannot expose another tenant's sensitive content. Tenants on the Enterprise tier and above can supply their own Key Encryption Key (KEK) for customer-held encryption (BYOK), using the `KEKRotateRequest` endpoint to rotate it.
+**Encryption Layer.** Each tenant receives a dedicated Data Encryption Key (DEK) provisioned during tenant creation via `provision_tenant_encryption()`. The DEK is wrapped (envelope encryption) and stored per-tenant. Prompt and completion data is encrypted at rest with the tenant's DEK, ensuring that even database-level access cannot expose another tenant's sensitive content. Tenants on the Enterprise tier and above can provide their own Key Encryption Key (KEK) via the local KEK provider (hex or base64 key supplied as an environment variable). When customers provide their own KEK, decryption requires the customer-supplied key. KEK rotation is supported via the `KEKRotateRequest` endpoint. Cloud KMS integration (AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault) is on the roadmap.
 
 #### Cross-Tenant Prevention
 
@@ -307,7 +307,7 @@ When a request targets a feature not included in the effective tier, the middlew
   "feature": "enforcement",
   "tier_required": "enterprise",
   "tier_current": "pro",
-  "upgrade_url": "https://tiresias.saluca.com/pricing"
+  "upgrade_url": "https://tiresias.network/pricing"
 }
 ```
 

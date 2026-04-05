@@ -106,6 +106,16 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Prevent CDN/Next.js caching on dynamic pages
+  const NO_CACHE_PATHS = ["/trial", "/pricing"];
+  if (NO_CACHE_PATHS.some((p) => pathname === p)) {
+    const response = NextResponse.next();
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    response.headers.set("CDN-Cache-Control", "no-store");
+    response.headers.set("Surrogate-Control", "no-store");
+    return response;
+  }
+
   return NextResponse.next();
 }
 
@@ -114,6 +124,8 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/login",
+    "/trial",
+    "/pricing",
     "/v1/:path*",
     "/dash/:path*",
   ],

@@ -123,4 +123,4 @@ Annual billing: 20% discount on all tiers.
 
 ---
 
-*Saluca LLC | tiresias.saluca.com/platform/soulauth*
+*Saluca LLC | tiresias.network/platform/soulauth*

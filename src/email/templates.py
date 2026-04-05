@@ -7,6 +7,7 @@ Brand: bg #0a0e1a, card #111827, gold #d4a853, teal #2dd4bf.
 
 from __future__ import annotations
 
+from config.settings import get_settings
 
 # ---------------------------------------------------------------------------
 # Shared layout helpers
@@ -76,8 +77,8 @@ def render_welcome(
     *,
     contact_name: str,
     soulkey: str,
-    quickstart_url: str = "https://tiresias.saluca.com/quickstart",
-    docs_url: str = "https://docs.tiresias.saluca.com",
+    quickstart_url: str = "https://tiresias.network/quickstart",
+    docs_url: str = "https://tiresias.network/docs",
 ) -> str:
     """Welcome email sent immediately after registration."""
     body = (
@@ -114,7 +115,7 @@ def render_welcome(
         f'</p>\n'
         f'<p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">\n'
         f'  If you did not create this account, contact support immediately at\n'
-        f'  <a href="mailto:support@saluca.com" style="color:#d4a853;">support@saluca.com</a>.\n'
+        f'  <a href="mailto:{get_settings().support_email}" style="color:#d4a853;">{get_settings().support_email}</a>.\n'
         f'</p>'
     )
     return _HEADER + body + _FOOTER
@@ -130,7 +131,7 @@ def render_trial_expiring(
     days_remaining: int,
     agents_used: int,
     requests_used: int,
-    upgrade_url: str = "https://tiresias.saluca.com/upgrade",
+    upgrade_url: str = "https://tiresias.network/upgrade",
 ) -> str:
     """Trial-expiring warning — day 10 of 14."""
     plural = "s" if days_remaining != 1 else ""
@@ -170,7 +171,7 @@ def render_trial_expired(
     *,
     contact_name: str,
     data_retention_days: int = 30,
-    upgrade_url: str = "https://tiresias.saluca.com/upgrade",
+    upgrade_url: str = "https://tiresias.network/upgrade",
 ) -> str:
     """Trial-expired email — sent when trial ends without payment."""
     body = (
@@ -196,7 +197,7 @@ def render_trial_expired(
         + _cta_button(upgrade_url, "Upgrade to Keep Your Data", "#d4a853")
         + f'\n<p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">\n'
         f'  Questions? Reply to this email or contact\n'
-        f'  <a href="mailto:support@saluca.com" style="color:#2dd4bf;">support@saluca.com</a>.\n'
+        f'  <a href="mailto:{get_settings().support_email}" style="color:#2dd4bf;">{get_settings().support_email}</a>.\n'
         f'</p>'
     )
     return _HEADER + body + _FOOTER
@@ -239,9 +240,9 @@ def render_payment_receipt(
         + _cta_button(invoice_url, "View Invoice PDF")
         + f'\n<p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">\n'
         f'  Invoices are also available in your\n'
-        f'  <a href="https://tiresias.saluca.com/settings/billing" style="color:#2dd4bf;">billing settings</a>.\n'
+        f'  <a href="https://tiresias.network/settings/billing" style="color:#2dd4bf;">billing settings</a>.\n'
         f'  For billing questions, contact\n'
-        f'  <a href="mailto:billing@saluca.com" style="color:#2dd4bf;">billing@saluca.com</a>.\n'
+        f'  <a href="mailto:{get_settings().billing_email}" style="color:#2dd4bf;">{get_settings().billing_email}</a>.\n'
         f'</p>'
     )
     return _HEADER + body + _FOOTER
@@ -257,7 +258,7 @@ def render_p0_acknowledged(
     ticket_id: str,
     subject: str,
     sla_hours: int = 4,
-    portal_url: str = "https://tiresias.saluca.com/support",
+    portal_url: str = "https://tiresias.network/support",
 ) -> str:
     """P0 ticket acknowledgment — sent to customer when P0 is acknowledged by Saluca."""
     truncated_subject = subject[:60] + ("..." if len(subject) > 60 else "")

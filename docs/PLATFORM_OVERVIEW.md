@@ -1,5 +1,7 @@
 # Tiresias Platform Overview
 
+**Version:** v3.4.4
+
 **AI agents are the new attack surface. Tiresias is the security platform built to protect them.**
 
 ---

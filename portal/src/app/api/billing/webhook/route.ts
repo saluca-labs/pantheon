@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { storePendingKey } from "../_keystore";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -25,14 +26,18 @@ const SOULAUTH_INTERNAL_URL =
   process.env.SOULAUTH_INTERNAL_URL || "http://localhost:8000";
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
-const PRICE_TO_TIER: Record<string, string> = {
-  [process.env.STRIPE_PRICE_STARTER_MONTHLY || ""]: "starter",
-  [process.env.STRIPE_PRICE_STARTER_ANNUAL || ""]: "starter",
-  [process.env.STRIPE_PRICE_PRO_MONTHLY || ""]: "pro",
-  [process.env.STRIPE_PRICE_PRO_ANNUAL || ""]: "pro",
-  [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY || ""]: "enterprise",
-  [process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL || ""]: "enterprise",
-};
+// Build price-to-tier mapping, filtering out empty/undefined price IDs
+// (e.g. Enterprise Annual is intentionally empty — contact-sales only)
+const PRICE_TO_TIER: Record<string, string> = Object.fromEntries(
+  [
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY, "starter"],
+    [process.env.STRIPE_PRICE_STARTER_ANNUAL, "starter"],
+    [process.env.STRIPE_PRICE_PRO_MONTHLY, "pro"],
+    [process.env.STRIPE_PRICE_PRO_ANNUAL, "pro"],
+    [process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY, "enterprise"],
+    [process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL, "enterprise"],
+  ].filter(([key]) => key && key !== "")
+);
 
 const LOOKUP_KEY_TO_TIER: Record<string, string> = {
   tiresias_starter_monthly: "starter",
@@ -43,7 +48,7 @@ const LOOKUP_KEY_TO_TIER: Record<string, string> = {
   tiresias_enterprise_annual: "enterprise",
 };
 
-function resolveTier(subscription: Stripe.Subscription): string {
+function resolveTier(subscription: Stripe.Subscription): string | null {
   const item = subscription.items.data[0];
   if (!item) return "community";
   const priceId = item.price.id;
@@ -52,8 +57,11 @@ function resolveTier(subscription: Stripe.Subscription): string {
   if (lookupKey && LOOKUP_KEY_TO_TIER[lookupKey]) return LOOKUP_KEY_TO_TIER[lookupKey];
   const metaTier = subscription.metadata?.tiresias_tier;
   if (metaTier) return metaTier.toLowerCase();
-  console.warn("Could not resolve tier for price " + priceId + ", defaulting to starter");
-  return "starter";
+  console.warn(
+    "webhook.resolveTier: no tier mapping for price " + priceId +
+    " (lookup_key=" + lookupKey + "). Skipping tier update."
+  );
+  return null;
 }
 
 async function forwardToSoulAuth(eventType: string, eventData: object) {
@@ -114,9 +122,8 @@ async function updateTenantTier(
 
 /**
  * Provision a new tenant via SoulAuth and return the raw_key + tenant_id.
- * raw_key is stored in Stripe subscription metadata temporarily so the
- * /api/billing/session endpoint can surface it to the success page.
- * Note: raw_key exposure is ephemeral — it will be cleared after first retrieval.
+ * raw_key is stored in an ephemeral in-memory keystore (not Stripe metadata)
+ * and retrieved once by the /api/billing/claim-key endpoint on the success page.
  */
 async function provisionTenant(
   companyName: string,
@@ -240,19 +247,27 @@ export async function POST(request: NextRequest) {
             subscriptionId,
             email
           );
-          if (result && subscriptionId) {
-            // Store tenant_id + raw_key in subscription metadata for success page retrieval
-            // raw_key is sensitive — cleared by success page after display
-            try {
-              await getStripe().subscriptions.update(subscriptionId, {
-                metadata: {
-                  tenant_id: result.tenant_id,
-                  soulkey_id: result.soulkey_id,
-                  raw_key: result.raw_key,
-                },
-              });
-            } catch (e) {
-              console.error("Failed to update subscription metadata:", e);
+          if (result) {
+            // Store raw_key in ephemeral in-memory keystore for one-time retrieval
+            // via /api/billing/claim-key (never stored in Stripe metadata)
+            storePendingKey(session.id, {
+              raw_key: result.raw_key,
+              tenant_id: result.tenant_id,
+              soulkey_id: result.soulkey_id,
+            });
+
+            // Store non-sensitive IDs in subscription metadata for lifecycle management
+            if (subscriptionId) {
+              try {
+                await getStripe().subscriptions.update(subscriptionId, {
+                  metadata: {
+                    tenant_id: result.tenant_id,
+                    soulkey_id: result.soulkey_id,
+                  },
+                });
+              } catch (e) {
+                console.error("Failed to update subscription metadata:", e);
+              }
             }
             console.log(
               "Checkout: provisioned new tenant " +
@@ -271,6 +286,15 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const tenantId = subscription.metadata?.tenant_id;
         const tier = resolveTier(subscription);
+
+        if (!tier) {
+          // No tier mapping found — log and skip (e.g. unmapped enterprise annual price)
+          console.warn(
+            "Skipping tier update for subscription " + subscription.id +
+            " — no tier could be resolved"
+          );
+          break;
+        }
 
         if (tenantId) {
           await updateTenantTier(tenantId, tier, {

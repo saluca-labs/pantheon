@@ -103,11 +103,26 @@ spec:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: resend-api-key
+            - name: SOULAUTH_RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: resend-api-key
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: tiresias-secrets
                   key: internal-api-key
+            - name: LINEAR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: linear-api-key
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: openrouter-api-key
             - name: METRICS_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -123,10 +138,10 @@ spec:
               value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
             - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
               value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
-            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL
-              value: "price_1TDjH4BkXMYmrc2LeWPVTZT0"
-            - name: SOULAUTH_LICENSE_REQUIRED
-              value: "false"
+            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL  # Intentionally empty — Enterprise is contact-sales only (no self-serve annual checkout)
+              value: ""
+            - name: SOULAUTH_TRIAL_FROM_EMAIL
+              value: "Tiresias <tiresias.onboarding@saluca.com>"
             - name: SOULAUTH_LOG_LEVEL
               value: "INFO"
             - name: SOULAUTH_DEBUG

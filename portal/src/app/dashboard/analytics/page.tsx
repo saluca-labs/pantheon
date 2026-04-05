@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { TierGate } from "@/components/dashboard/TierGate";
 
 /** Analytics dashboard -- security analytics: anomalies, detections, severity breakdown.
  *  Wired to live SoulAuth analytics + detection APIs. */
@@ -241,6 +242,7 @@ export default function AnalyticsPage() {
   const totalBuffered = detection?.total_matches_buffered ?? 0;
 
   return (
+    <TierGate requiredTier="pro" featureLabel="Security Analytics">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -505,5 +507,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </div>
+    </TierGate>
   );
 }

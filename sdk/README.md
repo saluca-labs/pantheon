@@ -1,6 +1,6 @@
 # Tiresias SDK
 
-Python SDK for [Tiresias](https://tiresias.saluca.com) - Zero-trust agent identity and authorization.
+Python SDK for [Tiresias](https://tiresias.network) - Zero-trust agent identity and authorization.
 
 ## Installation
 
@@ -15,7 +15,7 @@ import asyncio
 from tiresias import TiresiasClient
 
 async def main():
-    async with TiresiasClient("https://tiresias.saluca.com") as client:
+    async with TiresiasClient("https://tiresias.network") as client:
         # Check service health
         health = await client.get_health()
         print(f"Service: {health.service} v{health.version} - {health.status}")
@@ -43,7 +43,7 @@ asyncio.run(main())
 ## Trial Registration
 
 ```python
-async with TiresiasClient("https://tiresias.saluca.com") as client:
+async with TiresiasClient("https://tiresias.network") as client:
     # Register for a 14-day trial
     trial = await client.register_trial(
         contact_name="Cristian",
@@ -59,7 +59,7 @@ async with TiresiasClient("https://tiresias.saluca.com") as client:
 ## Agent Self-Inspection
 
 ```python
-async with TiresiasClient("https://tiresias.saluca.com") as client:
+async with TiresiasClient("https://tiresias.network") as client:
     info = await client.whoami("sk_agent_sal_alfred_abc123...")
     print(f"Persona: {info.persona_id}")
     print(f"Tenant: {info.tenant_id}")
@@ -73,7 +73,7 @@ async with TiresiasClient("https://tiresias.saluca.com") as client:
 ```python
 from tiresias import TiresiasClient, AuthenticationError, AuthorizationError, RateLimitError
 
-async with TiresiasClient("https://tiresias.saluca.com") as client:
+async with TiresiasClient("https://tiresias.network") as client:
     try:
         result = await client.evaluate_access(
             soulkey="sk_agent_invalid",

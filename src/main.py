@@ -46,6 +46,15 @@ from src.idp.router import router as idp_router
 from src.notifications.router import router as notifications_router
 from src.usage.router import router as usage_router
 from src.teams.router import router as teams_router
+from src.aletheia.router import router as aletheia_cot_router
+from src.aletheia.sanitize_router import router as aletheia_sanitize_router
+from src.aletheia.tool_evaluate_router import router as aletheia_tool_evaluate_router
+from src.keys.router import router as keys_router
+from src.mssp.router import router as mssp_router
+from src.prh.router import router as prh_router
+from src.tenant.router import router as tenant_router
+from src.support.router import router as support_router
+from src.chatbot.router import router as chatbot_router
 
 settings = get_settings()
 
@@ -395,9 +404,9 @@ app = FastAPI(
         "- **Pro**: Analytics, detection rules, delegation, policy git-sync\n"
         "- **Enterprise**: Enforcement, SIEM forwarding, audit export, multi-tenant, custom detection\n\n"
         "## Resources\n\n"
-        "- [Documentation](https://tiresias.saluca.com/docs)\n"
+        "- [Documentation](https://tiresias.network/docs)\n"
         "- [SDK (PyPI)](https://pypi.org/project/tiresias-sdk/)\n"
-        "- [Support](mailto:support@saluca.com)\n"
+        f"- [Support](mailto:{settings.support_email})\n"
     ),
     lifespan=lifespan,
     openapi_tags=[
@@ -434,8 +443,8 @@ app = FastAPI(
 
 # CORS middleware — production origins only; dev origins conditional on debug mode
 _PRODUCTION_ORIGINS = [
-    "https://tiresias.saluca.com",
-    "https://www.tiresias.saluca.com",
+    "https://tiresias.network",
+    "https://www.tiresias.network",
 ]
 _DEV_ORIGINS = [
     "http://localhost:3000",
@@ -495,6 +504,15 @@ app.include_router(idp_router)
 app.include_router(notifications_router)
 app.include_router(usage_router)
 app.include_router(teams_router)
+app.include_router(aletheia_cot_router)
+app.include_router(aletheia_sanitize_router)
+app.include_router(aletheia_tool_evaluate_router)
+app.include_router(keys_router)
+app.include_router(mssp_router)
+app.include_router(prh_router)
+app.include_router(tenant_router)
+app.include_router(support_router)
+app.include_router(chatbot_router)
 
 # Portal policy management API (Phase 3 — SaaS two-tier)
 from src.portal.policy_router import router as portal_policy_router

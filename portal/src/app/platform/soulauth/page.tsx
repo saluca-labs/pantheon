@@ -362,7 +362,7 @@ export default function SoulAuthPage() {
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
@@ -556,7 +556,7 @@ policies:
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-teal-500 hover:to-teal-400 transition-all shadow-lg shadow-teal-500/20"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"

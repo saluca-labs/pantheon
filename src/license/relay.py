@@ -17,7 +17,7 @@ logger = structlog.get_logger(__name__)
 
 LICENSE_SERVER_URL = os.environ.get(
     "TIRESIAS_LICENSE_SERVER_URL",
-    "https://license.tiresias.saluca.com",
+    "https://license.tiresias.network",
 )
 RELAY_TIMEOUT = 10.0  # seconds
 

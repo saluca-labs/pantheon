@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "SoulAuth"
-    app_version: str = "1.0.0"
+    app_version: str = "3.4.4"
     debug: bool = False
     log_level: str = "INFO"
 
@@ -108,8 +108,8 @@ class Settings(BaseSettings):
         default=None,
         description="OpenRouter API key for chatbot LLM (OPENROUTER_API_KEY env var)",
     )
-    trial_from_email: str = "Tiresias <onboarding@resend.dev>"
-    trial_verify_base_url: str = "https://tiresias.saluca.com/trial/verify"
+    trial_from_email: str = "Tiresias <tiresias.onboarding@saluca.com>"
+    trial_verify_base_url: str = "https://tiresias.network/trial/verify"
 
     # Detection Engine (Sigma rules + playbooks)
     detection_enabled: bool = True
@@ -214,6 +214,20 @@ class Settings(BaseSettings):
     ldap_group_role_map: Optional[str] = Field(
         default=None,
         description="JSON mapping of LDAP group DNs to SoulAuth roles",
+    )
+
+    # Contact emails (shown to customers — override via env vars)
+    support_email: str = Field(
+        default="support@tiresias.network",
+        description="Support contact email shown to customers",
+    )
+    billing_email: str = Field(
+        default="billing@tiresias.network",
+        description="Billing contact email shown to customers",
+    )
+    contact_email: str = Field(
+        default="contact@tiresias.network",
+        description="General contact email shown to customers",
     )
 
     # OIDC / SSO Settings

@@ -166,3 +166,29 @@ async def validate_depth_for_new_child(
         )
 
     return new_child_depth
+
+
+async def validate_partner_child_creation(
+    db: AsyncSession,
+    parent_tenant_id: uuid.UUID,
+    requested_tier: str,
+) -> None:
+    """
+    Enforce partner-specific constraints on child tenant creation.
+
+    Raises HTTPException if requested_tier is mssp or saas,
+    or if parent is already too deep in the hierarchy.
+    """
+    BLOCKED_TIERS = {"mssp", "saas"}
+    if requested_tier in BLOCKED_TIERS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Tier '{requested_tier}' cannot be assigned to partner sub-tenants.",
+        )
+
+    parent = await db.get(SoulTenant, parent_tenant_id)
+    if parent and hasattr(parent, "hierarchy_depth") and parent.hierarchy_depth >= 2:
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot create sub-tenants more than 1 level below the partner.",
+        )

@@ -57,8 +57,8 @@ const architectureItems = [
 const complianceTimeline = [
   {
     label: "GDPR Compliance",
-    subtitle: "Privacy Policy, DPA, Article 30 Register",
-    status: "Active",
+    subtitle: "Privacy policies, DPA, and data processing agreements in place — not a third-party certification",
+    status: "Implemented",
     statusColor: "text-of-primary bg-of-primary/10",
     year: "",
   },
