@@ -1,4 +1,37 @@
-# Tiresias SoulAuth — Quick Start Guide
+# Tiresias — Quick Start Guide
+
+## Self-Hosted Deployment
+
+Deploy Tiresias on your own infrastructure in four steps:
+
+```bash
+# 1. Copy the environment template
+cp .env.template .env
+
+# 2. Fill in the three required values
+#    - TIRESIAS_TENANT_ID  (UUID — python -c "import uuid; print(uuid.uuid4())")
+#    - TIRESIAS_KEK        (64 hex chars — python -c "import secrets; print(secrets.token_hex(32))")
+#    - TIRESIAS_LICENSE_KEY (provided by Saluca)
+#    Also set POSTGRES_PASSWORD to something secure.
+
+# 3. Start all services
+docker compose -f docker-compose.production.yml up -d
+
+# 4. Verify
+curl http://localhost:8080/health
+```
+
+Once healthy, point your LLM clients at `http://<your-host>:8080` as the proxy endpoint. SoulAuth is available on port 8000 for identity and policy management.
+
+To enable Redis-backed rate limiting:
+
+```bash
+docker compose -f docker-compose.production.yml --profile rate-limit up -d
+```
+
+---
+
+## SoulAuth Cloud (Hosted)
 
 **Service URL:** `https://tiresias-soulauth-253892677982.us-central1.run.app`
 **Swagger Docs:** `https://tiresias-soulauth-253892677982.us-central1.run.app/docs`

@@ -44,10 +44,10 @@ def effective_tier(install_tier: str, tenant_tier: str) -> str:
 # ---------------------------------------------------------------------------
 
 TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
-    "saas": ["saas", "mssp", "enterprise", "pro", "community"],
-    "mssp": ["enterprise", "pro", "community"],
-    "enterprise": ["pro", "community"],
-    "pro": ["community"],
+    "saas": ["saas", "mssp", "enterprise", "pro", "starter", "community"],
+    "mssp": ["enterprise", "pro", "starter", "community"],
+    "enterprise": ["pro", "starter", "community"],
+    "pro": ["starter", "community"],
     "community": [],
     "starter": [],
 }
