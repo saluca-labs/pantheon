@@ -33,6 +33,7 @@ TIER_RANK: dict[str, int] = {
     "enterprise": 3,
     "mssp": 4,
     "saas": 5,
+    "owner": 6,
 }
 
 
