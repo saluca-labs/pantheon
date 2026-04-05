@@ -190,6 +190,10 @@ class TrialActivationResponse(BaseModel):
     tenant_id: uuid.UUID
     soulkey_id: uuid.UUID
     raw_key: str = Field(description="Trial soulkey. Shown once. Save immediately.")
+    proxy_api_key: Optional[str] = Field(
+        default=None,
+        description="Tiresias proxy API key — shown once. Point agents at proxy.tiresias.network with this key.",
+    )
     status: str
     expires_at: datetime
 

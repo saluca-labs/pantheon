@@ -139,6 +139,7 @@ async def trial_verify(
         tenant_id=activation["tenant_id"],
         soulkey_id=activation["soulkey_id"],
         raw_key=activation["raw_key"],
+        proxy_api_key=activation.get("proxy_api_key"),
         status=activation["status"],
         expires_at=activation["expires_at"],
     )
@@ -175,6 +176,7 @@ def _verify_page_html(status: str, **kwargs) -> str:
               </div>
               <p style="margin:6px 0 0;font-size:11px;color:#ef4444;">This key will not be shown again.</p>
             </div>
+            {'<div style="margin-bottom:16px;"><p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Proxy API Key (shown once - save now)</p><div style="background:#111827;border:1px solid rgba(45,212,191,0.2);border-radius:8px;padding:12px;"><p style="margin:0;font-size:13px;font-family:monospace;color:#2dd4bf;word-break:break-all;">' + a['proxy_api_key'] + '</p></div><p style="margin:6px 0 0;font-size:11px;color:#ef4444;">Point your agents at proxy.tiresias.network with this key.</p></div>' if a.get('proxy_api_key') else ''}
             <div>
               <p style="margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;">Trial Expires</p>
               <p style="margin:0;font-size:13px;font-family:monospace;color:#e5e7eb;">{a['expires_at']}</p>
@@ -269,5 +271,6 @@ async def trial_verify_get(
         tenant_id=str(activation["tenant_id"]),
         soulkey_id=str(activation["soulkey_id"]),
         raw_key=activation["raw_key"],
+        proxy_api_key=activation.get("proxy_api_key"),
         expires_at=str(activation["expires_at"].strftime("%B %d, %Y") if hasattr(activation["expires_at"], "strftime") else activation["expires_at"]),
     ))

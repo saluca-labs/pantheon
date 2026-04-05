@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tiresias.bootstrap import first_boot
+from tiresias.bootstrap import first_boot, run_auto_migrations
 from tiresias.config import TiresiasSettings, parse_providers
 from tiresias.encryption.envelope import EnvelopeEncryption
 from tiresias.encryption.providers import resolve_kek_provider
@@ -143,7 +143,8 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
                 engine = await get_engine("__saas__", cfg.data_root)
             logger.info("Tiresias proxy started in SaaS mode")
         else:
-            # Dedicated / on-prem: single tenant, run first_boot
+            # Dedicated / on-prem: single tenant, run migrations then first_boot
+            run_auto_migrations()
             engine = await get_engine(cfg.tenant_id, cfg.data_root)
             async with AsyncSession(engine) as session:
                 api_key = await first_boot(cfg.tenant_id, cfg, session)

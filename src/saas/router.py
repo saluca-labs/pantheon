@@ -175,7 +175,7 @@ async def saas_provision(
 
         # 4. Generate Tiresias proxy API key for SaaS customers
         proxy_api_key = None
-        if request.tier in ("starter", "pro", "saas"):
+        if request.tier in ("trial", "starter", "pro", "saas"):
             from src.saas.proxy_keys import provision_proxy_key
             proxy_api_key = await provision_proxy_key(
                 db=db,

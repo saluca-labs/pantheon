@@ -18,6 +18,7 @@ const docsNav = [
     items: [
       { title: "User & Developer Guide", href: "/docs/user-guide" },
       { title: "Administrator Guide", href: "/docs/admin-guide" },
+      { title: "Troubleshooting", href: "/docs/troubleshooting" },
     ],
   },
   {
