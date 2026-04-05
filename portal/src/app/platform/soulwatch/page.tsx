@@ -80,7 +80,7 @@ const features = [
   {
     title: "Compliance Reporting",
     description:
-      "Auto-generated reports mapped to SOC2, ISO 27001, and NIST 800-53 controls. Export to PDF or CSV. Built to support your compliance journey, not block it.",
+      "Auto-generated compliance-ready reports mapped to SOC 2, ISO 27001, and NIST 800-53 control frameworks. Export to PDF or CSV. Certifications in progress (SOC 2 Type I targeted Q3 2026).",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
@@ -330,7 +330,7 @@ export default function SoulWatchPage() {
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
@@ -465,7 +465,7 @@ import websockets
 import json
 
 async def watch_agents():
-    uri = "wss://tiresias.saluca.com/watch/v1/stream"
+    uri = "wss://tiresias.network/watch/v1/stream"
     headers = {"Authorization": "Bearer sk_watch_live_..."}
 
     async with websockets.connect(uri, extra_headers=headers) as ws:
@@ -482,7 +482,7 @@ asyncio.run(watch_agents())`}
               <TerminalBlock
                 filename="query_anomalies.sh"
                 code={`# Get open anomalies for the last 24 hours
-curl -s https://tiresias.saluca.com/watch/v1/anomalies \\
+curl -s https://tiresias.network/watch/v1/anomalies \\
   -H "Authorization: Bearer sk_watch_live_..." \\
   -d '{"status": "open", "hours": 24}' | jq
 
@@ -671,7 +671,7 @@ tags:
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 cta-breathe"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"

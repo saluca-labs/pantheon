@@ -31,8 +31,8 @@ const products = [
   {
     name: "SoulWatch",
     tagline: "AI Runtime Security Monitoring",
-    status: "Coming Soon",
-    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
+    status: "Generally Available",
+    statusColor: "bg-teal-600/20 text-teal-400 border-teal-500/30",
     accent: "gold",
     href: "/platform/soulwatch",
     description:
@@ -49,8 +49,8 @@ const products = [
   {
     name: "SoulGate",
     tagline: "API Security Gateway",
-    status: "Coming Soon",
-    statusColor: "bg-navy-700 text-foreground-subtle border-navy-600",
+    status: "Generally Available",
+    statusColor: "bg-teal-600/20 text-teal-400 border-teal-500/30",
     accent: "gold",
     href: "/platform/soulgate",
     description:
@@ -349,7 +349,7 @@ export default function PlatformPage() {
                 href="/trial"
                 className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
               >
-                Join Waitlist
+                Start Free Trial
               </Link>
               <Link
                 href="/platform/soulauth"

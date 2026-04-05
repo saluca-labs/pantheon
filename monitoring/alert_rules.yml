@@ -136,3 +136,149 @@ groups:
         annotations:
           summary: "SoulAuth auth failure rate exceeds 20%"
           description: "401 rate is {{ $value | humanizePercentage }} - possible brute-force or misconfiguration."
+
+  - name: soulgate_critical
+    rules:
+      - alert: SoulGateDown
+        expr: up{job="soulgate"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate instance {{ $labels.instance }} is down"
+          description: "SoulGate target {{ $labels.instance }} has been unreachable for more than 1 minute."
+          runbook: "https://docs.saluca.dev/runbooks/soulgate-down"
+
+      - alert: HighGatewayErrorRate
+        expr: |
+          (
+            sum(rate(soulgate_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(soulgate_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate 5xx error rate exceeds 5%"
+          description: "HTTP 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: CircuitBreakerOpen
+        expr: soulgate_circuit_state == 2
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate circuit breaker open for upstream {{ $labels.upstream }}"
+          description: "Circuit breaker has been open for more than 1 minute, upstream is likely unhealthy."
+
+  - name: soulgate_warning
+    rules:
+      - alert: HighGatewayLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulgate_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate P99 latency exceeds 500ms"
+          description: "99th percentile gateway latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighRateLimitRejections
+        expr: |
+          sum(increase(soulgate_rate_limit_hits_total[5m])) > 100
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate rate limit rejection spike"
+          description: "{{ $value }} requests rejected by rate limiting in the last 5 minutes."
+
+      - alert: UpstreamUnhealthy
+        expr: soulgate_upstream_health == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate upstream {{ $labels.upstream }} is unhealthy"
+          description: "Upstream health check has been failing for more than 2 minutes."
+
+  - name: soulwatch_critical
+    rules:
+      - alert: SoulWatchDown
+        expr: up{job="soulwatch"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulWatch instance {{ $labels.instance }} is down"
+          description: "SoulWatch target {{ $labels.instance }} has been unreachable for more than 1 minute."
+          runbook: "https://docs.saluca.dev/runbooks/soulwatch-down"
+
+      - alert: SoulWatchDatabaseUnhealthy
+        expr: soulwatch_health_check_status{component="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulWatch database health check failing"
+          description: "Database connectivity check has been failing for more than 1 minute on {{ $labels.instance }}."
+
+  - name: soulwatch_warning
+    rules:
+      - alert: HighWatchLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulwatch_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulWatch P99 latency exceeds 500ms"
+          description: "99th percentile request latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighAnomalyRate
+        expr: |
+          sum(increase(soulwatch_anomalies_total[5m])) > 50
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High anomaly detection rate"
+          description: "{{ $value }} anomalies detected in the last 5 minutes."
+
+      - alert: SIEMDeadLetterQueueGrowing
+        expr: soulwatch_siem_dlq_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SIEM dead letter queue growing"
+          description: "DLQ has {{ $value }} events - SIEM forwarding may be failing."
+
+      - alert: HighPipelineLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulwatch_pipeline_duration_seconds_bucket[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulWatch pipeline P99 latency exceeds 1s"
+          description: "99th percentile event processing latency is {{ $value }}s over the last 5 minutes."

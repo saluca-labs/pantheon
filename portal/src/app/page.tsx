@@ -231,7 +231,7 @@ function Hero() {
               href="/trial"
               className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Join Waitlist
+              Start Free Trial
             </Link>
             <Link
               href="/developers"
@@ -376,24 +376,24 @@ function PlatformOverview() {
       tagline: "AI Runtime Security Monitoring",
       description:
         "Real-time behavioral analytics for your agent fleet. Sigma-compatible detection rules, anomaly scoring, and automated alerting - without reading agent payloads.",
-      badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badge: "GA",
+      badgeColor: "bg-teal-600/20 text-teal-400",
       accentColor: "teal",
       icon: EyeIcon,
       href: "/platform/soulwatch",
-      cta: "Join Waitlist",
+      cta: "Explore SoulWatch",
     },
     {
       name: "SoulGate",
       tagline: "API Security Gateway",
       description:
         "Secure the perimeter between your agents and the outside world. Rate limiting, schema validation, and threat detection at the API layer.",
-      badge: "Coming Soon",
-      badgeColor: "bg-navy-700 text-foreground-subtle",
+      badge: "GA",
+      badgeColor: "bg-teal-600/20 text-teal-400",
       accentColor: "teal",
       icon: GateIcon,
       href: "/platform/soulgate",
-      cta: "Join Waitlist",
+      cta: "Explore SoulGate",
     },
   ];
 
@@ -843,7 +843,7 @@ function FinalCTA() {
               href="/trial"
               className="rounded-xl bg-white px-10 py-4 text-sm font-bold text-navy-950 hover:bg-gold-300 transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15),0_0_60px_rgba(212,168,83,0.1)] ring-1 ring-white/20 hover:ring-gold-400/50 hover:shadow-[0_0_40px_rgba(212,168,83,0.25)]"
             >
-              Join Waitlist
+              Start Free Trial
             </Link>
             <Link
               href="/company#contact"

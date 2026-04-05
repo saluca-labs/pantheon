@@ -1,7 +1,7 @@
 # Tiresias Administrator Guide
 
-**Version:** 1.0
-**Last Updated:** 2026-03-22
+**Version:** v3.4.4
+**Last Updated:** 2026-04-04
 **Audience:** Platform administrators responsible for deploying, configuring, and operating Tiresias
 
 ---
@@ -47,7 +47,7 @@
 
 ### Docker Compose Quickstart
 
-The standard `docker-compose.yml` runs all six services:
+The standard `docker-compose.yml` runs all seven services:
 
 | Service      | Port | Description                        |
 |--------------|------|------------------------------------|

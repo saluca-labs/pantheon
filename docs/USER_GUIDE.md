@@ -2,7 +2,7 @@
 
 *AI Agent Security Platform -- SoulAuth | SoulWatch | SoulGate*
 
-**Version:** 1.0
+**Version:** v3.4.4
 **Last updated:** 2026-03-22
 
 ---
@@ -39,9 +39,12 @@ You can use all three together or adopt them independently. They share a common 
 
 ### Account Setup
 
-1. **Join the beta waitlist** at [tiresias.network](https://tiresias.network). We review applications on a rolling basis.
-2. **Receive your invite** via email. The invite includes your tenant ID and a link to set up your account.
-3. **Sign in via SSO** (Google) to access the Tiresias dashboard.
+1. **Start a free trial** at [tiresias.network/trial](https://tiresias.network/trial). After email verification, your tenant and SoulKey are provisioned automatically.
+2. **Check your email** for the verification link. Once verified, your tenant is live and you can sign in immediately.
+3. **Sign in** to access the Tiresias dashboard. Three authentication modes are supported:
+   - **Local accounts** -- email and password, managed directly in Tiresias. Best for small teams or evaluation.
+   - **LDAP / Active Directory** -- connect your corporate directory for centralized user management and group mapping.
+   - **OIDC / Google SSO** -- federated login via any OIDC provider (Google Workspace, Okta, Azure AD, etc.).
 4. **Create your first SoulKey** from the dashboard's Keys panel (or via the CLI).
 
 ### First Steps

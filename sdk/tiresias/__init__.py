@@ -5,7 +5,7 @@ Usage::
 
     from tiresias import TiresiasClient
 
-    async with TiresiasClient("https://tiresias.saluca.com") as client:
+    async with TiresiasClient("https://tiresias.network") as client:
         # Check service health
         health = await client.get_health()
 

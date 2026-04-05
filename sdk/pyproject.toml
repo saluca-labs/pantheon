@@ -39,8 +39,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://tiresias.saluca.com"
-Documentation = "https://tiresias.saluca.com/docs"
+Homepage = "https://tiresias.network"
+Documentation = "https://tiresias.network/docs"
 Repository = "https://github.com/saluca/tiresias-sdk"
 Issues = "https://github.com/saluca/tiresias-sdk/issues"
 

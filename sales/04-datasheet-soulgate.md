@@ -142,4 +142,4 @@ Annual billing: 20% discount. Also available as part of the Tiresias Platform bu
 
 ---
 
-*Saluca LLC | tiresias.saluca.com/platform/soulgate*
+*Saluca LLC | tiresias.network/platform/soulgate*

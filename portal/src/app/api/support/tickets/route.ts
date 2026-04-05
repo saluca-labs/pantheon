@@ -1,66 +1,43 @@
 /**
- * Support ticket API route.
- * Persists tickets to a JSON file so they survive process restarts.
- * In production this would forward to a ticketing backend or database.
+ * Support ticket API route — proxies to SoulAuth backend.
+ *
+ * GET  /api/support/tickets → GET  {soulauth}/v1/support/tickets
+ * POST /api/support/tickets → POST {soulauth}/v1/support/tickets
+ *
+ * The backend handles Linear integration, Telegram alerts, and SLA tracking.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, isAuthError } from "@/lib/server-auth";
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
+import { config } from "@/lib/server-config";
 
-interface StoredTicket {
-  id: string;
-  subject: string;
-  description: string;
-  severity: string;
-  category: string;
-  status: "open" | "in_progress" | "resolved" | "closed";
-  created_at: string;
-  sla_deadline: string;
-}
-
-const SLA_HOURS: Record<string, number> = {
-  P0: 4,
-  P1: 24,
-  P2: 72,
-  P3: 168,
-};
-
-// Persist tickets to a JSON file in the project data directory
-const DATA_DIR = path.join(process.cwd(), "data");
-const TICKETS_FILE = path.join(DATA_DIR, "support-tickets.json");
-
-function readTickets(): StoredTicket[] {
-  try {
-    if (fs.existsSync(TICKETS_FILE)) {
-      const raw = fs.readFileSync(TICKETS_FILE, "utf-8");
-      return JSON.parse(raw);
-    }
-  } catch {
-    // Corrupted file -- start fresh
-  }
-  return [];
-}
-
-function writeTickets(tickets: StoredTicket[]): void {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(TICKETS_FILE, JSON.stringify(tickets, null, 2), "utf-8");
-  } catch {
-    // If write fails, tickets remain in memory for the current process
-  }
-}
+const BACKEND_URL = config.soulauth.url;
 
 export async function GET(request: NextRequest) {
   const session = await verifySession(request);
   if (isAuthError(session)) return session;
 
-  const tickets = readTickets();
-  return NextResponse.json(tickets);
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/support/tickets`, {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+        "X-Tenant-ID": session.tenantId,
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    const data = await res.json();
+
+    // Backend returns { tickets: [...], total: N } — normalize for the frontend
+    // which expects an array directly
+    const tickets = data.tickets ?? data;
+    return NextResponse.json(tickets, { status: res.status });
+  } catch {
+    return NextResponse.json(
+      { detail: "Failed to fetch tickets from backend" },
+      { status: 502 },
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -69,42 +46,42 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { subject, description, severity, category } = body;
 
-    if (!subject || !description || !severity || !category) {
-      return NextResponse.json(
-        { detail: "subject, description, severity, and category are required" },
-        { status: 400 },
-      );
-    }
-
-    const now = new Date();
-    const slaHours = SLA_HOURS[severity] ?? 168;
-    const slaDeadline = new Date(now.getTime() + slaHours * 60 * 60 * 1000);
-
-    const ticket: StoredTicket = {
-      id: `TIR-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
-      subject,
-      description,
-      severity,
-      category,
-      status: "open",
-      created_at: now.toISOString(),
-      sla_deadline: slaDeadline.toISOString(),
+    // Backend expects lowercase severity (p0, p1, p2, p3)
+    const payload = {
+      ...body,
+      severity: body.severity?.toLowerCase(),
     };
 
-    const tickets = readTickets();
-    tickets.unshift(ticket);
-    writeTickets(tickets);
+    const res = await fetch(`${BACKEND_URL}/v1/support/tickets`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+        "X-Tenant-ID": session.tenantId,
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
+    });
 
+    const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json(data, { status: res.status });
+    }
+
+    // Normalize response for frontend: it expects { ticket_id, sla_deadline }
     return NextResponse.json(
-      { ticket_id: ticket.id, sla_deadline: ticket.sla_deadline },
+      {
+        ticket_id: data.ticket_id,
+        sla_deadline: data.sla_deadline,
+      },
       { status: 201 },
     );
   } catch {
     return NextResponse.json(
-      { detail: "Invalid request body" },
-      { status: 400 },
+      { detail: "Failed to create ticket in backend" },
+      { status: 502 },
     );
   }
 }
