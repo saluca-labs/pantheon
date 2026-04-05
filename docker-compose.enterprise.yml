@@ -35,6 +35,8 @@ services:
       # GCP Secret Manager (for GCP customers)
       TIRESIAS_GCP_PROJECT_ID: ${TIRESIAS_GCP_PROJECT_ID:-}
       TIRESIAS_GCP_SECRET_ID: ${TIRESIAS_GCP_SECRET_ID:-}
+      # Redis rate limiting (optional — set TIRESIAS_REDIS_URL to enable)
+      TIRESIAS_REDIS_URL: ${TIRESIAS_REDIS_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,6 +56,40 @@ services:
     cap_drop:
       - ALL
     restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — Ephemeral rate-limit counter store (optional)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /data
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    profiles:
+      - rate-limit
 
   # ---------------------------------------------------------------------------
   # SoulAuth — Identity, RBAC, detection, investigation (optional)

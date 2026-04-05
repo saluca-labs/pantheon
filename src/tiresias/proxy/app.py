@@ -15,11 +15,12 @@ from tiresias.config import TiresiasSettings, parse_providers
 from tiresias.encryption.envelope import EnvelopeEncryption
 from tiresias.encryption.providers import resolve_kek_provider
 from tiresias.proxy.interceptor import record_error_turn, record_turn
+from tiresias.proxy.rate_limit import RateLimitMiddleware
 from tiresias.proxy.saas_auth import SaaSAuthMiddleware
 from tiresias.providers import build_provider
 from tiresias.providers.health import HealthTracker
 from tiresias.providers.router import ProviderCascadeExhausted, ProviderRouter
-from tiresias.storage.engine import get_engine
+from tiresias.storage.engine import get_engine, set_tenant_context
 from tiresias.tracking.sessions import parse_session_id
 
 logger = logging.getLogger(__name__)
@@ -172,6 +173,16 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
     async def _saas_engine_factory():
         return await get_engine("__saas__", _cfg_for_middleware.data_root)
 
+    # Middleware execution order (Starlette LIFO: last-added = outermost = runs first):
+    #   1. SaaSAuthMiddleware (outer) — resolves tenant_id from API key
+    #   2. RateLimitMiddleware (inner) — checks RPM against resolved tenant
+    # Add rate limit FIRST, then auth SECOND so auth wraps rate limit.
+    app.add_middleware(
+        RateLimitMiddleware,
+        settings=_cfg_for_middleware,
+        redis_url=_cfg_for_middleware.redis_url,
+    )
+
     app.add_middleware(
         SaaSAuthMiddleware,
         settings=_cfg_for_middleware,
@@ -252,6 +263,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
             raise HTTPException(status_code=400, detail="Invalid JSON body")
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.tracking.sessions import tag_session
 
             updated = await tag_session(session_id, metadata, db_session)
@@ -263,6 +275,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         tenant_id = _resolve_tenant_id(request)
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.tracking.sessions import get_session_stats
 
             stats = await get_session_stats(session_id, db_session)
@@ -324,6 +337,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
 
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             try:
                 upstream_resp = await forward_generic_request(
                     client=client,
@@ -362,6 +376,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         tenant_id = _resolve_tenant_id(request)
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.analytics.api_telemetry import get_endpoint_metrics
 
             endpoints = await get_endpoint_metrics(
@@ -376,6 +391,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         tenant_id = _resolve_tenant_id(request)
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.analytics.api_telemetry import get_cost_by_endpoint
 
             costs = await get_cost_by_endpoint(tenant_id, db_session, hours=hours)
@@ -388,6 +404,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         tenant_id = _resolve_tenant_id(request)
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.analytics.api_telemetry import get_error_breakdown
 
             errors = await get_error_breakdown(
@@ -402,6 +419,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         tenant_id = _resolve_tenant_id(request)
         engine = await get_engine(tenant_id, cfg.data_root)
         async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
             from tiresias.analytics.unified import get_unified_analytics
 
             data = await get_unified_analytics(tenant_id, db_session, hours=hours)
@@ -454,7 +472,7 @@ async def _handle_non_streaming_router(
     settings,
 ):
     from sqlalchemy.ext.asyncio import AsyncSession as _AS
-    from tiresias.storage.engine import get_engine as _get_engine
+    from tiresias.storage.engine import get_engine as _get_engine, set_tenant_context as _stc
     import json as _json
     import time as _time
 
@@ -464,6 +482,7 @@ async def _handle_non_streaming_router(
     except ProviderCascadeExhausted as exc:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
+            await _stc(db_session, tenant_id)
             await record_error_turn(tenant_id, model, db_session)
         raise HTTPException(status_code=502, detail=str(exc))
     except HTTPException:
@@ -472,6 +491,7 @@ async def _handle_non_streaming_router(
     except Exception as exc:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
+            await _stc(db_session, tenant_id)
             await record_error_turn(tenant_id, model, db_session)
         raise HTTPException(status_code=502, detail=str(exc))
 
@@ -483,6 +503,7 @@ async def _handle_non_streaming_router(
     try:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
+            await _stc(db_session, tenant_id)
             await record_turn(
                 tenant_id=tenant_id,
                 model=model,
@@ -519,13 +540,14 @@ async def _handle_non_streaming(
     settings,
 ):
     from sqlalchemy.ext.asyncio import AsyncSession as _AS
-    from tiresias.storage.engine import get_engine as _get_engine
+    from tiresias.storage.engine import get_engine as _get_engine, set_tenant_context as _stc
 
     try:
         upstream_resp = await client.post(target_url, headers=upstream_headers, json=body)
     except Exception as exc:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
+            await _stc(db_session, tenant_id)
             await record_error_turn(tenant_id, model, db_session)
         raise HTTPException(status_code=502, detail=str(exc))
 
@@ -541,6 +563,7 @@ async def _handle_non_streaming(
         try:
             engine = await _get_engine(tenant_id, settings.data_root)
             async with _AS(engine) as db_session:
+                await _stc(db_session, tenant_id)
                 await record_turn(
                     tenant_id=tenant_id,
                     model=model,
@@ -557,6 +580,7 @@ async def _handle_non_streaming(
     else:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
+            await _stc(db_session, tenant_id)
             await record_error_turn(tenant_id, model, db_session)
 
     for h in ("transfer-encoding", "content-encoding", "content-length"):
@@ -617,10 +641,11 @@ async def _handle_streaming(
         _merged_meta_stream["status_code"] = 200
         try:
             from sqlalchemy.ext.asyncio import AsyncSession as _AS2
-            from tiresias.storage.engine import get_engine as _ge
+            from tiresias.storage.engine import get_engine as _ge, set_tenant_context as _stc2
 
             engine = await _ge(tenant_id, settings.data_root)
             async with _AS2(engine) as db_session:
+                await _stc2(db_session, tenant_id)
                 await record_turn(
                     tenant_id=tenant_id,
                     model=model,

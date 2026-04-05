@@ -14,6 +14,7 @@ interface ActivationResponse {
   tenant_id: string;
   soulkey_id: string;
   raw_key: string;
+  proxy_api_key?: string;
   status: string;
   expires_at: string;
 }
@@ -27,6 +28,7 @@ function VerifyContent() {
   const [activation, setActivation] = useState<ActivationResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [keyCopied, setKeyCopied] = useState(false);
+  const [proxyKeyCopied, setProxyKeyCopied] = useState(false);
 
   useEffect(() => {
     if (!trialId || !token) {
@@ -72,6 +74,14 @@ function VerifyContent() {
       navigator.clipboard.writeText(activation.raw_key);
       setKeyCopied(true);
       setTimeout(() => setKeyCopied(false), 2000);
+    }
+  };
+
+  const copyProxyKey = () => {
+    if (activation?.proxy_api_key) {
+      navigator.clipboard.writeText(activation.proxy_api_key);
+      setProxyKeyCopied(true);
+      setTimeout(() => setProxyKeyCopied(false), 2000);
     }
   };
 
@@ -146,6 +156,39 @@ function VerifyContent() {
                   </p>
                 </div>
               </div>
+
+              {/* Proxy API Key */}
+              {activation.proxy_api_key && (
+                <div className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 space-y-4 mb-8">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-of-outline uppercase tracking-wide">Tiresias Proxy API Key (shown once)</p>
+                      <button
+                        onClick={copyProxyKey}
+                        className="text-xs text-of-primary hover:text-of-primary/70 transition-colors"
+                      >
+                        {proxyKeyCopied ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                    <p className="text-xs text-of-on-surface-variant mb-2">
+                      Point your AI agents at https://proxy.tiresias.network/v1 with this key
+                    </p>
+                    <div className="bg-of-surface-container-low rounded-lg p-3 border border-of-primary/20">
+                      <p className="text-sm font-mono text-of-primary break-all">{activation.proxy_api_key}</p>
+                    </div>
+                    <p className="text-xs text-red-400 mt-2">
+                      Save this key now. It will not be shown again.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-of-outline uppercase tracking-wide mb-2">Configuration</p>
+                    <pre className="bg-of-surface-container-low rounded-lg p-3 border border-of-outline-variant/15 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">
+{`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1
+export TIRESIAS_API_KEY=${activation.proxy_api_key}`}
+                    </pre>
+                  </div>
+                </div>
+              )}
 
               {/* Quick start */}
               <div className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 mb-8">

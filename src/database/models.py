@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy import (
     String, Text, Boolean, DateTime, Float, Integer, Index, ForeignKey,
-    CheckConstraint, UniqueConstraint, Uuid, JSON,
+    CheckConstraint, UniqueConstraint, Uuid, JSON, LargeBinary,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
@@ -540,4 +540,57 @@ class SoulUserInvite(Base):
         Index("idx_soul_user_invites_tenant", "tenant_id"),
         Index("idx_soul_user_invites_email", "email"),
         Index("idx_soul_user_invites_token", "token_hash"),
+    )
+
+
+class PolicyHistory(Base):
+    """_soulauth_policy_history - Version history and rollback snapshots for policies."""
+    __tablename__ = "_soulauth_policy_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    persona_id: Mapped[str] = mapped_column(Text, nullable=False)
+    policy_version: Mapped[str] = mapped_column(Text, nullable=False)
+    resolved_policy: Mapped[dict] = mapped_column(JSON, nullable=False,
+        comment="Full policy snapshot at this version")
+    changed_by: Mapped[str] = mapped_column(String(100), nullable=False,
+        comment="Who made the change: portal, git_sync, api, portal_rollback")
+    change_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True,
+        comment="Human-readable description of what changed")
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_policy_history_tenant_persona_time", "tenant_id", "persona_id", "created_at"),
+    )
+
+
+class PolicyDeployKey(Base):
+    """_policy_deploy_keys - Per-tenant SSH deploy keys for policy git push."""
+    __tablename__ = "_policy_deploy_keys"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False
+    )
+    key_name: Mapped[str] = mapped_column(String(255), nullable=False,
+        comment="Human label, e.g. 'policy-sync-minipc'")
+    public_key: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="SSH public key content")
+    private_key_encrypted: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary, nullable=True,
+        comment="AES-256-GCM encrypted private key for cloud-managed keys"
+    )
+    fingerprint: Mapped[str] = mapped_column(String(255), nullable=False,
+        comment="SSH key fingerprint (SHA256:...) for identification")
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "key_name", name="uq_policy_deploy_keys_tenant_key_name"),
+        CheckConstraint("status IN ('active', 'revoked')", name="ck_policy_deploy_keys_status"),
+        Index("idx_policy_deploy_keys_tenant", "tenant_id"),
+        Index("idx_policy_deploy_keys_fingerprint", "fingerprint"),
     )
