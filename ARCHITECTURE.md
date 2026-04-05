@@ -549,7 +549,7 @@ The `_soul_idp_configs` table supports provider types: `google`, `okta`, `azure_
 
 ## Database Schema
 
-PostgreSQL 16 on Cloud SQL. 19 Alembic migrations in `alembic/versions/`.
+PostgreSQL 16 on Cloud SQL. 20 Alembic migrations in `alembic/versions/`.
 
 ### Migration History
 
