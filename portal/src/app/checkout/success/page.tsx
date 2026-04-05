@@ -20,6 +20,7 @@ interface SessionData {
   soulkey_id: string | null;
   customer_email: string | null;
   payment_status: string;
+  proxy_api_key?: string;
 }
 
 interface ClaimKeyData {

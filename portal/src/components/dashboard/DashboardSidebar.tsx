@@ -25,7 +25,7 @@ import { useBranding } from "@/lib/branding";
 import { tierMeets, type Tier } from "@/components/dashboard/TierGate";
 
 // Tier helper inline (avoids circular import from TierGate)
-const MSSP_TIERS = new Set(["mssp", "saas"]);
+const MSSP_TIERS = new Set(["mssp", "saas", "owner"]);
 
 interface NavItem {
   label: string;
@@ -329,7 +329,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: <ScanSearch className="w-5 h-5" />,
   },
   {
-    label: "SaaS Admin",
+    label: "Tenant Admin",
     href: "/dashboard/mssp/saas",
     group: "mssp",
     icon: <Ban className="w-5 h-5" />,
@@ -419,7 +419,7 @@ export default function DashboardSidebar() {
   const { session } = useAuth();
   const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
-  const isSaasTier = (session?.tier ?? "") === "saas";
+  const isSaasTier = (session?.tier ?? "") === "saas" || (session?.tier ?? "") === "owner";
   const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
   const isSalucaUser = session?.user_email?.endsWith("@saluca.com") ?? false;
   const isInvestigationActive = pathname === "/dashboard/investigation";
@@ -440,7 +440,10 @@ export default function DashboardSidebar() {
       }
     }
     if (isMsspTier) {
-      base.push(MSSP_GROUP);
+      const msspGroupLabel = session?.tier === "saas" ? "SaaS"
+        : session?.tier === "owner" ? "Platform"
+        : "MSSP";
+      base.push({ ...MSSP_GROUP, label: msspGroupLabel });
     }
     if (isSalucaUser) {
       base.push(PLATFORM_ADMIN_GROUP);

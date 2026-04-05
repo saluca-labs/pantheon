@@ -37,7 +37,7 @@ router = APIRouter(prefix="/v1/saas", tags=["SaaS Management"])
 class ProvisionRequest(BaseModel):
     company_name: str = Field(..., min_length=2, max_length=255)
     slug: str = Field(..., min_length=2, max_length=63, pattern=r"^[a-z0-9-]+$")
-    tier: str = Field(default="starter", description="Tier to assign: starter, pro, enterprise, mssp, saas")
+    tier: str = Field(default="starter", description="Tier to assign: starter, pro, enterprise, mssp, saas", pattern=r"^(community|starter|pro|enterprise|mssp|saas)$")
     admin_persona_id: str = Field(default="admin", description="persona_id for the admin soulkey")
     metadata: Optional[dict] = Field(default_factory=dict)
 

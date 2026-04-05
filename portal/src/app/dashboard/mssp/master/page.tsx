@@ -342,7 +342,7 @@ function PlatformAdminContent() {
               }
               className="w-full h-9 px-3 rounded-lg bg-of-surface-container-high border border-of-outline-variant/20 text-sm text-of-on-surface focus:outline-none focus:border-of-primary/40 transition-colors"
             >
-              {["saas", "mssp", "enterprise", "pro", "community"].map((t) => (
+              {["saas", "mssp", "enterprise", "pro", "starter", "community"].map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -467,7 +467,7 @@ function PlatformAdminContent() {
 
 export default function PlatformAdminPage() {
   return (
-    <TierGate requiredTier="saas" featureLabel="Platform Admin">
+    <TierGate requiredTier="mssp" featureLabel="Platform Admin">
       <PlatformAdminContent />
     </TierGate>
   );

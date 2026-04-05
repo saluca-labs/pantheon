@@ -505,6 +505,225 @@ Tenants configure automated response policies in `_soulauth_quarantine_policies`
 | `cooldown_minutes` | Minimum time between repeated triggers (default: 15) |
 | `auto_release_hours` | Auto-release suspended keys after N hours (default: 1.0) |
 
+### 5.8 Action Pipeline -- Inline Enforcement Between Cognition and Execution
+
+SoulGate's proxy pipeline (5.1) governs requests *to* upstream APIs -- protecting the resources agents consume. The **action pipeline** governs the inverse: actions agents *produce*. When an agent framework decides to post a message, react to a thread, or send a DM, that intent passes through SoulGate before reaching the execution layer. This is an enforcement membrane between cognition and action -- transparent to the agent framework, opaque to the execution layer.
+
+#### Design Rationale
+
+AI agent frameworks combine reasoning with action. A simulation engine decides *what* to do; an execution layer (Slack adapter, API client, workflow runner) carries it out. Without an enforcement boundary between these stages, any action the cognition layer produces is immediately executed -- there is no policy check, no audit trail, no kill switch.
+
+The action pipeline introduces a clean separation of concerns:
+
+- **The agent framework** decides what to do (action intent).
+- **SoulGate** decides whether it is allowed (policy evaluation, authentication, audit).
+- **The execution layer** carries it out (platform-specific API calls).
+
+This separation means policy changes take effect immediately without modifying agent code, denied actions never reach the execution layer, and every action decision -- permit or deny -- is recorded in the audit trail regardless of outcome.
+
+#### Pipeline Architecture
+
+```
+  Agent Framework ──POST action intent──> SoulGate
+                                            |
+                                       1. Authenticate (soulkey -> SoulAuth)
+                                       2. Rate limit check
+                                       3. Action policy evaluation
+                                       4. Audit log (always)
+                                            |
+                                +-----------+-----------+
+                           [permitted]              [denied]
+                                |                       |
+                      Forward to action layer    Return denial to caller
+                                |                  (policy, rule, reason)
+                      Execute (Slack, API, etc)         |
+                                |                  Log with full context
+                      Return result upstream
+```
+
+The pipeline mirrors the 7-stage proxy pipeline in structure but operates on **action intents** rather than API requests. The enforcement point is identical: SoulGate authenticates the caller, evaluates policy, and makes a permit/deny decision before any downstream system is contacted.
+
+#### Canonical Action Schema
+
+All action intents are expressed as a **TiresiasAction** -- a canonical schema that serves as the universal contract between cognition and execution layers. Agent frameworks do not speak Slack API, Microsoft Graph, or any platform-specific protocol to SoulGate. They submit a TiresiasAction; SoulGate evaluates it; the execution layer translates it to platform-native calls.
+
+**Action Types:**
+
+| Type | Description |
+|------|-------------|
+| `POST_MESSAGE` | Post a message to a channel |
+| `REPLY_IN_THREAD` | Reply within an existing thread |
+| `REACT` | Add an emoji reaction to a message |
+| `DM` | Send a direct message to a user |
+| `SHARE_LINK` | Share a URL with optional preview |
+| `PIN_MESSAGE` | Pin a message in a channel |
+| `CREATE_CHANNEL` | Create a new channel |
+| `DO_NOTHING` | Explicit no-op (simulation chose inaction) |
+
+The `DO_NOTHING` type is architecturally significant: it allows cognition engines to record that they evaluated a situation and decided not to act, providing a complete audit trail of agent decision-making -- not just the actions taken.
+
+**Request Structure:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `action_id` | UUID | Unique identifier for this action intent |
+| `tenant_id` | string | Tenant context for policy scoping |
+| `persona_id` | string | Agent persona submitting the action |
+| `action_type` | ActionType | One of the canonical action types above |
+| `target` | ActionTarget | Platform, channel, and optional thread identifier |
+| `content` | ActionContent | Text, emoji, link URL -- action-type-specific payload |
+| `simulation_context` | dict (optional) | Opaque pass-through from the cognition engine |
+| `timestamp` | datetime | UTC timestamp of intent creation |
+
+**Target Model:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `platform` | string | Target platform identifier (e.g., `slack`, `teams`) |
+| `channel` | string | Target channel or conversation identifier |
+| `thread_ts` | string (optional) | Thread timestamp for threaded replies |
+
+**Content Model:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `text` | string (optional) | Message text content |
+| `emoji` | string (optional) | Emoji name for reactions |
+| `link_url` | string (optional) | URL for link sharing |
+
+The `simulation_context` field is an opaque dictionary passed through the pipeline without inspection. It allows cognition engines to attach metadata (simulation ID, reasoning trace, confidence scores) that the execution layer can use for logging or debugging. SoulGate does not evaluate this field for policy decisions -- it is purely a pass-through.
+
+**Response Structure:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `action_id` | UUID | Echo of the submitted action identifier |
+| `status` | string | `executed`, `failed`, or `denied` |
+| `result` | dict (optional) | Execution result from the action layer |
+| `error` | string (optional) | Error description if `failed` |
+| `denied_by` | DenialInfo (optional) | Policy name, rule name, level, and reason if `denied` |
+
+#### Policy Evaluation Model
+
+Action policy evaluation determines whether a permitted agent is allowed to perform a specific action at a specific time against a specific target. This is distinct from authentication (which verifies identity) and rate limiting (which caps volume).
+
+**Monitor-Only Mode (Current)**
+
+The action pipeline is currently deployed in **monitor-only mode**. Every action is permitted, and every decision is logged to the audit trail. This phase serves three purposes:
+
+1. **Baseline construction**: Build a behavioral profile of normal action patterns per agent, per tenant, per action type.
+2. **Policy development**: Operators review audit data to define appropriate restrictions before enforcement begins.
+3. **Integration validation**: Confirm that the pipeline correctly intercepts, logs, and forwards all action types without disrupting agent operation.
+
+Monitor mode is not a temporary state -- it is the first stage of a deliberate progression.
+
+**Enforcement Mode (Planned)**
+
+When enforcement is enabled, policy evaluation applies a **3-level intersection model**:
+
+```
+  Effective Policy = Org Policy INTERSECT Project Policy INTERSECT Agent Policy
+                     (most restrictive wins)
+```
+
+| Level | Scope | Example |
+|-------|-------|---------|
+| **Organization** | All agents in the tenant | "No agent may create channels" |
+| **Project** | Agents in a specific project | "Agents in #security may only post, not DM" |
+| **Agent** | A specific persona | "analyst-bot may react and reply, not post" |
+
+Permissions are intersected -- an action must be permitted at all three levels. This follows the same least-privilege principle as the SoulAuth PDP (3.2): authority is narrowed at each level, never broadened.
+
+**Enforcement Progression:**
+
+| Phase | Scope | Description |
+|-------|-------|-------------|
+| Phase 1 | Slack actions | Message posting, reactions, DMs, channel operations |
+| Phase 2 | Workflow actions | Workflow triggers, task creation, status updates |
+| Phase 3 | Project access | Cross-project action restrictions |
+| Phase 4 | Data access | Content-aware policy (redaction, classification gates) |
+
+Each phase is independently activatable per tenant. Tenants can enforce Slack action policies while leaving workflow actions in monitor mode.
+
+#### Audit Trail
+
+Every action decision is recorded in the **SoulGateActionLog** table -- a dedicated audit surface for action pipeline events. This table participates in the same hash-chain integrity system described in 3.3.
+
+**Captured Fields:**
+
+| Field | Description |
+|-------|-------------|
+| `tenant_id` | Tenant context |
+| `soulkey_id` | Authenticated SoulKey |
+| `persona_id` | Agent persona that submitted the action |
+| `action_id` | Unique action identifier |
+| `action_type` | Canonical action type |
+| `target_platform` | Destination platform |
+| `target_channel` | Destination channel |
+| `decision` | `permit` or `deny` |
+| `policy_name` | Policy that governed the decision (if enforced) |
+| `rule_name` | Specific rule within the policy |
+| `downstream_status` | HTTP status from the execution layer (null if denied) |
+| `response_time_ms` | End-to-end pipeline latency |
+| `simulation_id` | Correlation ID from the cognition engine |
+| `source_ip` | Origin IP of the submitting agent framework |
+
+The audit trail captures every action regardless of policy mode. In monitor mode, all decisions are `permit` with `policy_name: monitor-only`. When enforcement is enabled, denied actions include the full policy chain that produced the denial. This means operators can retroactively analyze what *would have been denied* under a candidate policy by querying monitor-mode logs.
+
+#### Integration Points
+
+**Agent Framework -> SoulGate:**
+
+```
+POST /gate/v1/actions/submit
+Authorization: Bearer sk_agent_<tenant>_<persona>_<suffix>
+Content-Type: application/json
+
+{
+  "action_id": "550e8400-e29b-41d4-a716-446655440000",
+  "tenant_id": "acme",
+  "persona_id": "miroshark-analyst",
+  "action_type": "POST_MESSAGE",
+  "target": {
+    "platform": "slack",
+    "channel": "#security-alerts"
+  },
+  "content": {
+    "text": "Anomalous login pattern detected for service account svc-etl-03."
+  },
+  "simulation_context": {
+    "simulation_id": "sim-2026-04-04-1847",
+    "confidence": 0.92
+  }
+}
+```
+
+Authentication uses standard SoulKey credentials. The action pipeline reuses the same `validate_request_auth` path as the proxy pipeline -- no separate credential scheme.
+
+**SoulGate -> Execution Layer:**
+
+```
+POST /api/v1/actions/execute
+X-Tiresias-Token: <shared_token>
+X-Tenant-ID: <tenant_id>
+X-SoulKey-ID: <soulkey_id>
+X-Persona-ID: <persona_id>
+X-Forwarded-By: SoulGate/1.0
+Content-Type: application/json
+
+<TiresiasAction payload>
+```
+
+The execution layer (e.g., PicoClaw for Slack) receives the full TiresiasAction payload with identity headers injected by SoulGate. It authenticates inbound requests via the `X-Tiresias-Token` shared secret -- this token is never exposed to agent frameworks. The execution layer translates the canonical action into platform-native API calls (Slack Web API, Microsoft Graph, etc.).
+
+**SaaS Console Telemetry:**
+
+Action audit events are forwarded to the SaaS console alongside proxy audit events. The Portal provides centralized visibility into action patterns: volume by type, denial rates, latency distributions, and per-agent action histories.
+
+**SoulWatch Integration:**
+
+SoulWatch monitors action audit events using the same detection pipeline applied to proxy events. The behavioral anomaly detector builds action-specific baselines: normal posting frequency per agent, typical channels, expected action types. Deviations -- an agent that normally reacts suddenly posting high-volume messages, or an agent posting to channels it has never accessed -- trigger the standard detection and response pipeline.
+
 ---
 
 ## 6. Team RBAC Model (v3.3.0)
