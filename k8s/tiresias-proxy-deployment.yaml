@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiresias-proxy
+  namespace: tiresias
+  labels:
+    app: tiresias-proxy
+    component: proxy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tiresias-proxy
+  template:
+    metadata:
+      labels:
+        app: tiresias-proxy
+        component: proxy
+    spec:
+      serviceAccountName: tiresias-proxy
+      containers:
+        - name: tiresias-proxy
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: TIRESIAS_MODE
+              value: "saas"
+            - name: TIRESIAS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-proxy-secrets
+                  key: database-url
+            - name: TIRESIAS_KEK_PROVIDER
+              value: "gcp-sm"
+            - name: TIRESIAS_GCP_PROJECT_ID
+              value: "salucainfrastructure"
+            - name: TIRESIAS_GCP_SECRET_ID
+              value: "tiresias-master-kek"
+            - name: TIRESIAS_PROVIDERS
+              value: "anthropic,openai"
+            - name: TIRESIAS_RETENTION_DAYS
+              value: "90"
+            - name: TIRESIAS_USAGE_RETENTION_DAYS
+              value: "365"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 2
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiresias-proxy
+  namespace: tiresias
+  labels:
+    app: tiresias-proxy
+spec:
+  type: ClusterIP
+  selector:
+    app: tiresias-proxy
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tiresias-proxy-hpa
+  namespace: tiresias
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tiresias-proxy
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 4
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tiresias-proxy-pdb
+  namespace: tiresias
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: tiresias-proxy

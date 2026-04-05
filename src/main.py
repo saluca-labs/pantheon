@@ -494,6 +494,10 @@ app.include_router(notifications_router)
 app.include_router(usage_router)
 app.include_router(teams_router)
 
+# Portal policy management API (Phase 3 — SaaS two-tier)
+from src.portal.policy_router import router as portal_policy_router
+app.include_router(portal_policy_router)
+
 
 @app.get(
     "/health",

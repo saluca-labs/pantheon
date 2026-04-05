@@ -19,6 +19,14 @@ class TiresiasSettings(BaseSettings):
         extra="ignore",
     )
 
+    # Deployment mode
+    # - saas: shared multi-tenant proxy, tenant resolved per-request from API key
+    # - dedicated: single-tenant cloud pod, tenant_id from env (same as onprem code path)
+    # - onprem: single-tenant, local keys, local dashboard, no cloud dependency
+    mode: Literal["saas", "dedicated", "onprem"] = Field(
+        default="onprem", alias="TIRESIAS_MODE"
+    )
+
     # Core identity
     tenant_id: str = Field(
         default_factory=lambda: str(uuid4()),

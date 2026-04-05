@@ -240,12 +240,32 @@ async def provision_child_tenant(
         metadata={"admin_role": "admin", "provisioned_by": str(caller_id)},
     )
 
+    # Provision compute isolation for enterprise/mssp child tenants
+    compute_status = None
+    if child_tier in ("enterprise", "mssp"):
+        try:
+            from src.mssp.provisioner import provision_tenant_manifests, apply_tenant_manifests
+            manifest = provision_tenant_manifests(
+                tenant_id=str(new_tenant.id),
+                tenant_slug=body.slug,
+                tier=child_tier,
+            )
+            compute_status = await apply_tenant_manifests(manifest)
+        except Exception as e:
+            logger.warning(
+                "mssp.compute_provision_failed",
+                tenant_id=str(new_tenant.id),
+                error=str(e),
+            )
+            compute_status = {"status": "deferred", "error": str(e)}
+
     logger.info(
         "mssp.child_tenant_provisioned",
         parent_id=str(caller_id),
         child_id=str(new_tenant.id),
         slug=body.slug,
         depth=new_depth,
+        compute_status=compute_status,
     )
 
     return TenantCreateResponse(
@@ -257,6 +277,59 @@ async def provision_child_tenant(
         hierarchy_depth=new_depth,
         admin_soulkey=raw_key,
     )
+
+
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# POST /v1/mssp/tenants/{tenant_id}/compute -- manage compute isolation
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/tenants/{tenant_id}/compute",
+    summary="Generate or regenerate compute manifests for a tenant",
+    dependencies=[Depends(require_permission("multi_tenant"))],
+)
+async def manage_tenant_compute(
+    tenant_id: uuid.UUID,
+    request: Request,
+    action: str = Query("generate", description="generate | apply | status"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Generate, apply, or check status of K8s compute isolation for a child tenant.
+    - generate: Return manifests as JSON (for review or manual kubectl apply)
+    - apply: Generate and apply manifests to the cluster
+    """
+    caller_id = _get_caller_tenant_id(request)
+    await assert_in_hierarchy(db, caller_id, tenant_id)
+
+    result = await db.execute(
+        select(SoulTenant).where(SoulTenant.id == tenant_id)
+    )
+    tenant = result.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    from src.mssp.provisioner import provision_tenant_manifests, apply_tenant_manifests
+
+    manifest = provision_tenant_manifests(
+        tenant_id=str(tenant.id),
+        tenant_slug=tenant.slug,
+        tier=tenant.tier,
+    )
+
+    if action == "generate":
+        return {
+            "tenant_id": str(tenant.id),
+            "namespace": manifest.namespace,
+            "manifest_count": len(manifest.manifests),
+            "manifests": manifest.manifests,
+        }
+    elif action == "apply":
+        result = await apply_tenant_manifests(manifest)
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown action: {action}. Use 'generate' or 'apply'.")
 
 
 # ---------------------------------------------------------------------------
