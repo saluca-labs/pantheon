@@ -42,6 +42,30 @@ def resolve_kek_provider(
             "Local KEK provider requires either TIRESIAS_KEK env var or an API key"
         )
 
+    elif provider == "gcp-sm":
+        from tiresias.encryption.providers.gcp_sm import GCPSecretManagerKEKProvider
+
+        if not settings.gcp_project_id or not settings.gcp_secret_id:
+            raise ValueError(
+                "GCP-SM KEK provider requires TIRESIAS_GCP_PROJECT_ID and TIRESIAS_GCP_SECRET_ID"
+            )
+        return GCPSecretManagerKEKProvider.from_settings(
+            project_id=settings.gcp_project_id,
+            secret_id=settings.gcp_secret_id,
+        )
+
+    elif provider == "aws-kms":
+        from tiresias.encryption.providers.aws_kms import AWSKMSKEKProvider
+
+        if not settings.aws_kms_key_id or not settings.aws_kms_region:
+            raise ValueError(
+                "AWS KMS KEK provider requires TIRESIAS_AWS_KMS_KEY_ID and TIRESIAS_AWS_KMS_REGION"
+            )
+        return AWSKMSKEKProvider.from_settings(
+            key_id=settings.aws_kms_key_id,
+            region=settings.aws_kms_region,
+        )
+
     elif provider in _ENTERPRISE_PROVIDERS:
         raise ValueError(
             f"BYOK provider {provider!r} requires Tiresias Enterprise. "
