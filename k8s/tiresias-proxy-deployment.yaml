@@ -111,6 +111,8 @@ metadata:
   namespace: tiresias
   labels:
     app: tiresias-proxy
+  annotations:
+    cloud.google.com/backend-config: '{"default": "tiresias-proxy-backendconfig"}'
 spec:
   type: ClusterIP
   selector:
