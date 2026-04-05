@@ -27,6 +27,10 @@ FEATURE_TIERS: dict[str, list[str]] = {
     # Pro features
     "analytics": ["pro", "enterprise", "mssp", "saas"],
     "detection_rules": ["pro", "enterprise", "mssp", "saas"],
+    "sigma_rules": ["pro", "enterprise", "mssp", "saas"],
+    "investigation": ["pro", "enterprise", "mssp", "saas"],
+    "byok": ["pro", "enterprise", "mssp", "saas"],
+    "pii_scanning": ["pro", "enterprise", "mssp", "saas"],
     "delegation": ["pro", "enterprise", "mssp", "saas"],
     "policy_git_sync": ["pro", "enterprise", "mssp", "saas"],
     "admin_write": ["pro", "enterprise", "mssp", "saas"],
@@ -36,14 +40,24 @@ FEATURE_TIERS: dict[str, list[str]] = {
     "audit_export": ["enterprise", "mssp", "saas"],
     "multi_tenant": ["enterprise", "mssp", "saas"],
     "custom_detection": ["enterprise", "mssp", "saas"],
+    # MSSP features
+    "multi_tenant_mgmt": ["mssp", "saas"],
+    "white_label": ["mssp", "saas"],
 }
 
 # Map URL path prefixes to features
 ROUTE_FEATURES: dict[str, str] = {
     "/v1/analytics": "analytics",
     "/v1/detection": "detection_rules",
+    "/v1/sigma": "sigma_rules",
+    "/v1/investigation": "investigation",
+    "/v1/byok": "byok",
+    "/v1/pii": "pii_scanning",
     "/v1/enforcement": "enforcement",
     "/v1/integrations": "siem_forwarding",
+    "/v1/audit/export": "audit_export",
+    "/v1/tenants/manage": "multi_tenant_mgmt",
+    "/v1/white-label": "white_label",
 }
 
 # Paths that are always allowed regardless of license

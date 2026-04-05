@@ -18,28 +18,30 @@ interface Tier {
   cta: string;
   ctaHref: string;
   agents: string;
+  requests: string;
   retention: string;
   features: string[];
 }
 
 const tiers: Tier[] = [
   {
-    name: "Open",
+    name: "Community",
     priceMonthly: "Free",
     priceAnnual: "Free",
     period: "",
-    tagline: "For individuals, students, OSS, and startups under $1M ARR",
+    tagline: "Run locally. Your data never leaves your network.",
     highlight: false,
-    cta: "Get Started Free",
-    ctaHref: "/developers",
+    cta: "Download Free",
+    ctaHref: "/docs/quickstart",
     agents: "25",
+    requests: "10K/mo",
     retention: "7 days",
     features: [
-      "Full platform (all 3 products)",
-      "Self-hosted & cloud",
+      "Docker Compose deployment",
+      "Encrypted audit logging",
+      "Local dashboard",
+      "Basic audit logging",
       "Unlimited seats",
-      "25 managed agents",
-      "7-day data retention",
       "Community support",
     ],
   },
@@ -53,16 +55,15 @@ const tiers: Tier[] = [
     cta: "Start Free Trial",
     ctaHref: "/trial",
     agents: "50",
+    requests: "100K/mo",
     retention: "30 days",
     features: [
-      "Full platform (all 3 products)",
-      "Self-hosted & cloud",
-      "Unlimited seats",
-      "50 managed agents",
-      "30-day data retention",
+      "Docker Compose deployment",
+      "Encrypted audit logging",
+      "Local dashboard",
       "Session replay",
-      "Tagging",
-      "Cost dashboard",
+      "Basic policies",
+      "Cost alerts",
       "Email support (48h response)",
     ],
   },
@@ -76,92 +77,118 @@ const tiers: Tier[] = [
     cta: "Start Free Trial",
     ctaHref: "/trial",
     agents: "250",
+    requests: "1M/mo",
     retention: "90 days",
     features: [
-      "Full platform (all 3 products)",
-      "Self-hosted & cloud",
-      "Unlimited seats",
-      "250 managed agents",
-      "90-day data retention",
+      "Docker Compose deployment",
+      "Encrypted audit logging",
+      "Local dashboard",
       "Session replay",
-      "Custom Sigma rules",
-      "Response playbooks",
-      "Advanced analytics",
-      "1 SIEM destination",
       "BYOK encryption",
+      "Sigma detection rules",
+      "PII scanning",
+      "Investigation (L0\u2013L2)",
       "Priority support (24h response)",
     ],
   },
   {
     name: "Enterprise",
-    priceMonthly: "$999",
+    priceMonthly: "$2,499",
     priceAnnual: "Negotiated",
     period: "/mo",
     tagline: "For security-critical and regulated environments",
     highlight: false,
-    cta: "Talk to Sales",
+    cta: "Contact Sales",
     ctaHref: "mailto:contact@saluca.com?subject=Tiresias%20Enterprise",
     agents: "Unlimited",
+    requests: "Unlimited",
     retention: "Custom",
     features: [
-      "Full platform (all 3 products)",
-      "Self-hosted & cloud",
-      "Unlimited seats",
-      "Unlimited managed agents",
-      "Custom data retention",
+      "Docker Compose deployment",
+      "Encrypted audit logging",
+      "Local dashboard",
       "Session replay",
-      "Custom Sigma rules",
       "BYOK encryption",
-      "SSO / SAML",
-      "Audit log export",
-      "Unlimited SIEM destinations",
-      "Air-gap deployment",
+      "Sigma detection rules",
+      "PII scanning",
+      "Investigation (L0\u2013L2)",
+      "SIEM forwarding",
+      "Audit export",
+      "Custom detection rules",
+      "Delegation & RBAC",
       "Dedicated support (4h P0 response)",
+    ],
+  },
+  {
+    name: "MSSP",
+    priceMonthly: "$4,999",
+    priceAnnual: "Negotiated",
+    period: "/mo",
+    tagline: "Multi-tenant management for service providers",
+    highlight: false,
+    cta: "Contact Sales",
+    ctaHref: "mailto:contact@saluca.com?subject=Tiresias%20MSSP",
+    agents: "Unlimited",
+    requests: "Unlimited",
+    retention: "Custom",
+    features: [
+      "Everything in Enterprise",
+      "Multi-tenant isolation",
+      "Sub-tenant management",
+      "White-label branding",
+      "Partner revenue share",
+      "Dedicated account team",
     ],
   },
 ];
 
-const featureMatrix: { feature: string; open: string; starter: string; pro: string; enterprise: string }[] = [
-  { feature: "Full platform (all 3 products)", open: "check", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Self-hosted & cloud", open: "check", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Unlimited seats", open: "check", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Managed agents", open: "25", starter: "50", pro: "250", enterprise: "Unlimited" },
-  { feature: "Data retention", open: "7 days", starter: "30 days", pro: "90 days", enterprise: "Custom" },
-  { feature: "SIEM destinations", open: "dash", starter: "dash", pro: "1", enterprise: "Unlimited" },
-  { feature: "Session replay", open: "dash", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Tagging", open: "dash", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Cost dashboard", open: "dash", starter: "check", pro: "check", enterprise: "check" },
-  { feature: "Advanced analytics", open: "dash", starter: "dash", pro: "check", enterprise: "check" },
-  { feature: "Custom Sigma rules", open: "dash", starter: "dash", pro: "check", enterprise: "check" },
-  { feature: "Response playbooks", open: "dash", starter: "dash", pro: "check", enterprise: "check" },
-  { feature: "BYOK encryption", open: "dash", starter: "dash", pro: "check", enterprise: "check" },
-  { feature: "SSO / SAML", open: "dash", starter: "dash", pro: "dash", enterprise: "check" },
-  { feature: "Audit log export", open: "dash", starter: "dash", pro: "dash", enterprise: "check" },
-  { feature: "Air-gap deployment", open: "dash", starter: "dash", pro: "dash", enterprise: "check" },
-  { feature: "Support", open: "Community", starter: "Email (48h)", pro: "Priority (24h)", enterprise: "Dedicated (4h P0)" },
-  { feature: "SLA", open: "Best effort", starter: "Best effort", pro: "99.5%", enterprise: "Negotiated (up to 99.99%)" },
+const featureMatrix: { feature: string; community: string; starter: string; pro: string; enterprise: string; mssp: string }[] = [
+  { feature: "On-prem Docker Compose", community: "check", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Encrypted audit logging", community: "check", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Dashboard (local)", community: "check", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Managed agents", community: "25", starter: "50", pro: "250", enterprise: "Unlimited", mssp: "Unlimited" },
+  { feature: "Requests", community: "10K/mo", starter: "100K/mo", pro: "1M/mo", enterprise: "Unlimited", mssp: "Unlimited" },
+  { feature: "Data retention", community: "7 days", starter: "30 days", pro: "90 days", enterprise: "Custom", mssp: "Custom" },
+  { feature: "Session replay", community: "dash", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Basic policies", community: "dash", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Cost alerts", community: "dash", starter: "check", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "BYOK encryption", community: "dash", starter: "dash", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Sigma detection rules", community: "dash", starter: "dash", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "PII scanning", community: "dash", starter: "dash", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "Investigation (L0\u2013L2)", community: "dash", starter: "dash", pro: "check", enterprise: "check", mssp: "check" },
+  { feature: "SIEM forwarding", community: "dash", starter: "dash", pro: "dash", enterprise: "check", mssp: "check" },
+  { feature: "Audit export", community: "dash", starter: "dash", pro: "dash", enterprise: "check", mssp: "check" },
+  { feature: "Custom detection rules", community: "dash", starter: "dash", pro: "dash", enterprise: "check", mssp: "check" },
+  { feature: "Multi-tenant", community: "dash", starter: "dash", pro: "dash", enterprise: "dash", mssp: "check" },
+  { feature: "White-label", community: "dash", starter: "dash", pro: "dash", enterprise: "dash", mssp: "check" },
+  { feature: "Managed cloud proxy", community: "Add-on", starter: "Add-on", pro: "Add-on", enterprise: "Add-on", mssp: "Add-on" },
+  { feature: "Support", community: "Community", starter: "Email (48h)", pro: "Priority (24h)", enterprise: "Dedicated (4h P0)", mssp: "Dedicated account team" },
 ];
 
 const faqs = [
+  {
+    q: "How does deployment work?",
+    a: "Every tier ships as a Docker Compose stack you run on your own infrastructure. Pull the images, run docker compose up, and your proxy is live in minutes. Your data never leaves your network unless you explicitly enable the managed cloud proxy add-on.",
+  },
   {
     q: "How does billing work?",
     a: "Tiresias uses flat-rate pricing. You pay a fixed monthly or annual fee based on your tier \u2014 not per agent, not per seat. Your security bill should not grow every time you deploy a new AI agent.",
   },
   {
+    q: "What is the managed cloud proxy?",
+    a: "An optional add-on for any tier. Instead of running Docker Compose yourself, point your agents at proxy.tiresias.network and we handle the infrastructure. Same features, same security \u2014 just hosted by us. Available as a supplementary option alongside your on-prem deployment or as a standalone.",
+  },
+  {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Open (free) tier.",
+    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Community (free) tier.",
   },
   {
     q: "What is your refund policy?",
-    a: "All purchases are final \u2014 there are no refunds. You can cancel your subscription at any time to prevent future charges. Monthly plans stop at the end of the current billing period. Annual plans stop auto-renewal at the end of the term. Enterprise multi-year contracts have separate cancellation terms negotiated at signing.",
+    a: "All purchases are final \u2014 there are no refunds. You can cancel your subscription at any time to prevent future charges. Monthly plans stop at the end of the current billing period. Annual plans stop auto-renewal at the end of the term. Enterprise and MSSP contracts have separate cancellation terms negotiated at signing.",
   },
   {
-    q: "Who qualifies for the free Open tier?",
-    a: "The Open tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
-  },
-  {
-    q: "Can I self-host Tiresias?",
-    a: "Yes. Every tier supports both cloud and self-hosted deployment. Enterprise and Platform tiers additionally support air-gapped and on-premise environments.",
+    q: "Who qualifies for the free Community tier?",
+    a: "The Community tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
   },
   {
     q: "What products are included?",
@@ -169,19 +196,19 @@ const faqs = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Open (free) tier automatically.",
+    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Community (free) tier automatically.",
   },
   {
     q: "Do you offer annual discounts?",
-    a: "Yes. Annual billing saves 17% compared to monthly pricing on all paid tiers. Enterprise contracts include negotiated terms.",
+    a: "Yes. Annual billing saves 17% compared to monthly pricing on all paid tiers. Enterprise and MSSP contracts include negotiated terms.",
   },
   {
     q: "Is there a per-agent or per-seat fee?",
-    a: "No. Tiresias pricing is flat-rate. Unlimited seats at every tier, and managed agent limits are generous. If you need more than 250 agents, the Enterprise tier includes unlimited.",
+    a: "No. Tiresias pricing is flat-rate. Unlimited seats at every tier, and managed agent limits are generous. If you need more than 250 agents, the Enterprise and MSSP tiers include unlimited.",
   },
   {
-    q: "What about Platform and OEM licensing?",
-    a: "For SaaS platforms embedding Tiresias or OEM partners, we offer Platform ($2,499\u2013$24,999/mo) and OEM ($49,999\u2013$199,999/mo) tiers with unlimited agents, custom retention, and dedicated support. Contact partnerships@saluca.com.",
+    q: "What is the MSSP tier?",
+    a: "The MSSP tier is designed for managed security service providers who need multi-tenant isolation, sub-tenant management, white-label branding, and partner revenue share. Contact sales for custom pricing and onboarding.",
   },
 ];
 
@@ -237,6 +264,7 @@ function DashIcon() {
 function FeatureCell({ value }: { value: string }) {
   if (value === "check") return <CheckIcon className="h-4 w-4 text-teal-500 mx-auto" />;
   if (value === "dash") return <DashIcon />;
+  if (value === "Add-on") return <span className="text-xs font-medium text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-full">Add-on</span>;
   return <span className="text-sm text-foreground-muted">{value}</span>;
 }
 
@@ -256,8 +284,8 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight"
           >
-            Flat-rate{" "}
-            <span className="text-gradient-gold">security pricing</span>
+            On-prem by default.{" "}
+            <span className="text-gradient-gold">Flat-rate pricing.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -265,10 +293,10 @@ export default function PricingPage() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-6 text-lg sm:text-xl text-foreground-muted max-w-2xl mx-auto"
           >
-            Your security bill should not grow every time you deploy a new AI agent.
+            Every tier ships as a Docker Compose stack you run on your infrastructure.
             <br />
             <span className="text-foreground-subtle text-base">
-              One platform. All three products. Unlimited seats. No per-agent fees.
+              Your data never leaves your network. One platform. All three products. No per-agent fees.
             </span>
           </motion.p>
         </section>
@@ -304,9 +332,9 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <section className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
-          <div ref={cardsRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+          <div ref={cardsRef} className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 items-start">
             {tiers.map((tier, i) => {
-              const isEnterprise = tier.name === "Enterprise";
+              const isNegotiated = tier.name === "Enterprise" || tier.name === "MSSP";
               const isFree = tier.priceMonthly === "Free";
 
               let displayPrice: string;
@@ -316,14 +344,9 @@ export default function PricingPage() {
               if (isFree) {
                 displayPrice = "Free";
                 displayPeriod = "";
-              } else if (isEnterprise) {
-                if (annual) {
-                  displayPrice = "Negotiated";
-                  displayPeriod = "";
-                } else {
-                  displayPrice = "$999\u2013$4,999";
-                  displayPeriod = "/mo";
-                }
+              } else if (isNegotiated && annual) {
+                displayPrice = "Negotiated";
+                displayPeriod = "";
               } else if (annual) {
                 displayPrice = tier.priceAnnual;
                 displayPeriod = "/yr";
@@ -338,7 +361,7 @@ export default function PricingPage() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 + i * 0.1, duration: 0.4 }}
-                  className={`glass-card rounded-2xl p-8 flex flex-col transition-all duration-300 ${
+                  className={`glass-card rounded-2xl p-6 flex flex-col transition-all duration-300 ${
                     tier.highlight
                       ? "border-gold-500/40 ring-1 ring-gold-500/20 glow-gold relative lg:-mt-4 lg:mb-4"
                       : "hover:border-border-hover"
@@ -389,6 +412,10 @@ export default function PricingPage() {
                       <span className="font-medium text-foreground">{tier.agents}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span>Requests</span>
+                      <span className="font-medium text-foreground">{tier.requests}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span>Retention</span>
                       <span className="font-medium text-foreground">{tier.retention}</span>
                     </div>
@@ -411,7 +438,7 @@ export default function PricingPage() {
         </section>
 
         {/* Feature Comparison Table */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 pb-24">
+        <section className="mx-auto max-w-6xl px-6 lg:px-8 pb-24">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -433,20 +460,22 @@ export default function PricingPage() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left p-4 font-semibold text-foreground-muted">Feature</th>
-                    <th className="text-center p-4 font-semibold">Open</th>
+                    <th className="text-center p-4 font-semibold">Community</th>
                     <th className="text-center p-4 font-semibold">Starter</th>
                     <th className="text-center p-4 font-semibold text-gold-400">Pro</th>
                     <th className="text-center p-4 font-semibold">Enterprise</th>
+                    <th className="text-center p-4 font-semibold">MSSP</th>
                   </tr>
                 </thead>
                 <tbody>
                   {featureMatrix.map((row, i) => (
                     <tr key={row.feature} className={i % 2 === 0 ? "bg-navy-800/20" : ""}>
                       <td className="p-4 text-foreground-muted">{row.feature}</td>
-                      <td className="p-4 text-center"><FeatureCell value={row.open} /></td>
+                      <td className="p-4 text-center"><FeatureCell value={row.community} /></td>
                       <td className="p-4 text-center"><FeatureCell value={row.starter} /></td>
                       <td className="p-4 text-center"><FeatureCell value={row.pro} /></td>
                       <td className="p-4 text-center"><FeatureCell value={row.enterprise} /></td>
+                      <td className="p-4 text-center"><FeatureCell value={row.mssp} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -455,7 +484,7 @@ export default function PricingPage() {
           </motion.div>
         </section>
 
-        {/* Platform & OEM */}
+        {/* Managed Cloud Proxy Add-on */}
         <section className="mx-auto max-w-5xl px-6 lg:px-8 pb-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -465,34 +494,49 @@ export default function PricingPage() {
             className="glass-card rounded-2xl p-10"
           >
             <div className="text-center mb-8">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gold-400">For Platforms & OEM Partners</span>
-              <h2 className="text-2xl sm:text-3xl font-bold mt-3">Embed Tiresias in your product</h2>
+              <span className="text-xs font-semibold uppercase tracking-wider text-teal-400">Optional Add-on</span>
+              <h2 className="text-2xl sm:text-3xl font-bold mt-3">Managed Cloud Proxy</h2>
               <p className="text-foreground-muted mt-3 max-w-xl mx-auto">
-                For SaaS platforms and OEM partners who need Tiresias as an embedded capability.
-                Unlimited agents, custom retention, white-label options, and dedicated support.
+                Don&apos;t want to run infrastructure? Point your agents at{" "}
+                <code className="text-teal-400 font-mono text-sm">proxy.tiresias.network</code>{" "}
+                and we&apos;ll handle everything. Available as an add-on for any tier.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              <div className="rounded-xl border border-border p-6">
-                <h3 className="font-semibold mb-1">Platform</h3>
-                <p className="text-2xl font-bold">$2,499<span className="text-sm font-normal text-foreground-muted">&ndash;$24,999/mo</span></p>
-                <p className="text-sm text-foreground-muted mt-2">Unlimited agents, custom retention, multi-year available</p>
+            <div className="max-w-lg mx-auto">
+              <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-6 text-center">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <svg className="h-6 w-6 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                  </svg>
+                  <h3 className="font-semibold text-lg">Cloud Proxy</h3>
+                </div>
+                <p className="text-sm text-foreground-muted mb-4">
+                  Same features as your on-prem tier, fully managed. No Docker, no infrastructure, no maintenance.
+                  We run the proxy &mdash; you just point your agents at it.
+                </p>
+                <ul className="text-sm text-foreground-muted space-y-2 mb-6 text-left max-w-xs mx-auto">
+                  <li className="flex items-start gap-2">
+                    <CheckIcon className="h-4 w-4 flex-shrink-0 mt-0.5 text-teal-500" />
+                    <span>Zero infrastructure overhead</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckIcon className="h-4 w-4 flex-shrink-0 mt-0.5 text-teal-500" />
+                    <span>Automatic updates & patching</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckIcon className="h-4 w-4 flex-shrink-0 mt-0.5 text-teal-500" />
+                    <span>Same encryption & audit guarantees</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckIcon className="h-4 w-4 flex-shrink-0 mt-0.5 text-teal-500" />
+                    <span>Available for any tier</span>
+                  </li>
+                </ul>
                 <Link
-                  href="mailto:partnerships@saluca.com?subject=Tiresias%20Platform%20Inquiry"
-                  className="mt-4 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
+                  href="/cloud-proxy"
+                  className="inline-block rounded-lg border border-teal-500/40 bg-teal-500/10 px-8 py-3 text-sm font-medium text-teal-400 hover:bg-teal-500/20 transition-all"
                 >
-                  Contact Partnerships
-                </Link>
-              </div>
-              <div className="rounded-xl border border-border p-6">
-                <h3 className="font-semibold mb-1">OEM</h3>
-                <p className="text-2xl font-bold">$49,999<span className="text-sm font-normal text-foreground-muted">&ndash;$199,999/mo</span></p>
-                <p className="text-sm text-foreground-muted mt-2">Unlimited agents, custom retention, multi-year contracts</p>
-                <Link
-                  href="mailto:partnerships@saluca.com?subject=Tiresias%20OEM%20Inquiry"
-                  className="mt-4 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
-                >
-                  Contact Partnerships
+                  Enable Cloud Proxy
                 </Link>
               </div>
             </div>
@@ -530,12 +574,18 @@ export default function PricingPage() {
               Ready to secure your AI agents?
             </h2>
             <p className="text-foreground-muted mb-8 max-w-xl mx-auto">
-              Start free with the Open tier. No credit card required.
+              Download the Community tier free. Docker Compose up in minutes. Your data stays yours.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/trial"
+                href="/docs/quickstart"
                 className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-medium text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
+              >
+                Download Free
+              </Link>
+              <Link
+                href="/trial"
+                className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
               >
                 Start Free Trial
               </Link>
@@ -543,7 +593,7 @@ export default function PricingPage() {
                 href="mailto:contact@saluca.com?subject=Enterprise%20Inquiry"
                 className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
               >
-                Talk to Sales
+                Contact Sales
               </Link>
             </div>
           </motion.div>
