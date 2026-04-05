@@ -325,6 +325,87 @@ export TIRESIAS_API_KEY=${session.proxy_api_key}`}
         </div>
       </div>
 
+      {/* Deploy on Your Infrastructure */}
+      {session?.tenant_id && rawKey && (
+        <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-7 mb-8">
+          <h2 className="font-semibold mb-1">Deploy on Your Infrastructure</h2>
+          <p className="text-xs text-of-on-surface-variant mb-5">Run Tiresias on your own servers with Docker Compose.</p>
+
+          <div className="space-y-5">
+            {/* Step 1 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">1</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium mb-2">Download deployment files</p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href="/api/downloads/compose"
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-of-primary/10 border border-of-primary/20 text-of-primary hover:bg-of-primary/20 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    docker-compose.yml
+                  </a>
+                  <a
+                    href={`/api/downloads/env-template?tenant_id=${encodeURIComponent(session.tenant_id)}&license_key=${encodeURIComponent(rawKey)}`}
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-of-primary/10 border border-of-primary/20 text-of-primary hover:bg-of-primary/20 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    .env
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">2</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium mb-1">Review .env</p>
+                <p className="text-xs text-of-on-surface-variant">Your tenant ID and license key are pre-filled. Set a secure password for Postgres.</p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">3</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium mb-1.5">Start the stack</p>
+                <div className="relative">
+                  <pre className="bg-of-surface-container-low/60 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">docker compose up -d</pre>
+                  <div className="absolute top-2 right-2">
+                    <CopyButton text="docker compose up -d" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">4</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium mb-1.5">Verify it works</p>
+                <div className="relative">
+                  <pre className="bg-of-surface-container-low/60 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">curl http://localhost:8080/health</pre>
+                  <div className="absolute top-2 right-2">
+                    <CopyButton text="curl http://localhost:8080/health" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-of-on-surface-variant mt-5 pt-4 border-t border-of-outline-variant/10">
+            Your license key and tenant ID are pre-filled in the .env file. Just set your Postgres password and start.
+          </p>
+        </div>
+      )}
+
       {/* CTA row */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Link

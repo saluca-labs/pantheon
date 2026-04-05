@@ -205,6 +205,75 @@ curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
                 </pre>
               </div>
 
+              {/* Deploy on Your Infrastructure */}
+              <div className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 mb-8">
+                <h3 className="text-sm font-semibold mb-1">Deploy on Your Infrastructure</h3>
+                <p className="text-xs text-of-on-surface-variant mb-4">Run Tiresias on your own servers with Docker Compose.</p>
+
+                <div className="space-y-4">
+                  {/* Step 1 */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">1</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-2">Download deployment files</p>
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href="/api/downloads/compose"
+                          download
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-of-primary/10 border border-of-primary/20 text-of-primary hover:bg-of-primary/20 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          docker-compose.yml
+                        </a>
+                        <a
+                          href={`/api/downloads/env-template?tenant_id=${encodeURIComponent(activation.tenant_id)}&license_key=${encodeURIComponent(activation.raw_key)}`}
+                          download
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-of-primary/10 border border-of-primary/20 text-of-primary hover:bg-of-primary/20 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          .env
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">2</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-1">Review .env</p>
+                      <p className="text-xs text-of-on-surface-variant">Your tenant ID and license key are pre-filled. Set a secure password for Postgres.</p>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">3</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-1.5">Start the stack</p>
+                      <pre className="bg-of-surface-container-low rounded-lg p-3 border border-of-outline-variant/15 text-xs font-mono text-of-on-surface-variant overflow-x-auto">docker compose up -d</pre>
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-of-primary/15 border border-of-primary/20 flex items-center justify-center text-xs font-semibold text-of-primary">4</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-1.5">Verify it works</p>
+                      <pre className="bg-of-surface-container-low rounded-lg p-3 border border-of-outline-variant/15 text-xs font-mono text-of-on-surface-variant overflow-x-auto">curl http://localhost:8080/health</pre>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-of-on-surface-variant mt-4 pt-3 border-t border-of-outline-variant/10">
+                  Your license key and tenant ID are pre-filled in the .env file. Just set your Postgres password and start.
+                </p>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/trial/onboarding"
