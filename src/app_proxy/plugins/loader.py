@@ -41,6 +41,7 @@ def _parse_tools_from_manifest(plugin_dir: Path) -> list[ToolDef]:
                 name=entry["name"],
                 description=entry.get("description", ""),
                 input_schema=entry.get("inputSchema", {}),
+                annotations=entry.get("annotations", {}),
             )
         )
     return tools
@@ -55,6 +56,7 @@ def _parse_tools_from_yaml(raw_tools: list[dict[str, Any]]) -> list[ToolDef]:
                 name=entry["name"],
                 description=entry.get("description", ""),
                 input_schema=entry.get("inputSchema", entry.get("input_schema", {})),
+                annotations=entry.get("annotations", {}),
             )
         )
     return tools

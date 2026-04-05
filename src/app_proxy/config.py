@@ -96,3 +96,11 @@ class Settings(BaseSettings):
         default=30,
         description="Minutes before a pending approval auto-denies.",
     )
+    approval_notify_url: Optional[str] = Field(
+        default=None,
+        description="Webhook URL for approval status notifications (POST).",
+    )
+    approval_sweeper_interval_seconds: int = Field(
+        default=300,
+        description="Seconds between approval sweeper runs.",
+    )

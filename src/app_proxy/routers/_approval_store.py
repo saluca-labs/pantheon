@@ -1,13 +1,14 @@
-"""Shared in-memory approval queue store.
+"""DEPRECATED — in-memory approval store replaced by DB-backed ApprovalService.
 
-Separated into its own module to avoid circular imports between the
-tools and approval routers.  A production deployment would back this
-with the database.
+This module is retained only to avoid import errors in any code that has not
+yet been migrated.  The dict is no longer used by the tools or approval
+routers; all approval state is now managed by
+``app_proxy.approval.service.ApprovalService``.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-# approval_id -> {status, request, plugin_name, timeout_seconds, audit_ref, created_at, result}
+# Kept as an empty dict so stale imports don't crash on attribute access.
 approval_store: dict[str, dict[str, Any]] = {}

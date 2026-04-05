@@ -23,6 +23,7 @@ class ToolDef:
     name: str
     description: str = ""
     input_schema: dict[str, Any] = field(default_factory=dict)
+    annotations: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

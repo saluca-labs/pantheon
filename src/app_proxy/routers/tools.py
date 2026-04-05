@@ -78,6 +78,8 @@ class ToolCallPending(BaseModel):
     tool_name: str
     approval_id: str
     audit_ref: str
+    expires_at: str = ""  # ISO datetime when the approval expires
+    priority: str = "normal"  # "low" | "normal" | "high" | "critical"
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +144,7 @@ def _authorize(
     plugin_name: str,
     tool_name: str,
     request: ToolCallRequest,
+    tool_def: Any = None,
 ) -> RealCedarDecision:
     """Evaluate Cedar policies for the tool call via the real CedarPolicyEngine.
 
@@ -155,7 +158,13 @@ def _authorize(
             tenant_id=request.tenant_id,
             tenant_attrs={"tier": "enterprise", "max_agents": 50},
             plugin_id=plugin_name,
-            plugin_attrs={"classification": "safe", "owner_tenant": request.tenant_id},
+            plugin_attrs={
+                "classification": "destructive" if (
+                    tool_def and getattr(tool_def, 'annotations', None)
+                    and (tool_def.annotations.get('destructiveHint') or tool_def.annotations.get('tiresias:approvalRequired'))
+                ) else "safe",
+                "owner_tenant": request.tenant_id,
+            },
             action="tool_call",
             context={
                 "tool_name": tool_name,
@@ -214,9 +223,15 @@ def _get_audit_logger() -> AuditLogger:
 
 
 # ---------------------------------------------------------------------------
-# Approval queue stub
+# Approval service (DB-backed, replaces in-memory dict)
 # ---------------------------------------------------------------------------
-from app_proxy.routers._approval_store import approval_store  # noqa: E402
+def _get_approval_service() -> Any:
+    """Resolve the DB-backed ApprovalService from app state."""
+    try:
+        from app_proxy.main import get_approval_service  # type: ignore[attr-defined]
+        return get_approval_service()
+    except (ImportError, AttributeError, AssertionError):
+        raise HTTPException(status_code=503, detail="ApprovalService not available")
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +290,7 @@ async def call_tool(
 
     # 3. Cedar policy authorization (synchronous — engine is thread-safe)
     cedar_engine = get_cedar_engine()
-    decision = _authorize(cedar_engine, plugin.name, body.tool_name, body)
+    decision = _authorize(cedar_engine, plugin.name, body.tool_name, body, tool_def=tool_def)
 
     # Map CedarDecision to policy_decision string
     if decision.allowed:
@@ -318,16 +333,28 @@ async def call_tool(
                 audit_ref=audit_ref,
             )
 
-        approval_id = str(uuid.uuid4())
-        approval_store[approval_id] = {
-            "status": "pending",
-            "request": body.model_dump(),
-            "plugin_name": plugin.name,
-            "timeout_seconds": plugin.timeout_seconds,
-            "audit_ref": audit_ref,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "result": None,
-        }
+        approval_service = _get_approval_service()
+        approval_record = await approval_service.enqueue(
+            tenant_id=body.tenant_id,
+            agent_id=body.agent_id,
+            plugin_name=plugin.name,
+            tool_name=body.tool_name,
+            arguments=body.arguments,
+            reason="Cedar policy requires approval for destructive action",
+            call_id=call_id,
+            audit_ref=audit_ref,
+            priority="normal",
+        )
+        approval_id = str(approval_record.id)
+        expires_at = ""
+        if hasattr(approval_record, "expires_at") and approval_record.expires_at:
+            expires_at = (
+                approval_record.expires_at.isoformat()
+                if not isinstance(approval_record.expires_at, str)
+                else approval_record.expires_at
+            )
+        priority = getattr(approval_record, "priority", "normal") or "normal"
+
         await audit.record_result(audit_ref, status="pending_approval")
         await audit.record_approval(
             audit_ref, approval_id=approval_id, approval_status="pending",
@@ -336,6 +363,8 @@ async def call_tool(
             tool_name=body.tool_name,
             approval_id=approval_id,
             audit_ref=audit_ref,
+            expires_at=expires_at,
+            priority=priority,
         )
 
     # 6. Dispatch to plugin via real MCP client

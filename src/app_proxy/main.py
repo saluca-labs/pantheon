@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -22,6 +23,8 @@ _db_engine: AsyncEngine | None = None
 _cedar_engine: object | None = None  # typed loosely until cedar module lands
 _plugin_registry: object | None = None
 _audit_logger: object | None = None
+_approval_service: object | None = None
+_approval_sweeper_task: object | None = None
 _scheduler: object | None = None
 
 
@@ -51,6 +54,11 @@ def get_audit_logger() -> object:
     return _audit_logger
 
 
+def get_approval_service() -> object:
+    assert _approval_service is not None, "Approval service not initialised."
+    return _approval_service
+
+
 def get_scheduler() -> object:
     assert _scheduler is not None, "Scheduler not initialised."
     return _scheduler
@@ -62,7 +70,7 @@ def get_scheduler() -> object:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle for the App Proxy."""
-    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _scheduler
+    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler
 
     # ---- startup ----
     _settings = Settings()
@@ -86,6 +94,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     _audit_logger = AuditLogger(_db_engine)
     logger.info("audit.logger.ready")
+
+    # Approval service (needs DB engine)
+    from app_proxy.approval.service import ApprovalService
+    from app_proxy.approval.sweeper import run_approval_sweeper
+
+    _approval_service = ApprovalService(
+        db_engine=_db_engine,
+        notify_url=_settings.approval_notify_url,
+    )
+    _approval_sweeper_task = asyncio.create_task(
+        run_approval_sweeper(
+            _approval_service,
+            interval_seconds=_settings.approval_sweeper_interval_seconds,
+        )
+    )
+    logger.info("approval.service.ready")
 
     # Cedar policy engine
     from app_proxy.policy.engine import CedarPolicyEngine
@@ -119,6 +143,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # ---- shutdown ----
     logger.info("app_proxy.shutdown")
+
+    # Cancel approval sweeper
+    if _approval_sweeper_task is not None:
+        _approval_sweeper_task.cancel()
+        try:
+            await _approval_sweeper_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("approval.sweeper.cancelled")
 
     # Stop scheduler
     if _scheduler is not None and hasattr(_scheduler, 'shutdown'):
