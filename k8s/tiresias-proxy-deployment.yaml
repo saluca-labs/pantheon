@@ -44,6 +44,8 @@ spec:
               value: "90"
             - name: TIRESIAS_USAGE_RETENTION_DAYS
               value: "365"
+            - name: TIRESIAS_REDIS_URL
+              value: "redis://tiresias-redis:6379/0"
           resources:
             requests:
               cpu: 200m

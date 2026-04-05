@@ -85,6 +85,9 @@ class TiresiasSettings(BaseSettings):
     gcp_project_id: str | None = Field(default=None, alias="TIRESIAS_GCP_PROJECT_ID")
     gcp_secret_id: str | None = Field(default=None, alias="TIRESIAS_GCP_SECRET_ID")
 
+    # Redis (used for distributed rate limiting in SaaS mode)
+    redis_url: str | None = Field(default=None, alias="TIRESIAS_REDIS_URL")
+
 
 def parse_providers(providers_str: str) -> list[str]:
     """Parse TIRESIAS_PROVIDERS env var into an ordered list of provider names."""

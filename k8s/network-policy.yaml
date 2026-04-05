@@ -227,3 +227,67 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+---
+# Tiresias Proxy: accepts from ingress + internal, egress to SoulAuth + DB + DNS + external HTTPS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tiresias-proxy-netpol
+  namespace: tiresias
+spec:
+  podSelector:
+    matchLabels:
+      app: tiresias-proxy
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: tiresias
+      ports:
+        - protocol: TCP
+          port: 8080
+    # GCE health prober CIDRs (required for GKE load balancer health checks)
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # GKE metadata server (Workload Identity token exchange)
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulauth
+      ports:
+        - protocol: TCP
+          port: 8000
+    - ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tiresias-redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - ports:
+        - protocol: TCP
+          port: 443
