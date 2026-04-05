@@ -9,6 +9,18 @@ import Footer from "@/components/layout/Footer";
 
 const quickstartTabs = [
   {
+    label: "Node.js (Proxy)",
+    code: `npm install openai
+
+// Point OpenAI SDK at Tiresias proxy
+import OpenAI from 'openai';
+const openai = new OpenAI({
+  apiKey: 'sk-your-openai-key',
+  baseURL: 'https://proxy.tiresias.network/v1',
+  defaultHeaders: { 'X-Tiresias-Api-Key': 'tir_acme_...' },
+});`,
+  },
+  {
     label: "pip install",
     code: `pip install soulauth
 soulauth init
@@ -19,11 +31,12 @@ soulauth dev  # starts local server with SQLite`,
     code: `docker run -p 8000:8000 saluca/soulauth:latest`,
   },
   {
-    label: "API",
-    code: `curl -X POST https://api.tiresias.network/v1/auth/evaluate \\
-  -H "X-Soulkey: sk_live_..." \\
+    label: "curl (Proxy)",
+    code: `curl -X POST https://proxy.tiresias.network/v1/chat/completions \\
+  -H "X-Tiresias-Api-Key: tir_acme_..." \\
+  -H "Authorization: Bearer sk-your-openai-key" \\
   -H "Content-Type: application/json" \\
-  -d '{"action": "read", "resource": "customer-data"}'`,
+  -d '{"model": "gpt-4o", "messages": [{"role": "user", "content": "Hello"}]}'`,
   },
 ];
 
@@ -94,7 +107,32 @@ const cliCommands = [
   { cmd: "soulauth version", desc: "Print version info" },
 ];
 
+const proxyQuickstart = `import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: 'sk-your-openai-key',
+  baseURL: 'https://proxy.tiresias.network/v1',
+  defaultHeaders: {
+    'X-Tiresias-Api-Key': 'tir_acme_...',
+  },
+});
+
+// All calls now route through Tiresias
+const completion = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});`;
+
 const integrationGuides = [
+  {
+    title: "Node.js / TypeScript",
+    desc: "Use the OpenAI SDK with Tiresias proxy — just change your base URL.",
+    icon: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L4 4" />
+      </svg>
+    ),
+  },
   {
     title: "Python SDK",
     desc: "Full-featured client library with async support and type hints.",
