@@ -120,6 +120,16 @@ class SoulGateSettings(BaseSettings):
         description="Directory containing CotPolicy YAML files",
     )
 
+    # PicoClaw integration (action pipeline)
+    picoclaw_base_url: str = Field(
+        default="http://localhost:18790",
+        description="Base URL for PicoClaw gateway (action forwarding)",
+    )
+    picoclaw_action_token: Optional[str] = Field(
+        default=None,
+        description="Shared secret for authenticating action submissions",
+    )
+
     # Server
     host: str = "0.0.0.0"
     port: int = Field(default=8002, validation_alias="SOULGATE_SERVER_PORT")
