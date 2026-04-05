@@ -17,10 +17,10 @@ spec:
         app: tiresias-proxy
         component: proxy
     spec:
-      serviceAccountName: tiresias-proxy
+      serviceAccountName: tiresias-sa
       containers:
         - name: tiresias-proxy
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:latest
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:v0.6.2
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -30,14 +30,15 @@ spec:
             - name: TIRESIAS_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: tiresias-proxy-secrets
+                  name: tiresias-secrets
                   key: database-url
             - name: TIRESIAS_KEK_PROVIDER
-              value: "gcp-sm"
-            - name: TIRESIAS_GCP_PROJECT_ID
-              value: "salucainfrastructure"
-            - name: TIRESIAS_GCP_SECRET_ID
-              value: "tiresias-master-kek"
+              value: "local"
+            - name: TIRESIAS_KEK
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: tiresias-master-kek
             - name: TIRESIAS_PROVIDERS
               value: "anthropic,openai"
             - name: TIRESIAS_RETENTION_DAYS
@@ -78,6 +79,26 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: tmp
           emptyDir:
