@@ -3,7 +3,9 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+import os
 import secrets
+import subprocess
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +16,70 @@ from tiresias.encryption.providers import resolve_kek_provider
 from tiresias.storage.schema import TiresiasLicense
 
 logger = logging.getLogger(__name__)
+
+
+def _to_sync_url(url: str) -> str:
+    """Convert an async database URL to a sync one for Alembic.
+
+    Strips '+asyncpg' from the scheme so that
+    'postgresql+asyncpg://...' becomes 'postgresql://...'.
+    """
+    return url.replace("postgresql+asyncpg://", "postgresql://")
+
+
+def run_auto_migrations() -> None:
+    """Run Alembic migrations automatically on first boot (Postgres mode only).
+
+    Skipped when TIRESIAS_DATABASE_URL is unset (SQLite / local mode).
+    Failures are logged as warnings — the proxy continues regardless,
+    since the tables may already exist from a prior manual migration.
+    """
+    db_url = os.environ.get("TIRESIAS_DATABASE_URL")
+    if not db_url:
+        logger.debug("TIRESIAS_DATABASE_URL not set — skipping auto-migration (SQLite mode).")
+        return
+
+    if not db_url.startswith("postgresql"):
+        logger.debug("Non-Postgres database URL — skipping auto-migration.")
+        return
+
+    sync_url = _to_sync_url(db_url)
+
+    # Alembic env.py reads from config.settings which expects
+    # SOULAUTH_DATABASE_URL / SOULAUTH_DATABASE_URL_SYNC.
+    # Inject the sync URL so Alembic can connect without extra config.
+    env = os.environ.copy()
+    env["SOULAUTH_DATABASE_URL"] = db_url
+    env["SOULAUTH_DATABASE_URL_SYNC"] = sync_url
+
+    logger.info("Running Alembic auto-migration (alembic upgrade head)...")
+    try:
+        result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+        )
+        if result.returncode == 0:
+            stdout = result.stdout.strip()
+            if "already" in stdout.lower() or not stdout:
+                logger.info("Auto-migration: database already at head revision.")
+            else:
+                logger.info("Auto-migration succeeded:\n%s", stdout)
+        else:
+            logger.warning(
+                "Auto-migration returned non-zero exit code %d.\nstdout: %s\nstderr: %s",
+                result.returncode,
+                result.stdout.strip(),
+                result.stderr.strip(),
+            )
+    except subprocess.TimeoutExpired:
+        logger.warning("Auto-migration timed out after 120 seconds — continuing without migration.")
+    except FileNotFoundError:
+        logger.warning("Alembic binary not found — skipping auto-migration.")
+    except Exception:
+        logger.warning("Auto-migration failed — continuing anyway.", exc_info=True)
 
 
 def generate_api_key() -> str:

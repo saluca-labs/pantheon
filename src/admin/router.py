@@ -1041,6 +1041,73 @@ async def admin_rotate_kek(
 
 
 @router.post(
+    "/keys/proxy/rotate",
+    summary="Rotate a tenant's Tiresias proxy API key",
+    dependencies=[Depends(require_permission("keys:create"))],
+    responses={
+        200: {"description": "New proxy key issued. The old key is immediately invalidated."},
+        404: {"description": "No proxy key found for tenant"},
+    },
+)
+async def admin_rotate_proxy_key(
+    request: Request,
+    tenant_id: uuid.UUID = Query(..., description="Tenant UUID whose proxy key to rotate"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Rotate a tenant's Tiresias proxy API key.
+
+    Generates a new key and immediately invalidates the old one (hash overwritten).
+    The new raw key is returned exactly once — save it immediately.
+
+    Use this when a customer loses their proxy key or suspects compromise.
+    Requires `keys:create` permission.
+    """
+    caller_tenant_id = _get_caller_tenant_id(request)
+    if caller_tenant_id is not None and tenant_id != caller_tenant_id:
+        raise HTTPException(status_code=403, detail="Cannot rotate keys for another tenant")
+
+    # Look up tenant for slug
+    result = await db.execute(
+        select(SoulTenant).where(SoulTenant.id == tenant_id)
+    )
+    tenant = result.scalar_one_or_none()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    from src.saas.proxy_keys import rotate_proxy_key
+    try:
+        new_raw_key = await rotate_proxy_key(
+            db=db,
+            tenant_id=str(tenant_id),
+            tenant_slug=tenant.slug,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    # Audit log
+    await log_auth_event(
+        db,
+        tenant_id=tenant_id,
+        event_type="admin.proxy_key.rotated",
+        soulkey_id=getattr(getattr(request.state, "rbac_soulkey", None), "id", None),
+        persona_id=getattr(getattr(request.state, "rbac_soulkey", None), "persona_id", None),
+        resource="proxy_key",
+        action="rotate",
+        scope="admin",
+        decision="allow",
+        reason="Proxy API key rotated via admin endpoint",
+    )
+
+    return {
+        "tenant_id": str(tenant_id),
+        "proxy_api_key": new_raw_key,
+        "status": "rotated",
+        "message": "New proxy key issued. The old key is immediately invalid. Save this key — it will not be shown again.",
+    }
+
+
+@router.post(
     "/tenants/{tenant_id}/offboard",
     summary="Offboard tenant — revoke keys, destroy DEK, scrub data",
     dependencies=[Depends(require_permission("tenants:delete"))],
