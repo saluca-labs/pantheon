@@ -21,3 +21,15 @@ spec:
     port: 8001
     type: HTTP
     requestPath: /watch/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: tiresias-proxy-backendconfig
+  namespace: tiresias
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8080
+    type: HTTP
+    requestPath: /health
