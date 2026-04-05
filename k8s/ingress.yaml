@@ -9,6 +9,17 @@ spec:
   domains:
     - tiresias.network
 ---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: tiresias-proxy-cert
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+spec:
+  domains:
+    - proxy.tiresias.network
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -18,7 +29,7 @@ metadata:
     app.kubernetes.io/part-of: tiresias
   annotations:
     kubernetes.io/ingress.class: "gce"
-    networking.gke.io/managed-certificates: "tiresias-cert"
+    networking.gke.io/managed-certificates: "tiresias-cert,tiresias-proxy-cert"
     kubernetes.io/ingress.global-static-ip-name: "tiresias-ip"
     networking.gke.io/v1beta1.FrontendConfig: "tiresias-frontend"
 spec:
@@ -113,6 +124,16 @@ spec:
             backend:
               service:
                 name: portal
+                port:
+                  number: 80
+    - host: proxy.tiresias.network
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tiresias-proxy
                 port:
                   number: 80
 ---

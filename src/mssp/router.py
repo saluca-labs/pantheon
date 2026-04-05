@@ -24,6 +24,7 @@ from src.database.connection import get_db
 from src.database.models import SoulTenant, Soulkey
 from src.auth.soulkey import issue_soulkey
 from src.mssp.isolation import (
+    assert_in_hierarchy,
     get_tenant_subtree,
     get_child_tenant_ids,
     validate_depth_for_new_child,

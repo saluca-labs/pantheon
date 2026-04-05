@@ -19,6 +19,7 @@ interface SessionData {
   tenant_id: string | null;
   soulkey_id: string | null;
   raw_key: string | null;
+  proxy_api_key: string | null;
   customer_email: string | null;
   payment_status: string;
 }
@@ -224,6 +225,50 @@ function SuccessContent() {
           This key will not be shown again. Store it in a secrets manager.
         </p>
       </div>
+
+      {/* Proxy API Key card */}
+      {session?.proxy_api_key && (
+        <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-7 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-semibold text-sm text-foreground">Tiresias Proxy API Key</h2>
+              <p className="text-xs text-of-outline mt-0.5">
+                Point your AI agents at https://proxy.tiresias.network/v1 with this key
+              </p>
+            </div>
+            <CopyButton text={session.proxy_api_key} label="Copy proxy API key" />
+          </div>
+
+          <div className="bg-of-surface-container-low/60 border border-of-primary/20 rounded-xl p-4">
+            <code className="text-sm font-mono text-of-primary break-all leading-relaxed">
+              {session.proxy_api_key}
+            </code>
+          </div>
+
+          <p className="text-xs text-red-400/80 mt-3 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            This key will not be shown again. Store it in a secrets manager.
+          </p>
+
+          <div className="mt-4">
+            <p className="text-xs text-of-outline uppercase tracking-wide mb-2">Configuration</p>
+            <div className="relative">
+              <pre className="bg-of-surface-container-low/60 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">
+{`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1
+export TIRESIAS_API_KEY=${session.proxy_api_key}`}
+              </pre>
+              <div className="absolute top-2 right-2">
+                <CopyButton
+                  text={`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1\nexport TIRESIAS_API_KEY=${session.proxy_api_key}`}
+                  label="Copy configuration"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* IDs card */}
       {(session?.tenant_id || session?.soulkey_id) && (

@@ -88,6 +88,21 @@ async def get_engine(tenant_id: str, data_root: Path = Path("/data")) -> AsyncEn
         return engine
 
 
+async def set_tenant_context(session: "AsyncSession", tenant_id: str) -> None:
+    """Set the Postgres session variable used by RLS policies.
+
+    Must be called at the start of any DB session in SaaS mode so that
+    ``current_setting('app.current_tenant_id', true)`` returns the correct
+    tenant for row-level security filtering.  Uses SET LOCAL so the value
+    is scoped to the current transaction.
+    """
+    if _is_postgres():
+        await session.execute(
+            text("SET LOCAL app.current_tenant_id = :tid"),
+            {"tid": tenant_id},
+        )
+
+
 async def close_all_engines() -> None:
     """Dispose all cached engines and clear the registry (useful for test teardown)."""
     async with _registry_lock:

@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDeployKeys, useCreateDeployKey } from "@/lib/api/hooks/use-policies";
+import type { DeployKey } from "@/lib/api/schemas/policies";
 
 /** Policy file manager -- YAML policy editor with syntax display. Uses hardcoded mock data. */
 
@@ -340,6 +342,186 @@ function highlightYAML(content: string): React.ReactNode {
 
     return <React.Fragment key={i}>{parts}{"\n"}</React.Fragment>;
   });
+}
+
+/* ---- Deploy Key Section ---- */
+
+function DeployKeySection() {
+  const { keys, loading, error, refetch } = useDeployKeys();
+  const { create, creating, error: createError } = useCreateDeployKey();
+  const [keyName, setKeyName] = useState("");
+  const [newKey, setNewKey] = useState<DeployKey | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerate = useCallback(async () => {
+    if (!keyName.trim()) return;
+    const result = await create(keyName.trim());
+    if (result) {
+      setNewKey(result);
+      setKeyName("");
+      refetch();
+    }
+  }, [keyName, create, refetch]);
+
+  const handleCopy = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  }, []);
+
+  return (
+    <div className="glass-card rounded-xl p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Policy Sync &mdash; Deploy Keys</h2>
+          <p className="text-xs text-foreground-subtle mt-1">
+            SSH deploy keys used for automatic policy sync from your git repository.
+          </p>
+        </div>
+      </div>
+
+      {/* Generate key form */}
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          value={keyName}
+          onChange={(e) => setKeyName(e.target.value)}
+          placeholder="Key name (e.g. production-sync)"
+          className="flex-1 px-3 py-2 rounded-lg bg-navy-800 border border-white/10 text-sm text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all duration-200 font-mono"
+          onKeyDown={(e) => { if (e.key === "Enter") handleGenerate(); }}
+        />
+        <button
+          onClick={handleGenerate}
+          disabled={creating || !keyName.trim()}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 text-navy-950 text-sm font-medium hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {creating ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Generating...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+              Generate Key
+            </>
+          )}
+        </button>
+      </div>
+
+      {createError && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg border bg-red-500/5 border-red-500/20 text-red-400 text-sm">
+          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          {createError}
+        </div>
+      )}
+
+      {/* Newly created key -- show public key for copy */}
+      <AnimatePresence>
+        {newKey && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="rounded-lg border border-green-500/20 bg-green-500/5 p-4 space-y-3"
+          >
+            <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Deploy key &ldquo;{newKey.key_name}&rdquo; created
+            </div>
+            <p className="text-xs text-foreground-muted">
+              Add this public key as a deploy key in your policy git repository.
+            </p>
+            <div className="relative">
+              <pre className="p-3 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground font-mono whitespace-pre-wrap break-all overflow-x-auto">
+                {newKey.public_key}
+              </pre>
+              <button
+                onClick={() => handleCopy(newKey.public_key)}
+                className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-medium bg-navy-800 border border-white/10 text-foreground-muted hover:text-foreground hover:border-gold-500/30 transition-all"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gold-500/5 border border-gold-500/20 text-xs text-gold-400">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              The private key is stored securely and will be used automatically for policy sync.
+            </div>
+            <button
+              onClick={() => setNewKey(null)}
+              className="text-xs text-foreground-subtle hover:text-foreground transition-colors"
+            >
+              Dismiss
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Existing keys table */}
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <svg className="w-5 h-5 animate-spin text-foreground-subtle" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-sm text-foreground-subtle">
+          {error}
+        </div>
+      ) : keys.length === 0 ? (
+        <div className="text-center py-8 text-sm text-foreground-subtle">
+          No deploy keys configured. Generate one to enable git-based policy sync.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-2 px-3 text-xs font-medium text-foreground-muted uppercase tracking-wider">Name</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-foreground-muted uppercase tracking-wider">Fingerprint</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-foreground-muted uppercase tracking-wider">Status</th>
+                <th className="text-left py-2 px-3 text-xs font-medium text-foreground-muted uppercase tracking-wider">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {keys.map((k) => (
+                <tr key={k.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <td className="py-2.5 px-3 font-mono text-foreground">{k.key_name}</td>
+                  <td className="py-2.5 px-3 font-mono text-foreground-muted text-xs">{k.fingerprint}</td>
+                  <td className="py-2.5 px-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      k.status === "active"
+                        ? "bg-green-500/15 text-green-400 border border-green-500/20"
+                        : "bg-red-500/15 text-red-400 border border-red-500/20"
+                    }`}>
+                      {k.status}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 text-foreground-subtle text-xs">{k.created_at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PoliciesPage() {
@@ -873,6 +1055,9 @@ export default function PoliciesPage() {
           </div>
         </div>
       </div>
+
+      {/* Deploy Keys */}
+      <DeployKeySection />
     </div>
   );
 }
