@@ -38,11 +38,16 @@ async def get_engine(tenant_id: str, data_root: Path = Path("/data")) -> AsyncEn
                 return _engine_registry[_key]
 
             pg_url = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+            # Disable SSL for cloud-sql-proxy connections (proxy handles encryption)
+            connect_args = {}
+            if "127.0.0.1" in pg_url or "localhost" in pg_url:
+                connect_args["ssl"] = False
             engine = create_async_engine(
                 pg_url,
                 echo=False,
                 pool_size=10,
                 max_overflow=20,
+                connect_args=connect_args,
             )
 
             # Tables are created externally (migration / init SQL).
