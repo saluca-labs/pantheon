@@ -6,11 +6,11 @@
 ### Cloud Run Services (SaaS)
 | Service | Version | URL | Status |
 |---------|---------|-----|--------|
-| tiresias-portal | v3.3.0 | https://tiresias.network | Healthy |
-| tiresias-soulauth | v3.3.0 | https://tiresias-soulauth-253892677982.us-central1.run.app | Healthy |
-| tiresias-soulwatch | v3.3.0 | https://tiresias-soulwatch-253892677982.us-central1.run.app | Healthy |
-| tiresias-soulgate | v3.3.0 | https://tiresias-soulgate-zsnoaggk6q-uc.a.run.app | Healthy |
-| tiresias-proxy | v3.3.0 | https://tiresias-proxy-253892677982.us-central1.run.app | Healthy |
+| tiresias-portal | v3.4.4 | https://tiresias.network | Healthy |
+| tiresias-soulauth | v3.4.4 | https://tiresias-soulauth-253892677982.us-central1.run.app | Healthy |
+| tiresias-soulwatch | v3.4.4 | https://tiresias-soulwatch-253892677982.us-central1.run.app | Healthy |
+| tiresias-soulgate | v3.4.4 | https://tiresias-soulgate-zsnoaggk6q-uc.a.run.app | Healthy |
+| tiresias-proxy | v3.4.4 | https://tiresias-proxy-253892677982.us-central1.run.app | Healthy |
 
 ### Database
 - Cloud SQL: `tiresias-db` (PostgreSQL 16, db-g1-small, us-central1-a)
@@ -187,9 +187,9 @@
 - Hierarchy-aware MSSP provisioning
 - Portal session verification on all routes (v3.1.0 hardening)
 - Shared server-side libs with error boundaries (v3.1.0 hardening)
-- Team RBAC with two-layer role model (v3.3.0)
-- User CRUD, team management, invitation flow (v3.3.0)
-- Team Settings tab in portal settings (starter tier+) (v3.3.0)
+- Team RBAC with two-layer role model (v3.4.4)
+- User CRUD, team management, invitation flow (v3.4.4)
+- Team Settings tab in portal settings (starter tier+) (v3.4.4)
 
 ### No Data Yet (Expected)
 - Traces, Sessions, Providers, Costs (no LLM traffic through SaaS proxy)
@@ -210,7 +210,7 @@
 
 ## Release History
 
-### v3.3.0 (Current)
+### v3.4.4 (Current)
 - Team RBAC system with two-layer role model: portal-level (owner/admin/operator/viewer) + team-level (team_admin/analyst/member)
 - 3 new database tables: `_soul_teams`, `_soul_team_members`, `_soul_user_invites`
 - 3 new SoulUser fields: `is_account_admin`, `is_secondary_admin`, `primary_team_id`

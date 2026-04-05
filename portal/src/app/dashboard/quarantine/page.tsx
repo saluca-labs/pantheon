@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
+import { TierGate } from "@/components/dashboard/TierGate";
 import { truncateSoulkey } from "@/lib/display";
 import { ShieldAlert, ShieldCheck, ChevronDown, ChevronRight, X, Plus } from "lucide-react";
 
@@ -126,6 +127,7 @@ export default function QuarantinePage() {
   }
 
   return (
+    <TierGate requiredTier="enterprise" featureLabel="Agent Quarantine">
     <div className="max-w-7xl space-y-6">
 
       {/* Action result toast */}
@@ -522,5 +524,6 @@ export default function QuarantinePage() {
         </div>
       )}
     </div>
+    </TierGate>
   );
 }

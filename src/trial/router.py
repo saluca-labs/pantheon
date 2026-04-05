@@ -71,7 +71,7 @@ async def trial_register(
         await db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"A trial already exists for {request.company_domain}. Check your email or contact support.",
+            detail=f"A trial already exists for this email. Check your inbox or contact support@tiresias.network.",
         )
 
     # Send verification email via Resend
@@ -191,10 +191,10 @@ def _verify_page_html(status: str, **kwargs) -> str:
 export SOULAUTH_API_KEY="{a['raw_key'][:12]}..."
 
 curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
-  https://tiresias.saluca.com/v1/auth/whoami</pre>
+  https://tiresias.network/v1/auth/whoami</pre>
           </div>
           <div style="display:flex;gap:12px;">
-            <a href="https://tiresias.saluca.com/docs" style="flex:1;text-align:center;padding:12px 20px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">API Docs</a>
+            <a href="https://tiresias.network/docs" style="flex:1;text-align:center;padding:12px 20px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">API Docs</a>
           </div>
         </div>"""
     elif status == "error":
@@ -205,7 +205,7 @@ curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
           </div>
           <h1 style="margin:0 0 12px;font-size:24px;font-weight:700;color:#e5e7eb;">Verification Failed</h1>
           <p style="margin:0 0 32px;font-size:15px;color:#9ca3af;">{kwargs.get('message', 'Invalid or expired verification link.')}</p>
-          <a href="mailto:support@saluca.com" style="padding:12px 24px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Contact Support</a>
+          <a href="mailto:support@tiresias.network" style="padding:12px 24px;background:#d4a853;color:#0a0e1a;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Contact Support</a>
         </div>"""
     else:
         body = ""

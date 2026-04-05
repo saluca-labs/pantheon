@@ -149,4 +149,4 @@ Annual billing: 20% discount. Also available as part of the Tiresias Platform bu
 
 ---
 
-*Saluca LLC | tiresias.saluca.com/platform/soulwatch*
+*Saluca LLC | tiresias.network/platform/soulwatch*

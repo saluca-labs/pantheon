@@ -112,10 +112,10 @@ app = FastAPI(
 
 # CORS middleware - restrict origins to known domains
 _ALLOWED_ORIGINS = [
-    "https://tiresias.saluca.com",
+    "https://tiresias.network",
     "https://tiresias.network",
     "https://www.tiresias.network",
-    "https://www.tiresias.saluca.com",
+    "https://www.tiresias.network",
 ]
 if settings.debug:
     _ALLOWED_ORIGINS += ["http://localhost:3000", "http://localhost:8000"]

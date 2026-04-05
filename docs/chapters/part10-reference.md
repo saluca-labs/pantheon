@@ -763,7 +763,7 @@ Prefix: `SOULAUTH_`
 |----------|------|---------|-------------|
 | `SOULAUTH_RESEND_API_KEY` | string | _(none)_ | Resend API key for transactional email (trial verification). |
 | `SOULAUTH_TRIAL_FROM_EMAIL` | string | `Tiresias <onboarding@resend.dev>` | Sender address for trial verification emails. |
-| `SOULAUTH_TRIAL_VERIFY_BASE_URL` | string | `https://tiresias.saluca.com/trial/verify` | Base URL for trial email verification links. |
+| `SOULAUTH_TRIAL_VERIFY_BASE_URL` | string | `https://tiresias.network/trial/verify` | Base URL for trial email verification links. |
 | `OPENROUTER_API_KEY` | string | _(none)_ | OpenRouter API key for the AI support chatbot. |
 
 **Supabase Settings (Legacy):**

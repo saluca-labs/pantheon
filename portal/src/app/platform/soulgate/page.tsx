@@ -326,7 +326,7 @@ export default function SoulGatePage() {
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-center text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"
@@ -459,7 +459,7 @@ export default function SoulGatePage() {
               <TerminalBlock
                 filename="register_upstream.sh"
                 code={`# Register an upstream service with SoulGate
-curl -X POST https://tiresias.saluca.com/gate/v1/upstreams \\
+curl -X POST https://tiresias.network/gate/v1/upstreams \\
   -H "Authorization: Bearer sk_gate_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -486,7 +486,7 @@ curl -X POST https://tiresias.saluca.com/gate/v1/upstreams \\
               <TerminalBlock
                 filename="configure_rate_limit.sh"
                 code={`# Set a rate limit policy
-curl -X POST https://tiresias.saluca.com/gate/v1/rate-limits \\
+curl -X POST https://tiresias.network/gate/v1/rate-limits \\
   -H "Authorization: Bearer sk_gate_live_..." \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -512,7 +512,7 @@ curl -X POST https://tiresias.saluca.com/gate/v1/rate-limits \\
 
 # Query the gateway audit log
 resp = requests.get(
-    "https://tiresias.saluca.com/gate/v1/audit",
+    "https://tiresias.network/gate/v1/audit",
     headers={"Authorization": "Bearer sk_gate_live_..."},
     params={
         "status": "blocked",
@@ -672,7 +672,7 @@ for entry in resp.json()["entries"]:
                   href="/trial"
                   className="rounded-lg bg-gradient-to-r from-gold-600 to-gold-500 px-8 py-3 text-sm font-semibold text-navy-950 hover:from-gold-500 hover:to-gold-400 transition-all shadow-lg shadow-gold-500/20 cta-breathe"
                 >
-                  Join Waitlist
+                  Start Free Trial
                 </Link>
                 <Link
                   href="/developers"

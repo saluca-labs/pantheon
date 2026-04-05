@@ -26,6 +26,18 @@ MAX_TRIALS_PER_EMAIL = 1
 VERIFICATION_TOKEN_LENGTH = 32
 
 
+def normalize_email(email: str) -> str:
+    """Normalize email: lowercase, strip +alias for gmail/googlemail."""
+    email = email.strip().lower()
+    local, _, domain = email.partition("@")
+    if domain in ("gmail.com", "googlemail.com"):
+        local = local.split("+")[0]
+        local = local.replace(".", "")
+    else:
+        local = local.split("+")[0]
+    return f"{local}@{domain}"
+
+
 async def register_trial(
     db: AsyncSession,
     contact_name: str,
@@ -39,35 +51,25 @@ async def register_trial(
     Returns (trial_record, verification_token).
     Implements anti-abuse checks per SPEC.md section 16.4.
     """
+    # Normalize email to prevent +alias abuse
+    normalized_email = normalize_email(contact_email)
 
-    # Anti-abuse: check domain rate limit
-    domain_count = await db.execute(
-        select(func.count(Trial.id)).where(
-            Trial.company_domain == company_domain,
-            Trial.status.in_(["pending", "active", "verified"]),
-        )
-    )
-    if (domain_count.scalar() or 0) >= MAX_TRIALS_PER_DOMAIN:
-        raise ValueError(
-            f"Maximum trials ({MAX_TRIALS_PER_DOMAIN}) reached for domain {company_domain}"
-        )
-
-    # Anti-abuse: check email uniqueness
+    # Anti-abuse: check email uniqueness (exact email match only)
     email_count = await db.execute(
         select(func.count(Trial.id)).where(
-            Trial.contact_email == contact_email,
+            Trial.contact_email == normalized_email,
             Trial.status.in_(["pending", "active", "verified"]),
         )
     )
     if (email_count.scalar() or 0) >= MAX_TRIALS_PER_EMAIL:
-        raise ValueError(f"A trial already exists for {contact_email}")
+        raise ValueError(f"A trial already exists for {normalized_email}")
 
     # Generate verification token
     verification_token = secrets.token_urlsafe(VERIFICATION_TOKEN_LENGTH)
 
     trial = Trial(
         contact_name=contact_name,
-        contact_email=contact_email,
+        contact_email=normalized_email,
         company_name=company_name,
         company_domain=company_domain,
         use_case=use_case,
