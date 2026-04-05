@@ -155,6 +155,15 @@ async def verify_and_activate_trial(
         metadata={"trial_id": str(trial.id)},
     )
 
+    # Provision Tiresias proxy API key for trial users
+    from src.saas.proxy_keys import provision_proxy_key
+    proxy_api_key = await provision_proxy_key(
+        db=db,
+        tenant_id=str(tenant.id),
+        tenant_slug=slug,
+        tier="trial",
+    )
+
     # Update trial with tenant and soulkey references
     trial.tenant_id = tenant.id
     trial.soulkey_id = soulkey.id
@@ -174,6 +183,7 @@ async def verify_and_activate_trial(
         "tenant_id": tenant.id,
         "soulkey_id": soulkey.id,
         "raw_key": raw_key,
+        "proxy_api_key": proxy_api_key,
         "status": "active",
         "expires_at": trial.expires_at,
         "contact_name": trial.contact_name,
@@ -271,6 +281,15 @@ async def activate_trial(
         metadata={"trial_id": str(trial.id)},
     )
 
+    # Provision Tiresias proxy API key for trial users
+    from src.saas.proxy_keys import provision_proxy_key
+    proxy_api_key = await provision_proxy_key(
+        db=db,
+        tenant_id=str(tenant.id),
+        tenant_slug=slug,
+        tier="trial",
+    )
+
     # Update trial with tenant and soulkey references
     trial.tenant_id = tenant.id
     trial.soulkey_id = soulkey.id
@@ -290,6 +309,7 @@ async def activate_trial(
         "tenant_id": tenant.id,
         "soulkey_id": soulkey.id,
         "raw_key": raw_key,
+        "proxy_api_key": proxy_api_key,
         "status": "active",
         "expires_at": trial.expires_at,
     }
