@@ -23,10 +23,20 @@ COPY --from=builder /build/dist/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl \
     && rm -rf /tmp/*.whl
 
-# Copy default config, policies, and plugins directories
-COPY config/ config/
+# Copy policies and plugins
 COPY policies/ policies/
 COPY plugins/ plugins/
+
+# Create writable data directory for SQLite
+RUN mkdir -p /app/data && chown -R appproxy:appproxy /app/data
+
+ENV PYTHONPATH="/app/plugins"
+# Copy Cedar schema to a known location
+COPY src/app_proxy/policy/schema.json /app/policies/cedar_schema.json
+
+ENV APP_PROXY_DATABASE_URL="sqlite+aiosqlite:////app/data/app_proxy.db"
+ENV APP_PROXY_CEDAR_SCHEMA_PATH="/app/policies/cedar_schema.json"
+ENV APP_PROXY_POLICIES_DIR="/app/policies/cedar"
 
 USER appproxy
 
