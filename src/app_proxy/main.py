@@ -236,6 +236,7 @@ def _mount_routers() -> None:
         "admin": "app_proxy.routers.admin",
         "approval": "app_proxy.routers.approval",
         "schedules": "app_proxy.routers.schedules",
+        "compliance": "app_proxy.routers.compliance",
     }
     for name, module_path in router_modules.items():
         try:

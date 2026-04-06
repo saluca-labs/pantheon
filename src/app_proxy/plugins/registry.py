@@ -41,7 +41,7 @@ class PluginConfig:
 
     name: str
     version: str
-    mcp_server_type: str  # "stdio" | "http"
+    mcp_server_type: str  # "stdio" | "http" | "wasm"
     mcp_server_command: list[str] = field(default_factory=list)
     mcp_server_url: str | None = None  # for http type
     env: dict[str, str] = field(default_factory=dict)
@@ -52,6 +52,10 @@ class PluginConfig:
     acl: dict[str, Any] = field(default_factory=dict)
     healthy: bool = False
     last_health_check: datetime | None = None
+    # Wasm-specific fields
+    wasm_path: str | None = None
+    wasm_capabilities: list[str] = field(default_factory=list)
+    wasm_resource_limits: dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -144,13 +148,19 @@ class PluginRegistry:
         plugin = self._plugins.get(name)
         if plugin is None:
             return None
-        return {
+        config: dict[str, Any] = {
             "transport": plugin.mcp_server_type,
             "command": plugin.mcp_server_command or None,
             "url": plugin.mcp_server_url,
             "timeout_seconds": plugin.timeout_seconds,
             "env": plugin.env,
         }
+        # Include Wasm-specific fields when transport is wasm
+        if plugin.mcp_server_type == "wasm":
+            config["wasm_plugin_name"] = plugin.name
+            config["wasm_path"] = plugin.wasm_path
+            config["wasm_capabilities"] = plugin.wasm_capabilities
+        return config
 
     def list_plugins(self) -> list[dict[str, Any]]:
         """Return summary info for all registered plugins."""
@@ -175,7 +185,10 @@ class PluginRegistry:
         for name, plugin in self._plugins.items():
             # For stdio plugins, just mark healthy if command is set.
             # A real implementation would attempt a JSON-RPC initialize handshake.
-            plugin.healthy = bool(plugin.mcp_server_command or plugin.mcp_server_url)
+            if plugin.mcp_server_type == "wasm":
+                plugin.healthy = bool(plugin.wasm_path)
+            else:
+                plugin.healthy = bool(plugin.mcp_server_command or plugin.mcp_server_url)
             plugin.last_health_check = now
             results[name] = plugin.healthy
         return results

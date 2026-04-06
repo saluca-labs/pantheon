@@ -106,6 +106,11 @@ def load_plugin_config(plugin_dir: Path) -> PluginConfig:
     env_raw: dict[str, str] = mcp_raw.get("env", {})
     env = {k: _expand_env(v) for k, v in env_raw.items()}
 
+    # ---- Wasm-specific fields ----
+    wasm_path: str | None = mcp_raw.get("wasm_path")
+    wasm_capabilities: list[str] = mcp_raw.get("capabilities", [])
+    wasm_resource_limits: dict[str, Any] = mcp_raw.get("resource_limits", {})
+
     # ---- tools ----
     # Prefer manifest.json; fall back to inline YAML tools
     tools = _parse_tools_from_manifest(plugin_dir)
@@ -139,4 +144,7 @@ def load_plugin_config(plugin_dir: Path) -> PluginConfig:
         policies=policies_raw,
         policy_rules=policy_rules,
         acl=acl,
+        wasm_path=wasm_path,
+        wasm_capabilities=wasm_capabilities,
+        wasm_resource_limits=wasm_resource_limits,
     )

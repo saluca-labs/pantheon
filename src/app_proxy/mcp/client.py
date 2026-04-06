@@ -34,11 +34,15 @@ class MCPResult:
 class PluginConfig:
     """Minimal plugin transport configuration."""
 
-    transport: str  # "stdio" or "http"
+    transport: str  # "stdio" | "http" | "wasm"
     command: Optional[list[str]] = None  # for stdio: ["node", "server.js"]
     url: Optional[str] = None  # for http: "http://localhost:3001"
     timeout_seconds: int = 30
     env: dict[str, str] = field(default_factory=dict)
+    # Wasm transport fields
+    wasm_plugin_name: Optional[str] = None
+    wasm_path: Optional[str] = None
+    wasm_capabilities: Optional[list[str]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -107,6 +111,8 @@ class MCPClient:
                 result = await self._dispatch_stdio(plugin_config, tool_name, arguments, timeout)
             elif plugin_config.transport == "http":
                 result = await self._dispatch_http(plugin_config, tool_name, arguments, timeout)
+            elif plugin_config.transport == "wasm":
+                result = await self._dispatch_wasm(plugin_config, tool_name, arguments, timeout)
             else:
                 result = MCPResult(
                     success=False,
@@ -230,6 +236,67 @@ class MCPClient:
             resp.raise_for_status()
 
         return _parse_response(resp.text)
+
+    # ------------------------------------------------------------------
+    # Wasm transport
+    # ------------------------------------------------------------------
+    async def _dispatch_wasm(
+        self,
+        config: PluginConfig,
+        tool_name: str,
+        arguments: dict[str, Any],
+        timeout: int,
+    ) -> MCPResult:
+        """Dispatch a tool call to a Wasm-sandboxed plugin.
+
+        Uses :class:`app_proxy.wasm.runtime.WasmPluginRuntime` to invoke
+        the tool inside an isolated Wasm instance.  The runtime and its
+        wasmtime dependency are imported lazily so that installations
+        without wasmtime can still use stdio/HTTP transports.
+        """
+        try:
+            from app_proxy.wasm.runtime import get_wasm_runtime
+        except ImportError:
+            return MCPResult(
+                success=False,
+                error="Wasm runtime not available (app_proxy.wasm package missing)",
+            )
+
+        plugin_name = config.wasm_plugin_name
+        if not plugin_name:
+            return MCPResult(success=False, error="wasm transport requires 'wasm_plugin_name'")
+
+        runtime = get_wasm_runtime()
+        if not runtime.available:
+            return MCPResult(
+                success=False,
+                error="No Wasm backend available. Install wasmtime: pip install wasmtime",
+            )
+
+        # Ensure the plugin is loaded
+        if runtime.get_instance(plugin_name) is None:
+            if not config.wasm_path:
+                return MCPResult(
+                    success=False,
+                    error=f"Wasm plugin '{plugin_name}' not loaded and no wasm_path provided",
+                )
+            try:
+                from app_proxy.wasm.types import WasmResourceLimits
+
+                runtime.load_plugin(
+                    name=plugin_name,
+                    wasm_path=config.wasm_path,
+                    capabilities=config.wasm_capabilities or [],
+                )
+            except Exception as exc:
+                return MCPResult(success=False, error=f"Failed to load Wasm plugin: {exc}")
+
+        result = await runtime.call_tool(plugin_name, tool_name, arguments, timeout)
+
+        if result.get("success"):
+            return MCPResult(success=True, result=result.get("result"))
+        else:
+            return MCPResult(success=False, error=result.get("error", "Unknown Wasm error"))
 
 
 # ---------------------------------------------------------------------------
