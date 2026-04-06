@@ -30,6 +30,8 @@ _risk_scorer: object | None = None
 _behavioral_analyzer: object | None = None
 _rate_counter: object | None = None
 _health_poller_task: asyncio.Task | None = None
+_slack_relay: object | None = None
+_slack_monitor_task: asyncio.Task | None = None
 
 
 def get_settings() -> Settings:
@@ -83,13 +85,18 @@ def get_rate_counter() -> object:
     return _rate_counter
 
 
+def get_slack_relay() -> object | None:
+    """Return the auto-started Slack relay, or None if tokens were not set."""
+    return _slack_relay
+
+
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle for the App Proxy."""
-    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler, _risk_scorer, _behavioral_analyzer, _rate_counter, _health_poller_task
+    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler, _risk_scorer, _behavioral_analyzer, _rate_counter, _health_poller_task, _slack_relay, _slack_monitor_task
 
     # ---- startup ----
     _settings = Settings()
@@ -184,10 +191,65 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await _scheduler.start()
     logger.info("scheduler.engine.ready")
 
+    # Auto-start Slack relay + monitoring if tokens are present
+    import os
+
+    _slack_bot_token = os.environ.get("SLACK_BOT_TOKEN")
+    _slack_app_token = os.environ.get("SLACK_APP_TOKEN")
+
+    if _slack_bot_token and _slack_app_token:
+        try:
+            from plugins.slack.relay import SlackRelay
+            from app_proxy.monitoring.slack_monitor import SlackMonitor
+
+            _slack_relay = SlackRelay(
+                bot_token=_slack_bot_token,
+                app_token=_slack_app_token,
+                buffer_size=2000,
+                db_path="/app/data/relay_events.db",
+            )
+            await _slack_relay.start()
+            logger.info("slack.relay.autostarted")
+
+            # Start the monitoring poller
+            _monitor = SlackMonitor(
+                relay=_slack_relay,
+                risk_scorer=_risk_scorer,
+                audit_logger=_audit_logger,
+                analyzer=_behavioral_analyzer,
+                poll_interval=5.0,
+                batch_size=50,
+            )
+            _slack_monitor_task = asyncio.create_task(_monitor.run())
+            logger.info("slack.monitor.autostarted")
+        except Exception:
+            logger.exception("slack.autostart.failed")
+            _slack_relay = None
+            _slack_monitor_task = None
+    else:
+        logger.info(
+            "slack.relay.skipped",
+            reason="SLACK_BOT_TOKEN or SLACK_APP_TOKEN not set",
+        )
+
     yield
 
     # ---- shutdown ----
     logger.info("app_proxy.shutdown")
+
+    # Cancel Slack monitor
+    if _slack_monitor_task is not None:
+        _slack_monitor_task.cancel()
+        try:
+            await _slack_monitor_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("slack.monitor.cancelled")
+
+    # Stop Slack relay
+    if _slack_relay is not None and hasattr(_slack_relay, 'stop'):
+        await _slack_relay.stop()
+        logger.info("slack.relay.stopped")
 
     # Cancel health poller
     if _health_poller_task is not None:
