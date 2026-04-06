@@ -42,6 +42,17 @@ class PluginListResponse(BaseModel):
     plugins: list[PluginSummary]
 
 
+class PluginHealthResult(BaseModel):
+    plugin: str
+    healthy: bool
+
+
+class PluginHealthResponse(BaseModel):
+    results: list[PluginHealthResult]
+    healthy_count: int
+    total_count: int
+
+
 class PolicyReloadResponse(BaseModel):
     status: str = "ok"
     policies_loaded: int = 0
@@ -153,3 +164,24 @@ async def validate_policies(
     except Exception as exc:
         logger.error("policies.validate.error", error=str(exc))
         raise HTTPException(status_code=500, detail=f"Policy validation failed: {exc}")
+
+
+@router.post("/plugins/health", response_model=PluginHealthResponse)
+async def trigger_health_check(
+    _admin: None = Depends(_require_admin),
+) -> PluginHealthResponse:
+    """Force an immediate health check across all plugins."""
+    registry = get_plugin_registry()
+    if not isinstance(registry, PluginRegistry):
+        return PluginHealthResponse(results=[], healthy_count=0, total_count=0)
+
+    results = await registry.health_check()
+    items = [
+        PluginHealthResult(plugin=name, healthy=healthy)
+        for name, healthy in results.items()
+    ]
+    return PluginHealthResponse(
+        results=items,
+        healthy_count=sum(1 for v in results.values() if v),
+        total_count=len(results),
+    )

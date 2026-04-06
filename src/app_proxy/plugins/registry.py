@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import httpx
 import structlog
 
 logger = structlog.stdlib.get_logger("app_proxy.plugins.registry")
@@ -179,19 +182,138 @@ class PluginRegistry:
         ]
 
     async def health_check(self) -> dict[str, bool]:
-        """Ping each plugin and update health status. Returns plugin_name -> healthy."""
-        results: dict[str, bool] = {}
-        now = datetime.now(timezone.utc)
-        for name, plugin in self._plugins.items():
-            # For stdio plugins, just mark healthy if command is set.
-            # A real implementation would attempt a JSON-RPC initialize handshake.
-            if plugin.mcp_server_type == "wasm":
-                plugin.healthy = bool(plugin.wasm_path)
-            else:
-                plugin.healthy = bool(plugin.mcp_server_command or plugin.mcp_server_url)
+        """Ping each plugin and update health status. Returns plugin_name -> healthy.
+
+        Checks run in parallel with a 5-second timeout per plugin:
+        - **stdio**: spawn the MCP server, send JSON-RPC ``initialize``, verify response.
+        - **http**: POST JSON-RPC ``initialize`` to the plugin URL.
+        - **wasm**: verify the wasm_path file exists and is readable.
+        """
+
+        async def _check_one(name: str, plugin: PluginConfig) -> tuple[str, bool]:
+            now = datetime.now(timezone.utc)
+            try:
+                if plugin.mcp_server_type == "stdio":
+                    healthy = await self._health_check_stdio(plugin)
+                elif plugin.mcp_server_type == "http":
+                    healthy = await self._health_check_http(plugin)
+                elif plugin.mcp_server_type == "wasm":
+                    healthy = self._health_check_wasm(plugin)
+                else:
+                    healthy = False
+            except Exception as exc:
+                logger.warning("health_check.error", plugin=name, error=str(exc))
+                healthy = False
+
+            plugin.healthy = healthy
             plugin.last_health_check = now
-            results[name] = plugin.healthy
+            return name, healthy
+
+        tasks = [_check_one(name, plugin) for name, plugin in self._plugins.items()]
+        pairs = await asyncio.gather(*tasks, return_exceptions=True)
+
+        results: dict[str, bool] = {}
+        for item in pairs:
+            if isinstance(item, BaseException):
+                logger.warning("health_check.gather.error", error=str(item))
+                continue
+            results[item[0]] = item[1]
+
+        logger.info(
+            "health_check.complete",
+            total=len(self._plugins),
+            healthy=sum(1 for v in results.values() if v),
+        )
         return results
+
+    # -- health check implementations ----------------------------------------
+
+    @staticmethod
+    async def _health_check_stdio(plugin: PluginConfig) -> bool:
+        """Spawn the MCP server, send initialize, verify response, kill."""
+        if not plugin.mcp_server_command:
+            return False
+
+        init_request = json.dumps({
+            "jsonrpc": "2.0",
+            "id": 0,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "1.0",
+                "capabilities": {},
+                "clientInfo": {"name": "tiresias-healthcheck"},
+            },
+        }) + "\n"
+
+        proc = await asyncio.create_subprocess_exec(
+            *plugin.mcp_server_command,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env={**os.environ, **plugin.env} if plugin.env else None,
+        )
+
+        try:
+            stdout, _ = await asyncio.wait_for(
+                proc.communicate(input=init_request.encode("utf-8")),
+                timeout=5,
+            )
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            logger.warning("health_check.stdio.timeout", plugin=plugin.name)
+            return False
+
+        raw = stdout.decode("utf-8", errors="replace").strip()
+        if not raw:
+            return False
+
+        # Take last JSON line (server may emit logs before the response)
+        last_line = raw.splitlines()[-1]
+        try:
+            data = json.loads(last_line)
+        except json.JSONDecodeError:
+            return False
+
+        result = data.get("result", {})
+        return bool(result.get("protocolVersion") and result.get("capabilities") is not None)
+
+    @staticmethod
+    async def _health_check_http(plugin: PluginConfig) -> bool:
+        """POST JSON-RPC initialize to the plugin HTTP endpoint."""
+        if not plugin.mcp_server_url:
+            return False
+
+        payload = {
+            "jsonrpc": "2.0",
+            "id": 0,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "1.0",
+                "capabilities": {},
+                "clientInfo": {"name": "tiresias-healthcheck"},
+            },
+        }
+
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.post(
+                plugin.mcp_server_url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            resp.raise_for_status()
+
+        data = resp.json()
+        result = data.get("result", {})
+        return bool(result.get("protocolVersion") and result.get("capabilities") is not None)
+
+    @staticmethod
+    def _health_check_wasm(plugin: PluginConfig) -> bool:
+        """Check that the wasm file exists and is readable."""
+        if not plugin.wasm_path:
+            return False
+        p = Path(plugin.wasm_path)
+        return p.is_file() and os.access(p, os.R_OK)
 
     def __len__(self) -> int:
         return len(self._plugins)

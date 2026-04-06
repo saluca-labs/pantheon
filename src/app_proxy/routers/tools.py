@@ -20,8 +20,10 @@ from app_proxy.main import (
     get_cedar_engine,
     get_db_engine,
     get_plugin_registry,
+    get_rate_counter,
     get_settings,
 )
+from app_proxy.auth.rate_counter import RateCounter
 from app_proxy.mcp.client import MCPClient, MCPResult
 from app_proxy.plugins.registry import PluginRegistry
 from app_proxy.policy.engine import CedarDecision as RealCedarDecision
@@ -162,6 +164,7 @@ def _authorize(
     request: ToolCallRequest,
     tool_def: Any = None,
     risk_score: int = 0,
+    rate_count: int = 0,
 ) -> RealCedarDecision:
     """Evaluate Cedar policies for the tool call via the real CedarPolicyEngine.
 
@@ -185,7 +188,7 @@ def _authorize(
             action="tool_call",
             context={
                 "tool_name": tool_name,
-                "rate_count": 0,
+                "rate_count": rate_count,
                 "rate_window_seconds": 3600,
                 "hour_of_day": datetime.now(timezone.utc).hour,
                 "has_approval": False,
@@ -346,7 +349,7 @@ async def call_tool(
         arguments=body.arguments,
         tool_annotations=tool_def.annotations if tool_def.annotations else {},
         hour_of_day=datetime.now(timezone.utc).hour,
-        agent_call_count=0,  # TODO: wire session-level call counter
+        agent_call_count=analyzer.get_call_count(body.agent_id),
     )
     risk_assessment = _risk_scorer.score(risk_ctx)
 
@@ -421,9 +424,12 @@ async def call_tool(
 
     # 4. Cedar policy authorization (synchronous — engine is thread-safe)
     cedar_engine = get_cedar_engine()
+    rate_counter: RateCounter = get_rate_counter()  # type: ignore[assignment]
+    rate_count = rate_counter.get_count(body.agent_id, plugin.name)
     decision = _authorize(
         cedar_engine, plugin.name, body.tool_name, body,
         tool_def=tool_def, risk_score=risk_assessment.score,
+        rate_count=rate_count,
     )
 
     # Map CedarDecision to policy_decision string
@@ -529,6 +535,7 @@ async def call_tool(
             plugin_latency_ms=mcp_result.latency_ms, total_latency_ms=total_ms,
         )
         pre_event.status = "success"
+        rate_counter.record(body.agent_id, plugin.name)
         return ToolCallSuccess(
             tool_name=body.tool_name,
             result=mcp_result.result,

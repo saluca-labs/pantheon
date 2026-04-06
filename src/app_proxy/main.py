@@ -28,6 +28,8 @@ _approval_sweeper_task: object | None = None
 _scheduler: object | None = None
 _risk_scorer: object | None = None
 _behavioral_analyzer: object | None = None
+_rate_counter: object | None = None
+_health_poller_task: asyncio.Task | None = None
 
 
 def get_settings() -> Settings:
@@ -76,13 +78,18 @@ def get_behavioral_analyzer() -> object:
     return _behavioral_analyzer
 
 
+def get_rate_counter() -> object:
+    assert _rate_counter is not None, "Rate counter not initialised."
+    return _rate_counter
+
+
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle for the App Proxy."""
-    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler, _risk_scorer, _behavioral_analyzer
+    global _settings, _db_engine, _cedar_engine, _plugin_registry, _audit_logger, _approval_service, _approval_sweeper_task, _scheduler, _risk_scorer, _behavioral_analyzer, _rate_counter, _health_poller_task
 
     # ---- startup ----
     _settings = Settings()
@@ -139,6 +146,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await _plugin_registry.load()
     logger.info("plugin.registry.ready", plugins=len(_plugin_registry.list_tools()))
 
+    # Background health polling for plugins
+    from app_proxy.plugins.health import run_health_poller
+
+    _health_poller_task = asyncio.create_task(
+        run_health_poller(_plugin_registry, interval_seconds=60)
+    )
+
     # Risk scorer + behavioral analyzer
     from app_proxy.risk.analyzer import BehavioralAnalyzer
 
@@ -151,6 +165,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     _behavioral_analyzer = BehavioralAnalyzer(window_minutes=30, max_history=100)
     logger.info("behavioral.analyzer.ready")
+
+    # Rate counter (in-memory sliding window)
+    from app_proxy.auth.rate_counter import RateCounter
+
+    _rate_counter = RateCounter(window_seconds=3600)
+    logger.info("rate.counter.ready")
 
     # Scheduler engine (needs cedar, registry, audit, DB)
     from app_proxy.scheduler.engine import SchedulerEngine
@@ -168,6 +188,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # ---- shutdown ----
     logger.info("app_proxy.shutdown")
+
+    # Cancel health poller
+    if _health_poller_task is not None:
+        _health_poller_task.cancel()
+        try:
+            await _health_poller_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("health.poller.cancelled")
 
     # Cancel approval sweeper
     if _approval_sweeper_task is not None:

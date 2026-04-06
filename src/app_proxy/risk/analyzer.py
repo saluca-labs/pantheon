@@ -112,6 +112,13 @@ class BehavioralAnalyzer:
                 alerts.append(alert)
         return alerts
 
+    def get_call_count(self, agent_id: str) -> int:
+        """Return the number of events in the current window for *agent_id*."""
+        with self._lock:
+            self._prune(agent_id)
+            q = self._history.get(agent_id)
+            return len(q) if q else 0
+
     def check_and_record(self, event: ToolEvent) -> list[BehavioralAlert]:
         """Record + analyze in one call (convenience)."""
         self.record(event)

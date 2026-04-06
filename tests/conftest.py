@@ -143,6 +143,10 @@ async def app_client(
     from app_proxy.risk.analyzer import BehavioralAnalyzer
     main_mod._behavioral_analyzer = BehavioralAnalyzer()
 
+    # --- Rate counter ---
+    from app_proxy.auth.rate_counter import RateCounter
+    main_mod._rate_counter = RateCounter()
+
     # --- Build client (bypass lifespan via ASGI transport) ---
     transport = ASGITransport(app=main_mod.app)  # type: ignore[arg-type]
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
