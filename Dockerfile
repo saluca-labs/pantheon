@@ -30,7 +30,7 @@ COPY plugins/ plugins/
 # Create writable data directory for SQLite
 RUN mkdir -p /app/data && chown -R appproxy:appproxy /app/data
 
-ENV PYTHONPATH="/app/plugins"
+ENV PYTHONPATH="/app"
 # Copy Cedar schema to a known location
 COPY src/app_proxy/policy/schema.json /app/policies/cedar_schema.json
 
