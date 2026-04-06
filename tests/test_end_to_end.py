@@ -194,12 +194,14 @@ async def test_tools_call_needs_approval(app_client: AsyncClient) -> None:
     assert "approval_id" in body
     assert "audit_ref" in body
 
-    # Verify the approval was queued in the in-memory store
-    from app_proxy.routers._approval_store import approval_store
+    # Verify the approval was queued in the DB-backed service
+    from app_proxy.main import get_approval_service
 
     approval_id = body["approval_id"]
-    assert approval_id in approval_store
-    assert approval_store[approval_id]["status"] == "pending"
+    service = get_approval_service()
+    record = await service.get(approval_id)
+    assert record is not None, f"Approval {approval_id} not found in DB"
+    assert record.status == "pending"
 
 
 # ═══════════════════════════════════════════════════════════════════════════

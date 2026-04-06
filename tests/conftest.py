@@ -82,6 +82,9 @@ async def app_client(
     orig_cedar = main_mod._cedar_engine
     orig_registry = main_mod._plugin_registry
     orig_audit = main_mod._audit_logger
+    orig_approval = getattr(main_mod, '_approval_service', None)
+    orig_analyzer = getattr(main_mod, '_behavioral_analyzer', None)
+    orig_scheduler = getattr(main_mod, '_scheduler', None)
 
     # --- Build test settings (no auth keys = dev mode) ---
     settings = Settings(
@@ -132,6 +135,14 @@ async def app_client(
     await registry.load()
     main_mod._plugin_registry = registry
 
+    # --- Approval service ---
+    from app_proxy.approval.service import ApprovalService
+    main_mod._approval_service = ApprovalService(db_engine=engine)
+
+    # --- Behavioral analyzer ---
+    from app_proxy.risk.analyzer import BehavioralAnalyzer
+    main_mod._behavioral_analyzer = BehavioralAnalyzer()
+
     # --- Build client (bypass lifespan via ASGI transport) ---
     transport = ASGITransport(app=main_mod.app)  # type: ignore[arg-type]
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -144,3 +155,5 @@ async def app_client(
     main_mod._cedar_engine = orig_cedar
     main_mod._plugin_registry = orig_registry
     main_mod._audit_logger = orig_audit
+    main_mod._approval_service = orig_approval
+    main_mod._behavioral_analyzer = orig_analyzer
