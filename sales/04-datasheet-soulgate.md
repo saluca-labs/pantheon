@@ -11,8 +11,9 @@ SoulGate is a reverse proxy gateway that secures the perimeter between your AI a
 Every request passes through a 7-step security pipeline before reaching upstream services. SoulGate validates tokens issued by SoulAuth and logs all traffic for audit.
 
 **Status**: Generally Available
-**Version**: 1.0
+**Version**: 3.6.1
 **Deployment**: Docker sidecar alongside SoulAuth
+**Docker Hub**: salucalabs/tiresias-soulgate
 
 ---
 
@@ -24,12 +25,12 @@ Every request passes through:
 2. **IP Access Control** - IP/CIDR allowlist and blocklist enforcement
 3. **Rate Limiting** - Sliding window rate limiter (in-memory + DB config)
 4. **Circuit Breaking** - 3-state machine (closed/open/half-open)
-5. **Request Inspection** - Prompt injection detection (36 patterns)
+5. **Request Inspection** - Prompt injection detection (40+ OWASP patterns)
 6. **Proxy** - Reverse proxy to upstream services
 7. **Audit Logging** - Async batch audit trail
 
 ### Prompt Injection Detection
-- 36 detection patterns covering known injection techniques
+- 40+ detection patterns based on OWASP known injection techniques
 - Pattern matching on request content
 - Custom threat pattern support
 - Block or alert modes
@@ -42,9 +43,14 @@ Every request passes through:
 
 ### Circuit Breakers
 - 3-state machine: closed (healthy), open (failing), half-open (testing)
+- Anti-weaponization protections to prevent abuse of circuit breaker triggers
 - Per-upstream circuit isolation
 - Configurable failure thresholds and recovery windows
 - Prevents cascade failures across your agent fleet
+
+### CoT Policy Enforcement
+- Chain-of-Thought policy evaluation at the gateway layer
+- Enforce reasoning transparency requirements before forwarding requests
 
 ### API Key Management
 - Bcrypt-hashed key storage
@@ -64,17 +70,20 @@ Every request passes through:
 
 | Specification | Detail |
 |---|---|
-| API | RESTful, 19 endpoints |
+| API | RESTful, ~32 operations |
 | Pipeline | 7-step request processing |
-| Injection Patterns | 36 detection signatures |
+| Injection Patterns | 40+ OWASP detection signatures |
 | Rate Limiter | Sliding window (memory + DB) |
 | Circuit Breaker | 3-state machine per upstream |
 | Key Hashing | Bcrypt |
 | Token Validation | ES256 local + SoulAuth callback |
 | Audit | Async batch logging |
 | Database | PostgreSQL 16 (shared cluster, isolated tables) |
+| CoT Enforcement | Gateway-level policy evaluation |
+| Circuit Breaker | 3-state with anti-weaponization |
 | Test Coverage | 40 tests (rate limit, inspection, circuit breaker) |
 | Container | Docker sidecar |
+| Orchestration | Kubernetes-ready (GCP Cloud Run verified) |
 
 ---
 
@@ -120,13 +129,17 @@ Inbound Request
 
 ## Pricing
 
-| Tier | Price | Includes |
-|---|---|---|
-| **Starter** | $10/agent/mo | Reverse proxy, rate limiting, prompt injection detection, circuit breakers, request audit, 7-day retention |
-| **Pro** | $20/agent/mo | Everything in Starter + API key management with rotation, IP access controls (CIDR), custom threat patterns, 30-day retention, upstream health monitoring, email support (24h) |
-| **Enterprise** | Custom | Everything in Pro + geographic access controls, 90-day retention, full audit export (CSV/API), dedicated gateway instance, custom payload inspection rules, dedicated account manager, 99.99% SLA |
+SoulGate is not sold separately. It is included as part of the unified Tiresias platform.
 
-Annual billing: 20% discount. Also available as part of the Tiresias Platform bundle (save up to 18%).
+| Tier | Platform Price | SoulGate Access |
+|---|---|---|
+| **Open** | **Free** | Reverse proxy, basic rate limiting, prompt injection detection (40+ patterns), request audit, 7-day retention |
+| **Starter** | **$49/mo** | Everything in Open + circuit breakers, enhanced rate limiting, 30-day retention |
+| **Pro** | **$199/mo** | Everything in Starter + API key management with rotation, IP access controls (CIDR), CoT policy enforcement, custom threat patterns, 90-day retention, upstream health monitoring |
+| **Enterprise** | **$2,499/mo** | Everything in Pro + geographic access controls, custom retention, full audit export (CSV/API), dedicated gateway instance, custom payload inspection rules, dedicated support (8h SLA) |
+| **MSSP** | **$4,999/mo base + $199/tenant** | Multi-tenant gateway management, cross-tenant access rules |
+
+Annual billing: 17% discount (2 months free). Also available as part of the Tiresias Platform bundle (save up to 18%).
 
 ---
 

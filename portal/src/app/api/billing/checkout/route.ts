@@ -60,7 +60,7 @@ const PLANS: Record<
     type: "recurring",
   },
   enterprise: {
-    // Custom invoicing ($999-4,999/mo) — not self-serve
+    // Custom invoicing ($2,499/mo) — not self-serve
     name: "Tiresias Enterprise",
     stripe_price_id: "",
     stripe_price_id_annual: "",
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         {
           error: "enterprise_contact_sales",
           detail:
-            "Enterprise plans ($999-4,999/mo) require custom invoicing. Contact sales.",
+            "Enterprise plans ($2,499/mo) require custom invoicing. Contact sales.",
           redirect_url: "mailto:contact@tiresias.network?subject=Tiresias%20Enterprise%20Inquiry",
         },
         { status: 400 }
