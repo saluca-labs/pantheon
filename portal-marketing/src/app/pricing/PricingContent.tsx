@@ -24,11 +24,11 @@ interface Tier {
 
 const tiers: Tier[] = [
   {
-    name: "Community",
+    name: "Open",
     priceMonthly: "Free",
     priceAnnual: "Free",
     period: "",
-    tagline: "For individuals, students, OSS, and startups under $1M ARR",
+    tagline: "For individuals, students, OSS, and companies under $1M ARR",
     highlight: false,
     cta: "Get Started Free",
     ctaHref: "/developers",
@@ -46,7 +46,7 @@ const tiers: Tier[] = [
   {
     name: "Starter",
     priceMonthly: "$49",
-    priceAnnual: "$468",
+    priceAnnual: "$488",
     period: "/mo",
     tagline: "For growing teams with production agents",
     highlight: false,
@@ -69,7 +69,7 @@ const tiers: Tier[] = [
   {
     name: "Pro",
     priceMonthly: "$199",
-    priceAnnual: "$2,028",
+    priceAnnual: "$1,982",
     period: "/mo",
     tagline: "For security teams running at scale",
     highlight: true,
@@ -96,7 +96,7 @@ const tiers: Tier[] = [
   {
     name: "Enterprise",
     priceMonthly: "$2,499",
-    priceAnnual: "$1,999",
+    priceAnnual: "$24,890",
     period: "/mo",
     tagline: "For security-critical and regulated environments",
     highlight: false,
@@ -152,15 +152,15 @@ const faqs = [
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Community (free) tier.",
+    a: "Yes. Cancel at any time from your billing dashboard. Your access continues through the end of the current billing period, then downgrades to the Open (free) tier.",
   },
   {
     q: "What is your refund policy?",
     a: "All purchases are final \u2014 there are no refunds. You can cancel your subscription at any time to prevent future charges. Monthly plans stop at the end of the current billing period. Annual plans stop auto-renewal at the end of the term. Enterprise multi-year contracts have separate cancellation terms negotiated at signing.",
   },
   {
-    q: "Who qualifies for the free Community tier?",
-    a: "The Community tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
+    q: "Who qualifies for the free Open tier?",
+    a: "The Open tier is free forever for individuals, students, open-source projects, and businesses under $1M ARR. No credit card required. No time-limited trial \u2014 natural feature limits enforce tier boundaries.",
   },
   {
     q: "Can I self-host Tiresias?",
@@ -172,7 +172,7 @@ const faqs = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Community (free) tier automatically.",
+    a: "Yes. Starter and Pro plans include a 14-day free trial with full access to all features in your tier. No credit card is required to start. At the end of the trial you can subscribe or your account downgrades to the Open (free) tier automatically.",
   },
   {
     q: "Do you offer annual discounts?",
@@ -184,7 +184,7 @@ const faqs = [
   },
   {
     q: "What about Platform and OEM licensing?",
-    a: "For SaaS platforms embedding Tiresias or OEM partners, we offer Platform ($2,499\u2013$24,999/mo) and OEM ($49,999\u2013$199,999/mo) tiers with unlimited agents, custom retention, and dedicated support. Contact partnerships@saluca.com.",
+    a: "For SaaS platforms embedding Tiresias or OEM partners, we offer Platform ($14,999/mo + $10/tenant) and OEM ($49,999\u2013$199,999/mo) tiers with unlimited agents, custom retention, and dedicated support. Contact partnerships@saluca.com.",
   },
 ];
 
@@ -321,8 +321,9 @@ export default function PricingContent() {
                 displayPeriod = "";
               } else if (isEnterprise) {
                 if (annual) {
-                  displayPrice = "$1,999";
-                  displayPeriod = "/mo";
+                  displayPrice = "$24,890";
+                  displayPeriod = "/yr";
+                  billedNote = "billed annually ($2,074.17/mo)";
                 } else {
                   displayPrice = "$2,499";
                   displayPeriod = "/mo";
@@ -436,7 +437,7 @@ export default function PricingContent() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left p-4 font-semibold text-foreground-muted">Feature</th>
-                    <th className="text-center p-4 font-semibold">Community</th>
+                    <th className="text-center p-4 font-semibold">Open</th>
                     <th className="text-center p-4 font-semibold">Starter</th>
                     <th className="text-center p-4 font-semibold text-gold-400">Pro</th>
                     <th className="text-center p-4 font-semibold">Enterprise</th>
@@ -475,25 +476,60 @@ export default function PricingContent() {
                 Unlimited agents, custom retention, white-label options, and dedicated support.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="rounded-xl border border-border p-6">
-                <h3 className="font-semibold mb-1">Platform</h3>
-                <p className="text-2xl font-bold">$2,499<span className="text-sm font-normal text-foreground-muted">&ndash;$24,999/mo</span></p>
-                <p className="text-sm text-foreground-muted mt-2">Unlimited agents, custom retention, multi-year available</p>
+                <div className="inline-flex items-center gap-2 rounded-lg bg-amber-500/5 px-3 py-1.5 mb-3">
+                  <span className="text-sm font-bold text-amber-400">MSSP</span>
+                </div>
+                <p className="text-2xl font-bold">$4,999<span className="text-sm font-normal text-foreground-muted">/mo</span></p>
+                <p className="text-sm text-foreground-muted mt-1">+ $199/tenant/mo (metered)</p>
+                <ul className="mt-4 space-y-2 text-sm text-foreground-muted">
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-amber-400 shrink-0" /><span>Sub-tenant provisioning via API</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-amber-400 shrink-0" /><span>White-label branding</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-amber-400 shrink-0" /><span>Per-tenant isolation and policies</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-amber-400 shrink-0" /><span>Stripe Connect payouts</span></li>
+                </ul>
                 <Link
-                  href="mailto:partnerships@saluca.com?subject=Tiresias%20Platform%20Inquiry"
-                  className="mt-4 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
+                  href="mailto:partnerships@saluca.com?subject=Tiresias%20MSSP%20Inquiry"
+                  className="mt-5 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
                 >
                   Contact Partnerships
                 </Link>
               </div>
               <div className="rounded-xl border border-border p-6">
-                <h3 className="font-semibold mb-1">OEM</h3>
+                <div className="inline-flex items-center gap-2 rounded-lg bg-teal-500/5 px-3 py-1.5 mb-3">
+                  <span className="text-sm font-bold text-teal-400">Platform</span>
+                </div>
+                <p className="text-2xl font-bold">$14,999<span className="text-sm font-normal text-foreground-muted">/mo</span></p>
+                <p className="text-sm text-foreground-muted mt-1">+ $10/tenant/mo, annual contracts</p>
+                <ul className="mt-4 space-y-2 text-sm text-foreground-muted">
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-teal-400 shrink-0" /><span>Unlimited agents</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-teal-400 shrink-0" /><span>Custom data retention</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-teal-400 shrink-0" /><span>Multi-tenant isolation</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-teal-400 shrink-0" /><span>Dedicated support</span></li>
+                </ul>
+                <Link
+                  href="mailto:partnerships@saluca.com?subject=Tiresias%20Platform%20Inquiry"
+                  className="mt-5 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
+                >
+                  Contact Partnerships
+                </Link>
+              </div>
+              <div className="rounded-xl border border-gold-500/20 p-6">
+                <div className="inline-flex items-center gap-2 rounded-lg bg-gold-500/5 px-3 py-1.5 mb-3">
+                  <span className="text-sm font-bold text-gold-400">OEM</span>
+                </div>
                 <p className="text-2xl font-bold">$49,999<span className="text-sm font-normal text-foreground-muted">&ndash;$199,999/mo</span></p>
-                <p className="text-sm text-foreground-muted mt-2">Unlimited agents, custom retention, multi-year contracts</p>
+                <p className="text-sm text-foreground-muted mt-1">Multi-year contracts</p>
+                <ul className="mt-4 space-y-2 text-sm text-foreground-muted">
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Everything in Platform</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Full white-label</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Custom SLAs (up to 99.99%)</span></li>
+                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Tier 1 scale (Zapier/Make class)</span></li>
+                </ul>
                 <Link
                   href="mailto:partnerships@saluca.com?subject=Tiresias%20OEM%20Inquiry"
-                  className="mt-4 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
+                  className="mt-5 block text-center rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:border-border-hover hover:bg-navy-800/50 transition-all"
                 >
                   Contact Partnerships
                 </Link>
@@ -533,7 +569,7 @@ export default function PricingContent() {
               Ready to secure your AI agents?
             </h2>
             <p className="text-foreground-muted mb-8 max-w-xl mx-auto">
-              Start free with the Community tier. No credit card required.
+              Start free with the Open tier. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

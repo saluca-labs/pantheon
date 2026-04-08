@@ -59,7 +59,7 @@ export default function LegalPage() {
                 Saluca LLC (&quot;Saluca,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is committed to protecting the privacy of individuals and organizations that use our products and services. This Privacy Policy explains how we collect, use, store, and share information when you interact with Tiresias, our AI security platform, including our website, dashboard, APIs, documentation, and related services (collectively, the &quot;Service&quot;).
               </p>
               <p className="text-of-on-surface-variant leading-relaxed mt-4">
-                This policy applies to all users of the Service, whether you are using our free Community Tier or a paid subscription. By using the Service, you acknowledge that you have read and understood this Privacy Policy.
+                This policy applies to all users of the Service, whether you are using our free Open Tier or a paid subscription. By using the Service, you acknowledge that you have read and understood this Privacy Policy.
               </p>
             </div>
 
@@ -693,7 +693,7 @@ export default function LegalPage() {
               <ul className="list-disc pl-6 space-y-2 text-of-on-surface-variant">
                 <li><span className="text-foreground font-medium">&quot;API Key&quot;</span> means a unique cryptographic token issued to Customer for authentication with the Service.</li>
                 <li><span className="text-foreground font-medium">&quot;Authorized Users&quot;</span> means individuals authorized by Customer to access and use the Service under Customer&apos;s account.</li>
-                <li><span className="text-foreground font-medium">&quot;Community Tier&quot;</span> means the free, open-source tier of the Service licensed under the Apache License 2.0.</li>
+                <li><span className="text-foreground font-medium">&quot;Open Tier&quot;</span> means the free, open-source tier of the Service licensed under the Apache License 2.0.</li>
                 <li><span className="text-foreground font-medium">&quot;Customer Data&quot;</span> means all data, content, and information submitted to or processed through the Service by Customer or its Authorized Users.</li>
                 <li><span className="text-foreground font-medium">&quot;Dashboard&quot;</span> means the web-based management interface for the Service available at tiresias.network.</li>
                 <li><span className="text-foreground font-medium">&quot;Documentation&quot;</span> means the technical documentation, user guides, and API references provided by Saluca for the Service.</li>
@@ -739,9 +739,9 @@ export default function LegalPage() {
                 <span className="text-of-primary">3.</span> Service Tiers and Features
               </h3>
 
-              <h4 className="text-foreground font-medium mt-4 mb-2">3.1 Community Tier</h4>
+              <h4 className="text-foreground font-medium mt-4 mb-2">3.1 Open Tier</h4>
               <p className="text-of-on-surface-variant mb-3">
-                The Community Tier is available free of charge and is licensed under the Apache License, Version 2.0. The Community Tier includes the core Tiresias engine for self-hosted deployment. Community Tier users are subject to the terms of the Apache 2.0 license in addition to these Terms.
+                The Open Tier is available free of charge and is licensed under the Apache License, Version 2.0. The Open Tier includes the core Tiresias engine for self-hosted deployment. Open Tier users are subject to the terms of the Apache 2.0 license in addition to these Terms.
               </p>
 
               <h4 className="text-foreground font-medium mt-6 mb-2">3.2 Paid Tiers</h4>
@@ -819,11 +819,11 @@ export default function LegalPage() {
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Enterprise</td>
-                      <td className="py-2">$999 &ndash; $4,999/month (custom)</td>
+                      <td className="py-2">$2,499/month</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Platform</td>
-                      <td className="py-2">$2,499 &ndash; $24,999/month (custom)</td>
+                      <td className="py-2">$14,999/month + $10/tenant (custom)</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">OEM</td>
@@ -933,9 +933,9 @@ export default function LegalPage() {
                 Subject to your compliance with these Terms and payment of applicable fees, Saluca grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Service during the Subscription Period for your internal business purposes.
               </p>
 
-              <h4 className="text-foreground font-medium mt-6 mb-2">6.3 Community License</h4>
+              <h4 className="text-foreground font-medium mt-6 mb-2">6.3 Open License</h4>
               <p className="text-of-on-surface-variant">
-                The Community Tier of Tiresias is licensed under the Apache License, Version 2.0. You may use, modify, and distribute the Community Tier in accordance with the Apache 2.0 license terms. The Apache 2.0 license does not extend to proprietary features, hosted services, or Paid Tier components.
+                The Open Tier of Tiresias is licensed under the Apache License, Version 2.0. You may use, modify, and distribute the Open Tier in accordance with the Apache 2.0 license terms. The Apache 2.0 license does not extend to proprietary features, hosted services, or Paid Tier components.
               </p>
 
               <h4 className="text-foreground font-medium mt-6 mb-2">6.4 Feedback</h4>
@@ -945,7 +945,7 @@ export default function LegalPage() {
 
               <h4 className="text-foreground font-medium mt-6 mb-2">6.5 Restrictions</h4>
               <p className="text-of-on-surface-variant">
-                Except as expressly permitted by these Terms or applicable law, you may not: (a) reverse engineer, decompile, or disassemble the Service; (b) modify, adapt, or create derivative works of the Service (except as permitted under the Apache 2.0 license for the Community Tier); (c) sublicense, resell, or redistribute the Service; (d) remove or alter any proprietary notices or labels; or (e) use the Service to develop a competing product.
+                Except as expressly permitted by these Terms or applicable law, you may not: (a) reverse engineer, decompile, or disassemble the Service; (b) modify, adapt, or create derivative works of the Service (except as permitted under the Apache 2.0 license for the Open Tier); (c) sublicense, resell, or redistribute the Service; (d) remove or alter any proprietary notices or labels; or (e) use the Service to develop a competing product.
               </p>
             </div>
 
@@ -966,7 +966,7 @@ export default function LegalPage() {
                   </thead>
                   <tbody className="text-of-on-surface-variant">
                     <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Community</td>
+                      <td className="py-2 pr-4">Open</td>
                       <td className="py-2">Best effort (self-hosted)</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
@@ -1000,7 +1000,7 @@ export default function LegalPage() {
                   </thead>
                   <tbody className="text-of-on-surface-variant">
                     <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Community</td>
+                      <td className="py-2 pr-4">Open</td>
                       <td className="py-2">GitHub Issues, community forum</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
@@ -1109,9 +1109,9 @@ export default function LegalPage() {
                 EXCEPT AS EXPRESSLY SET FORTH IN THIS SECTION 10, THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. SALUCA DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR COMPLETELY SECURE.
               </p>
 
-              <h4 className="text-foreground font-medium mt-6 mb-2">10.4 Community Tier</h4>
+              <h4 className="text-foreground font-medium mt-6 mb-2">10.4 Open Tier</h4>
               <p className="text-of-on-surface-variant">
-                THE COMMUNITY TIER IS PROVIDED &quot;AS IS&quot; WITHOUT ANY WARRANTY WHATSOEVER. THE COMMUNITY TIER IS LICENSED UNDER THE APACHE LICENSE 2.0 AND IS SUBJECT TO THE DISCLAIMERS AND LIMITATIONS SET FORTH IN THAT LICENSE.
+                THE OPEN TIER IS PROVIDED &quot;AS IS&quot; WITHOUT ANY WARRANTY WHATSOEVER. THE OPEN TIER IS LICENSED UNDER THE APACHE LICENSE 2.0 AND IS SUBJECT TO THE DISCLAIMERS AND LIMITATIONS SET FORTH IN THAT LICENSE.
               </p>
             </div>
 

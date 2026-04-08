@@ -4,6 +4,8 @@
 
 ---
 
+**Version 3.6.1 | Generally Available**
+
 ## The Problem
 
 AI agents are the new attack surface. Every autonomous agent is an identity without governance - calling APIs, accessing data stores, and communicating with other agents with implicit trust and zero audit trails. Traditional IAM was never built for this.
@@ -29,7 +31,7 @@ Cryptographic agent identity, just-in-time authorization, and policy-as-code. Ev
 Real-time behavioral analytics for your agent fleet. Sigma-compatible detection rules, anomaly scoring, and automated alerting - without reading agent payloads.
 
 ### SoulGate - API Security Gateway
-Secure the perimeter between your agents and the outside world. Rate limiting, prompt injection detection, circuit breakers, and threat detection at the API layer.
+Secure the perimeter between your agents and the outside world. Rate limiting, prompt injection detection (40+ OWASP patterns), circuit breakers with anti-weaponization, and CoT policy enforcement at the API layer.
 
 ---
 
@@ -53,7 +55,7 @@ Agent Request --> SoulAuth (Identity & AuthZ) --> SoulWatch (Monitor) --> SoulGa
 | Zero-knowledge architecture | Yes | No | No |
 | Runtime behavioral monitoring | Yes (SoulWatch) | No | Partial |
 | Policy-as-code (git sync) | Yes | Partial | No |
-| Prompt injection detection | Yes (36 patterns) | No | Partial |
+| Prompt injection detection | Yes (40+ OWASP patterns) | No | Partial |
 | SIEM integration | Native (Splunk, Elastic, Sentinel) | N/A | No |
 | Sigma detection rules | Yes (SOC-compatible) | N/A | No |
 | Automated quarantine | 7 graduated response actions | No | No |
@@ -64,11 +66,18 @@ Agent Request --> SoulAuth (Identity & AuthZ) --> SoulWatch (Monitor) --> SoulGa
 ## Enterprise Features
 
 - **Policy-as-Code** - YAML policies versioned in git, deployed through CI/CD
-- **SIEM Integration** - Native connectors for Splunk, Elastic, Microsoft Sentinel, Syslog
+- **SIEM Integration** - Native connectors for Splunk, Elastic, Microsoft Sentinel, Syslog, Webhook
 - **Sigma Detection Rules** - SOC-compatible rules using your existing detection pipeline
-- **Multi-Tenancy** - Tenant isolation with row-level security, per-tenant policy namespaces
+- **Multi-Tenancy** - Tenant isolation with row-level security, per-tenant policy namespaces, hierarchy-aware provisioning
+- **Tenant Hierarchy** - Parent-child tenant trees with tier-based creation matrix, cycle detection, and cross-tenant subtree visibility
+- **Team RBAC** - Two-layer role model (portal-level + team-level), user management, invitation workflows
+- **Per-Tenant Rate Limiting** - Tier-based request throttling from Open (60/min) through MSSP (unlimited)
+- **Data Export** - Streaming export of audit logs, keys, and policies (enterprise+ gated)
+- **Password Policy** - Enforced complexity (10+ chars, character classes, 500+ common password blocklist)
+- **Failed Auth Audit Trail** - All failed login attempts logged (local, OIDC, LDAP)
 - **Automated Quarantine** - Seven graduated response actions, policy-driven, audit-logged
-- **Compliance Ready** - Designed with GDPR Article 25 principles, exportable audit logs, SOC2/ISO 27001/NIST reporting
+- **Compliance Ready** - 31/32 SaaS production checklist items passing. GDPR Article 25 principles, exportable audit logs, SOC2/ISO 27001/NIST reporting
+- **OIDC Hardening** - PostgreSQL-backed nonce store, state secret enforcement, session cookie security (httpOnly, secure, sameSite)
 
 ---
 
@@ -76,20 +85,23 @@ Agent Request --> SoulAuth (Identity & AuthZ) --> SoulWatch (Monitor) --> SoulGa
 
 Products can be purchased independently or bundled for savings.
 
-| | Starter/Community | Pro | Enterprise |
+| Tier | Monthly | Annual | Includes |
 |---|---|---|---|
-| **SoulAuth** | Free | $15/agent/mo | Custom |
-| **SoulWatch** | $10/agent/mo | $20/agent/mo | Custom |
-| **SoulGate** | $10/agent/mo | $20/agent/mo | Custom |
-| **Platform Bundle** | $29/agent/mo (save 17%) | $45/agent/mo (save 18%) | Custom |
+| **Open** | Free | Free | 25 agents, 7-day retention |
+| **Starter** | $49/mo | $488/yr ($40.67/mo) | 50 agents, 30-day retention |
+| **Pro** | $199/mo | $1,982/yr ($165.17/mo) | 250 agents, 90-day retention |
+| **Enterprise** | $2,499/mo | $24,890/yr ($2,074.17/mo) | Unlimited agents, custom retention |
+| **MSSP** | $4,999/mo + $199/tenant/mo | Custom | Multi-tenant hierarchy |
+| **Platform** | $14,999/mo + $10/tenant | Custom | SaaS embedding |
+| **OEM** | $49,999-$199,999/mo | Custom | Full white-label |
 
-Annual billing: 20% discount. Startup program available (Platform Pro free for 12 months for qualified startups).
+Annual billing: 17% discount (2 months free). Startup program available (Platform Pro free for 12 months for qualified startups).
 
 ---
 
 ## Get Started
 
-- **Free Trial**: 14 days, full Pro access to all three products, no credit card required
+- **Free Tier**: Open tier, 25 agents, no credit card required
 - **Website**: tiresias.network
 - **Contact**: contact@saluca.com
 - **Developer Docs**: tiresias.network/developers
