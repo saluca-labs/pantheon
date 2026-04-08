@@ -127,12 +127,12 @@ Tiresias fits your infrastructure, not the other way around.
 
 | Tier | What You Get | Price |
 |---|---|---|
-| **Community** | SoulAuth only. 1 agent, 1,000 API calls/month. | Free forever |
-| **Starter** | Basic monitoring and gateway protection. | $10-29 / agent / month |
-| **Pro** | Full platform. Custom detection rules. SIEM integration. | $15-45 / agent / month |
-| **Enterprise** | SSO/SAML, on-premise deployment, dedicated support, SLA. | Custom |
+| **Open** | Full platform. 25 agents, 7-day retention. | Free |
+| **Starter** | Session replay, tagging, cost dashboard. 50 agents, 30-day retention. | $49/mo |
+| **Pro** | Custom Sigma rules, response playbooks, BYOK encryption. 250 agents, 90-day retention. | $199/mo |
+| **Enterprise** | SSO/SAML, audit log export, air-gap deployment, unlimited agents. | $2,499/mo |
 
-- Annual billing saves 20%.
+- Annual billing saves 17% (2 months free).
 - Platform bundles (SoulAuth + SoulWatch + SoulGate together) save 17-18% compared to purchasing products individually.
 
 ---
