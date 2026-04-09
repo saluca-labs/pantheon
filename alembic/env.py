@@ -23,8 +23,12 @@ try:
 except Exception:
     sync_url = config.get_main_option("sqlalchemy.url")
 
-# No MetaData target — we use raw SQL operations in migrations
-target_metadata = None
+# Import models for autogenerate support
+try:
+    from src.database.models import Base
+    target_metadata = Base.metadata
+except Exception:
+    target_metadata = None
 
 
 def run_migrations_offline() -> None:
