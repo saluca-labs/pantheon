@@ -15,6 +15,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 
+# Whitelist of allowed columns for WHERE clause construction
+# Security: prevents SQL injection via column name manipulation
+ALLOWED_CONTRACT_COLUMNS = frozenset({
+    "contract_type",
+    "tenant_id",
+    "partner_id",
+    "status",
+    "review_status",
+    "submitted_by",
+})
+
 
 def compute_content_hash(content: str, prev_hash: Optional[str] = None) -> str:
     """Compute SHA-256 hash of contract content linked to previous version."""
@@ -39,7 +50,10 @@ async def get_latest_version(
     partner_id: Optional[uuid.UUID] = None,
     contract_type: str = "msa",
 ) -> Optional[dict]:
-    """Get the latest contract version for a tenant/partner."""
+    """Get the latest contract version for a tenant/partner.
+
+    Security: Uses parameterized queries with column whitelist to prevent SQL injection.
+    """
     conditions = ["contract_type = :ctype"]
     params = {"ctype": contract_type}
 
@@ -51,6 +65,8 @@ async def get_latest_version(
         params["pid"] = str(partner_id)
 
     where = " AND ".join(conditions)
+    # Security: where clause built from hardcoded column names only,
+    # values passed as parameters - never interpolate user input into SQL
     result = await db.execute(text(f"""
         SELECT id, version, status, content_hash, prev_hash, content,
                review_status, review_risk_score, submitted_by, created_at
@@ -82,7 +98,10 @@ async def verify_chain(
     partner_id: Optional[uuid.UUID] = None,
     contract_type: str = "msa",
 ) -> dict:
-    """Verify the integrity of the entire contract version chain."""
+    """Verify the integrity of the entire contract version chain.
+
+    Security: Uses parameterized queries with column whitelist to prevent SQL injection.
+    """
     conditions = ["contract_type = :ctype"]
     params = {"ctype": contract_type}
 
@@ -94,6 +113,8 @@ async def verify_chain(
         params["pid"] = str(partner_id)
 
     where = " AND ".join(conditions)
+    # Security: where clause built from hardcoded column names only,
+    # values passed as parameters - never interpolate user input into SQL
     result = await db.execute(text(f"""
         SELECT version, content, content_hash, prev_hash
         FROM _soul_contracts

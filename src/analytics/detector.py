@@ -128,12 +128,17 @@ class AnomalyDetector:
         baseline_engine: BaselineEngine,
         thresholds: Optional[dict] = None,
         window_size: int = 300,  # 5 minute sliding window in seconds
+        ttl_days: int = 7,  # TTL for event windows - compliance: retain for audit
     ):
         self._baseline_engine = baseline_engine
         self._thresholds = {**self.DEFAULT_THRESHOLDS, **(thresholds or {})}
         self._window_size = window_size
+        self._ttl_seconds = ttl_days * 24 * 60 * 60  # Convert days to seconds
+        self._last_cleanup = time.time()
+        self._cleanup_interval = 3600  # Run cleanup every 1 hour
 
         # Sliding windows: soulkey_id -> deque of (timestamp, event_dict)
+        # Privacy: TTL enforced to prevent indefinite retention
         self._event_windows: dict[uuid.UUID, deque] = {}
 
         # Recent anomalies ring buffer
@@ -145,11 +150,43 @@ class AnomalyDetector:
         # Track key rotation events: soulkey_id -> deque of timestamps
         self._rotation_window: dict[uuid.UUID, deque] = {}
 
+    def _cleanup_old_entries(self) -> None:
+        """
+        Remove entries older than TTL from all sliding windows.
+
+        Privacy: Enforces data retention policy - events older than 7 days are purged.
+        Compliance: TTL configurable for audit retention requirements.
+        """
+        current_time = time.time()
+        if current_time - self._last_cleanup < self._cleanup_interval:
+            return  # Not time for cleanup yet
+
+        for window_dict in [self._event_windows, self._failed_auth_window, self._rotation_window]:
+            keys_to_delete = []
+            for key, deque_list in window_dict.items():
+                # Remove old entries from front of deque
+                while deque_list and (current_time - deque_list[0][0]) > self._ttl_seconds:
+                    deque_list.popleft()
+                # Mark empty deques for deletion
+                if not deque_list:
+                    keys_to_delete.append(key)
+            # Clean up empty entries
+            for key in keys_to_delete:
+                del window_dict[key]
+
+        self._last_cleanup = current_time
+        logger.debug("detector.cleanup.complete", windows_checked=len(window_dict))
+
     async def check_event(self, event: AuditLog) -> list[Anomaly]:
         """
         Check a single audit event against baselines.
         Returns a list of detected anomalies (may be empty).
+
+        Privacy: TTL cleanup enforced to prevent indefinite data retention.
         """
+        # Run periodic cleanup to enforce TTL (privacy/compliance)
+        self._cleanup_old_entries()
+
         if not event.soulkey_id:
             return await self._check_unauthenticated_event(event)
 

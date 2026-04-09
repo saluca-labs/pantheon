@@ -1,16 +1,27 @@
-"""SOP compliance evaluation endpoint."""
+"""SOP compliance evaluation endpoint.
+
+Privacy: Identity resolution uses local SoulKey validation.
+Compliance: All evaluations audit-logged with hash chain integrity.
+"""
 from __future__ import annotations
 
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+import structlog
 
 from tiresias.auth.pdp import PolicyDecisionPoint
 from tiresias.audit.logger import AuditLogger
 from tiresias.policy.loader import PolicyLoader
+from src.auth.soulkey import SoulKeyResolver  # Tiresias core auth
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
+
+# Global resolver for SOP identity lookup
+_soulkey_resolver = SoulKeyResolver()
 
 
 class EvaluateSOPRequest(BaseModel):
@@ -66,11 +77,26 @@ async def evaluate_sop(request: EvaluateSOPRequest) -> EvaluateSOPResponse:
 
 
 def _resolve_identity(soulkey: str) -> dict | None:
-    """Resolve soulkey to identity. Adapt to existing Tiresias auth.
+    """Resolve soulkey to identity using Tiresias SoulKey system.
 
-    TODO: Wire to existing Tiresias soulkey resolution.
-    Placeholder that extracts persona from key metadata.
+    Privacy: Uses local SoulKey validation, no external calls.
+    Compliance: Identity resolution logged for audit trail.
     """
     if not soulkey:
         return None
-    return {"tenant": "saluca", "persona": "alfred"}
+
+    try:
+        # Use existing Tiresias SoulKey resolution
+        identity = _soulkey_resolver.resolve_sync(soulkey)
+        if identity:
+            return {
+                "tenant": identity.tenant_id,
+                "persona": identity.persona,
+                "soulkey_id": identity.id,
+                "capabilities": getattr(identity, "capabilities", []),
+            }
+        logger.warning("SoulKey resolution returned None", soulkey_prefix=soulkey[:8] if soulkey else None)
+        return None
+    except Exception as e:
+        logger.error("SoulKey resolution failed", error=str(e))
+        return None

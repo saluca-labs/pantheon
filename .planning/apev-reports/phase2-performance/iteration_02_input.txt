@@ -1,0 +1,28 @@
+TIRESIAS PHASE 2: PERFORMANCE & CODE QUALITY - ITERATION 2
+
+Review these issues. For each: VERDICT, SEVERITY, FIX (complete code), TEST, VERIFY.
+
+ISSUE P1: Memory Leak in Detector
+File: src/analytics/detector.py, Lines: 137-146
+self._event_windows: dict[uuid.UUID, deque] = {}  # Grows forever
+self._failed_auth_window: dict[str, deque] = {}   # Grows forever
+self._rotation_window: dict[uuid.UUID, deque] = {} # Grows forever
+
+No TTL/pruning. FIX: Add max age (7 days) with periodic cleanup.
+
+ISSUE P2: N+1 Stripe Queries
+File: src/partner/admin_router.py, Lines: 260-273
+Stripe Connect status checked in loop for each partner without batching.
+FIX: Batch Stripe API calls or cache results.
+
+ISSUE P4: Over-Complex check_event() Method
+File: src/analytics/detector.py, Line: 148
+Single method with 18+ anomaly checks - hard to test, maintain.
+FIX: Split into per-anomaly-type methods with registry pattern.
+
+ISSUE P5: Debug Print Statements
+- src/sdk/__init__.py:17 - print statement in docstring example
+- src/saas/trial_expiry.py:128 - print(f"Trial expiry job complete: {result}")
+FIX: Replace with structlog logger.
+
+OUTPUT: Plain text, markdown for code. Privacy-first, compliance-driven.

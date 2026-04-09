@@ -40,6 +40,7 @@ from src.investigation.router import router as investigation_router
 from src.saas.router import router as saas_router
 from src.saas.master import router as saas_master_router
 from src.partner.router import router as partner_router
+from src.partner.setup import register_partner_program
 from src.contracts.router import router as contracts_router
 from src.siem.router import router as siem_router
 from src.idp.router import router as idp_router
@@ -178,12 +179,17 @@ async def lifespan(app: FastAPI):
     ).hexdigest() if license_token.is_valid else None
 
     # Start license integrity watchdog (T2.3)
+    # Config: WATCHDOG_INTERVAL_SECONDS (default: 300)
     from src.license.watchdog import start_watchdog, stop_watchdog
-    start_watchdog(app, interval_seconds=300)
+    _watchdog_interval = int(os.environ.get("WATCHDOG_INTERVAL_SECONDS", "300"))
+    start_watchdog(app, interval_seconds=_watchdog_interval)
 
     # Start config integrity watchdog (T5.1)
+    # Config: CONFIG_WATCHDOG_INTERVAL_SECONDS (default: 60), APP_ROOT (default: /app)
     from src.security.config_watchdog import start_config_watchdog, stop_config_watchdog
-    start_config_watchdog(app_root="/app", interval_seconds=60)
+    _config_interval = int(os.environ.get("CONFIG_WATCHDOG_INTERVAL_SECONDS", "60"))
+    _app_root = os.environ.get("APP_ROOT", "/app")
+    start_config_watchdog(app_root=_app_root, interval_seconds=_config_interval)
 
     # Start background gauge updater
     try:
@@ -498,6 +504,7 @@ app.include_router(investigation_router)
 app.include_router(saas_router)
 app.include_router(saas_master_router)
 app.include_router(partner_router)
+register_partner_program(app)
 app.include_router(contracts_router)
 app.include_router(siem_router)
 app.include_router(idp_router)
