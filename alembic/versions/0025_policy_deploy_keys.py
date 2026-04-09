@@ -1,7 +1,7 @@
 """Add per-tenant SSH deploy keys for policy git push.
 
-Revision ID: 0021
-Revises: 0020
+Revision ID: 0025
+Revises: 0024
 Create Date: 2026-04-04
 """
 from typing import Sequence, Union
@@ -9,8 +9,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0021"
-down_revision: str = "0020"
+revision: str = "0025"
+down_revision: str = "0024"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

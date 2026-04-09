@@ -108,7 +108,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Prevent CDN/Next.js caching on dynamic pages
-  const NO_CACHE_PATHS = ["/trial", "/pricing"];
+  const NO_CACHE_PATHS = ["/trial", "/pricing", "/onboarding"];
   if (NO_CACHE_PATHS.some((p) => pathname === p)) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -127,6 +127,7 @@ export const config = {
     "/login",
     "/trial",
     "/pricing",
+    "/onboarding",
     "/v1/:path*",
     "/dash/:path*",
   ],
