@@ -1,0 +1,149 @@
+# =============================================================================
+# Tiresias Partner Program: Overlay / Patch Reference
+# =============================================================================
+# This file documents ALL changes needed to existing Kubernetes manifests to
+# support the partner program. Since existing files are not modified directly,
+# apply these changes manually or use this as a kustomize strategic-merge patch.
+#
+# Affected manifests:
+#   - k8s/soulauth-deployment.yaml  (env vars)
+#   - k8s/ingress.yaml              (webhook path rule)
+#   - k8s/network-policy.yaml       (no changes needed, documented below)
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Section 1: SoulAuth Deployment — Additional Environment Variables
+# ---------------------------------------------------------------------------
+# Add these env vars to soulauth-deployment.yaml at:
+#   spec.template.spec.containers[0].env  (the soulauth container)
+#
+# Insert after the existing SOULAUTH_OIDC_STATE_SECRET block.
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soulauth
+  namespace: tiresias
+spec:
+  template:
+    spec:
+      containers:
+        - name: soulauth
+          env:
+            # --- Partner Program: Stripe Connect ---
+            - name: STRIPE_PARTNER_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: stripe-partner-webhook-secret
+            - name: STRIPE_CONNECT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: stripe-connect-client-id
+
+            # --- Partner Program: Notifications ---
+            - name: PARTNER_OPS_SLACK_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: partner-ops-slack-webhook
+
+            # --- Partner Program: Stripe Product IDs ---
+            - name: STRIPE_PARTNER_PRODUCT_MSSP
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: stripe-partner-product-mssp
+            - name: STRIPE_PARTNER_PRODUCT_CONSULTANT
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: stripe-partner-product-consultant
+            - name: STRIPE_PARTNER_PRODUCT_TECH_ALLIANCE
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-partner-secrets
+                  key: stripe-partner-product-tech-alliance
+
+            # --- Partner Program: Revenue Share Defaults ---
+            # These can be overridden per-partner via the admin API.
+            - name: PARTNER_DEFAULT_REV_SHARE_MSSP
+              value: "0.20"
+            - name: PARTNER_DEFAULT_REV_SHARE_CONSULTANT
+              value: "0.15"
+            - name: PARTNER_DEFAULT_REV_SHARE_TECH_ALLIANCE
+              value: "0.10"
+
+            # --- Partner Program: Tier Guard ---
+            # "monitor" = log violations without blocking (safe for initial rollout)
+            # "enforce" = reject requests that exceed tier limits
+            - name: TIER_GUARD_ENABLED
+              value: "monitor"
+
+            # --- Partner Program: Feature Flags ---
+            - name: PARTNER_PROGRAM_ENABLED
+              value: "true"
+            - name: PARTNER_SELF_SERVE_SIGNUP
+              value: "false"
+
+# ---------------------------------------------------------------------------
+# Section 2: Ingress — Additional Path Rule for Partner Webhooks
+# ---------------------------------------------------------------------------
+# The existing /v1/* catch-all in ingress.yaml already routes partner API
+# traffic to soulauth. However, Stripe webhook delivery benefits from an
+# explicit path match to avoid ambiguity and to allow per-path rate limiting
+# or WAF rules in the future.
+#
+# Add this path rule to ingress.yaml at:
+#   spec.rules[0].http.paths
+# Insert BEFORE the /v1/* catch-all rule (line ~103 in current ingress.yaml).
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tiresias-ingress
+  namespace: tiresias
+spec:
+  rules:
+    - host: tiresias.network
+      http:
+        paths:
+          # Partner webhook endpoint (explicit route for Stripe delivery)
+          # Insert before /v1/* in the existing ingress
+          - path: /v1/partner/webhooks
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+
+# ---------------------------------------------------------------------------
+# Section 3: NetworkPolicy — Stripe Webhook Ingress (No Changes Needed)
+# ---------------------------------------------------------------------------
+# Stripe webhooks arrive from the public internet via the GKE load balancer.
+# The existing soulauth-netpol already permits:
+#
+#   1. Ingress on port 8000 from GCE health prober CIDRs:
+#      - 130.211.0.0/22
+#      - 35.191.0.0/16
+#
+#   2. Unrestricted ingress on port 8000 (first ingress rule has no "from"
+#      selector, which means all sources are allowed on that port).
+#
+#   3. Egress on port 443 (needed for Stripe API callbacks, Slack webhooks,
+#      and Resend email delivery).
+#
+# Therefore, no network policy changes are required. The partner webhook
+# endpoint at /v1/partner/webhooks will be reachable through the existing
+# ingress controller and network policy rules.
+#
+# SECURITY REVIEW NOTES:
+#   - Stripe webhook requests are verified via STRIPE_PARTNER_WEBHOOK_SECRET
+#     using Stripe's signature verification (stripe-signature header).
+#   - The webhook endpoint should reject requests without valid signatures
+#     with HTTP 400, not 401 (per Stripe's conventions).
+#   - Consider adding a Cloud Armor WAF rule to rate-limit /v1/partner/webhooks
+#     to 100 req/min as defense-in-depth against replay attacks.
+# ---------------------------------------------------------------------------

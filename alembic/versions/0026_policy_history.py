@@ -1,7 +1,7 @@
 """Add policy version history table for rollback support.
 
-Revision ID: 0022
-Revises: 0021
+Revision ID: 0026
+Revises: 0025
 Create Date: 2026-04-04
 """
 from typing import Sequence, Union
@@ -9,8 +9,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0022"
-down_revision: str = "0021"
+revision: str = "0026"
+down_revision: str = "0025"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
