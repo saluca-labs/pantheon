@@ -19,6 +19,9 @@ python-multipart==0.0.6
 structlog==23.2.0
 prometheus-client==0.19.0
 
+# GeoIP (privacy: local database, no external API calls)
+geoip2>=4.8.0
+
 # Development & Testing
 pytest==7.4.3
 pytest-asyncio==0.21.1

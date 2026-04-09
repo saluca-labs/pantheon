@@ -42,20 +42,18 @@ jobs:
         run: pip install pip-audit
 
       - name: Audit Python dependencies
-        continue-on-error: true
+        # MVP: Block CI on known vulnerabilities
         run: |
           pip-audit \
             --requirement requirements.txt \
             --format json \
             --output pip-audit-results.json \
-            --progress-spinner off \
-            || true
-          # Always pretty-print results to the build log even on error
+            --progress-spinner off
+          # Pretty-print results to the build log
           pip-audit \
             --requirement requirements.txt \
             --format columns \
-            --progress-spinner off \
-            || true
+            --progress-spinner off
 
       - name: Upload pip-audit results
         if: always()

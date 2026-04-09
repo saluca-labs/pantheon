@@ -594,3 +594,40 @@ class PolicyDeployKey(Base):
         Index("idx_policy_deploy_keys_tenant", "tenant_id"),
         Index("idx_policy_deploy_keys_fingerprint", "fingerprint"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Tier and RBAC Configuration Overrides
+# Privacy: Database-backed config allows runtime updates without redeploy.
+# Compliance: All changes audit-logged via updated_at timestamps.
+# ---------------------------------------------------------------------------
+
+class TierOverride(Base):
+    """tier_overrides - Runtime tier configuration overrides."""
+    __tablename__ = "tier_overrides"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tier_name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    max_children: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=None)
+    allowed_children_json: Mapped[Optional[list]] = mapped_column("allowed_children", JSON, nullable=True, default=list)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+
+class RolePermission(Base):
+    """role_permissions - Runtime RBAC permission overrides."""
+    __tablename__ = "role_permissions"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    role_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    permission: Mapped[str] = mapped_column(String(100), nullable=False)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=True
+    )
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('role_name', 'permission', 'tenant_id', name='uq_role_permission_tenant'),
+        Index('idx_role_permissions_tenant', 'tenant_id', 'role_name'),
+    )

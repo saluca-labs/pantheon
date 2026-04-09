@@ -1,37 +1,70 @@
 """
 Country/region allow/deny rules.
-Uses ipaddress stdlib for basic geo classification.
-No MaxMind DB - placeholder for future GeoIP integration.
+Uses GeoLite2 database for production geo classification.
+
+Install: pip install geoip2
+Download DB: https://dev.maxmind.com/geoip/geolite2-free-geolocation-data
+
+Privacy: GeoIP data stored locally, no external API calls.
+Compliance: Required for GDPR/geo-fencing enforcement.
 """
 
 from typing import Optional
-
+import os
 import structlog
+import geoip2.database  # pip install geoip2
 
 logger = structlog.get_logger(__name__)
 
-# Placeholder: in production, integrate MaxMind GeoLite2 or similar.
-# For now, geo rules are matched against manually provided country codes
-# stored in access rules.
+_GEOIP_READER = None
+
+
+def get_geoip_reader() -> geoip2.database.Reader:
+    """Lazy-load GeoIP reader with connection persistence."""
+    global _GEOIP_READER
+    if _GEOIP_READER is None:
+        db_path = os.getenv(
+            "GEOLITE2_DB_PATH",
+            "/usr/share/GeoIP/GeoLite2-Country.mmdb"
+        )
+        if not os.path.exists(db_path):
+            logger.error(f"GeoIP database not found at {db_path}")
+            raise FileNotFoundError(
+                f"GeoLite2 database required at {db_path}. "
+                "Download from https://dev.maxmind.com/geoip/geolite2-free-geolocation-data"
+            )
+        _GEOIP_READER = geoip2.database.Reader(db_path)
+    return _GEOIP_READER
 
 
 def resolve_country(ip_address: str) -> Optional[str]:
     """
-    Resolve IP address to country code.
-    Placeholder implementation - returns None (unknown).
-    In production, use MaxMind GeoLite2 or cloud provider IP metadata.
+    Resolve IP address to country code using GeoLite2.
+    Returns ISO 3166-1 alpha-2 country code (e.g., 'US', 'DE', 'CN').
+    Returns None for private/reserved IPs or lookup failures.
+
+    Privacy: Local database lookup, no external requests.
     """
-    # Private/reserved IP ranges -> skip geo checks
     import ipaddress
+
     try:
         addr = ipaddress.ip_address(ip_address)
         if addr.is_private or addr.is_loopback or addr.is_reserved:
             return None
     except ValueError:
+        logger.warning(f"Invalid IP address: {ip_address}")
         return None
 
-    # TODO: integrate GeoIP database
-    return None
+    try:
+        reader = get_geoip_reader()
+        response = reader.country(ip_address)
+        return response.country.iso_code
+    except geoip2.errors.AddressNotFoundError:
+        logger.debug(f"IP not found in GeoIP database: {ip_address}")
+        return None
+    except Exception as e:
+        logger.error(f"GeoIP lookup failed for {ip_address}: {e}")
+        return None
 
 
 def check_geo_rules(
