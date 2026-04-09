@@ -73,78 +73,82 @@ class EnvironmentAdapter(ABC):
 
 
 class OpenClawAdapter(EnvironmentAdapter):
-    """Adapter for OpenClaw execution environment."""
+    """Adapter for OpenClaw execution environment.
+
+    DEPRECATED: OpenClaw integration deferred to post-MVP.
+    Use DreamServer or direct Ollama integration instead.
+    """
 
     async def initialize_environment(self, config: Dict[str, Any]) -> bool:
-        return True
+        raise NotImplementedError(
+            "OpenClaw adapter not implemented. "
+            "Use DreamServer (DreamServer/) or direct Ollama integration for agent execution. "
+            "OpenClaw integration planned for post-MVP release."
+        )
 
     async def execute_agent(self, context: AgentExecutionContext, payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "status": "executed",
-            "agent_id": context.agent_id,
-            "environment": "openclaw",
-            "result": "placeholder"
-        }
+        raise NotImplementedError(
+            "OpenClaw adapter not implemented. "
+            "Use DreamServer or direct Ollama integration for agent execution."
+        )
 
     async def terminate_agent(self, agent_id: str) -> bool:
-        return True
+        raise NotImplementedError("OpenClaw adapter not implemented.")
 
     async def get_agent_status(self, agent_id: str) -> Dict[str, Any]:
-        return {
-            "agent_id": agent_id,
-            "status": "running",
-            "environment": "openclaw"
-        }
+        raise NotImplementedError("OpenClaw adapter not implemented.")
 
 
 class NemoClawAdapter(EnvironmentAdapter):
-    """Adapter for NemoClaw execution environment."""
+    """Adapter for NemoClaw execution environment.
+
+    DEPRECATED: NemoClaw integration deferred to post-MVP.
+    Use DreamServer or direct Ollama integration instead.
+    """
 
     async def initialize_environment(self, config: Dict[str, Any]) -> bool:
-        return True
+        raise NotImplementedError(
+            "NemoClaw adapter not implemented. "
+            "Use DreamServer or direct Ollama integration for agent execution."
+        )
 
     async def execute_agent(self, context: AgentExecutionContext, payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "status": "executed",
-            "agent_id": context.agent_id,
-            "environment": "nemoclaw",
-            "result": "placeholder"
-        }
+        raise NotImplementedError(
+            "NemoClaw adapter not implemented. "
+            "Use DreamServer or direct Ollama integration for agent execution."
+        )
 
     async def terminate_agent(self, agent_id: str) -> bool:
-        return True
+        raise NotImplementedError("NemoClaw adapter not implemented.")
 
     async def get_agent_status(self, agent_id: str) -> Dict[str, Any]:
-        return {
-            "agent_id": agent_id,
-            "status": "running",
-            "environment": "nemoclaw"
-        }
+        raise NotImplementedError("NemoClaw adapter not implemented.")
 
 
 class NanoclawAdapter(EnvironmentAdapter):
-    """Adapter for Nanoclaw execution environment."""
+    """Adapter for Nanoclaw execution environment.
+
+    DEPRECATED: Nanoclaw integration deferred to post-MVP.
+    Use DreamServer or direct Ollama integration instead.
+    """
 
     async def initialize_environment(self, config: Dict[str, Any]) -> bool:
-        return True
+        raise NotImplementedError(
+            "Nanoclaw adapter not implemented. "
+            "Use DreamServer or direct Ollama integration for agent execution."
+        )
 
     async def execute_agent(self, context: AgentExecutionContext, payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "status": "executed",
-            "agent_id": context.agent_id,
-            "environment": "nanoclaw",
-            "result": "placeholder"
-        }
+        raise NotImplementedError(
+            "Nanoclaw adapter not implemented. "
+            "Use DreamServer or direct Ollama integration for agent execution."
+        )
 
     async def terminate_agent(self, agent_id: str) -> bool:
-        return True
+        raise NotImplementedError("Nanoclaw adapter not implemented.")
 
     async def get_agent_status(self, agent_id: str) -> Dict[str, Any]:
-        return {
-            "agent_id": agent_id,
-            "status": "running",
-            "environment": "nanoclaw"
-        }
+        raise NotImplementedError("Nanoclaw adapter not implemented.")
 
 
 class LegacySoulKeyAdapter:

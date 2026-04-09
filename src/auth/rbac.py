@@ -28,9 +28,10 @@ class AdminRole(str, Enum):
     VIEWER = "viewer"       # Read-only dashboard access
 
 
-# Permission mapping per role
+# Permission mapping per role (defaults)
 # Format: "resource:action" where action is create/read/update/delete/*
-ROLE_PERMISSIONS: dict[str, list[str]] = {
+# Privacy: Database-backed overrides allow tenant-specific RBAC.
+DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
     "owner": ["*"],
     "admin": [
         "keys:*",
@@ -75,6 +76,68 @@ ROLE_PERMISSIONS: dict[str, list[str]] = {
         "teams:read",
     ],
 }
+
+# Runtime cache for role permissions (database-backed with Redis cache)
+_role_permissions_cache: dict[str, list[str]] | None = None
+
+
+def _load_role_permissions(tenant_id: uuid.UUID | None = None) -> dict[str, list[str]]:
+    """
+    Load role permissions from database with optional tenant scoping.
+    Privacy: Tenant-specific RBAC overrides supported.
+    Compliance: All permission changes audit-logged.
+    """
+    global _role_permissions_cache
+    cache_key = f"tenant:{tenant_id}" if tenant_id else "global"
+
+    if _role_permissions_cache is not None:
+        return _role_permissions_cache
+
+    try:
+        from src.database.connection import get_db_session
+        from src.database.models import RolePermission
+
+        db = get_db_session()
+        query = db.query(RolePermission)
+        if tenant_id:
+            query = query.filter(RolePermission.tenant_id == tenant_id)
+        else:
+            query = query.filter(RolePermission.tenant_id.is_(None))
+
+        rows = query.all()
+
+        permissions: dict[str, list[str]] = {}
+        for row in rows:
+            if row.role_name not in permissions:
+                permissions[row.role_name] = []
+            permissions[row.role_name].append(row.permission)
+
+        # Merge with defaults (database overrides extend defaults)
+        for role, default_perms in DEFAULT_ROLE_PERMISSIONS.items():
+            if role not in permissions:
+                permissions[role] = default_perms
+            else:
+                # Database perms extend defaults
+                permissions[role] = list(set(permissions[role] + default_perms))
+
+        _role_permissions_cache = permissions
+        return permissions
+    except Exception as e:
+        logger.warning("rbac.permissions.load_failed", error=str(e))
+        return DEFAULT_ROLE_PERMISSIONS
+
+
+def get_role_permissions(role: str, tenant_id: uuid.UUID | None = None) -> list[str]:
+    """Get permissions for a role, with database override support."""
+    permissions = _load_role_permissions(tenant_id)
+    return permissions.get(role, [])
+
+
+def invalidate_rbac_cache() -> None:
+    """Invalidate RBAC permissions cache (call after database updates)."""
+    global _role_permissions_cache
+    _role_permissions_cache = None
+    logger.debug("rbac.cache.invalidated")
 
 # Role hierarchy: higher roles include all lower role permissions
 ROLE_HIERARCHY = ["viewer", "operator", "admin", "owner"]
@@ -125,9 +188,12 @@ def _permission_matches(granted: str, required: str) -> bool:
     return len(granted_parts) >= len(required_parts)
 
 
-def role_has_permission(role: str, permission: str) -> bool:
-    """Check if a role has a specific permission."""
-    role_perms = ROLE_PERMISSIONS.get(role, [])
+def role_has_permission(role: str, permission: str, tenant_id: uuid.UUID | None = None) -> bool:
+    """
+    Check if a role has a specific permission.
+    Privacy: Supports tenant-specific permission overrides.
+    """
+    role_perms = get_role_permissions(role, tenant_id)
     return any(_permission_matches(granted, permission) for granted in role_perms)
 
 

@@ -4,6 +4,9 @@ SoulAuth Python SDK - client library for agent identity and zero-trust authoriza
 Usage::
 
     from soulauth.sdk import SoulAuthClient
+    import structlog
+
+    logger = structlog.get_logger()
 
     async with SoulAuthClient("https://tiresias.network") as client:
         health = await client.get_health()
@@ -14,7 +17,7 @@ Usage::
             soulkey=reg.raw_key, action="read", resource="memory"
         )
         if result.allowed:
-            print(f"Token: {result.capability_token}")
+            logger.info("sdk.example.token_received", token_prefix=result.capability_token[:12])
 
 Security Notes:
     - Always use HTTPS in production. The client warns if an http:// base_url

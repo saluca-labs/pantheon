@@ -125,7 +125,7 @@ async def _main():
     """Entry point for direct execution: python -m src.saas.trial_expiry"""
     async for db in get_db():
         result = await expire_trials(db)
-        print(f"Trial expiry job complete: {result}")
+        logger.info("trial_expiry.job_complete", **result)
 
 
 if __name__ == "__main__":
