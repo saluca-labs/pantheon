@@ -55,7 +55,8 @@ def effective_tier(install_tier: str, tenant_tier: str) -> str:
 # ---------------------------------------------------------------------------
 
 # Default values (used if no database override exists)
-DEFAULT_TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
+# Aliases for backwards compatibility (TIER_* prefix used by saas/master.py)
+TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
     "owner": ["saas", "mssp", "enterprise", "pro", "starter", "community"],
     "saas": ["saas", "mssp", "enterprise", "pro", "starter", "community"],
     "mssp": ["enterprise", "pro", "starter", "community"],
@@ -65,7 +66,7 @@ DEFAULT_TIER_ALLOWED_CHILDREN: dict[str, list[str]] = {
     "starter": [],
 }
 
-DEFAULT_TIER_MAX_CHILDREN: dict[str, int] = {
+TIER_MAX_CHILDREN: dict[str, int] = {
     "owner": 0,      # 0 = unlimited
     "saas": 0,       # 0 = unlimited
     "mssp": 500,
@@ -111,21 +112,21 @@ def _load_tier_overrides() -> dict:
     except Exception as e:
         logger.warning("tier.overrides.load_failed", error=str(e))
         return {
-            "allowed_children": DEFAULT_TIER_ALLOWED_CHILDREN,
-            "max_children": DEFAULT_TIER_MAX_CHILDREN,
+            "allowed_children": TIER_ALLOWED_CHILDREN,
+            "max_children": TIER_MAX_CHILDREN,
         }
 
 
 def get_tier_allowed_children(tier: str) -> list[str]:
     """Get allowed children for a tier, with database override support."""
     overrides = _load_tier_overrides()
-    return overrides["allowed_children"].get(tier, DEFAULT_TIER_ALLOWED_CHILDREN.get(tier, []))
+    return overrides["allowed_children"].get(tier, TIER_ALLOWED_CHILDREN.get(tier, []))
 
 
 def get_tier_max_children(tier: str) -> int:
     """Get max children for a tier, with database override support."""
     overrides = _load_tier_overrides()
-    return overrides["max_children"].get(tier, DEFAULT_TIER_MAX_CHILDREN.get(tier, 0))
+    return overrides["max_children"].get(tier, TIER_MAX_CHILDREN.get(tier, 0))
 
 
 def can_create_child(parent_tier: str, child_tier: str) -> bool:
