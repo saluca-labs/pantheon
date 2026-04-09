@@ -25,8 +25,11 @@ from src.partner.invitation import create_invitation, validate_and_consume_invit
 from src.partner.connect import create_connect_account, create_onboarding_link, create_dashboard_link, get_account_status
 from src.partner.promo import create_partner_coupon, create_promo_code, list_partner_promo_codes
 from src.partner.commissions import calculate_split
+from src.partner.admin_notifications import notify_slack_partner_event
 from src.middleware.tenant import create_tenant, provision_tenant_encryption
 from src.auth.soulkey import issue_soulkey
+from src.email.sender import send_email
+from src.email.templates import _HEADER, _FOOTER, _kv_row
 from src.tier import DEFAULT_TIER
 
 logger = structlog.get_logger(__name__)
@@ -124,7 +127,105 @@ class DashboardLinkResponse(BaseModel):
     url: str
 
 
+class PartnerApplyRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    linkedin_url: str = Field(..., min_length=10, max_length=512)
+    tos_accepted: bool = Field(..., description="Must be true to submit")
+
+
+class PartnerApplyResponse(BaseModel):
+    message: str
+    application_id: str
+
+
 # --- Endpoints ---
+
+@router.post(
+    "/apply",
+    response_model=PartnerApplyResponse,
+    summary="Submit a partner application (public)",
+)
+async def partner_apply(
+    body: PartnerApplyRequest,
+    db: AsyncSession = Depends(get_db),
+) -> PartnerApplyResponse:
+    """Public endpoint: submit a partner application for review."""
+    if not body.tos_accepted:
+        raise HTTPException(status_code=400, detail="Terms and conditions must be accepted")
+
+    # Validate LinkedIn URL format
+    if "linkedin.com/" not in body.linkedin_url:
+        raise HTTPException(status_code=400, detail="Please provide a valid LinkedIn profile URL")
+
+    # Check for duplicate
+    existing = await db.execute(text(
+        "SELECT id, status FROM _partner_applications WHERE email = :email"
+    ), {"email": body.email})
+    row = existing.first()
+    if row:
+        raise HTTPException(status_code=409, detail="An application with this email is already on file")
+
+    # Insert application
+    app_id = str(uuid.uuid4())
+    await db.execute(text("""
+        INSERT INTO _partner_applications (id, email, linkedin_url, status)
+        VALUES (:id, :email, :linkedin_url, 'pending')
+    """), {"id": app_id, "email": body.email, "linkedin_url": body.linkedin_url})
+
+    logger.info(
+        "partner.application.submitted",
+        application_id=app_id,
+        email=body.email,
+    )
+
+    # Admin notification email (non-fatal)
+    try:
+        admin_html = _HEADER + (
+            f'\n<p style="margin:0 0 16px;font-size:16px;color:#e5e7eb;">New Partner Application</p>\n'
+            f'<p style="margin:0 0 24px;font-size:15px;color:#9ca3af;line-height:1.6;">\n'
+            f'  A new partner application has been submitted and is awaiting your review.\n'
+            f'</p>\n'
+            f'<table width="100%" cellpadding="0" cellspacing="0"\n'
+            f'       style="background:#0a0e1a;border-radius:8px;border:1px solid #1f2937;margin-bottom:24px;">\n'
+            f'  <tr>\n'
+            f'    <td style="padding:16px 20px;">\n'
+            f'      <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#d4a853;">Application Details</p>\n'
+            f'      <table width="100%" cellpadding="0" cellspacing="0">\n'
+            + _kv_row("Email", body.email)
+            + _kv_row("LinkedIn", f'<a href="{body.linkedin_url}" style="color:#2dd4bf;">{body.linkedin_url}</a>')
+            + _kv_row("Application ID", app_id)
+            + f'\n      </table>\n'
+            f'    </td>\n'
+            f'  </tr>\n'
+            f'</table>\n'
+            f'<p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">\n'
+            f'  Review and approve this application from the admin dashboard.\n'
+            f'</p>'
+        ) + _FOOTER
+        await send_email(
+            to="cristian@saluca.com",
+            subject=f"[Partner Application] {body.email}",
+            html=admin_html,
+            tag="partner_application_admin",
+        )
+    except Exception as exc:
+        logger.warning("partner.application.admin_email_failed", error=str(exc))
+
+    # Slack notification (non-fatal)
+    try:
+        await notify_slack_partner_event(
+            event_type="partner_applied",
+            partner_name=body.email,
+            detail=f"LinkedIn: {body.linkedin_url}",
+        )
+    except Exception as exc:
+        logger.warning("partner.application.slack_failed", error=str(exc))
+
+    return PartnerApplyResponse(
+        message="Application received. We will review and be in touch.",
+        application_id=app_id,
+    )
+
 
 @router.post(
     "/invitations",
@@ -211,6 +312,7 @@ async def partner_onboard(
         approved_by="invitation_system",
     )
     db.add(partner)
+    await db.flush()
 
     # Update invitation with resulting partner ID
     await db.execute(text(

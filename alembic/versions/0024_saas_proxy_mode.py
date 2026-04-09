@@ -1,8 +1,8 @@
 """Add SaaS proxy mode support: RLS-ready indexes, api_key_hash index,
 and ensure tiresias tables exist in shared Postgres for multi-tenant mode.
 
-Revision ID: 0020
-Revises: 0019
+Revision ID: 0024
+Revises: 0023
 Create Date: 2026-04-04
 """
 from typing import Sequence, Union
@@ -10,8 +10,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0020"
-down_revision: str = "0019"
+revision: str = "0024"
+down_revision: str = "0023"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

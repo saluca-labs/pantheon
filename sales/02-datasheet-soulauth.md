@@ -11,8 +11,9 @@ SoulAuth is a zero-trust identity and authorization system purpose-built for AI 
 SoulAuth operates on a zero-knowledge architecture: it verifies identities and evaluates policies using metadata only. Agent payloads never touch the platform.
 
 **Status**: Generally Available
-**Version**: 1.0
+**Version**: 3.6.1
 **Deployment**: Docker, Kubernetes, or standalone
+**Docker Hub**: salucalabs/tiresias-soulauth
 
 ---
 
@@ -41,10 +42,37 @@ SoulAuth operates on a zero-knowledge architecture: it verifies identities and e
 - Escalation workflows for elevated permissions
 - Full delegation chain audit trail
 
-### Multi-Tenancy
+### Multi-Tenancy & Tenant Hierarchy
 - Row-level security (RLS) for complete tenant isolation
 - Per-tenant policy namespaces and key hierarchies
 - Independent audit trails per tenant
+- Parent-child tenant hierarchy with tier-based creation matrix
+- Cross-tenant subtree expansion for keys and audit
+- Hierarchy permission hardening (cycle detection, sibling guard, parent-chain walk)
+- SaaS admin endpoints for tenant lifecycle management
+- MSSP provisioning via hierarchy-aware endpoint
+
+### Team RBAC & User Management
+- Two-layer role model: portal-level (owner/admin/operator/viewer) + team-level (team_admin/analyst/member)
+- User CRUD, team management, and invitation workflows (17 new API endpoints)
+- Account admin and secondary admin designations
+- JIT user provisioning honors pending team invites
+
+### Per-Tenant Rate Limiting
+- Tier-based request throttling (Open 60/min through MSSP unlimited)
+- Middleware-enforced, configurable per tier
+
+### Data Export
+- 3 streaming export endpoints: audit logs, keys, policies
+- Enterprise+ tier gated
+
+### Password Policy & Auth Hardening
+- Minimum 10 characters, character class enforcement, 500+ common password blocklist
+- Failed auth attempts logged to audit trail (local, OIDC, LDAP)
+- Investigation token hardening (cryptographic tokens, 60-min TTL, rate limiter)
+- OIDC nonce store backed by PostgreSQL (not in-memory)
+- OIDC state secret enforcement at startup
+- Session cookie security (httpOnly, secure, sameSite)
 
 ---
 
@@ -52,18 +80,20 @@ SoulAuth operates on a zero-knowledge architecture: it verifies identities and e
 
 | Specification | Detail |
 |---|---|
-| API | RESTful, 35+ endpoints |
+| API | RESTful, 176 operations |
 | Authentication | Soulkey + capability tokens |
 | Token Format | JWT ES256 |
 | Identity Hash | SHA-512 |
 | Database | PostgreSQL 16 with RLS |
 | Policy Format | YAML with git sync |
-| SDK | Python (SoulAuthClient) |
+| Auth Modes | Local, LDAP, OIDC (Google SSO) |
+| SDK | Python (SoulAuthClient, 10 methods, 12 models) |
 | CLI | 12 commands |
 | Migrations | Alembic |
 | Monitoring | Prometheus metrics, Grafana dashboards |
+| Rate Limiting | Per-tenant, tier-based |
 | Container | Docker Compose |
-| Orchestration | Kubernetes-ready |
+| Orchestration | Kubernetes-ready (GCP Cloud Run verified) |
 
 ---
 
@@ -74,6 +104,7 @@ SoulAuth operates on a zero-knowledge architecture: it verifies identities and e
 - **Source Control**: Git-based policy sync (GitHub, GitLab, Bitbucket)
 - **Compliance**: SOC2, ISO 27001, NIST 800-53 report generation
 - **Detection**: Sigma-compatible rule engine (7 built-in rules, 3 playbooks)
+- **Export**: Streaming data export (audit, keys, policies)
 
 ---
 
@@ -103,11 +134,13 @@ Your Infrastructure                    SoulAuth
 
 | Tier | Price | Includes |
 |---|---|---|
-| **Community** | Free | 1 agent, 1,000 API calls/mo, basic policy, local SQLite, Python SDK + CLI |
-| **Pro** | $15/agent/mo | Unlimited agents, 50K API calls/mo, full policy engine + git sync, capability tokens, key lifecycle, delegation, managed Postgres, email support (24h) |
-| **Enterprise** | Custom | Unlimited API calls, user-agent ABAC with clearance hierarchy, SSO/SAML, custom policy consulting, on-premise option, dedicated account manager, 99.99% SLA |
+| **Open** | Free | 25 agents, 7-day retention, basic policy, Python SDK + CLI |
+| **Starter** | $49/mo | 50 agents, 30-day retention, rate limiting (60/min), basic team management |
+| **Pro** | $199/mo | 250 agents, 90-day retention, full policy engine + git sync, capability tokens, key lifecycle, delegation, managed Postgres, team RBAC, email support (24h) |
+| **Enterprise** | $2,499/mo | Unlimited agents, custom retention, user-agent ABAC with clearance hierarchy, SSO/SAML, data export, password policy enforcement, custom policy consulting, on-premise option, dedicated account manager, 99.99% SLA |
+| **MSSP** | $4,999/mo + $199/tenant/mo | Multi-tenant hierarchy, cross-tenant visibility, tenant provisioning, per-tenant rate limiting (1,000/min) |
 
-Annual billing: 20% discount on all tiers.
+Annual billing: 17% discount (2 months free).
 
 ---
 
