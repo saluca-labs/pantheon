@@ -1,0 +1,152 @@
+# Gatus Health Check Configuration — Tiresias Platform
+# Deploy: kubectl create configmap gatus-config --from-file=config.yaml=gatus.yaml -n tiresias
+# Image:  ghcr.io/twin/gatus:latest
+#
+# Probe design for SoulAuth /v1/auth/evaluate:
+#   The endpoint requires Pydantic validation before it touches the DB.
+#   An empty POST returns 422 (validation error). The fix sends a
+#   well-formed body with a dummy soulkey. The dummy key fails at
+#   Stage 1 (identity resolution) with 401, which is accepted as healthy.
+#
+#   AuthEvaluateRequest schema (src/auth/schemas.py):
+#     resource: str  (required)
+#     action:   str  (required)
+#     scope:    str  (required, plain string — not a dict)
+#     context:  Optional[dict]
+#     user_context: Optional[dict]
+
+web:
+  port: 8080
+  read-buffer-size: 8192
+
+storage:
+  type: memory
+
+metrics: true
+
+endpoints:
+
+  # ------------------------------------------------------------------
+  # SoulAuth — /health
+  # Simple GET, no auth required. Expect 200.
+  # ------------------------------------------------------------------
+  - name: SoulAuth Health
+    url: https://platform.tiresias.network/health
+    interval: 60s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 3000"
+    alerts:
+      - type: slack
+        description: SoulAuth /health is down or slow
+
+  # ------------------------------------------------------------------
+  # SoulAuth — /v1/auth/evaluate (PDP probe)
+  #
+  # Sends a structurally valid request with a dummy soulkey.
+  # The dummy key (sk_health_check_probe) does not exist in the DB,
+  # so the PDP returns 401 at Stage 1 (identity resolution).
+  # A 401 confirms the service is alive and parsing requests correctly.
+  # A 422 means the body failed Pydantic validation (wrong shape).
+  # A 5xx means the service is down or erroring.
+  # ------------------------------------------------------------------
+  - name: SoulAuth Evaluate
+    url: https://platform.tiresias.network/v1/auth/evaluate
+    method: POST
+    interval: 60s
+    client:
+      timeout: 10s
+    headers:
+      Content-Type: application/json
+      X-Soulkey: sk_health_check_probe
+    body: |
+      {
+        "resource": "health_check",
+        "action": "probe",
+        "scope": "health:probe"
+      }
+    conditions:
+      - "[STATUS] == 401"
+    alerts:
+      - type: slack
+        description: SoulAuth evaluate endpoint is not returning expected 401 — service may be down or schema changed
+
+  # ------------------------------------------------------------------
+  # Tiresias Portal (platform.tiresias.network)
+  # Accepts any 2xx or 3xx (Next.js may redirect / to /dashboard).
+  # ------------------------------------------------------------------
+  - name: Tiresias Portal
+    url: https://platform.tiresias.network
+    interval: 60s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] < 400"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: slack
+        description: Tiresias Portal is down or unreachable
+
+  # ------------------------------------------------------------------
+  # Marketing site (tiresias.network)
+  # ------------------------------------------------------------------
+  - name: Tiresias Marketing Site
+    url: https://tiresias.network
+    interval: 120s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] < 400"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: slack
+        description: tiresias.network marketing site is down or unreachable
+
+  # ------------------------------------------------------------------
+  # API Documentation (/docs — FastAPI Swagger UI)
+  # SoulAuth returns 200 for /docs. A 404 would indicate the docs
+  # route was disabled (e.g. docs_url=None in production config).
+  # ------------------------------------------------------------------
+  - name: API Documentation
+    url: https://platform.tiresias.network/docs
+    interval: 300s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: slack
+        description: SoulAuth API docs (/docs) are unreachable — may have been disabled in production
+
+  # ------------------------------------------------------------------
+  # SSL Certificate — platform.tiresias.network
+  # Alert 14 days before expiry.
+  # ------------------------------------------------------------------
+  - name: SSL Certificate — platform.tiresias.network
+    url: https://platform.tiresias.network
+    interval: 3600s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] < 500"
+      - "[CERTIFICATE_EXPIRATION] > 336h"
+    alerts:
+      - type: slack
+        description: SSL certificate for platform.tiresias.network expires within 14 days
+
+  # ------------------------------------------------------------------
+  # SSL Certificate — tiresias.network
+  # ------------------------------------------------------------------
+  - name: SSL Certificate — tiresias.network
+    url: https://tiresias.network
+    interval: 3600s
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] < 500"
+      - "[CERTIFICATE_EXPIRATION] > 336h"
+    alerts:
+      - type: slack
+        description: SSL certificate for tiresias.network expires within 14 days

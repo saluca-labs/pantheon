@@ -1,22 +1,22 @@
 steps:
   # Build all images in parallel
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.5', '-f', 'Dockerfile', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v3.6.1', '-f', 'Dockerfile', '.']
     id: 'build-soulauth'
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v2.4.5', '-f', 'soulGate/Dockerfile', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v3.6.1', '-f', 'soulGate/Dockerfile', '.']
     id: 'build-soulgate'
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.4.5', '-f', 'soulWatch/Dockerfile', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v3.6.1', '-f', 'soulWatch/Dockerfile', '.']
     id: 'build-soulwatch'
 
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
       '--build-arg', 'NEXT_PUBLIC_SOULAUTH_API_URL=http://soulauth.tiresias.svc.cluster.local',
-      '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v2.4.5',
+      '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v3.6.1',
       '-f', 'portal/Dockerfile',
       './portal'
     ]
@@ -24,10 +24,10 @@ steps:
 
 # Cloud Build pushes these automatically
 images:
-  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v2.4.5'
-  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v2.4.5'
-  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.4.5'
-  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v2.4.5'
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v3.6.1'
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v3.6.1'
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v3.6.1'
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v3.6.1'
 
 options:
   machineType: 'E2_HIGHCPU_8'

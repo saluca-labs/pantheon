@@ -34,7 +34,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: marketing-portal
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/marketing:v1.0.0
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/marketing:v3.6.1
           ports:
             - containerPort: 3000
               name: http
