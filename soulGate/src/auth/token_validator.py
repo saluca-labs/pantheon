@@ -110,30 +110,34 @@ async def _validate_api_key(raw_key: str, db: AsyncSession) -> AuthResult:
 
 
 async def _validate_bearer_token(token: str) -> AuthResult:
-    """Validate JWT by calling SoulAuth /v1/auth/evaluate."""
+    """Validate JWT capability token by calling SoulAuth GET /v1/auth/identity."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(
-                f"{settings.soulauth_base_url}/v1/auth/evaluate",
-                json={"token": token},
-                headers={"Content-Type": "application/json"},
+            response = await client.get(
+                f"{settings.soulauth_base_url}/v1/auth/identity",
+                headers={"X-Soulkey": token},
             )
 
         if response.status_code == 200:
             data = response.json()
-            decision = data.get("decision", {})
-            if decision.get("allowed", False):
+            if data.get("status") != "active":
                 return AuthResult(
-                    authenticated=True,
-                    auth_method="token",
-                    tenant_id=_parse_uuid(data.get("tenant_id")),
-                    soulkey_id=_parse_uuid(data.get("soulkey_id")),
-                    persona_id=data.get("persona_id"),
-                    scopes=data.get("scopes", []),
+                    authenticated=False,
+                    error=f"Token identity status: {data.get('status', 'unknown')}",
                 )
             return AuthResult(
+                authenticated=True,
+                auth_method="token",
+                tenant_id=_parse_uuid(data.get("tenant_id")),
+                soulkey_id=_parse_uuid(data.get("soulkey_id")),
+                persona_id=data.get("persona_id"),
+                scopes=[],
+            )
+
+        if response.status_code == 401:
+            return AuthResult(
                 authenticated=False,
-                error=decision.get("reason", "Token validation denied"),
+                error="Invalid or expired capability token",
             )
 
         logger.warning("auth.soulauth_error", status=response.status_code)
@@ -157,17 +161,21 @@ async def _validate_bearer_token(token: str) -> AuthResult:
 
 
 async def _validate_soulkey(raw_key: str) -> AuthResult:
-    """Validate SoulKey by calling SoulAuth identity resolution."""
+    """Validate SoulKey by calling SoulAuth GET /v1/auth/identity."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.post(
-                f"{settings.soulauth_base_url}/v1/auth/identify",
-                json={"soulkey": raw_key},
-                headers={"Content-Type": "application/json"},
+            response = await client.get(
+                f"{settings.soulauth_base_url}/v1/auth/identity",
+                headers={"X-Soulkey": raw_key},
             )
 
         if response.status_code == 200:
             data = response.json()
+            if data.get("status") != "active":
+                return AuthResult(
+                    authenticated=False,
+                    error=f"SoulKey identity status: {data.get('status', 'unknown')}",
+                )
             return AuthResult(
                 authenticated=True,
                 auth_method="soulkey",
@@ -176,9 +184,16 @@ async def _validate_soulkey(raw_key: str) -> AuthResult:
                 persona_id=data.get("persona_id"),
             )
 
+        if response.status_code == 401:
+            return AuthResult(
+                authenticated=False,
+                error="Invalid SoulKey",
+            )
+
+        logger.warning("auth.soulauth_error", status=response.status_code)
         return AuthResult(
             authenticated=False,
-            error="Invalid SoulKey",
+            error=f"SoulAuth returned {response.status_code}",
         )
 
     except httpx.ConnectError:

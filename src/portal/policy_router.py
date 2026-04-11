@@ -234,7 +234,7 @@ async def sync_status():
             last_sync_status=mgr._last_sync_status,
             last_error=mgr._last_error,
             last_commit_hash=mgr._last_commit_hash,
-            sync_interval_seconds=mgr._interval,
+            sync_interval_seconds=mgr.sync_interval,
         )
     except Exception:
         return SyncStatusResponse(last_sync_status="not_configured")

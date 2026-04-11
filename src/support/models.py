@@ -29,6 +29,8 @@ class TicketCreate(BaseModel):
     description: str = Field(..., min_length=10, max_length=5000)
     severity: Literal["p0", "p1", "p2", "p3"] = "p2"
     category: Literal["bug", "security", "outage", "question", "feature"] = "bug"
+    contact_email: Optional[str] = Field(None, max_length=254)
+    contact_name: Optional[str] = Field(None, max_length=200)
 
 
 class TicketResponse(BaseModel):

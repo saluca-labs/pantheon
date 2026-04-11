@@ -393,6 +393,11 @@ class AsyncPolicySyncManager:
 async_sync_manager: Optional[AsyncPolicySyncManager] = None
 
 
+def get_sync_manager() -> Optional[AsyncPolicySyncManager]:
+    """Return the global async sync manager singleton (may be None if not initialized)."""
+    return async_sync_manager
+
+
 def init_async_sync_manager(
     repo_path: str,
     sync_interval: int = 300,

@@ -336,7 +336,7 @@ function ProblemStatement() {
         >
           <AnimatedStat value={73} suffix="%" label="of enterprises deploy AI agents in production" />
           <AnimatedStat value={12} label="implicit permissions per agent on average" />
-          <AnimatedStat value={0} label="visibility into agent-to-agent traffic" />
+          <AnimatedStat value={0} suffix="%" label="visibility into agent-to-agent traffic" />
         </motion.div>
 
         <motion.p

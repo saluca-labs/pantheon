@@ -121,6 +121,30 @@ CREATE TABLE IF NOT EXISTS _soulauth_trials (
 CREATE INDEX IF NOT EXISTS idx_trials_email ON _soulauth_trials(contact_email);
 CREATE INDEX IF NOT EXISTS idx_trials_domain ON _soulauth_trials(company_domain);
 CREATE INDEX IF NOT EXISTS idx_trials_active ON _soulauth_trials(status);
+
+-- Support Tickets
+CREATE TABLE IF NOT EXISTS _support_tickets (
+    id              TEXT PRIMARY KEY,
+    ticket_id       TEXT NOT NULL UNIQUE,
+    tenant_id       TEXT REFERENCES _soul_tenants(id) ON DELETE SET NULL,
+    status          TEXT NOT NULL DEFAULT 'open'
+                    CHECK (status IN ('open','acknowledged','in_progress','resolved','closed')),
+    severity        TEXT NOT NULL DEFAULT 'p2'
+                    CHECK (severity IN ('p0','p1','p2','p3')),
+    category        TEXT NOT NULL DEFAULT 'bug',
+    subject         TEXT NOT NULL,
+    description     TEXT NOT NULL,
+    contact_email   TEXT,
+    contact_name    TEXT,
+    linear_url      TEXT,
+    sla_deadline    TEXT NOT NULL,
+    created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    acknowledged_at TEXT,
+    resolved_at     TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_tickets_tenant ON _support_tickets(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON _support_tickets(status);
 """
 
 
@@ -138,4 +162,5 @@ def get_table_names() -> list[str]:
         "_soulauth_audit",
         "_soulauth_delegations",
         "_soulauth_trials",
+        "_support_tickets",
     ]

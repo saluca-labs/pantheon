@@ -389,12 +389,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Tiresias API",
     version="1.0.0",
-    # Disable OpenAPI/Swagger in production for SoulAuth (FINDING-09).
-    # Note: the customer-facing proxy (tiresias.proxy.app) keeps docs enabled
-    # at /docs and /openapi.json in all modes — it is the public API surface.
-    docs_url="/docs" if settings.debug else None,
-    redoc_url="/redoc" if settings.debug else None,
-    openapi_url="/openapi.json" if settings.debug else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     description=(
         "Tiresias - Enterprise Agent Identity & Zero-Trust Authorization Platform.\n\n"
         "Provides durable agent identity (SoulKeys), JIT policy evaluation (PDP), "
