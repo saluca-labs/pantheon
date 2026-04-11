@@ -4,6 +4,21 @@ All notable changes to the Tiresias Platform will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.1] - 2026-04-10
+
+### Fixed
+- Fixed SoulGate token validator calling wrong SoulAuth endpoint
+- Added SoulAuth BackendConfig for GCP Load Balancer health checks
+- Enabled API documentation in production
+- Fixed homepage stat counter missing suffix
+- Fixed platform product pages redirecting to login
+- Fixed policy git-sync configuration and missing accessor function
+- Replaced in-memory support ticket storage with PostgreSQL
+- Implemented persistent DLQ for SoulWatch SIEM forwarding
+- Connected reports page to live analytics data
+- Qualified EU region references in legal documentation
+- Created Gatus health check configuration with corrected evaluate probe
+
 ## [3.4.4] - 2026-04-03
 
 ### Added

@@ -8,6 +8,14 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 /** Routes that require authentication */
 const PROTECTED_PREFIXES = ["/dashboard"];
 
+/**
+ * Public marketing/product pages that live on tiresias.network (portal-marketing).
+ * When a user lands on platform.tiresias.network/platform/*, redirect them to the
+ * marketing site so they see the public product detail pages instead of hitting a
+ * 404 that falls through to /dashboard → /login.
+ */
+const MARKETING_PREFIXES = ["/platform"];
+
 /** Routes that should redirect to dashboard if already logged in */
 const AUTH_ROUTES = ["/login"];
 
@@ -58,8 +66,15 @@ function isSessionValid(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const validSession = isSessionValid(request);
+
+  // Redirect /platform/* to the marketing site (pages live in portal-marketing)
+  const isMarketingPath = MARKETING_PREFIXES.some((p) => pathname.startsWith(p));
+  if (isMarketingPath) {
+    const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || "https://tiresias.network";
+    return NextResponse.redirect(`${marketingUrl}${pathname}${search}`, 301);
+  }
 
   // Root: authenticated users go to dashboard, unauthenticated see landing page
   if (pathname === "/" && validSession) {
@@ -128,6 +143,7 @@ export const config = {
     "/trial",
     "/pricing",
     "/onboarding",
+    "/platform/:path*",
     "/v1/:path*",
     "/dash/:path*",
   ],

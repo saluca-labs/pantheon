@@ -2,11 +2,13 @@
 Integration management API for SoulWatch - SIEM destinations, DLQ, and syslog.
 """
 
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from soulWatch.src.database.connection import get_db
@@ -87,6 +89,95 @@ async def list_dlq(
         "page": page,
         "page_size": page_size,
     }
+
+
+@router.post("/dlq/{item_id}/retry")
+async def retry_dlq_item(
+    item_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Manually trigger a retry for a single DLQ entry.
+    On success the row is deleted; on failure retry_count is incremented.
+    """
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid UUID")
+
+    result = await db.execute(select(SoulWatchDLQ).where(SoulWatchDLQ.id == item_uuid))
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="DLQ item not found")
+
+    forwarder = get_event_forwarder()
+    if not forwarder:
+        raise HTTPException(status_code=503, detail="SIEM forwarder not configured")
+
+    from soulWatch.src.integrations.forwarder import _event_from_row
+    try:
+        event = _event_from_row(row)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Cannot deserialize event: {exc}")
+
+    failed = await forwarder._forward_batch_all_destinations(db, [event], destination_label="manual_retry")
+    if failed:
+        row.retry_count += 1
+        row.last_retry_at = datetime.now(timezone.utc)
+        row.error_message = failed[0][1][:1000]
+        return {
+            "status": "failed",
+            "retry_count": row.retry_count,
+            "error": row.error_message,
+        }
+    else:
+        await db.execute(delete(SoulWatchDLQ).where(SoulWatchDLQ.id == item_uuid))
+        return {"status": "delivered", "id": item_id}
+
+
+@router.post("/dlq/retry-all")
+async def retry_all_dlq(
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Kick off a flush cycle immediately, which retries all eligible DLQ rows.
+    Returns the DLQ size before and after.
+    """
+    forwarder = get_event_forwarder()
+    if not forwarder:
+        raise HTTPException(status_code=503, detail="SIEM forwarder not configured")
+
+    count_before_result = await db.execute(select(func.count()).select_from(SoulWatchDLQ))
+    count_before = count_before_result.scalar() or 0
+
+    await forwarder.flush()
+
+    count_after_result = await db.execute(select(func.count()).select_from(SoulWatchDLQ))
+    count_after = count_after_result.scalar() or 0
+
+    return {
+        "status": "ok",
+        "dlq_before": count_before,
+        "dlq_after": count_after,
+        "delivered": count_before - count_after,
+    }
+
+
+@router.delete("/dlq/{item_id}")
+async def delete_dlq_item(
+    item_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete (discard) a DLQ entry without retrying it."""
+    try:
+        item_uuid = uuid.UUID(item_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid UUID")
+
+    result = await db.execute(delete(SoulWatchDLQ).where(SoulWatchDLQ.id == item_uuid))
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="DLQ item not found")
+    return {"status": "deleted", "id": item_id}
 
 
 # ── Syslog configuration endpoints ─────────────────────────────────────
