@@ -271,7 +271,7 @@ async def admin_update_tenant(
     if request.status is not None:
         update_values["status"] = request.status
     if request.metadata is not None:
-        update_values["metadata"] = request.metadata
+        update_values["metadata_"] = request.metadata
 
     if update_values:
         await db.execute(
