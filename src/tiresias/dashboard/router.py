@@ -14,6 +14,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tiresias.storage.engine import set_tenant_context
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["dashboard"])
@@ -91,6 +93,7 @@ async def spend_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         return await get_spend_summary(session, cfg.tenant_id, t_start, t_end)
 
 
@@ -107,6 +110,7 @@ async def requests_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         return await get_requests_per_day(session, cfg.tenant_id, t_start, t_end)
 
 
@@ -123,6 +127,7 @@ async def latency_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         data = await get_latency_percentiles(session, cfg.tenant_id, t_start, t_end)
     return {"providers": data}
 
@@ -140,6 +145,7 @@ async def errors_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         data = await get_error_rates(session, cfg.tenant_id, t_start, t_end)
     return {"providers": data}
 
@@ -158,6 +164,7 @@ async def top_sessions_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         return await get_top_sessions(session, cfg.tenant_id, t_start, t_end, limit=limit)
 
 
@@ -172,6 +179,7 @@ async def session_replay_endpoint(
     envelope = get_envelope()
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         result = await get_session_replay(session, cfg.tenant_id, session_id, envelope)
     if not result["turns"]:
         raise HTTPException(status_code=404, detail=f"Session {session_id!r} not found.")
@@ -200,6 +208,7 @@ async def traces_endpoint(
     t_end = _parse_dt_param(end, default_end)
     engine = await _get_proxy_engine()
     async with AsyncSession(engine) as session:
+        await set_tenant_context(session, cfg.tenant_id)
         return await get_traces(
             session, cfg.tenant_id, t_start, t_end,
             page=page, limit=limit,
