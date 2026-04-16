@@ -32,6 +32,7 @@ from src.detection.sigma_engine import SigmaEngine
 from src.auth.local_router import router as local_auth_router
 from src.auth.local_bootstrap import bootstrap_local_admin
 from src.auth.ldap_router import router as ldap_auth_router
+from src.auth.mfa_router import router as mfa_router
 from src.detection.playbooks import PlaybookEngine
 from src.detection._state import init_detection
 from src.middleware.usage_limit import UsageLimitMiddleware
@@ -496,6 +497,7 @@ app.include_router(detection_router)
 app.include_router(oidc_router)
 app.include_router(local_auth_router)
 app.include_router(ldap_auth_router)
+app.include_router(mfa_router)
 app.include_router(billing_router)
 app.include_router(investigation_router)
 app.include_router(saas_router)

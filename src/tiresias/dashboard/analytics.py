@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tiresias.storage.schema import TiresiasAuditLog, TiresiasUsageBucket
 
 
-async def get_spend_summary(db_session: AsyncSession, tenant_id: str, start: datetime, end: datetime) -> dict:
+async def get_spend_summary(db_session: AsyncSession, tenant_ids: list[str], start: datetime, end: datetime) -> dict:
     """Total spend in USD between start and end."""
     stmt = (
         select(
@@ -20,7 +20,7 @@ async def get_spend_summary(db_session: AsyncSession, tenant_id: str, start: dat
             func.sum(TiresiasAuditLog.completion_tokens).label("total_completion_tokens"),
         )
         .where(
-            TiresiasAuditLog.tenant_id == tenant_id,
+            TiresiasAuditLog.tenant_id.in_(tenant_ids),
             TiresiasAuditLog.created_at >= start,
             TiresiasAuditLog.created_at <= end,
             TiresiasAuditLog.deleted_at.is_(None),
@@ -39,12 +39,12 @@ async def get_spend_summary(db_session: AsyncSession, tenant_id: str, start: dat
     }
 
 
-async def get_requests_per_day(db_session: AsyncSession, tenant_id: str, start: datetime, end: datetime) -> list[dict]:
+async def get_requests_per_day(db_session: AsyncSession, tenant_ids: list[str], start: datetime, end: datetime) -> list[dict]:
     """Return request counts grouped by day (UTC date)."""
     stmt = (
         select(TiresiasAuditLog.created_at, TiresiasAuditLog.cost_usd)
         .where(
-            TiresiasAuditLog.tenant_id == tenant_id,
+            TiresiasAuditLog.tenant_id.in_(tenant_ids),
             TiresiasAuditLog.created_at >= start,
             TiresiasAuditLog.created_at <= end,
             TiresiasAuditLog.deleted_at.is_(None),
@@ -70,12 +70,12 @@ async def get_requests_per_day(db_session: AsyncSession, tenant_id: str, start: 
     return {"counts": sorted(day_counts.values(), key=lambda x: x["date"])}
 
 
-async def get_latency_percentiles(db_session: AsyncSession, tenant_id: str, start: datetime, end: datetime) -> list[dict]:
+async def get_latency_percentiles(db_session: AsyncSession, tenant_ids: list[str], start: datetime, end: datetime) -> list[dict]:
     """Return p50/p95/p99 latency per provider extracted from metadata_json.latency_ms."""
     stmt = (
         select(TiresiasAuditLog.provider, TiresiasAuditLog.metadata_json)
         .where(
-            TiresiasAuditLog.tenant_id == tenant_id,
+            TiresiasAuditLog.tenant_id.in_(tenant_ids),
             TiresiasAuditLog.created_at >= start,
             TiresiasAuditLog.created_at <= end,
             TiresiasAuditLog.deleted_at.is_(None),
@@ -119,12 +119,12 @@ async def get_latency_percentiles(db_session: AsyncSession, tenant_id: str, star
     return output
 
 
-async def get_error_rates(db_session: AsyncSession, tenant_id: str, start: datetime, end: datetime) -> list[dict]:
+async def get_error_rates(db_session: AsyncSession, tenant_ids: list[str], start: datetime, end: datetime) -> list[dict]:
     """Return error rate per provider from metadata_json.status_code or .error flag."""
     stmt = (
         select(TiresiasAuditLog.provider, TiresiasAuditLog.metadata_json)
         .where(
-            TiresiasAuditLog.tenant_id == tenant_id,
+            TiresiasAuditLog.tenant_id.in_(tenant_ids),
             TiresiasAuditLog.created_at >= start,
             TiresiasAuditLog.created_at <= end,
             TiresiasAuditLog.deleted_at.is_(None),
@@ -177,7 +177,7 @@ async def get_error_rates(db_session: AsyncSession, tenant_id: str, start: datet
 
 async def get_top_sessions(
     db_session: AsyncSession,
-    tenant_id: str,
+    tenant_ids: list[str],
     start: datetime,
     end: datetime,
     limit: int = 20,
@@ -195,7 +195,7 @@ async def get_top_sessions(
             func.max(TiresiasAuditLog.created_at).label("last_at"),
         )
         .where(
-            TiresiasAuditLog.tenant_id == tenant_id,
+            TiresiasAuditLog.tenant_id.in_(tenant_ids),
             TiresiasAuditLog.created_at >= start,
             TiresiasAuditLog.created_at <= end,
             TiresiasAuditLog.deleted_at.is_(None),
@@ -315,7 +315,7 @@ async def get_session_replay(
 
 async def get_traces(
     db_session: AsyncSession,
-    tenant_id: str,
+    tenant_ids: list[str],
     start: datetime,
     end: datetime,
     page: int = 1,
@@ -328,7 +328,7 @@ async def get_traces(
 ) -> dict:
     """Return paginated individual audit log rows with optional filters."""
     conditions = [
-        TiresiasAuditLog.tenant_id == tenant_id,
+        TiresiasAuditLog.tenant_id.in_(tenant_ids),
         TiresiasAuditLog.created_at >= start,
         TiresiasAuditLog.created_at <= end,
         TiresiasAuditLog.deleted_at.is_(None),
@@ -387,6 +387,7 @@ async def get_traces(
         items.append({
             "id": row.id,
             "timestamp": row.created_at.isoformat() if row.created_at else None,
+            "tenant_id": row.tenant_id,
             "session_id": row.session_id,
             "model": row.model or "unknown",
             "provider": row.provider or "unknown",
