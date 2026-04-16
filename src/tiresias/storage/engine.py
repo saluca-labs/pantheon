@@ -102,9 +102,13 @@ async def set_tenant_context(session: "AsyncSession", tenant_id: str) -> None:
     is scoped to the current transaction.
     """
     if _is_postgres():
+        import re
+        if not re.fullmatch(r"[0-9a-fA-F\-]{36}", tenant_id):
+            raise ValueError(f"Invalid tenant_id format: {tenant_id!r}")
+        # Postgres rejects parameter binding inside SET, so interpolate directly.
+        # tenant_id is UUID-validated above; no injection surface.
         await session.execute(
-            text("SET LOCAL app.current_tenant_id = :tid"),
-            {"tid": tenant_id},
+            text(f"SET LOCAL app.current_tenant_id = '{tenant_id}'")
         )
 
 

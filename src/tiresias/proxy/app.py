@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+# Configure logging FIRST, before any other imports that might touch logging
+from tiresias.proxy.logging_utils import configure_logging
+configure_logging()
+
 import json
 import logging
 import os
@@ -17,6 +21,11 @@ from tiresias.encryption.providers import resolve_kek_provider
 from tiresias.proxy.interceptor import record_error_turn, record_turn
 from tiresias.proxy.rate_limit import RateLimitMiddleware
 from tiresias.proxy.saas_auth import SaaSAuthMiddleware
+from tiresias.proxy.soulgate_client import (
+    SoulgateDecision,
+    evaluate_llm_request,
+    new_request_id,
+)
 from tiresias.providers import build_provider
 from tiresias.providers.health import HealthTracker
 from tiresias.providers.router import ProviderCascadeExhausted, ProviderRouter
@@ -142,6 +151,28 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
             if cfg.database_url:
                 engine = await get_engine("__saas__", cfg.data_root)
             logger.info("Tiresias proxy started in SaaS mode")
+
+            # Phase B: attach engine factory to SecurityAuditHandler and
+            # run chain-verify on boot.
+            try:
+                from tiresias.proxy.logging_utils import get_security_audit_handler
+                from tiresias.proxy.chain_verify import verify_chain_on_boot
+
+                handler = get_security_audit_handler()
+
+                async def _audit_engine_factory():
+                    return await get_engine("__saas__", cfg.data_root)
+
+                if handler is not None:
+                    handler.set_engine_factory(_audit_engine_factory)
+                summary = await verify_chain_on_boot(_audit_engine_factory)
+                logger.info(
+                    "security_audit_chain_verify_boot tenants=%s breaks=%s",
+                    summary.get("tenants_checked"),
+                    len(summary.get("breaks", [])),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("security_audit_boot_verify_failed error=%s", exc)
         else:
             # Dedicated / on-prem: single tenant, run migrations then first_boot
             run_auto_migrations()
@@ -163,7 +194,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
     app = FastAPI(
         title="Tiresias Proxy",
         description="OpenAI-compatible proxy with encrypted audit logging",
-        version="0.6.0",
+        version="0.6.21",
         lifespan=lifespan,
     )
 
@@ -211,8 +242,77 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         upstream_headers = {
             k: v
             for k, v in request.headers.items()
-            if k.lower() not in ("host", "content-length", "transfer-encoding", "x-tiresias-api-key")
+            if k.lower() not in ("host", "content-length", "transfer-encoding", "x-tiresias-api-key", "authorization")
         }
+
+        # --- Soulgate LLM policy enforcement (Tier 2b) ---
+        # Gated entirely by SOULGATE_ENABLED (CESO) / PROXY_SOULGATE_ENFORCEMENT (plan-doc).
+        # off (default)  → no call, no behavior change vs v0.6.18.
+        # shadow         → evaluate + log, never raise.
+        # enforce        → evaluate; raise 403 on verdict=deny with opaque body.
+        sg_mode = cfg.effective_soulgate_mode
+        if sg_mode != "off":
+            try:
+                _sg_decision = await evaluate_llm_request(
+                    client=get_http_client(),
+                    settings=cfg,
+                    tenant_id=tenant_id,
+                    model=model,
+                    endpoint="/v1/chat/completions",
+                    persona_id=getattr(request.state, "persona_id", None),
+                    soulkey_id=getattr(request.state, "soulkey_id", None),
+                    session_id=str(session_id) if session_id else None,
+                    messages=body.get("messages", []),
+                    stream=is_streaming,
+                    source_ip=(request.headers.get("x-forwarded-for", "").split(",")[0].strip() or None),
+                )
+            except Exception as exc:  # defensive — soulgate_client is already fail-safe
+                logger.warning(
+                    "soulgate_eval_crashed tenant=%s error=%s severity=WARNING",
+                    tenant_id, type(exc).__name__,
+                )
+                _sg_decision = SoulgateDecision(verdict="allow", source="client_crash_fail_open")
+
+            logger.info(
+                "soulgate_eval verdict=%s source=%s policy_id=%s latency_ms=%.1f tenant=%s model=%s mode=%s",
+                _sg_decision.verdict,
+                _sg_decision.source,
+                _sg_decision.policy_id,
+                _sg_decision.latency_ms,
+                tenant_id,
+                model,
+                sg_mode,
+            )
+            if sg_mode == "enforce" and _sg_decision.verdict == "deny":
+                request_id = new_request_id()
+                # First-class SECURITY audit event (level 45) — written to
+                # _security_audit hash chain by SecurityAuditHandler.
+                from tiresias.proxy.logging_utils import SECURITY_LEVEL
+                logger.log(SECURITY_LEVEL, "soulgate_deny", extra={
+                    "event_type": "soulgate_deny",
+                    "actor_id": tenant_id or "unknown",
+                    "actor_type": "tenant",
+                    "outcome": "deny",
+                    "resource_type": "llm_endpoint",
+                    "resource_id": "/v1/chat/completions",
+                    "service": "tiresias-proxy",
+                    "tenant_id": tenant_id,
+                    "request_id": request_id,
+                    "agent_name": getattr(request.state, "persona_id", None),
+                    "endpoint": "/v1/chat/completions",
+                    "model": model,
+                    "policy_id": _sg_decision.policy_id,
+                    "reason_code": _sg_decision.reason_code,
+                    "deny_reason": _sg_decision.reason,
+                    "source": _sg_decision.source,
+                })
+                raise HTTPException(
+                    status_code=403,
+                    detail={"error": "policy_denied", "request_id": request_id},
+                )
+        # --- End soulgate enforcement hook ---
+
+        _req_soulkey_id = getattr(request.state, "soulkey_id", None)
 
         if is_streaming:
             # Model-prefix routing: if the model has a known provider prefix
@@ -240,6 +340,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
                 extra_metadata=extra_metadata,
                 envelope=envelope,
                 settings=cfg,
+                soulkey_id=_req_soulkey_id,
             )
         else:
             return await _handle_non_streaming_router(
@@ -252,6 +353,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
                 extra_metadata=extra_metadata,
                 envelope=envelope,
                 settings=cfg,
+                soulkey_id=_req_soulkey_id,
             )
 
     @app.post("/v1/sessions/{session_id}/tag")
@@ -309,6 +411,20 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
     from tiresias.dashboard.router import router as dashboard_router
     app.include_router(dashboard_router)
 
+    # Phase B: security-audit export + verification endpoints
+    try:
+        from tiresias.routers.security_audit import router as security_audit_router
+        app.include_router(security_audit_router)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("security_audit_router_register_failed error=%s", exc)
+
+    # Task #42: Retention policy management endpoints
+    try:
+        from tiresias.routers.retention import router as retention_router
+        app.include_router(retention_router)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("retention_router_register_failed error=%s", exc)
+
     # -------------------------------------------------------------------------
     # Phase 5: Generic API proxy routes (APIP-01 to APIP-04)
     # -------------------------------------------------------------------------
@@ -331,7 +447,7 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         upstream_headers = {
             k: v
             for k, v in request.headers.items()
-            if k.lower() not in ("host", "content-length", "transfer-encoding", "x-tiresias-api-key")
+            if k.lower() not in ("host", "content-length", "transfer-encoding", "x-tiresias-api-key", "authorization")
         }
 
         from tiresias.proxy.generic import forward_generic_request
@@ -471,6 +587,7 @@ async def _handle_non_streaming_router(
     extra_metadata,
     envelope,
     settings,
+    soulkey_id: str | None = None,
 ):
     from sqlalchemy.ext.asyncio import AsyncSession as _AS
     from tiresias.storage.engine import get_engine as _get_engine, set_tenant_context as _stc
@@ -515,9 +632,11 @@ async def _handle_non_streaming_router(
                 metadata=_merged_meta,
                 envelope=envelope,
                 db_session=db_session,
+                soulkey_id=soulkey_id,
             )
     except Exception as audit_exc:
-        logger.warning("Audit record_turn failed (non-fatal): %s", audit_exc)
+        logger.error("audit_write_failed type=%s error=%s tenant_id=%s", type(audit_exc).__name__, str(audit_exc), tenant_id, exc_info=True)
+        # preserve existing swallow behavior so upstream responses still return 200
 
     response_bytes = _json.dumps(response_json).encode()
     return Response(
@@ -539,6 +658,7 @@ async def _handle_non_streaming(
     extra_metadata,
     envelope,
     settings,
+    soulkey_id: str | None = None,
 ):
     from sqlalchemy.ext.asyncio import AsyncSession as _AS
     from tiresias.storage.engine import get_engine as _get_engine, set_tenant_context as _stc
@@ -575,9 +695,11 @@ async def _handle_non_streaming(
                     metadata=extra_metadata,
                     envelope=envelope,
                     db_session=db_session,
+                    soulkey_id=soulkey_id,
                 )
         except Exception as audit_exc:
-            logger.warning("Audit record_turn failed (non-fatal): %s", audit_exc)
+            logger.error("audit_write_failed type=%s error=%s tenant_id=%s", type(audit_exc).__name__, str(audit_exc), tenant_id, exc_info=True)
+            # preserve existing swallow behavior so upstream responses still return 200
     else:
         engine = await _get_engine(tenant_id, settings.data_root)
         async with _AS(engine) as db_session:
@@ -607,6 +729,7 @@ async def _handle_streaming(
     extra_metadata,
     envelope,
     settings,
+    soulkey_id: str | None = None,
 ):
     import json as _json
     import time as _time2
@@ -657,11 +780,13 @@ async def _handle_streaming(
                     metadata=_merged_meta_stream,
                     envelope=envelope,
                     db_session=db_session,
+                    soulkey_id=soulkey_id,
                 )
         except Exception as exc:
             logging.getLogger(__name__).error(
-                "Failed to record streaming turn: %s", exc
+                "audit_write_failed type=%s error=%s tenant_id=%s", type(exc).__name__, str(exc), tenant_id, exc_info=True
             )
+            # preserve existing swallow behavior so upstream responses still return 200
 
     return StreamingResponse(
         stream_generator(),

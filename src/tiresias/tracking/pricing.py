@@ -37,6 +37,59 @@ PRICING_TABLE: dict[str, dict[str, float]] = {
     "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
     "mixtral-8x7b-32768": {"input": 0.24, "output": 0.24},
     "gemma2-9b-it": {"input": 0.20, "output": 0.20},
+    # ---------------------------------------------------------------------------
+    # Ollama Cloud models — placeholder pricing, refine when Ollama exposes metered billing
+    # Tier guide (per 1M tokens): Small<30B=$0.05/$0.15, Mid 30-120B=$0.15/$0.45,
+    # Large 120-400B=$0.40/$1.20, XLarge 400B-1T=$1.00/$3.00. Thinking: +50% output.
+    # ---------------------------------------------------------------------------
+    # DeepSeek — published API prices used as proxy
+    "deepseek-v3.2:cloud": {"input": 0.27, "output": 1.10},   # 671B; DeepSeek-V3 public API price
+    # Qwen3-Coder family
+    "qwen3-coder:480b-cloud": {"input": 1.00, "output": 3.00},  # 480B XLarge  # placeholder pricing, refine when Ollama exposes metered billing
+    "qwen3-coder-next:cloud": {"input": 1.00, "output": 3.00},  # XLarge experimental  # placeholder pricing, refine when Ollama exposes metered billing
+    "qwen3-coder:30b-a3b-q4_K_M": {"input": 0.05, "output": 0.15},  # local 30B small  # placeholder pricing, refine when Ollama exposes metered billing
+    # Qwen3 general
+    "qwen3.5:397b-cloud": {"input": 1.00, "output": 3.00},      # 397B XLarge  # placeholder pricing, refine when Ollama exposes metered billing
+    "qwen3-next:80b-cloud": {"input": 0.15, "output": 0.45},    # 80B mid  # placeholder pricing, refine when Ollama exposes metered billing
+    "qwen3-vl:235b-cloud": {"input": 0.40, "output": 1.20},     # 235B large  # placeholder pricing, refine when Ollama exposes metered billing
+    # Kimi (Moonshot)
+    "kimi-k2.5:cloud": {"input": 0.40, "output": 1.20},         # large multimodal  # placeholder pricing, refine when Ollama exposes metered billing
+    "kimi-k2:1t-cloud": {"input": 1.00, "output": 3.00},        # 1T XLarge  # placeholder pricing, refine when Ollama exposes metered billing
+    "kimi-k2-thinking:cloud": {"input": 1.00, "output": 4.50},  # 1T thinking +50% output  # placeholder pricing, refine when Ollama exposes metered billing
+    # Mistral / Devstral
+    "mistral-large-3:675b-cloud": {"input": 1.00, "output": 3.00},   # 675B XLarge  # placeholder pricing, refine when Ollama exposes metered billing
+    "devstral-2:123b-cloud": {"input": 0.40, "output": 1.20},         # 123B large  # placeholder pricing, refine when Ollama exposes metered billing
+    "devstral-small-2:24b-cloud": {"input": 0.05, "output": 0.15},    # 24B small  # placeholder pricing, refine when Ollama exposes metered billing
+    "ministral-3:3b-cloud": {"input": 0.05, "output": 0.15},          # 3B small  # placeholder pricing, refine when Ollama exposes metered billing
+    "ministral-3:8b-cloud": {"input": 0.05, "output": 0.15},          # 8B small  # placeholder pricing, refine when Ollama exposes metered billing
+    "ministral-3:14b-cloud": {"input": 0.15, "output": 0.45},         # 14B mid  # placeholder pricing, refine when Ollama exposes metered billing
+    # Cogito / Nemotron
+    "cogito-2.1:671b-cloud": {"input": 1.00, "output": 3.00},         # 671B XLarge  # placeholder pricing, refine when Ollama exposes metered billing
+    "nemotron-3-super:cloud": {"input": 0.40, "output": 1.20},        # 120B large  # placeholder pricing, refine when Ollama exposes metered billing
+    "nemotron-3-nano:30b-cloud": {"input": 0.05, "output": 0.15},     # 30B small  # placeholder pricing, refine when Ollama exposes metered billing
+    # GPT-OSS (open-source OpenAI models)
+    "gpt-oss:120b-cloud": {"input": 0.10, "output": 0.30},            # 120B; OSS placeholder  # placeholder pricing, refine when Ollama exposes metered billing
+    "gpt-oss:20b-cloud": {"input": 0.05, "output": 0.15},             # 20B small OSS  # placeholder pricing, refine when Ollama exposes metered billing
+    # Gemini cloud (via Ollama)
+    "gemini-3-flash-preview:cloud": {"input": 0.10, "output": 0.40},  # Flash tier  # placeholder pricing, refine when Ollama exposes metered billing
+    # Gemma (Google open)
+    "gemma3:4b-cloud": {"input": 0.05, "output": 0.15},               # 4B small  # placeholder pricing, refine when Ollama exposes metered billing
+    "gemma3:12b-cloud": {"input": 0.05, "output": 0.15},              # 12B small  # placeholder pricing, refine when Ollama exposes metered billing
+    "gemma3:27b-cloud": {"input": 0.15, "output": 0.45},              # 27B mid  # placeholder pricing, refine when Ollama exposes metered billing
+    "gemma4:26b": {"input": 0.15, "output": 0.45},                    # 26B local vision  # placeholder pricing, refine when Ollama exposes metered billing
+    "gemma4:31b-cloud": {"input": 0.15, "output": 0.45},              # 31B mid  # placeholder pricing, refine when Ollama exposes metered billing
+    # GLM (Zhipu AI)
+    "glm-4.6:cloud": {"input": 0.15, "output": 0.45},                 # mid  # placeholder pricing, refine when Ollama exposes metered billing
+    "glm-4.7:cloud": {"input": 0.15, "output": 0.45},                 # mid  # placeholder pricing, refine when Ollama exposes metered billing
+    "glm-5:cloud": {"input": 0.40, "output": 1.20},                   # large  # placeholder pricing, refine when Ollama exposes metered billing
+    "glm-5.1:cloud": {"input": 0.40, "output": 1.20},                 # large  # placeholder pricing, refine when Ollama exposes metered billing
+    # MiniMax
+    "minimax-m2:cloud": {"input": 0.40, "output": 1.20},              # large  # placeholder pricing, refine when Ollama exposes metered billing
+    "minimax-m2.1:cloud": {"input": 0.40, "output": 1.20},            # large  # placeholder pricing, refine when Ollama exposes metered billing
+    "minimax-m2.5:cloud": {"input": 0.40, "output": 1.20},            # large  # placeholder pricing, refine when Ollama exposes metered billing
+    "minimax-m2.7:cloud": {"input": 0.40, "output": 1.20},            # large  # placeholder pricing, refine when Ollama exposes metered billing
+    # RNJ
+    "rnj-1:8b-cloud": {"input": 0.05, "output": 0.15},               # 8B small  # placeholder pricing, refine when Ollama exposes metered billing
 }
 
 MODEL_PREFIX_FALLBACK: list[tuple[str, str]] = [
@@ -67,6 +120,42 @@ MODEL_PREFIX_FALLBACK: list[tuple[str, str]] = [
     ("llama-3.1-70b", "llama-3.1-70b-versatile"),
     ("llama-3.1-8b", "llama-3.1-8b-instant"),
     ("mixtral-8x7b", "mixtral-8x7b-32768"),
+    # Ollama Cloud prefix fallbacks
+    ("deepseek-v3.2", "deepseek-v3.2:cloud"),
+    ("qwen3-coder:480b", "qwen3-coder:480b-cloud"),
+    ("qwen3-coder-next", "qwen3-coder-next:cloud"),
+    ("qwen3.5:397b", "qwen3.5:397b-cloud"),
+    ("qwen3-next:80b", "qwen3-next:80b-cloud"),
+    ("qwen3-vl:235b", "qwen3-vl:235b-cloud"),
+    ("kimi-k2-thinking", "kimi-k2-thinking:cloud"),
+    ("kimi-k2:1t", "kimi-k2:1t-cloud"),
+    ("kimi-k2.5", "kimi-k2.5:cloud"),
+    ("mistral-large-3", "mistral-large-3:675b-cloud"),
+    ("devstral-2:123b", "devstral-2:123b-cloud"),
+    ("devstral-small-2", "devstral-small-2:24b-cloud"),
+    ("ministral-3:3b", "ministral-3:3b-cloud"),
+    ("ministral-3:8b", "ministral-3:8b-cloud"),
+    ("ministral-3:14b", "ministral-3:14b-cloud"),
+    ("cogito-2.1", "cogito-2.1:671b-cloud"),
+    ("nemotron-3-super", "nemotron-3-super:cloud"),
+    ("nemotron-3-nano", "nemotron-3-nano:30b-cloud"),
+    ("gpt-oss:120b", "gpt-oss:120b-cloud"),
+    ("gpt-oss:20b", "gpt-oss:20b-cloud"),
+    ("gpt-oss", "gpt-oss:120b-cloud"),
+    ("gemini-3-flash-preview", "gemini-3-flash-preview:cloud"),
+    ("gemma3:4b", "gemma3:4b-cloud"),
+    ("gemma3:12b", "gemma3:12b-cloud"),
+    ("gemma3:27b", "gemma3:27b-cloud"),
+    ("gemma4:31b", "gemma4:31b-cloud"),
+    ("glm-4.6", "glm-4.6:cloud"),
+    ("glm-4.7", "glm-4.7:cloud"),
+    ("glm-5.1", "glm-5.1:cloud"),
+    ("glm-5", "glm-5:cloud"),
+    ("minimax-m2.7", "minimax-m2.7:cloud"),
+    ("minimax-m2.5", "minimax-m2.5:cloud"),
+    ("minimax-m2.1", "minimax-m2.1:cloud"),
+    ("minimax-m2", "minimax-m2:cloud"),
+    ("rnj-1:8b", "rnj-1:8b-cloud"),
 ]
 
 

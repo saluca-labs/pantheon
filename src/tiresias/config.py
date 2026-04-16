@@ -88,6 +88,56 @@ class TiresiasSettings(BaseSettings):
     # Redis (used for distributed rate limiting in SaaS mode)
     redis_url: str | None = Field(default=None, alias="TIRESIAS_REDIS_URL")
 
+    # Dashboard: when True, resolve caller's tenant hierarchy and aggregate across all
+    # descendant tenants instead of using the proxy pod's own cfg.tenant_id.
+    dashboard_tenant_hierarchy_mode: bool = Field(
+        default=False,
+        alias="DASHBOARD_TENANT_HIERARCHY_MODE",
+    )
+
+    # Auth gate: when True, every resolved tenant_id must exist in _soul_tenants
+    # with status='active'. Tenants that passed the DB license check but are NOT
+    # registered in soul_tenants receive an opaque 403. Default OFF so existing
+    # tenants are unaffected until CESO explicitly flips the flag.
+    saas_auth_require_tenant_registration: bool = Field(
+        default=False,
+        alias="SAAS_AUTH_REQUIRE_TENANT_REGISTRATION",
+    )
+
+    # --- Soulgate LLM policy enforcement (Tier 2b, v0.6.19) ---
+    # Tri-state enforcement: off = skip soulgate entirely (default — no
+    # behavior change vs v0.6.18), shadow = call and log only, enforce =
+    # deny on verdict=deny.  PROXY_SOULGATE_ENFORCEMENT kept as secondary
+    # alias for backward compatibility with the plan-doc name.
+    soulgate_enabled: Literal["off", "shadow", "enforce"] = Field(
+        default="off",
+        alias="SOULGATE_ENABLED",
+    )
+    soulgate_enforcement_legacy: Literal["off", "shadow", "enforce"] | None = Field(
+        default=None,
+        alias="PROXY_SOULGATE_ENFORCEMENT",
+    )
+    soulgate_url: str = Field(
+        default="http://soulgate.tiresias.svc.cluster.local:80",
+        alias="SOULGATE_URL",
+    )
+    soulgate_internal_key: str | None = Field(
+        default=None,
+        alias="SOULGATE_INTERNAL_API_KEY",
+    )
+    soulgate_timeout_ms: int = Field(default=500, alias="SOULGATE_TIMEOUT_MS")
+    soulgate_fail_mode: Literal["open", "closed"] = Field(
+        default="open",
+        alias="SOULGATE_FAIL_MODE",
+    )
+
+    @property
+    def effective_soulgate_mode(self) -> str:
+        """Prefer the CESO-canonical env; fall back to the plan-doc alias."""
+        if self.soulgate_enforcement_legacy is not None and self.soulgate_enabled == "off":
+            return self.soulgate_enforcement_legacy
+        return self.soulgate_enabled
+
 
 def parse_providers(providers_str: str) -> list[str]:
     """Parse TIRESIAS_PROVIDERS env var into an ordered list of provider names."""

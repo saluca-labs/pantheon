@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 _SOULAUTH_URL = os.environ.get("SOULAUTH_URL", "http://soulauth-mssp:8000")
 
 
-async def _verify_soulkey(soul_key: str) -> bool:
+async def _verify_soulkey(soul_key: str) -> str | None:
     """Verify an X-SoulKey against SoulAuth's session verification endpoint.
 
-    Returns True if the session is valid, False otherwise.
+    Returns the tenant_id string on success, None on failure.
     """
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as client:
@@ -40,11 +40,18 @@ async def _verify_soulkey(soul_key: str) -> bool:
             )
             if resp.status_code == 200:
                 data = resp.json()
-                return data.get("valid", False) or data.get("status") == "active"
-            return False
+                is_valid = data.get("valid", False) or data.get("status") == "active"
+                if is_valid:
+                    return data.get("tenant_id")
+            return None
     except Exception as exc:
         logger.warning("soulkey.verification_failed", error=str(exc))
-        return False
+        return None
+
+
+async def _resolve_session_tenant(soul_key: str) -> str | None:
+    """Return the tenant_id for a valid SoulKey session, or None."""
+    return await _verify_soulkey(soul_key)
 
 
 def make_api_key_dependency(get_settings_fn, get_engine_fn):
@@ -75,6 +82,30 @@ def make_api_key_dependency(get_settings_fn, get_engine_fn):
         cfg = get_settings_fn()
         engine = await get_engine_fn()
 
+        # When hierarchy mode is enabled, scan all license rows to find the matching
+        # tenant for this API key (enables sub-tenants to authenticate).
+        # When disabled, use the legacy single-tenant lookup against cfg.tenant_id.
+        if cfg.dashboard_tenant_hierarchy_mode:
+            async with AsyncSession(engine) as session:
+                stmt = select(TiresiasLicense).where(
+                    TiresiasLicense.api_key_hash.isnot(None)
+                )
+                result = await session.execute(stmt)
+                license_rows = result.scalars().all()
+
+            matched_tenant_id = None
+            for row in license_rows:
+                if row.api_key_hash and verify_api_key(api_key, row.api_key_hash):
+                    matched_tenant_id = row.tenant_id
+                    break
+
+            if matched_tenant_id is None:
+                raise HTTPException(status_code=401, detail="Invalid API key.")
+
+            request.state.tenant_id = matched_tenant_id
+            return api_key
+
+        # Legacy: single-tenant lookup against cfg.tenant_id
         async with AsyncSession(engine) as session:
             stmt = select(TiresiasLicense).where(
                 TiresiasLicense.tenant_id == cfg.tenant_id
@@ -112,7 +143,9 @@ def make_auth_dependency(get_settings_fn, get_engine_fn):
         # --- Path 1: X-SoulKey (portal session token) ---
         soul_key = request.headers.get("x-soulkey")
         if soul_key:
-            if await _verify_soulkey(soul_key):
+            tenant_id = await _verify_soulkey(soul_key)
+            if tenant_id is not None:
+                request.state.soulkey_tenant_id = tenant_id
                 return soul_key
             # If SoulKey was provided but invalid, reject immediately
             raise HTTPException(
