@@ -74,6 +74,7 @@ class BaselineResponse(BaseModel):
 
 @router.get("/anomalies", response_model=dict)
 async def list_anomalies(
+    tenant_id: Optional[str] = Query(None),
     soulkey_id: Optional[str] = Query(None),
     anomaly_type: Optional[str] = Query(None, alias="type"),
     severity: Optional[str] = Query(None),
@@ -84,8 +85,33 @@ async def list_anomalies(
     page_size: int = Query(50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
 ):
-    """List detected anomalies with pagination and filters."""
-    query = select(SoulWatchAnomaly).order_by(SoulWatchAnomaly.created_at.desc())
+    """List detected anomalies with pagination and filters.
+
+    tenant_id is required. When SOULWATCH_TENANT_HIERARCHY_MODE=true the
+    query includes rows from descendant tenants.
+    """
+    from soulWatch.src.database.tenants import get_descendant_tenant_ids
+    from soulWatch.config.settings import get_settings
+
+    # Tenant isolation — require explicit tenant_id.
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="tenant_id is required")
+
+    try:
+        uuid.UUID(tenant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tenant_id")
+
+    settings = get_settings()
+    if settings.tenant_hierarchy_mode:
+        tenant_ids = await get_descendant_tenant_ids(db, tenant_id)
+        tenant_uuids = [uuid.UUID(t) for t in tenant_ids]
+        tenant_filter = SoulWatchAnomaly.tenant_id.in_(tenant_uuids)
+    else:
+        tid = uuid.UUID(tenant_id)
+        tenant_filter = SoulWatchAnomaly.tenant_id == tid
+
+    query = select(SoulWatchAnomaly).where(tenant_filter).order_by(SoulWatchAnomaly.created_at.desc())
 
     if soulkey_id:
         try:

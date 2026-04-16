@@ -278,22 +278,53 @@ async def test_rule(rule_id: str, body: RuleTestRequest):
 
 @router.get("/detections")
 async def list_detections(
+    tenant_id: Optional[str] = Query(None),
     rule_id: Optional[str] = Query(None),
     level: Optional[str] = Query(None),
     soulkey_id: Optional[str] = Query(None),
     since_hours: int = Query(24, ge=1, le=720),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
+    include_noise: bool = Query(False, description="When false (default), suppress rows with a non-null noise_classification (e.g. legacy_health_probe_noise). Set true for audit/investigation."),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get paginated Sigma rule match log from the database."""
+    """Get paginated Sigma rule match log from the database.
+
+    tenant_id is required for tenant-scoped access. Omitting it returns 401
+    rather than leaking rows across tenants.
+
+    When SOULWATCH_TENANT_HIERARCHY_MODE=true the query expands to include
+    all active descendant tenants so MSSP/SaaS owners see rows from leaf
+    tenants without needing per-tenant calls.
+    """
     from sqlalchemy import func
     import uuid
+    from soulWatch.src.database.tenants import get_descendant_tenant_ids
+    from soulWatch.config.settings import get_settings
+
+    # Tenant isolation — require explicit tenant_id to prevent cross-tenant leakage.
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="tenant_id is required")
+
+    try:
+        uuid.UUID(tenant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tenant_id")
+
+    settings = get_settings()
+    if settings.tenant_hierarchy_mode:
+        tenant_ids = await get_descendant_tenant_ids(db, tenant_id)
+        tenant_uuids = [uuid.UUID(t) for t in tenant_ids]
+        tenant_filter = SoulWatchDetection.tenant_id.in_(tenant_uuids)
+    else:
+        tid = uuid.UUID(tenant_id)
+        tenant_filter = SoulWatchDetection.tenant_id == tid
 
     cutoff = datetime.now(timezone.utc) - timedelta(hours=since_hours)
     query = (
         select(SoulWatchDetection)
         .where(SoulWatchDetection.created_at >= cutoff)
+        .where(tenant_filter)
         .order_by(SoulWatchDetection.created_at.desc())
     )
 
@@ -307,6 +338,11 @@ async def list_detections(
             query = query.where(SoulWatchDetection.soulkey_id == sk_id)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid soulkey_id")
+
+    # By default suppress known-noise rows (B7-FIX-HEALTH-PROBE-NOISE).
+    # Callers investigating historical false-positives can opt in with include_noise=true.
+    if not include_noise:
+        query = query.where(SoulWatchDetection.noise_classification.is_(None))
 
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
@@ -340,6 +376,7 @@ async def list_detections(
                 "response_playbook": d.response_playbook,
                 "created_at": d.created_at.isoformat() if d.created_at else None,
                 "description": _build_description(d),
+                "noise_classification": d.noise_classification,
             }
             for d in detections
         ],

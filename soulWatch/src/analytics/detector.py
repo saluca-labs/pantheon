@@ -393,6 +393,21 @@ class AnomalyDetector:
                     except (ValueError, TypeError):
                         pass
 
+                # Extract tenant_id from event; log a warning when missing so
+                # we can track how often unauthenticated events carry no tenant.
+                tenant_id: Optional[uuid.UUID] = None
+                if event.get("tenant_id"):
+                    try:
+                        tenant_id = uuid.UUID(str(event["tenant_id"]))
+                    except (ValueError, TypeError):
+                        pass
+                if tenant_id is None:
+                    logger.warning(
+                        "detector.unauthenticated_event_missing_tenant",
+                        source=source,
+                        event_type=event.get("event_type"),
+                    )
+
                 anomaly = Anomaly(
                     type=AnomalyType.CREDENTIAL_STUFFING,
                     severity=SEVERITY_CRITICAL,
@@ -401,6 +416,7 @@ class AnomalyDetector:
                     evidence={"source": source, "failure_count": recent_failures},
                     baseline_value=threshold,
                     observed_value=recent_failures,
+                    tenant_id=tenant_id,
                 )
                 anomalies.append(anomaly)
                 await self._persist_anomalies(anomalies, db)

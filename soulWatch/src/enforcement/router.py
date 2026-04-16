@@ -59,14 +59,40 @@ class ApproveRequest(BaseModel):
 
 @router.get("/quarantines")
 async def list_quarantines(
+    tenant_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     soulkey_id: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
 ):
-    """List quarantine records with optional filters."""
-    query = select(SoulWatchQuarantine).order_by(SoulWatchQuarantine.quarantined_at.desc())
+    """List quarantine records with optional filters.
+
+    tenant_id is required. When SOULWATCH_TENANT_HIERARCHY_MODE=true the
+    query includes rows from descendant tenants.
+    """
+    from soulWatch.src.database.tenants import get_descendant_tenant_ids
+    from soulWatch.config.settings import get_settings
+
+    # Tenant isolation — require explicit tenant_id.
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="tenant_id is required")
+
+    try:
+        uuid.UUID(tenant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid tenant_id")
+
+    settings = get_settings()
+    if settings.tenant_hierarchy_mode:
+        tenant_ids = await get_descendant_tenant_ids(db, tenant_id)
+        tenant_uuids = [uuid.UUID(t) for t in tenant_ids]
+        tenant_filter = SoulWatchQuarantine.tenant_id.in_(tenant_uuids)
+    else:
+        tid = uuid.UUID(tenant_id)
+        tenant_filter = SoulWatchQuarantine.tenant_id == tid
+
+    query = select(SoulWatchQuarantine).where(tenant_filter).order_by(SoulWatchQuarantine.quarantined_at.desc())
 
     if status:
         query = query.where(SoulWatchQuarantine.status == status)

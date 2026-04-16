@@ -3,11 +3,14 @@ Core event processing pipeline for SoulWatch.
 Ingest -> Detect -> Respond -> Forward -> Broadcast.
 """
 
+import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from soulWatch.src.analytics._state import get_detector, get_alert_router
@@ -50,48 +53,256 @@ def set_ws_manager(manager):
 
 
 
+def _require_tenant_id(event: dict, handler_name: str) -> Optional[uuid.UUID]:
+    """
+    Extract and validate tenant_id from an event dict.
+    Returns a UUID on success; logs WARN and returns None if missing/invalid.
+    """
+    raw = event.get("tenant_id")
+    if not raw:
+        logger.warning(
+            f"pipeline.{handler_name}.missing_tenant_id",
+            event_type=event.get("event_type"),
+        )
+        return None
+    try:
+        return uuid.UUID(str(raw))
+    except (ValueError, AttributeError):
+        logger.warning(
+            f"pipeline.{handler_name}.invalid_tenant_id",
+            tenant_id=raw,
+        )
+        return None
+
+
 async def _handle_tool_invocation(event: dict, db: AsyncSession) -> dict:
-    """Persist a tool_invocation event from tiresias-exec."""
+    """
+    Persist a tool_invocation event to aletheia_tool_invocations.
+
+    Guards:
+    - WARN + skip if tenant_id is missing or invalid.
+    - ON CONFLICT (invocation_id) DO NOTHING for idempotency.
+    """
     from soulWatch.src.database.models import AletheiaToolInvocation
-    from datetime import datetime, timezone
+
+    tid = _require_tenant_id(event, "tool_invocation")
+    if tid is None:
+        return {"persisted": False, "reason": "missing_tenant_id"}
 
     execution = event.get("execution", {})
     policy = event.get("policy", {})
     sanitizer = event.get("sanitizer", {})
 
-    record = AletheiaToolInvocation(
-        tenant_id=uuid.UUID(str(event["tenant_id"])) if event.get("tenant_id") else None,
-        invocation_id=event.get("invocation_id", f"inv_{uuid.uuid4().hex[:12]}"),
-        agent_id=event.get("agent_id"),
-        timestamp=(
-            datetime.fromisoformat(event["timestamp"])
-            if event.get("timestamp")
-            else datetime.now(timezone.utc)
-        ),
-        command=event.get("command", "unknown"),
-        args=event.get("args", []),
-        full_command=event.get("full_command", ""),
-        working_directory=event.get("working_directory"),
-        exit_code=execution.get("exit_code"),
-        duration_ms=execution.get("duration_ms"),
-        stdout_bytes=execution.get("stdout_bytes", 0),
-        stderr_bytes=execution.get("stderr_bytes", 0),
-        stdout_hash=execution.get("stdout_hash"),
-        stderr_hash=execution.get("stderr_hash"),
-        policy_verdict=policy.get("verdict"),
-        policy_rule_matched=", ".join(policy.get("rules_matched", [])) or None,
-        sanitizer_mode=sanitizer.get("mode"),
-        sanitizer_verdict=sanitizer.get("verdict"),
-        patterns_matched=sanitizer.get("patterns_matched", []),
-        environment_hash=event.get("environment_hash"),
+    invocation_id = event.get("invocation_id") or f"inv_{uuid.uuid4().hex[:12]}"
+
+    # Use raw SQL INSERT with ON CONFLICT DO NOTHING so idempotent replays are safe.
+    # Note: cast JSON columns with CAST(...AS json) not ::json to avoid asyncpg param
+    # confusion with the :: operator in SQLAlchemy text() statements.
+    stmt = text("""
+        INSERT INTO aletheia_tool_invocations (
+            id, tenant_id, invocation_id, agent_id, timestamp,
+            command, args, full_command, working_directory,
+            exit_code, duration_ms, stdout_bytes, stderr_bytes,
+            stdout_hash, stderr_hash, policy_verdict, policy_rule_matched,
+            sanitizer_mode, sanitizer_verdict, patterns_matched,
+            environment_hash, created_at
+        ) VALUES (
+            :id, :tenant_id, :invocation_id, :agent_id, :timestamp,
+            :command, CAST(:args AS json), :full_command, :working_directory,
+            :exit_code, :duration_ms, :stdout_bytes, :stderr_bytes,
+            :stdout_hash, :stderr_hash, :policy_verdict, :policy_rule_matched,
+            :sanitizer_mode, :sanitizer_verdict, CAST(:patterns_matched AS json),
+            :environment_hash, :created_at
+        )
+        ON CONFLICT (invocation_id) DO NOTHING
+    """)
+
+    ts = (
+        datetime.fromisoformat(event["timestamp"])
+        if event.get("timestamp")
+        else datetime.now(timezone.utc)
     )
-    db.add(record)
+    now = datetime.now(timezone.utc)
+
+    rules_matched = policy.get("rules_matched", [])
+    rule_str = ", ".join(rules_matched) if rules_matched else None
+
+    await db.execute(stmt, {
+        "id": str(uuid.uuid4()),
+        "tenant_id": str(tid),
+        "invocation_id": invocation_id,
+        "agent_id": event.get("agent_id"),
+        "timestamp": ts,
+        "command": event.get("command", "unknown"),
+        "args": json.dumps(event.get("args", [])),
+        "full_command": event.get("full_command", ""),
+        "working_directory": event.get("working_directory"),
+        "exit_code": execution.get("exit_code"),
+        "duration_ms": execution.get("duration_ms"),
+        "stdout_bytes": execution.get("stdout_bytes", 0),
+        "stderr_bytes": execution.get("stderr_bytes", 0),
+        "stdout_hash": execution.get("stdout_hash"),
+        "stderr_hash": execution.get("stderr_hash"),
+        "policy_verdict": policy.get("verdict"),
+        "policy_rule_matched": rule_str,
+        "sanitizer_mode": sanitizer.get("mode"),
+        "sanitizer_verdict": sanitizer.get("verdict"),
+        "patterns_matched": json.dumps(sanitizer.get("patterns_matched", [])),
+        "environment_hash": event.get("environment_hash"),
+        "created_at": now,
+    })
+
     logger.info(
         "pipeline.tool_invocation_persisted",
-        invocation_id=record.invocation_id,
-        command=record.command,
+        invocation_id=invocation_id,
+        command=event.get("command"),
+        tenant_id=str(tid),
     )
-    return {"persisted": True, "invocation_id": record.invocation_id}
+    return {"persisted": True, "invocation_id": invocation_id}
+
+
+def _compute_cot_hashes(
+    tenant_id: str,
+    chain_id: str,
+    entry_index: int,
+    request_id: str,
+    timestamp: str,
+    model: str,
+    provider: str,
+    cot_content: str,
+    prev_hash: str,
+) -> tuple[str, str]:
+    """
+    Compute (cot_hash, entry_hash) for a CoT chain entry.
+
+    cot_hash  = SHA-256 of the raw CoT content bytes.
+    entry_hash = SHA-256 of canonical JSON of the entry metadata + cot_hash + prev_hash,
+                 forming the tamper-evident hash chain.
+    """
+    cot_hash = hashlib.sha256(cot_content.encode("utf-8", errors="replace")).hexdigest()
+    entry_payload = json.dumps({
+        "tenant_id": tenant_id,
+        "chain_id": chain_id,
+        "entry_index": entry_index,
+        "request_id": request_id,
+        "timestamp": timestamp,
+        "model": model,
+        "provider": provider,
+        "cot_hash": cot_hash,
+        "prev_hash": prev_hash,
+    }, sort_keys=True)
+    entry_hash = hashlib.sha256(entry_payload.encode("utf-8")).hexdigest()
+    return cot_hash, entry_hash
+
+
+async def _handle_cot_event(event: dict, db: AsyncSession) -> dict:
+    """
+    Persist a cot_turn event to aletheia_cot_chain.
+
+    Expected event fields (all from tiresias-proxy cot_turn payload):
+      tenant_id, chain_id, entry_index, request_id, timestamp,
+      model, provider, agent_id, cot_content (raw text), prev_hash
+
+    Guards:
+    - WARN + skip if tenant_id is missing or invalid.
+    - ON CONFLICT (tenant_id, chain_id, entry_index) DO NOTHING for idempotency.
+    """
+    tid = _require_tenant_id(event, "cot_event")
+    if tid is None:
+        return {"persisted": False, "reason": "missing_tenant_id"}
+
+    chain_id_str = event.get("chain_id") or str(uuid.uuid4())
+    entry_index = int(event.get("entry_index", 0))
+    request_id_str = event.get("request_id") or str(uuid.uuid4())
+
+    try:
+        chain_id = uuid.UUID(chain_id_str)
+    except (ValueError, AttributeError):
+        chain_id = uuid.uuid4()
+
+    try:
+        request_id = uuid.UUID(request_id_str)
+    except (ValueError, AttributeError):
+        request_id = uuid.uuid4()
+
+    ts_raw = event.get("timestamp") or datetime.now(timezone.utc).isoformat()
+    try:
+        ts = datetime.fromisoformat(ts_raw)
+    except (ValueError, TypeError):
+        ts = datetime.now(timezone.utc)
+
+    model = event.get("model", "unknown")
+    provider = event.get("provider", "unknown")
+    cot_content = event.get("cot_content", "")
+    prev_hash = event.get("prev_hash", "0" * 64)
+
+    cot_token_count = event.get("cot_token_count", 0) or 0
+    cot_byte_count = len(cot_content.encode("utf-8", errors="replace"))
+
+    cot_hash, entry_hash = _compute_cot_hashes(
+        tenant_id=str(tid),
+        chain_id=str(chain_id),
+        entry_index=entry_index,
+        request_id=str(request_id),
+        timestamp=ts.isoformat(),
+        model=model,
+        provider=provider,
+        cot_content=cot_content,
+        prev_hash=prev_hash,
+    )
+
+    now = datetime.now(timezone.utc)
+
+    stmt = text("""
+        INSERT INTO aletheia_cot_chain (
+            id, tenant_id, chain_id, entry_index, request_id,
+            timestamp, model, provider, agent_id,
+            cot_hash, cot_token_count, cot_byte_count,
+            prev_hash, entry_hash, content_stored, content_ref,
+            created_at
+        ) VALUES (
+            :id, :tenant_id, :chain_id, :entry_index, :request_id,
+            :timestamp, :model, :provider, :agent_id,
+            :cot_hash, :cot_token_count, :cot_byte_count,
+            :prev_hash, :entry_hash, false, :content_ref,
+            :created_at
+        )
+        ON CONFLICT (tenant_id, chain_id, entry_index) DO NOTHING
+    """)
+
+    await db.execute(stmt, {
+        "id": str(uuid.uuid4()),
+        "tenant_id": str(tid),
+        "chain_id": str(chain_id),
+        "entry_index": entry_index,
+        "request_id": str(request_id),
+        "timestamp": ts,
+        "model": model,
+        "provider": provider,
+        "agent_id": event.get("agent_id"),
+        "cot_hash": cot_hash,
+        "cot_token_count": cot_token_count,
+        "cot_byte_count": cot_byte_count,
+        "prev_hash": prev_hash,
+        "entry_hash": entry_hash,
+        "content_ref": None,
+        "created_at": now,
+    })
+
+    logger.info(
+        "pipeline.cot_entry_persisted",
+        chain_id=str(chain_id),
+        entry_index=entry_index,
+        request_id=str(request_id),
+        tenant_id=str(tid),
+        cot_hash=cot_hash[:16] + "...",
+    )
+    return {
+        "persisted": True,
+        "chain_id": str(chain_id),
+        "entry_index": entry_index,
+        "entry_hash": entry_hash,
+    }
 
 async def process_event(event: dict, db: AsyncSession) -> dict:
     """
@@ -126,7 +337,7 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
         except Exception as e:
             logger.debug("pipeline.geo_enrichment_failed", error=str(e))
 
-    # Route tool_invocation events to dedicated handler + continue pipeline
+    # Route aletheia events to dedicated handlers + continue pipeline
     event_type = event.get("event_type")
     if event_type == "tool_invocation":
         try:
@@ -134,6 +345,13 @@ async def process_event(event: dict, db: AsyncSession) -> dict:
             result["tool_invocation"] = tool_result
         except Exception as e:
             logger.error("pipeline.tool_invocation_persist_failed", error=str(e))
+
+    if event_type == "cot_turn":
+        try:
+            cot_result = await _handle_cot_event(event, db)
+            result["cot_turn"] = cot_result
+        except Exception as e:
+            logger.error("pipeline.cot_event_persist_failed", error=str(e))
 
     # 1. Run anomaly detection
     detector = get_detector()

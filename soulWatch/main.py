@@ -65,6 +65,14 @@ async def lifespan(app: FastAPI):
     """Application lifespan - startup and shutdown."""
     logger.info("soulwatch.starting", version=settings.app_version, mode=settings.mode)
 
+    # Log enforcement mode so operators can confirm at a glance (tech-debt #44)
+    _enforcement_mode = os.environ.get("SOULWATCH_QUARANTINE_ENFORCEMENT", "dry_run").lower()
+    logger.info(
+        "soulwatch_startup",
+        enforcement_mode=_enforcement_mode,
+        version=settings.app_version,
+    )
+
     # Initialize database tables
     await init_db()
 
@@ -98,11 +106,20 @@ async def lifespan(app: FastAPI):
     # Start background baseline rebuild
     baseline_engine.start_background_rebuild(async_session_factory)
 
+    # Quarantine engine — constructed once, shared by PlaybookEngine, enforcement router,
+    # pipeline processor, and the auto-release background task. (Tier 2a, 2026-04-15)
+    quarantine_engine: QuarantineEngine = QuarantineEngine()
+
     # Initialize Sigma detection engine and playbooks
+    # PlaybookEngine receives quarantine_engine + async_session_factory so that
+    # _handle_quarantine can write DB rows and call soulauth.
     if settings.detection_enabled:
         try:
             sigma_engine = SigmaEngine()
-            playbook_engine_inst = PlaybookEngine()
+            playbook_engine_inst = PlaybookEngine(
+                db_session_factory=async_session_factory,
+                quarantine_engine=quarantine_engine,
+            )
 
             rules_dir = settings.detection_rules_dir or os.path.join(
                 os.path.dirname(__file__), "src", "detection", "rules"
@@ -144,8 +161,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("soulwatch.detection_start_failed", error=str(e))
 
-    # Initialize quarantine engine
-    quarantine_engine = QuarantineEngine()
+    # Wire the shared quarantine engine into the enforcement router and pipeline processor
     set_quarantine_engine(quarantine_engine)
     set_pipeline_quarantine(quarantine_engine)
 
@@ -215,12 +231,44 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("soulwatch.llm_poller_start_failed", error=str(e))
 
+    # Auto-release background task: checks expired quarantines every 60 seconds.
+    # Granularity is sufficient — auto_release_at is specified in minutes.
+    # Runs regardless of sidecar/standalone mode. (Tier 2a, 2026-04-15)
+    import asyncio as _asyncio
+
+    _auto_release_task: "asyncio.Task | None" = None
+
+    async def _auto_release_loop():
+        while True:
+            try:
+                await _asyncio.sleep(60)
+                async with async_session_factory() as db:
+                    released = await quarantine_engine.auto_release_check(db)
+                    if released:
+                        await db.commit()
+                        logger.info("quarantine.auto_release_batch", count=len(released))
+            except _asyncio.CancelledError:
+                break
+            except Exception as exc:
+                logger.warning("quarantine.auto_release_loop_error", error=str(exc))
+
+    _auto_release_task = _asyncio.create_task(_auto_release_loop())
+    logger.info("soulwatch.quarantine_auto_release_started", interval_seconds=60)
+
     logger.info("soulwatch.started", mode=settings.mode)
 
     yield
 
     # Shutdown
     logger.info("soulwatch.shutting_down")
+
+    # Stop auto-release loop
+    if _auto_release_task and not _auto_release_task.done():
+        _auto_release_task.cancel()
+        try:
+            await _auto_release_task
+        except _asyncio.CancelledError:
+            pass
 
     # Stop pollers
     if poller:

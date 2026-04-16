@@ -93,6 +93,14 @@ class SoulWatchSettings(BaseSettings):
     baseline_rebuild_interval_hours: int = 6
     baseline_lookback_hours: int = 168  # 7 days
 
+    # Tenant hierarchy — when ON, list endpoints expand tenant_id to include
+    # all active descendant tenants via recursive CTE on _soul_tenants.
+    # OFF (default) preserves the legacy single-tenant filter.
+    tenant_hierarchy_mode: bool = Field(
+        default=False,
+        description="Expand tenant queries to include descendant tenants",
+    )
+
     # Retention
     anomaly_retention_days: int = 90
     detection_retention_days: int = 90
