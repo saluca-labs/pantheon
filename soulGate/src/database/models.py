@@ -210,6 +210,42 @@ class SoulGateActionLog(Base):
     )
 
 
+class SoulGateLLMPolicy(Base):
+    """
+    Per-tenant LLM request gate policies.
+
+    Matched by ``(tenant_id, model_pattern, endpoint_pattern)`` at
+    ``POST /gate/v1/llm/evaluate``.  Higher ``priority`` wins on ties.
+
+    The ``fail_mode`` column is a nullable per-tenant override for the
+    proxy-side fail behavior when soulgate is unreachable: ``open`` means
+    the proxy permits the request on soulgate failure, ``closed`` means
+    it blocks it.  NULL means "use the proxy env default".
+    """
+    __tablename__ = "_soulgate_llm_policies"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    soulkey_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
+    persona_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    model_pattern: Mapped[str] = mapped_column(String(255), nullable=False, default="*")
+    endpoint_pattern: Mapped[str] = mapped_column(String(500), nullable=False, default="/v1/*")
+    action: Mapped[str] = mapped_column(String(20), nullable=False, default="allow")  # allow, deny
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    reason_code: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    fail_mode: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # open|closed|NULL
+    created_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=True)
+
+    __table_args__ = (
+        Index("idx_soulgate_llm_policies_tenant", "tenant_id"),
+        Index("idx_soulgate_llm_policies_lookup", "tenant_id", "enabled", "priority"),
+    )
+
+
 class SoulGateThreatPattern(Base):
     """Custom threat detection patterns (regex or keyword)."""
     __tablename__ = "_soulgate_threat_patterns"
