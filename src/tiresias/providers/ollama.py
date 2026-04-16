@@ -29,5 +29,8 @@ class OllamaProvider(OpenAIProvider):
         return url, headers, payload
 
     def is_error(self, status_code: int) -> bool:
-        """Ollama returns 4xx for unknown models -- treat as failover-worthy."""
-        return status_code >= 400
+        """Ollama returns 5xx or 429 for transient errors -- those are failover-worthy.
+        4xx errors (model not found, bad request) are surfaced to the caller via
+        is_client_error() -- do NOT cascade on them, as the model-prefix router
+        already selected Ollama as the correct provider for this model."""
+        return status_code >= 500 or status_code == 429

@@ -36,6 +36,7 @@ async def record_turn(
     metadata,
     envelope: EnvelopeEncryption,
     db_session: AsyncSession,
+    soulkey_id: str | None = None,
 ) -> dict:
     messages = request_body.get("messages", [])
     prompt_text = json.dumps(messages)
@@ -72,6 +73,7 @@ async def record_turn(
         metadata_json=json.dumps(metadata) if metadata else None,
         request_hash=request_hash,
         response_hash=response_hash,
+        soulkey_id=str(soulkey_id) if soulkey_id else None,
         created_at=now,
     )
     db_session.add(row)
@@ -105,6 +107,11 @@ async def record_turn(
     tool_calls = _extract_tool_calls(response_body)
     if tool_calls:
         _report_tool_invocations(tool_calls, tenant_id, model, provider, session_id)
+
+    # Extract and report chain-of-thought turns to SoulWatch (fire-and-forget)
+    cot_blocks = _extract_cot_blocks(response_body)
+    if cot_blocks:
+        _report_cot_turns(cot_blocks, tenant_id, model, provider, session_id, row_id)
 
     return snapshot
 
@@ -224,6 +231,90 @@ def _report_tool_invocations(tool_calls, tenant_id, model, provider, session_id)
             logger.warning(
                 "SoulWatch tool event failed for %s: %s",
                 tc["tool_name"],
+                exc,
+            )
+
+
+def _extract_cot_blocks(response_body: dict) -> list[dict]:
+    """
+    Extract chain-of-thought (thinking) blocks from an LLM response.
+
+    Handles:
+    - Claude format: content blocks with type='thinking' (extended thinking).
+    - OpenAI o-series format: choices[0].message.reasoning_content (if present).
+    """
+    blocks = []
+
+    # Claude: content blocks with type=thinking
+    for block in response_body.get("content", []):
+        if isinstance(block, dict) and block.get("type") == "thinking":
+            thinking_text = block.get("thinking", "")
+            if thinking_text:
+                blocks.append({
+                    "cot_content": thinking_text,
+                    "thinking_signature": block.get("signature"),
+                })
+
+    # OpenAI o-series: reasoning_content in message
+    for choice in response_body.get("choices", []):
+        msg = choice.get("message", {})
+        reasoning = msg.get("reasoning_content") or msg.get("reasoning")
+        if reasoning:
+            blocks.append({
+                "cot_content": str(reasoning),
+                "thinking_signature": None,
+            })
+
+    return blocks
+
+
+def _report_cot_turns(cot_blocks, tenant_id, model, provider, session_id, request_id):
+    """Fire-and-forget POST CoT turns to SoulWatch."""
+    import httpx
+    import uuid as _uuid
+
+    soulwatch_url = os.environ.get("SOULWATCH_URL", "http://soulwatch-mssp:8001")
+    chain_id = str(_uuid.uuid4())
+    prev_hash = "0" * 64
+
+    for idx, block in enumerate(cot_blocks):
+        cot_content = block.get("cot_content", "")
+        cot_token_count = max(1, len(cot_content) // 4)  # rough approximation
+
+        payload = {
+            "event_type": "cot_turn",
+            "version": "1.0",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "tenant_id": tenant_id,
+            "agent_id": session_id or "unknown",
+            "chain_id": chain_id,
+            "entry_index": idx,
+            "request_id": str(request_id),
+            "model": model,
+            "provider": provider,
+            "cot_content": cot_content,
+            "cot_token_count": cot_token_count,
+            "prev_hash": prev_hash,
+        }
+        try:
+            internal_key = os.environ.get("SOULWATCH_INTERNAL_API_KEY", "")
+            headers = {"X-Internal-Key": internal_key} if internal_key else {}
+            resp = httpx.post(
+                f"{soulwatch_url}/watch/v1/events",
+                json=payload,
+                headers=headers,
+                timeout=2.0,
+            )
+            resp.raise_for_status()
+            # Update prev_hash from response for chain linkage if available
+            resp_data = resp.json()
+            if resp_data.get("result", {}).get("entry_hash"):
+                prev_hash = resp_data["result"]["entry_hash"]
+        except Exception as exc:
+            logger.warning(
+                "SoulWatch CoT event failed for chain %s entry %d: %s",
+                chain_id,
+                idx,
                 exc,
             )
 

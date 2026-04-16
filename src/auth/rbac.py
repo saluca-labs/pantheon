@@ -26,6 +26,7 @@ class AdminRole(str, Enum):
     ADMIN = "admin"         # Key management, policy, audit
     OPERATOR = "operator"   # View dashboards, trigger sync, view audit
     VIEWER = "viewer"       # Read-only dashboard access
+    AUDITOR = "auditor"     # Audit-read + decrypt-scope (MFA-gated reveal)
 
 
 # Permission mapping per role (defaults)
@@ -70,6 +71,22 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "detection:read",
         "analytics:read",
         "aletheia:read",
+        "keys:read",
+        "enforcement:read",
+        "users:read",
+        "teams:read",
+    ],
+    "auditor": [
+        # Read-only audit surface + MFA-gated decrypt scope.
+        # Cannot mutate policy / keys / tenants; can reveal encrypted CoT
+        # content after successful MFA step-up (enforced at route level).
+        "audit:read",
+        "tenants:read",
+        "policy:read",
+        "detection:read",
+        "analytics:read",
+        "aletheia:read",
+        "aletheia:decrypt",
         "keys:read",
         "enforcement:read",
         "users:read",
@@ -140,7 +157,7 @@ def invalidate_rbac_cache() -> None:
     logger.debug("rbac.cache.invalidated")
 
 # Role hierarchy: higher roles include all lower role permissions
-ROLE_HIERARCHY = ["viewer", "operator", "admin", "owner"]
+ROLE_HIERARCHY = ["viewer", "auditor", "operator", "admin", "owner"]
 
 # Account admin permissions (checked via is_account_admin flag, not role)
 ACCOUNT_ADMIN_PERMISSIONS = [

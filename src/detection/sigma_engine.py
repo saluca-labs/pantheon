@@ -144,6 +144,13 @@ def _match_single(
     event_value: Any, rule_value: Any, modifier: Optional[str], field_name: str
 ) -> tuple[bool, dict]:
     """Match a single value with optional modifier."""
+    # Explicit null / None matching: rule value None (from YAML `null`) matches
+    # an event field that is absent or None.
+    if rule_value is None:
+        if event_value is None:
+            return True, {field_name: {"expected": None, "actual": None}}
+        return False, {}
+
     if event_value is None:
         return False, {}
 
@@ -515,6 +522,15 @@ class SigmaEngine:
         matched, details = _evaluate_selection(event, selections[sel_name])
         if not matched:
             return None
+
+        # If a named 'filter' selection exists, skip events that match it.
+        # This implements the standard Sigma filter exclusion for aggregation rules
+        # (e.g., excluding health-check probes from privilege-escalation counts).
+        # ref: B7-FIX-HEALTH-PROBE-NOISE
+        if "filter" in selections:
+            filter_matched, _ = _evaluate_selection(event, selections["filter"])
+            if filter_matched:
+                return None
 
         # Build grouping key from event (use soulkey_id or persona_id or source_ip)
         group_key = (

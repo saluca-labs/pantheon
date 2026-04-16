@@ -16,6 +16,13 @@ detection:
       - escalation_requested
       - auth_deny
     decision: deny
+  # Exclude k8s liveness/readiness health-probe events that carry resource=health_check
+  # and no soulkey (nil soulkey_id). These are infra artifacts, not real escalation
+  # attempts. Without this filter, ~30 probes/min across the cluster generate
+  # hundreds of false-positive detections per hour. ref: B7-FIX-HEALTH-PROBE-NOISE
+  filter:
+    resource: health_check
+    soulkey_id: null
   condition: selection | count() > 3
   timeframe: 5m
 tags:

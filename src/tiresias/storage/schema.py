@@ -44,6 +44,7 @@ class TiresiasAuditLog(Base):
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     request_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     response_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    soulkey_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False, index=True
     )

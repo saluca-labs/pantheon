@@ -5,6 +5,7 @@ Uses generic types (Uuid, JSON) for cross-database compatibility in testing.
 PostgreSQL-specific features (JSONB, partial indexes) are in database/schema.sql.
 """
 
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -15,6 +16,39 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
+
+
+class PortableArray(TypeDecorator):
+    """Cross-database ARRAY type: uses ARRAY on PostgreSQL, JSON on SQLite."""
+
+    impl = Text
+    cache_ok = True
+
+    def __init__(self, item_type=None):
+        super().__init__()
+        self.item_type = item_type
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(ARRAY(self.item_type or Text))
+        return dialect.type_descriptor(JSON())
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == "postgresql":
+            return value
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == "postgresql":
+            return value
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
 
 from src.database.connection import Base
 
@@ -289,7 +323,7 @@ class SoulIdPConfig(Base):
     client_secret_enc: Mapped[str] = mapped_column(Text, nullable=False)
     discovery_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     issuer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    scopes: Mapped[Optional[list]] = mapped_column(ARRAY(Text), nullable=True)
+    scopes: Mapped[Optional[list]] = mapped_column(PortableArray(Text), nullable=True)
     claim_mapping: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
     domain_hint: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     group_role_map: Mapped[Optional[dict]] = mapped_column(JSON, default=dict, nullable=True)
