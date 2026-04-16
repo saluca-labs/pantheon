@@ -20,9 +20,21 @@ export async function tryFetch(
   headers?: Record<string, string>,
   timeout = 8000,
 ): Promise<any> {
+  const caller = headers ?? {};
+  const hasAuth =
+    "Authorization" in caller ||
+    "X-SoulKey" in caller ||
+    "X-Internal-Key" in caller;
+  const internalKey = process.env.INTERNAL_API_KEY ?? "";
+  const defaultAuth: Record<string, string> =
+    !hasAuth && internalKey ? { "X-Internal-Key": internalKey } : {};
   try {
     const res = await fetch(url, {
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...defaultAuth,
+        ...caller,
+      },
       signal: AbortSignal.timeout(timeout),
     });
     if (!res.ok) return null;
@@ -40,8 +52,10 @@ export async function tryFetch(
  * gracefully instead of crashing.
  */
 export async function fetchAllTenantIds(): Promise<string[]> {
+  const internalKey = process.env.INTERNAL_API_KEY ?? "";
   const data = await tryFetch(
     `${config.soulauth.url}/v1/soulauth/admin/tenants`,
+    internalKey ? { "X-Internal-Key": internalKey } : undefined,
   );
   if (!Array.isArray(data)) return [];
   return data
