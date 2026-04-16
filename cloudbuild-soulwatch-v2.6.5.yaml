@@ -1,0 +1,26 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.6.5'
+      - '-f'
+      - 'soulWatch/Dockerfile'
+      - '.'
+    id: 'build-soulwatch'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-soulwatch'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.6.5'
+    waitFor: ['build-soulwatch']
+
+images:
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v2.6.5'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: GCS_ONLY
+
+timeout: '900s'

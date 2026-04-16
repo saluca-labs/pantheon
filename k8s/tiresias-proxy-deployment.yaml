@@ -16,11 +16,12 @@ spec:
       labels:
         app: tiresias-proxy
         component: proxy
+        app.kubernetes.io/part-of: tiresias
     spec:
       serviceAccountName: tiresias-sa
       containers:
         - name: tiresias-proxy
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:v0.6.2
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:v0.6.9
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -33,12 +34,11 @@ spec:
                   name: tiresias-secrets
                   key: database-url
             - name: TIRESIAS_KEK_PROVIDER
-              value: "local"
-            - name: TIRESIAS_KEK
-              valueFrom:
-                secretKeyRef:
-                  name: tiresias-secrets
-                  key: tiresias-master-kek
+              value: "gcp-sm"
+            - name: TIRESIAS_GCP_PROJECT_ID
+              value: "salucainfrastructure"
+            - name: TIRESIAS_GCP_SECRET_ID
+              value: "tiresias-kek"
             - name: TIRESIAS_PROVIDERS
               value: "anthropic,openai"
             - name: TIRESIAS_RETENTION_DAYS
