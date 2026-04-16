@@ -1,0 +1,34 @@
+# ConfigMap wrapping scripts/generate_partner_conf.py so the init
+# container on the Fluent Bit DaemonSet can mount + execute it without
+# baking a custom image. Regenerate via:
+#
+#   kubectl create configmap fluent-bit-partner-generator \
+#       --namespace=tiresias-logging \
+#       --from-file=generate_partner_conf.py=scripts/generate_partner_conf.py \
+#       --dry-run=client -o yaml > k8s/fluent-bit-partner-generator-configmap.yaml
+#
+# This file is a PLACEHOLDER — run the command above against the
+# current script, then kubectl apply. The content block is intentionally
+# left as a pointer rather than a stale copy of the script, so the
+# generator source of truth stays in scripts/generate_partner_conf.py.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-partner-generator
+  namespace: tiresias-logging
+  labels:
+    app: fluent-bit
+    component: partner-exports
+    phase: F
+  annotations:
+    tiresias.saluca.com/source: scripts/generate_partner_conf.py
+    tiresias.saluca.com/regenerate-cmd: |
+      kubectl create configmap fluent-bit-partner-generator \
+        --namespace=tiresias-logging \
+        --from-file=generate_partner_conf.py=scripts/generate_partner_conf.py \
+        --dry-run=client -o yaml | kubectl apply -f -
+data:
+  # Populated at deploy time via `kubectl create configmap ... --from-file=...`
+  # to avoid drift between this YAML and the authoritative python source.
+  generate_partner_conf.py: |
+    # populated at deploy time — see annotation regenerate-cmd

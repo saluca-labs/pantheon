@@ -1,0 +1,16 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Minimal deps: SQLAlchemy + psycopg3 (sync driver used by retention_sweep).
+RUN pip install --no-cache-dir \
+      "sqlalchemy>=2.0" \
+      "psycopg[binary]>=3.1"
+
+COPY scripts/retention_sweep.py /app/retention_sweep.py
+
+# Run as non-root.
+RUN useradd -u 1000 -m tiresias
+USER 1000
+
+ENTRYPOINT ["python", "/app/retention_sweep.py"]

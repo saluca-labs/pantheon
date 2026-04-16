@@ -1,5 +1,6 @@
 .git
-portal/node_modules
+**/node_modules
+**/.next
 **/__pycache__
 **/*.pyc
 .planning
