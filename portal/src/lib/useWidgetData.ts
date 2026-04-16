@@ -12,13 +12,14 @@
  * @param transform - Optional function to reshape the raw response into `T`
  * @param refreshInterval - Polling interval in ms (default: `config.refreshInterval`)
  * @param skip      - When true, suppresses all fetching (e.g. unauthenticated state)
+ * @param requireTenant - When true, reads tenant_id from cookie and injects as query param; auto-skips when tenant is unavailable
  *
- * @returns `{ data, loading, error, refetch }` -- standard async data tuple
+ * @returns `{ data, loading, error, refetch }`, standard async data tuple
  */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { api, ApiError } from "./api";
+import { api, ApiError, getStoredTenantId } from "./api";
 import { config } from "./config";
 
 interface UseWidgetDataOptions<T> {
@@ -30,6 +31,12 @@ interface UseWidgetDataOptions<T> {
   refreshInterval?: number;
   /** Whether to skip fetching (e.g. when not authenticated) */
   skip?: boolean;
+  /**
+   * When true, read tenant_id from getStoredTenantId() and inject as query param.
+   * Auto-sets skip when tenant is unavailable, so widgets avoid firing requests
+   * that would 400 on the backend for missing tenant scope.
+   */
+  requireTenant?: boolean;
 }
 
 interface UseWidgetDataResult<T> {
@@ -39,21 +46,42 @@ interface UseWidgetDataResult<T> {
   refetch: () => void;
 }
 
+/**
+ * Append a `tenant_id=<encoded>` query param to the endpoint, using `&` if
+ * the endpoint already contains a query string, otherwise `?`.
+ */
+function appendTenantParam(endpoint: string, tenantId: string): string {
+  const separator = endpoint.includes("?") ? "&" : "?";
+  return `${endpoint}${separator}tenant_id=${encodeURIComponent(tenantId)}`;
+}
+
 export function useWidgetData<T>({
   endpoint,
   transform,
   refreshInterval = config.refreshInterval,
   skip = false,
+  requireTenant = false,
 }: UseWidgetDataOptions<T>): UseWidgetDataResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Read tenant id only on the client to avoid SSR hydration mismatches.
+  const tenantId =
+    typeof window !== "undefined" ? getStoredTenantId() : null;
+
+  // Effective skip: caller's explicit skip, OR requireTenant with no tenant available.
+  const effectiveSkip = skip || (requireTenant && !tenantId);
+
+  // Resolve the final endpoint; only inject tenant when requested and present.
+  const resolvedEndpoint =
+    requireTenant && tenantId ? appendTenantParam(endpoint, tenantId) : endpoint;
+
   const fetchData = useCallback(async () => {
-    if (skip) return;
+    if (effectiveSkip) return;
     try {
-      const raw = await api.get(endpoint);
+      const raw = await api.get(resolvedEndpoint);
       const result = transform ? transform(raw) : (raw as T);
       setData(result);
       setError(null);
@@ -68,13 +96,13 @@ export function useWidgetData<T>({
     } finally {
       setLoading(false);
     }
-  }, [endpoint, transform, skip]);
+  }, [resolvedEndpoint, transform, effectiveSkip]);
 
   useEffect(() => {
     setLoading(true);
     fetchData();
 
-    if (!skip && refreshInterval > 0) {
+    if (!effectiveSkip && refreshInterval > 0) {
       intervalRef.current = setInterval(fetchData, refreshInterval);
     }
 
@@ -83,7 +111,7 @@ export function useWidgetData<T>({
         clearInterval(intervalRef.current);
       }
     };
-  }, [fetchData, refreshInterval, skip]);
+  }, [fetchData, refreshInterval, effectiveSkip]);
 
   return { data, loading, error, refetch: fetchData };
 }
