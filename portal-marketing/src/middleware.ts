@@ -15,6 +15,8 @@ import type { NextRequest } from "next/server";
 /** Platform-bound path prefixes (order doesn't matter, first match wins). */
 const PLATFORM_PREFIXES = [
   "/dashboard",
+  "/login",
+  "/onboarding",
   "/api/session",
   "/api/auth",
   "/api/dash",
@@ -88,6 +90,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/login",
+    "/onboarding",
     "/api/session/:path*",
     "/api/auth/:path*",
     "/api/dash/:path*",
