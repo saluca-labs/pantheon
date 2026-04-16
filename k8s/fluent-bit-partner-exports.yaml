@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-partner-exports
+  namespace: tiresias-logging
+  labels:
+    app: fluent-bit
+    component: partner-exports
+    phase: F
+  annotations:
+    tiresias.saluca.com/schema-version: "1.0"
+    tiresias.saluca.com/notes: |
+      Phase F partner export registry. Operator-managed ONLY; no portal
+      write path yet (deferred to Phase F.1). Initially empty partners
+      list so the generator produces a no-op partner-exports.conf.
+data:
+  partners.yaml: |
+    # Phase F — On-prem enterprise log export registry
+    # -------------------------------------------------
+    # Each entry drives generate_partner_conf.py which emits the
+    # per-partner [FILTER] + [OUTPUT] sections loaded by fluent-bit.conf
+    # via `@INCLUDE partner-exports.conf`.
+    #
+    # format:      leef | cef | gelf | otel
+    # destination.type:
+    #   - syslog_tcp | syslog_udp | syslog_tls   (for LEEF, CEF)
+    #   - gelf_udp   | gelf_tcp   | gelf_tls     (for GELF)
+    #   - http       | https                     (generic HTTPS POST: LEEF/CEF over HTTP)
+    #   - otlp_http  | otlp_grpc                 (for OTEL)
+    # filter.tenant_id: optional list; if omitted, all tenants.
+    # filter.severity_min: DEBUG | INFO | WARN | ERROR | SECURITY (default INFO).
+    # auth.secret_ref: key in `partner-export-auth-tokens` secret.
+    # tls.secret_ref:  key in `partner-export-tls-certs` secret.
+    partners: []
+    # Example (kept commented; remove during real partner onboarding):
+    # partners:
+    #   - id: partner-abc
+    #     format: leef
+    #     destination:
+    #       type: syslog_tls
+    #       host: siem.partner-abc.example.com
+    #       port: 6514
+    #     filter:
+    #       tenant_id:
+    #         - 00000001-0000-4000-a001-000000000001
+    #       severity_min: INFO
+    #     tls:
+    #       secret_ref: partner-abc-client-cert
+    #   - id: partner-xyz
+    #     format: gelf
+    #     destination:
+    #       type: gelf_udp
+    #       host: graylog.partner-xyz.example.com
+    #       port: 12201
+    #     filter:
+    #       severity_min: WARN
+    #   - id: partner-qrs
+    #     format: otel
+    #     destination:
+    #       type: otlp_http
+    #       host: otel-collector.partner-qrs.example.com
+    #       port: 4318
+    #     auth:
+    #       secret_ref: partner-qrs-bearer

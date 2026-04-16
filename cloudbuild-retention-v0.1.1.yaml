@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.retention'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-retention:v0.1.1'
+      - '.'
+images:
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-retention:v0.1.1'

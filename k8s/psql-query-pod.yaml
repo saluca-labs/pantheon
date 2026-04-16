@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: psql-tier5-verify3
+  namespace: tiresias
+spec:
+  restartPolicy: Never
+  serviceAccountName: tiresias-sa
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  initContainers:
+  - name: cloud-sql-proxy
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+    args:
+    - --structured-logs
+    - --auto-iam-authn
+    - --exit-zero-on-sigterm
+    - salucainfrastructure:us-central1:tiresias-db
+    restartPolicy: Always
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: [ALL]}
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+  containers:
+  - name: psql
+    image: postgres:16
+    command: ["/bin/sh","-c"]
+    args:
+    - |
+      for i in $(seq 1 30); do
+        if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then echo "proxy ready"; break; fi
+        sleep 1
+      done
+      echo "=== Q3: mssp/platform/oem billing_periods (RLS bypass) ==="
+      psql "$SOULAUTH_DATABASE_URL_SYNC" <<'EOF'
+      SET app.billing_aggregator = 'on';
+      SELECT tenant_id, tier_at_period_start, base_cents, period_start, created_at
+      FROM _billing_periods
+      WHERE tier_at_period_start IN ('mssp','platform','oem')
+      ORDER BY created_at DESC LIMIT 20;
+      EOF
+      echo ""
+      echo "=== Q4: aggregated audit events for mssp/platform ==="
+      psql "$SOULAUTH_DATABASE_URL_SYNC" <<'EOF'
+      SET app.billing_aggregator = 'on';
+      SELECT payload->>'tenant_id' AS tenant_id,
+             payload->>'tier' AS tier,
+             payload->>'base_cents' AS base_cents,
+             payload->>'tenant_count' AS tenant_count,
+             ts
+      FROM _security_audit
+      WHERE event_type='billing_period.aggregated'
+        AND payload->>'tier' IN ('mssp','platform','oem')
+      ORDER BY ts DESC LIMIT 20;
+      EOF
+      echo ""
+      echo "=== Q_JOIN: Q3 spec with join ==="
+      psql "$SOULAUTH_DATABASE_URL_SYNC" <<'EOF'
+      SET app.billing_aggregator = 'on';
+      SELECT bp.tenant_id, bp.tier_at_period_start, bp.base_cents, sa.payload->>'tenant_count' AS tc
+      FROM _billing_periods bp
+      JOIN _security_audit sa ON bp.id::text = sa.resource_id
+      WHERE sa.event_type='billing_period.aggregated'
+        AND bp.tier_at_period_start IN ('mssp','platform','oem')
+      ORDER BY bp.created_at DESC LIMIT 10;
+      EOF
+      sleep 3
+    env:
+    - name: SOULAUTH_DATABASE_URL_SYNC
+      valueFrom:
+        secretKeyRef:
+          name: tiresias-secrets
+          key: database-url-sync
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: [ALL]}

@@ -1,0 +1,101 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tiresias-billing-aggregator
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/component: billing
+spec:
+  # Monthly: 1st of month at 00:00 UTC. CESO calendar anchor (2026-04-15 final).
+  schedule: "0 0 1 * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: tiresias-billing-aggregator
+            app.kubernetes.io/part-of: tiresias
+        spec:
+          serviceAccountName: tiresias-sa
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          initContainers:
+            - name: cloud-sql-proxy
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+              restartPolicy: Always
+              args:
+                - "--structured-logs"
+                - "--auto-iam-authn"
+                - "--exit-zero-on-sigterm"
+                - "salucainfrastructure:us-central1:tiresias-db"
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                runAsNonRoot: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          containers:
+            - name: billing-aggregator
+              image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-billing-aggregator:v0.1.5
+              imagePullPolicy: Always
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  echo "waiting for cloud-sql-proxy..."
+                  for i in $(seq 1 30); do
+                    if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                      echo "cloud-sql-proxy ready after ${i}s"; break
+                    fi
+                    sleep 1
+                  done
+                  exec python /app/scripts/billing_aggregator.py
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              env:
+                # CESO 2026-04-15: start in DRY_RUN for first successful month
+                # before Phase 2 flips Stripe on. DRY_RUN still writes
+                # _billing_periods rows (status=draft) + sync log entries.
+                - name: DRY_RUN
+                  value: "true"
+                # Grace period lives in src/billing/grace.py (Phase 2 edits it).
+                # Exposed here so aggregator logs carry the CESO value.
+                - name: GRACE_DAYS
+                  value: "7"
+                - name: SOULAUTH_DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: tiresias-secrets
+                      key: database-url
+                - name: SOULAUTH_DATABASE_URL_SYNC
+                  valueFrom:
+                    secretKeyRef:
+                      name: tiresias-secrets
+                      key: database-url-sync
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi

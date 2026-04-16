@@ -1,0 +1,4 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build','-f','Dockerfile','-t','us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:migrate-0031','.']
+images: ['us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:migrate-0031']
