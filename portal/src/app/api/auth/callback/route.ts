@@ -15,11 +15,12 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 
 function getBaseUrl(request: NextRequest): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (appUrl) return appUrl;
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "localhost:3000";
-  const proto = request.headers.get("x-forwarded-proto") || "https";
-  return `${proto}://${host}`;
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  if (host) {
+    const proto = request.headers.get("x-forwarded-proto") || "https";
+    return `${proto}://${host}`;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
 export async function GET(request: NextRequest) {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     const res = await fetch(`${backendUrl}/v1/auth/oidc/callback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, state, redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || getBaseUrl(request)}/api/auth/callback` }),
+      body: JSON.stringify({ code, state, redirect_uri: `${getBaseUrl(request)}/api/auth/callback` }),
     });
 
     if (!res.ok) {

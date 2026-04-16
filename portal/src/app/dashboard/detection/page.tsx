@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { truncateSoulkey } from "@/lib/display";
 import { TrendingUp, Cpu, Clock, MapPin, ShieldAlert, AlertTriangle, ExternalLink, Download } from "lucide-react";
+import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 
 /** Detection overview -- anomaly matches with severity and type breakdown. Uses live API via useWidgetData. */
 
@@ -80,7 +81,7 @@ export default function DetectionPage() {
     refreshInterval: 30000,
   });
 
-  const { data: anomaliesData, loading: anomaliesLoading } = useWidgetData<AnomaliesData>({
+  const { data: anomaliesData, loading: anomaliesLoading, error: anomaliesError } = useWidgetData<AnomaliesData>({
     endpoint: "/api/watch/v1/anomalies?page_size=100",
     refreshInterval: 60000,
   });
@@ -115,6 +116,10 @@ export default function DetectionPage() {
 
   return (
     <div className="max-w-7xl space-y-6">
+      {/* Anomaly sub-fetch upgrade prompt */}
+      {anomaliesError && parseErrorStatus(anomaliesError) === 402 && (
+        <UpgradePrompt feature="threat_detection" requiredTier="pro" />
+      )}
       {/* Anomaly indicator strip (QUAR-06) */}
       <div>
         <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-3">
@@ -181,7 +186,7 @@ export default function DetectionPage() {
           <div>
             <h2 className="text-sm font-bold text-of-on-surface">Detection Matches</h2>
             <p className="text-[11px] text-of-on-surface-variant mt-0.5">
-              Recent Sigma rule matches \u2014 auto-refreshes every 30s
+              Recent Sigma rule matches — auto-refreshes every 30s
             </p>
           </div>
           {matches.length > 0 && (
@@ -474,7 +479,7 @@ export default function DetectionPage() {
                                   <Icon className="h-3 w-3" />
                                   <span className="font-bold">{ANOMALY_LABELS[aType] ?? a.anomaly_type}</span>
                                   <span className="font-mono text-[9px] opacity-50">{a.id.slice(0, 8)}</span>
-                                  <span className="opacity-70">\u2014 {a.description}</span>
+                                  <span className="opacity-70">— {a.description}</span>
                                 </div>
                               );
                             })}

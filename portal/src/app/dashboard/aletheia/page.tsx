@@ -233,7 +233,7 @@ export default function AletheiaOverviewPage() {
                       <tr key={v.id} className="border-b border-of-outline-variant/5">
                         <td className="py-2 font-mono text-of-on-surface truncate max-w-[120px]">{v.command}</td>
                         <td className="py-2 text-of-on-surface-variant truncate max-w-[100px]">{v.agent_id}</td>
-                        <td className="py-2 font-mono text-of-on-surface-variant">{v.policy_rule_matched ?? "\u2014"}</td>
+                        <td className="py-2 font-mono text-of-on-surface-variant">{v.policy_rule_matched ?? "—"}</td>
                         <td className="py-2 text-of-on-surface-variant">{relativeTime(v.timestamp)}</td>
                       </tr>
                     ))}

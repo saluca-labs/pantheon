@@ -9,6 +9,7 @@ import { Search, ChevronDown, ChevronRight } from "lucide-react";
 interface TraceEntry {
   id: string;
   timestamp: string;
+  tenant_id?: string;
   session_id?: string;
   model: string;
   provider: string;
@@ -196,6 +197,9 @@ export default function TracesPage() {
                     Timestamp
                   </th>
                   <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">
+                    Tenant
+                  </th>
+                  <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">
                     Session
                   </th>
                   <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">
@@ -241,6 +245,16 @@ export default function TracesPage() {
                             ? new Date(trace.timestamp).toLocaleString()
                             : "--"}
                         </td>
+                        <td className="px-4 py-3 text-of-on-surface font-mono text-xs whitespace-nowrap">
+                          <span
+                            className="px-1.5 py-0.5 rounded bg-of-surface-container-high text-of-on-surface-variant border border-of-outline-variant/20 text-[10px] font-bold tracking-wide"
+                            title={trace.tenant_id ?? ""}
+                          >
+                            {trace.tenant_id
+                              ? trace.tenant_id.slice(-8)
+                              : "\u2014"}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-of-on-surface font-mono text-xs truncate max-w-[120px]">
                           {trace.session_id || "\u2014"}
                         </td>
@@ -267,7 +281,7 @@ export default function TracesPage() {
                       </tr>
                       {isExpanded && (
                         <tr className="bg-of-surface-container-low">
-                          <td colSpan={9} className="px-6 py-4">
+                          <td colSpan={10} className="px-6 py-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                               <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-1">
@@ -336,7 +350,7 @@ export default function TracesPage() {
                 {traces.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={10}
                       className="px-4 py-8 text-center text-sm text-of-on-surface-variant"
                     >
                       No traces found
