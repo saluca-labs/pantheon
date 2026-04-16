@@ -15,6 +15,11 @@ actions:
       reason: "Auto-quarantine triggered by critical detection rule"
       suspend_key: true
       kill_sessions: true
+      # CESO 2026-04-15: default action is suspend (reversible); set to "revoke" for terminal action
+      playbook_action: suspend
+      # auto_release_minutes: rule-001 cred-stuffing -> 24h enforced in handler
+      # rule-005/006 prompt-injection/key-abuse -> None (indefinite) enforced in handler
+      # Override per-playbook by setting explicit auto_release_minutes here
   - type: log
     params:
       level: critical
