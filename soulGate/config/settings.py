@@ -15,7 +15,7 @@ class SoulGateSettings(BaseSettings):
 
     # Application
     app_name: str = "SoulGate"
-    app_version: str = "1.0.0"
+    app_version: str = "2.5.0"
     debug: bool = False
     log_level: str = "INFO"
 

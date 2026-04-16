@@ -25,6 +25,7 @@ from soulGate.src.monitoring.metrics import metrics_router, MetricsMiddleware
 from soulGate.src.security_headers import SecurityHeadersMiddleware
 from soulGate.src.proxy.gateway import close_http_client
 from soulGate.src.actions.router import router as actions_router, close_picoclaw_client
+from soulGate.src.llm.router import router as llm_router
 
 settings = get_settings()
 
@@ -142,6 +143,7 @@ app.include_router(circuit_router)
 app.include_router(audit_router)
 app.include_router(metrics_router)
 app.include_router(actions_router)
+app.include_router(llm_router)
 
 
 @app.get("/health")
