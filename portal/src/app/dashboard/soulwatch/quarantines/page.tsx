@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { api } from "@/lib/api";
+import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 
 /** SoulWatch quarantines -- live quarantine list with release controls. */
 
@@ -190,9 +191,11 @@ export default function QuarantinesPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
-          Failed to load quarantines: {error}
-        </div>
+        parseErrorStatus(error) === 402
+          ? <UpgradePrompt feature="quarantine_management" requiredTier="pro" />
+          : <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+              Failed to load quarantines: {error}
+            </div>
       )}
 
       {/* Summary Cards */}

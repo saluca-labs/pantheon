@@ -107,6 +107,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // Inject Bearer <METRICS_AUTH_TOKEN> for /metrics so the dashboard's UsageMetrics
+  // widget can scrape soulauth's prometheus endpoint without exposing the token to
+  // the browser. Soulauth's /metrics expects the static bearer token configured via
+  // METRICS_AUTH_TOKEN env var.
+  if (pathname === "/metrics") {
+    const metricsToken = process.env.METRICS_AUTH_TOKEN;
+    if (metricsToken) {
+      const headers = new Headers(request.headers);
+      headers.set("Authorization", `Bearer ${metricsToken}`);
+      return NextResponse.next({
+        request: { headers },
+      });
+    }
+  }
+
   // Inject X-SoulKey header for /v1/* and /dash/* API requests so the Next.js rewrite
   // forwards authentication to the soulauth backend.  The SoulKey lives in
   // an HttpOnly cookie that client-side JS cannot read, but middleware can.
@@ -146,5 +161,6 @@ export const config = {
     "/platform/:path*",
     "/v1/:path*",
     "/dash/:path*",
+    "/metrics",
   ],
 };
