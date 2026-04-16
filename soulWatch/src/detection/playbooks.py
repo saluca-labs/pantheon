@@ -4,18 +4,23 @@ Playbooks define automated response actions triggered by Sigma rule matches.
 """
 
 import ipaddress
+import os
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from urllib.parse import urlparse
 
 import structlog
 import yaml
 
 from soulWatch.src.detection.sigma_engine import SigmaMatch
+from soulWatch.src.enforcement.quarantine import QuarantineAction, QuarantineEngine
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import async_sessionmaker
 
 logger = structlog.get_logger(__name__)
 
@@ -110,14 +115,48 @@ class PlaybookResult:
         }
 
 
+def _resolve_quarantine_actions(params: dict) -> list[str]:
+    """Map playbook YAML params to QuarantineAction enum value strings.
+
+    Accepts both YAML-style boolean flags (suspend_key: true, kill_sessions: true)
+    and a forward-compat explicit list (actions: [suspend_key, kill_session]).
+    """
+    # Explicit list wins if provided
+    if "actions" in params and isinstance(params["actions"], list):
+        return [str(a) for a in params["actions"]]
+
+    result: list[str] = []
+    if params.get("suspend_key"):
+        result.append(QuarantineAction.SUSPEND_KEY.value)
+    if params.get("revoke_key"):
+        result.append(QuarantineAction.REVOKE_KEY.value)
+    if params.get("kill_sessions") or params.get("kill_session"):
+        result.append(QuarantineAction.KILL_SESSION.value)
+    if params.get("force_reauth"):
+        result.append(QuarantineAction.FORCE_REAUTH.value)
+    if params.get("rate_limit"):
+        result.append(QuarantineAction.RATE_LIMIT.value)
+    if params.get("isolate"):
+        result.append(QuarantineAction.ISOLATE.value)
+    if params.get("reset_context"):
+        result.append(QuarantineAction.RESET_CONTEXT.value)
+    return result
+
+
 class PlaybookEngine:
     """Loads, manages, and executes response playbooks."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        db_session_factory: Optional["async_sessionmaker"] = None,
+        quarantine_engine: Optional[QuarantineEngine] = None,
+    ):
         self._playbooks: dict[str, ResponsePlaybook] = {}
         self._cooldowns: dict[tuple[str, str], datetime] = {}
         self._execution_log: list[PlaybookResult] = []
         self._action_handlers: dict[str, Any] = {}
+        self._db_session_factory = db_session_factory
+        self._quarantine_engine = quarantine_engine
         self._register_default_handlers()
 
     def load_playbooks(self, playbooks_dir: str) -> int:
@@ -317,17 +356,195 @@ class PlaybookEngine:
             details={"log_level": params.get("level", "warning"), "rule_id": context.get("rule_id")},
         )
 
-    async def _handle_quarantine(self, params: dict, context: dict) -> ActionResult:
-        soulkey_id = context.get("event", {}).get("soulkey_id")
-        reason = params.get("reason", f"Auto-quarantine by playbook {context.get('playbook_id')}")
+    async def _handle_quarantine(self, params: dict, context: dict) -> ActionResult:  # noqa: C901
+        """
+        Enforce or dry-run a quarantine for the triggering soulkey.
+
+        Enforcement mode is read from SOULWATCH_QUARANTINE_ENFORCEMENT env var
+        at call time (so it can be flipped without restart):
+          - dry_run  : log intent only, no DB write, no soulauth API call
+          - off      : silent no-op (returns success, no side effects)
+          - enforce  : write _soulwatch_quarantines row + call soulauth admin API
+
+        CESO decisions (2026-04-15):
+          - Default action: suspend_key (revoke_key is configurable via playbook_action param)
+          - Dry-run window: 4 hours before enforcement (deploy with SOULWATCH_QUARANTINE_ENFORCEMENT=dry_run)
+          - Auto-release: cred-stuffing -> 24h; severity-005/006 -> None (indefinite)
+        """
+        event = context.get("event", {})
+        soulkey_id_str = event.get("soulkey_id")
+        tenant_id_str = event.get("tenant_id")
+        playbook_id = context.get("playbook_id")
+        rule_id = context.get("rule_id")
+        reason = params.get("reason", f"Auto-quarantine by playbook {playbook_id}")
+
+        # --- 1. Validate soulkey_id ---
+        if not soulkey_id_str:
+            logger.warning(
+                "playbook.quarantine.missing_soulkey_id",
+                rule_id=rule_id, playbook_id=playbook_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=False,
+                message="Cannot quarantine: soulkey_id is null",
+                details={"rule_id": rule_id, "playbook_id": playbook_id},
+            )
+
+        try:
+            soulkey_id = uuid.UUID(str(soulkey_id_str))
+        except (ValueError, AttributeError):
+            logger.warning(
+                "playbook.quarantine.invalid_soulkey_id",
+                value=soulkey_id_str, rule_id=rule_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=False,
+                message="Cannot quarantine: soulkey_id is not a valid UUID",
+                details={"value": soulkey_id_str},
+            )
+
+        # --- 2. Resolve actions from params ---
+        # CESO: default is suspend_key; revoke_key only if explicitly configured
+        playbook_action = params.get("playbook_action", "suspend")
+        if playbook_action == "revoke":
+            # Override: replace suspend_key with revoke_key
+            raw_params = dict(params)
+            raw_params["suspend_key"] = False
+            raw_params["revoke_key"] = True
+            action_strings = _resolve_quarantine_actions(raw_params)
+        else:
+            action_strings = _resolve_quarantine_actions(params)
+
+        if not action_strings:
+            # Sensible default per CESO: suspend + kill sessions
+            action_strings = [
+                QuarantineAction.SUSPEND_KEY.value,
+                QuarantineAction.KILL_SESSION.value,
+            ]
+
+        try:
+            actions = [QuarantineAction(a) for a in action_strings]
+        except ValueError as exc:
+            logger.warning(
+                "playbook.quarantine.unknown_action",
+                error=str(exc), rule_id=rule_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=False,
+                message=f"Unknown quarantine action: {exc}",
+            )
+
+        # --- 3. Read enforcement mode (at call time, not init) ---
+        mode = os.environ.get("SOULWATCH_QUARANTINE_ENFORCEMENT", "enforce").lower()
+
+        if mode == "off":
+            logger.info(
+                "playbook.quarantine.off",
+                soulkey_id=soulkey_id_str, rule_id=rule_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=True,
+                message=f"Quarantine suppressed (mode=off) for soulkey {soulkey_id_str}",
+                details={"soulkey_id": soulkey_id_str, "mode": "off"},
+            )
+
+        if mode == "dry_run":
+            logger.warning(
+                "playbook.quarantine.dry_run",
+                soulkey_id=soulkey_id_str, actions=action_strings,
+                reason=reason, rule_id=rule_id, playbook_id=playbook_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=True,
+                message=f"[DRY-RUN] Would quarantine soulkey {soulkey_id_str}",
+                details={
+                    "soulkey_id": soulkey_id_str,
+                    "actions": action_strings,
+                    "reason": reason,
+                    "dry_run": True,
+                },
+            )
+
+        # --- 4. Enforce: require DB + QuarantineEngine ---
+        if self._db_session_factory is None or self._quarantine_engine is None:
+            logger.error(
+                "playbook.quarantine.no_db_session",
+                soulkey_id=soulkey_id_str, rule_id=rule_id,
+            )
+            return ActionResult(
+                action_type="quarantine", success=False,
+                message="Cannot quarantine: DB session factory not injected into PlaybookEngine",
+            )
+
+        # --- 5. Per-playbook auto-release per CESO decisions ---
+        # Explicit param wins; otherwise apply rule-based defaults:
+        #   rule-001 (cred-stuffing) -> 24h = 1440 minutes
+        #   rule-005 / rule-006 (prompt-injection / key-abuse) -> None (indefinite)
+        auto_release_minutes: Optional[int] = params.get("auto_release_minutes", None)
+        if auto_release_minutes is None:
+            if rule_id and "001" in rule_id:
+                auto_release_minutes = 1440  # 24 hours
+            # rules 005/006 and any other -> None (indefinite)
+
+        # --- 6. Write quarantine record + call soulauth ---
+        try:
+            async with self._db_session_factory() as db:
+                record = await self._quarantine_engine.execute_manual_quarantine(
+                    db=db,
+                    soulkey_id=soulkey_id,
+                    actions=actions,
+                    reason=reason,
+                    auto_release_after=auto_release_minutes,
+                )
+                # Stamp playbook-origin fields (execute_manual_quarantine sets triggered_by_type="manual")
+                record.triggered_by_type = "playbook"
+                record.triggered_by_id = playbook_id
+                if tenant_id_str:
+                    try:
+                        record.tenant_id = uuid.UUID(str(tenant_id_str))
+                    except (ValueError, AttributeError):
+                        pass
+                persona_id = event.get("persona_id")
+                if persona_id:
+                    record.persona_id = str(persona_id)
+                await db.flush()
+                await db.commit()
+                quarantine_id = record.id
+        except Exception as exc:
+            logger.error(
+                "playbook.quarantine.db_failed",
+                error=str(exc), soulkey_id=soulkey_id_str,
+            )
+            return ActionResult(
+                action_type="quarantine", success=False,
+                message=f"Quarantine DB write failed: {exc}",
+            )
+
+        # --- 7. Emit SECURITY audit event ---
         logger.warning(
-            "playbook.action.quarantine", soulkey_id=soulkey_id,
-            reason=reason, rule_id=context.get("rule_id"),
+            "SECURITY quarantine.applied",
+            quarantine_id=str(quarantine_id),
+            soulkey_id=soulkey_id_str,
+            tenant_id=tenant_id_str,
+            playbook_id=playbook_id,
+            rule_id=rule_id,
+            actions=action_strings,
+            reason=reason,
+            severity="SECURITY",
         )
+
         return ActionResult(
-            action_type="quarantine", success=True,
-            message=f"Quarantine requested for soulkey {soulkey_id}",
-            details={"soulkey_id": soulkey_id, "reason": reason},
+            action_type="quarantine",
+            success=True,
+            message=f"Quarantine activated for soulkey {soulkey_id_str}",
+            details={
+                "quarantine_id": str(quarantine_id),
+                "soulkey_id": soulkey_id_str,
+                "tenant_id": tenant_id_str,
+                "actions_taken": action_strings,
+                "reason": reason,
+                "status": "active",
+            },
         )
 
     async def _handle_notify(self, params: dict, context: dict) -> ActionResult:

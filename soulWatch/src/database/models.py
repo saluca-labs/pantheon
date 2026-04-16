@@ -98,6 +98,9 @@ class SoulWatchDetection(Base):
     event_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=dict)
     response_playbook: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=_now, nullable=True)
+    # NULL = genuine detection.  Non-null = known false-positive category.
+    # Added in migration 0029 (B7-FIX-HEALTH-PROBE-NOISE).
+    noise_classification: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     __table_args__ = (
         Index("idx_soulwatch_detections_rule", "rule_id"),
