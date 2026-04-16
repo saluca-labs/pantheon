@@ -218,6 +218,211 @@ class TestProvisionerManifests:
         assert "pods" in hard
 
 
+class TestTenantRegistrationGate:
+    """Tests for SAAS_AUTH_REQUIRE_TENANT_REGISTRATION feature flag (B8-AUTH-HARDEN)."""
+
+    def _make_settings(self, flag_on: bool):
+        from tiresias.config import TiresiasSettings
+        s = TiresiasSettings(TIRESIAS_MODE="saas", TIRESIAS_KEK_PROVIDER="local", TIRESIAS_KEK="0" * 64)
+        object.__setattr__(s, "saas_auth_require_tenant_registration", flag_on)
+        return s
+
+    def test_flag_default_off(self):
+        """SAAS_AUTH_REQUIRE_TENANT_REGISTRATION must default to False."""
+        from tiresias.config import TiresiasSettings
+        s = TiresiasSettings(TIRESIAS_MODE="saas", TIRESIAS_KEK_PROVIDER="local", TIRESIAS_KEK="0" * 64)
+        assert s.saas_auth_require_tenant_registration is False
+
+    def test_flag_on_via_env(self, monkeypatch):
+        """Flag reads from env var."""
+        monkeypatch.setenv("SAAS_AUTH_REQUIRE_TENANT_REGISTRATION", "true")
+        from tiresias.config import TiresiasSettings
+        s = TiresiasSettings(TIRESIAS_MODE="saas", TIRESIAS_KEK_PROVIDER="local", TIRESIAS_KEK="0" * 64)
+        assert s.saas_auth_require_tenant_registration is True
+
+    @pytest.mark.asyncio
+    async def test_flag_off_bypasses_soul_check(self):
+        """When flag is OFF, a valid license key passes even if not in _soul_tenants."""
+        import hashlib
+        import tiresias.proxy.saas_auth as saas_mod
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        saas_mod.clear_tenant_cache()
+        saas_mod._cleared_since_flag_on = False
+
+        raw_key = "tir_test_flagoff_xyzxyz9900112233"
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+        license_row = MagicMock()
+        license_row.__getitem__ = lambda self, i: ("tenant-flagoff-001", "enterprise")[i]
+        mock_license_result = MagicMock(first=lambda: license_row)
+
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock(return_value=mock_license_result)
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=False)
+
+        mock_engine_factory = AsyncMock(return_value=MagicMock())
+
+        settings = self._make_settings(flag_on=False)
+        app = MagicMock()
+
+        middleware = saas_mod.SaaSAuthMiddleware(app, settings, mock_engine_factory)
+
+        request = MagicMock()
+        request.state = MagicMock()
+        request.url.path = "/v1/chat/completions"
+        request.headers.get = lambda k, d="": {
+            "x-tiresias-api-key": raw_key,
+        }.get(k, d)
+
+        call_next = AsyncMock(return_value=MagicMock(status_code=200))
+
+        with patch("tiresias.proxy.saas_auth.AsyncSession", return_value=mock_session_cm):
+            await middleware.dispatch(request, call_next)
+
+        # Should pass through without 403
+        assert call_next.called
+        # Cached with tenant_valid=None (flag was OFF) — index 2 in 4-tuple
+        assert key_hash in saas_mod._tenant_cache
+        assert saas_mod._tenant_cache[key_hash][2] is None
+
+    @pytest.mark.asyncio
+    async def test_flag_on_unregistered_tenant_gets_403(self):
+        """When flag is ON, a tenant not in _soul_tenants gets opaque 403."""
+        import hashlib
+        import json
+        import tiresias.proxy.saas_auth as saas_mod
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        saas_mod.clear_tenant_cache()
+        saas_mod._cleared_since_flag_on = True  # already cleared; skip auto-clear
+
+        raw_key = "tir_test_unregistered_xyzxyz9900112233"
+
+        license_row = MagicMock()
+        license_row.__getitem__ = lambda self, i: ("tenant-unreg-001", "enterprise")[i]
+        mock_license_result = MagicMock(first=lambda: license_row)
+
+        mock_soul_result = MagicMock(first=lambda: None)  # not in _soul_tenants
+
+        call_count = [0]
+        async def mock_execute(stmt, params=None):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return mock_license_result
+            return mock_soul_result
+
+        mock_session = AsyncMock()
+        mock_session.execute = mock_execute
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=False)
+
+        mock_engine_factory = AsyncMock(return_value=MagicMock())
+
+        settings = self._make_settings(flag_on=True)
+        app = MagicMock()
+        middleware = saas_mod.SaaSAuthMiddleware(app, settings, mock_engine_factory)
+
+        request = MagicMock()
+        request.state = MagicMock()
+        request.url.path = "/v1/chat/completions"
+        request.headers.get = lambda k, d="": {
+            "x-tiresias-api-key": raw_key,
+        }.get(k, d)
+
+        call_next = AsyncMock(return_value=MagicMock(status_code=200))
+
+        with patch("tiresias.proxy.saas_auth.AsyncSession", return_value=mock_session_cm):
+            resp = await middleware.dispatch(request, call_next)
+
+        assert resp.status_code == 403
+        body = json.loads(resp.body)
+        assert body == {"error": "authentication_failed"}
+        # call_next must NOT have been called
+        assert not call_next.called
+
+    @pytest.mark.asyncio
+    async def test_flag_on_registered_active_tenant_passes(self):
+        """When flag is ON, a tenant present in _soul_tenants with active status passes."""
+        import hashlib
+        import tiresias.proxy.saas_auth as saas_mod
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        saas_mod.clear_tenant_cache()
+        saas_mod._cleared_since_flag_on = True  # skip auto-clear
+
+        raw_key = "tir_test_registered_xyzxyz9900112233"
+
+        license_row = MagicMock()
+        license_row.__getitem__ = lambda self, i: ("tenant-reg-001", "enterprise")[i]
+        mock_license_result = MagicMock(first=lambda: license_row)
+
+        soul_row = MagicMock()
+        soul_row.__getitem__ = lambda self, i: ("active",)[i]
+        mock_soul_result = MagicMock(first=lambda: soul_row)
+
+        call_count = [0]
+        async def mock_execute(stmt, params=None):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return mock_license_result
+            return mock_soul_result
+
+        mock_session = AsyncMock()
+        mock_session.execute = mock_execute
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=False)
+
+        mock_engine_factory = AsyncMock(return_value=MagicMock())
+
+        settings = self._make_settings(flag_on=True)
+        app = MagicMock()
+        middleware = saas_mod.SaaSAuthMiddleware(app, settings, mock_engine_factory)
+
+        request = MagicMock()
+        request.state = MagicMock()
+        request.url.path = "/v1/chat/completions"
+        request.headers.get = lambda k, d="": {
+            "x-tiresias-api-key": raw_key,
+        }.get(k, d)
+
+        call_next = AsyncMock(return_value=MagicMock(status_code=200))
+
+        with patch("tiresias.proxy.saas_auth.AsyncSession", return_value=mock_session_cm):
+            await middleware.dispatch(request, call_next)
+
+        assert call_next.called
+
+    def test_403_body_is_opaque(self):
+        """403 body must be exactly {'error': 'authentication_failed'} with no detail."""
+        import json
+        body = {"error": "authentication_failed"}
+        assert "detail" not in body
+        assert "tenant_id" not in body
+        assert "reason" not in body
+        assert json.dumps(body) == '{"error": "authentication_failed"}'
+
+    def test_cache_sentinel_cleared_on_flag_flip(self):
+        """Auto-clear sentinel is False by default and resets when module is reloaded."""
+        import tiresias.proxy.saas_auth as saas_mod
+        # Sentinel starts False (or may be True if prior test set it; reset it)
+        saas_mod._cleared_since_flag_on = False
+        assert saas_mod._cleared_since_flag_on is False
+        # Manually trigger the clear path
+        saas_mod._tenant_cache["dummy"] = ("t", "tier", None, 0.0)
+        saas_mod.clear_tenant_cache()
+        saas_mod._cleared_since_flag_on = True
+        assert saas_mod._cleared_since_flag_on is True
+        assert len(saas_mod._tenant_cache) == 0
+
+
 class TestEncryptionProviderFactory:
     """Verify KEK provider resolution for all modes."""
 

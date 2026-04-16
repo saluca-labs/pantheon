@@ -942,3 +942,130 @@ class TestNestedFieldAccess:
         event = {"context": {}}
         matched, _ = _match_field(event, "context.source_ip", "10.0.0.1")
         assert matched is False
+
+
+# ---------------------------------------------------------------------------
+# 25. B7-FIX-HEALTH-PROBE-NOISE — privilege escalation rule filter
+#
+# Verifies that:
+#   (a) real unauthenticated auth_deny events still trigger sa-rule-002
+#   (b) k8s health-probe events (resource=health_check, soulkey_id=None)
+#       do NOT trigger sa-rule-002 even after accumulating > 3 events
+# ---------------------------------------------------------------------------
+
+
+_PRIV_ESC_RULE_YAML = """
+title: Privilege Escalation - Unusual Scope Request with High Denial Rate
+id: sa-rule-002-privilege-escalation
+status: stable
+level: high
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type:
+      - scope_violation
+      - escalation_requested
+      - auth_deny
+    decision: deny
+  filter:
+    resource: health_check
+    soulkey_id: null
+  condition: selection | count() > 3
+  timeframe: 5m
+response_playbook: pb-rate-limit-alert
+enabled: true
+"""
+
+
+class TestHealthProbeFilterB7:
+    """B7-FIX-HEALTH-PROBE-NOISE regression tests for sa-rule-002."""
+
+    @pytest.fixture
+    def priv_esc_engine(self):
+        eng = SigmaEngine()
+        eng.add_rule(eng.load_rule(_PRIV_ESC_RULE_YAML))
+        return eng
+
+    def _real_deny_event(self, soulkey_id: str = None) -> dict:
+        """A genuine auth_deny from an authenticated agent hitting a forbidden scope."""
+        return {
+            "event_type": "auth_deny",
+            "decision": "deny",
+            "soulkey_id": soulkey_id or str(uuid.uuid4()),
+            "persona_id": "agent-attacker",
+            "resource": "vault/secrets",
+            "action": "read",
+            "reason": "scope_not_permitted",
+        }
+
+    def _health_probe_event(self) -> dict:
+        """Simulated k8s health-probe event as emitted by soulauth v3.6.1."""
+        return {
+            "event_type": "auth_deny",
+            "decision": "deny",
+            "soulkey_id": None,
+            "resource": "health_check",
+            "action": "probe",
+            "reason": "unknown soulkey",
+        }
+
+    def test_real_auth_deny_still_triggers_above_threshold(self, priv_esc_engine):
+        """4 real auth_deny events from the same key must trigger the rule."""
+        key = str(uuid.uuid4())
+        matches = []
+        for _ in range(4):
+            matches = priv_esc_engine.evaluate(self._real_deny_event(soulkey_id=key))
+        assert len(matches) == 1, "Rule must fire on real unauth events above threshold"
+        assert matches[0].rule.id == "sa-rule-002-privilege-escalation"
+
+    def test_health_probe_events_do_not_trigger(self, priv_esc_engine):
+        """100 health-probe events must NOT trigger the rule (filter excludes them)."""
+        last_matches = []
+        for _ in range(100):
+            last_matches = priv_esc_engine.evaluate(self._health_probe_event())
+        assert last_matches == [], (
+            "Health-probe events matched filter must never fire sa-rule-002 "
+            "(B7-FIX-HEALTH-PROBE-NOISE regression)"
+        )
+
+    def test_mixed_events_only_real_counted(self, priv_esc_engine):
+        """
+        Interleave 50 probe events with 4 real deny events.
+        Only the real denies count; detection fires exactly once (on the 4th real deny).
+        """
+        key = str(uuid.uuid4())
+        fired = False
+        real_count = 0
+        for i in range(54):
+            if i % 10 == 0 and real_count < 4:
+                # Every 10th event is a real deny
+                matches = priv_esc_engine.evaluate(self._real_deny_event(soulkey_id=key))
+                real_count += 1
+                if matches:
+                    fired = True
+            else:
+                matches = priv_esc_engine.evaluate(self._health_probe_event())
+                assert matches == [], f"Probe event at step {i} triggered rule unexpectedly"
+        assert fired, "Rule should have fired after 4 real deny events were interspersed"
+
+    def test_null_soulkey_real_deny_still_counted(self, priv_esc_engine):
+        """
+        A real auth_deny with soulkey_id=None but resource != health_check
+        must NOT be filtered and must still count toward the threshold.
+        """
+        real_nil_key_event = {
+            "event_type": "auth_deny",
+            "decision": "deny",
+            "soulkey_id": None,
+            "resource": "vault/secrets",   # NOT health_check → filter does NOT exclude
+            "action": "read",
+            "reason": "unknown soulkey",
+        }
+        matches = []
+        for _ in range(4):
+            matches = priv_esc_engine.evaluate(real_nil_key_event)
+        assert len(matches) == 1, (
+            "nil-UUID deny against a real resource must still trigger the rule"
+        )
