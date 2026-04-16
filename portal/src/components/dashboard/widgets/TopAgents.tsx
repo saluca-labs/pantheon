@@ -67,6 +67,7 @@ export default function TopAgents() {
   const { data: agents, loading, error, refetch } = useWidgetData({
     endpoint: "/v1/soulauth/admin/keys",
     transform: transformSoulkeys,
+    requireTenant: true,
   });
 
   return (

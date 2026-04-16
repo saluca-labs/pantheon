@@ -76,6 +76,7 @@ export default function EvaluationTrends() {
   const { data, loading, error, refetch } = useWidgetData({
     endpoint: "/v1/soulauth/admin/audit/report",
     transform: transformAudit,
+    requireTenant: true,
   });
 
   const maxVal = data ? Math.max(...data.dailyData.map((d) => d.allowed + d.denied), 1) : 1;

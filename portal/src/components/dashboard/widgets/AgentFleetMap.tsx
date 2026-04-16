@@ -46,6 +46,7 @@ export default function AgentFleetMap() {
   const { data: agents, loading, error, refetch } = useWidgetData({
     endpoint: "/v1/soulauth/admin/keys",
     transform: transformKeys,
+    requireTenant: true,
   });
 
   return (

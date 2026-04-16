@@ -79,6 +79,7 @@ export default function KeyLifecycle() {
   const { data, loading, error, refetch } = useWidgetData({
     endpoint: "/v1/soulauth/admin/keys",
     transform: transformKeys,
+    requireTenant: true,
   });
 
   return (
