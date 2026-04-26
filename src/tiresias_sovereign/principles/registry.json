@@ -1,0 +1,110 @@
+[
+  {
+    "id": "P1",
+    "category": "Identity",
+    "predicate": "soulkey_present",
+    "action": "allow",
+    "severity": "high",
+    "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "prev_hash": null
+  },
+  {
+    "id": "P2",
+    "category": "Identity",
+    "predicate": "soulkey_valid_hash",
+    "action": "allow",
+    "severity": "high",
+    "hash": "a5b9c0b743e1c5d0b3a5f2d2c6e7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5",
+    "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "P3",
+    "category": "Identity",
+    "predicate": "dual_key_match",
+    "action": "allow",
+    "severity": "high",
+    "hash": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2",
+    "prev_hash": "a5b9c0b743e1c5d0b3a5f2d2c6e7f8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5"
+  },
+  {
+    "id": "P4",
+    "category": "Boundary",
+    "predicate": "destination_allowlist",
+    "action": "allow",
+    "severity": "medium",
+    "hash": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
+    "prev_hash": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"
+  },
+  {
+    "id": "P5",
+    "category": "Boundary",
+    "predicate": "no_proxy_loops",
+    "action": "deny",
+    "severity": "high",
+    "hash": "d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+    "prev_hash": "c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4"
+  },
+  {
+    "id": "P6",
+    "category": "Boundary",
+    "predicate": "no_credential_echo",
+    "action": "deny",
+    "severity": "high",
+    "hash": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
+    "prev_hash": "d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6"
+  },
+  {
+    "id": "P7",
+    "category": "Accountability",
+    "predicate": "audit_chain_append",
+    "action": "log",
+    "severity": "low",
+    "hash": "f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0",
+    "prev_hash": "e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+  },
+  {
+    "id": "P8",
+    "category": "Accountability",
+    "predicate": "cot_hash_capture",
+    "action": "log",
+    "severity": "low",
+    "hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b",
+    "prev_hash": "f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0"
+  },
+  {
+    "id": "P9",
+    "category": "Transparency",
+    "predicate": "header_principles_passed",
+    "action": "add_header",
+    "severity": "info",
+    "hash": "c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3",
+    "prev_hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b"
+  },
+  {
+    "id": "P10",
+    "category": "Transparency",
+    "predicate": "header_policy_bundle",
+    "action": "add_header",
+    "severity": "info",
+    "hash": "e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5",
+    "prev_hash": "c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3"
+  },
+  {
+    "id": "P11",
+    "category": "Transparency",
+    "predicate": "header_versioned_policy",
+    "action": "add_header",
+    "severity": "info",
+    "hash": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7",
+    "prev_hash": "e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5"
+  },
+  {
+    "id": "P12",
+    "category": "Transparency",
+    "predicate": "deny_reason_exposed",
+    "action": "add_header",
+    "severity": "info",
+    "hash": "a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+    "prev_hash": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+  }
+]
