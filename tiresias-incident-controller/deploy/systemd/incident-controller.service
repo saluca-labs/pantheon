@@ -1,0 +1,20 @@
+[Unit]
+Description=Tiresias Incident Controller
+After=network.target tailscaled.service
+
+[Service]
+Type=simple
+User=cristian
+WorkingDirectory=/home/cristian/tiresias-incident-controller
+Environment=PYTHONPATH=/home/cristian/tiresias-incident-controller
+Environment=LOKI_URL=http://100.92.149.12:3100
+Environment=PROMETHEUS_URL=http://100.92.149.12:9091
+Environment=DB_URL=postgresql://tiresias:TiresiasDB2026Prod@localhost:5433/tiresias
+Environment=GCS_BUCKET=saluca-incident-forensics
+Environment=TELEGRAM_URL=http://localhost:8080/notify/telegram
+ExecStart=/usr/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8090 --log-level info
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

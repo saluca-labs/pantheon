@@ -1,0 +1,291 @@
+# ---------------------------------------------------------------------------
+# Tiresias Incident Controller — Notification Matrix  (Section 9.1)
+#
+# Defines who gets notified, through which channels, at which severity
+# levels, and with what message content.
+# ---------------------------------------------------------------------------
+
+# ── Audience Definitions ───────────────────────────────────────────────────
+
+audiences:
+
+  - id: security-team
+    name: Security Team
+    description: InfoSec analysts and incident responders
+    members:
+      - role: security-engineer
+      - role: security-lead
+    escalation_contact: ciso
+
+  - id: executive-oncall
+    name: Executive On-Call
+    description: C-level or VP on-call rotation for critical incidents
+    members:
+      - role: executive-oncall
+    escalation_contact: ceo
+
+  - id: sre-oncall
+    name: SRE On-Call
+    description: Primary SRE on-call rotation
+    members:
+      - role: sre-oncall-primary
+      - role: sre-oncall-secondary
+    escalation_contact: sre-manager
+
+  - id: engineering-leads
+    name: Engineering Leads
+    description: Service owners and tech leads for affected domains
+    members:
+      - role: tech-lead
+      - role: service-owner
+    escalation_contact: vp-engineering
+
+  - id: sre-general
+    name: SRE General
+    description: Broader SRE team for awareness on lower-severity items
+    members:
+      - role: sre-team
+    escalation_contact: sre-oncall-primary
+
+# ── Channel Definitions ───────────────────────────────────────────────────
+
+channels:
+
+  - id: slack-incidents
+    type: slack
+    config:
+      workspace: saluca-corp
+      channel: "#incidents"
+      bot_token_secret: SLACK_INCIDENT_BOT_TOKEN
+
+  - id: slack-security
+    type: slack
+    config:
+      workspace: saluca-corp
+      channel: "#security-incidents"
+      bot_token_secret: SLACK_SECURITY_BOT_TOKEN
+
+  - id: slack-sre
+    type: slack
+    config:
+      workspace: saluca-corp
+      channel: "#sre-alerts"
+      bot_token_secret: SLACK_SRE_BOT_TOKEN
+
+  - id: pagerduty-critical
+    type: pagerduty
+    config:
+      service_key_secret: PAGERDUTY_SERVICE_KEY
+      severity_map:
+        SEV-0: critical
+        SEV-1: critical
+        SEV-2: error
+
+  - id: email-executive
+    type: email
+    config:
+      smtp_secret: SMTP_CREDENTIALS
+      from: incidents@saluca.io
+      reply_to: sre-oncall@saluca.io
+
+  - id: webhook-statuspage
+    type: webhook
+    config:
+      url_secret: STATUSPAGE_WEBHOOK_URL
+      method: POST
+      headers:
+        Content-Type: application/json
+
+# ── Notification Rules ─────────────────────────────────────────────────────
+
+rules:
+
+  # SEV-0: Active Breach
+  - id: sev0-all-hands
+    name: "SEV-0 All-Hands Alert"
+    severity_trigger:
+      - SEV-0
+    audiences:
+      - security-team
+      - executive-oncall
+      - sre-oncall
+    channels:
+      - slack-security
+      - slack-incidents
+      - pagerduty-critical
+      - email-executive
+    escalation:
+      if_no_ack_within: 120s
+      escalate_to: executive-oncall
+      repeat_interval: 300s
+      max_repeats: 5
+    template: sev0_breach_notification
+
+  # SEV-1: Total Outage
+  - id: sev1-outage
+    name: "SEV-1 Service Outage Alert"
+    severity_trigger:
+      - SEV-1
+    audiences:
+      - sre-oncall
+      - engineering-leads
+    channels:
+      - slack-incidents
+      - pagerduty-critical
+      - webhook-statuspage
+    escalation:
+      if_no_ack_within: 300s
+      escalate_to: engineering-leads
+      repeat_interval: 600s
+      max_repeats: 3
+    template: sev1_outage_notification
+
+  # SEV-2: Degradation
+  - id: sev2-degradation
+    name: "SEV-2 Service Degradation Alert"
+    severity_trigger:
+      - SEV-2
+    audiences:
+      - sre-oncall
+    channels:
+      - slack-sre
+      - pagerduty-critical
+    escalation:
+      if_no_ack_within: 600s
+      escalate_to: sre-oncall
+      repeat_interval: 900s
+      max_repeats: 2
+    template: sev2_degradation_notification
+
+  # SEV-3: Anomaly
+  - id: sev3-anomaly
+    name: "SEV-3 Anomaly Notification"
+    severity_trigger:
+      - SEV-3
+    audiences:
+      - sre-oncall
+    channels:
+      - slack-sre
+    escalation: null
+    template: sev3_anomaly_notification
+
+  # SEV-4: Informational
+  - id: sev4-info
+    name: "SEV-4 Informational"
+    severity_trigger:
+      - SEV-4
+    audiences:
+      - sre-general
+    channels:
+      - slack-sre
+    escalation: null
+    template: sev4_info_notification
+
+# ── Message Templates ──────────────────────────────────────────────────────
+
+templates:
+
+  sev0_breach_notification:
+    subject: "[SEV-0] ACTIVE BREACH — {{ incident.title }}"
+    body: |
+      *ACTIVE SECURITY INCIDENT — IMMEDIATE ACTION REQUIRED*
+
+      *Incident:* `{{ incident.id }}`
+      *Type:* {{ incident.type }}
+      *Severity:* {{ incident.severity }}
+      *Detected:* {{ incident.detected_at | iso8601 }}
+
+      *Description:*
+      {{ incident.description }}
+
+      *Automated Actions Taken:*
+      {% for action in incident.actions_taken %}
+      - `{{ action.action_type }}` on `{{ action.target }}` — {{ action.status }}
+      {% endfor %}
+
+      *Source Alerts:*
+      {% for alert in incident.source_alerts %}
+      - {{ alert.name }} ({{ alert.source }}) at {{ alert.fired_at }}
+      {% endfor %}
+
+      *Playbook:* `{{ incident.playbook }}`
+      *Forensic Snapshot:* `{{ incident.forensic_snapshot_id }}`
+
+      ---
+      This is an automated notification from Tiresias Incident Controller.
+      Acknowledge within 2 minutes or escalation will trigger.
+
+  sev1_outage_notification:
+    subject: "[SEV-1] SERVICE OUTAGE — {{ incident.title }}"
+    body: |
+      *SERVICE OUTAGE — IMMEDIATE RESPONSE REQUIRED*
+
+      *Incident:* `{{ incident.id }}`
+      *Type:* {{ incident.type }}
+      *Severity:* {{ incident.severity }}
+      *Detected:* {{ incident.detected_at | iso8601 }}
+
+      *Description:*
+      {{ incident.description }}
+
+      *Automated Actions Taken:*
+      {% for action in incident.actions_taken %}
+      - `{{ action.action_type }}` on `{{ action.target }}` — {{ action.status }}
+      {% endfor %}
+
+      *Status Page Update:* Automatically posted.
+
+      ---
+      Acknowledge within 5 minutes or escalation will trigger.
+
+  sev2_degradation_notification:
+    subject: "[SEV-2] DEGRADATION — {{ incident.title }}"
+    body: |
+      *Service Degradation Detected*
+
+      *Incident:* `{{ incident.id }}`
+      *Type:* {{ incident.type }}
+      *Severity:* {{ incident.severity }}
+      *Detected:* {{ incident.detected_at | iso8601 }}
+
+      *Description:*
+      {{ incident.description }}
+
+      *Automated Actions Taken:*
+      {% for action in incident.actions_taken %}
+      - `{{ action.action_type }}` on `{{ action.target }}` — {{ action.status }}
+      {% endfor %}
+
+      ---
+      Acknowledge within 10 minutes.
+
+  sev3_anomaly_notification:
+    subject: "[SEV-3] ANOMALY — {{ incident.title }}"
+    body: |
+      *Anomaly Detected — Enhanced Monitoring Active*
+
+      *Incident:* `{{ incident.id }}`
+      *Type:* {{ incident.type }}
+      *Severity:* {{ incident.severity }}
+      *Detected:* {{ incident.detected_at | iso8601 }}
+
+      *Description:*
+      {{ incident.description }}
+
+      A deep-dive dashboard has been created in Grafana.
+      No immediate action required — review during next business day.
+
+  sev4_info_notification:
+    subject: "[SEV-4] INFO — {{ incident.title }}"
+    body: |
+      *Informational Incident Logged*
+
+      *Incident:* `{{ incident.id }}`
+      *Type:* {{ incident.type }}
+      *Detected:* {{ incident.detected_at | iso8601 }}
+
+      *Description:*
+      {{ incident.description }}
+
+      A Jira ticket has been created for review.
+      No action required.

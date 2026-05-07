@@ -1,0 +1,187 @@
+# ---------------------------------------------------------------------------
+# Tiresias Incident Controller — Alert Correlation Rules  (Section 4.2)
+#
+# Each rule defines a pattern of incoming alerts that, when matched within
+# the specified time window, produces a single correlated incident of the
+# given type and severity.
+#
+# condition.all_of  — every listed alert must fire within the window.
+# condition.any_of  — at least `min_count` of the listed alerts must fire.
+# ---------------------------------------------------------------------------
+
+correlations:
+
+  # ── Service ──────────────────────────────────────────────────────────────
+
+  - id: total-service-outage
+    name: Total Service Outage
+    description: >-
+      Multiple monitored endpoints report simultaneous failure, indicating
+      a complete service outage rather than isolated errors.
+    condition:
+      all_of:
+        - alert: EndpointDown
+          count: 3
+        - alert: HealthCheckFailed
+          count: 2
+      window: 120s
+    produces:
+      incident_type: INC-SVC-001
+      severity: SEV-1
+      title: "Total service outage — multiple endpoints unreachable"
+
+  - id: partial-outage
+    name: Partial Service Outage
+    description: >-
+      A subset of endpoints or service replicas are failing while others
+      remain healthy, resulting in degraded throughput.
+    condition:
+      any_of:
+        - alert: EndpointDown
+        - alert: HighErrorRate
+        - alert: LatencyP99Exceeded
+      min_count: 2
+      window: 180s
+    produces:
+      incident_type: INC-SVC-002
+      severity: SEV-2
+      title: "Partial service degradation detected"
+
+  - id: database-unreachable
+    name: Database Unreachable
+    description: >-
+      Primary or replica database connections are failing across multiple
+      application pods.
+    condition:
+      all_of:
+        - alert: DatabaseConnectionPoolExhausted
+          count: 1
+        - alert: DatabaseReplicationLag
+          count: 1
+      window: 60s
+    produces:
+      incident_type: INC-SVC-003
+      severity: SEV-1
+      title: "Database cluster unreachable"
+
+  - id: cert-expiry-critical
+    name: Certificate Expiry Critical
+    description: >-
+      TLS certificate is expiring within the critical threshold and no
+      automatic renewal has succeeded.
+    condition:
+      all_of:
+        - alert: CertExpiringCritical
+          count: 1
+        - alert: CertRenewalFailed
+          count: 1
+      window: 300s
+    produces:
+      incident_type: INC-SVC-004
+      severity: SEV-2
+      title: "TLS certificate expiry imminent — renewal failed"
+
+  # ── Security ─────────────────────────────────────────────────────────────
+
+  - id: coordinated-attack
+    name: Coordinated Attack
+    description: >-
+      Simultaneous WAF blocks from distinct source ranges combined with
+      behavioural anomaly detection firing — indicates a coordinated
+      offensive rather than opportunistic scanning.
+    condition:
+      all_of:
+        - alert: WAFBlockRateSpiked
+          count: 1
+        - alert: AnomalyScoreElevated
+          count: 1
+      window: 60s
+    produces:
+      incident_type: INC-SEC-001
+      severity: SEV-0
+      title: "Coordinated attack — WAF bypass attempt with anomaly spike"
+
+  - id: anomaly-spike
+    name: Anomaly Score Spike
+    description: >-
+      Anomaly detection model scores have exceeded the threshold across
+      multiple signal sources without a corresponding WAF trigger.
+    condition:
+      any_of:
+        - alert: AnomalyScoreElevated
+        - alert: UnusualAPIPattern
+        - alert: GeoVelocityAnomaly
+      min_count: 2
+      window: 300s
+    produces:
+      incident_type: INC-SEC-002
+      severity: SEV-3
+      title: "Anomaly spike across multiple signal sources"
+
+  # ── Infrastructure ───────────────────────────────────────────────────────
+
+  - id: crashloop-degradation
+    name: Crashloop-Induced Degradation
+    description: >-
+      One or more pods are stuck in CrashLoopBackOff, reducing available
+      capacity below the minimum healthy replica threshold.
+    condition:
+      all_of:
+        - alert: PodCrashLoopBackOff
+          count: 2
+        - alert: ReplicasBelowMinimum
+          count: 1
+      window: 180s
+    produces:
+      incident_type: INC-SVC-002
+      severity: SEV-2
+      title: "Crashloop-induced capacity degradation"
+
+  - id: node-failure
+    name: Node Failure
+    description: >-
+      A Kubernetes node has become NotReady and workloads are being
+      evicted or left unschedulable.
+    condition:
+      all_of:
+        - alert: NodeNotReady
+          count: 1
+        - alert: PodEviction
+          count: 1
+      window: 120s
+    produces:
+      incident_type: INC-INF-001
+      severity: SEV-2
+      title: "Kubernetes node failure with pod evictions"
+
+  - id: disk-critical
+    name: Disk Usage Critical
+    description: >-
+      Persistent volume or node root filesystem usage has exceeded the
+      critical threshold (>90%) and is still growing.
+    condition:
+      all_of:
+        - alert: DiskUsageCritical
+          count: 1
+      window: 60s
+    produces:
+      incident_type: INC-INF-002
+      severity: SEV-2
+      title: "Disk usage critical — capacity exhaustion imminent"
+
+  - id: memory-exhaustion
+    name: Memory Exhaustion
+    description: >-
+      Node or pod memory usage has breached the OOM-kill threshold,
+      causing container restarts or node instability.
+    condition:
+      all_of:
+        - alert: MemoryUsageCritical
+          count: 1
+        - alert: OOMKillDetected
+          count: 1
+      window: 120s
+    produces:
+      incident_type: INC-INF-003
+      severity: SEV-2
+      title: "Memory exhaustion — OOM kills detected"
