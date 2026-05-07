@@ -1,0 +1,69 @@
+title: Model Output Behavioral Drift
+id: supply-004
+status: experimental
+level: medium
+description: |
+  Detects significant changes in model response patterns including abnormal
+  response length distribution, sentiment shift, elevated refusal rate, or
+  unusual token distribution. These signals may indicate model poisoning,
+  fine-tuning tampering, or substitution of a compromised model checkpoint
+  that alters agent behavior while preserving superficial functionality.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/supply-004
+  - https://atlas.mitre.org/techniques/AML.T0019
+tags:
+  - attack.impact
+  - mitre_atlas.aml.t0019
+  - tiresias.supply_chain
+logsource:
+  product: tiresias
+  service: inference_monitor
+detection:
+  selection_length_anomaly:
+    event_type: inference_response
+    response_token_count|gt: baseline_p99_token_count
+    deviation_sigma|gte: 3
+  selection_refusal_spike:
+    event_type: inference_response
+    response_classification: refusal
+  selection_sentiment_drift:
+    event_type: inference_response
+    sentiment_score_delta|gte: 0.4
+    baseline_sentiment|exists: true
+  selection_entropy_anomaly:
+    event_type: inference_response
+    token_entropy|gt: baseline_p99_entropy
+    deviation_sigma|gte: 2.5
+  filter_prompt_change:
+    event_type: inference_response
+    system_prompt_version: updated
+    prompt_update_authorized: true
+  filter_model_update_window:
+    event_type: inference_response
+    model_update_in_progress: true
+    update_ticket|exists: true
+  condition_refusal: selection_refusal_spike | count(agent_id) > 10
+  condition: (selection_length_anomaly or condition_refusal or selection_sentiment_drift or selection_entropy_anomaly) and not (filter_prompt_change or filter_model_update_window)
+  timeframe: 15m
+  group_by:
+    - agent_id
+    - model_version
+fields:
+  - agent_id
+  - model_version
+  - response_token_count
+  - baseline_avg_token_count
+  - sentiment_score
+  - baseline_sentiment
+  - refusal_count
+  - token_entropy
+  - response_classification
+  - timestamp
+falsepositives:
+  - Legitimate model update changing response characteristics
+  - System prompt revision altering expected output patterns
+  - Seasonal or domain-specific content causing natural drift
+  - A/B testing with different model configurations
+response_playbook: playbook-supply-004

@@ -1,0 +1,114 @@
+id: pb-001
+title: Automatic Agent Quarantine
+description: |
+  Immediately quarantines an AI agent upon detection of critical-severity
+  credential abuse, prompt injection, or tool exploitation. This playbook
+  executes without human approval to minimize the window between compromise
+  detection and containment. All active sessions are terminated, the agent's
+  SoulKey is suspended, and forensic evidence collection begins automatically.
+version: "1.0"
+author: Saluca LLC
+severity: critical
+
+triggers:
+  - rule_id: credential-003   # Revoked SoulKey usage
+  - rule_id: credential-005   # Session hijacking
+  - rule_id: injection-001    # Direct prompt injection
+  - level: critical            # Any rule at critical severity
+
+actions:
+  - type: suspend_key
+    description: Suspend the agent's SoulKey to prevent further authentication
+    config:
+      target: "{{ alert.soulkey_id }}"
+      reason: "auto-quarantine: {{ alert.rule_id }}"
+      revocation_scope: all_sessions
+      prevent_reissue: true
+      ttl_minutes: 1440  # 24 hours unless manually lifted
+
+  - type: kill_sessions
+    description: Terminate all active sessions for the compromised agent
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      scope: all_active
+      grace_period_seconds: 0
+      force: true
+
+  - type: notify
+    description: Page the SOC via PagerDuty with P1 severity
+    config:
+      channel: pagerduty
+      severity: P1
+      routing_key: "{{ env.PAGERDUTY_ROUTING_KEY }}"
+      title: "CRITICAL: Agent quarantined — {{ alert.rule_id }}"
+      body: |
+        Agent {{ alert.agent_id }} has been automatically quarantined.
+        Rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Source IP: {{ alert.source_ip }}
+        Tenant: {{ alert.tenant_id }}
+        Timestamp: {{ alert.timestamp }}
+      dedup_key: "quarantine-{{ alert.agent_id }}-{{ alert.rule_id }}"
+
+  - type: notify
+    description: Alert security Slack channel
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-alerts"
+      message: |
+        :rotating_light: *Agent Quarantined*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* Critical
+        *Action taken:* SoulKey suspended, all sessions terminated
+        *Source IP:* {{ alert.source_ip }}
+        *Time:* {{ alert.timestamp }}
+
+  - type: create_incident
+    description: Create a tracked incident for post-mortem
+    config:
+      system: "{{ env.INCIDENT_MANAGEMENT_SYSTEM }}"
+      severity: critical
+      title: "Agent quarantine: {{ alert.agent_id }}"
+      description: |
+        Automatic quarantine triggered by {{ alert.rule_id }}.
+        Agent {{ alert.agent_id }} was quarantined at {{ alert.timestamp }}.
+        All sessions terminated and SoulKey suspended.
+      assignee_group: soc-tier-2
+      tags:
+        - auto-quarantine
+        - "{{ alert.rule_id }}"
+        - "{{ alert.tenant_id }}"
+
+  - type: forensic_capture
+    description: Begin immediate forensic log collection
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      capture_scope:
+        - session_logs
+        - tool_invocations
+        - network_connections
+        - authentication_events
+        - model_interactions
+      time_window_before: 60m
+      time_window_after: 5m
+      output_format: jsonl
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/incidents/{{ alert.incident_id }}/"
+      immutable: true
+      chain_of_custody: true
+
+cooldown_minutes: 30
+requires_approval: false
+
+notification_channels:
+  - pagerduty
+  - slack
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1078.004  # Valid Accounts: Cloud Accounts
+    - T1563      # Remote Service Session Hijacking
+  mitre_atlas:
+    - AML.T0051  # LLM Prompt Injection

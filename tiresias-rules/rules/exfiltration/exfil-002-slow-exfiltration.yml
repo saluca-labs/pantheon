@@ -1,0 +1,90 @@
+title: Low-and-Slow Data Exfiltration
+id: exfil-002
+status: experimental
+description: >
+  Detects sustained elevated read activity over a prolonged period that stays
+  below burst-detection thresholds but consistently exceeds the agent's
+  historical baseline. This pattern is characteristic of low-and-slow
+  exfiltration designed to evade short-window anomaly detection.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1048/001/
+tags:
+  - attack.exfiltration
+  - attack.t1048.001
+  - tiresias.ai-agent
+  - tiresias.data-plane
+  - tiresias.slow-exfil
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    tool_action|contains:
+      - read
+      - get
+      - list
+      - fetch
+      - query
+      - select
+
+  # Sustained rate: agent stays between 20-99 reads per 5m window
+  # (below exfil-001 burst threshold) but does so across 6+ consecutive windows
+  rate_window:
+    timeframe: 5m
+    group_by:
+      - agent_id
+      - session_id
+    count:
+      field: event_id
+      gte: 20
+      lt: 100
+
+  sustained:
+    # Tiresias extension: require the rate_window condition to persist
+    tiresias_sustained:
+      consecutive_windows: 6
+      window_size: 5m
+      # Minimum total duration: 30 minutes of elevated reads
+      min_duration: 30m
+
+  baseline_deviation:
+    tiresias_baseline:
+      metric: read_count_per_hour
+      lookback: 7d
+      deviation: 1.5
+      # Lower deviation threshold since the pattern relies on persistence
+      mode: and
+
+  condition: selection AND rate_window AND sustained AND baseline_deviation
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - resource_type
+  - cumulative_record_count
+  - sustained_duration_minutes
+  - baseline_read_rate
+  - observed_read_rate
+  - target_tenant_id
+
+level: medium
+severity: medium
+
+falsepositives:
+  - Long-running ETL or sync agents with steady-state read patterns
+  - Monitoring agents polling data sources at regular intervals
+  - Agents performing iterative search/refinement workflows
+  - Customer support agents working through large ticket queues
+
+response:
+  - Calculate cumulative data volume accessed during sustained window
+  - Compare accessed resources against agent's authorized scope
+  - Flag for analyst review with trend visualization
+  - If cumulative volume exceeds data-loss threshold, escalate to high

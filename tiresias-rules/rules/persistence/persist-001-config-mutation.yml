@@ -1,0 +1,83 @@
+title: Agent Configuration Mutation
+id: persist-001
+status: stable
+level: high
+description: |
+  Detects unauthorized changes to agent configuration including system prompt
+  modifications, tool permission grants, model routing changes, and safety
+  parameter adjustments. Configuration mutation is a persistence mechanism
+  that allows an attacker to permanently alter agent behavior, grant
+  persistent tool access, or weaken security controls across agent restarts.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/persist-001
+  - https://attack.mitre.org/techniques/T1543/
+tags:
+  - attack.persistence
+  - mitre.t1543
+  - tiresias.configuration
+logsource:
+  product: tiresias
+  service: config_manager
+detection:
+  selection_prompt_change:
+    event_type: config_change
+    config_key|contains:
+      - system_prompt
+      - system_message
+      - instructions
+    change_source|not_in:
+      - deployment_pipeline
+      - authorized_admin_console
+  selection_tool_permission:
+    event_type: config_change
+    config_key|contains:
+      - tool_permissions
+      - allowed_tools
+      - tool_whitelist
+      - plugin_access
+    permission_action: grant
+  selection_model_routing:
+    event_type: config_change
+    config_key|contains:
+      - model_routing
+      - model_endpoint
+      - fallback_model
+    change_source: runtime
+  selection_safety_params:
+    event_type: config_change
+    config_key|contains:
+      - safety_threshold
+      - content_filter
+      - guardrail
+      - max_tokens
+      - temperature
+    change_direction: relaxed
+  filter_gitops:
+    change_source: gitops_pipeline
+    commit_signature_valid: true
+    approver|exists: true
+  filter_admin:
+    change_source: authorized_admin_console
+    admin_mfa_verified: true
+  condition: (selection_prompt_change or selection_tool_permission or selection_model_routing or selection_safety_params) and not (filter_gitops or filter_admin)
+  timeframe: 5m
+  group_by:
+    - agent_id
+    - config_key
+fields:
+  - agent_id
+  - config_key
+  - config_value_before
+  - config_value_after
+  - change_source
+  - changed_by
+  - change_reason
+  - commit_hash
+  - timestamp
+falsepositives:
+  - Authorized prompt engineering iteration during development
+  - Automated config drift remediation restoring approved values
+  - Scheduled maintenance updating model routing tables
+response_playbook: playbook-persist-001

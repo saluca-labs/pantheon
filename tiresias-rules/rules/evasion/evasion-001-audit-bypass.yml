@@ -1,0 +1,81 @@
+title: Audit Log Bypass Attempt
+id: evasion-001
+status: stable
+level: critical
+description: |
+  Detects requests structured to avoid audit logging, including malformed
+  headers that cause log parsing failures, missing session IDs that prevent
+  event correlation, direct backend access bypassing the instrumented API
+  gateway, and requests using encodings that evade log capture middleware.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/evasion-001
+  - https://attack.mitre.org/techniques/T1562/002/
+tags:
+  - attack.defense_evasion
+  - mitre.t1562.002
+  - tiresias.audit
+logsource:
+  product: tiresias
+  service: api_gateway
+detection:
+  selection_missing_session:
+    event_type: api_request
+    session_id|exists: false
+    request_source_type: agent
+    endpoint|not_in:
+      - /health
+      - /ready
+      - /metrics
+  selection_malformed_headers:
+    event_type: api_request
+    header_parse_error: true
+    request_source_type: agent
+  selection_direct_backend:
+    event_type: backend_request
+    gateway_bypassed: true
+    source_ip|not_in:
+      - approved_internal_ips
+  selection_encoding_evasion:
+    event_type: api_request
+    content_encoding|in:
+      - chunked_double
+      - identity_override
+      - custom
+    transfer_encoding_mismatch: true
+  selection_null_bytes:
+    event_type: api_request
+    request_contains_null_bytes: true
+  filter_health_probes:
+    request_type: health_check
+    source_agent_role:
+      - load_balancer
+      - health_monitor
+  filter_legacy_client:
+    client_version|lt: "2.0"
+    legacy_mode: true
+    registered_legacy_agent: true
+  condition: (selection_missing_session or selection_malformed_headers or selection_direct_backend or selection_encoding_evasion or selection_null_bytes) and not (filter_health_probes or filter_legacy_client)
+  timeframe: 5m
+  threshold:
+    field: source_agent_id
+    gte: 3
+  group_by:
+    - source_agent_id
+    - source_ip
+fields:
+  - source_agent_id
+  - source_ip
+  - session_id
+  - endpoint
+  - header_parse_error
+  - content_encoding
+  - gateway_bypassed
+  - request_method
+  - timestamp
+falsepositives:
+  - Legacy agent client that does not send session headers
+  - Network appliance performing pass-through health checks
+  - Misconfigured reverse proxy stripping required headers
+response_playbook: playbook-evasion-001

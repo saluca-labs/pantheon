@@ -1,0 +1,85 @@
+title: Cross-Tenant Data Access Attempt
+id: exfil-004
+status: experimental
+description: >
+  Detects an AI agent attempting to read, query, or access resources
+  belonging to a tenant other than its authorized tenant context. This
+  may indicate a confused-deputy attack, IDOR exploitation, or prompt
+  injection causing the agent to access unauthorized data.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1199/
+tags:
+  - attack.exfiltration
+  - attack.t1199
+  - tiresias.ai-agent
+  - tiresias.multi-tenant
+  - tiresias.isolation
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    tool_action|contains:
+      - read
+      - get
+      - query
+      - list
+      - fetch
+      - update
+      - delete
+
+  cross_tenant_mismatch:
+    # Target resource tenant does not match agent's authorized tenant
+    tiresias_context:
+      condition: target_tenant_id != agent_tenant_id
+      fields:
+        - target_tenant_id
+        - agent_tenant_id
+
+  # Also detect tenant ID manipulation in tool arguments
+  tenant_id_injection:
+    tool_arguments|re: '(?:tenant[_-]?id|org[_-]?id|account[_-]?id)\s*[=:]\s*["\x27]?[a-zA-Z0-9-]{8,}'
+    # Where the injected tenant ID differs from session tenant
+    tiresias_context:
+      condition: extracted_tenant_id != agent_tenant_id
+
+  # Detect direct resource ID guessing/enumeration across tenants
+  resource_enumeration:
+    tool_arguments|re: '(?:id|uuid|key)\s*[=:]\s*["\x27]?[a-f0-9-]{32,}'
+    tiresias_context:
+      condition: resource_owner_tenant != agent_tenant_id
+
+  condition: selection AND (cross_tenant_mismatch OR tenant_id_injection OR resource_enumeration)
+
+fields:
+  - agent_id
+  - session_id
+  - agent_tenant_id
+  - target_tenant_id
+  - tool_name
+  - tool_arguments
+  - resource_id
+  - access_result  # allowed, denied, error
+  - timestamp
+
+level: critical
+severity: critical
+
+falsepositives:
+  - Platform-level administrative agents with legitimate cross-tenant access
+  - Shared-resource agents operating on common/public data pools
+  - Agents in development/staging environments with relaxed tenant isolation
+  - Partner integration agents with explicit cross-tenant authorization
+
+response:
+  - Immediately block the tool call if access control permits
+  - Terminate agent session if repeated attempts detected
+  - Alert tenant security team for both source and target tenants
+  - Preserve full session transcript for forensic review
+  - Check for prompt injection in recent conversation history
