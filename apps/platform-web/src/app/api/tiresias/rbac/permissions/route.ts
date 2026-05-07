@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@workos-inc/authkit-nextjs';
-import { extractRoleFromSession, checkPermission } from '@/lib/rbac/check';
+import { cookies } from 'next/headers';
+import { validateSession } from '@platform/auth';
+import { getSessionToken } from '@platform/auth/cookies';
+import { extractRoleFromLocalSession, checkPermission } from '@/lib/rbac/check';
 import {
   Permission,
   Role,
@@ -9,15 +11,15 @@ import {
 import { Pool } from 'pg';
 
 /**
- * BFF-local Postgres connection for permission overrides (D-18).
- * Separate from the Tiresias backend database -- this is BFF state.
+ * BFF-local Postgres connection for permission overrides.
+ * Separate from the Tiresias backend database — this is BFF state.
  */
 let pool: Pool | null = null;
 
 function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.BFF_DATABASE_URL,
+      connectionString: process.env['BFF_DATABASE_URL'] ?? process.env['DATABASE_URL'],
       max: 5,
     });
   }
@@ -42,20 +44,25 @@ async function ensureTable(): Promise<void> {
 const VALID_ROLES = new Set(Object.values(Role));
 const VALID_PERMISSIONS = new Set(Object.values(Permission));
 
+async function getLocalSession() {
+  const cookieStore = await cookies();
+  const token = getSessionToken(cookieStore as any);
+  if (!token) return null;
+  return validateSession(token, getPool());
+}
+
 /**
  * GET /api/tiresias/rbac/permissions
  *
  * Returns the effective permission map for the user's organization.
- * Merges DEFAULT_ROLE_PERMISSIONS with any overrides from BFF-local Postgres.
- * Per RBAC-06: admins can configure granular permissions.
  */
 export async function GET() {
-  const session = await withAuth();
-  if (!session.user) {
+  const sessionResult = await getLocalSession();
+  if (!sessionResult) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const identity = extractRoleFromSession(session);
+  const identity = extractRoleFromLocalSession(sessionResult.user);
   if (!identity.orgId) {
     return NextResponse.json(
       { error: 'No organization found for user' },
@@ -75,15 +82,13 @@ export async function GET() {
       [identity.orgId],
     );
 
-    // Start with defaults, overlay any overrides
     const permissions: Record<string, string[]> = {};
     for (const role of Object.values(Role)) {
-      permissions[role] = [...DEFAULT_ROLE_PERMISSIONS[role]];
+      permissions[role] = [...(DEFAULT_ROLE_PERMISSIONS[role] ?? [])];
     }
 
     for (const row of result.rows) {
       if (VALID_ROLES.has(row.role as Role)) {
-        // Filter to only valid permission slugs
         permissions[row.role] = row.allowed_actions.filter((a) =>
           VALID_PERMISSIONS.has(a as Permission),
         );
@@ -92,10 +97,9 @@ export async function GET() {
 
     return NextResponse.json({ permissions });
   } catch {
-    // If database is unavailable, fall back to defaults
     const permissions: Record<string, string[]> = {};
     for (const role of Object.values(Role)) {
-      permissions[role] = [...DEFAULT_ROLE_PERMISSIONS[role]];
+      permissions[role] = [...(DEFAULT_ROLE_PERMISSIONS[role] ?? [])];
     }
     return NextResponse.json({ permissions });
   }
@@ -104,27 +108,26 @@ export async function GET() {
 /**
  * POST /api/tiresias/rbac/permissions
  *
- * Saves permission overrides for a specific role in the user's organization.
- * Requires SETTINGS_MANAGE permission (admin only by default).
- * Per RBAC-06: admins can configure which roles can perform which actions.
- * Per D-18: BFF is the policy enforcement point for writes, stored in BFF-local Postgres.
+ * Saves permission overrides. Requires SETTINGS_MANAGE permission.
  */
 export async function POST(request: NextRequest) {
-  const session = await withAuth();
-  if (!session.user) {
+  const sessionResult = await getLocalSession();
+  if (!sessionResult) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Permission check: only users with SETTINGS_MANAGE can configure permissions
-  const permResult = checkPermission(session, Permission.SETTINGS_MANAGE);
-  if (!permResult.allowed) {
+  // Permission check — adapt checkPermission to local session
+  const identity = extractRoleFromLocalSession(sessionResult.user);
+  const allowed = (DEFAULT_ROLE_PERMISSIONS[identity.role] ?? []).includes(
+    Permission.SETTINGS_MANAGE
+  );
+  if (!allowed) {
     return NextResponse.json(
       { error: 'Forbidden: insufficient permissions to manage settings' },
       { status: 403 },
     );
   }
 
-  const identity = extractRoleFromSession(session);
   if (!identity.orgId) {
     return NextResponse.json(
       { error: 'No organization found for user' },
@@ -132,20 +135,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Parse and validate request body
   let body: { role?: string; allowed_actions?: string[] };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
   const { role, allowed_actions } = body;
 
-  // Validate role
   if (!role || !VALID_ROLES.has(role as Role)) {
     return NextResponse.json(
       { error: `Invalid role. Must be one of: ${[...VALID_ROLES].join(', ')}` },
@@ -153,7 +151,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Validate allowed_actions
   if (!Array.isArray(allowed_actions)) {
     return NextResponse.json(
       { error: 'allowed_actions must be an array' },

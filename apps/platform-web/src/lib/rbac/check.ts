@@ -3,7 +3,7 @@ import 'server-only';
 import { Role, Permission, hasPermission } from './permissions';
 
 /**
- * Identity extracted from a WorkOS session JWT.
+ * Identity extracted from a local session user record.
  */
 export interface SessionIdentity {
   userId: string;
@@ -14,64 +14,71 @@ export interface SessionIdentity {
 }
 
 /**
- * Extract role and identity from a WorkOS session access token.
+ * Extract role and identity from a local-auth session user.
  *
- * Decodes the JWT payload from base64url (WorkOS middleware has already
- * verified the signature, so we only need to read claims).
- * Defaults role to 'viewer' if missing from the JWT (Pitfall 1 from research).
+ * Roles are stored in a memberships table. For this pass, we read from the
+ * user record directly. Role defaults to 'viewer' when not set.
+ */
+export function extractRoleFromLocalSession(user: {
+  id: string;
+  email: string;
+  organizationId?: string | null;
+  roles?: string[];
+}): SessionIdentity {
+  const rawRole = user.roles?.[0] ?? '';
+  const role = Object.values(Role).includes(rawRole as Role)
+    ? (rawRole as Role)
+    : Role.VIEWER;
+
+  return {
+    userId: user.id,
+    role,
+    orgId: user.organizationId ?? '',
+    teamId: '',
+    permissions: [],
+  };
+}
+
+/**
+ * @deprecated Use extractRoleFromLocalSession instead.
+ * Kept for backwards compatibility with existing code that passes an accessToken.
  */
 export function extractRoleFromSession(session: {
   accessToken: string;
 }): SessionIdentity {
   const parts = session.accessToken.split('.');
   if (parts.length < 2) {
-    return {
-      userId: '',
-      role: Role.VIEWER,
-      orgId: '',
-      teamId: '',
-      permissions: [],
-    };
+    return { userId: '', role: Role.VIEWER, orgId: '', teamId: '', permissions: [] };
   }
 
-  // Decode base64url JWT payload
-  const payloadB64 = parts[1]
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+  const payloadB64 = parts[1]!.replace(/-/g, '+').replace(/_/g, '/');
   const payloadJson = Buffer.from(payloadB64, 'base64').toString('utf-8');
 
   let payload: Record<string, unknown>;
   try {
     payload = JSON.parse(payloadJson);
   } catch {
-    return {
-      userId: '',
-      role: Role.VIEWER,
-      orgId: '',
-      teamId: '',
-      permissions: [],
-    };
+    return { userId: '', role: Role.VIEWER, orgId: '', teamId: '', permissions: [] };
   }
 
-  const rawRole = typeof payload.role === 'string' ? payload.role : '';
+  const rawRole = typeof payload['role'] === 'string' ? payload['role'] : '';
   const role = Object.values(Role).includes(rawRole as Role)
     ? (rawRole as Role)
     : Role.VIEWER;
 
   return {
-    userId: typeof payload.sub === 'string' ? payload.sub : '',
+    userId: typeof payload['sub'] === 'string' ? payload['sub'] : '',
     role,
-    orgId: typeof payload.org_id === 'string' ? payload.org_id : '',
-    teamId: typeof payload.team_id === 'string' ? payload.team_id : '',
-    permissions: Array.isArray(payload.permissions)
-      ? (payload.permissions as string[])
+    orgId: typeof payload['org_id'] === 'string' ? payload['org_id'] : '',
+    teamId: typeof payload['team_id'] === 'string' ? payload['team_id'] : '',
+    permissions: Array.isArray(payload['permissions'])
+      ? (payload['permissions'] as string[])
       : [],
   };
 }
 
 /**
  * Check if the session has the required permission.
- * Returns identity info alongside the authorization result.
  */
 export function checkPermission(
   session: { accessToken: string },
@@ -85,12 +92,5 @@ export function checkPermission(
 } {
   const identity = extractRoleFromSession(session);
   const allowed = hasPermission(identity.role, requiredPermission);
-
-  return {
-    allowed,
-    userId: identity.userId,
-    role: identity.role,
-    orgId: identity.orgId,
-    teamId: identity.teamId,
-  };
+  return { allowed, userId: identity.userId, role: identity.role, orgId: identity.orgId, teamId: identity.teamId };
 }
