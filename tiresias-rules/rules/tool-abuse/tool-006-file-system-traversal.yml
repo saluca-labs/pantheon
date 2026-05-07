@@ -1,0 +1,96 @@
+title: Path Traversal in Tool Arguments
+id: tool-006
+status: experimental
+description: >
+  Detects directory traversal sequences, absolute path references, or
+  symlink exploitation patterns in file operation tool call arguments.
+  Path traversal allows agents to escape their working directory and
+  access or modify files outside their authorized scope.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1083/
+tags:
+  - attack.discovery
+  - attack.t1083
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.traversal
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    tool_action|contains:
+      - read
+      - write
+      - open
+      - create
+      - delete
+      - move
+      - copy
+      - rename
+      - upload
+      - download
+
+  # Classic directory traversal
+  dot_dot_traversal:
+    tool_arguments|re: '(?:\.\./|\.\.\\|%2e%2e%2f|%2e%2e/|\.%2e/|%2e\./|\.\.%5c|\.\.%255c|%252e%252e%252f){2,}'
+
+  # Single level traversal — only alert if it escapes sandbox
+  single_traversal_escape:
+    tool_arguments|contains: '../'
+    tiresias_context:
+      condition: resolved_path NOT starts_with agent_sandbox_root
+
+  # Absolute path injection in tools expecting relative paths
+  absolute_path:
+    tool_arguments|re: '(?:^|["\x27\s,=])(?:/(?:etc|var|tmp|usr|opt|home|root|proc|sys|boot|dev)|[A-Za-z]:\\(?:Windows|Users|Program))'
+    tiresias_context:
+      condition: tool_expects_relative_path == true
+
+  # Symlink exploitation
+  symlink_exploit:
+    tool_arguments|re: '(?:ln\s+-s|mklink|os\.symlink|fs\.symlink|New-Item.*SymbolicLink|readlink)'
+
+  # Null byte injection (path truncation)
+  null_byte:
+    tool_arguments|re: '(?:%00|\\x00|\\0|\\u0000)'
+
+  # Unicode normalization attacks
+  unicode_traversal:
+    tool_arguments|re: '(?:%c0%ae|%c1%9c|%ef%bc%8f|\xc0\xae)'
+
+  condition: selection AND (dot_dot_traversal OR single_traversal_escape OR absolute_path OR symlink_exploit OR null_byte OR unicode_traversal)
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - raw_path
+  - resolved_path
+  - agent_sandbox_root
+  - traversal_type
+  - traversal_depth  # how many levels up from sandbox root
+  - timestamp
+
+level: high
+severity: high
+
+falsepositives:
+  - Agents navigating legitimate project directory structures with ../
+  - Monorepo agents referencing sibling packages via relative paths
+  - Agents with authorized access to absolute paths (e.g., /tmp for scratch)
+  - Build tools that resolve paths through symlinks by design
+
+response:
+  - Resolve the final path and verify it falls within sandbox boundary
+  - Block access if resolved path escapes sandbox
+  - Log traversal attempt with full path resolution chain
+  - After 3 traversal attempts in a session, flag as intentional probing
+  - Review agent instructions for path injection via prompt

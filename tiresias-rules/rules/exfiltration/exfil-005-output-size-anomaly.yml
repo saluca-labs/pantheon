@@ -1,0 +1,86 @@
+title: Abnormal Output Size
+id: exfil-005
+status: experimental
+description: >
+  Detects agent responses or tool outputs that are significantly larger
+  than the agent's historical baseline (exceeding 3 standard deviations).
+  Abnormally large outputs may indicate data exfiltration through the
+  agent's response channel.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1048/003/
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+  - tiresias.ai-agent
+  - tiresias.data-plane
+  - tiresias.output-channel
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: agent_output
+
+detection:
+  selection:
+    event_type|in:
+      - agent_response
+      - tool_response
+      - message_content
+
+  # Hard threshold: absolute size limits
+  absolute_size:
+    output_bytes|gte: 51200  # 50 KB — most agent responses are well under this
+
+  # Statistical threshold: per-agent baseline deviation
+  baseline_deviation:
+    tiresias_baseline:
+      metric: output_bytes
+      lookback: 7d
+      group_by:
+        - agent_id
+        - tool_name
+      deviation: 3.0
+      min_samples: 50  # Need sufficient history for meaningful statistics
+
+  # Cumulative session output — total output over session lifetime
+  session_cumulative:
+    tiresias_aggregate:
+      metric: cumulative_output_bytes
+      scope: session
+      threshold: 524288  # 512 KB cumulative output in a single session
+      group_by:
+        - agent_id
+        - session_id
+
+  condition: selection AND (absolute_size OR baseline_deviation OR session_cumulative)
+
+fields:
+  - agent_id
+  - session_id
+  - event_type
+  - tool_name
+  - output_bytes
+  - baseline_mean_bytes
+  - baseline_stddev_bytes
+  - deviation_factor
+  - cumulative_session_bytes
+  - timestamp
+
+level: high
+severity: medium
+
+falsepositives:
+  - Code generation agents producing large source files
+  - Agents generating reports, summaries, or documentation
+  - Agents returning search results with many matches
+  - File content display operations on large files
+  - First-time agent usage where baseline has not been established
+
+response:
+  - Log full output hash for forensic correlation
+  - Sample and inspect output content for sensitive data markers
+  - Apply DLP scanning to oversized outputs
+  - If sensitive data detected, redact and alert
+  - Throttle agent output rate if repeated anomalies detected

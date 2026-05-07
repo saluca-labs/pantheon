@@ -1,0 +1,68 @@
+title: Unauthorized Cross-Agent Communication
+id: lateral-001
+status: stable
+level: high
+description: |
+  Detects agent-to-agent requests outside defined communication channels or
+  without proper delegation tokens. Unauthorized cross-agent communication
+  can indicate a compromised agent attempting to pivot through the agent mesh,
+  exfiltrate data via a less-monitored agent, or exploit trust relationships
+  between agents to escalate access.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/lateral-001
+  - https://attack.mitre.org/techniques/T1021/
+tags:
+  - attack.lateral_movement
+  - mitre.t1021
+  - tiresias.agent_mesh
+logsource:
+  product: tiresias
+  service: mesh_gateway
+detection:
+  selection_unregistered_channel:
+    event_type: agent_request
+    communication_channel|not_in:
+      - registered_channel_list
+    target_agent_id|exists: true
+  selection_missing_delegation:
+    event_type: agent_request
+    delegation_token|exists: false
+    request_type: cross_agent
+  selection_invalid_delegation:
+    event_type: agent_request
+    delegation_token_valid: false
+    delegation_token|exists: true
+  selection_direct_bypass:
+    event_type: agent_request
+    routing: direct
+    gateway_bypassed: true
+  filter_health_check:
+    event_type: agent_request
+    request_type: health_check
+    source_agent_role: mesh_monitor
+  filter_broadcast:
+    event_type: agent_request
+    request_type: system_broadcast
+    source_agent_role: mesh_controller
+  condition: (selection_unregistered_channel or selection_missing_delegation or selection_invalid_delegation or selection_direct_bypass) and not (filter_health_check or filter_broadcast)
+  timeframe: 1m
+  group_by:
+    - source_agent_id
+    - target_agent_id
+fields:
+  - source_agent_id
+  - target_agent_id
+  - communication_channel
+  - delegation_token_status
+  - request_type
+  - request_payload_size
+  - routing
+  - source_ip
+  - timestamp
+falsepositives:
+  - Newly deployed agent before channel registration propagates
+  - Emergency failover routing through alternate communication path
+  - Mesh topology reconfiguration during maintenance window
+response_playbook: playbook-lateral-001

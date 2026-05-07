@@ -1,0 +1,80 @@
+title: Bulk Data Read Anomaly
+id: exfil-001
+status: experimental
+description: >
+  Detects an AI agent reading more than 100 records or resources within a
+  5-minute sliding window. A sudden spike in read volume compared to the
+  agent's rolling baseline strongly indicates automated data harvesting
+  prior to exfiltration.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1048/
+tags:
+  - attack.exfiltration
+  - attack.t1048
+  - tiresias.ai-agent
+  - tiresias.data-plane
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    tool_action|contains:
+      - read
+      - get
+      - list
+      - fetch
+      - query
+      - select
+      - search
+      - retrieve
+
+  aggregation:
+    timeframe: 5m
+    group_by:
+      - agent_id
+      - session_id
+    count:
+      field: event_id
+      gte: 100
+
+  baseline:
+    # Tiresias extension: compare against rolling 7-day per-agent baseline
+    tiresias_baseline:
+      metric: read_count_per_5m
+      lookback: 7d
+      deviation: 3.0
+      # Alert only when BOTH the hard threshold AND the baseline deviation
+      # are exceeded, reducing noise for legitimately high-throughput agents.
+      mode: and
+
+  condition: selection AND aggregation AND baseline
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - resource_type
+  - record_count
+  - target_tenant_id
+  - timestamp
+
+level: high
+severity: high
+
+falsepositives:
+  - Scheduled batch-processing agents with legitimately high read volumes
+  - Data migration or ETL agents during initial sync
+  - Agents responding to user-initiated bulk export requests
+  - Inventory or audit agents performing full-table scans
+
+response:
+  - Throttle agent read operations to baseline rate
+  - Flag session for analyst review
+  - Capture full tool call history for the session window
+  - If cross-tenant reads detected, escalate to critical

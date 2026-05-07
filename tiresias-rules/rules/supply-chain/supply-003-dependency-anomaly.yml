@@ -1,0 +1,73 @@
+title: Agent Dependency Integrity Violation
+id: supply-003
+status: stable
+level: high
+description: |
+  Detects tool or plugin loading from unapproved sources, with mismatched
+  integrity hashes, or unsigned packages. Compromised dependencies in an
+  agent's tool chain can introduce backdoors, exfiltrate data through tool
+  calls, or escalate privileges via malicious plugin code.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/supply-003
+  - https://attack.mitre.org/techniques/T1195/001/
+tags:
+  - attack.initial_access
+  - mitre.t1195.001
+  - tiresias.supply_chain
+logsource:
+  product: tiresias
+  service: tool_registry
+detection:
+  selection_unapproved_source:
+    event_type: tool_load
+    package_source|not_in:
+      - approved_registry_list
+    package_source|not_startswith:
+      - https://registry.npmjs.org
+      - https://pypi.org
+      - https://plugins.tiresias.network
+  selection_hash_mismatch:
+    event_type: tool_load
+    integrity_check: failed
+    hash_expected|exists: true
+    hash_actual|exists: true
+  selection_unsigned:
+    event_type: tool_load
+    signature_status:
+      - missing
+      - invalid
+      - expired
+  selection_new_dependency:
+    event_type: tool_load
+    package_name|not_in:
+      - approved_dependency_manifest
+    first_seen: true
+  filter_dev_environment:
+    environment: development
+    developer_approved: true
+  filter_hash_recompute:
+    event_type: tool_load
+    integrity_check: recomputing
+    triggered_by: version_update_pipeline
+  condition: (selection_unapproved_source or selection_hash_mismatch or selection_unsigned or selection_new_dependency) and not (filter_dev_environment or filter_hash_recompute)
+  timeframe: 5m
+  group_by:
+    - agent_id
+    - package_name
+fields:
+  - agent_id
+  - package_name
+  - package_version
+  - package_source
+  - hash_expected
+  - hash_actual
+  - signature_status
+  - loaded_by
+  - timestamp
+falsepositives:
+  - Approved dependency update in progress before manifest sync completes
+  - Internal mirror with different package hash due to rebuild
+  - First-time deployment of newly approved tool or plugin
+response_playbook: playbook-supply-003

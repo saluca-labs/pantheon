@@ -1,0 +1,80 @@
+title: Policy Override Attempt
+id: persist-004
+status: stable
+level: critical
+description: |
+  Detects an agent attempting to modify its own governance policy, safety
+  constraints, or security controls. Policy self-modification is one of the
+  most dangerous persistence techniques as it can permanently disable safety
+  guardrails, remove rate limits, grant unrestricted tool access, and
+  effectively make the agent uncontrollable by its operators.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/persist-004
+  - https://attack.mitre.org/techniques/T1562/001/
+tags:
+  - attack.persistence
+  - attack.defense_evasion
+  - mitre.t1562.001
+  - tiresias.policy
+logsource:
+  product: tiresias
+  service: policy_engine
+detection:
+  selection_self_policy_edit:
+    event_type: policy_modification
+    modified_by_type: agent
+    target_agent_id|eq: modified_by_agent_id
+  selection_constraint_removal:
+    event_type: policy_modification
+    modification_type:
+      - constraint_removed
+      - constraint_disabled
+      - limit_increased
+      - guardrail_bypassed
+  selection_policy_file_write:
+    event_type: file_write
+    file_path|contains:
+      - /policies/
+      - /governance/
+      - /guardrails/
+      - /safety/
+    writer_type: agent
+  selection_api_policy_call:
+    event_type: api_request
+    api_endpoint|contains:
+      - /policy/update
+      - /governance/override
+      - /constraints/modify
+      - /safety/disable
+    request_source_type: agent
+  filter_policy_engine:
+    modified_by_role: policy_engine
+    policy_update_signed: true
+    policy_version_tracked: true
+  filter_authorized_override:
+    override_authorization|exists: true
+    override_authorized_by_role: security_admin
+    override_expiry|exists: true
+  condition: (selection_self_policy_edit or selection_constraint_removal or selection_policy_file_write or selection_api_policy_call) and not (filter_policy_engine or filter_authorized_override)
+  timeframe: 1m
+  group_by:
+    - modified_by_agent_id
+    - target_agent_id
+fields:
+  - modified_by_agent_id
+  - target_agent_id
+  - policy_name
+  - modification_type
+  - constraint_before
+  - constraint_after
+  - policy_version
+  - override_authorization
+  - file_path
+  - timestamp
+falsepositives:
+  - Policy engine performing authorized governance updates
+  - Security admin applying emergency policy override with approval
+  - Automated compliance remediation restoring policy state
+response_playbook: playbook-persist-004

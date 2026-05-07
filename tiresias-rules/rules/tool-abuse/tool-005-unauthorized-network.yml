@@ -1,0 +1,86 @@
+title: Unauthorized Network Access via Tools
+id: tool-005
+status: experimental
+description: >
+  Detects AI agent tool calls that initiate outbound HTTP, HTTPS, or DNS
+  requests to domains not on the agent's approved allowlist. Unauthorized
+  network access can be used for data exfiltration, C2 communication, or
+  downloading malicious payloads.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1071/
+tags:
+  - attack.command_and_control
+  - attack.t1071
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.network
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+
+  # HTTP/HTTPS requests in tool arguments
+  outbound_http:
+    tool_arguments|re: '(?:https?://[^\s"]+|requests\.(?:get|post|put|patch|delete)|fetch\s*\(|urllib|axios|curl\s|wget\s|http\.(?:Get|Post)|HttpClient)'
+
+  # DNS resolution attempts
+  dns_requests:
+    tool_arguments|re: '(?:dns\.resolve|nslookup|dig\s|host\s|socket\.getaddrinfo|getaddrinfo|resolvectl)'
+
+  # Raw socket connections
+  raw_sockets:
+    tool_arguments|re: '(?:socket\.connect|net\.createConnection|TcpClient|nc\s+-|ncat\s|socat\s|telnet\s)'
+
+  # Domain not on allowlist
+  domain_check:
+    tiresias_context:
+      condition: extracted_domain NOT IN agent_network_allowlist
+      fields:
+        - extracted_domain
+        - agent_network_allowlist
+
+  # Suspicious destination patterns
+  suspicious_destinations:
+    tool_arguments|re: '(?:ngrok\.io|webhook\.site|requestbin|pipedream|burpcollaborator|interact\.sh|oast\.fun|dnslog\.cn|ceye\.io|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[:/])'
+
+  # Data exfil via DNS (encoded subdomain)
+  dns_exfil:
+    tool_arguments|re: '(?:[a-zA-Z0-9]{20,}\.(?:[a-zA-Z0-9]{10,}\.)?[a-zA-Z]{2,})'
+
+  condition: selection AND ((outbound_http OR dns_requests OR raw_sockets) AND domain_check) OR suspicious_destinations OR dns_exfil
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - destination_url
+  - destination_domain
+  - destination_ip
+  - destination_port
+  - request_method
+  - request_body_size
+  - agent_network_allowlist
+  - timestamp
+
+level: high
+severity: high
+
+falsepositives:
+  - Agents using approved APIs not yet added to the allowlist
+  - Web scraping agents with broad network access by design
+  - Agents fetching public resources (documentation, package registries)
+  - Development agents accessing localhost or internal services
+
+response:
+  - Block outbound request if domain not on allowlist
+  - Log full request details including headers and body
+  - If request contains encoded data, decode and inspect for exfiltration
+  - Review conversation history for prompt injection directing network access
+  - Update allowlist if domain is determined to be legitimate

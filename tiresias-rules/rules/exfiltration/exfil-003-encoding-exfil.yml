@@ -1,0 +1,91 @@
+title: Data Exfiltration via Encoding
+id: exfil-003
+status: experimental
+description: >
+  Detects base64, hex-encoded, or compressed data payloads in agent outputs
+  or tool responses that exceed normal patterns. Encoding is a common
+  technique to smuggle structured data past content-inspection controls.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1132/
+tags:
+  - attack.exfiltration
+  - attack.t1132
+  - tiresias.ai-agent
+  - tiresias.data-plane
+  - tiresias.encoding
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: agent_output
+
+detection:
+  selection_base64:
+    event_type|in:
+      - tool_response
+      - agent_output
+      - message_content
+    content|re: '[A-Za-z0-9+/]{64,}={0,2}'
+
+  selection_hex:
+    event_type|in:
+      - tool_response
+      - agent_output
+      - message_content
+    content|re: '(?:0x)?[0-9a-fA-F]{128,}'
+
+  selection_compressed:
+    event_type|in:
+      - tool_response
+      - agent_output
+      - message_content
+    content|re: '(?:H4sIA|eJz|UEs|UEsD)'  # gzip, zlib, zip magic in b64
+
+  selection_url_encoded:
+    event_type|in:
+      - tool_response
+      - agent_output
+      - message_content
+    content|re: '(?:%[0-9A-Fa-f]{2}){20,}'
+
+  size_threshold:
+    # Encoded payload must be substantial — ignore small encoded strings
+    # that appear in normal API keys, tokens, etc.
+    encoded_payload_bytes|gte: 1024
+
+  baseline:
+    tiresias_baseline:
+      metric: encoded_content_ratio
+      lookback: 7d
+      deviation: 2.5
+      mode: or  # Alert on either hard threshold or baseline deviation
+
+  condition: (selection_base64 OR selection_hex OR selection_compressed OR selection_url_encoded) AND size_threshold
+
+fields:
+  - agent_id
+  - session_id
+  - event_type
+  - tool_name
+  - encoding_type
+  - encoded_payload_bytes
+  - decoded_sample_hash
+  - destination
+  - timestamp
+
+level: high
+severity: high
+
+falsepositives:
+  - Agents legitimately handling file uploads/downloads (images, PDFs)
+  - Code generation agents producing base64 test fixtures
+  - Agents interacting with APIs that return encoded binary data
+  - Cryptographic operations producing hex output
+
+response:
+  - Decode and inspect payload content for sensitive data markers
+  - Check if decoded content matches any DLP signatures (PII, credentials)
+  - Quarantine output if sensitive data detected
+  - Correlate with recent read operations to identify source data

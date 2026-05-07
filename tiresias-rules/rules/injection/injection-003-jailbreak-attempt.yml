@@ -1,0 +1,66 @@
+title: LLM Jailbreak Attempt
+id: injection-003
+status: stable
+level: high
+description: |
+  Detects DAN-style ("Do Anything Now"), roleplay-based, and encoding-based
+  jailbreak attempts against AI agents. Jailbreaks attempt to bypass the
+  model's safety alignment by convincing it to adopt an unrestricted persona,
+  engage in fictional scenarios that bypass restrictions, or process encoded
+  payloads that evade content filters. These are precursors to data
+  exfiltration, unauthorized actions, or harmful content generation.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-003
+  - https://atlas.mitre.org/techniques/AML.T0054
+tags:
+  - attack.initial_access
+  - atlas.aml.t0054
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulgate
+detection:
+  selection:
+    event_type: agent_input
+  dan_patterns:
+    input_content|re:
+      - '(?i)DAN\s*(mode|prompt|jailbreak|\d)'
+      - '(?i)do\s+anything\s+now'
+      - '(?i)you\s+are\s+(now\s+)?free\s+(from|of)\s+(all\s+)?restrictions'
+      - '(?i)enable\s+(developer|debug|admin|god)\s+mode'
+      - '(?i)unlock\s+(all|your|full)\s+(capabilities|potential|features)'
+      - '(?i)token\s+threat|stay\s+in\s+character|two\s+responses'
+      - '(?i)jailbreak(ed)?'
+      - '(?i)bypass\s+(safety|content|ethical)\s+(filters?|guardrails?|restrictions?)'
+  roleplay_patterns:
+    input_content|re:
+      - '(?i)pretend\s+(that\s+)?you\s+(are|have)\s+no\s+(rules|restrictions|limits|filters|ethics)'
+      - '(?i)imagine\s+(you\s+are|a\s+world\s+where)\s+(an?\s+)?(unrestricted|uncensored)'
+      - '(?i)in\s+this\s+(hypothetical|fictional)\s+scenario.*no\s+(rules|restrictions)'
+      - '(?i)roleplay\s+as\s+(an?\s+)?(evil|unrestricted|unfiltered|uncensored)'
+      - '(?i)write\s+a\s+story\s+where\s+(the\s+)?AI\s+(has\s+)?no\s+(rules|limits)'
+      - '(?i)opposite\s+day|opposite\s+mode'
+  encoding_evasion:
+    input_content|re:
+      - '(?i)respond\s+in\s+(base64|hex|binary|rot13|morse)'
+      - '(?i)encode\s+(your\s+)?(response|answer|output)\s+(in|as|using)'
+      - '(?i)translate\s+(to|into)\s+(pig\s+latin|leetspeak|l33t)'
+  condition: selection and (dan_patterns or roleplay_patterns or encoding_evasion)
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - input_content
+  - input_length
+  - source_ip
+  - matched_category
+  - matched_pattern
+  - conversation_turn_count
+  - timestamp
+falsepositives:
+  - AI safety researchers conducting authorized testing
+  - Users asking about jailbreaks in informational context
+  - Training data curation workflows processing jailbreak examples
+response_playbook: playbook-injection-003

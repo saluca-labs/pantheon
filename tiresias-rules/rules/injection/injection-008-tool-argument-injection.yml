@@ -1,0 +1,92 @@
+title: Tool Argument Injection
+id: injection-008
+status: stable
+level: critical
+description: |
+  Detects shell metacharacters, SQL injection payloads, path traversal
+  sequences, or other injection patterns in tool call arguments. When an AI
+  agent invokes external tools (shell commands, database queries, file
+  operations, API calls), maliciously crafted arguments can escape the
+  intended context and execute arbitrary commands, read unauthorized files,
+  or manipulate database records. This is the AI-agent equivalent of
+  classic injection attacks targeting the tool execution layer.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-008
+  - https://attack.mitre.org/techniques/T1059/
+  - https://attack.mitre.org/techniques/T1190/
+tags:
+  - attack.execution
+  - attack.initial_access
+  - mitre.t1059
+  - mitre.t1190
+  - tiresias.tool_security
+logsource:
+  product: tiresias
+  service: soulwatch
+detection:
+  selection:
+    event_type: tool_invocation
+  shell_injection:
+    tool_arguments|re:
+      - ';\s*(cat|curl|wget|nc|bash|sh|python|perl|ruby|php)\s'
+      - '\|\s*(cat|bash|sh|nc|curl|python)\s'
+      - '\$\([^)]+\)'
+      - '`[^`]+`'
+      - '&&\s*(cat|curl|wget|rm|chmod|chown|nc)\s'
+      - '\|\|\s*(cat|curl|wget|rm|chmod)\s'
+      - '>\s*/etc/'
+      - '>\s*/tmp/'
+      - '\bnohup\b.*&'
+      - '\b(eval|exec)\s*\('
+  sql_injection:
+    tool_arguments|re:
+      - "(?i)'\\s*(OR|AND)\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+['\"]?"
+      - '(?i);\s*(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|EXEC)\s'
+      - '(?i)UNION\s+(ALL\s+)?SELECT'
+      - "(?i)'\\s*;\\s*--"
+      - '(?i)\\bSLEEP\\s*\\(\\d+\\)'
+      - '(?i)\\bBENCHMARK\\s*\\('
+      - '(?i)\\bWAITFOR\\s+DELAY\\b'
+      - '(?i)\\bLOAD_FILE\\s*\\('
+      - '(?i)\\bINTO\\s+(OUT|DUMP)FILE\\b'
+  path_traversal:
+    tool_arguments|re:
+      - '\.\./\.\./\.\.'
+      - '\.\.\\\\\.\.\\\\\.\.\\\\'
+      - '%2e%2e%2f'
+      - '%2e%2e/'
+      - '\.\.%2f'
+      - '/etc/(passwd|shadow|hosts|sudoers)'
+      - '/proc/(self|[0-9]+)/(environ|cmdline|maps)'
+      - '\\\\etc\\\\passwd'
+  ssrf_patterns:
+    tool_arguments|re:
+      - '(?i)(http|ftp)s?://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.|0\.0\.0\.0|localhost)'
+      - '(?i)(http|ftp)s?://\[?(::1|0:0:0:0:0:0:0:1|fe80::)\]?'
+      - '(?i)(http|ftp)s?://metadata\.(google|aws|azure)'
+      - '(?i)(http|ftp)s?://169\.254\.169\.254'
+  template_injection:
+    tool_arguments|re:
+      - '\{\{.*\}\}'
+      - '\$\{.*\}'
+      - '<%.*%>'
+      - '#\{.*\}'
+  condition: selection and (shell_injection or sql_injection or path_traversal or ssrf_patterns or template_injection)
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - injection_type
+  - matched_pattern
+  - user_id
+  - source_ip
+  - timestamp
+falsepositives:
+  - Legitimate shell tool usage with pipes and redirects by authorized agents
+  - Database administration agents executing legitimate DDL
+  - Development agents accessing local development paths
+  - Agents configured to access internal metadata endpoints
+response_playbook: playbook-injection-008

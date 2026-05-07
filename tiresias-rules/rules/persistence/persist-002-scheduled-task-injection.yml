@@ -1,0 +1,78 @@
+title: Scheduled Task Injection
+id: persist-002
+status: stable
+level: high
+description: |
+  Detects an agent creating or modifying cron jobs, scheduled tasks, cloud
+  scheduler entries, or recurring operations. Agents should not autonomously
+  create persistent scheduled execution; this pattern indicates an attacker
+  establishing persistence by ensuring malicious logic re-executes on a
+  schedule even after the compromised session ends.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/persist-002
+  - https://attack.mitre.org/techniques/T1053/
+tags:
+  - attack.persistence
+  - attack.execution
+  - mitre.t1053
+  - tiresias.scheduled_task
+logsource:
+  product: tiresias
+  service: task_scheduler
+detection:
+  selection_cron_create:
+    event_type:
+      - cron_job_created
+      - cron_job_modified
+    created_by_type: agent
+  selection_cloud_scheduler:
+    event_type:
+      - cloud_scheduler_create
+      - cloud_scheduler_update
+    initiated_by_type: agent
+    authorized_workflow: false
+  selection_recurring_operation:
+    event_type: recurring_task_registered
+    registrant_type: agent
+    registration_source|not_in:
+      - approved_orchestration_platform
+  selection_at_job:
+    event_type: at_job_created
+    created_by_type: agent
+    command|contains:
+      - curl
+      - wget
+      - python
+      - node
+      - bash
+  filter_approved_scheduler:
+    event_type|contains: scheduler
+    workflow_id|in:
+      - approved_scheduled_workflows
+    approval_ticket|exists: true
+  filter_self_maintenance:
+    event_type|contains: cron
+    task_type: agent_self_health_check
+    registered_in_manifest: true
+  condition: (selection_cron_create or selection_cloud_scheduler or selection_recurring_operation or selection_at_job) and not (filter_approved_scheduler or filter_self_maintenance)
+  timeframe: 5m
+  group_by:
+    - agent_id
+    - task_name
+fields:
+  - agent_id
+  - event_type
+  - task_name
+  - schedule_expression
+  - command
+  - target_endpoint
+  - created_by
+  - creation_source
+  - timestamp
+falsepositives:
+  - Agent with explicit scheduled-task permissions in its manifest
+  - Orchestrator agent managing approved recurring workflows
+  - Self-healing agent creating authorized health check schedules
+response_playbook: playbook-persist-002

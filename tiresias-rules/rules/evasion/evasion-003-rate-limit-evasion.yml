@@ -1,0 +1,67 @@
+title: Rate Limit Evasion via Key Rotation
+id: evasion-003
+status: stable
+level: high
+description: |
+  Detects an agent rapidly cycling through multiple SoulKeys or API keys
+  to circumvent per-key rate limits. This technique distributes requests
+  across many keys to stay under individual thresholds while exceeding
+  aggregate limits, enabling high-volume data exfiltration, brute force
+  attacks, or resource exhaustion without triggering per-key alerts.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/evasion-003
+  - https://attack.mitre.org/techniques/T1090/
+tags:
+  - attack.defense_evasion
+  - attack.command_and_control
+  - mitre.t1090
+  - tiresias.rate_limiting
+logsource:
+  product: tiresias
+  service: rate_limiter
+detection:
+  selection_key_cycling:
+    event_type: api_request
+    distinct_api_keys_used|gte: 4
+  selection_rapid_rotation:
+    event_type: key_switch
+    time_since_last_switch|lte: 60
+    switches_in_window|gte: 3
+  selection_aggregate_exceed:
+    event_type: rate_limit_check
+    per_key_usage_percent|lt: 80
+    aggregate_source_usage_percent|gte: 150
+  selection_borrowed_keys:
+    event_type: api_request
+    api_key_owner|ne: request_source_agent
+    distinct_key_owners|gte: 3
+  filter_key_rotation:
+    event_type: key_switch
+    switch_reason: scheduled_rotation
+    rotation_id|exists: true
+  filter_pool_assignment:
+    key_pool_id|exists: true
+    key_pool_authorized: true
+    agent_in_pool_roster: true
+  condition: (selection_key_cycling or selection_rapid_rotation or selection_aggregate_exceed or selection_borrowed_keys) and not (filter_key_rotation or filter_pool_assignment)
+  timeframe: 10m
+  group_by:
+    - source_agent_id
+    - source_ip
+fields:
+  - source_agent_id
+  - source_ip
+  - distinct_api_keys_used
+  - key_switch_count
+  - per_key_usage_percent
+  - aggregate_request_count
+  - api_key_owners
+  - time_between_switches
+  - timestamp
+falsepositives:
+  - Scheduled key rotation cycling through new and old keys
+  - Agent pool with shared key assignment and load balancing
+  - Failover mechanism trying backup keys after primary rate limit hit
+response_playbook: playbook-evasion-003

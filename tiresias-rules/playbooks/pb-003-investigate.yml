@@ -1,0 +1,106 @@
+id: pb-003
+title: Investigation and Enhanced Monitoring
+description: |
+  Initiates an investigation workflow for medium-severity detections such as
+  off-hours activity, behavioral anomalies, and lateral movement indicators.
+  This playbook enables detailed observability without disrupting agent
+  operations, forwarding enriched telemetry to the SIEM and adding the
+  alert to the analyst investigation queue.
+version: "1.0"
+author: Saluca LLC
+severity: medium
+
+triggers:
+  - rule_id: credential-006   # Off-hours authentication
+  - rule_id: credential-004   # Key rotation anomaly
+  - level: medium              # Any rule at medium severity
+
+actions:
+  - type: enhanced_logging
+    description: Enable detailed logging for the flagged agent
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      log_level: verbose
+      capture:
+        - tool_call_arguments
+        - data_access_patterns
+        - session_metadata
+        - network_destinations
+        - model_interactions
+      duration_minutes: 240
+      destination: "{{ env.SIEM_LOG_ENDPOINT }}"
+      format: cef
+      tag: "investigation-{{ alert.alert_id }}"
+
+  - type: notify
+    description: Forward enriched alert to SIEM via webhook
+    config:
+      channel: webhook
+      url: "{{ env.SIEM_WEBHOOK_URL }}"
+      method: POST
+      headers:
+        Content-Type: application/json
+        Authorization: "Bearer {{ env.SIEM_API_TOKEN }}"
+      payload:
+        alert_id: "{{ alert.alert_id }}"
+        rule_id: "{{ alert.rule_id }}"
+        rule_title: "{{ alert.rule_title }}"
+        agent_id: "{{ alert.agent_id }}"
+        tenant_id: "{{ alert.tenant_id }}"
+        severity: "{{ alert.severity }}"
+        source_ip: "{{ alert.source_ip }}"
+        timestamp: "{{ alert.timestamp }}"
+        fields: "{{ alert.fields }}"
+        playbook: pb-003
+        status: investigating
+
+  - type: notify
+    description: Slack notification for awareness
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-triage"
+      message: |
+        :mag: *Investigation Opened*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* Medium
+        *Action taken:* Enhanced monitoring enabled, added to investigation queue
+        *Tenant:* {{ alert.tenant_id }}
+        *Time:* {{ alert.timestamp }}
+
+  - type: create_incident
+    description: Add to investigation queue for analyst review
+    config:
+      system: "{{ env.INCIDENT_MANAGEMENT_SYSTEM }}"
+      severity: medium
+      title: "Investigation: {{ alert.rule_title }} — {{ alert.agent_id }}"
+      description: |
+        Medium-severity detection requires investigation.
+        Rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Agent: {{ alert.agent_id }}
+        Tenant: {{ alert.tenant_id }}
+        Enhanced logging has been enabled for 4 hours.
+      assignee_group: soc-tier-1
+      queue: investigation
+      sla_response_minutes: 120
+      tags:
+        - investigation
+        - "{{ alert.rule_id }}"
+        - "{{ alert.tenant_id }}"
+
+cooldown_minutes: 60
+requires_approval: false
+
+notification_channels:
+  - slack
+  - webhook
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1078      # Valid Accounts
+    - T1021      # Remote Services
+  mitre_atlas:
+    - AML.T0040  # ML Model Inference API Access

@@ -1,0 +1,103 @@
+title: Tool Invocation Failure Burst
+id: tool-004
+status: experimental
+description: >
+  Detects more than 10 tool call failures within a 5-minute window for
+  a single agent session. A burst of failures indicates systematic
+  probing of tool interfaces, brute-force parameter guessing, or a
+  misconfigured attack attempting to find exploitable tool behaviors.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1190/
+tags:
+  - attack.initial_access
+  - attack.t1190
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.probing
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    call_status|in:
+      - error
+      - failed
+      - denied
+      - unauthorized
+      - timeout
+      - invalid
+
+  aggregation:
+    timeframe: 5m
+    group_by:
+      - agent_id
+      - session_id
+    count:
+      field: event_id
+      gte: 10
+
+  # Distinguish between diverse probing (many different tools/params)
+  # vs repeated retries on same tool (more likely benign retry logic)
+  diversity_indicator:
+    tiresias_aggregate:
+      metric: unique_tool_names
+      scope: window
+      group_by:
+        - agent_id
+        - session_id
+      # High diversity = likely probing; low diversity = likely retries
+      # This field is informational — used in severity adjustment
+      expose_as: tool_diversity_count
+
+  # Error type diversity — many different error types = more suspicious
+  error_diversity:
+    tiresias_aggregate:
+      metric: unique_error_types
+      scope: window
+      group_by:
+        - agent_id
+        - session_id
+      expose_as: error_type_diversity
+
+  condition: selection AND aggregation
+
+  # Severity adjustment based on diversity
+  tiresias_severity_modifier:
+    - condition: tool_diversity_count >= 5
+      adjust: +1  # Escalate if probing many different tools
+    - condition: error_type_diversity >= 4
+      adjust: +1  # Escalate if hitting many different error types
+
+fields:
+  - agent_id
+  - session_id
+  - failure_count
+  - unique_tools_attempted
+  - unique_error_types
+  - tool_names_list
+  - error_messages_sample
+  - first_failure_timestamp
+  - last_failure_timestamp
+  - timestamp
+
+level: medium
+severity: medium
+
+falsepositives:
+  - Agents encountering transient API outages or rate limits
+  - Newly deployed agents with misconfigured tool permissions
+  - Agents in degraded environments where backend services are down
+  - Retry-heavy agent frameworks that attempt tools multiple times
+
+response:
+  - Analyze failure patterns — are they systematic enumeration or retries?
+  - Rate-limit agent tool calls if probing pattern confirmed
+  - Review tool arguments across failures for escalation patterns
+  - If authorization failures dominate, review agent permission scope
+  - After 3 consecutive burst windows, suspend agent session

@@ -1,0 +1,166 @@
+id: pb-006
+title: Forensic Evidence Capture
+description: |
+  Initiates comprehensive forensic evidence preservation when evasion
+  techniques are detected, including audit log bypass attempts, log deletion,
+  and steganographic data hiding. Because evasion rules indicate an adversary
+  actively trying to cover their tracks, this playbook prioritizes evidence
+  integrity above all else: logs are frozen to immutable storage, agent state
+  is snapshotted, and the full request chain is captured with cryptographic
+  chain-of-custody verification. Legal and compliance teams are notified
+  immediately.
+version: "1.0"
+author: Saluca LLC
+severity: critical
+
+triggers:
+  - rule_id: evasion-001      # Audit log bypass attempt
+  - rule_id: evasion-002      # Log deletion or tampering
+  - rule_id: evasion-003      # Steganographic data hiding
+  - level: critical            # Any critical evasion detection
+
+actions:
+  - type: forensic_capture
+    description: Snapshot complete agent state before evidence can be destroyed
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      priority: immediate
+      capture_scope:
+        - agent_memory_state
+        - agent_configuration
+        - active_session_state
+        - tool_call_history
+        - model_interaction_log
+        - environment_variables
+        - loaded_plugins
+        - network_connections_active
+      output_format: jsonl
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/agent-state/"
+      immutable: true
+      chain_of_custody: true
+      integrity_hash: sha256
+      legal_hold: true
+
+  - type: forensic_capture
+    description: Capture the full request chain leading to the evasion attempt
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      capture_scope:
+        - triggering_request_full
+        - request_chain_upstream
+        - request_chain_downstream
+        - associated_tool_calls
+        - api_gateway_logs
+        - dns_queries
+        - network_flow_logs
+      time_window_before: 180m
+      time_window_after: 30m
+      output_format: jsonl
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/request-chain/"
+      immutable: true
+      chain_of_custody: true
+      integrity_hash: sha256
+      legal_hold: true
+
+  - type: enhanced_logging
+    description: Freeze audit logs to immutable storage to prevent further tampering
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      target_tenant_id: "{{ alert.tenant_id }}"
+      action: freeze_to_immutable
+      log_sources:
+        - audit_log
+        - access_log
+        - tool_invocation_log
+        - authentication_log
+        - model_router_log
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/frozen-logs/"
+      immutable: true
+      object_lock_mode: compliance
+      object_lock_retention_days: 2555  # 7 years for compliance
+      integrity_hash: sha256
+      verify_completeness: true
+
+  - type: notify
+    description: Notify legal and compliance teams immediately
+    config:
+      channel: email
+      recipients:
+        - "{{ env.LEGAL_EMAIL }}"
+        - "{{ env.COMPLIANCE_EMAIL }}"
+        - "{{ env.CISO_EMAIL }}"
+      subject: "[FORENSIC HOLD] Evasion detected — evidence preserved — {{ alert.alert_id }}"
+      body: |
+        An AI agent evasion technique has been detected and forensic evidence
+        has been automatically preserved under legal hold.
+
+        Alert ID: {{ alert.alert_id }}
+        Rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Agent: {{ alert.agent_id }}
+        Tenant: {{ alert.tenant_id }}
+        Detection time: {{ alert.timestamp }}
+
+        Evidence locations (S3, immutable, compliance lock):
+        - Agent state: s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/agent-state/
+        - Request chain: s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/request-chain/
+        - Frozen logs: s3://{{ env.FORENSICS_BUCKET }}/evasion/{{ alert.alert_id }}/frozen-logs/
+
+        Chain of custody: SHA-256 integrity hashes computed at capture time.
+        Retention: 7 years (compliance object lock).
+
+        DO NOT modify, move, or delete any evidence without legal authorization.
+
+  - type: notify
+    description: PagerDuty alert for SOC awareness
+    config:
+      channel: pagerduty
+      severity: P1
+      routing_key: "{{ env.PAGERDUTY_ROUTING_KEY }}"
+      title: "FORENSIC CAPTURE: Evasion detected — {{ alert.rule_id }}"
+      body: |
+        Evasion technique detected. Forensic evidence has been preserved.
+        Agent: {{ alert.agent_id }}
+        Rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Tenant: {{ alert.tenant_id }}
+        All audit logs frozen to immutable storage.
+        Legal/compliance notified.
+      dedup_key: "forensic-{{ alert.alert_id }}"
+
+  - type: notify
+    description: Slack notification with evidence chain reference
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-critical"
+      message: |
+        :lock: *Forensic Evidence Captured*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* Critical
+        *Actions taken:*
+        - Agent state snapshotted
+        - Full request chain captured (3h window)
+        - Audit logs frozen to immutable storage (7yr retention)
+        - Legal/compliance notified
+        - Chain of custody: SHA-256 verified
+        *Alert ID:* `{{ alert.alert_id }}`
+        *Time:* {{ alert.timestamp }}
+
+cooldown_minutes: null  # No cooldown — every evasion event triggers capture
+requires_approval: false
+
+notification_channels:
+  - pagerduty
+  - slack
+  - email
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1070      # Indicator Removal
+    - T1070.001  # Clear Windows Event Logs
+    - T1562.001  # Impair Defenses: Disable or Modify Tools
+    - T1001.002  # Data Obfuscation: Steganography
+  mitre_atlas:
+    - AML.T0015  # Evade ML Model

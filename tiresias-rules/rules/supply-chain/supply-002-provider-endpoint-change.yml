@@ -1,0 +1,71 @@
+title: LLM Provider Endpoint Manipulation
+id: supply-002
+status: stable
+level: critical
+description: |
+  Detects API base URL changes or requests routed to non-approved LLM provider
+  endpoints. Attackers may redirect agent inference requests to a malicious
+  proxy or shadow endpoint to intercept prompts, inject responses, or serve
+  a trojaned model. This includes DNS rebinding, environment variable tampering,
+  and configuration injection targeting provider URLs.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/supply-002
+  - https://attack.mitre.org/techniques/T1195/002/
+tags:
+  - attack.initial_access
+  - mitre.t1195.002
+  - tiresias.supply_chain
+logsource:
+  product: tiresias
+  service: model_router
+detection:
+  selection_endpoint_change:
+    event_type: api_request
+    api_base_url|not_in:
+      - https://api.openai.com
+      - https://api.anthropic.com
+      - https://generativelanguage.googleapis.com
+      - approved_endpoint_allowlist
+  selection_env_tampering:
+    event_type: config_change
+    config_key|contains:
+      - API_BASE
+      - OPENAI_BASE_URL
+      - ANTHROPIC_BASE_URL
+      - LLM_ENDPOINT
+    change_source|not_in:
+      - deployment_pipeline
+      - authorized_admin
+  selection_dns_anomaly:
+    event_type: dns_resolution
+    resolved_domain|contains:
+      - api.openai.com
+      - api.anthropic.com
+    resolved_ip|not_in:
+      - approved_provider_ip_ranges
+  filter_approved_proxy:
+    api_base_url|in:
+      - approved_proxy_endpoints
+    proxy_auth_valid: true
+  condition: (selection_endpoint_change or selection_env_tampering or selection_dns_anomaly) and not filter_approved_proxy
+  timeframe: 1m
+  group_by:
+    - agent_id
+    - api_base_url
+fields:
+  - agent_id
+  - api_base_url
+  - previous_api_base_url
+  - config_key
+  - change_source
+  - resolved_ip
+  - source_ip
+  - tls_cert_fingerprint
+  - timestamp
+falsepositives:
+  - Authorized failover to backup LLM provider endpoint
+  - Network proxy or API gateway performing legitimate TLS termination
+  - Development environment using local model server
+response_playbook: playbook-supply-002

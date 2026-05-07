@@ -1,0 +1,68 @@
+title: Cross-Department Scope Request
+id: lateral-003
+status: stable
+level: high
+description: |
+  Detects an agent requesting access to resources outside its assigned
+  department or organizational unit. Agents are scoped to specific domains;
+  cross-department access attempts may indicate privilege escalation, data
+  exfiltration reconnaissance, or a compromised agent probing for lateral
+  movement opportunities across organizational boundaries.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/lateral-003
+  - https://attack.mitre.org/techniques/T1078/003/
+tags:
+  - attack.lateral_movement
+  - mitre.t1078.003
+  - tiresias.scope
+logsource:
+  product: tiresias
+  service: access_control
+detection:
+  selection_cross_department:
+    event_type: resource_access_request
+    resource_department|not_in:
+      - agent_assigned_departments
+    access_type:
+      - read
+      - write
+      - execute
+  selection_ou_boundary:
+    event_type: resource_access_request
+    resource_ou|ne: agent_assigned_ou
+    cross_ou_token|exists: false
+  selection_scope_enumeration:
+    event_type: resource_list_request
+    resource_scope: all_departments
+  filter_shared_resources:
+    resource_classification: shared
+    access_level: read
+  filter_approved_cross_dept:
+    cross_department_authorization|exists: true
+    authorization_valid: true
+    authorization_expiry|gte: current_time
+  condition: (selection_cross_department or selection_ou_boundary or selection_scope_enumeration) and not (filter_shared_resources or filter_approved_cross_dept)
+  timeframe: 5m
+  threshold:
+    field: agent_id
+    gte: 2
+  group_by:
+    - agent_id
+    - resource_department
+fields:
+  - agent_id
+  - agent_assigned_departments
+  - resource_department
+  - resource_ou
+  - resource_name
+  - access_type
+  - cross_department_authorization
+  - request_justification
+  - timestamp
+falsepositives:
+  - Cross-functional agent with legitimate multi-department scope
+  - Temporary cross-department project with authorized scope expansion
+  - Shared service agent accessing common resources
+response_playbook: playbook-lateral-003

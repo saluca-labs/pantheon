@@ -1,0 +1,84 @@
+title: Unauthorized Webhook Installation
+id: persist-003
+status: stable
+level: high
+description: |
+  Detects an agent registering webhooks, callbacks, or event subscriptions
+  to external endpoints. Unauthorized webhooks create a persistent data
+  exfiltration channel that continues to send data to attacker-controlled
+  infrastructure even after the initial compromise is remediated, and can
+  also serve as a command-and-control callback mechanism.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/persist-003
+  - https://attack.mitre.org/techniques/T1133/
+tags:
+  - attack.persistence
+  - mitre.t1133
+  - tiresias.webhook
+logsource:
+  product: tiresias
+  service: webhook_registry
+detection:
+  selection_webhook_create:
+    event_type:
+      - webhook_registered
+      - callback_registered
+      - event_subscription_created
+    registrant_type: agent
+    target_url|not_in:
+      - approved_webhook_destinations
+  selection_external_endpoint:
+    event_type: webhook_registered
+    target_url|not_startswith:
+      - https://hooks.tiresias.network
+      - https://api.tiresias.network
+    target_url|contains:
+      - ngrok
+      - webhook.site
+      - requestbin
+      - pipedream
+      - hookbin
+  selection_wildcard_subscription:
+    event_type: event_subscription_created
+    event_filter: "*"
+    registrant_type: agent
+  selection_high_frequency:
+    event_type: webhook_registered
+    delivery_frequency|in:
+      - realtime
+      - continuous
+    data_scope|in:
+      - all_events
+      - all_requests
+  filter_approved_integration:
+    target_url|in:
+      - approved_webhook_destinations
+    integration_id|in:
+      - approved_integration_list
+  filter_internal_mesh:
+    target_url|startswith:
+      - https://hooks.tiresias.network
+      - https://internal.
+    internal_routing: true
+  condition: (selection_webhook_create or selection_external_endpoint or selection_wildcard_subscription or selection_high_frequency) and not (filter_approved_integration or filter_internal_mesh)
+  timeframe: 5m
+  group_by:
+    - agent_id
+    - target_url
+fields:
+  - agent_id
+  - event_type
+  - target_url
+  - event_filter
+  - delivery_frequency
+  - data_scope
+  - webhook_secret_set
+  - registrant_ip
+  - timestamp
+falsepositives:
+  - Approved integration setup with a new third-party service
+  - Development environment testing webhook delivery
+  - Internal monitoring system registering event callbacks
+response_playbook: playbook-persist-003

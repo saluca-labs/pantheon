@@ -1,0 +1,87 @@
+title: Steganographic Data Exfiltration
+id: evasion-005
+status: experimental
+level: high
+description: |
+  Detects patterns consistent with data hidden in normal-looking agent
+  outputs, including unusual entropy in text responses, whitespace encoding
+  patterns, zero-width Unicode characters, suspiciously structured base64
+  fragments in natural language, and consistent output padding that may
+  carry encoded payloads. Steganographic exfiltration evades content
+  inspection by embedding secrets within benign-appearing responses.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/evasion-005
+  - https://attack.mitre.org/techniques/T1001/002/
+tags:
+  - attack.defense_evasion
+  - attack.exfiltration
+  - mitre.t1001.002
+  - tiresias.steganography
+logsource:
+  product: tiresias
+  service: content_inspector
+detection:
+  selection_entropy_anomaly:
+    event_type: response_analysis
+    response_entropy|gt: baseline_p99_entropy
+    response_content_type: text
+    entropy_deviation_sigma|gte: 3
+  selection_zero_width:
+    event_type: response_analysis
+    zero_width_char_count|gte: 5
+    zero_width_characters|contains:
+      - U+200B
+      - U+200C
+      - U+200D
+      - U+FEFF
+      - U+2060
+  selection_whitespace_encoding:
+    event_type: response_analysis
+    trailing_whitespace_pattern: structured
+    whitespace_entropy|gt: 0.7
+    lines_with_trailing_whitespace_pct|gte: 50
+  selection_base64_fragments:
+    event_type: response_analysis
+    embedded_base64_fragment_count|gte: 3
+    base64_fragments_decode_to_binary: true
+    base64_not_in_code_block: true
+  selection_consistent_padding:
+    event_type: response_analysis
+    response_length_modulo_pattern: true
+    padding_consistency|gte: 0.95
+    consecutive_padded_responses|gte: 5
+  filter_code_output:
+    response_context: code_generation
+    base64_in_code_context: true
+  filter_unicode_locale:
+    response_language|in:
+      - ar
+      - he
+      - fa
+      - ur
+    bidirectional_text: true
+  condition: (selection_entropy_anomaly or selection_zero_width or selection_whitespace_encoding or selection_base64_fragments or selection_consistent_padding) and not (filter_code_output or filter_unicode_locale)
+  timeframe: 15m
+  group_by:
+    - agent_id
+    - destination_session
+fields:
+  - agent_id
+  - destination_session
+  - response_entropy
+  - baseline_entropy
+  - zero_width_char_count
+  - zero_width_char_positions
+  - trailing_whitespace_pattern
+  - embedded_base64_fragment_count
+  - response_length
+  - padding_pattern
+  - timestamp
+falsepositives:
+  - Code generation output containing legitimate base64 strings
+  - Multilingual responses with bidirectional Unicode control characters
+  - Markdown or formatted output with intentional whitespace structure
+  - Compressed or encoded data in legitimate agent tool responses
+response_playbook: playbook-evasion-005

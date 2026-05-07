@@ -1,0 +1,87 @@
+title: Audit Log Deletion or Tampering
+id: evasion-002
+status: stable
+level: critical
+description: |
+  Detects attempts to delete, truncate, modify, or overwrite audit trail
+  records. Log tampering is a critical evasion technique that destroys
+  forensic evidence of prior malicious activity, making incident response
+  and attribution significantly more difficult. This includes direct
+  deletion, retention policy manipulation, and log rotation abuse.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/evasion-002
+  - https://attack.mitre.org/techniques/T1070/002/
+tags:
+  - attack.defense_evasion
+  - mitre.t1070.002
+  - tiresias.audit
+logsource:
+  product: tiresias
+  service: audit_system
+detection:
+  selection_log_delete:
+    event_type:
+      - log_delete
+      - log_purge
+      - log_truncate
+    initiated_by_type: agent
+  selection_log_modify:
+    event_type: log_entry_modified
+    modification_type:
+      - content_changed
+      - timestamp_altered
+      - field_removed
+      - entry_replaced
+  selection_retention_change:
+    event_type: config_change
+    config_key|contains:
+      - log_retention
+      - audit_retention
+      - log_ttl
+    new_value|lt: previous_value
+  selection_log_rotation_abuse:
+    event_type: log_rotation
+    rotation_trigger: manual
+    initiated_by_type: agent
+    rotated_log_size|lt: expected_log_size
+  selection_storage_delete:
+    event_type: storage_operation
+    operation: delete
+    target_path|contains:
+      - /audit/
+      - /logs/
+      - /telemetry/
+    initiated_by_type: agent
+  filter_retention_policy:
+    event_type|in:
+      - log_delete
+      - log_purge
+    initiated_by: retention_policy_engine
+    retention_policy_id|exists: true
+  filter_rotation_schedule:
+    event_type: log_rotation
+    rotation_trigger: scheduled
+    rotation_schedule_id|exists: true
+  condition: (selection_log_delete or selection_log_modify or selection_retention_change or selection_log_rotation_abuse or selection_storage_delete) and not (filter_retention_policy or filter_rotation_schedule)
+  timeframe: 1m
+  group_by:
+    - initiated_by
+    - target_log
+fields:
+  - initiated_by
+  - initiated_by_type
+  - event_type
+  - target_log
+  - target_path
+  - entries_affected
+  - modification_type
+  - previous_retention_days
+  - new_retention_days
+  - timestamp
+falsepositives:
+  - Scheduled log retention policy executing automated purge
+  - Storage migration moving audit logs to archive tier
+  - Compliance-driven log redaction of PII data
+response_playbook: playbook-evasion-002

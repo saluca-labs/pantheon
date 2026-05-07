@@ -1,0 +1,60 @@
+title: Unexpected Model Version Change
+id: supply-001
+status: stable
+level: high
+description: |
+  Detects an agent switching to a model version not present in the approved
+  model registry, or a version downgrade from a newer model to an older one.
+  Unauthorized model changes can indicate supply chain compromise where an
+  attacker substitutes a backdoored or weaker model to degrade agent safety
+  controls, extract data via a compromised model, or bypass alignment guardrails.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/supply-001
+  - https://atlas.mitre.org/techniques/AML.T0010
+tags:
+  - attack.initial_access
+  - mitre_atlas.aml.t0010
+  - tiresias.supply_chain
+logsource:
+  product: tiresias
+  service: model_router
+detection:
+  selection_unapproved:
+    event_type: model_load
+    model_version|not_in:
+      - approved_model_registry
+  selection_downgrade:
+    event_type: model_switch
+    new_model_version|lt: previous_model_version
+  selection_unexpected_provider:
+    event_type: model_load
+    model_provider|not_in:
+      - approved_provider_list
+  filter_canary_deployment:
+    deployment_tag: canary
+    authorized_by|exists: true
+  filter_rollback:
+    event_type: model_switch
+    change_reason: authorized_rollback
+    change_ticket|exists: true
+  condition: (selection_unapproved or selection_downgrade or selection_unexpected_provider) and not (filter_canary_deployment or filter_rollback)
+  timeframe: 5m
+  group_by:
+    - agent_id
+    - model_provider
+fields:
+  - agent_id
+  - previous_model_version
+  - new_model_version
+  - model_provider
+  - change_reason
+  - source_ip
+  - config_source
+  - timestamp
+falsepositives:
+  - Authorized canary deployments testing new model versions
+  - Planned rollback after model regression detected in production
+  - Model registry propagation delay during approved update window
+response_playbook: playbook-supply-001

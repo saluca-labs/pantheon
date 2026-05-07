@@ -1,0 +1,69 @@
+title: Direct Prompt Injection Attempt
+id: injection-001
+status: stable
+level: high
+description: |
+  Detects known prompt injection patterns in user-facing inputs to AI agents.
+  Direct prompt injection occurs when an attacker crafts input that overrides
+  the agent's system instructions, causing it to ignore safety guardrails,
+  disclose sensitive information, or perform unauthorized actions. Patterns
+  include instruction override phrases, role reassignment, and delimiter
+  exploitation.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-001
+  - https://atlas.mitre.org/techniques/AML.T0051
+tags:
+  - attack.initial_access
+  - atlas.aml.t0051
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulgate
+detection:
+  selection:
+    event_type: agent_input
+    input_source: user
+  keywords_override:
+    input_content|contains:
+      - 'ignore previous instructions'
+      - 'ignore all previous'
+      - 'disregard above'
+      - 'disregard your instructions'
+      - 'forget your instructions'
+      - 'forget everything above'
+      - 'override system prompt'
+      - 'new instructions:'
+      - 'you are now'
+      - 'act as if you have no restrictions'
+      - 'pretend you are'
+      - 'from now on you will'
+      - 'ignore your programming'
+      - 'do not follow your guidelines'
+      - 'system prompt override'
+      - '[SYSTEM]'
+      - '<<SYS>>'
+      - '</s><s>[INST]'
+  keywords_delimiter_exploit:
+    input_content|re:
+      - '```system\n'
+      - '---\nrole:\s*system'
+      - '\[INST\].*\[/INST\]'
+      - '<\|im_start\|>system'
+      - '###\s*(System|Instruction|SYSTEM)'
+  condition: selection and (keywords_override or keywords_delimiter_exploit)
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - input_content
+  - input_length
+  - source_ip
+  - matched_pattern
+  - timestamp
+falsepositives:
+  - Security researchers running authorized red-team exercises
+  - Users discussing prompt injection in educational context
+  - Support agents quoting injection attempts in tickets
+response_playbook: playbook-injection-001

@@ -1,0 +1,79 @@
+title: Destructive System Command
+id: tool-001
+status: experimental
+description: >
+  Detects AI agent tool calls that execute destructive system operations
+  such as recursive deletion, database drops, disk formatting, or force
+  pushes. These operations can cause irreversible data loss and should
+  require explicit human approval.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1485/
+tags:
+  - attack.impact
+  - attack.t1485
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.destructive
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+
+  # File system destruction
+  destructive_fs:
+    tool_arguments|re: '(?:rm\s+-(r|rf|fr)\s|rmdir\s+/s|del\s+/[sfq]|Remove-Item\s.*-Recurse|shred\s|wipe\s)'
+
+  # Database destruction
+  destructive_db:
+    tool_arguments|re|i: '(?:DROP\s+(?:TABLE|DATABASE|SCHEMA|INDEX)|TRUNCATE\s+TABLE|DELETE\s+FROM\s+\w+\s*(?:;|$)|DESTROY|db\.dropDatabase|\.drop\(\))'
+
+  # Disk/partition operations
+  destructive_disk:
+    tool_arguments|re: '(?:dd\s+.*of=/dev/|mkfs\.|format\s+[A-Za-z]:|fdisk|parted\s.*rm|diskpart)'
+
+  # Git destructive operations
+  destructive_git:
+    tool_arguments|re: '(?:git\s+push\s+.*--force|git\s+reset\s+--hard|git\s+clean\s+-[fdx]|git\s+branch\s+-D)'
+
+  # Container/infrastructure destruction
+  destructive_infra:
+    tool_arguments|re: '(?:docker\s+(?:rm|rmi)\s+-f|kubectl\s+delete\s+(?:namespace|node|pv)|terraform\s+destroy|pulumi\s+destroy)'
+
+  # Kubernetes force delete
+  destructive_k8s:
+    tool_arguments|re: '(?:kubectl\s+delete.*--force|kubectl\s+delete.*--grace-period=0)'
+
+  condition: selection AND (destructive_fs OR destructive_db OR destructive_disk OR destructive_git OR destructive_infra OR destructive_k8s)
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - destructive_command_type
+  - target_resource
+  - user_approval_status
+  - timestamp
+
+level: critical
+severity: critical
+
+falsepositives:
+  - CI/CD agents performing authorized cleanup operations
+  - Database migration agents running controlled schema changes
+  - DevOps agents executing approved infrastructure teardown
+  - Test environment cleanup agents with scoped permissions
+
+response:
+  - Block execution immediately — require human-in-the-loop approval
+  - Log full tool call with arguments for audit trail
+  - Notify system administrator and session owner
+  - If executed without approval, initiate incident response
+  - Check for backup availability of targeted resources

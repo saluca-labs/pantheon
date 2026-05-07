@@ -1,0 +1,61 @@
+title: Excessive Delegation Chain Depth
+id: lateral-002
+status: stable
+level: medium
+description: |
+  Detects delegation chains exceeding 3 levels deep, where agent A delegates
+  to B, B delegates to C, C delegates to D or further. Deep delegation chains
+  obscure the original requestor, dilute accountability, and can be used to
+  launder malicious requests through a series of trusted intermediaries,
+  making attribution and detection more difficult.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/lateral-002
+  - https://attack.mitre.org/techniques/T1550/
+tags:
+  - attack.lateral_movement
+  - mitre.t1550
+  - tiresias.delegation
+logsource:
+  product: tiresias
+  service: delegation_tracker
+detection:
+  selection_deep_chain:
+    event_type: delegation_request
+    delegation_depth|gte: 4
+  selection_chain_growth:
+    event_type: delegation_request
+    delegation_depth|gte: 3
+    previous_delegation_depth|lt: 3
+  selection_circular:
+    event_type: delegation_request
+    delegation_chain_contains_duplicate: true
+  filter_approved_workflow:
+    event_type: delegation_request
+    workflow_id|in:
+      - approved_deep_delegation_workflows
+    workflow_authorized: true
+  filter_orchestrator:
+    source_agent_role: orchestrator
+    delegation_depth|lte: 5
+  condition: (selection_deep_chain or selection_chain_growth or selection_circular) and not (filter_approved_workflow or filter_orchestrator)
+  timeframe: 10m
+  group_by:
+    - delegation_chain_root
+    - delegation_chain_id
+fields:
+  - delegation_chain_id
+  - delegation_chain_root
+  - delegation_depth
+  - source_agent_id
+  - target_agent_id
+  - delegation_chain_agents
+  - original_request_type
+  - current_request_type
+  - timestamp
+falsepositives:
+  - Complex multi-step workflows with authorized deep delegation paths
+  - Orchestrator agents coordinating multi-agent pipelines
+  - Retry logic creating additional delegation hops on transient failures
+response_playbook: playbook-lateral-002
