@@ -139,8 +139,19 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
       - run: pnpm install --frozen-lockfile
 
-      - name: Run TypeScript tests
-        run: pnpm test || true   # non-fatal for first pass
+      - name: Build shared TS packages first
+        # vitest resolves @platform/* via dist exports, so the consumed
+        # shared packages must be compiled before running unit tests.
+        run: |
+          pnpm --filter @platform/types build
+          pnpm --filter @platform/config build
+          pnpm --filter @platform/auth build
+
+      - name: Run TypeScript tests (unit, gating)
+        # Excludes src/__tests__/contracts/ which are integration tests
+        # requiring a live backend on :8900 — those run separately via the
+        # smoke-test workflow against a docker compose stack.
+        run: cd apps/platform-web && pnpm exec vitest run --exclude 'src/__tests__/contracts/**' --reporter=dot
 
       - uses: actions/setup-python@v5
         with:
@@ -152,9 +163,16 @@ jobs:
           uv pip install --system -e packages/observability/python
           uv pip install --system -e packages/memory-client/python
           uv pip install --system -e apps/platform-api
+          uv pip install --system pytest pytest-asyncio pytest-mock httpx
 
-      - name: Run Python tests
-        run: cd apps/platform-api && python -m pytest --tb=short -q || true
+      - name: Run Python tests — platform_auth
+        run: cd packages/auth/python && python -m pytest --tb=short -q
+
+      - name: Run Python tests — platform-api (platform v2)
+        run: cd apps/platform-api && python -m pytest tests/platform --confcutdir=tests/platform --tb=short -q
+
+      - name: Run Python tests — platform-api (legacy)
+        run: cd apps/platform-api && python -m pytest --ignore=tests/platform --tb=short -q || true
 
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:
