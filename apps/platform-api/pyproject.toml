@@ -4,6 +4,9 @@ version = "1.0.0"
 description = "Enterprise Agent Identity & Zero-Trust Authorization System"
 requires-python = ">=3.11"
 
+[project.dependencies]
+platform-auth = { path = "../../packages/auth/python", develop = true }
+
 [project.scripts]
 soulauth = "src.cli:main"
 
