@@ -1,0 +1,56 @@
+{
+  "name": "@platform/memory",
+  "version": "0.3.0",
+  "description": "Local-first agent memory — topic index, FTS, hybrid vector search (BM25 + embeddings + RRF), temporal decay",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "memory",
+    "ai",
+    "agent",
+    "sqlite",
+    "postgres",
+    "mcp",
+    "vector",
+    "hybrid-search",
+    "rrf",
+    "embeddings"
+  ],
+  "license": "Apache-2.0",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0"
+  },
+  "peerDependencies": {
+    "node-llama-cpp": "^3.0.0",
+    "pg": "^8.0.0",
+    "sqlite-vec": "^0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "node-llama-cpp": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "sqlite-vec": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "sqlite-vec": "^0.1.7-alpha.2",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
