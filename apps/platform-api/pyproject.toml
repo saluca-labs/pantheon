@@ -1,15 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "soulauth"
 version = "1.0.0"
 description = "Enterprise Agent Identity & Zero-Trust Authorization System"
 requires-python = ">=3.11"
+# Runtime dependencies are pinned in requirements.txt and installed by the
+# Dockerfile / dev workflow. Local workspace packages (platform-auth,
+# platform-memory-client, platform-config, platform-observability) are
+# installed explicitly via `uv pip install -e packages/<name>/python` in CI
+# and the bootstrap script — PEP 621 path-style dependencies aren't supported.
+dependencies = []
 
-[project.dependencies]
-platform-auth = { path = "../../packages/auth/python", develop = true }
-platform-memory-client = { path = "../../packages/memory-client/python", develop = true }
+[project.optional-dependencies]
+workspace = [
+  "platform-auth",
+  "platform-config",
+  "platform-observability",
+  "platform-memory-client",
+]
 
 [project.scripts]
 soulauth = "src.cli:main"
+
+[tool.setuptools]
+py-modules = []
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

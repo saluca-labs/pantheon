@@ -61,6 +61,7 @@ jobs:
           uv pip install --system -e packages/auth/python
           uv pip install --system -e packages/config/python
           uv pip install --system -e packages/observability/python
+          uv pip install --system -e packages/memory-client/python
           uv pip install --system -e apps/platform-api
 
   # ── Lint ─────────────────────────────────────────────────────────────────────
@@ -148,6 +149,8 @@ jobs:
       - run: |
           uv pip install --system -e packages/auth/python
           uv pip install --system -e packages/config/python
+          uv pip install --system -e packages/observability/python
+          uv pip install --system -e packages/memory-client/python
           uv pip install --system -e apps/platform-api
 
       - name: Run Python tests
