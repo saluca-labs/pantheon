@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Role, Permission, hasPermission } from './permissions';
+import { Role, Permission, hasPermission as _hasPermission } from './permissions';
 
 /**
  * Identity extracted from a local session user record.
@@ -14,15 +14,21 @@ export interface SessionIdentity {
 }
 
 /**
+ * Re-export hasPermission so callers don't have to import from two places.
+ */
+export const hasPermission = _hasPermission;
+
+/**
  * Extract role and identity from a local-auth session user.
  *
- * Roles are stored in a memberships table. For this pass, we read from the
- * user record directly. Role defaults to 'viewer' when not set.
+ * Roles are stored on the user record (and, in a future phase, on memberships).
+ * Defaults to viewer when role is missing or invalid.
  */
 export function extractRoleFromLocalSession(user: {
   id: string;
   email: string;
   organizationId?: string | null;
+  teamId?: string | null;
   roles?: string[];
 }): SessionIdentity {
   const rawRole = user.roles?.[0] ?? '';
@@ -34,54 +40,22 @@ export function extractRoleFromLocalSession(user: {
     userId: user.id,
     role,
     orgId: user.organizationId ?? '',
-    teamId: '',
+    teamId: user.teamId ?? '',
     permissions: [],
   };
 }
 
 /**
- * @deprecated Use extractRoleFromLocalSession instead.
- * Kept for backwards compatibility with existing code that passes an accessToken.
- */
-export function extractRoleFromSession(session: {
-  accessToken: string;
-}): SessionIdentity {
-  const parts = session.accessToken.split('.');
-  if (parts.length < 2) {
-    return { userId: '', role: Role.VIEWER, orgId: '', teamId: '', permissions: [] };
-  }
-
-  const payloadB64 = parts[1]!.replace(/-/g, '+').replace(/_/g, '/');
-  const payloadJson = Buffer.from(payloadB64, 'base64').toString('utf-8');
-
-  let payload: Record<string, unknown>;
-  try {
-    payload = JSON.parse(payloadJson);
-  } catch {
-    return { userId: '', role: Role.VIEWER, orgId: '', teamId: '', permissions: [] };
-  }
-
-  const rawRole = typeof payload['role'] === 'string' ? payload['role'] : '';
-  const role = Object.values(Role).includes(rawRole as Role)
-    ? (rawRole as Role)
-    : Role.VIEWER;
-
-  return {
-    userId: typeof payload['sub'] === 'string' ? payload['sub'] : '',
-    role,
-    orgId: typeof payload['org_id'] === 'string' ? payload['org_id'] : '',
-    teamId: typeof payload['team_id'] === 'string' ? payload['team_id'] : '',
-    permissions: Array.isArray(payload['permissions'])
-      ? (payload['permissions'] as string[])
-      : [],
-  };
-}
-
-/**
- * Check if the session has the required permission.
+ * Check if a local session user has the required permission.
  */
 export function checkPermission(
-  session: { accessToken: string },
+  user: {
+    id: string;
+    email: string;
+    organizationId?: string | null;
+    teamId?: string | null;
+    roles?: string[];
+  },
   requiredPermission: Permission,
 ): {
   allowed: boolean;
@@ -90,7 +64,13 @@ export function checkPermission(
   orgId: string;
   teamId: string;
 } {
-  const identity = extractRoleFromSession(session);
-  const allowed = hasPermission(identity.role, requiredPermission);
-  return { allowed, userId: identity.userId, role: identity.role, orgId: identity.orgId, teamId: identity.teamId };
+  const identity = extractRoleFromLocalSession(user);
+  const allowed = _hasPermission(identity.role, requiredPermission);
+  return {
+    allowed,
+    userId: identity.userId,
+    role: identity.role,
+    orgId: identity.orgId,
+    teamId: identity.teamId,
+  };
 }
