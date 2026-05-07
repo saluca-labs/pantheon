@@ -12,6 +12,7 @@ Exports:
 from .password import hash_password, verify_password
 from .session import create_session, validate_session, invalidate_session
 from .dependencies import get_current_user, require_role
+from .bff import BffIdentity, get_bff_identity, require_bff_role
 
 __all__ = [
     "hash_password",
@@ -21,4 +22,7 @@ __all__ = [
     "invalidate_session",
     "get_current_user",
     "require_role",
+    "BffIdentity",
+    "get_bff_identity",
+    "require_bff_role",
 ]
