@@ -1,0 +1,45 @@
+{
+  "name": "@platform/auth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-auth default: Argon2id password hashing + Postgres session management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./cookies": {
+      "import": "./dist/cookies.js",
+      "types": "./dist/cookies.d.ts"
+    },
+    "./csrf": {
+      "import": "./dist/csrf.js",
+      "types": "./dist/csrf.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "argon2": "^0.41.0",
+    "zod": "^3.25.0"
+  },
+  "peerDependencies": {
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
