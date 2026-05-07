@@ -139,8 +139,11 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
       - run: pnpm install --frozen-lockfile
 
-      - name: Run TypeScript tests
-        run: pnpm test || true   # non-fatal for first pass
+      - name: Run TypeScript tests (unit, gating)
+        # Excludes src/__tests__/contracts/ which are integration tests
+        # requiring a live backend on :8900 — those run separately via the
+        # smoke-test workflow against a docker compose stack.
+        run: cd apps/platform-web && pnpm exec vitest run --exclude 'src/__tests__/contracts/**' --reporter=dot
 
       - uses: actions/setup-python@v5
         with:
