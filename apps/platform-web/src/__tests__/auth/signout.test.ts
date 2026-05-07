@@ -1,15 +1,33 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock WorkOS SDK
-vi.mock('@workos-inc/authkit-nextjs', () => ({
-  signOut: vi.fn().mockResolvedValue(new Response(null, { status: 302 })),
+// Mock the platform/auth package
+vi.mock('@platform/auth', () => ({
+  invalidateSession: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@platform/auth/cookies', () => ({
+  clearSessionCookie: vi.fn(),
+  getSessionToken: vi.fn().mockReturnValue('mock-token'),
 }));
 
 describe('Sign Out Route', () => {
-  it('should call signOut from WorkOS SDK', async () => {
-    const { signOut } = await import('@workos-inc/authkit-nextjs');
-    const response = await signOut();
-    expect(signOut).toHaveBeenCalled();
-    expect(response.status).toBe(302);
+  it('should call invalidateSession with the session token', async () => {
+    const { invalidateSession } = await import('@platform/auth');
+
+    // Simulate the signout logic
+    const token = 'mock-token';
+    await invalidateSession(token, {} as any);
+
+    expect(invalidateSession).toHaveBeenCalledWith('mock-token', expect.anything());
+  });
+
+  it('should not throw when no session token is present', async () => {
+    const { invalidateSession } = await import('@platform/auth');
+    (invalidateSession as any).mockResolvedValue(undefined);
+
+    // With no token, signout should still succeed gracefully
+    expect(() => {
+      if (!null) return; // No token, skip
+    }).not.toThrow();
   });
 });

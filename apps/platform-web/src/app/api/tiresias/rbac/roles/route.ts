@@ -1,24 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@workos-inc/authkit-nextjs';
-import { extractRoleFromSession, checkPermission } from '@/lib/rbac/check';
-import { Permission, Role } from '@/lib/rbac/permissions';
+import { cookies } from 'next/headers';
+import { validateSession } from '@platform/auth';
+import { getSessionToken } from '@platform/auth/cookies';
+import { extractRoleFromLocalSession } from '@/lib/rbac/check';
+import { Permission, Role, DEFAULT_ROLE_PERMISSIONS } from '@/lib/rbac/permissions';
+import { Pool } from 'pg';
 
-const WORKOS_API_KEY = process.env.WORKOS_API_KEY ?? '';
-const WORKOS_API_BASE = 'https://api.workos.com';
+let pool: Pool | null = null;
+function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env['DATABASE_URL'],
+      max: 5,
+    });
+  }
+  return pool;
+}
+
+async function getLocalSession() {
+  const cookieStore = await cookies();
+  const token = getSessionToken(cookieStore as any);
+  if (!token) return null;
+  return validateSession(token, getPool());
+}
 
 /**
  * GET /api/tiresias/rbac/roles
  *
- * Lists organization members with their roles via WorkOS Admin API.
- * Any authenticated user can list members (read access).
+ * Lists organization members with their roles from local Postgres.
  */
 export async function GET() {
-  const session = await withAuth();
-  if (!session.user) {
+  const sessionResult = await getLocalSession();
+  if (!sessionResult) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const identity = extractRoleFromSession(session);
+  const identity = extractRoleFromLocalSession(sessionResult.user);
   if (!identity.orgId) {
     return NextResponse.json(
       { error: 'No organization found for user' },
@@ -27,32 +44,42 @@ export async function GET() {
   }
 
   try {
-    const url = new URL(
-      '/user_management/organization_memberships',
-      WORKOS_API_BASE,
+    const db = getPool();
+    const result = await db.query<{
+      id: string;
+      user_id: string;
+      organization_id: string;
+      role: string;
+      email: string;
+      display_name: string | null;
+    }>(
+      `SELECT m.id, m.user_id, m.organization_id, m.role,
+              u.email, u.display_name
+       FROM memberships m
+       JOIN users u ON u.id = m.user_id
+       WHERE m.organization_id = $1
+       ORDER BY u.email`,
+      [identity.orgId],
     );
-    url.searchParams.set('organization_id', identity.orgId);
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${WORKOS_API_KEY}`,
-        'Content-Type': 'application/json',
+    const data = result.rows.map((row) => ({
+      id: row.id,
+      user_id: row.user_id,
+      organization_id: row.organization_id,
+      role_slug: row.role,
+      user: {
+        id: row.user_id,
+        email: row.email,
+        first_name: row.display_name?.split(' ')[0] ?? null,
+        last_name: row.display_name?.split(' ').slice(1).join(' ') ?? null,
       },
-    });
+    }));
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch members from WorkOS' },
-        { status: response.status },
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ data });
   } catch {
     return NextResponse.json(
-      { error: 'Failed to connect to WorkOS API' },
-      { status: 502 },
+      { error: 'Failed to fetch members' },
+      { status: 500 },
     );
   }
 }
@@ -60,46 +87,37 @@ export async function GET() {
 /**
  * PATCH /api/tiresias/rbac/roles
  *
- * Updates a member's role via WorkOS Admin API.
- * Requires MEMBERS_MANAGE permission (admin only by default).
- * Per RBAC-01: admins can assign roles to org members.
- * Per D-18: BFF is the policy enforcement point for writes.
+ * Updates a member's role. Requires MEMBERS_MANAGE permission.
  */
 export async function PATCH(request: NextRequest) {
-  const session = await withAuth();
-  if (!session.user) {
+  const sessionResult = await getLocalSession();
+  if (!sessionResult) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Permission check: only users with MEMBERS_MANAGE can change roles
-  const permResult = checkPermission(session, Permission.MEMBERS_MANAGE);
-  if (!permResult.allowed) {
+  const identity = extractRoleFromLocalSession(sessionResult.user);
+  const allowed = (DEFAULT_ROLE_PERMISSIONS[identity.role] ?? []).includes(
+    Permission.MEMBERS_MANAGE
+  );
+  if (!allowed) {
     return NextResponse.json(
       { error: 'Forbidden: insufficient permissions to manage members' },
       { status: 403 },
     );
   }
 
-  // Parse and validate request body
   let body: { membershipId?: string; role?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
   const { membershipId, role } = body;
   if (!membershipId || typeof membershipId !== 'string') {
-    return NextResponse.json(
-      { error: 'membershipId is required' },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'membershipId is required' }, { status: 400 });
   }
 
-  // Validate role is one of the valid Role enum values
   const validRoles = new Set(Object.values(Role));
   if (!role || !validRoles.has(role as Role)) {
     return NextResponse.json(
@@ -109,34 +127,13 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const url = new URL(
-      `/user_management/organization_memberships/${membershipId}`,
-      WORKOS_API_BASE,
+    const db = getPool();
+    await db.query(
+      `UPDATE memberships SET role = $1 WHERE id = $2`,
+      [role, membershipId],
     );
-
-    const response = await fetch(url.toString(), {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${WORKOS_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ role_slug: role }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: 'Failed to update role in WorkOS', details: errorData },
-        { status: response.status },
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true, membershipId, role });
   } catch {
-    return NextResponse.json(
-      { error: 'Failed to connect to WorkOS API' },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
   }
 }
