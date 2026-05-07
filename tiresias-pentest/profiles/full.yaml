@@ -1,0 +1,59 @@
+profile: full
+description: Full penetration test — all 6 scan phases
+
+phases:
+  - name: trivy
+    description: Container image vulnerability scanning
+    tools: [trivy]
+    targets:
+      - us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v1.1.1
+      - us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v1.0.7
+      - us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulwatch:v1.0.7
+      - us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v1.0.1
+      - postgres:16-alpine
+    severity: [CRITICAL, HIGH, MEDIUM]
+
+  - name: nuclei_infra
+    description: Infrastructure and network scanning
+    tools: [nuclei]
+    templates: [cves, misconfiguration, exposed-panels, default-logins, network]
+    ports: [3000, 5432, 8000, 8001, 8002]
+    severity: [critical, high, medium]
+
+  - name: zap
+    description: Web application scanning
+    tools: [zaproxy]
+    spider: true
+    active_scan: true
+    openapi_import: true
+
+  - name: api
+    description: API security testing
+    tools: [nuclei, custom]
+    custom_tests:
+      - custom-tests/auth-bypass.py
+      - custom-tests/jwt-confusion.py
+
+  - name: tiresias
+    description: Tiresias-specific security tests
+    tools: [custom]
+    custom_tests:
+      - custom-tests/tenant-isolation.py
+      - custom-tests/encryption-verify.py
+
+  - name: selfmon
+    description: Self-monitoring analysis
+    tools: [custom]
+    custom_tests:
+      - self-monitoring/extract-soulwatch.py
+      - self-monitoring/compare-detection.py
+
+schedule:
+  frequency: weekly
+  day: sunday
+  time: "02:00"
+  timezone: UTC
+
+notifications:
+  telegram: true
+  on: [critical, high]
