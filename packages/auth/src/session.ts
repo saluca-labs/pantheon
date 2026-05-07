@@ -11,6 +11,26 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString('base64url');
 }
 
+interface SessionRow {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+interface SessionWithUserRow extends SessionRow {
+  user_id: string;
+  email: string;
+  displayName: string | null;
+  emailVerified: boolean;
+  organizationId: string | null;
+  user_createdAt: Date;
+  user_updatedAt: Date;
+}
+
 /**
  * Create a new session for a user.
  */
@@ -24,7 +44,7 @@ export async function createSession(
     Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000
   );
 
-  const result = await (db as any).query<Session>(
+  const result = await db.query(
     `INSERT INTO sessions (user_id, token, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING id, user_id AS "userId", token, expires_at AS "expiresAt",
@@ -33,7 +53,7 @@ export async function createSession(
     [userId, token, expiresAt, meta?.ipAddress ?? null, meta?.userAgent ?? null]
   );
 
-  const row = result.rows[0];
+  const row = (result.rows as SessionRow[])[0];
   if (!row) throw new Error('Failed to create session');
   return row;
 }
@@ -46,7 +66,7 @@ export async function validateSession(
   token: string,
   db: DB
 ): Promise<SessionWithUser | null> {
-  const result = await (db as any).query<SessionWithUser>(
+  const result = await db.query(
     `SELECT
        s.id, s.user_id AS "userId", s.token, s.expires_at AS "expiresAt",
        s.created_at AS "createdAt", s.ip_address AS "ipAddress",
@@ -63,27 +83,27 @@ export async function validateSession(
     [token]
   );
 
-  const row = result.rows[0];
+  const row = (result.rows as SessionWithUserRow[])[0];
   if (!row) return null;
 
   return {
     session: {
-      id: (row as any).id,
-      userId: (row as any).userId,
-      token: (row as any).token,
-      expiresAt: (row as any).expiresAt,
-      createdAt: (row as any).createdAt,
-      ipAddress: (row as any).ipAddress,
-      userAgent: (row as any).userAgent,
+      id: row.id,
+      userId: row.userId,
+      token: row.token,
+      expiresAt: row.expiresAt,
+      createdAt: row.createdAt,
+      ipAddress: row.ipAddress,
+      userAgent: row.userAgent,
     },
     user: {
-      id: (row as any)['user_id'],
-      email: (row as any).email,
-      displayName: (row as any).displayName,
-      emailVerified: (row as any).emailVerified,
-      organizationId: (row as any).organizationId,
-      createdAt: (row as any).user_createdAt,
-      updatedAt: (row as any).user_updatedAt,
+      id: row.user_id,
+      email: row.email,
+      displayName: row.displayName,
+      emailVerified: row.emailVerified,
+      organizationId: row.organizationId,
+      createdAt: row.user_createdAt,
+      updatedAt: row.user_updatedAt,
     },
   };
 }
@@ -95,7 +115,7 @@ export async function invalidateSession(
   token: string,
   db: DB
 ): Promise<void> {
-  await (db as any).query(
+  await db.query(
     `UPDATE sessions SET invalidated_at = NOW() WHERE token = $1`,
     [token]
   );
