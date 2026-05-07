@@ -23,6 +23,13 @@ COPY . .
 RUN pnpm install --frozen-lockfile --ignore-scripts
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Build shared workspace packages first — platform-web imports @platform/auth,
+# @platform/config, @platform/types, all of which point at dist/ entry points
+# ("main": "dist/index.js"). Without this, Turbopack can't resolve them.
+RUN pnpm --filter "@platform/types" \
+         --filter "@platform/config" \
+         --filter "@platform/auth" \
+         run build
 RUN pnpm --filter platform-web build
 
 # ── Stage 3: runner ───────────────────────────────────────────────────────────
