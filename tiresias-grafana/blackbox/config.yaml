@@ -1,0 +1,48 @@
+# Tiresias SOC — Blackbox Exporter Configuration
+# Synthetic probes for uptime, SSL, and endpoint health
+
+modules:
+  # HTTP GET — expects 2xx
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: [200]
+      method: GET
+      follow_redirects: true
+      preferred_ip_protocol: ip4
+
+  # HTTP GET — accepts any non-5xx
+  http_non5xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: []  # any 2xx/3xx/4xx
+      fail_if_body_matches_regexp:
+        - "Internal Server Error"
+      method: GET
+      follow_redirects: true
+      preferred_ip_protocol: ip4
+
+  # SSL certificate check
+  tls_connect:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      tls: true
+      tls_config:
+        insecure_skip_verify: false
+
+  # TCP port check
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+
+  # ICMP ping
+  icmp:
+    prober: icmp
+    timeout: 5s
+    icmp:
+      preferred_ip_protocol: ip4

@@ -1,0 +1,26 @@
+# Tiresias SOC — Grafana Alert Contact Points
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Telegram - Alfred
+    receivers:
+      - uid: telegram-alfred
+        type: webhook
+        settings:
+          url: http://100.100.85.53:8080/notify/telegram
+          httpMethod: POST
+          maxAlerts: 10
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: Daily Briefing
+    receivers:
+      - uid: daily-briefing
+        type: webhook
+        settings:
+          url: http://100.100.85.53:8080/notify/briefing
+          httpMethod: POST
+          maxAlerts: 50
+        disableResolveMessage: true

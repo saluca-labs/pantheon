@@ -1,0 +1,257 @@
+{
+  "uid": "tiresias-audit",
+  "title": "Audit Trail \u2014 Production",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Events (24h)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) FROM _soulauth_audit WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Active Tenants",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) FROM _soul_tenants WHERE status='active'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active SoulKeys",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) FROM _soulkeys WHERE status='active'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Unique Event Types",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(DISTINCT event_type) FROM _soulauth_audit WHERE timestamp > NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Events Over Time",
+      "gridPos": { "x": 0, "y": 3, "w": 16, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT $__timeGroup(timestamp, $__interval) AS time, event_type, COUNT(*) AS count FROM _soulauth_audit WHERE $__timeFilter(timestamp) GROUP BY time, event_type ORDER BY time",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "piechart",
+      "title": "Events by Type",
+      "gridPos": { "x": 16, "y": 3, "w": 8, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT event_type, COUNT(*) AS count FROM _soulauth_audit WHERE $__timeFilter(timestamp) GROUP BY event_type ORDER BY count DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Decisions Over Time",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT $__timeGroup(timestamp, $__interval) AS time, decision, COUNT(*) AS count FROM _soulauth_audit WHERE $__timeFilter(timestamp) AND decision IS NOT NULL GROUP BY time, decision ORDER BY time",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "allow"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "deny"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": "bargauge",
+      "title": "Events by Tenant",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT t.name AS tenant, COUNT(*) AS count FROM _soulauth_audit a JOIN _soul_tenants t ON a.tenant_id = t.id WHERE $__timeFilter(a.timestamp) GROUP BY t.name ORDER BY count DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Full Audit Log",
+      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 10 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT a.timestamp, t.name AS tenant, a.event_type, a.persona_id, a.resource, a.action, a.decision, a.reason FROM _soulauth_audit a LEFT JOIN _soul_tenants t ON a.tenant_id = t.id WHERE $__timeFilter(a.timestamp) ORDER BY a.timestamp DESC LIMIT 100",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Tenant Overview",
+      "gridPos": { "x": 0, "y": 27, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT name, slug, tier, status, created_at FROM _soul_tenants ORDER BY created_at DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "SoulKey Status",
+      "gridPos": { "x": 12, "y": 27, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "rawSql": "SELECT s.persona_id, s.label, s.status, t.name AS tenant, s.issued_at, s.last_used_at FROM _soulkeys s LEFT JOIN _soul_tenants t ON s.tenant_id = t.id ORDER BY s.issued_at DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
+}

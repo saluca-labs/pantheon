@@ -1,0 +1,392 @@
+{
+  "uid": "tiresias-soulwatch",
+  "title": "SoulWatch — Anomaly Detection",
+  "tags": ["tiresias", "soulwatch", "anomaly-detection"],
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Anomalies",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 5, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM _soulwatch_anomalies WHERE status NOT IN ('resolved','dismissed')",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Detections (24h)",
+      "type": "stat",
+      "gridPos": { "x": 5, "y": 0, "w": 5, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM _soulwatch_detections WHERE created_at > NOW() - INTERVAL '24 hours'",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Critical/High Anomalies",
+      "type": "stat",
+      "gridPos": { "x": 10, "y": 0, "w": 5, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM _soulwatch_anomalies WHERE severity IN ('critical','high') AND status NOT IN ('resolved','dismissed')",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Quarantined Agents",
+      "type": "stat",
+      "gridPos": { "x": 15, "y": 0, "w": 5, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM _soulwatch_quarantines WHERE released_at IS NULL",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Active Baselines",
+      "type": "stat",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 3 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM _soulwatch_baselines",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Anomalies Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 3, "w": 16, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT $__timeGroup(created_at, $__interval) AS time, severity, COUNT(*) FROM _soulwatch_anomalies WHERE $__timeFilter(created_at) GROUP BY time, severity ORDER BY time",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "critical" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "high" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "medium" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "low" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Anomaly Types",
+      "type": "piechart",
+      "gridPos": { "x": 16, "y": 3, "w": 8, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT anomaly_type, COUNT(*) FROM _soulwatch_anomalies WHERE $__timeFilter(created_at) GROUP BY anomaly_type",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Detections by Rule",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT $__timeGroup(created_at, $__interval) AS time, rule_title, COUNT(*) FROM _soulwatch_detections WHERE $__timeFilter(created_at) GROUP BY time, rule_title ORDER BY time",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Detection Levels",
+      "type": "bargauge",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 7 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT level, COUNT(*) FROM _soulwatch_detections WHERE $__timeFilter(created_at) GROUP BY level ORDER BY CASE level WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Anomaly Detail Log",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 10 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT a.created_at, a.anomaly_type, a.severity, a.description, a.baseline_value, a.observed_value, a.status FROM _soulwatch_anomalies a WHERE $__timeFilter(a.created_at) ORDER BY a.created_at DESC LIMIT 50",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": []
+      }
+    },
+    {
+      "id": 11,
+      "title": "Detection Detail",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "production-db" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT d.created_at, d.rule_id, d.rule_title, d.level, d.response_playbook FROM _soulwatch_detections d WHERE $__timeFilter(d.created_at) ORDER BY d.created_at DESC LIMIT 50",
+          "datasource": { "type": "postgres", "uid": "production-db" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": []
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "version": 1
+}

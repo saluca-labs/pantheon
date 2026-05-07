@@ -1,0 +1,16 @@
+# Tiresias SOC — Dashboard Provisioning
+
+apiVersion: 1
+
+providers:
+  - name: Tiresias SOC
+    orgId: 1
+    folder: Tiresias SOC
+    folderUid: tiresias-soc
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
