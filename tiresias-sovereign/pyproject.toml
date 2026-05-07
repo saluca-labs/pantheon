@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tiresias-sovereign"
+version = "0.1.0"
+description = "Sovereign Tiresias policy proxy"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+[tool.ruff]
+select = ["E", "F", "W", "C90"]
+ignore = []
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
