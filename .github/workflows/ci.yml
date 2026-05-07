@@ -139,6 +139,14 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
       - run: pnpm install --frozen-lockfile
 
+      - name: Build shared TS packages first
+        # vitest resolves @platform/* via dist exports, so the consumed
+        # shared packages must be compiled before running unit tests.
+        run: |
+          pnpm --filter @platform/types build
+          pnpm --filter @platform/config build
+          pnpm --filter @platform/auth build
+
       - name: Run TypeScript tests (unit, gating)
         # Excludes src/__tests__/contracts/ which are integration tests
         # requiring a live backend on :8900 — those run separately via the
