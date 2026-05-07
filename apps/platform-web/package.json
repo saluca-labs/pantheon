@@ -1,19 +1,24 @@
 {
-  "name": "tiresias-web",
+  "name": "platform-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run --reporter=verbose",
     "test:contracts": "vitest run src/__tests__/contracts/ --reporter=verbose"
   },
   "dependencies": {
+    "@platform/auth": "workspace:*",
+    "@platform/config": "workspace:*",
+    "@platform/types": "workspace:*",
     "@tanstack/react-query": "^5.95.2",
     "@types/pg": "^8.20.0",
-    "@workos-inc/authkit-nextjs": "^2.17.0",
+    "argon2": "^0.41.0",
     "clsx": "^2.1.1",
     "geist": "^1.3.1",
     "lucide-react": "^0.469.0",

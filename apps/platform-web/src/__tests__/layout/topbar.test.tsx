@@ -1,30 +1,30 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-
-// Mock WorkOS SDK
-vi.mock('@workos-inc/authkit-nextjs/components', () => ({
-  useAuth: vi.fn().mockReturnValue({
-    user: {
-      email: 'cristian@saluca.com',
-      firstName: 'Cristian',
-    },
-  }),
-}));
 
 import { Topbar } from '@/components/layout/topbar';
 
 describe('Topbar', () => {
-  it('renders user name', () => {
-    render(<Topbar />);
+  it('renders display name when provided', () => {
+    render(<Topbar userEmail="cristian@saluca.com" displayName="Cristian" />);
     expect(screen.getByText('Cristian')).toBeInTheDocument();
   });
 
+  it('falls back to email when display name is absent', () => {
+    render(<Topbar userEmail="cristian@saluca.com" />);
+    expect(screen.getByText('cristian@saluca.com')).toBeInTheDocument();
+  });
+
   it('renders sign out button with form action', () => {
-    render(<Topbar />);
+    render(<Topbar userEmail="cristian@saluca.com" displayName="Cristian" />);
     const signOutButton = screen.getByText('Sign out');
     expect(signOutButton).toBeInTheDocument();
     const form = signOutButton.closest('form');
     expect(form?.getAttribute('action')).toBe('/auth/signout');
     expect(form?.getAttribute('method')).toBe('POST');
+  });
+
+  it('renders nothing when no user is provided', () => {
+    render(<Topbar />);
+    expect(screen.queryByText('Sign out')).not.toBeInTheDocument();
   });
 });
