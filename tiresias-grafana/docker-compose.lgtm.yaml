@@ -1,0 +1,160 @@
+# Tiresias SOC — LGTM Stack
+# Deploy on DreamServer (192.168.12.167)
+# Usage: docker compose -f docker-compose.lgtm.yaml --env-file .env up -d
+
+services:
+  grafana:
+    image: grafana/grafana-oss:11.6.0
+    container_name: tiresias-grafana
+    ports:
+      - "3004:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/plugins:/var/lib/grafana/plugins:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD}"
+      GF_SERVER_ROOT_URL: "${GRAFANA_ROOT_URL:-http://192.168.12.167:3001}"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "false"
+      # GF_INSTALL_PLUGINS: "grafana-json-datasource"  # requires internet; install manually
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/soc-overview.json
+      GF_ALERTING_ENABLED: "true"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_LOG_LEVEL: "info"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_COOKIE_SECURE: "false"
+      GF_SECURITY_COOKIE_SAMESITE: "lax"
+      # DB credentials for datasource provisioning
+      PENTEST_DB_USER: "${PENTEST_DB_USER}"
+      PENTEST_DB_PASSWORD: "${PENTEST_DB_PASSWORD}"
+      PROD_DB_HOST: "${PROD_DB_HOST}"
+      PROD_DB_PORT: "${PROD_DB_PORT}"
+      PROD_DB_USER: "${PROD_DB_USER}"
+      PROD_DB_PASSWORD: "${PROD_DB_PASSWORD}"
+      PENTEST_REPORTS_API_URL: "${PENTEST_REPORTS_API_URL}"
+    depends_on:
+      loki:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: tiresias-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+    command: -config.file=/etc/loki/config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  promtail:
+    image: grafana/promtail:3.4.2
+    container_name: tiresias-promtail
+    volumes:
+      - /var/log:/var/log:ro
+      - ./promtail/config.yaml:/etc/promtail/config.yaml:ro
+      - promtail-positions:/tmp
+      - "${PENTEST_REPORTS_PATH:-/repos/security/pentest-reports}:/pentest-reports:ro"
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      loki:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: tiresias-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts/prometheus-rules.yml:/etc/prometheus/rules.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: tiresias-node-exporter
+    ports:
+      - "9100:9100"
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: tiresias-blackbox
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox/config.yaml:/etc/blackbox_exporter/config.yml:ro
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    container_name: tiresias-cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+    networks:
+      - tiresias-soc
+
+volumes:
+  grafana-data:
+  loki-data:
+  prometheus-data:
+  promtail-positions:
+
+networks:
+  tiresias-soc:
+    driver: bridge
