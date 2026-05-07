@@ -58,10 +58,10 @@ jobs:
 
       - name: Install Python packages
         run: |
-          uv pip install -e packages/auth/python
-          uv pip install -e packages/config/python
-          uv pip install -e packages/observability/python
-          uv pip install -e apps/platform-api
+          uv pip install --system -e packages/auth/python
+          uv pip install --system -e packages/config/python
+          uv pip install --system -e packages/observability/python
+          uv pip install --system -e apps/platform-api
 
   # ── Lint ─────────────────────────────────────────────────────────────────────
   lint:
@@ -146,9 +146,9 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install uv
       - run: |
-          uv pip install -e packages/auth/python
-          uv pip install -e packages/config/python
-          uv pip install -e apps/platform-api
+          uv pip install --system -e packages/auth/python
+          uv pip install --system -e packages/config/python
+          uv pip install --system -e apps/platform-api
 
       - name: Run Python tests
         run: cd apps/platform-api && python -m pytest --tb=short -q || true
