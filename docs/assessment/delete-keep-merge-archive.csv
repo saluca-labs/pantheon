@@ -1,0 +1,32 @@
+path,fate,rationale,owner
+tiresias/,moved,git mv → apps/platform-api/,platform
+tiresias-web/,moved,git mv → apps/platform-web/,platform
+tiresias-app-proxy/,moved,git mv → apps/platform-app-proxy/,platform
+tiresias-sovereign/,moved,git mv → apps/platform-sovereign/,platform
+tiresias-grafana/,moved,git mv → infrastructure/grafana/,ops
+tiresias-incident-controller/,moved,git mv → infrastructure/incident-controller/,ops
+tiresias-monitor/,moved,git mv → infrastructure/monitor/,ops
+tiresias-pentest/,moved,git mv → infrastructure/pentest/,security
+tiresias-rules/,moved,git mv → infrastructure/rules/,security
+tiresias-enforcement/,moved,git mv → infrastructure/enforcement/,security
+apps/platform-api/cloudbuild-*.yaml,archived,moved to archive/cloudbuild/ — superseded by GitHub Actions,platform
+apps/platform-web/src/app/(auth)/callback/route.ts,deleted,WorkOS OAuth callback — replaced by local auth,platform
+apps/platform-web/src/components/providers/ (AuthKitProvider),updated,Removed AuthKitProvider wrapper — no adapter needed,platform
+packages/auth/,new,Local-auth default with Argon2id,platform
+packages/memory/,new (vendored),Elysium @ 758a4a5 — internal package @platform/memory,platform
+packages/config/,new,Shared env validation (zod/pydantic-settings),platform
+packages/types/,new,Shared TS domain types,platform
+packages/observability/,new,Structured logging (pino/structlog),platform
+packages/database/,new,Alembic migration tree for local-auth schema,platform
+docker-compose.yml,new,Root compose with profiles default/full/ci,platform
+.env.example,new,Authoritative env var reference,platform
+.nvmrc,new,Pin Node 22,platform
+.tool-versions,new,Pin node/python/pnpm via asdf,platform
+scripts/bootstrap.sh,new,Dev environment setup script,platform
+scripts/seed-admin.ts,new,Dev admin user seed,platform
+turbo.json,new,Turborepo pipeline config,platform
+package.json (root),new,pnpm workspace root,platform
+pnpm-workspace.yaml,new,pnpm workspace members,platform
+.github/workflows/ci.yml,new,Normalized CI: pnpm + uv + lint/test/build,platform
+.github/workflows/cd.yml,new,CD: tag-based GHCR image push,platform
+archive/dockerfiles/,archived,Old per-app Dockerfiles preserved for reference,platform
