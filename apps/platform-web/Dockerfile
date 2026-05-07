@@ -15,9 +15,12 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 FROM node:22-alpine AS builder
 WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/packages ./packages
+# Copy full source first, then install — pnpm needs every workspace
+# package.json present to materialize per-package node_modules and .bin
+# symlinks correctly. (The earlier COPY-from-deps approach lost those
+# nested symlinks when `COPY . .` overlaid the packages/ and apps/ dirs.)
 COPY . .
+RUN pnpm install --frozen-lockfile --ignore-scripts
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN pnpm --filter platform-web build
