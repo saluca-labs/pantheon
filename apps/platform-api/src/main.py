@@ -611,3 +611,21 @@ async def root():
         "description": "Enterprise Agent Identity & Zero-Trust Authorization System",
         "docs": "/docs",
     }
+
+
+# ── Local-auth-aware liveness / readiness probes ──────────────────────────────
+@app.get("/health/live", tags=["Health"], summary="Liveness probe")
+async def health_live():
+    """Liveness probe — returns 200 when the process is alive."""
+    return {"status": "ok"}
+
+
+@app.get("/health/ready", tags=["Health"], summary="Readiness probe")
+async def health_ready():
+    """Readiness probe — returns 200 when the DB is reachable."""
+    from src.monitoring.health import run_health_checks
+    result = await run_health_checks(detail=False)
+    if result.get("status") != "healthy":
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"status": "not_ready"}, status_code=503)
+    return {"status": "ready"}
