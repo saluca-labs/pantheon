@@ -1,0 +1,112 @@
+title: Privilege Escalation via Tool Chaining
+id: tool-007
+status: experimental
+description: >
+  Detects an AI agent using a sequence of tools in a pattern consistent
+  with privilege escalation — reading configuration or credential stores,
+  extracting secrets, then authenticating or performing elevated actions.
+  Individual steps may be benign; the chain reveals malicious intent.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://attack.mitre.org/techniques/T1552/
+tags:
+  - attack.privilege_escalation
+  - attack.t1078
+  - attack.credential_access
+  - attack.t1552
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.tool-chain
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  # Phase 1: Reconnaissance — reading config, listing resources, discovery
+  phase_recon:
+    event_type: tool_call
+    tool_arguments|re|i: '(?:\.env|config|settings|\.yml|\.yaml|\.json|\.ini|\.conf|\.properties|secrets|vault|parameter[_-]?store|ssm|key[_-]?vault)'
+    tool_action|contains:
+      - read
+      - get
+      - list
+      - cat
+      - describe
+
+  # Phase 2: Credential extraction — parsing/extracting secrets from config
+  phase_extract:
+    event_type: tool_call
+    tool_arguments|re|i: '(?:password|api[_-]?key|secret|token|credential|access[_-]?key|private[_-]?key|connection[_-]?string|auth|bearer|jwt)'
+    tool_action|contains:
+      - parse
+      - extract
+      - decode
+      - read
+      - get
+
+  # Phase 3: Authentication — using extracted credentials
+  phase_auth:
+    event_type: tool_call
+    tool_arguments|re|i: '(?:login|authenticate|authorize|sign[_-]?in|connect|session|assume[_-]?role|sts|oauth|token[_-]?exchange)'
+    tool_action|contains:
+      - execute
+      - call
+      - invoke
+      - post
+      - create
+
+  # Phase 4: Elevated action — performing privileged operations
+  phase_elevate:
+    event_type: tool_call
+    tool_arguments|re|i: '(?:admin|root|sudo|superuser|grant|revoke|create[_-]?user|delete[_-]?user|modify[_-]?role|attach[_-]?policy|escalat|privilege)'
+
+  # Chain detection: phases must occur in sequence within time window
+  chain:
+    tiresias_sequence:
+      ordered: true
+      timeframe: 30m
+      group_by:
+        - agent_id
+        - session_id
+      steps:
+        - phase_recon
+        - phase_extract
+        - phase_auth
+      # phase_elevate is optional — alert if first 3 phases match
+      optional_steps:
+        - phase_elevate
+      max_gap_between_steps: 10m
+
+  condition: chain
+
+fields:
+  - agent_id
+  - session_id
+  - chain_steps  # ordered list of tool calls forming the chain
+  - recon_targets  # config files/resources accessed
+  - extracted_credential_types  # what types of secrets were accessed
+  - auth_targets  # what services/systems were authenticated to
+  - elevated_actions  # what privileged operations followed
+  - chain_duration_seconds
+  - timestamp
+
+level: critical
+severity: critical
+
+falsepositives:
+  - Deployment agents that read config, authenticate, and deploy (normal CI/CD)
+  - Infrastructure provisioning agents setting up new services
+  - Secret rotation agents that read old creds and write new ones
+  - Onboarding agents that create accounts with appropriate privileges
+
+response:
+  - Immediately pause agent session pending review
+  - Capture full tool call chain with arguments and responses
+  - Verify whether extracted credentials were actually used
+  - Check if any elevated actions succeeded
+  - If credentials were compromised, initiate rotation
+  - Correlate with prompt history for injection indicators

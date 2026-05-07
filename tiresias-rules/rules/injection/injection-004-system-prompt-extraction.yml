@@ -1,0 +1,67 @@
+title: System Prompt Extraction Attempt
+id: injection-004
+status: stable
+level: high
+description: |
+  Detects user queries designed to extract the agent's system prompt,
+  configuration, or internal instructions. System prompts contain sensitive
+  operational details, tool definitions, access scopes, and safety
+  guardrails. Successful extraction enables more targeted attacks and
+  reveals the agent's security posture to an adversary.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-004
+  - https://atlas.mitre.org/techniques/AML.T0042
+tags:
+  - attack.reconnaissance
+  - attack.collection
+  - atlas.aml.t0042
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulgate
+detection:
+  selection:
+    event_type: agent_input
+    input_source: user
+  extraction_direct:
+    input_content|re:
+      - '(?i)repeat\s+(the\s+)?(text|words?|instructions?|prompt)\s+(above|before|preceding)'
+      - '(?i)what\s+(are|were)\s+your\s+(initial\s+)?instructions'
+      - '(?i)show\s+(me\s+)?(your|the)\s+(system\s+)?prompt'
+      - '(?i)print\s+(your|the)\s+(system\s+)?prompt'
+      - '(?i)display\s+(your|the)\s+(full\s+)?(system\s+)?(prompt|instructions)'
+      - '(?i)what\s+is\s+your\s+system\s+(prompt|message|instruction)'
+      - '(?i)output\s+(everything|all)\s+(above|before|preceding)'
+      - '(?i)tell\s+me\s+(your|the)\s+(system\s+)?(prompt|rules|instructions|guidelines)'
+      - '(?i)reveal\s+(your|the)\s+(system\s+)?(prompt|instructions|configuration)'
+  extraction_indirect:
+    input_content|re:
+      - '(?i)summarize\s+(everything|all)\s+(you\s+were|you.ve\s+been)\s+told'
+      - '(?i)what\s+(rules?|constraints?|limitations?)\s+(do\s+you|were\s+you)\s+(follow|given|have)'
+      - '(?i)what\s+tools?\s+(do\s+you|can\s+you)\s+(have|access|use)'
+      - '(?i)list\s+(all\s+)?(your\s+)?(tools?|functions?|capabilities|permissions)'
+      - '(?i)what\s+(can|are)\s+you\s+(not\s+)?(allowed|permitted|able)\s+to\s+(do|access)'
+      - '(?i)describe\s+your\s+(configuration|setup|architecture|design)'
+      - '(?i)how\s+were\s+you\s+(configured|set\s+up|initialized|prompted)'
+  extraction_encoding:
+    input_content|re:
+      - '(?i)(translate|convert|encode)\s+(your\s+)?(system\s+)?(prompt|instructions)\s+(to|into|as)'
+      - '(?i)spell\s+out\s+(your|the)\s+(system\s+)?(prompt|instructions)\s+(backwards|in\s+reverse)'
+  condition: selection and (extraction_direct or extraction_indirect or extraction_encoding)
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - input_content
+  - source_ip
+  - matched_category
+  - matched_pattern
+  - prior_turns_count
+  - timestamp
+falsepositives:
+  - Users legitimately asking about agent capabilities in product context
+  - Internal developers debugging agent configuration
+  - Documentation writers describing agent features
+response_playbook: playbook-injection-004

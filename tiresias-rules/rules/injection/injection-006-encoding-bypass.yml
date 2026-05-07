@@ -1,0 +1,68 @@
+title: Encoding-Based Filter Bypass
+id: injection-006
+status: stable
+level: high
+description: |
+  Detects the use of base64, hexadecimal, rot13, unicode escapes, HTML
+  entities, URL encoding, or other obfuscation methods in agent inputs
+  designed to bypass content safety filters. Attackers encode malicious
+  instructions so they pass through text-based detection rules but are
+  decoded and executed by the model or downstream tooling.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-006
+  - https://atlas.mitre.org/techniques/AML.T0015.002
+tags:
+  - attack.defense_evasion
+  - atlas.aml.t0015.002
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulgate
+detection:
+  selection:
+    event_type: agent_input
+  base64_block:
+    input_content|re:
+      - '(?i)(decode|interpret|execute|run|process)\s+(this\s+)?base64'
+      - '[A-Za-z0-9+/]{40,}={0,2}'
+  hex_encoding:
+    input_content|re:
+      - '(?i)(decode|interpret|execute|run)\s+(this\s+)?hex'
+      - '(?i)\\x[0-9a-fA-F]{2}(\\x[0-9a-fA-F]{2}){9,}'
+      - '0x[0-9a-fA-F]{2}(\s*0x[0-9a-fA-F]{2}){9,}'
+  rot13_cipher:
+    input_content|re:
+      - '(?i)(decode|apply|use)\s+rot13'
+      - '(?i)rot13\s*[:=\(]'
+  unicode_obfuscation:
+    input_content|re:
+      - '\\u[0-9a-fA-F]{4}(\\u[0-9a-fA-F]{4}){4,}'
+      - '&#x[0-9a-fA-F]{2,4};(&#x[0-9a-fA-F]{2,4};){4,}'
+      - '&#\d{2,5};(&#\d{2,5};){4,}'
+  url_encoding:
+    input_content|re:
+      - '%[0-9a-fA-F]{2}(%[0-9a-fA-F]{2}){9,}'
+  homoglyph_substitution:
+    input_content|re:
+      - '[\u0400-\u04ff].*[\x41-\x5a\x61-\x7a].*[\u0400-\u04ff]'
+      - '[\u0370-\u03ff].*[\x41-\x5a\x61-\x7a].*[\u0370-\u03ff]'
+  filter_legitimate_code:
+    input_content|re:
+      - '(?i)(debug|error|stack\s*trace|log\s*output|source\s*code)'
+  condition: selection and (base64_block or hex_encoding or rot13_cipher or unicode_obfuscation or url_encoding or homoglyph_substitution) and not filter_legitimate_code
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - input_content
+  - detected_encoding_type
+  - decoded_content_preview
+  - source_ip
+  - timestamp
+falsepositives:
+  - Developers sharing encoded data for legitimate processing
+  - Agents designed to handle encoded content (e.g., email attachment processing)
+  - Base64-encoded images or files in legitimate workflows
+response_playbook: playbook-injection-006

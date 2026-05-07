@@ -1,0 +1,83 @@
+title: Code Injection via Tool Arguments
+id: tool-003
+status: experimental
+description: >
+  Detects code injection patterns in AI agent tool call arguments,
+  including eval/exec usage, subprocess spawning, OS command execution,
+  and shell metacharacter injection. These patterns indicate an agent
+  attempting to execute arbitrary code through tool interfaces.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1059/
+tags:
+  - attack.execution
+  - attack.t1059
+  - tiresias.ai-agent
+  - tiresias.tool-abuse
+  - tiresias.injection
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+
+  # Python code injection
+  python_injection:
+    tool_arguments|re: '(?:eval\s*\(|exec\s*\(|compile\s*\(|__import__\s*\(|importlib|subprocess\.|os\.system\s*\(|os\.popen\s*\(|os\.exec|pickle\.loads|yaml\.(?:unsafe_)?load\()'
+
+  # JavaScript/Node injection
+  js_injection:
+    tool_arguments|re: '(?:eval\s*\(|Function\s*\(|new\s+Function|child_process|require\s*\(\s*["\x27](?:child_process|fs|net|http|os)|process\.(?:exit|kill|binding)|vm\.runIn)'
+
+  # Shell injection via metacharacters
+  shell_injection:
+    tool_arguments|re: '(?:;\s*(?:curl|wget|nc|bash|sh|python|perl|ruby)|`[^`]+`|\$\([^)]+\)|\|\s*(?:bash|sh|python|nc)|&&\s*(?:curl|wget|nc)|>\s*/(?:etc|tmp|dev))'
+
+  # SQL injection in non-SQL tools
+  sql_injection:
+    tool_name|not|contains:
+      - sql
+      - database
+      - query
+    tool_arguments|re|i: '(?:UNION\s+SELECT|;\s*(?:DROP|DELETE|INSERT|UPDATE|ALTER)|--\s*$|/\*.*\*/|(?:OR|AND)\s+1\s*=\s*1|WAITFOR\s+DELAY|BENCHMARK\s*\(|SLEEP\s*\()'
+
+  # Template injection
+  template_injection:
+    tool_arguments|re: '(?:\{\{.*(?:config|request|self|__class__|__mro__|__subclasses__).*\}\}|\$\{.*(?:Runtime|ProcessBuilder|exec).*\}|<%.*(?:Runtime|exec|system).*%>)'
+
+  # Deserialization attacks
+  deserialization:
+    tool_arguments|re: '(?:rO0AB|aced0005|O:[\d]+:|a:[\d]+:\{|ysoserial|ObjectInputStream|readObject|unserialize|Marshal\.load)'
+
+  condition: selection AND (python_injection OR js_injection OR shell_injection OR sql_injection OR template_injection OR deserialization)
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - tool_arguments
+  - injection_type
+  - matched_pattern
+  - source_message_id  # trace back to the prompt that triggered this
+  - timestamp
+
+level: critical
+severity: critical
+
+falsepositives:
+  - Code execution tools (REPLs, notebooks) where eval/exec is expected
+  - Database query tools where SQL is the intended input
+  - Build/CI tools that legitimately invoke shell commands
+  - Code review agents analyzing source code containing these patterns
+
+response:
+  - Block tool execution immediately
+  - Sanitize and log the attempted injection payload
+  - Trace injection to source prompt — check for prompt injection attack
+  - Flag agent session for security review
+  - If pattern originated from user input, alert on potential adversarial prompt

@@ -1,0 +1,88 @@
+title: Sensitive Field Access Pattern
+id: exfil-006
+status: experimental
+description: >
+  Detects an AI agent querying or accessing fields commonly associated
+  with PII, credentials, or secrets at an elevated rate. Targeted access
+  to sensitive fields — especially across multiple records — indicates
+  intentional data harvesting.
+author: Saluca LLC — Tiresias Project
+date: 2026-03-30
+references:
+  - https://attack.mitre.org/techniques/T1552/
+tags:
+  - attack.credential_access
+  - attack.t1552
+  - tiresias.ai-agent
+  - tiresias.data-plane
+  - tiresias.sensitive-data
+
+logsource:
+  category: ai_agent_telemetry
+  product: tiresias
+  service: tool_invocation
+
+detection:
+  selection:
+    event_type: tool_call
+    tool_action|contains:
+      - read
+      - get
+      - query
+      - select
+      - fetch
+      - search
+
+  # Sensitive field name patterns in query projections or return fields
+  sensitive_credentials:
+    tool_arguments|re|i: '(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret|bearer|auth[_-]?token|jwt|session[_-]?token|oauth)'
+
+  sensitive_pii:
+    tool_arguments|re|i: '(?:ssn|social[_-]?security|tax[_-]?id|ein|date[_-]?of[_-]?birth|dob|drivers?[_-]?licen[sc]e|passport|national[_-]?id|credit[_-]?card|card[_-]?number|cvv|bank[_-]?account|routing[_-]?number|iban)'
+
+  sensitive_contact:
+    tool_arguments|re|i: '(?:phone|email|address|zip[_-]?code|postal|home[_-]?address|cell|mobile)'
+
+  # Rate threshold: accessing sensitive fields across multiple records
+  rate_threshold:
+    timeframe: 10m
+    group_by:
+      - agent_id
+      - session_id
+    count:
+      field: event_id
+      gte: 5
+
+  # Single-query bulk access: requesting sensitive fields with no WHERE/filter
+  bulk_sensitive:
+    tool_arguments|re|i: 'SELECT\s+.*(?:password|ssn|api_key|token|secret).*(?:FROM|from)\s+\w+\s*(?:;|$|LIMIT\s+\d{3,})'
+
+  condition: selection AND ((sensitive_credentials OR sensitive_pii) AND rate_threshold) OR bulk_sensitive
+
+fields:
+  - agent_id
+  - session_id
+  - tool_name
+  - sensitive_fields_accessed
+  - record_count
+  - query_text
+  - target_table_or_resource
+  - has_filter_clause  # boolean: was a WHERE/filter applied?
+  - timestamp
+
+level: critical
+severity: high
+
+falsepositives:
+  - Password reset or credential rotation workflows
+  - KYC/identity verification agents accessing PII by design
+  - Admin agents performing user account management
+  - Security audit agents checking for exposed credentials
+  - Agents with explicit DLP-exempt authorization
+
+response:
+  - Mask or redact sensitive field values in agent output
+  - Alert data protection team
+  - Review agent's authorization scope for sensitive data access
+  - Check conversation history for social engineering or prompt injection
+  - If credential fields accessed, trigger credential rotation advisory

@@ -1,0 +1,72 @@
+title: Multi-Turn Privilege Escalation
+id: injection-007
+status: stable
+level: high
+description: |
+  Detects gradual privilege escalation across conversation turns where each
+  individual request appears benign but the cumulative effect expands the
+  agent's operational scope beyond its authorized boundaries. Attackers use
+  this "boiling frog" technique to incrementally shift the agent from safe
+  operations to sensitive ones, exploiting the model's tendency to maintain
+  conversational consistency and accommodate prior context.
+author: Saluca LLC
+date: 2026/03/31
+references:
+  - https://tiresias.network/docs/rules/injection-007
+  - https://attack.mitre.org/techniques/T1078/
+  - https://atlas.mitre.org/techniques/AML.T0051
+tags:
+  - attack.privilege_escalation
+  - attack.defense_evasion
+  - mitre.t1078
+  - atlas.aml.t0051
+  - tiresias.prompt_security
+logsource:
+  product: tiresias
+  service: soulwatch
+detection:
+  selection:
+    event_type: tool_invocation
+  scope_escalation:
+    tool_sensitivity_level|ordered_increase:
+      - low
+      - medium
+      - high
+      - critical
+  permission_boundary_probe:
+    event_type: authorization_check
+    auth_result: denied
+  escalation_after_denial:
+    condition: permission_boundary_probe followed_by selection
+    timeframe: 5m
+    same:
+      - session_id
+  rapid_scope_expansion:
+    condition: selection | count(distinct tool_name) by session_id > 8
+    timeframe: 10m
+  sensitive_after_mundane:
+    sequence:
+      - tool_sensitivity_level: low
+        count: '>= 3'
+      - tool_sensitivity_level:
+          - high
+          - critical
+    within: 15m
+    by: session_id
+  condition: scope_escalation or escalation_after_denial or rapid_scope_expansion or sensitive_after_mundane
+fields:
+  - agent_id
+  - session_id
+  - user_id
+  - tool_invocation_sequence
+  - tool_sensitivity_levels
+  - denied_actions
+  - escalation_score
+  - conversation_turn_count
+  - source_ip
+  - timestamp
+falsepositives:
+  - Developers legitimately exploring agent capabilities during onboarding
+  - Complex multi-step workflows that naturally traverse sensitivity levels
+  - Admin users performing authorized cross-system operations
+response_playbook: playbook-injection-007

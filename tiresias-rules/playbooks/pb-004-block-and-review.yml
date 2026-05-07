@@ -1,0 +1,110 @@
+id: pb-004
+title: Block and Human Review
+description: |
+  Blocks the specific request that triggered the alert and queues it for
+  mandatory human review before the agent may proceed. Used for supply chain
+  integrity violations, persistence mechanism creation, and policy override
+  attempts where automated response alone is insufficient and human judgment
+  is required to determine intent.
+version: "1.0"
+author: Saluca LLC
+severity: high
+
+triggers:
+  - rule_id: supply-001       # Unexpected model version change
+  - rule_id: supply-002       # Provider endpoint change
+  - level: high                # Persistence and policy override rules
+
+actions:
+  - type: block_request
+    description: Block the triggering request and return denial to the agent
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      request_id: "{{ alert.request_id }}"
+      block_scope: specific_request
+      response_code: 403
+      response_message: "Request blocked pending human review — ref: {{ alert.alert_id }}"
+      preserve_request: true
+      preserve_response: true
+
+  - type: forensic_capture
+    description: Preserve full request/response chain for forensic analysis
+    config:
+      target_agent_id: "{{ alert.agent_id }}"
+      capture_scope:
+        - blocked_request_full
+        - request_headers
+        - request_body
+        - upstream_response
+        - session_context
+        - tool_call_chain
+      time_window_before: 30m
+      time_window_after: 0m
+      output_format: jsonl
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/reviews/{{ alert.alert_id }}/"
+      immutable: true
+      chain_of_custody: true
+
+  - type: create_incident
+    description: Create human review ticket with approval gate
+    config:
+      system: "{{ env.INCIDENT_MANAGEMENT_SYSTEM }}"
+      severity: high
+      title: "Review required: {{ alert.rule_title }} — {{ alert.agent_id }}"
+      description: |
+        A request has been blocked and requires human review before the agent
+        may continue this operation.
+
+        Rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Agent: {{ alert.agent_id }}
+        Tenant: {{ alert.tenant_id }}
+        Request ID: {{ alert.request_id }}
+
+        Forensic capture stored at:
+        s3://{{ env.FORENSICS_BUCKET }}/reviews/{{ alert.alert_id }}/
+
+        Actions available:
+        - APPROVE: Release the blocked request and allow the agent to proceed
+        - DENY: Permanently block and escalate to quarantine (pb-001)
+        - INVESTIGATE: Maintain block and open full investigation (pb-003)
+      assignee_group: soc-tier-2
+      requires_approval: true
+      approval_timeout_minutes: 60
+      escalation_on_timeout: pb-001
+      tags:
+        - human-review
+        - supply-chain
+        - "{{ alert.rule_id }}"
+        - "{{ alert.tenant_id }}"
+
+  - type: notify
+    description: Alert security channel that human review is pending
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-alerts"
+      message: |
+        :octagonal_sign: *Request Blocked — Human Review Required*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* High
+        *Action taken:* Request blocked, forensic capture in progress
+        *Review ticket:* {{ incident.url }}
+        *Timeout:* Auto-escalates to quarantine in 60 minutes if unreviewed
+        *Time:* {{ alert.timestamp }}
+
+cooldown_minutes: 5
+requires_approval: true
+
+notification_channels:
+  - slack
+  - email
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1195      # Supply Chain Compromise
+    - T1098      # Account Manipulation
+  mitre_atlas:
+    - AML.T0010  # ML Supply Chain Compromise

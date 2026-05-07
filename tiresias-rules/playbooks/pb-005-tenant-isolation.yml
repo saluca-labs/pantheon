@@ -1,0 +1,157 @@
+id: pb-005
+title: Tenant Isolation Emergency
+description: |
+  Executes emergency tenant isolation when cross-tenant data access or
+  agent impersonation is detected. This is the most severe containment
+  playbook: it isolates the tenant's network segment, suspends all agent
+  sessions within the tenant boundary, and triggers P1 incident response
+  including executive notification. Manual reset is required to restore
+  tenant connectivity — there is no automatic cooldown.
+version: "1.0"
+author: Saluca LLC
+severity: critical
+
+triggers:
+  - rule_id: credential-005   # Session hijacking (cross-tenant vector)
+  - level: critical            # Cross-tenant access, agent impersonation
+
+actions:
+  - type: isolate_tenant
+    description: Isolate tenant network segment to prevent cross-tenant contamination
+    config:
+      tenant_id: "{{ alert.tenant_id }}"
+      isolation_level: full
+      actions:
+        - block_cross_tenant_traffic
+        - block_egress_to_external
+        - allow_management_plane_only
+      enforcement: immediate
+      requires_manual_reset: true
+      reset_authorization: security-lead
+
+  - type: suspend_key
+    description: Suspend all agent SoulKeys within the affected tenant
+    config:
+      target: "tenant:{{ alert.tenant_id }}"
+      scope: all_agents_in_tenant
+      reason: "tenant-isolation: cross-tenant violation detected"
+      revocation_scope: all_sessions
+      prevent_reissue: true
+      ttl_minutes: null  # No auto-expiry; manual reset only
+
+  - type: kill_sessions
+    description: Terminate all active agent sessions in the tenant
+    config:
+      target_tenant_id: "{{ alert.tenant_id }}"
+      scope: all_tenant_sessions
+      grace_period_seconds: 0
+      force: true
+
+  - type: notify
+    description: P1 PagerDuty alert to SOC and on-call security lead
+    config:
+      channel: pagerduty
+      severity: P1
+      routing_key: "{{ env.PAGERDUTY_ROUTING_KEY }}"
+      title: "CRITICAL: Tenant isolation — cross-tenant breach detected"
+      body: |
+        TENANT ISOLATION ACTIVATED
+
+        Tenant {{ alert.tenant_id }} has been fully isolated due to
+        cross-tenant security violation.
+
+        Triggering rule: {{ alert.rule_id }} — {{ alert.rule_title }}
+        Agent: {{ alert.agent_id }}
+        Source IP: {{ alert.source_ip }}
+        Timestamp: {{ alert.timestamp }}
+
+        All agent sessions terminated. All SoulKeys suspended.
+        Network segment isolated. Manual reset required.
+
+        Incident commander assignment required immediately.
+      dedup_key: "tenant-isolation-{{ alert.tenant_id }}"
+      escalation_policy: "{{ env.PAGERDUTY_CRITICAL_POLICY }}"
+
+  - type: notify
+    description: Executive notification for critical tenant breach
+    config:
+      channel: email
+      recipients:
+        - "{{ env.SECURITY_LEAD_EMAIL }}"
+        - "{{ env.CTO_EMAIL }}"
+        - "{{ env.LEGAL_EMAIL }}"
+      subject: "[P1 CRITICAL] Tenant isolation activated — {{ alert.tenant_id }}"
+      body: |
+        A cross-tenant security violation has triggered emergency tenant
+        isolation for tenant {{ alert.tenant_id }}.
+
+        Triggering rule: {{ alert.rule_id }}
+        Affected agent: {{ alert.agent_id }}
+        Time of detection: {{ alert.timestamp }}
+
+        Actions taken automatically:
+        - Tenant network segment fully isolated
+        - All agent SoulKeys in tenant suspended
+        - All active sessions terminated
+        - Forensic log collection initiated
+
+        Manual reset is required to restore tenant operations.
+        Incident commander assignment is required.
+
+  - type: notify
+    description: Slack alert to security and executive channels
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-critical"
+      message: |
+        :red_circle: *TENANT ISOLATION ACTIVATED*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Tenant:* `{{ alert.tenant_id }}`
+        *Agent:* `{{ alert.agent_id }}`
+        *Severity:* Critical — P1
+        *Actions taken:*
+        - Tenant network segment isolated
+        - All tenant agent sessions terminated
+        - All tenant SoulKeys suspended
+        *Manual reset required to restore operations*
+        *Time:* {{ alert.timestamp }}
+
+  - type: forensic_capture
+    description: Full forensic capture of tenant state at time of violation
+    config:
+      target_tenant_id: "{{ alert.tenant_id }}"
+      capture_scope:
+        - all_agent_sessions
+        - all_tool_invocations
+        - cross_tenant_access_logs
+        - network_flow_logs
+        - authentication_events
+        - model_interactions
+        - api_gateway_logs
+      time_window_before: 120m
+      time_window_after: 10m
+      output_format: jsonl
+      destination: "s3://{{ env.FORENSICS_BUCKET }}/tenant-isolation/{{ alert.tenant_id }}/{{ alert.incident_id }}/"
+      immutable: true
+      chain_of_custody: true
+      legal_hold: true
+
+cooldown_minutes: null  # Manual reset only
+requires_approval: false
+
+notification_channels:
+  - pagerduty
+  - slack
+  - email
+
+metadata:
+  created: "2026-03-30"
+  last_updated: "2026-03-30"
+  mitre_attack:
+    - T1563      # Remote Service Session Hijacking
+    - T1199      # Trusted Relationship
+    - T1078.004  # Valid Accounts: Cloud Accounts
+  mitre_atlas:
+    - AML.T0051  # LLM Prompt Injection
+    - AML.T0048  # Exfiltration via ML API
