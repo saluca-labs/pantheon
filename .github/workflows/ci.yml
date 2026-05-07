@@ -153,7 +153,10 @@ jobs:
           uv pip install --system -e packages/memory-client/python
           uv pip install --system -e apps/platform-api
 
-      - name: Run Python tests
+      - name: Run Python tests — platform_auth
+        run: cd packages/auth/python && python -m pytest --tb=short -q
+
+      - name: Run Python tests — platform-api
         run: cd apps/platform-api && python -m pytest --tb=short -q || true
 
   # ── Build ─────────────────────────────────────────────────────────────────────
