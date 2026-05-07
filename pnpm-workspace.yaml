@@ -1,0 +1,4 @@
+packages:
+  - "apps/platform-web"
+  - "apps/memory-service"
+  - "packages/*"
