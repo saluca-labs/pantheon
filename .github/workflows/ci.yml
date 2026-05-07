@@ -163,6 +163,7 @@ jobs:
           uv pip install --system -e packages/observability/python
           uv pip install --system -e packages/memory-client/python
           uv pip install --system -e apps/platform-api
+          uv pip install --system pytest pytest-asyncio pytest-mock httpx
 
       - name: Run Python tests — platform_auth
         run: cd packages/auth/python && python -m pytest --tb=short -q
