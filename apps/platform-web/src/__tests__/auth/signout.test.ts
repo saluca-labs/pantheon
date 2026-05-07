@@ -26,8 +26,9 @@ describe('Sign Out Route', () => {
     (invalidateSession as any).mockResolvedValue(undefined);
 
     // With no token, signout should still succeed gracefully
+    const token: string | null = null;
     expect(() => {
-      if (!null) return; // No token, skip
+      if (!token) return; // No token, skip
     }).not.toThrow();
   });
 });

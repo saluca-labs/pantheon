@@ -19,7 +19,7 @@
  *       refuses to start.
  */
 
-import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify';
 import { Asphodel, SQLiteAdapter, PostgresAdapter } from '@platform/memory';
 
 const PORT = Number(process.env.MEMORY_SERVICE_PORT ?? 8910);
@@ -47,12 +47,17 @@ function buildAdapter() {
 }
 
 async function build(): Promise<FastifyInstance> {
-  const app = Fastify({
-    logger: {
-      level: process.env.LOG_LEVEL ?? 'info',
-      transport: NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
-    },
-  });
+  const loggerOptions: NonNullable<FastifyServerOptions['logger']> =
+    NODE_ENV === 'development'
+      ? {
+          level: process.env.LOG_LEVEL ?? 'info',
+          transport: { target: 'pino-pretty' },
+        }
+      : {
+          level: process.env.LOG_LEVEL ?? 'info',
+        };
+
+  const app: FastifyInstance = Fastify({ logger: loggerOptions });
 
   const db = new Asphodel(buildAdapter());
   await db.init();
@@ -79,7 +84,7 @@ async function build(): Promise<FastifyInstance> {
     topics?: string[];
   };
 
-  app.post('/v1/memories', async (req: FastifyRequest<{ Body: RememberBody }>, reply) => {
+  app.post<{ Body: RememberBody }>('/v1/memories', async (req, reply) => {
     const { content, topics } = req.body ?? ({} as RememberBody);
     if (typeof content !== 'string' || content.length === 0) {
       reply.code(400).send({ error: 'content is required' });
@@ -89,41 +94,42 @@ async function build(): Promise<FastifyInstance> {
     reply.code(201).send(memory);
   });
 
-  app.get('/v1/memories', async (req: FastifyRequest<{
-    Querystring: { limit?: string; offset?: string };
-  }>) => {
-    const limit = Number(req.query.limit ?? 20);
-    const offset = Number(req.query.offset ?? 0);
-    return await db.list(limit, offset);
-  });
+  app.get<{ Querystring: { limit?: string; offset?: string } }>(
+    '/v1/memories',
+    async (req) => {
+      const limit = Number(req.query.limit ?? 20);
+      const offset = Number(req.query.offset ?? 0);
+      return await db.list(limit, offset);
+    },
+  );
 
-  app.get('/v1/memories/recall', async (req: FastifyRequest<{
-    Querystring: { topic?: string; limit?: string };
-  }>, reply) => {
-    const topic = req.query.topic;
-    if (!topic) {
-      reply.code(400).send({ error: 'topic is required' });
-      return;
-    }
-    const limit = Number(req.query.limit ?? 10);
-    return await db.recall(topic, { limit });
-  });
+  app.get<{ Querystring: { topic?: string; limit?: string } }>(
+    '/v1/memories/recall',
+    async (req, reply) => {
+      const topic = req.query.topic;
+      if (!topic) {
+        reply.code(400).send({ error: 'topic is required' });
+        return;
+      }
+      const limit = Number(req.query.limit ?? 10);
+      return await db.recall(topic, { limit });
+    },
+  );
 
-  app.get('/v1/memories/search', async (req: FastifyRequest<{
-    Querystring: { q?: string; limit?: string };
-  }>, reply) => {
-    const q = req.query.q;
-    if (!q) {
-      reply.code(400).send({ error: 'q is required' });
-      return;
-    }
-    const limit = Number(req.query.limit ?? 10);
-    return await db.search(q, { limit });
-  });
+  app.get<{ Querystring: { q?: string; limit?: string } }>(
+    '/v1/memories/search',
+    async (req, reply) => {
+      const q = req.query.q;
+      if (!q) {
+        reply.code(400).send({ error: 'q is required' });
+        return;
+      }
+      const limit = Number(req.query.limit ?? 10);
+      return await db.search(q, { limit });
+    },
+  );
 
-  app.delete('/v1/memories/:id', async (req: FastifyRequest<{
-    Params: { id: string };
-  }>) => {
+  app.delete<{ Params: { id: string } }>('/v1/memories/:id', async (req) => {
     const id = Number(req.params.id);
     const ok = await db.forget(id);
     return { deleted: ok };
