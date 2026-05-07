@@ -1,0 +1,80 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tiresias-migrate-0032
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/component: migration
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: tiresias-migrate-0032
+        app.kubernetes.io/part-of: tiresias
+    spec:
+      serviceAccountName: tiresias-sa
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: migrate
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:migrate-0032
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "waiting for cloud-sql-proxy..."
+              for i in $(seq 1 30); do
+                if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                  echo "cloud-sql-proxy ready after ${i}s"; break
+                fi
+                sleep 1
+              done
+              alembic upgrade 0032
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          env:
+            - name: SOULAUTH_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url
+            - name: SOULAUTH_DATABASE_URL_SYNC
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url-sync
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

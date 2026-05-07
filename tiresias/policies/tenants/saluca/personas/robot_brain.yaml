@@ -1,0 +1,39 @@
+metadata:
+  tenant: saluca
+  persona: robot_brain
+  role: edge_agent
+spec:
+  jit:
+    max_capability_ttl: 180
+    default_capability_ttl: 60
+    require_active_session: true
+    allowed_nodes: ["robot-pi"]
+    operating_window: "24/7"
+    max_concurrent_capabilities: 3
+  model_policies:
+    default_models: ["claude-haiku-4-5-20251001"]
+    task_routing:
+      vision:
+        allowed: ["gemini-2.5-flash", "gemini-2.0-flash"]
+        preferred: "gemini-2.5-flash"
+        description: "Camera feed analysis, obstacle detection"
+      command_parsing:
+        allowed: ["claude-haiku-4-5-20251001"]
+        preferred: "claude-haiku-4-5-20251001"
+        description: "Parse voice/text commands into servo actions"
+      navigation:
+        allowed: ["claude-haiku-4-5-20251001", "local:pathfinder"]
+        preferred: "local:pathfinder"
+        description: "Path planning, obstacle avoidance"
+    forbidden_models: ["claude-opus-4-20250514", "claude-sonnet-4-20250514", "gpt-4o", "gpt-3.5-turbo"]
+    cost_budget:
+      daily_limit_usd: 5.0
+      per_request_max_usd: 0.10
+    enforcement: "strict"
+  resources:
+    memory:
+      - actions: [read]
+        scopes: ["sensor:*", "map:*"]
+    mesh:
+      - actions: [execute]
+        nodes: ["robot-pi"]

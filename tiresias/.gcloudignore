@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.next
+**/__pycache__
+**/*.pyc
+.planning
+.venv
+**/.venv
+cmd/tiresias-exec/tiresias-exec
+sales

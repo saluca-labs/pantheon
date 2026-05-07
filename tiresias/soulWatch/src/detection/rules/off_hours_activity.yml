@@ -1,0 +1,23 @@
+title: Off-Hours Agent Activity
+id: sa-rule-003-off-hours-activity
+status: stable
+level: medium
+description: >
+  Detects agent activity outside configured business hours (00:00-06:00 UTC).
+  Legitimate automated agents may operate 24/7, but human-directed agents
+  operating off-hours warrant investigation.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type:
+      - auth_grant
+      - capability_used
+    context.off_hours: "true"
+  condition: selection
+tags:
+  - attack.execution
+  - soulauth.off_hours
+response_playbook: pb-investigate
+enabled: true

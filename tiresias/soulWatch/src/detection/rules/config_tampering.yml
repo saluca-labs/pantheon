@@ -1,0 +1,22 @@
+title: Config File Tampering - Unauthorized Modification
+id: sa-rule-009-config-tampering
+status: stable
+level: critical
+description: >
+  Detects unauthorized modifications to critical configuration files
+  (.env, docker-compose.yml, policy YAML files, alembic.ini) after
+  application startup. Changes outside of a deployment pipeline indicate tampering.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type: config_integrity_violation
+  condition: selection
+  timeframe: 1m
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+  - tiresias.config_tampering
+response_playbook: pb-auto-quarantine
+enabled: true

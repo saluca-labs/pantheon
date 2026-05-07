@@ -1,0 +1,284 @@
+# Consolidated alert rules for SoulAuth (FINDING-23)
+# All metric names match those exported by src/monitoring/metrics.py:
+#   - soulauth_request_duration_seconds (Histogram: method, path_template, status_code)
+#   - soulauth_auth_requests_total (Counter: decision, resource, tenant_id)
+#   - soulauth_health_check_status (Gauge: component)
+#   - soulauth_token_minting_failures_total (Counter: reason)
+#   - soulauth_policy_sync_last_success_timestamp (Gauge)
+#   - soulauth_pep_decisions_total (Counter: decision)
+#   - soulauth_rate_limit_rejections_total (Counter: endpoint, tenant_id)
+
+groups:
+  - name: soulauth_critical
+    rules:
+      - alert: SoulAuthDown
+        expr: up{job="soulauth"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulAuth instance {{ $labels.instance }} is down"
+          description: "SoulAuth target {{ $labels.instance }} has been unreachable for more than 1 minute."
+          runbook: "https://docs.saluca.dev/runbooks/soulauth-down"
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(soulauth_request_duration_seconds_count{status_code=~"5.."}[5m]))
+            /
+            sum(rate(soulauth_request_duration_seconds_count[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulAuth 5xx error rate exceeds 5%"
+          description: "HTTP 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: DatabaseUnhealthy
+        expr: soulauth_health_check_status{component="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulAuth database health check failing"
+          description: "Database connectivity check has been failing for more than 1 minute on {{ $labels.instance }}."
+
+  - name: soulauth_warning
+    rules:
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulauth_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulAuth p99 latency exceeds 500ms"
+          description: "99th percentile request latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(soulauth_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulAuth p95 latency exceeds 1s"
+          description: "95th percentile request latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: TokenMintingFailures
+        expr: |
+          sum(increase(soulauth_token_minting_failures_total[5m])) > 10
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High token minting failure rate"
+          description: "More than 10 token minting failures in the last 5 minutes ({{ $value }} failures)."
+
+      - alert: PolicySyncStale
+        expr: |
+          (time() - soulauth_policy_sync_last_success_timestamp) > 600
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Policy sync is stale"
+          description: "Last successful policy sync was {{ $value | humanizeDuration }} ago (threshold: 10m)."
+
+      - alert: HighAuthDenialRate
+        expr: |
+          (
+            sum(rate(soulauth_pep_decisions_total{decision="denied"}[5m]))
+            /
+            sum(rate(soulauth_pep_decisions_total[5m]))
+          ) > 0.20
+        for: 3m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High auth denial rate"
+          description: "PEP denial rate is {{ $value | humanizePercentage }} - possible misconfiguration or attack."
+
+      - alert: RateLimitRejectionSpike
+        expr: |
+          sum(increase(soulauth_rate_limit_rejections_total[5m])) > 100
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Rate limit rejection spike"
+          description: "{{ $value }} requests rejected by rate limiting in the last 5 minutes."
+
+      - alert: AuthFailureSpike
+        expr: |
+          sum(rate(soulauth_request_duration_seconds_count{status_code="401"}[5m]))
+          /
+          sum(rate(soulauth_request_duration_seconds_count[5m]))
+          > 0.20
+        for: 3m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "SoulAuth auth failure rate exceeds 20%"
+          description: "401 rate is {{ $value | humanizePercentage }} - possible brute-force or misconfiguration."
+
+  - name: soulgate_critical
+    rules:
+      - alert: SoulGateDown
+        expr: up{job="soulgate"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate instance {{ $labels.instance }} is down"
+          description: "SoulGate target {{ $labels.instance }} has been unreachable for more than 1 minute."
+          runbook: "https://docs.saluca.dev/runbooks/soulgate-down"
+
+      - alert: HighGatewayErrorRate
+        expr: |
+          (
+            sum(rate(soulgate_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(soulgate_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate 5xx error rate exceeds 5%"
+          description: "HTTP 5xx error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: CircuitBreakerOpen
+        expr: soulgate_circuit_state == 2
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulGate circuit breaker open for upstream {{ $labels.upstream }}"
+          description: "Circuit breaker has been open for more than 1 minute, upstream is likely unhealthy."
+
+  - name: soulgate_warning
+    rules:
+      - alert: HighGatewayLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulgate_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate P99 latency exceeds 500ms"
+          description: "99th percentile gateway latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighRateLimitRejections
+        expr: |
+          sum(increase(soulgate_rate_limit_hits_total[5m])) > 100
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate rate limit rejection spike"
+          description: "{{ $value }} requests rejected by rate limiting in the last 5 minutes."
+
+      - alert: UpstreamUnhealthy
+        expr: soulgate_upstream_health == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulGate upstream {{ $labels.upstream }} is unhealthy"
+          description: "Upstream health check has been failing for more than 2 minutes."
+
+  - name: soulwatch_critical
+    rules:
+      - alert: SoulWatchDown
+        expr: up{job="soulwatch"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulWatch instance {{ $labels.instance }} is down"
+          description: "SoulWatch target {{ $labels.instance }} has been unreachable for more than 1 minute."
+          runbook: "https://docs.saluca.dev/runbooks/soulwatch-down"
+
+      - alert: SoulWatchDatabaseUnhealthy
+        expr: soulwatch_health_check_status{component="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SoulWatch database health check failing"
+          description: "Database connectivity check has been failing for more than 1 minute on {{ $labels.instance }}."
+
+  - name: soulwatch_warning
+    rules:
+      - alert: HighWatchLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulwatch_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulWatch P99 latency exceeds 500ms"
+          description: "99th percentile request latency is {{ $value }}s over the last 5 minutes."
+
+      - alert: HighAnomalyRate
+        expr: |
+          sum(increase(soulwatch_anomalies_total[5m])) > 50
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High anomaly detection rate"
+          description: "{{ $value }} anomalies detected in the last 5 minutes."
+
+      - alert: SIEMDeadLetterQueueGrowing
+        expr: soulwatch_siem_dlq_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SIEM dead letter queue growing"
+          description: "DLQ has {{ $value }} events - SIEM forwarding may be failing."
+
+      - alert: HighPipelineLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(soulwatch_pipeline_duration_seconds_bucket[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SoulWatch pipeline P99 latency exceeds 1s"
+          description: "99th percentile event processing latency is {{ $value }}s over the last 5 minutes."

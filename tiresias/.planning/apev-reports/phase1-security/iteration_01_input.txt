@@ -1,0 +1,189 @@
+TIRESIAS PHASE 1 SECURITY REVIEW — ITERATION 1
+=============================================
+
+Review these 5 security issues and provide:
+1. Exact code analysis (quote the vulnerable code)
+2. Security/performance impact explanation
+3. Complete fix with exact code changes
+4. Test updates needed
+5. Verification steps
+
+---
+
+ISSUE S1: SQL INJECTION IN CONTRACTS
+File: src/contracts/chain.py
+Lines: 54-60, 97-102
+
+VULNERABLE CODE (line 54-60):
+```python
+where = " AND ".join(conditions)
+result = await db.execute(text(f"""
+    SELECT id, version, status, content_hash, prev_hash, content,
+           review_status, review_risk_score, submitted_by, created_at
+    FROM _soul_contracts
+    WHERE {where}
+    ORDER BY version DESC LIMIT 1
+"""), params)
+```
+
+VULNERABLE CODE (line 97-102):
+```python
+where = " AND ".join(conditions)
+result = await db.execute(text(f"""
+    SELECT version, content, content_hash, prev_hash
+    FROM _soul_contracts
+    WHERE {where}
+    ORDER BY version ASC
+"""), params)
+```
+
+CONTEXT: conditions list built at lines 43-51:
+```python
+conditions = ["contract_type = :ctype"]
+params = {"ctype": contract_type}
+
+if tenant_id:
+    conditions.append("tenant_id = :tid")
+    params["tid"] = str(tenant_id)
+if partner_id:
+    conditions.append("partner_id = :pid")
+    params["pid"] = str(partner_id)
+```
+
+ANALYZE: Is this actually SQL injection vulnerable? The conditions appear to be hardcoded strings, not user input. But verify if there's any path where user input could reach the where clause.
+
+---
+
+ISSUE S2: SQL INJECTION IN PARTNER ADMIN
+File: src/partner/admin_router.py
+Lines: 646-667
+
+VULNERABLE CODE:
+```python
+where_clause = (" AND ".join(conditions)) if conditions else "1=1"
+
+count_result = await db.execute(
+    text(f"SELECT count(*) FROM _partner_invitations WHERE {where_clause}"),
+    params,
+)
+
+data_result = await db.execute(text(f"""
+    SELECT id, token_hash, partner_name, contact_email, partner_type,
+           commission_rate, status, created_at, expires_at, consumed_at
+    FROM _partner_invitations
+    WHERE {where_clause}
+    ORDER BY created_at DESC
+"""), params)
+```
+
+CONTEXT: Need to see how conditions and params are built (lines 620-645 approximately).
+
+ANALYZE: Same pattern — check if conditions can contain user input.
+
+---
+
+ISSUE S3: GEO-IP PLACEHOLDER
+File: soulGate/src/access/geo.py
+Lines: 18-34
+
+PLACEHOLDER CODE:
+```python
+def resolve_country(ip_address: str) -> Optional[str]:
+    """
+    Resolve IP address to country code.
+    Placeholder implementation - returns None (unknown).
+    In production, use MaxMind GeoLite2 or cloud provider IP metadata.
+    """
+    # Private/reserved IP ranges -> skip geo checks
+    import ipaddress
+    try:
+        addr = ipaddress.ip_address(ip_address)
+        if addr.is_private or addr.is_loopback or addr.is_reserved:
+            return None
+    except ValueError:
+        return None
+
+    # TODO: integrate GeoIP database
+    return None  # <-- ALWAYS RETURNS NONE
+```
+
+ANALYZE: This breaks all geo-fencing rules. Provide production-ready fix using:
+- Option A: MaxMind GeoLite2 (free, requires download)
+- Option B: Cloud provider IP metadata (AWS/Azure/GCP IP ranges)
+- Option C: ip-api.com or similar HTTP API (rate limited)
+
+Recommend Option A for production. Provide implementation.
+
+---
+
+ISSUE S4: CLAW ADAPTER PLACEHOLDERS
+File: src/compatibility/adapter.py
+Lines: 81-147
+
+PLACEHOLDER CODE:
+```python
+class OpenClawAdapter(EnvironmentAdapter):
+    async def execute_agent(self, context, payload):
+        return {
+            "status": "executed",
+            "agent_id": context.agent_id,
+            "environment": "openclaw",
+            "result": "placeholder"  # <-- DOES NOTHING
+        }
+
+class NemoClawAdapter(EnvironmentAdapter):
+    async def execute_agent(self, context, payload):
+        return {
+            "status": "executed",
+            "agent_id": context.agent_id,
+            "environment": "nemoclaw",
+            "result": "placeholder"  # <-- DOES NOTHING
+        }
+
+class NanoclawAdapter(EnvironmentAdapter):
+    async def execute_agent(self, context, payload):
+        return {
+            "status": "executed",
+            "agent_id": context.agent_id,
+            "environment": "nanoclaw",
+            "result": "placeholder"  # <-- DOES NOTHING
+        }
+```
+
+ANALYZE: These are stubs. Either:
+1. Implement proper agent execution (call actual CLAW APIs)
+2. Remove the module if CLAW integration is not MVP-critical
+3. Document as "future feature" with clear roadmap
+
+Check if these adapters are actually called anywhere. If not, recommend removal.
+
+---
+
+ISSUE S5: SOP ENDPOINT PLACEHOLDER
+File: src/tiresias/routers/auth.py
+Lines: 68-76
+
+PLACEHOLDER CODE:
+```python
+def _resolve_identity(soulkey: str) -> dict | None:
+    """Resolve soulkey to identity. Adapt to existing Tiresias auth.
+
+    TODO: Wire to existing Tiresias soulkey resolution.
+    Placeholder that extracts persona from key metadata.
+    """
+    if not soulkey:
+        return None
+    return {"tenant": "saluca", "persona": "alfred"}  # <-- HARDCODED
+```
+
+ANALYZE: This breaks SOP compliance checking. Find the actual SoulKey resolution in Tiresias (likely in src/auth/soulkey.py or src/tiresias/auth/) and wire it up properly.
+
+---
+
+OUTPUT FORMAT:
+For each issue, provide:
+1. VERDICT: Valid vulnerability / False positive / Needs refactoring
+2. SEVERITY: Critical / High / Medium / Low
+3. FIX: Complete code solution
+4. TEST: What test to add
+5. VERIFY: How to confirm fix works

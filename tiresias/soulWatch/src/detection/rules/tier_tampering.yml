@@ -1,0 +1,28 @@
+title: License Tier Tampering - Direct DB Modification
+id: sa-rule-007-tier-tampering
+status: stable
+level: critical
+description: >
+  Detects when a tenant's tier field is modified outside of the legitimate
+  billing flow (Stripe webhook or admin upgrade endpoint). A direct DB update
+  to _soul_tenants.tier bypassing the application layer indicates tampering.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type: tier_changed
+  filter_legitimate:
+    context.source|contains:
+      - "stripe_webhook"
+      - "billing_upgrade"
+      - "admin_license_issue"
+      - "saas_provision"
+  condition: selection and not filter_legitimate
+  timeframe: 1m
+tags:
+  - attack.privilege_escalation
+  - attack.t1548
+  - tiresias.license_tampering
+response_playbook: pb-auto-quarantine
+enabled: true

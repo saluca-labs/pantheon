@@ -1,0 +1,100 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tiresias-retention-sweep
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/component: retention
+spec:
+  # Daily at 02:00 UTC.
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: tiresias-retention-sweep
+            app.kubernetes.io/part-of: tiresias
+        spec:
+          serviceAccountName: tiresias-sa
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          # Native sidecar (K8s >= 1.29): cloud-sql-proxy terminates automatically
+          # when the main container exits.
+          initContainers:
+            - name: cloud-sql-proxy
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+              restartPolicy: Always
+              args:
+                - "--structured-logs"
+                - "--auto-iam-authn"
+                - "--exit-zero-on-sigterm"
+                - "salucainfrastructure:us-central1:tiresias-db"
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                runAsNonRoot: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          containers:
+            - name: retention
+              image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-retention:v0.1.2
+              imagePullPolicy: Always
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  echo "waiting for cloud-sql-proxy..."
+                  for i in $(seq 1 30); do
+                    if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                      echo "cloud-sql-proxy ready after ${i}s"; break
+                    fi
+                    sleep 1
+                  done
+                  exec python /app/retention_sweep.py
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              env:
+                # DRY_RUN=true on first deploy. CESO must flip to 'false' after
+                # observing one or two successful dry-runs.
+                - name: DRY_RUN
+                  value: "true"
+                - name: BATCH_LIMIT
+                  value: "10000"
+                - name: SOULAUTH_DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: tiresias-secrets
+                      key: database-url
+                - name: SOULAUTH_DATABASE_URL_SYNC
+                  valueFrom:
+                    secretKeyRef:
+                      name: tiresias-secrets
+                      key: database-url-sync
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi

@@ -1,0 +1,47 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulgate-backendconfig
+  namespace: tiresias
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8002
+    type: HTTP
+    requestPath: /gate/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulwatch-backendconfig
+  namespace: tiresias
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8001
+    type: HTTP
+    requestPath: /watch/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulauth-backendconfig
+  namespace: tiresias
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8000
+    type: HTTP
+    requestPath: /health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: tiresias-proxy-backendconfig
+  namespace: tiresias
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8080
+    type: HTTP
+    requestPath: /health

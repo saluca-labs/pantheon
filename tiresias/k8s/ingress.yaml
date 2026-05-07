@@ -1,0 +1,178 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: tiresias-cert
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+spec:
+  domains:
+    - tiresias.network
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: tiresias-proxy-cert
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+spec:
+  domains:
+    - proxy.tiresias.network
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tiresias-ingress
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "tiresias-cert,tiresias-proxy-cert,tiresias-platform-cert"
+    kubernetes.io/ingress.global-static-ip-name: "tiresias-ip"
+    networking.gke.io/v1beta1.FrontendConfig: "tiresias-frontend"
+spec:
+  rules:
+    # ---- tiresias.network (marketing site) ----
+    - host: tiresias.network
+      http:
+        paths:
+          # Stripe billing webhooks must keep working on tiresias.network
+          - path: /api/billing/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: marketing-portal
+                port:
+                  number: 80
+          # Marketing site catch-all (must be last)
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: marketing-portal
+                port:
+                  number: 80
+    - host: proxy.tiresias.network
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tiresias-proxy
+                port:
+                  number: 80
+    - host: platform.tiresias.network
+      http:
+        paths:
+          # SoulGate routes
+          - path: /gate/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulgate
+                port:
+                  number: 80
+          # SoulWatch routes
+          - path: /watch/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulwatch
+                port:
+                  number: 80
+          # SoulAuth API routes
+          - path: /health
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /auth/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tokens/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /policies/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tenants/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /admin/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /sdk/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /metrics
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          # SoulAuth v1 API routes (partner, contracts, investigation, teams, etc.)
+          - path: /v1/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          # Next.js API routes (billing webhook, etc.)
+          - path: /api/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal
+                port:
+                  number: 80
+          # Portal frontend (catch-all, must be last)
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal
+                port:
+                  number: 80
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: tiresias-frontend
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT

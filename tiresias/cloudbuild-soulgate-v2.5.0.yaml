@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'soulGate/Dockerfile'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v2.5.0'
+      - '.'
+images:
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulgate:v2.5.0'

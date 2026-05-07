@@ -1,0 +1,74 @@
+TIRESIAS PHASE 4: TESTING & CI - ITERATION 4
+
+Review these issues. For each: VERDICT, SEVERITY, FIX (complete code), TEST, VERIFY.
+
+---
+
+ISSUE T1: No Coverage Gate
+
+File: .github/workflows/ci.yml (or equivalent CI config)
+
+PROBLEM: pytest-cov installed but no coverage threshold enforced.
+CI passes with 0% coverage.
+
+FIX: Add coverage gate (minimum 70% for MVP).
+Configure pytest-cov to fail below threshold.
+
+---
+
+ISSUE T2: No Load Testing Suite
+
+File: New - tests/load/
+
+PROBLEM: No performance/load tests for:
+- Auth endpoint (login, token validation)
+- PDP evaluation
+- Capability token minting
+- Audit logging throughput
+
+FIX: Create Locust load test suite.
+Target: 1000 req/s sustained, p99 < 100ms.
+
+---
+
+ISSUE T3: No Chaos/Failure Tests
+
+File: New - tests/chaos/
+
+PROBLEM: No tests for failure modes:
+- License service down
+- Database failover
+- Redis outage
+- GeoIP database missing
+
+FIX: Create chaos test suite with graceful degradation verification.
+
+---
+
+ISSUE T4: Security Test Suite Gaps
+
+File: tests/security/
+
+PROBLEM: Limited security test coverage.
+Need explicit tests for:
+- SQL injection prevention
+- XSS prevention
+- CSRF token validation
+- Rate limit bypass attempts
+
+FIX: Add security test cases with attack patterns.
+
+---
+
+ISSUE T5: pip-audit Not Gated
+
+File: .github/workflows/ci.yml
+
+PROBLEM: pip-audit installed but not run in CI.
+Vulnerable dependencies can be committed.
+
+FIX: Add pip-audit step to CI, block on known vulnerabilities.
+
+---
+
+OUTPUT: Markdown code blocks. Privacy-first, compliance-driven.

@@ -1,0 +1,52 @@
+# Tiresias - AI Agent Security Platform
+
+> Zero-knowledge agent security for the enterprise. Identity, authorization, and runtime protection — without ever accessing your data.
+
+Tiresias is a runtime security platform purpose-built for AI agents. It provides cryptographic agent identity (SoulAuth), zero-trust policy enforcement, behavioral anomaly detection, and automated quarantine — all operating on metadata only, never touching agent payloads.
+
+## Core Products
+
+- [SoulAuth](https://tiresias.network/platform): Cryptographic agent identity and just-in-time authorization. Hardware-bound soulkey identity, policy-as-code (YAML, git-versioned), zero standing permissions.
+- [SoulWatch](https://tiresias.network/platform): Real-time behavioral analytics with Sigma-compatible detection rules. 18 anomaly types with per-agent baselines, 60 threat patterns scored in 0.39ms.
+- [SoulGate](https://tiresias.network/platform): API security gateway with rate limiting, schema validation, and threat detection at the API layer.
+
+## Key Capabilities
+
+- 18 behavioral anomaly types with per-agent baselines
+- 60 threat patterns scored in 0.39ms average latency
+- Sigma-compatible detection rules for SOC integration
+- Native SIEM output (Splunk, Elastic, Microsoft Sentinel)
+- Prompt injection detection
+- Context window exfiltration detection
+- Privilege escalation via tool call detection
+- Seven graduated automated response actions (alert to full isolation)
+- Multi-tenancy with row-level security
+- Policy-as-code with git-versioned YAML declarations
+- GDPR Article 25 compliance by design
+
+## Architecture
+
+Tiresias uses a zero-knowledge architecture. Agent payloads never leave customer infrastructure. Policy evaluation uses metadata only. Cryptographic proofs replace data inspection. Privacy is architectural, not policy-based.
+
+## Use Cases
+
+- Enterprise AI agent fleet security
+- Agentic AI runtime monitoring
+- Agent-to-agent traffic visibility
+- Compliance and audit trail for AI agents
+- MSSP multi-tenant agent security
+
+## Pricing
+
+- Free tier: 1,000 agent authentications/month
+- Enterprise plans available
+- Contact: https://tiresias.network/company#contact
+
+## Company
+
+- Built by Saluca LLC (San Diego, CA)
+- Website: https://tiresias.network
+- Documentation: https://tiresias.network/docs
+- Developers: https://tiresias.network/developers
+- Security: https://tiresias.network/security
+- Pricing: https://tiresias.network/pricing

@@ -1,0 +1,386 @@
+# =============================================================================
+# Tiresias Platform — Self-Hosted Production Deployment
+# =============================================================================
+#
+# The AI security platform for enterprise LLM governance. Deploys the full
+# Tiresias stack: audit proxy, identity/RBAC, behavioral analytics, API
+# gateway, and management dashboard.
+#
+# Quick start:
+#   1. Copy .env.template to .env and fill in required values
+#   2. docker compose -f docker-compose.production.yml up -d
+#   3. Open http://localhost:3000 for the management dashboard
+#   4. Point your AI agents at http://<host>:8080 (the audit proxy)
+#
+# Enable optional Redis rate limiting:
+#   docker compose -f docker-compose.production.yml --profile rate-limit up -d
+#
+# Minimum requirements: 4 CPU, 8 GB RAM, 50 GB disk
+#
+# Documentation: https://docs.tiresias.network
+# Support: support@tiresias.network
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Shared relational database for all Tiresias services
+  # ---------------------------------------------------------------------------
+  # Stores audit logs, user accounts, RBAC policies, detection rules, and
+  # investigation data. Data is persisted to a named Docker volume.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      # POSTGRES_USER — Database superuser name (e.g. "tiresias")
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      # POSTGRES_PASSWORD — Database superuser password (use a strong random value)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      # POSTGRES_DB — Name of the default database (e.g. "tiresias")
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    ports:
+      # Bind to localhost only — never expose Postgres to the network
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/postgresql
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SoulAuth — Identity, RBAC, detection rules, and investigation engine
+  # ---------------------------------------------------------------------------
+  # Central authentication and authorization service. Issues JWTs, enforces
+  # role-based access control, manages detection policies, and powers the
+  # investigation workflow. All other services validate tokens against SoulAuth.
+  soulauth:
+    image: salucalabs/soulauth:${TIRESIAS_VERSION:-v3.5.0}
+    ports:
+      - "${SOULAUTH_PORT:-8000}:8000"
+    environment:
+      # SOULAUTH_DATABASE_URL — Async PostgreSQL connection string (asyncpg driver)
+      SOULAUTH_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # SOULAUTH_DATABASE_URL_SYNC — Sync PostgreSQL connection string (for migrations)
+      SOULAUTH_DATABASE_URL_SYNC: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # SOULAUTH_JWT_PRIVATE_KEY — Ed25519 or RSA private key for signing JWTs (PEM format)
+      SOULAUTH_JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      # SOULAUTH_JWT_PUBLIC_KEY — Corresponding public key for JWT verification (PEM format)
+      SOULAUTH_JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+      # TIRESIAS_LICENSE_KEY — Your Tiresias license key (required, obtain from Saluca Labs)
+      TIRESIAS_LICENSE_KEY: ${TIRESIAS_LICENSE_KEY:?TIRESIAS_LICENSE_KEY must be set}
+      # TIRESIAS_LICENSE_SECRET — License secret for offline validation
+      TIRESIAS_LICENSE_SECRET: ${TIRESIAS_LICENSE_SECRET:-}
+      # SOULAUTH_MODE — Deployment mode (enterprise for self-hosted)
+      SOULAUTH_MODE: enterprise
+      # SOULAUTH_AUTH_MODE — Authentication mode (local for built-in user management)
+      SOULAUTH_AUTH_MODE: "local"
+      # SOULAUTH_LOCAL_ADMIN_EMAIL — Initial admin email for local auth bootstrap
+      SOULAUTH_LOCAL_ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
+      # SOULAUTH_LOCAL_ADMIN_PASSWORD — Initial admin password for local auth bootstrap
+      SOULAUTH_LOCAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # SOULAUTH_LOG_LEVEL — Logging verbosity: debug, info, warning, error (default: info)
+      SOULAUTH_LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/health'); assert r.status_code == 200"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SoulGate — API gateway (internal only)
+  # ---------------------------------------------------------------------------
+  # Unified API gateway that routes and load-balances internal service calls.
+  # Not exposed to the host network — only reachable by other Tiresias services.
+  soulgate:
+    image: salucalabs/soulgate:${TIRESIAS_VERSION:-v3.5.0}
+    # No host port — internal service only
+    expose:
+      - "8002"
+    environment:
+      # SOULGATE_DATABASE_URL — Async PostgreSQL connection string (asyncpg driver)
+      SOULGATE_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # SOULGATE_SOULAUTH_BASE_URL — Internal URL for SoulAuth (token validation, RBAC lookups)
+      SOULGATE_SOULAUTH_BASE_URL: http://soulauth:8000
+      # SOULGATE_SOULWATCH_BASE_URL — Internal URL for SoulWatch (analytics)
+      SOULGATE_SOULWATCH_BASE_URL: http://soulwatch:8001
+      # SOULGATE_INTERNAL_API_KEY — Shared internal API key for service-to-service auth
+      SOULGATE_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      # SOULGATE_LOG_LEVEL — Logging verbosity (default: info)
+      SOULGATE_LOG_LEVEL: ${LOG_LEVEL:-info}
+      # SOULGATE_PICOCLAW_BASE_URL — Action execution layer URL (leave empty for monitor-only)
+      SOULGATE_PICOCLAW_BASE_URL: ${SOULGATE_PICOCLAW_BASE_URL:-}
+      # SOULGATE_PICOCLAW_ACTION_TOKEN — Shared secret for action pipeline auth
+      SOULGATE_PICOCLAW_ACTION_TOKEN: ${SOULGATE_PICOCLAW_ACTION_TOKEN:-}
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8002/health'); assert r.status_code == 200"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SoulWatch — Behavioral analytics engine (internal only)
+  # ---------------------------------------------------------------------------
+  # Analyzes LLM interaction patterns in real time. Detects anomalous usage,
+  # policy violations, prompt injection attempts, and data exfiltration signals.
+  # Not exposed to the host network — only reachable by other Tiresias services.
+  soulwatch:
+    image: salucalabs/soulwatch:${TIRESIAS_VERSION:-v3.5.0}
+    # No host port — internal service only
+    expose:
+      - "8001"
+    environment:
+      # SOULWATCH_DATABASE_URL — Async PostgreSQL connection for analytics storage
+      SOULWATCH_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # SOULWATCH_SOULAUTH_URL — Internal URL for SoulAuth (token validation)
+      SOULWATCH_SOULAUTH_URL: http://soulauth:8000
+      # SOULWATCH_INTERNAL_API_KEY — Shared internal API key for service-to-service auth
+      SOULWATCH_INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      # SOULWATCH_MODE — Deployment mode (sidecar for self-hosted)
+      SOULWATCH_MODE: sidecar
+      # SOULWATCH_LOG_LEVEL — Logging verbosity (default: info)
+      SOULWATCH_LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8001/health'); assert r.status_code == 200"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Tiresias Proxy — LLM audit proxy with encrypted logging
+  # ---------------------------------------------------------------------------
+  # The core of the platform. Point your AI agents and LLM clients at this
+  # service. It transparently proxies requests to upstream LLM providers while
+  # capturing an encrypted, tamper-evident audit log of every interaction.
+  #
+  # Supports: OpenAI, Anthropic, Azure OpenAI, and any OpenAI-compatible API
+  # via generic proxy mode.
+  tiresias-proxy:
+    image: salucalabs/tiresias-proxy:${TIRESIAS_VERSION:-v3.5.0}
+    ports:
+      # The port your AI agents connect to (default: 8080)
+      - "${PROXY_PORT:-8080}:8080"
+    environment:
+      # TIRESIAS_MODE — Deployment mode. Always "onprem" for self-hosted.
+      TIRESIAS_MODE: onprem
+      # TIRESIAS_TENANT_ID — Unique tenant identifier (UUID, assigned by Saluca Labs)
+      TIRESIAS_TENANT_ID: ${TIRESIAS_TENANT_ID:?TIRESIAS_TENANT_ID must be set}
+      # TIRESIAS_KEK_PROVIDER — Key encryption key provider: "local", "aws-kms", or "gcp-sm"
+      TIRESIAS_KEK_PROVIDER: ${TIRESIAS_KEK_PROVIDER:-local}
+      # TIRESIAS_KEK — 256-bit key encryption key in hex (64 characters). Required when KEK_PROVIDER=local.
+      # Generate with: openssl rand -hex 32
+      TIRESIAS_KEK: ${TIRESIAS_KEK:?TIRESIAS_KEK must be set (64 hex chars)}
+      # TIRESIAS_DATABASE_URL — PostgreSQL connection string for audit log storage
+      TIRESIAS_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # TIRESIAS_PROVIDERS — Comma-separated list of LLM providers to proxy (default: anthropic,openai)
+      TIRESIAS_PROVIDERS: ${TIRESIAS_PROVIDERS:-anthropic,openai}
+      # TIRESIAS_UPSTREAM_URL — Default upstream LLM API base URL
+      TIRESIAS_UPSTREAM_URL: ${TIRESIAS_UPSTREAM_URL:-https://api.openai.com}
+      # TIRESIAS_RETENTION_DAYS — Days to retain full audit logs before purge (default: 90)
+      TIRESIAS_RETENTION_DAYS: ${TIRESIAS_RETENTION_DAYS:-90}
+      # TIRESIAS_USAGE_RETENTION_DAYS — Days to retain usage/billing metrics (default: 365)
+      TIRESIAS_USAGE_RETENTION_DAYS: ${TIRESIAS_USAGE_RETENTION_DAYS:-365}
+      # TIRESIAS_GENERIC_PROXY_MODE — Enable passthrough for non-standard LLM APIs (default: false)
+      TIRESIAS_GENERIC_PROXY_MODE: ${TIRESIAS_GENERIC_PROXY_MODE:-false}
+      # --- AWS KMS (optional, for BYOK customers using AWS) ---
+      # TIRESIAS_AWS_KMS_KEY_ID — AWS KMS key ARN for envelope encryption
+      TIRESIAS_AWS_KMS_KEY_ID: ${TIRESIAS_AWS_KMS_KEY_ID:-}
+      # TIRESIAS_AWS_KMS_REGION — AWS region of the KMS key (e.g. us-east-1)
+      TIRESIAS_AWS_KMS_REGION: ${TIRESIAS_AWS_KMS_REGION:-}
+      # --- GCP Secret Manager (optional, for GCP customers) ---
+      # TIRESIAS_GCP_PROJECT_ID — GCP project containing the secret
+      TIRESIAS_GCP_PROJECT_ID: ${TIRESIAS_GCP_PROJECT_ID:-}
+      # TIRESIAS_GCP_SECRET_ID — GCP Secret Manager secret ID for the KEK
+      TIRESIAS_GCP_SECRET_ID: ${TIRESIAS_GCP_SECRET_ID:-}
+      # --- Redis rate limiting (optional — enable the rate-limit profile) ---
+      # TIRESIAS_REDIS_URL — Redis connection string (e.g. redis://redis:6379)
+      TIRESIAS_REDIS_URL: ${TIRESIAS_REDIS_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Portal — Next.js management dashboard
+  # ---------------------------------------------------------------------------
+  # Web-based UI for managing users, reviewing audit logs, configuring detection
+  # rules, running investigations, and viewing analytics. Communicates with
+  # backend services over the internal tiresias-net network.
+  #
+  # IMPORTANT: NEXT_PUBLIC_* variables are baked into the Next.js build at image
+  # build time. The pre-built salucalabs/tiresias-portal image ships with
+  # defaults pointing to the internal Docker network hostnames below. If you
+  # need to customize these URLs (e.g. for a reverse proxy), you must rebuild
+  # the image with --build-arg overrides.
+  portal:
+    image: salucalabs/tiresias-portal:${TIRESIAS_VERSION:-v3.5.0}
+    # Uncomment the build section below ONLY if you need to override the
+    # NEXT_PUBLIC_* URLs baked into the image (e.g. for custom reverse proxy).
+    # build:
+    #   context: ./portal
+    #   dockerfile: Dockerfile
+    #   args:
+    #     # NEXT_PUBLIC_SOULAUTH_API_URL — SoulAuth API URL as seen by the browser.
+    #     # Default assumes the browser can reach soulauth at the Docker hostname.
+    #     # For production with a reverse proxy, set to your external URL
+    #     # (e.g. https://auth.yourcompany.com).
+    #     NEXT_PUBLIC_SOULAUTH_API_URL: ${NEXT_PUBLIC_SOULAUTH_API_URL:-http://soulauth:8000}
+    #     NEXT_PUBLIC_SOULWATCH_API_URL: ${NEXT_PUBLIC_SOULWATCH_API_URL:-http://soulwatch:8001}
+    #     NEXT_PUBLIC_SOULGATE_API_URL: ${NEXT_PUBLIC_SOULGATE_API_URL:-http://soulgate:8002}
+    ports:
+      - "${PORTAL_PORT:-3000}:3000"
+    environment:
+      # NEXT_PUBLIC_SOULAUTH_API_URL — SoulAuth API URL for browser-side requests.
+      # Must match the build arg if image was rebuilt. For server-side rendering,
+      # this points to the internal Docker hostname.
+      NEXT_PUBLIC_SOULAUTH_API_URL: ${NEXT_PUBLIC_SOULAUTH_API_URL:-http://soulauth:8000}
+      # NEXT_PUBLIC_SOULWATCH_API_URL — SoulWatch API URL for the analytics dashboard
+      NEXT_PUBLIC_SOULWATCH_API_URL: ${NEXT_PUBLIC_SOULWATCH_API_URL:-http://soulwatch:8001}
+      # NEXT_PUBLIC_SOULGATE_API_URL — SoulGate API URL for gateway operations
+      NEXT_PUBLIC_SOULGATE_API_URL: ${NEXT_PUBLIC_SOULGATE_API_URL:-http://soulgate:8002}
+      # NODE_ENV — Always "production" for deployed instances
+      NODE_ENV: production
+    depends_on:
+      soulauth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — Ephemeral rate-limit counter store (optional)
+  # ---------------------------------------------------------------------------
+  # In-memory store for API rate limiting counters. Enable by running with
+  # --profile rate-limit and setting TIRESIAS_REDIS_URL=redis://redis:6379
+  # in your .env file. Data is not persisted — counters reset on restart.
+  redis:
+    image: redis:7-alpine
+    profiles:
+      - rate-limit
+    command:
+      - redis-server
+      # Max memory for rate-limit counters (increase for high-traffic deployments)
+      - --maxmemory
+      - 256mb
+      # Evict least-recently-used keys when memory is full
+      - --maxmemory-policy
+      - allkeys-lru
+      # Disable persistence — rate-limit counters are ephemeral
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /data
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  # Persistent PostgreSQL data — survives container restarts and upgrades.
+  # Back up this volume regularly. See: docker volume inspect tiresias_pgdata
+  pgdata:
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  # Internal bridge network for all Tiresias services. No service is reachable
+  # from outside the host unless explicitly published via "ports".
+  tiresias-net:
+    driver: bridge

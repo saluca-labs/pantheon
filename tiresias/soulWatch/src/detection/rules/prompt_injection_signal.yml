@@ -1,0 +1,29 @@
+title: Prompt Injection Signal - Sudden Admin Resource Access
+id: sa-rule-005-prompt-injection
+status: stable
+level: critical
+description: >
+  Detects when an agent that normally accesses only user-level resources suddenly
+  begins requesting access to admin or system resources. This is a strong signal
+  for prompt injection or agent compromise, where the agent's behavior has been
+  redirected by malicious input.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type:
+      - auth_grant
+      - auth_deny
+      - escalation_requested
+    resource|startswith: "admin"
+  filter_system:
+    resource|startswith: "system"
+  condition: selection OR filter_system
+tags:
+  - attack.initial_access
+  - attack.t1190
+  - soulauth.prompt_injection
+  - soulauth.agent_compromise
+response_playbook: pb-auto-quarantine
+enabled: true
