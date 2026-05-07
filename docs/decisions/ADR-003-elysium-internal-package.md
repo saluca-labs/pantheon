@@ -57,16 +57,20 @@ packages/memory/
   README.md     (notes vendored commit)
 ```
 
-## Python Access
+## Python Access (resolved)
 
-In v1, `@platform/memory` is consumed only by `apps/platform-web` (TypeScript-to-TypeScript). Python services (`apps/platform-api`) do not yet have access to memory capabilities.
+Python services (`apps/platform-api`) consume memory capabilities through a thin Node sidecar:
 
-**Follow-up options for Python access:**
-1. A thin Node.js HTTP sidecar (`apps/platform-api/memory-service/`) that exposes memory via REST
-2. A Python port of the core memory algorithms
-3. A shared SQLite database file that both runtimes read (for the SQLite adapter only)
+- **`apps/memory-service/`** — Fastify HTTP service that wraps `@platform/memory`. Exposes `POST /v1/memories`, `GET /v1/memories`, `GET /v1/memories/recall`, `GET /v1/memories/search`, `DELETE /v1/memories/:id`, plus `/health/{live,ready}`. Auth via shared `MEMORY_SERVICE_KEY` header. Refuses to start in production without a key.
+- **`packages/memory-client/python/`** — Async `httpx` client (`platform_memory_client.MemoryClient`) that mirrors the JS `Asphodel` API surface. Used by `apps/platform-api`.
+- **Compose wiring** — `memory-service` is part of the `default` and `full` profiles. `platform-api` `depends_on: memory-service: service_healthy` so it cannot start before memory is reachable.
 
-Option 1 (HTTP sidecar) is the recommended follow-up per spec Phase F guidance.
+This was the recommended follow-up from the original ADR. Other options considered and rejected:
+
+| Option | Why not |
+|---|---|
+| Python port of the algorithms | Doubles maintenance surface; drifts from upstream elysium. |
+| Shared SQLite file across runtimes | Lock contention; SQLite-only (we want Postgres path too); breaks containerization where each service has its own filesystem. |
 
 ## Consequences
 

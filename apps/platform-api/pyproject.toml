@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 
 [project.dependencies]
 platform-auth = { path = "../../packages/auth/python", develop = true }
+platform-memory-client = { path = "../../packages/memory-client/python", develop = true }
 
 [project.scripts]
 soulauth = "src.cli:main"
