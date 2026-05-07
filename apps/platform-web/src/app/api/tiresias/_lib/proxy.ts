@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from '@workos-inc/authkit-nextjs';
-import { extractRoleFromSession, checkPermission } from '@/lib/rbac/check';
+import { cookies } from 'next/headers';
+import { Pool } from 'pg';
+import { validateSession, getSessionToken } from '@platform/auth';
+import { extractRoleFromLocalSession, hasPermission } from '@/lib/rbac/check';
 import { Permission } from '@/lib/rbac/permissions';
 import { buildIdentityHeaders } from './headers';
 
 const TIRESIAS_API_URL = process.env.TIRESIAS_API_URL ?? 'http://localhost:8900';
 const TIRESIAS_API_KEY = process.env.TIRESIAS_API_KEY ?? '';
+
+let _pool: Pool | null = null;
+function getPool(): Pool {
+  if (!_pool) {
+    _pool = new Pool({ connectionString: process.env['DATABASE_URL'], max: 5 });
+  }
+  return _pool;
+}
 
 export interface ProxyOptions {
   requiredPermission?: Permission;
@@ -50,12 +60,12 @@ export function filterByTeam<T extends Record<string, unknown>>(
 }
 
 /**
- * BFF proxy helper that bridges WorkOS sessions to Tiresias backend
+ * BFF proxy helper that bridges the local session to the Tiresias backend
  * API key + identity headers.
  *
  * Flow:
- * 1. Authenticate via WorkOS session
- * 2. Extract role from JWT
+ * 1. Authenticate via local session cookie (validated against Postgres)
+ * 2. Extract role from the session user record
  * 3. Check permission (if required)
  * 4. Forward request to backend with API key + identity headers
  * 5. Apply team filtering (D-04 stopgap)
@@ -66,19 +76,24 @@ export async function proxyToBackend(
   backendPath: string,
   options: ProxyOptions = {},
 ): Promise<NextResponse> {
-  // 1. Authenticate
-  const session = await withAuth();
-  if (!session.user) {
+  // 1. Authenticate via local session
+  const cookieStore = await cookies();
+  const token = getSessionToken(cookieStore as any);
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Extract identity from JWT
-  const identity = extractRoleFromSession(session);
+  const result = await validateSession(token, getPool());
+  if (!result) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 2. Extract identity from the local session user
+  const identity = extractRoleFromLocalSession(result.user);
 
   // 3. Permission check (if required)
   if (options.requiredPermission) {
-    const result = checkPermission(session, options.requiredPermission);
-    if (!result.allowed) {
+    if (!hasPermission(identity.role, options.requiredPermission)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
   }
