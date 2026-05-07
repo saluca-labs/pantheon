@@ -1,0 +1,6 @@
+name: mock
+version: 1.0.0
+mcp_server:
+  type: stdio
+  command: ["python", "-m", "tests.mock_plugin"]
+  timeout_seconds: 5

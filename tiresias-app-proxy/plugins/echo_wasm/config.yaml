@@ -1,0 +1,35 @@
+name: echo-wasm
+version: 1.0.0
+description: >
+  Example Wasm-sandboxed plugin that echoes input back.
+  Demonstrates the Wasm transport, capability declaration, and resource limits.
+
+mcp_server:
+  type: wasm
+  wasm_path: plugins/echo_wasm/echo.wasm
+  capabilities:
+    - "echo:call"
+  resource_limits:
+    memory_pages: 64
+    fuel: 100000000
+  timeout_seconds: 10
+
+tools:
+  - name: echo
+    description: "Echo the input text back unchanged."
+    inputSchema:
+      type: object
+      properties:
+        text:
+          type: string
+          description: "Text to echo back."
+      required:
+        - text
+    annotations:
+      tiresias:capability: "echo:call"
+
+policies:
+  rules: []
+
+acl:
+  allow_all: true

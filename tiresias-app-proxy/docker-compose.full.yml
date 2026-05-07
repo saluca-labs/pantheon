@@ -1,0 +1,57 @@
+version: "3.9"
+
+# Full stack: App Proxy + PicoClaw agent runtime
+# Usage:
+#   cp /path/to/saluca-deploy/.env .env
+#   docker compose -f docker-compose.full.yml up -d
+
+services:
+  app-proxy:
+    image: tiresias-app-proxy:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      APP_PROXY_DATABASE_URL: "sqlite+aiosqlite:////app/data/app_proxy.db"
+      APP_PROXY_POLICIES_DIR: "/app/policies/cedar"
+      APP_PROXY_CEDAR_SCHEMA_PATH: "/app/policies/cedar_schema.json"
+      APP_PROXY_POLICY_ENFORCEMENT_MODE: "strict"
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_APP_TOKEN: "${SLACK_APP_TOKEN}"
+    volumes:
+      - app_proxy_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  picoclaw:
+    image: picoclaw:latest
+    environment:
+      # App Proxy connection — uses Docker network DNS
+      APP_PROXY_URL: "http://app-proxy:8081"
+      APP_PROXY_AGENT_ID: "${AGENT_ID:-alfred}"
+      APP_PROXY_TENANT_ID: "${TENANT_ID:-saluca}"
+      # Slack tokens (PicoClaw may also need direct access for legacy paths)
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_APP_TOKEN: "${SLACK_APP_TOKEN}"
+      # Model routing
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      # Soul memory
+      SOUL_API_KEY: "${SOUL_API_KEY}"
+      SOUL_API_URL: "${SOUL_API_URL}"
+      # Tiresias governance
+      TIRESIAS_ACTION_TOKEN: "${TIRESIAS_ACTION_TOKEN}"
+    depends_on:
+      app-proxy:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  app_proxy_data:
