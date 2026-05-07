@@ -1,0 +1,26 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-portal'
+    args: [
+      'build',
+      '--build-arg', 'NEXT_PUBLIC_SOULAUTH_API_URL=http://partner-api.partner-portal.svc.cluster.local',
+      '-t', 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v3.6.1',
+      '-f', 'portal/Dockerfile',
+      './portal'
+    ]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-portal'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v3.6.1'
+    waitFor: ['build-portal']
+
+images:
+  - 'us-central1-docker.pkg.dev/salucainfrastructure/tiresias/portal:v3.6.1'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: GCS_ONLY
+
+timeout: '1800s'

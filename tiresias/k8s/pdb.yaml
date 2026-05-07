@@ -1,0 +1,63 @@
+# PodDisruptionBudgets for Tiresias services
+# Ensures at least 1 pod remains available during voluntary disruptions
+# (node drains, cluster upgrades, rolling restarts).
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulauth-pdb
+  namespace: tiresias
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: tiresias
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulauth
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulgate-pdb
+  namespace: tiresias
+  labels:
+    app: soulgate
+    app.kubernetes.io/name: soulgate
+    app.kubernetes.io/part-of: tiresias
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulgate
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulwatch-pdb
+  namespace: tiresias
+  labels:
+    app: soulwatch
+    app.kubernetes.io/name: soulwatch
+    app.kubernetes.io/part-of: tiresias
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulwatch
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: portal-pdb
+  namespace: tiresias
+  labels:
+    app: portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/part-of: tiresias
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: portal

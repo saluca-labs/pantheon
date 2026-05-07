@@ -1,0 +1,257 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiresias-sa
+  namespace: tiresias
+  labels:
+    app.kubernetes.io/part-of: tiresias
+  annotations:
+    iam.gke.io/gcp-service-account: tiresias-sa@salucainfrastructure.iam.gserviceaccount.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soulauth
+  namespace: tiresias
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: tiresias
+    app.kubernetes.io/component: identity-engine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: soulauth
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: soulauth
+        app.kubernetes.io/name: soulauth
+        app.kubernetes.io/part-of: tiresias
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: tiresias-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: soulauth
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/soulauth:v3.6.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: SOULAUTH_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url
+            - name: SOULAUTH_DATABASE_URL_SYNC
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: database-url-sync
+            - name: SOULAUTH_JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: jwt-private-key
+            - name: SOULAUTH_JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: jwt-public-key
+            - name: SOULAUTH_JWT_KID
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: jwt-kid
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: stripe-secret-key
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: stripe-webhook-secret
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: resend-api-key
+            - name: SOULAUTH_RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: resend-api-key
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: internal-api-key
+            - name: LINEAR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: linear-api-key
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: openrouter-api-key
+            - name: METRICS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: metrics-auth-token
+            - name: STRIPE_PRICE_STARTER_MONTHLY
+              value: "price_1TDMSlBkXMYmrc2L29W09pQl"
+            - name: STRIPE_PRICE_STARTER_ANNUAL
+              value: "price_1TDMSlBkXMYmrc2LuuaUN5Cp"
+            - name: STRIPE_PRICE_PRO_MONTHLY
+              value: "price_1TDMT2BkXMYmrc2Lhf1whQpi"
+            - name: STRIPE_PRICE_PRO_ANNUAL
+              value: "price_1TDMT2BkXMYmrc2LnBUoJEww"
+            - name: STRIPE_PRICE_ENTERPRISE_MONTHLY
+              value: "price_1TDjH4BkXMYmrc2LBA1vL1qs"
+            - name: STRIPE_PRICE_ENTERPRISE_ANNUAL  # Intentionally empty — Enterprise is contact-sales only (no self-serve annual checkout)
+              value: ""
+            - name: SOULAUTH_TRIAL_FROM_EMAIL
+              value: "Tiresias <tiresias.onboarding@saluca.com>"
+            - name: SOULAUTH_LOG_LEVEL
+              value: "INFO"
+            - name: SOULAUTH_DEBUG
+              value: "false"
+            - name: SOULAUTH_MODE
+              value: "enterprise"
+            - name: TIRESIAS_LICENSE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: tiresias-license-secret
+            - name: TIRESIAS_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: tiresias-license-key
+            - name: SOULAUTH_LICENSE_REQUIRED
+              value: "true"
+            - name: TRIAL_VERIFY_BASE_URL
+              value: "https://api.tiresias.network"
+            - name: SOULAUTH_OIDC_ENABLED
+              value: "true"
+            - name: SOULAUTH_PUBLIC_URL
+              value: "https://tiresias.network"
+            - name: SOULAUTH_OIDC_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: oidc-secret-key
+            - name: SOULAUTH_OIDC_STATE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tiresias-secrets
+                  key: oidc-state-secret
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulauth
+  namespace: tiresias
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: tiresias
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "soulauth-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soulauth

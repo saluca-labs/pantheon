@@ -1,0 +1,22 @@
+title: Tool Invocation with Non-Zero Exit Code Burst
+id: aletheia-tool-002
+status: stable
+level: medium
+description: >
+  Multiple tool invocations failing in rapid succession may indicate
+  misconfiguration, brute-force attempts, or abuse of CLI tooling.
+logsource:
+  product: tiresias
+  service: aletheia
+detection:
+  selection:
+    event_type: tool_invocation
+  filter_failures:
+    exit_code|gt: 0
+  condition: selection and filter_failures
+  timeframe: 5m
+  count: 10
+tags:
+  - aletheia.tool_errors
+response_playbook: rate_limit_and_alert
+enabled: true

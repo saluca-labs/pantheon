@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Keys
+keys/
+*.pem
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Alembic
+alembic/versions/*.pyc
+.github/
+
+# Kubernetes secrets with real values - use k8s/secrets.yaml.example instead
+k8s/secrets.yaml
+.env.cloud
+
+# Builder logs (operational, not source)
+BUILDER_*.md
+SECURITY_INCIDENTS_LOG.jsonl
+

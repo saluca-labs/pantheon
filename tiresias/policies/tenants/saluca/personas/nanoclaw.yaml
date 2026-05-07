@@ -1,0 +1,39 @@
+metadata:
+  tenant: saluca
+  persona: nanoclaw
+  role: dev_agent
+spec:
+  jit:
+    max_capability_ttl: 300
+    default_capability_ttl: 120
+    require_active_session: true
+    allowed_nodes: ["nas00", "gcp-vm"]
+    operating_window: "24/7"
+    max_concurrent_capabilities: 5
+  model_policies:
+    default_models: ["claude-sonnet-4-20250514"]
+    task_routing:
+      code_generation:
+        allowed: ["claude-sonnet-4-20250514"]
+        preferred: "claude-sonnet-4-20250514"
+        description: "Code writing, refactoring"
+      code_review:
+        allowed: ["claude-haiku-4-5-20251001"]
+        preferred: "claude-haiku-4-5-20251001"
+        description: "Linting, style checks"
+      summarization:
+        allowed: ["claude-haiku-4-5-20251001"]
+        preferred: "claude-haiku-4-5-20251001"
+        description: "PR summaries, commit messages"
+    forbidden_models: ["claude-opus-4-20250514", "gpt-4o", "gpt-3.5-turbo"]
+    cost_budget:
+      daily_limit_usd: 10.0
+      per_request_max_usd: 0.50
+    enforcement: "strict"
+  resources:
+    memory:
+      - actions: [read, write]
+        scopes: ["code:*", "git:*"]
+    vault:
+      - actions: [read]
+        scopes: ["github_token", "npm_token"]

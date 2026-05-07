@@ -1,0 +1,139 @@
+## Local on-prem instance — single complete Tiresias stack on minipc.
+## Uses tiresias-pg from the saluca stack (saluca-deploy_saluca-net).
+## Ports: proxy 8080, soulauth 8000, portal 3000, soulgate/soulwatch internal.
+
+services:
+  # Dummy postgres — we use tiresias-pg from saluca stack instead
+  postgres:
+    image: postgres:16-alpine
+    entrypoint: ["sh", "-c", "while true; do sleep 3600; done"]
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 2s
+      retries: 1
+    read_only: false
+    cap_drop: []
+    security_opt: []
+    volumes: []
+    ports: !override
+      - "127.0.0.1:5433:5432"
+
+  # ---------------------------------------------------------------------------
+  # Tiresias Proxy — LLM audit proxy with encrypted logging
+  # ---------------------------------------------------------------------------
+  tiresias-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    ports:
+      - "0.0.0.0:8080:8080"
+    environment:
+      TIRESIAS_MODE: onprem
+      TIRESIAS_TENANT_ID: ${TIRESIAS_TENANT_ID}
+      TIRESIAS_KEK_PROVIDER: ${TIRESIAS_KEK_PROVIDER:-local}
+      TIRESIAS_KEK: ${TIRESIAS_KEK}
+      TIRESIAS_DATABASE_URL: postgresql://tiresias:tiresias@tiresias-pg:5432/tiresias
+      TIRESIAS_PROVIDERS: ${TIRESIAS_PROVIDERS:-anthropic,openai}
+      TIRESIAS_UPSTREAM_URL: ${TIRESIAS_UPSTREAM_URL:-https://api.openai.com}
+      TIRESIAS_RETENTION_DAYS: ${TIRESIAS_RETENTION_DAYS:-90}
+      TIRESIAS_USAGE_RETENTION_DAYS: ${TIRESIAS_USAGE_RETENTION_DAYS:-365}
+      TIRESIAS_GENERIC_PROXY_MODE: ${TIRESIAS_GENERIC_PROXY_MODE:-false}
+      TIRESIAS_REDIS_URL: ""
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tiresias-net
+      - saluca-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SoulAuth — proper ports, shared DB via saluca-net
+  # ---------------------------------------------------------------------------
+  soulauth:
+    ports: !override
+      - "0.0.0.0:8000:8000"
+    volumes:
+      - ./keys:/app/keys:ro
+    environment:
+      SOULAUTH_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+      SOULAUTH_DATABASE_URL_SYNC: postgresql://tiresias:tiresias@tiresias-pg:5432/tiresias
+      SOULAUTH_DEBUG: "false"
+      SOULAUTH_MODE: "enterprise"
+      SOULAUTH_LICENSE_REQUIRED: "false"
+      SOULAUTH_AUTH_MODE: "local,oidc"
+      SOULAUTH_JWT_PRIVATE_KEY_PATH: /app/keys/private.pem
+      SOULAUTH_JWT_PUBLIC_KEY_PATH: /app/keys/public.pem
+      SOULAUTH_JWT_KID: "minipc-2026-04"
+      ENVIRONMENT: "production"
+      TIRESIAS_LICENSE_KEY: ${TIRESIAS_LICENSE_KEY:-}
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  # ---------------------------------------------------------------------------
+  # SoulGate — internal, shared DB
+  # ---------------------------------------------------------------------------
+  soulgate:
+    ports:
+      - "0.0.0.0:8002:8002"
+    environment:
+      SOULGATE_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+      SOULGATE_SOULAUTH_BASE_URL: http://soulauth:8000
+      SOULGATE_SOULWATCH_BASE_URL: http://soulwatch:8001
+      SOULGATE_PICOCLAW_BASE_URL: http://picoclaw-saluca:18790
+      SOULGATE_PICOCLAW_ACTION_TOKEN: "46b10516e6add9e82335e2b34489040124a07fb2243d176338d712bcee2dff57"
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  # ---------------------------------------------------------------------------
+  # SoulWatch — internal, shared DB
+  # ---------------------------------------------------------------------------
+  soulwatch:
+    ports:
+      - "0.0.0.0:8001:8001"
+    environment:
+      SOULWATCH_DATABASE_URL: postgresql+asyncpg://tiresias:tiresias@tiresias-pg:5432/tiresias
+    networks:
+      - tiresias-net
+      - saluca-net
+
+  # ---------------------------------------------------------------------------
+  # Portal — full UI with platform admin
+  # ---------------------------------------------------------------------------
+  portal:
+    ports: !override
+      - "0.0.0.0:3000:3000"
+    environment:
+      SOULAUTH_INTERNAL_URL: http://soulauth:8000
+      SOULWATCH_INTERNAL_URL: http://soulwatch:8001
+      NEXT_PUBLIC_SOULGATE_API_URL: http://soulgate:8002
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+  # Monitoring off by default — enable with --profile monitoring
+  prometheus:
+    profiles: ["monitoring"]
+
+  alertmanager:
+    profiles: ["monitoring"]
+
+networks:
+  saluca-net:
+    external: true
+    name: saluca-deploy_saluca-net

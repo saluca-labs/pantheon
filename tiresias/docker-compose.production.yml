@@ -1,0 +1,168 @@
+# Tiresias — Self-Hosted Production Deployment
+#
+# Single-file deploy for all tiers. No overlays needed.
+#
+# Usage:
+#   cp .env.template .env
+#   # Edit .env: set TIRESIAS_TENANT_ID, TIRESIAS_KEK, TIRESIAS_LICENSE_KEY
+#   docker compose -f docker-compose.production.yml up -d
+#
+# Optional: enable Redis rate limiting
+#   docker compose -f docker-compose.production.yml --profile rate-limit up -d
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — shared database for all Tiresias services
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run/postgresql
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Tiresias Proxy — LLM audit proxy with encrypted logging
+  # ---------------------------------------------------------------------------
+  tiresias-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    ports:
+      - "${PROXY_PORT:-8080}:8080"
+    environment:
+      TIRESIAS_MODE: onprem
+      TIRESIAS_TENANT_ID: ${TIRESIAS_TENANT_ID:?TIRESIAS_TENANT_ID must be set}
+      TIRESIAS_KEK_PROVIDER: ${TIRESIAS_KEK_PROVIDER:-local}
+      TIRESIAS_KEK: ${TIRESIAS_KEK:?TIRESIAS_KEK must be set (64 hex chars)}
+      TIRESIAS_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      TIRESIAS_PROVIDERS: ${TIRESIAS_PROVIDERS:-anthropic,openai}
+      TIRESIAS_UPSTREAM_URL: ${TIRESIAS_UPSTREAM_URL:-https://api.openai.com}
+      TIRESIAS_RETENTION_DAYS: ${TIRESIAS_RETENTION_DAYS:-90}
+      TIRESIAS_USAGE_RETENTION_DAYS: ${TIRESIAS_USAGE_RETENTION_DAYS:-365}
+      TIRESIAS_GENERIC_PROXY_MODE: ${TIRESIAS_GENERIC_PROXY_MODE:-false}
+      # AWS KMS (for BYOK customers)
+      TIRESIAS_AWS_KMS_KEY_ID: ${TIRESIAS_AWS_KMS_KEY_ID:-}
+      TIRESIAS_AWS_KMS_REGION: ${TIRESIAS_AWS_KMS_REGION:-}
+      # GCP Secret Manager (for GCP customers)
+      TIRESIAS_GCP_PROJECT_ID: ${TIRESIAS_GCP_PROJECT_ID:-}
+      TIRESIAS_GCP_SECRET_ID: ${TIRESIAS_GCP_SECRET_ID:-}
+      # Redis rate limiting (optional — set TIRESIAS_REDIS_URL to enable)
+      TIRESIAS_REDIS_URL: ${TIRESIAS_REDIS_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # SoulAuth — Identity, RBAC, detection, investigation
+  # ---------------------------------------------------------------------------
+  soulauth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${SOULAUTH_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+      TIRESIAS_LICENSE_KEY: ${TIRESIAS_LICENSE_KEY:?TIRESIAS_LICENSE_KEY must be set}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis — Ephemeral rate-limit counter store (optional)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - tiresias-net
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /data
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    profiles:
+      - rate-limit
+
+volumes:
+  pgdata:
+
+networks:
+  tiresias-net:
+    driver: bridge
