@@ -1,0 +1,35 @@
+# Tiresias SOC — Grafana Notification Policies
+
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: Telegram - Alfred
+    group_by: ['alertname', 'host']
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - receiver: Telegram - Alfred
+        matchers:
+          - severity = critical
+        group_wait: 10s
+        group_interval: 1m
+        repeat_interval: 1h
+        continue: false
+
+      - receiver: Telegram - Alfred
+        matchers:
+          - severity = warning
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+        continue: false
+
+      - receiver: Daily Briefing
+        matchers:
+          - severity =~ "info|low"
+        group_wait: 5m
+        group_interval: 1h
+        repeat_interval: 24h
+        continue: false

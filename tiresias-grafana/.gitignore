@@ -1,0 +1,13 @@
+.env
+*.pem
+*.key
+metrics-token
+grafana-data/
+loki-data/
+prometheus-data/
+positions.yaml
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
