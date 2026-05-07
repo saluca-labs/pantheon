@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  app-proxy:
+    image: tiresias-app-proxy:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      APP_PROXY_DATABASE_URL: "sqlite+aiosqlite:////app/data/app_proxy.db"
+      APP_PROXY_POLICIES_DIR: "/app/policies/cedar"
+      APP_PROXY_CEDAR_SCHEMA_PATH: "/app/policies/cedar_schema.json"
+      APP_PROXY_POLICY_ENFORCEMENT_MODE: "strict"
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_APP_TOKEN: "${SLACK_APP_TOKEN}"
+    volumes:
+      - app_proxy_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  app_proxy_data:

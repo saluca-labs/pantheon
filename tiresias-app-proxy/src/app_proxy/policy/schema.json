@@ -1,0 +1,82 @@
+{
+  "Tiresias": {
+    "entityTypes": {
+      "Tenant": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "tier": { "type": "String", "required": true },
+            "max_agents": { "type": "Long", "required": true }
+          }
+        }
+      },
+      "Agent": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "soulkey": { "type": "String", "required": true },
+            "roles": { "type": "Set", "element": { "type": "String" }, "required": true }
+          }
+        },
+        "memberOfTypes": ["Tenant"]
+      },
+      "Plugin": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "classification": { "type": "String", "required": true },
+            "owner_tenant": { "type": "String", "required": true }
+          }
+        }
+      }
+    },
+    "actions": {
+      "tool_call": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Plugin"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "tool_name": { "type": "String", "required": true },
+              "rate_count": { "type": "Long", "required": true },
+              "rate_window_seconds": { "type": "Long", "required": true },
+              "hour_of_day": { "type": "Long", "required": true },
+              "has_approval": { "type": "Boolean", "required": true },
+              "estimated_cost_usd": { "type": "Long", "required": true },
+              "input_keys": { "type": "Set", "element": { "type": "String" }, "required": true }
+            }
+          }
+        }
+      },
+      "read": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Plugin"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "tool_name": { "type": "String", "required": true },
+              "hour_of_day": { "type": "Long", "required": true }
+            }
+          }
+        }
+      },
+      "write": {
+        "appliesTo": {
+          "principalTypes": ["Agent"],
+          "resourceTypes": ["Plugin"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "tool_name": { "type": "String", "required": true },
+              "hour_of_day": { "type": "Long", "required": true },
+              "has_approval": { "type": "Boolean", "required": true },
+              "rate_count": { "type": "Long", "required": true }
+            }
+          }
+        }
+      }
+    }
+  }
+}
