@@ -57,6 +57,9 @@ from src.prh.router import router as prh_router
 from src.tenant.router import router as tenant_router
 from src.support.router import router as support_router
 from src.chatbot.router import router as chatbot_router
+from src.platform import init_memory_client, shutdown_memory_client
+from src.platform.identity_router import router as platform_identity_router
+from src.platform.health_router import router as platform_health_router
 
 settings = get_settings()
 
@@ -343,6 +346,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("billing.grace_sweep_start_failed", error=str(e))
 
+    # Initialise shared MemoryClient (platform-v2 unification).
+    # Failure is non-fatal: endpoints depending on memory will return 503
+    # individually; routes that don't touch memory keep working.
+    try:
+        await init_memory_client(app)
+        logger.info("platform.memory_client_started")
+    except Exception as e:
+        logger.warning("platform.memory_client_start_failed", error=str(e))
+
     yield
 
     # Shutdown
@@ -383,6 +395,12 @@ async def lifespan(app: FastAPI):
                 async_sync_manager.stop()
         except Exception:
             pass
+
+    # Close MemoryClient httpx pool
+    try:
+        await shutdown_memory_client(app)
+    except Exception as e:
+        logger.warning("platform.memory_client_stop_failed", error=str(e))
 
     await close_db()
 
@@ -523,6 +541,10 @@ app.include_router(chatbot_router)
 # Portal policy management API (Phase 3 — SaaS two-tier)
 from src.portal.policy_router import router as portal_policy_router
 app.include_router(portal_policy_router)
+
+# Platform v2 unification routers — BFF identity echo + aggregated readiness
+app.include_router(platform_identity_router)
+app.include_router(platform_health_router)
 
 
 @app.get(
