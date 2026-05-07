@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "platform-auth"
+version = "0.1.0"
+description = "Local-auth default for Python services: Argon2id password hashing + Postgres session management"
+requires-python = ">=3.11"
+dependencies = [
+  "argon2-cffi>=23.0.0",
+  "pydantic>=2.0.0",
+  "sqlalchemy>=2.0.0",
+  "itsdangerous>=2.2.0",
+  "fastapi>=0.115.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "httpx>=0.28.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["platform_auth"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
