@@ -15,6 +15,7 @@ build/
 .next/
 out/
 target/
+*.tsbuildinfo
 
 # Environment / secrets
 .env
