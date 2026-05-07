@@ -1,0 +1,60 @@
+TIRESIAS PHASE 3: CONFIGURATION - ITERATION 3
+
+Review these issues. For each: VERDICT, SEVERITY, FIX (complete code), TEST, VERIFY.
+
+---
+
+ISSUE C1: Hardcoded Tier Limits
+
+File: src/tier.py
+
+PROBLEM: Tier limits (requests, cost, agents) hardcoded in Python source.
+Should be database-configurable for runtime adjustments without redeploy.
+
+FIX: Move to database table with admin API for updates.
+Keep defaults in config, but allow runtime override.
+
+---
+
+ISSUE C2: Hardcoded RBAC Permissions
+
+File: src/auth/rbac.py
+
+PROBLEM: Role permissions hardcoded in source.
+Roadmap mentions "Admin-configurable RBAC".
+
+FIX: Store permissions in database table, cache in Redis.
+Admin API to update permissions per-tenant.
+
+---
+
+ISSUE C3: Hardcoded Watchdog Intervals
+
+File: src/main.py
+- Line 183: start_watchdog(app, interval_seconds=300)
+- Line 187: start_config_watchdog(app_root="/app", interval_seconds=60)
+
+PROBLEM: Intervals and paths hardcoded.
+
+FIX: Move to environment variables:
+- WATCHDOG_INTERVAL_SECONDS (default: 300)
+- CONFIG_WATCHDOG_INTERVAL_SECONDS (default: 60)
+- APP_ROOT (default: /app)
+
+---
+
+ISSUE C4: Outdated Dependencies
+
+File: requirements.txt
+
+PROBLEM: Dependencies pinned to Q4 2023 versions (1+ year old).
+- fastapi==0.104.1 (current: 0.115+)
+- pydantic==2.5.0 (current: 2.10+)
+- uvicorn==0.24.0 (current: 0.30+)
+
+FIX: Update to latest stable, review changelogs for breaking changes.
+Test thoroughly after update.
+
+---
+
+OUTPUT: Markdown code blocks, plain text. Privacy-first, compliance-driven.

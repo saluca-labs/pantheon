@@ -1,0 +1,25 @@
+title: Key Abuse - Suspended/Revoked Key Repeated Use Attempts
+id: sa-rule-006-key-abuse
+status: stable
+level: critical
+description: >
+  Detects repeated attempts to use a suspended or revoked SoulKey. Three or more
+  attempts indicate either a misconfigured integration or an attacker attempting
+  to use stolen credentials that have been deactivated.
+logsource:
+  product: soulauth
+  service: audit
+detection:
+  selection:
+    event_type: auth_deny
+    reason|contains: "suspended"
+  selection_revoked:
+    event_type: auth_deny
+    reason|contains: "revoked"
+  condition: selection OR selection_revoked
+tags:
+  - attack.credential_access
+  - attack.t1078.004
+  - soulauth.key_abuse
+response_playbook: pb-auto-quarantine
+enabled: true

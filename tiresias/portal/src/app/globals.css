@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+:root {
+  /* Obsidian Flux — surface hierarchy */
+  --of-background: #121318;
+  --of-surface: #121318;
+  --of-surface-dim: #121318;
+  --of-surface-container-lowest: #0d0e13;
+  --of-surface-container-low: #1a1b21;
+  --of-surface-container: #1e1f25;
+  --of-surface-container-high: #292a2f;
+  --of-surface-container-highest: #34343a;
+  --of-surface-bright: #38393f;
+  --of-surface-variant: #34343a;
+  --of-surface-tint: #5adace;
+
+  /* Obsidian Flux — text */
+  --of-on-surface: #e3e1e9;
+  --of-on-surface-variant: #c7c6cb;
+  --of-on-background: #e3e1e9;
+  --of-inverse-surface: #e3e1e9;
+  --of-inverse-on-surface: #2f3036;
+
+  /* Obsidian Flux — primary (Electric Mint) */
+  --of-primary: #5adace;
+  --of-primary-fixed: #79f7ea;
+  --of-primary-fixed-dim: #5adace;
+  --of-on-primary: #003733;
+  --of-on-primary-container: #008a81;
+  --of-inverse-primary: #006a63;
+  --of-primary-container: #00100e;
+
+  /* Obsidian Flux — secondary (Steel Blue) */
+  --of-secondary: #bdc7dc;
+  --of-secondary-container: #3d4759;
+  --of-on-secondary: #273141;
+  --of-on-secondary-container: #abb5cb;
+  --of-secondary-fixed: #d9e3f9;
+  --of-secondary-fixed-dim: #bdc7dc;
+
+  /* Obsidian Flux — tertiary (Steel Azure) */
+  --of-tertiary: #8ecdff;
+  --of-tertiary-container: #000f1b;
+  --of-on-tertiary: #00344f;
+  --of-on-tertiary-container: #2682b9;
+  --of-tertiary-fixed: #cbe6ff;
+  --of-tertiary-fixed-dim: #8ecdff;
+
+  /* Obsidian Flux — error */
+  --of-error: #ffb4ab;
+  --of-error-container: #93000a;
+  --of-on-error: #690005;
+  --of-on-error-container: #ffdad6;
+
+  /* Obsidian Flux — outline */
+  --of-outline: #919095;
+  --of-outline-variant: #46464b;
+
+  /* Semantic aliases (used in layout classes) */
+  --background: var(--of-background);
+  --foreground: var(--of-on-surface);
+  --foreground-muted: var(--of-on-surface-variant);
+  --foreground-subtle: #5a5e72;
+  --border: rgba(255, 255, 255, 0.04);
+  --border-hover: rgba(255, 255, 255, 0.08);
+
+  /* Status */
+  --success: #3ecf8e;
+  --warning: #f5b041;
+  --danger: #ef6461;
+  --info: var(--of-tertiary);
+}
+
+@theme inline {
+  /* Core layout */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+
+  /* Obsidian Flux surfaces */
+  --color-of-background: var(--of-background);
+  --color-of-surface: var(--of-surface);
+  --color-of-surface-dim: var(--of-surface-dim);
+  --color-of-surface-container-lowest: var(--of-surface-container-lowest);
+  --color-of-surface-container-low: var(--of-surface-container-low);
+  --color-of-surface-container: var(--of-surface-container);
+  --color-of-surface-container-high: var(--of-surface-container-high);
+  --color-of-surface-container-highest: var(--of-surface-container-highest);
+  --color-of-surface-bright: var(--of-surface-bright);
+  --color-of-surface-variant: var(--of-surface-variant);
+
+  /* Obsidian Flux text */
+  --color-of-on-surface: var(--of-on-surface);
+  --color-of-on-surface-variant: var(--of-on-surface-variant);
+  --color-of-on-background: var(--of-on-background);
+
+  /* Obsidian Flux primary */
+  --color-of-primary: var(--of-primary);
+  --color-of-primary-fixed: var(--of-primary-fixed);
+  --color-of-on-primary: var(--of-on-primary);
+  --color-of-on-primary-container: var(--of-on-primary-container);
+  --color-of-primary-container: var(--of-primary-container);
+
+  /* Obsidian Flux secondary */
+  --color-of-secondary: var(--of-secondary);
+  --color-of-secondary-container: var(--of-secondary-container);
+  --color-of-on-secondary: var(--of-on-secondary);
+  --color-of-on-secondary-container: var(--of-on-secondary-container);
+
+  /* Obsidian Flux tertiary */
+  --color-of-tertiary: var(--of-tertiary);
+  --color-of-on-tertiary: var(--of-on-tertiary);
+  --color-of-on-tertiary-container: var(--of-on-tertiary-container);
+
+  /* Obsidian Flux error */
+  --color-of-error: var(--of-error);
+  --color-of-error-container: var(--of-error-container);
+  --color-of-on-error: var(--of-on-error);
+  --color-of-on-error-container: var(--of-on-error-container);
+
+  /* Obsidian Flux outline */
+  --color-of-outline: var(--of-outline);
+  --color-of-outline-variant: var(--of-outline-variant);
+
+  /* Status */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* Gold palette */
+  --color-gold-300: #e8c374;
+  --color-gold-400: #d4a853;
+  --color-gold-500: #c9a84c;
+  --color-gold-600: #b8943a;
+
+  /* Teal palette */
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+
+  /* Amber palette */
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+
+  /* Navy palette */
+  --color-navy-700: #1e293b;
+  --color-navy-800: #1a1b21;
+  --color-navy-900: #0f1117;
+  --color-navy-950: #0a0e1a;
+
+  /* Border */
+  --color-border: var(--of-surface-container-high);
+  --color-border-hover: var(--of-surface-bright);
+  --color-border-accent: #d4a853;
+
+  /* Green (status) */
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+
+  /* Red (status) */
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+
+  /* Typography */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-manrope: var(--font-manrope);
+}
+
+/* ── Custom component utilities ─────────────────────────────── */
+
+@utility glass-card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid var(--of-surface-container-high);
+  backdrop-filter: blur(12px);
+}
+
+@utility glow-gold {
+  box-shadow: 0 0 40px rgba(212, 168, 83, 0.08), 0 0 80px rgba(212, 168, 83, 0.04);
+}
+
+@utility glow-teal {
+  box-shadow: 0 0 40px rgba(45, 212, 191, 0.08), 0 0 80px rgba(45, 212, 191, 0.04);
+}
+
+@utility text-gradient-gold {
+  background: linear-gradient(135deg, #d4a853, #e8c374);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility text-gradient-teal {
+  background: linear-gradient(135deg, #2dd4bf, #5eead4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@utility cta-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 83, 0.15); }
+  50% { box-shadow: 0 0 30px rgba(212, 168, 83, 0.25); }
+}
+
+@layer base {
+  html {
+    background-color: var(--of-background);
+    color: var(--of-on-surface);
+  }
+
+  body {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    background-color: var(--of-background);
+    color: var(--of-on-surface);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Monospace contexts */
+  code, pre, kbd, samp {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  }
+}
+
+/* ── Docs content styling ───────────────────────────────────── */
+.docs-content {
+  color: var(--of-on-surface-variant);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.docs-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--of-on-surface);
+  margin: 0 0 1rem;
+  letter-spacing: -0.025em;
+}
+.docs-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--of-on-surface);
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--of-surface-container-high);
+}
+.docs-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--of-on-surface);
+  margin: 2rem 0 0.75rem;
+}
+.docs-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--of-on-surface);
+  margin: 1.5rem 0 0.5rem;
+}
+.docs-content p {
+  margin-bottom: 1rem;
+}
+.docs-content ul, .docs-content ol {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+.docs-content ul { list-style-type: disc; }
+.docs-content ol { list-style-type: decimal; }
+.docs-content li {
+  margin-bottom: 0.25rem;
+}
+.docs-content li > ul, .docs-content li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+.docs-content a {
+  color: #d4a853;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.docs-content a:hover {
+  color: #e8c374;
+}
+.docs-content strong {
+  font-weight: 600;
+  color: var(--of-on-surface);
+}
+.docs-content code {
+  background: var(--of-surface-container-lowest);
+  border: 1px solid var(--of-surface-container-high);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.8125rem;
+  color: #d4a853;
+}
+.docs-content pre {
+  background: var(--of-surface-container-lowest);
+  border: 1px solid var(--of-surface-container-high);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+.docs-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--of-on-surface-variant);
+  font-size: 0.8125rem;
+}
+.docs-content blockquote {
+  border-left: 2px solid rgba(212, 168, 83, 0.4);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+}
+.docs-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--of-surface-container-high);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.docs-content thead {
+  background: var(--of-surface-container);
+}
+.docs-content th {
+  padding: 0.625rem 1rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--of-on-surface);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--of-surface-container-high);
+}
+.docs-content td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--of-surface-container);
+}
+.docs-content tr:hover {
+  background: var(--of-surface-container-low);
+}
+.docs-content hr {
+  border: none;
+  border-top: 1px solid var(--of-surface-container-high);
+  margin: 2rem 0;
+}

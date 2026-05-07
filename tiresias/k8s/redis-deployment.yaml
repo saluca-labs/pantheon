@@ -1,0 +1,143 @@
+# Tiresias Redis — Ephemeral rate-limit counter store
+# Used by tiresias-proxy for distributed per-tenant RPM enforcement.
+# Data is intentionally not persisted (allkeys-lru eviction, no AOF/RDB).
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiresias-redis
+  namespace: tiresias
+  labels:
+    app: tiresias-redis
+    app.kubernetes.io/name: tiresias-redis
+    app.kubernetes.io/part-of: tiresias
+    component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tiresias-redis
+  template:
+    metadata:
+      labels:
+        app: tiresias-redis
+        app.kubernetes.io/part-of: tiresias
+        component: cache
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - --maxmemory
+            - 256mb
+            - --maxmemory-policy
+            - allkeys-lru
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 2
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir:
+            medium: Memory
+            sizeLimit: 300Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiresias-redis
+  namespace: tiresias
+  labels:
+    app: tiresias-redis
+    app.kubernetes.io/name: tiresias-redis
+    app.kubernetes.io/part-of: tiresias
+    component: cache
+spec:
+  type: ClusterIP
+  selector:
+    app: tiresias-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tiresias-redis-netpol
+  namespace: tiresias
+spec:
+  podSelector:
+    matchLabels:
+      app: tiresias-redis
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: tiresias
+      ports:
+        - protocol: TCP
+          port: 6379
+  egress:
+    # DNS only — Redis has no outbound dependencies
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tiresias-redis-pdb
+  namespace: tiresias
+  labels:
+    app: tiresias-redis
+    app.kubernetes.io/name: tiresias-redis
+    app.kubernetes.io/part-of: tiresias
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: tiresias-redis

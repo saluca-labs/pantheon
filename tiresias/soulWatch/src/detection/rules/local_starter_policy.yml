@@ -1,0 +1,31 @@
+# SoulAuth Local Starter Policy
+# Permissive defaults for independent developer mode.
+# This policy grants full access to all resources — suitable for local dev only.
+# Do NOT use this policy in production or multi-tenant environments.
+
+apiVersion: soulauth/v1
+kind: PersonaPolicy
+metadata:
+  tenant: local
+  persona: "*"
+  role: developer
+  description: "Default permissive policy for local development"
+
+spec:
+  resources:
+    "*":
+      actions: [read, write, execute]
+      scopes: ["*"]
+
+  jit:
+    max_capability_ttl: 900    # 15 min for dev
+    default_capability_ttl: 300  # 5 min default
+    require_active_session: false
+    allowed_nodes: ["*"]
+    operating_window: "24/7"
+    max_concurrent_capabilities: 50
+
+  escalation:
+    can_grant_temporary_access: true
+    can_suspend_agents: true
+    approval_required_for: []

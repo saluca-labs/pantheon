@@ -1,0 +1,41 @@
+id: pb-auto-quarantine
+name: Auto Quarantine
+description: >
+  Critical-level response playbook. Immediately suspends the offending SoulKey,
+  terminates active sessions, and notifies SOC via PagerDuty and Slack.
+  Used for credential stuffing, prompt injection, and key abuse detections.
+trigger_rules:
+  - sa-rule-001-credential-stuffing
+  - sa-rule-005-prompt-injection
+  - sa-rule-006-key-abuse
+severity_threshold: high
+actions:
+  - type: quarantine
+    params:
+      reason: "Auto-quarantine triggered by critical detection rule"
+      suspend_key: true
+      kill_sessions: true
+      # CESO 2026-04-15: default action is suspend (reversible); set to "revoke" for terminal action
+      playbook_action: suspend
+      # auto_release_minutes: rule-001 cred-stuffing -> 24h enforced in handler
+      # rule-005/006 prompt-injection/key-abuse -> None (indefinite) enforced in handler
+      # Override per-playbook by setting explicit auto_release_minutes here
+  - type: log
+    params:
+      level: critical
+      message: "CRITICAL: Agent quarantined by automated detection"
+  - type: notify
+    params:
+      channels:
+        - pagerduty
+        - slack
+      message: "CRITICAL DETECTION: Agent quarantined. Review immediately."
+      priority: critical
+  - type: escalate
+    params:
+      target: soc_team
+      priority: critical
+      create_incident: true
+cooldown_minutes: 30
+requires_approval: false
+enabled: true

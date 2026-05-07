@@ -1,0 +1,29 @@
+id: pb-rate-limit-alert
+name: Rate Limit and Alert
+description: >
+  Medium-level response playbook. Throttles the offending agent to prevent
+  further abuse while alerting the SOC team via Slack for investigation.
+  Used for privilege escalation and data exfiltration detections.
+trigger_rules:
+  - sa-rule-002-privilege-escalation
+  - sa-rule-004-data-exfiltration
+severity_threshold: medium
+actions:
+  - type: rate_limit
+    params:
+      max_requests: 5
+      window_seconds: 60
+      reason: "Rate-limited by detection rule"
+  - type: log
+    params:
+      level: warning
+      message: "Agent rate-limited due to suspicious activity"
+  - type: notify
+    params:
+      channels:
+        - slack
+      message: "DETECTION: Agent rate-limited for suspicious activity. Investigation recommended."
+      priority: high
+cooldown_minutes: 15
+requires_approval: false
+enabled: true
