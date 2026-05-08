@@ -43,17 +43,153 @@ import httpx
 # by projectId) still exercise the auth + DB read path with a known-empty UUID.
 # `null_ok` flags endpoints that return null when the user has no record yet
 # (health/profile returns { profile: null } for a fresh user).
+# ── Agentic OS write probes ──────────────────────────────────────────────
+# Each entry that supports a `write` block round-trips POST/PUT against the
+# OS's primary write endpoint, then re-GETs the list endpoint and confirms
+# the new entity appears (or, for health's PUT upsert, that the profile is
+# no longer null). Filmmaker is intentionally read-only here — its writes
+# require a projectId tied to a real project, which Workstream B introduces.
+#
+# Payloads are minimal-but-valid: every required zod field, no optionals.
+# Enum values mirror the literal lists in lib/agentic-os/<slug>/*.ts.
 AGENTIC_OS_PROBES: dict[str, dict[str, Any]] = {
-    "health":         {"path": "/api/tiresias/agentic-os/health/profile",          "key": "profile",     "null_ok": True},
-    "maker":          {"path": "/api/tiresias/agentic-os/maker/builds",            "key": "builds"},
-    "research":       {"path": "/api/tiresias/agentic-os/research/hypotheses",     "key": "hypotheses"},
-    "secure-dev":     {"path": "/api/tiresias/agentic-os/secure-dev/threat-models", "key": "models"},
-    "cyber":          {"path": "/api/tiresias/agentic-os/cyber/alerts",            "key": "alerts"},
-    "filmmaker":      {"path": "/api/tiresias/agentic-os/filmmaker/shots",         "key": "shots",
-                       "params": {"projectId": "00000000-0000-0000-0000-000000000000"}},
-    "autobiographer": {"path": "/api/tiresias/agentic-os/autobiographer/chapters", "key": "chapters"},
-    "business":       {"path": "/api/tiresias/agentic-os/business/contacts",       "key": "people"},
-    "creator":        {"path": "/api/tiresias/agentic-os/creator/posts",           "key": "posts"},
+    "health": {
+        "path": "/api/tiresias/agentic-os/health/profile",
+        "key": "profile",
+        "null_ok": True,
+        "write": {
+            "method": "PUT",
+            "path": "/api/tiresias/agentic-os/health/profile",
+            "body": {
+                "sex": "prefer_not_to_say",
+                "heightCm": 170,
+                "weightKg": 70,
+                "goals": ["general_wellness"],
+                "conditions": [],
+                "medications": [],
+                "allergies": [],
+            },
+            "response_key": "profile",
+            # Upsert: re-GET should now return a non-null profile.
+            "verify": "profile_present",
+        },
+    },
+    "maker": {
+        "path": "/api/tiresias/agentic-os/maker/builds",
+        "key": "builds",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/maker/builds",
+            "body": {"name": "smoke-build"},
+            "response_key": "build",
+            "verify": "list_grew",
+        },
+    },
+    "research": {
+        "path": "/api/tiresias/agentic-os/research/hypotheses",
+        "key": "hypotheses",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/research/hypotheses",
+            "body": {
+                "title": "smoke-hypothesis",
+                "ifClause": "if smoke runs",
+                "thenClause": "then post succeeds",
+                "becauseClause": "because the harness writes a row",
+            },
+            "response_key": "hypothesis",
+            "verify": "list_grew",
+        },
+    },
+    "secure-dev": {
+        "path": "/api/tiresias/agentic-os/secure-dev/threat-models",
+        "key": "models",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/secure-dev/threat-models",
+            "body": {
+                "systemName": "smoke-system",
+                "systemDescription": "Smoke harness probe target.",
+                "checklist": {
+                    "systemDescription": "Smoke harness probe target.",
+                    "generatedAt": "2026-01-01T00:00:00.000Z",
+                    "threats": [
+                        {
+                            "id": "S-1",
+                            "category": "Spoofing",
+                            "title": "Smoke threat",
+                            "description": "Placeholder for smoke run.",
+                            "mitigations": ["OWASP ASVS V2"],
+                            "severity": "low",
+                            "referenceUrl": "https://owasp.org/www-project-application-security-verification-standard/",
+                            "triggered": False,
+                        },
+                    ],
+                },
+            },
+            "response_key": "model",
+            "verify": "list_grew",
+        },
+    },
+    "cyber": {
+        "path": "/api/tiresias/agentic-os/cyber/alerts",
+        "key": "alerts",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/cyber/alerts",
+            "body": {
+                "title": "smoke-alert",
+                "severity": "low",
+                "category": "other",
+            },
+            "response_key": "alert",
+            "verify": "list_grew",
+        },
+    },
+    "filmmaker": {
+        "path": "/api/tiresias/agentic-os/filmmaker/shots",
+        "key": "shots",
+        "params": {"projectId": "00000000-0000-0000-0000-000000000000"},
+        # Read-only here — write contract requires a real projectId, covered
+        # by Workstream B (filmmaker projects endpoint).
+    },
+    "autobiographer": {
+        "path": "/api/tiresias/agentic-os/autobiographer/chapters",
+        "key": "chapters",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/autobiographer/chapters",
+            "body": {"title": "smoke-chapter", "bodyText": "Smoke harness chapter body."},
+            "response_key": "chapter",
+            "verify": "list_grew",
+        },
+    },
+    "business": {
+        "path": "/api/tiresias/agentic-os/business/contacts",
+        "key": "people",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/business/contacts",
+            "body": {"firstName": "Smoke", "lastName": "Tester"},
+            "response_key": "person",
+            "verify": "list_grew",
+        },
+    },
+    "creator": {
+        "path": "/api/tiresias/agentic-os/creator/posts",
+        "key": "posts",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/creator/posts",
+            "body": {
+                "title": "smoke-post",
+                "channel": "blog",
+                "contentFormat": "article",
+            },
+            "response_key": "post",
+            "verify": "list_grew",
+        },
+    },
 }
 
 
@@ -141,6 +277,28 @@ def step_bff_auth_mode(client: httpx.Client) -> None:
     ok("bff→api auth-mode", f"mode={body['mode']} oidc_enabled={body.get('oidc_enabled')}")
 
 
+def _agos_get(client: httpx.Client, slug: str) -> tuple[str, Any]:
+    """GET an OS list endpoint and return (key, value) on success.
+
+    Fails the harness on non-200 / missing key / wrong type.
+    """
+    probe = AGENTIC_OS_PROBES[slug]
+    path = probe["path"]
+    key = probe["key"]
+    params = probe.get("params")
+    resp = client.get(f"{WEB_URL}{path}", params=params)
+    if resp.status_code != 200:
+        fail(f"agos.{slug}", f"GET {path} → HTTP {resp.status_code}: {resp.text[:200]}")
+    try:
+        body = resp.json()
+    except ValueError:
+        fail(f"agos.{slug}", f"GET {path} → non-JSON body: {resp.text[:200]}")
+        raise  # unreachable, fail() exits
+    if not isinstance(body, dict) or key not in body:
+        fail(f"agos.{slug}", f"GET {path} → missing key '{key}': {body}")
+    return key, body[key]
+
+
 def step_agentic_os_probe(client: httpx.Client, slug: str) -> None:
     """Round-trip an Agentic OS list endpoint as the freshly-logged-in user.
 
@@ -153,21 +311,8 @@ def step_agentic_os_probe(client: httpx.Client, slug: str) -> None:
     if probe is None:
         fail(f"agos.{slug}", f"unknown slug; known={sorted(AGENTIC_OS_PROBES)}")
         return
-    path = probe["path"]
-    key = probe["key"]
-    params = probe.get("params")
     null_ok = probe.get("null_ok", False)
-    resp = client.get(f"{WEB_URL}{path}", params=params)
-    if resp.status_code != 200:
-        fail(f"agos.{slug}", f"GET {path} → HTTP {resp.status_code}: {resp.text[:200]}")
-    try:
-        body = resp.json()
-    except ValueError:
-        fail(f"agos.{slug}", f"GET {path} → non-JSON body: {resp.text[:200]}")
-        return
-    if not isinstance(body, dict) or key not in body:
-        fail(f"agos.{slug}", f"GET {path} → missing key '{key}': {body}")
-    value = body[key]
+    key, value = _agos_get(client, slug)
     if value is None and null_ok:
         shape = "null"
     elif isinstance(value, list):
@@ -176,7 +321,67 @@ def step_agentic_os_probe(client: httpx.Client, slug: str) -> None:
         shape = "object"
     else:
         shape = type(value).__name__
-    ok(f"agos.{slug}", f"GET {path} → 200 {{{key}: {shape}}}")
+    ok(f"agos.{slug}", f"GET {probe['path']} → 200 {{{key}: {shape}}}")
+
+
+def step_agentic_os_write(client: httpx.Client, slug: str) -> None:
+    """POST/PUT a minimal-but-valid payload to an OS write endpoint.
+
+    Then re-GET the list and verify the new entity appears (or, for health's
+    PUT upsert, that the profile is no longer null). Skips slugs whose probe
+    has no `write` block (e.g. filmmaker, which needs a real projectId until
+    Workstream B lands).
+    """
+    probe = AGENTIC_OS_PROBES.get(slug)
+    if probe is None:
+        fail(f"agos.{slug}.write", f"unknown slug; known={sorted(AGENTIC_OS_PROBES)}")
+        return
+    write = probe.get("write")
+    if not write:
+        ok(f"agos.{slug}.write", "skipped (no write probe defined)")
+        return
+
+    method = write["method"].upper()
+    write_path = write["path"]
+    body = write["body"]
+    response_key = write["response_key"]
+    verify = write.get("verify", "list_grew")
+
+    # Capture pre-write list size so we can check that the row landed.
+    if verify == "list_grew":
+        _, before = _agos_get(client, slug)
+        before_count = len(before) if isinstance(before, list) else 0
+    else:
+        before_count = None
+
+    resp = client.request(method, f"{WEB_URL}{write_path}", json=body)
+    if resp.status_code not in (200, 201):
+        fail(f"agos.{slug}.write", f"{method} {write_path} → HTTP {resp.status_code}: {resp.text[:300]}")
+    try:
+        rb = resp.json()
+    except ValueError:
+        fail(f"agos.{slug}.write", f"{method} {write_path} → non-JSON body: {resp.text[:200]}")
+        return
+    if not isinstance(rb, dict) or response_key not in rb:
+        fail(f"agos.{slug}.write", f"{method} {write_path} → missing key '{response_key}': {rb}")
+    entity = rb[response_key]
+
+    # Verify follow-up GET reflects the write.
+    _, after = _agos_get(client, slug)
+    if verify == "list_grew":
+        after_count = len(after) if isinstance(after, list) else 0
+        if after_count <= (before_count or 0):
+            fail(
+                f"agos.{slug}.write",
+                f"list did not grow after {method}: before={before_count} after={after_count}",
+            )
+        ok(f"agos.{slug}.write", f"{method} → {response_key} id={entity.get('id', '?')}, list {before_count}→{after_count}")
+    elif verify == "profile_present":
+        if after is None:
+            fail(f"agos.{slug}.write", f"{method} {write_path} succeeded but profile is still null")
+        ok(f"agos.{slug}.write", f"{method} → {response_key} upserted; GET no longer null")
+    else:
+        fail(f"agos.{slug}.write", f"unknown verify mode: {verify}")
 
 
 def step_memory_crud() -> None:
@@ -227,25 +432,43 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"({', '.join(sorted(AGENTIC_OS_PROBES))}), 'all' (default), or 'none' to skip."
         ),
     )
+    parser.add_argument(
+        "--no-write",
+        dest="write",
+        action="store_false",
+        default=True,
+        help="Skip the per-OS write round-trip (POST/PUT). Reads still run.",
+    )
     return parser.parse_args(argv)
+
+
+def _selected_slugs(arg: str) -> list[str]:
+    if arg == "none":
+        return []
+    if arg == "all":
+        return list(AGENTIC_OS_PROBES.keys())
+    return [arg]
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    print(f"smoke: web={WEB_URL} api={API_URL} memory={MEMORY_URL} os={args.os_slug}")
+    print(
+        f"smoke: web={WEB_URL} api={API_URL} memory={MEMORY_URL} "
+        f"os={args.os_slug} write={'yes' if args.write else 'no'}"
+    )
     with httpx.Client(timeout=TIMEOUT, follow_redirects=True) as client:
         step_register(client)
         step_login(client)
         step_health_full(client)
         step_bff_identity(client)
         step_bff_auth_mode(client)
-        if args.os_slug == "none":
+        slugs = _selected_slugs(args.os_slug)
+        if not slugs:
             ok("agentic-os", "skipped (--os=none)")
-        elif args.os_slug == "all":
-            for slug in AGENTIC_OS_PROBES:
-                step_agentic_os_probe(client, slug)
-        else:
-            step_agentic_os_probe(client, args.os_slug)
+        for slug in slugs:
+            step_agentic_os_probe(client, slug)
+            if args.write:
+                step_agentic_os_write(client, slug)
     step_memory_crud()
     print("✓ all smoke steps passed")
     return 0
