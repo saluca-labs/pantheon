@@ -1,7 +1,7 @@
 # Tiresias Detection Rules -- AI Agent Security Content
 
-[![Rules](https://img.shields.io/badge/detection_rules-36-blue)](rules/)
-[![Playbooks](https://img.shields.io/badge/response_playbooks-6-green)](playbooks/)
+[![Rules](https://img.shields.io/badge/detection_rules-49-blue)](rules/)
+[![Playbooks](https://img.shields.io/badge/response_playbooks-7-green)](playbooks/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-orange)](LICENSE)
 
 Open-source, Sigma-compatible detection rules and response playbooks for **AI agent runtime security**. Built for [Tiresias](https://tiresias.network) -- the security monitoring platform purpose-built for autonomous AI agent infrastructure.
@@ -24,12 +24,11 @@ For more information, visit [tiresias.network](https://tiresias.network).
 | [Tool Abuse](rules/tool-abuse/) | 5 | Unauthorized tool invocation, parameter tampering, tool chaining abuse |
 | [Lateral Movement](rules/lateral-movement/) | 4 | Cross-agent pivoting, service mesh traversal, trust relationship exploitation |
 | [Supply Chain](rules/supply-chain/) | 4 | Model version tampering, provider endpoint changes, plugin substitution |
-| [Persistence](rules/persistence/) | 3 | Scheduled task creation, memory injection, configuration modification |
-| [Evasion](rules/evasion/) | 0* | Audit bypass, log tampering, steganographic hiding |
+| [Persistence](rules/persistence/) | 4 | Scheduled task creation, memory injection, configuration modification |
+| [Evasion](rules/evasion/) | 5 | Audit bypass, log tampering, steganographic hiding |
+| [Matrix Comms](rules/matrix-comms/) | 4 | Unauthorized room join, agent impersonation, cross-tenant access, broadcast abuse |
 
-\* Evasion rules are in development. Response playbook [pb-006](playbooks/pb-006-forensic-capture.yml) is ready for when they land.
-
-**Total: 36 detection rules, 6 response playbooks**
+**Total: 49 detection rules, 7 response playbooks**
 
 ## Quick Start
 

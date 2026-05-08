@@ -1,0 +1,87 @@
+title: High-Volume Matrix Broadcast or Fan-Out
+id: matrix-004
+status: experimental
+level: medium
+description: |
+  A single Matrix sender posted an unusually high number of messages
+  across multiple rooms in a short window, or invited a large number of
+  users to one or more rooms. Patterns include:
+
+  - Agent sending >50 messages across distinct rooms in 60 seconds
+    (potential exfiltration via fan-out or worm-style propagation)
+  - User issuing >20 invites in 60 seconds (potential automated mass
+    onboarding bypassing approval flows)
+  - Single room receiving >200 messages from one sender in 60 seconds
+    (potential alert flooding or denial-of-attention abuse)
+
+  Legitimate broadcasts from the platform-provisioner during tenant
+  onboarding are filtered out.
+author: Saluca LLC
+date: 2026/05/08
+references:
+  - https://attack.mitre.org/techniques/T1499/
+  - https://attack.mitre.org/techniques/T1567/
+  - https://tiresias.network/docs/rules/matrix-004
+tags:
+  - attack.exfiltration
+  - attack.impact
+  - mitre.t1499
+  - mitre.t1567
+  - mitre_atlas.aml.t0040
+  - tiresias.matrix_appservice
+  - tiresias.rate_anomaly
+
+logsource:
+  product: tiresias
+  service: matrix_appservice
+  category: ai_agent_telemetry
+
+detection:
+  selection_fanout_messages:
+    event_type: matrix_event
+    event_subtype: m.room.message
+    sender_message_count_60s|gte: 50
+    distinct_rooms_60s|gte: 5
+  selection_invite_storm:
+    event_type: matrix_event
+    event_subtype: m.room.member
+    membership: invite
+    sender_invite_count_60s|gte: 20
+  selection_room_flood:
+    event_type: matrix_event
+    event_subtype: m.room.message
+    room_message_count_60s|gte: 200
+    distinct_senders_60s: 1
+  filter_provisioner:
+    sender_localpart|startswith: tiresias-bot
+  filter_announce:
+    sender_localpart: platform-provisioner
+    room_alias|startswith: announce-
+  condition: (selection_fanout_messages or selection_invite_storm or selection_room_flood)
+             and not (filter_provisioner or filter_announce)
+  timeframe: 1m
+  group_by:
+    - sender
+    - tenant_id
+
+fields:
+  - sender
+  - sender_localpart
+  - tenant_id
+  - room_id
+  - room_alias
+  - event_subtype
+  - sender_message_count_60s
+  - sender_invite_count_60s
+  - room_message_count_60s
+  - distinct_rooms_60s
+  - distinct_senders_60s
+  - source_ip
+  - timestamp
+
+falsepositives:
+  - Genuine tenant-wide announcement from a verified human admin
+  - Stress test or smoke run targeting the appservice in a staging tenant
+  - Bulk redaction sweep after a moderation action (different event_subtype)
+
+response_playbook: pb-002
