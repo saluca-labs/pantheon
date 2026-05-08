@@ -314,10 +314,28 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── End-to-end smoke test ───────────────────────────────────────────────
+  # Matrix runs one stack-up per slug so a per-OS regression surfaces with
+  # the failing slug name in the job title. The `all` entry exercises every
+  # OS in a single boot as a cheap sanity check that nothing in the matrix
+  # is silently being skipped.
   smoke:
-    name: End-to-end smoke
+    name: End-to-end smoke (${{ matrix.os_slug }})
     runs-on: ubuntu-latest
     needs: docker-build
+    strategy:
+      fail-fast: false
+      matrix:
+        os_slug:
+          - all
+          - health
+          - maker
+          - research
+          - secure-dev
+          - cyber
+          - filmmaker
+          - autobiographer
+          - business
+          - creator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -350,13 +368,13 @@ jobs:
           cd packages/database && alembic upgrade heads
       - name: Print compose status
         run: docker compose ps
-      - name: Run smoke harness
+      - name: Run smoke harness (${{ matrix.os_slug }})
         env:
           PLATFORM_WEB_URL: http://localhost:3000
           TIRESIAS_API_URL: http://localhost:8000
           MEMORY_SERVICE_URL: http://localhost:8910
           MEMORY_SERVICE_KEY: changeme-memory-service-shared-secret
-        run: python scripts/smoke-test.py
+        run: python scripts/smoke-test.py --os ${{ matrix.os_slug }}
       - name: Capture logs on failure
         if: failure()
         run: |
