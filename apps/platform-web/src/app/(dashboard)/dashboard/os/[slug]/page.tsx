@@ -149,6 +149,12 @@ export default async function AgenticOsModulePage({ params }: Props) {
         {mod.status === 'live' && mod.slug === 'filmmaker' && (
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Link
+              href="/dashboard/os/filmmaker/projects"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              My Projects
+            </Link>
+            <Link
               href="/dashboard/os/filmmaker/shots"
               className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
             >
