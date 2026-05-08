@@ -384,13 +384,16 @@ def step_agentic_os_write(client: httpx.Client, slug: str) -> None:
         fail(f"agos.{slug}.write", f"unknown verify mode: {verify}")
 
 
-def step_audit_view(client: httpx.Client) -> None:
-    """Verify the audit log endpoint returns at least one entry.
+def step_audit_view(client: httpx.Client, *, expect_nonempty: bool = True) -> None:
+    """Verify the audit log endpoint returns 200 + an entries list.
 
-    The per-OS write probes above all call recordAudit internally, so by the
-    time we reach this step the agos_audit table is guaranteed to have rows
-    for the smoke user. We just confirm the endpoint returns 200 + a non-empty
-    list.
+    When ``expect_nonempty`` is True (default), at least one row must be
+    present — the per-OS write probes above all call recordAudit internally,
+    so by the time we reach this step the agos_audit table should have rows
+    for the smoke user. When False (e.g. running --os filmmaker, which is
+    read-only and has no write probe), we accept an empty list so the smoke
+    matrix's per-slug filmmaker job doesn't fail simply because no write
+    happened.
     """
     path = "/api/tiresias/agentic-os/audit?limit=50"
     resp = client.get(f"{WEB_URL}{path}")
@@ -407,8 +410,13 @@ def step_audit_view(client: httpx.Client) -> None:
     if not isinstance(body, dict) or "entries" not in body:
         fail("audit.view", f"GET {path} \u2192 missing 'entries' key: {body}")
     entries = body["entries"]
-    if not isinstance(entries, list) or len(entries) == 0:
-        fail("audit.view", f"GET {path} \u2192 entries list is empty; expected \u22651 row from smoke writes")
+    if not isinstance(entries, list):
+        fail("audit.view", f"GET {path} \u2192 entries is not a list: {type(entries).__name__}")
+    if len(entries) == 0:
+        if expect_nonempty:
+            fail("audit.view", f"GET {path} \u2192 entries list is empty; expected \u22651 row from smoke writes")
+        ok("audit.view", f"GET {path} \u2192 0 entries (no write probes ran for this slug — accepted)")
+        return
     ok("audit.view", f"GET {path} \u2192 {len(entries)} entr{'y' if len(entries) == 1 else 'ies'} returned")
 
 
@@ -583,12 +591,17 @@ def main(argv: list[str] | None = None) -> int:
         slugs = _selected_slugs(args.os_slug)
         if not slugs:
             ok("agentic-os", "skipped (--os=none)")
+        wrote_anything = False
         for slug in slugs:
             step_agentic_os_probe(client, slug)
             if args.write:
+                probe = AGENTIC_OS_PROBES.get(slug, {})
+                if probe.get("write"):
+                    wrote_anything = True
                 step_agentic_os_write(client, slug)
-        # After all per-OS writes, verify the audit log has at least one entry.
-        step_audit_view(client)
+        # After all per-OS writes, verify the audit log endpoint. Require at
+        # least one row only when at least one write probe actually ran.
+        step_audit_view(client, expect_nonempty=wrote_anything)
         # After all per-OS writes, verify the cross-OS summary endpoint.
         if slugs:
             step_agentic_os_summary(client)
