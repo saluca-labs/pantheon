@@ -451,6 +451,57 @@ def step_agentic_os_summary(client: httpx.Client) -> None:
     )
 
 
+def step_flags_roundtrip(client: httpx.Client) -> None:
+    """Verify /api/tiresias/agentic-os/flags GET/PUT round-trip.
+
+    The flags endpoint is a per-user UX gate. We:
+      1. GET current flags  → expect 200 + a `flags` map keyed by slug.
+      2. PUT a single-flag toggle for `health` → expect 200.
+      3. GET again and verify the value flipped.
+      4. PUT it back so the test is idempotent across runs.
+
+    On a deployment that does not yet have the flags endpoint (e.g. before
+    Workstream E lands), a 404 is treated as a skip.
+    """
+    path = "/api/tiresias/agentic-os/flags"
+    resp = client.get(f"{WEB_URL}{path}")
+    if resp.status_code == 404:
+        ok("flags.roundtrip", f"GET {path} \u2192 404 (flags endpoint not yet deployed — skipping)")
+        return
+    if resp.status_code != 200:
+        fail("flags.roundtrip", f"GET {path} \u2192 HTTP {resp.status_code}: {resp.text[:200]}")
+    body = resp.json()
+    if not isinstance(body, dict) or "flags" not in body or not isinstance(body["flags"], dict):
+        fail("flags.roundtrip", f"GET {path} \u2192 missing/invalid 'flags' key: {body}")
+    initial = body["flags"]
+    if "health" not in initial:
+        fail("flags.roundtrip", f"GET {path} \u2192 missing 'health' slug in flags")
+    initial_health = bool(initial["health"])
+    target = not initial_health
+
+    resp = client.put(
+        f"{WEB_URL}{path}",
+        json={"slug": "health", "enabled": target},
+    )
+    if resp.status_code not in (200, 204):
+        fail("flags.roundtrip", f"PUT {path} \u2192 HTTP {resp.status_code}: {resp.text[:200]}")
+
+    resp = client.get(f"{WEB_URL}{path}")
+    if resp.status_code != 200:
+        fail("flags.roundtrip", f"GET {path} (verify) \u2192 HTTP {resp.status_code}")
+    body = resp.json()
+    if bool(body.get("flags", {}).get("health")) != target:
+        fail(
+            "flags.roundtrip",
+            f"GET {path} did not reflect PUT: expected health={target}, got {body['flags'].get('health')}",
+        )
+
+    # Restore original state so re-runs are idempotent.
+    client.put(f"{WEB_URL}{path}", json={"slug": "health", "enabled": initial_health})
+
+    ok("flags.roundtrip", f"GET/PUT {path} \u2192 health flag toggled and restored")
+
+
 def step_memory_crud() -> None:
     """Exercise memory-service directly via its API key.
 
@@ -541,6 +592,8 @@ def main(argv: list[str] | None = None) -> int:
         # After all per-OS writes, verify the cross-OS summary endpoint.
         if slugs:
             step_agentic_os_summary(client)
+        # Per-user feature flag GET/PUT round-trip (Workstream E).
+        step_flags_roundtrip(client)
     step_memory_crud()
     print("✓ all smoke steps passed")
     return 0

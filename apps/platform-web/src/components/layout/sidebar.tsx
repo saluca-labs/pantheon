@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   Cpu,
+  SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
 import { Logo } from '@/components/brand/logo';
@@ -38,15 +39,32 @@ export const navItems: readonly BaseItem[] = [
   { label: 'Settings', href: '/dashboard/settings', icon: Settings, enabled: false },
 ] as const;
 
-/** Build the Agentic OS nav items from the shared module registry. */
-export function agenticOsNavItems(): BaseItem[] {
-  return AGENTIC_OS_MODULES.map((m) => ({
-    label: m.label,
-    href: `/dashboard/os/${m.slug}`,
-    icon: m.icon,
+/**
+ * Build the Agentic OS nav items from the shared module registry,
+ * filtered to the provided enabled slugs (resolved server-side from the
+ * per-user feature flag store). Always appends an "OS Settings" entry at
+ * the end of the group so users can reach the toggle UI even when most
+ * modules are disabled.
+ */
+export function agenticOsNavItems(enabledSlugs?: string[]): BaseItem[] {
+  const items: BaseItem[] = AGENTIC_OS_MODULES
+    .filter((m) => !enabledSlugs || enabledSlugs.includes(m.slug))
+    .map((m) => ({
+      label: m.label,
+      href: `/dashboard/os/${m.slug}`,
+      icon: m.icon,
+      enabled: true,
+      badge: m.status === 'live' ? undefined : m.status === 'preview' ? 'Preview' : 'Soon',
+    }));
+
+  items.push({
+    label: 'OS Settings',
+    href: '/dashboard/os/settings',
+    icon: SlidersHorizontal,
     enabled: true,
-    badge: m.status === 'live' ? undefined : m.status === 'preview' ? 'Preview' : 'Soon',
-  }));
+  });
+
+  return items;
 }
 
 interface NavLinkProps {
@@ -124,9 +142,14 @@ export function NavGroup({ title, icon: Icon, items, pathname, defaultOpen = tru
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  /** Slugs resolved server-side from the per-user feature flag store. */
+  enabledSlugs?: string[];
+}
+
+export function Sidebar({ enabledSlugs }: SidebarProps = {}) {
   const pathname = usePathname();
-  const agenticItems = agenticOsNavItems();
+  const agenticItems = agenticOsNavItems(enabledSlugs);
 
   return (
     <aside className="hidden md:flex w-60 flex-col bg-[#1a1d27] border-r border-[#2a2d3e] h-screen sticky top-0">
