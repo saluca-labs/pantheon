@@ -1,0 +1,896 @@
+# Maker OS — Full Execution Plan (Assess → Plan → Execute → Validate)
+
+## How to Use This Document
+
+Every ticket follows **EPIC-XX-[A|P|E|V]-NN** where A = Assess, P = Plan, E = Execute, V = Validate, mirroring the Creator OS plan structure.[^1]
+Epics are independent enough to be parallelized after EPIC-01 and EPIC-02 complete.
+Every Execute ticket includes exact file paths, package names, and commands, and every Validate ticket includes concrete pass/fail criteria that an automated agent can evaluate without ambiguity.[^1]
+
+***
+
+## Frozen Tech Stack (All Tickets Assume This)
+
+Reuse the Creator OS application stack as-is and add a small number of maker-specific dependencies.[^1]
+
+| Layer         | Package                     | License   | Pin   |
+|--------------|-----------------------------|-----------|-------|
+| Monorepo     | `turborepo`                 | MIT       | latest |
+| Framework    | `next` (App Router)         | MIT       | 14.x  |
+| Language     | TypeScript                  | Apache-2.0| 5.x   |
+| Package mgr  | `pnpm`                      | MIT       | 9.x   |
+| Styling      | `tailwindcss` + `shadcn/ui` | MIT       | 3.x   |
+| ORM          | `prisma` + `@prisma/client` | Apache-2.0| 5.x   |
+| Database     | SQLite (dev) / Postgres     | —         | —     |
+| Auth         | `next-auth` v5              | MIT       | 5.x   |
+| State        | `zustand`                   | MIT       | 4.x   |
+| MCP          | `@modelcontextprotocol/sdk` | MIT       | latest |
+| AI SDK       | `ai` (Vercel AI SDK)        | Apache-2.0| 3.x   |
+| Process mgr  | `supervisord`               | MIT       | 4.x   |
+| Proxy        | `nginx`                     | BSD       | 1.25.x|
+| Container    | Docker multi-stage          | Apache-2.0| 25.x  |
+| Export       | `pandoc` (subprocess)       | GPL-2+    | 3.x   |
+
+### Maker-Specific External Services (Co‑Processes)
+
+These are **not** linked as libraries; they run as separate services that Maker OS talks to via HTTP/websocket, exactly like Owncast/Flowise/Activepieces in Creator OS.[^1]
+
+| Function           | Default Tool       | Notes |
+|--------------------|-------------------|-------|
+| 3D printer control | Klipper + Mainsail/Fluidd, or OctoPrint | Open-source 3D printer control UIs and APIs.[^2][^3][^4] |
+| CNC control        | LinuxCNC, CNCjs   | LinuxCNC for pro multi-axis machines, CNCjs for GRBL routers.[^5][^6] |
+| Slicing            | OrcaSlicer, PrusaSlicer, Cura | AGPL/LGPL slicers with CLI and config profiles.[^7][^8][^9] |
+| Mesh tools         | MeshLab, Meshmixer | Mesh repair and processing utilities.[^10][^11] |
+| Project tracking   | Taiga, OpenProject | Open-source project management for builds and commissions.[^12][^13] |
+| BOM/inventory      | IndaBOM, Shelf-like FOSS tools | BOM and materials tracking.[^14][^15] |
+
+***
+
+## EPIC-01: Project Scaffold & Monorepo
+
+**Goal:** Produce a Turborepo monorepo at `~/maker-os/` with a working Next.js app shell, shared packages, and CI-ready config, cloned from Creator OS conventions.[^1]
+
+***
+
+### EPIC-01-A-01 — Assess Existing Environment
+
+**Type:** Assess  
+**Description:** Verify the host machine has all required tooling before scaffolding begins; this is identical to Creator OS.[^1]
+
+**Inputs:** Fresh machine or existing dev machine.
+
+**Commands to run:**
+```bash
+node --version      # must be >= 20.0.0
+pnpm --version      # must be >= 9.0.0
+docker --version    # must be >= 25.0.0
+git --version       # any recent version
+```
+
+**Outputs / Acceptance Criteria:**
+- All four commands return version strings without error.  
+- If `pnpm` is missing: `npm install -g pnpm`.  
+- If Node < 20: install via `nvm install 20 && nvm use 20`.  
+- Document result in `SETUP_LOG.md` at repo root.
+
+***
+
+### EPIC-01-A-02 — Assess Monorepo Structure Requirements
+
+**Type:** Assess  
+**Description:** Define the exact directory layout before creating any files, mirroring Creator OS but renaming packages for Maker OS.[^1]
+
+**Outputs:** `ARCHITECTURE.md` containing:
+
+```text
+maker-os/
+├── apps/
+│   └── web/                     # Next.js 14 main app
+├── packages/
+│   ├── ui/                      # shared shadcn components
+│   ├── db/                      # Prisma schema + client
+│   ├── mcp-server/              # MCP server package
+│   ├── mcp-client/              # MCP client + CLI
+│   └── machines/                # machine integration helpers (OctoPrint/Klipper/CNC)
+├── infra/
+│   ├── nginx/                   # nginx.conf
+│   ├── supervisord/             # supervisord.conf
+│   └── docker/                  # Dockerfile + compose
+├── turbo.json
+├── pnpm-workspace.yaml
+└── package.json
+```
+
+***
+
+### EPIC-01-P-01 — Plan Turborepo Pipeline Config
+
+**Type:** Plan  
+**Description:** Define `turbo.json` pipeline tasks before scaffolding so later epics can rely on `pnpm turbo run build`, `dev`, `lint`, and `test`, same pattern as Creator OS.[^1]
+
+**Outputs:** Draft `turbo.json`:
+
+```json
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
+    "dev":   { "cache": false, "persistent": true },
+    "lint":  { "outputs": [] },
+    "test":  { "outputs": [] },
+    "db:generate": { "cache": false }
+  }
+}
+```
+
+***
+
+### EPIC-01-E-01 — Scaffold Turborepo Root
+
+**Type:** Execute  
+**Description:** Initialize the monorepo root, mirroring Creator OS commands but with `maker-os` directory.[^1]
+
+**Commands:**
+```bash
+mkdir maker-os && cd maker-os
+git init
+pnpm init
+pnpm add -D turbo typescript @types/node
+```
+
+**Files to create:**
+- `pnpm-workspace.yaml`:
+  ```yaml
+  packages:
+    - 'apps/*'
+    - 'packages/*'
+  ```
+- `turbo.json`: use content from EPIC-01-P-01.  
+- `.gitignore`: include `node_modules`, `.next`, `.turbo`, `dist`, `*.db`.  
+- `tsconfig.base.json` (identical to Creator OS):[^1]
+  ```json
+  {
+    "compilerOptions": {
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "module": "esnext",
+      "moduleResolution": "bundler",
+      "resolveJsonModule": true,
+      "target": "ES2022"
+    }
+  }
+  ```
+
+***
+
+### EPIC-01-E-02 — Scaffold Next.js App
+
+**Type:** Execute  
+**Description:** Create the `apps/web` Next.js application with App Router, TypeScript, and Tailwind configured.[^1]
+
+**Commands:**
+```bash
+cd apps
+pnpm create next-app@14 web \
+  --typescript \
+  --tailwind \
+  --eslint \
+  --app \
+  --src-dir \
+  --import-alias "@/*"
+```
+
+**Post-scaffold edits:**
+- In `apps/web/tsconfig.json`, add `"extends": "../../tsconfig.base.json"`.  
+- In `apps/web/package.json`, set `"name": "@maker-os/web"`.  
+- Delete `apps/web/public/vercel.svg` and `apps/web/public/next.svg`.
+
+***
+
+### EPIC-01-E-03 — Install and Init shadcn/ui
+
+**Type:** Execute  
+**Description:** Add the shared component library to `apps/web`, same flow as Creator OS.[^1]
+
+**Commands (run from `apps/web`):**
+```bash
+pnpm dlx shadcn@latest init
+# When prompted: style=default, base color=slate, CSS variables=yes
+pnpm dlx shadcn@latest add button card input label textarea
+pnpm dlx shadcn@latest add dropdown-menu navigation-menu sheet tabs
+pnpm dlx shadcn@latest add toast sonner badge avatar separator
+```
+
+***
+
+### EPIC-01-E-04 — Scaffold Shared Packages
+
+**Type:** Execute  
+**Description:** Create `packages/ui`, `packages/db`, `packages/mcp-server`, `packages/mcp-client`, and `packages/machines` directories with minimal `package.json` files.[^1]
+
+**Commands:**
+```bash
+mkdir -p packages/ui packages/db packages/mcp-server packages/mcp-client packages/machines
+```
+
+**Files:**
+```json
+// packages/ui/package.json
+{ "name": "@maker-os/ui", "version": "0.0.1", "main": "./index.ts", "types": "./index.ts" }
+
+// packages/db/package.json
+{ "name": "@maker-os/db", "version": "0.0.1", "main": "./index.ts" }
+
+// packages/mcp-server/package.json
+{ "name": "@maker-os/mcp-server", "version": "0.0.1", "main": "./src/index.ts" }
+
+// packages/mcp-client/package.json
+{ "name": "@maker-os/mcp-client", "version": "0.0.1", "main": "./src/index.ts", "bin": { "maker-cli": "./src/cli.ts" } }
+
+// packages/machines/package.json
+{ "name": "@maker-os/machines", "version": "0.0.1", "main": "./src/index.ts" }
+```
+
+***
+
+### EPIC-01-V-01 — Validate Monorepo Boots
+
+**Type:** Validate  
+**Commands:**
+```bash
+cd maker-os
+pnpm install
+pnpm turbo run build
+pnpm turbo run dev
+```
+
+**Pass criteria:**
+- `pnpm install` exits 0 with no unresolved workspace dependencies.  
+- `pnpm turbo run build` builds `apps/web` without errors.  
+- `pnpm turbo run dev` starts Next.js dev server on `http://localhost:3000`.
+
+**Fail criteria:** Any non-zero exit code, TypeScript error, or missing package resolution.
+
+***
+
+## EPIC-02: Database Schema (Prisma + SQLite)
+
+**Goal:** A fully migrated Prisma schema covering all maker entities: projects, builds, files (STL/DXF/SVG), machines, jobs, BOM items, and automation triggers, using the Creator OS schema as a starting point.[^1]
+
+***
+
+### EPIC-02-A-01 — Audit All Data Entities Across Modules
+
+**Type:** Assess  
+**Description:** Enumerate every entity each module will need before writing the schema.
+
+**Inputs:** Maker OS high-level modules: Projects, Builds, Files, Machines, Jobs, BOM, Inventory, Automation.
+
+**Outputs:** `packages/db/ENTITIES.md` containing exactly:
+
+```text
+User, Session, Account (NextAuth)
+Project (high-level cosplay build or fabrication job)
+Build (specific physical instance of a project, e.g. "MKVII suit v1")
+FileAsset (STL, STEP, DXF, SVG, images, G-code)
+FileVersion (per-file version history)
+MachineProfile (a 3D printer, CNC, laser, or other machine)
+MachineType (3D printer, CNC router, CNC mill, laser cutter, resin printer)
+PrintJob (3D printing job linked to FileAsset + MachineProfile)
+CNCJob (CNC or laser job linked to FileAsset + MachineProfile)
+JobEvent (status updates and telemetry for jobs)
+Material (filament, resin, foam, worbla, fasteners)
+BOMItem (material requirement for a Build)
+InventoryLot (stock quantities per Material and location)
+Commission (client work order, optional)
+CommissionPayment (payments for a commission)
+Setting (key-value app config)
+MCPServerConfig (for MCP integrations)
+AutomationTrigger (webhook, schedule, job event)
+AutomationLog (run history for automations)
+AIConversation (for AI helper)
+AIMessage
+```
+
+***
+
+### EPIC-02-P-01 — Design Schema Relationships
+
+**Type:** Plan  
+**Description:** Define foreign keys and cardinality before Prisma syntax.
+
+**Outputs:** `packages/db/SCHEMA_PLAN.md` describing:
+
+- `User` 1→N `Project`, `Build`, `AIConversation`, `Commission`.  
+- `Project` 1→N `Build`.  
+- `Build` 1→N `FileAsset` (design files attached to a build).  
+- `FileAsset` 1→N `FileVersion`.  
+- `MachineType` 1→N `MachineProfile`.  
+- `MachineProfile` 1→N `PrintJob`, 1→N `CNCJob`.  
+- `PrintJob` 1→N `JobEvent`; `CNCJob` 1→N `JobEvent`.  
+- `Build` 1→N `BOMItem`.  
+- `Material` 1→N `BOMItem` and 1→N `InventoryLot`.  
+- `Commission` 1→N `Build` and 1→N `CommissionPayment`.  
+- `AIConversation` 1→N `AIMessage`.  
+- All models have `id String @id @default(cuid())`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`.
+
+***
+
+### EPIC-02-E-01 — Install Prisma and Write Schema
+
+**Type:** Execute  
+**Commands (from `packages/db`):**
+
+```bash
+pnpm add prisma @prisma/client
+pnpm prisma init --datasource-provider sqlite
+```
+
+**File: `packages/db/prisma/schema.prisma`** — implement models based on `SCHEMA_PLAN.md`, reusing Creator OS patterns for User, Session, Account, Setting, AIConversation, AIMessage, MCPServerConfig, AutomationTrigger, AutomationLog.[^1]
+
+Key additional models (sketch):
+
+```prisma
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("planning") // planning | in_progress | done | archived
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  builds      Build[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Build {
+  id          String   @id @default(cuid())
+  name        String
+  notes       String?
+  status      String   @default("design") // design | printing | postprocess | delivered
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  commissionId String?
+  commission  Commission? @relation(fields: [commissionId], references: [id])
+  files       FileAsset[]
+  bomItems    BOMItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FileAsset {
+  id        String        @id @default(cuid())
+  label     String
+  kind      String        // stl | step | dxf | svg | image | gcode
+  path      String
+  url       String
+  mimeType  String
+  buildId   String?
+  build     Build?        @relation(fields: [buildId], references: [id])
+  versions  FileVersion[]
+  printJobs PrintJob[]
+  cncJobs   CNCJob[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model FileVersion {
+  id         String    @id @default(cuid())
+  version    Int
+  changelog  String?
+  fileId     String
+  file       FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  path       String
+  createdAt  DateTime  @default(now())
+}
+
+model MachineType {
+  id        String           @id @default(cuid())
+  name      String           @unique // 3d_printer | cnc_router | cnc_mill | laser | resin_printer
+  machines  MachineProfile[]
+}
+
+model MachineProfile {
+  id          String       @id @default(cuid())
+  name        String
+  host        String       // base URL of OctoPrint, Mainsail, CNCjs, etc.
+  typeId      String
+  type        MachineType  @relation(fields: [typeId], references: [id])
+  apiKey      String?
+  isActive    Boolean      @default(true)
+  printJobs   PrintJob[]
+  cncJobs     CNCJob[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model PrintJob {
+  id          String        @id @default(cuid())
+  name        String
+  status      String        @default("queued") // queued | running | done | failed
+  externalId  String?       // id in OctoPrint/Mainsail
+  machineId   String
+  machine     MachineProfile @relation(fields: [machineId], references: [id])
+  fileId      String
+  file        FileAsset     @relation(fields: [fileId], references: [id])
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  events      JobEvent[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model CNCJob {
+  id          String        @id @default(cuid())
+  name        String
+  status      String        @default("queued")
+  externalId  String?
+  machineId   String
+  machine     MachineProfile @relation(fields: [machineId], references: [id])
+  fileId      String
+  file        FileAsset     @relation(fields: [fileId], references: [id])
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  events      JobEvent[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model JobEvent {
+  id        String   @id @default(cuid())
+  jobType   String   // print | cnc
+  jobId     String
+  message   String
+  data      String?
+  createdAt DateTime @default(now())
+}
+
+model Material {
+  id          String        @id @default(cuid())
+  name        String
+  category    String        // filament | resin | foam | worbla | hardware
+  unit        String        // m | g | sheet | piece
+  sku         String?
+  bomItems    BOMItem[]
+  inventory   InventoryLot[]
+}
+
+model BOMItem {
+  id        String    @id @default(cuid())
+  buildId   String
+  build     Build     @relation(fields: [buildId], references: [id], onDelete: Cascade)
+  materialId String
+  material  Material  @relation(fields: [materialId], references: [id])
+  quantity  Float
+  notes     String?
+}
+
+model InventoryLot {
+  id         String   @id @default(cuid())
+  materialId String
+  material   Material @relation(fields: [materialId], references: [id])
+  location   String?
+  quantity   Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Commission {
+  id          String            @id @default(cuid())
+  clientName  String
+  clientEmail String?
+  reference   String?           // link to moodboard / reference folder
+  status      String            @default("inquiry")
+  builds      Build[]
+  payments    CommissionPayment[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model CommissionPayment {
+  id           String      @id @default(cuid())
+  commissionId String
+  commission   Commission  @relation(fields: [commissionId], references: [id], onDelete: Cascade)
+  amount       Float
+  currency     String @default("USD")
+  paidAt       DateTime
+  note         String?
+}
+```
+
+After writing the schema, update `DATABASE_URL` in `apps/web/.env.local` to `"file:../../data/maker-os.db"` following the same pattern as Creator OS.[^1]
+
+***
+
+### EPIC-02-E-02 — Create Prisma Client Export
+
+**Type:** Execute  
+**File: `packages/db/index.ts`:**
+
+```ts
+import { PrismaClient } from './generated/client'
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({ log: process.env.NODE_ENV === 'development' ? ['query'] : [] })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+export * from './generated/client'
+```
+
+This matches the pattern already used in Creator OS, enabling shared Prisma client across app and MCP server.[^1]
+
+***
+
+### EPIC-02-E-03 — Run Initial Migration
+
+**Type:** Execute  
+**Commands (from `packages/db`):**
+
+```bash
+pnpm prisma generate
+pnpm prisma migrate dev --name init
+```
+
+**Expected output:**
+- `packages/db/prisma/migrations/YYYYMMDDHHMMSS_init/migration.sql` created.  
+- `packages/db/generated/client/` populated with the Prisma client.
+
+***
+
+### EPIC-02-V-01 — Validate Schema and Client
+
+**Type:** Validate  
+
+**Commands:**
+```bash
+pnpm prisma validate
+pnpm prisma studio
+```
+
+**Pass criteria:**
+- `prisma validate` exits 0 with no errors.  
+- Prisma Studio shows all key models: User, Project, Build, FileAsset, FileVersion, MachineType, MachineProfile, PrintJob, CNCJob, JobEvent, Material, BOMItem, InventoryLot, Commission, CommissionPayment, Setting, AIConversation, AIMessage, MCPServerConfig, AutomationTrigger, AutomationLog.[^1]
+- Insert one `Setting` row (`key="app_name"`, `value="Maker OS"`) via Studio and confirm it persists after restart.
+
+***
+
+## EPIC-03: Authentication Layer
+
+**Goal:** Working NextAuth.js v5 session with credentials provider (email + password) and a protected route middleware, identical to Creator OS but with Maker OS branding.[^1]
+
+(Structure, commands, and validation steps are the same as EPIC-03 in the Creator OS plan, replacing package names `@creator-os/db` with `@maker-os/db`.)[^1]
+
+***
+
+## EPIC-04: Shell UI & Navigation
+
+**Goal:** A persistent sidebar navigation shell that renders all Maker OS module routes, with collapsible sidebar, dark/light mode, and breadcrumb header, mirroring Creator OS shell but with maker-centric sections.[^1]
+
+### Navigation Sections
+
+Define nav items for these maker modules:
+
+- **Dashboard** — job summary, machines status, quick links.
+- **Projects** — high-level cosplay builds and fabrication projects.
+- **Builds** — per-build view of files, jobs, BOM, and status.
+- **Files** — global file vault (STL, STEP, DXF, SVG, G-code).
+- **Machines** — printers, CNCs, lasers with status and queues.
+- **Jobs** — all print/CNC jobs with filters and status.
+- **Materials** — materials, inventory lots, and BOM usage.
+- **Commissions** — client work tracking (optional).
+- **Automation** — triggers and logs.
+- **AI Assist** — maker-specific AI tools.
+- **Settings** — app configuration.
+
+Stub route pages, layout, and validation follow the same patterns as Creator OS EPIC-04.[^1]
+
+***
+
+## EPIC-05: File Vault & Mesh Pipeline
+
+**Goal:** A central "Files" module where users upload design files, see versions, trigger auto-repair using MeshLab/Meshmixer, and attach files to builds.[^11][^10]
+
+### EPIC-05-A-01 — Assess File Types and Flows
+
+Document in `apps/web/src/app/(app)/files/FILE_SPEC.md`:
+
+- Supported input types: `.stl`, `.step`, `.stp`, `.obj`, `.3mf`, `.dxf`, `.svg`, image formats (`.png`, `.jpg`), and `.gcode`.  
+- For 3D meshes (STL/OBJ/3MF), pipeline: **upload → store as FileAsset → optional MeshLab repair → queue to slicer**.[^10]
+- For 2D vectors (DXF/SVG), pipeline: **upload → preview → send to laser/CNC toolchain**.[^16][^17]
+- For G-code, treat as read-only job artifact attached to jobs.
+
+### EPIC-05-E-01 — File Upload API
+
+Implement `apps/web/src/app/api/files/route.ts` with `POST` accepting multipart uploads.
+
+- Store file under `/data/files/${cuid()}.${ext}`.  
+- Create `FileAsset` with basic metadata and a first `FileVersion`.  
+- Return JSON `{ id, label, kind, url }`.
+
+### EPIC-05-E-02 — Mesh Repair Worker
+
+Create a Node worker script `packages/machines/src/mesh-repair.ts` that:
+
+- Accepts a `fileVersionId`.  
+- Uses `meshlabserver` or PyMeshLab to run a cleaning script for mesh repair (remove isolated pieces, fix normals).[^18][^10]
+- Writes a new repaired file, creates a new `FileVersion` and updates `FileAsset`.
+
+### EPIC-05-E-03 — Files UI
+
+`apps/web/src/app/(app)/files/page.tsx`:
+
+- Table of `FileAsset` with label, kind, last updated, build, and actions.  
+- Action menu: **View versions**, **Run repair**, **Attach to build**, **Send to slicer**, **Delete**.  
+- Detail drawer showing `FileVersion` history and preview (for images/SVG, use `<img>`/SVG; for meshes, embed a lightweight viewer later).
+
+### EPIC-05-V-01 — Validate Files Module
+
+- Upload STL → `FileAsset` row created and visible in table.  
+- Trigger repair → new `FileVersion` appears with updated path.  
+- Attach file to a Build from the Builds view and confirm relation persists.
+
+***
+
+## EPIC-06: Slicer Bridge
+
+**Goal:** Bridge Maker OS Files and Machines to external slicers (OrcaSlicer, PrusaSlicer, Cura) so users can send files with prefilled printer/material profiles.[^9][^7][^8]
+
+### EPIC-06-A-01 — Assess Slicer Integration Options
+
+Document in `apps/web/SLICER_INTEGRATION.md`:
+
+- OrcaSlicer and PrusaSlicer can be driven via command line and config bundles; Cura has CLI plus HTTP API via Cura Connect.[^8][^9]
+- Start with **"export project for slicer"** pattern (download pre-configured 3MF/AMF) rather than full remote slicing, to avoid OS-specific headaches.[^19]
+- Long-term option: headless slicing container running PrusaSlicer or Cura in Docker.
+
+### EPIC-06-P-01 — Design Slicer Export Formats
+
+Define that Maker OS will initially:
+
+- Generate a 3MF/zip bundle containing STL and metadata (suggested layer height, infill, supports) per `MachineProfile`.  
+- Provide a one-click "Download for OrcaSlicer/PrusaSlicer/Cura" button in Files UI.
+
+### EPIC-06-E-01 — Slicer Export API
+
+`apps/web/src/app/api/files/[id]/export-for-slicer/route.ts`:
+
+- Lookup `FileAsset` and `MachineProfile`.  
+- Generate a JSON manifest of slicer hints (layer height, nozzle diameter, filament, etc.).  
+- Zip STL file + manifest and stream to client as download.
+
+### EPIC-06-V-01 — Validate Slicer Export
+
+- Export a file for a Bambu or Prusa printer → open in OrcaSlicer/PrusaSlicer and confirm geometry and suggested settings load correctly.[^20][^8]
+
+***
+
+## EPIC-07: Machine Dashboard
+
+**Goal:** A Machines module that lists printers/CNCs/lasers, shows online/offline status, and links into OctoPrint/Mainsail/CNCjs/LinuxCNC UIs.[^5][^3][^2]
+
+### EPIC-07-A-01 — Catalog Machine Types
+
+Document in `apps/web/src/app/(app)/machines/MACHINE_SPEC.md`:
+
+- 3D printers: Klipper+Mainsail, OctoPrint, Marlin-only (no API).  
+- CNC routers/lasers: CNCjs (websocket/REST), bCNC (local UI), LinuxCNC (HAL + various UIs).[^6][^5]
+- Each `MachineProfile` stores: `type`, `host`, `apiKey` (for OctoPrint), `uiUrl` override.
+
+### EPIC-07-E-01 — Machines API
+
+Implement `apps/web/src/app/api/machines` routes to CRUD `MachineProfile` and `MachineType`.
+
+### EPIC-07-E-02 — Machine Status Poller
+
+`packages/machines/src/status-poller.ts`:
+
+- Periodically poll each machine API (OctoPrint `/api/printer`, Mainsail/Moonraker `/printer/info`, CNCjs `/api/status`) to record status and basic telemetry.[^21][^3][^2]
+- Update `MachineProfile` with lastHeartbeat, lastJobId.
+
+### EPIC-07-E-03 — Machines UI
+
+`apps/web/src/app/(app)/machines/page.tsx`:
+
+- Cards for each machine with name, type, status (online/offline/printing), last job, and quick links: **Open UI**, **View jobs**.  
+- For machines with known web UI, render an `<iframe>` into the external UI at `/machines/[id]/console`.
+
+### EPIC-07-V-01 — Validate Machines Module
+
+- Add a Klipper/Mainsail printer and OctoPrint printer → status updates correctly when they are online/offline.[^3][^2]
+- Link "Open UI" opens external web consoles.
+
+***
+
+## EPIC-08: Jobs & Telemetry
+
+**Goal:** A Jobs module aggregating PrintJob and CNCJob across machines, with status history and basic analytics.
+
+### EPIC-08-E-01 — Job Creation Hooks
+
+- When a job is created externally (e.g., OctoPrint API job start webhook), map it into `PrintJob` or `CNCJob` via a lightweight endpoint like `/api/hooks/octoprint` that parses payload and upserts job data.[^3]
+- When Maker OS exports a G-code bundle (EPIC-06), optionally create a queued job object before user submits job in external UI.
+
+### EPIC-08-E-02 — Job Events
+
+- Implement handlers in `status-poller.ts` to write `JobEvent` entries on status transitions like `queued → printing → done` or `error`.
+
+### EPIC-08-E-03 — Jobs UI
+
+`apps/web/src/app/(app)/jobs/page.tsx`:
+
+- Table view combining PrintJob and CNCJob with filters by machine, status, date.  
+- Detail view for a job showing events timeline and link to original machine console.
+
+### EPIC-08-V-01 — Validate Jobs Module
+
+- Run a print from OctoPrint and a job from CNCjs → both appear in Jobs table with correct status and timestamps.[^6][^3]
+
+***
+
+## EPIC-09: Materials, BOM, and Inventory
+
+**Goal:** Track materials (filament, resin, foam, etc.), BOM per build, and inventory usage.
+
+### EPIC-09-A-01 — Define Material Categories
+
+Document in `apps/web/src/app/(app)/materials/MATERIAL_SPEC.md`:
+
+- Filament (PLA, PETG, ABS, etc.), resin types, foams, thermoplastics, fabrics, hardware, paint/finishing supplies.[^22]
+- For each category, define default units and recommended fields (e.g., filament: color, diameter, spool weight; foam: thickness, sheet dimensions).
+
+### EPIC-09-E-01 — Materials & Inventory APIs
+
+- CRUD routes for Material and InventoryLot, following Prisma schema.  
+- Endpoints to consume inventory when jobs are marked "done" using BOM estimates.
+
+### EPIC-09-E-02 — BOM UI in Builds
+
+- In `apps/web/src/app/(app)/builds/[id]/page.tsx`, add a BOM tab listing BOMItem rows with quantity, material, and cost.
+
+### EPIC-09-V-01 — Validate BOM & Inventory
+
+- Create materials and inventory lots; create a build with BOM; complete a job and confirm inventory decreased appropriately.
+
+***
+
+## EPIC-10: Projects, Builds, and Commissions
+
+**Goal:** Project and build management for both hobbyist and professional workflows, including optional commission tracking.
+
+### EPIC-10-E-01 — Projects API & UI
+
+- CRUD `Project` routes and TUI: table of projects with status and progress.  
+- Each Project page lists associated Builds.
+
+### EPIC-10-E-02 — Builds API & UI
+
+- CRUD `Build` routes; UI with tabs for Files (EPIC-05), Jobs (EPIC-08), BOM (EPIC-09), Notes, and Commission data if present.
+
+### EPIC-10-E-03 — Commissions Module (Optional)
+
+- CRUD `Commission` and `CommissionPayment`, with a simple pipeline of statuses (inquiry, quoted, in_progress, delivered, closed).  
+- Link Commission to one or more Builds.
+
+### EPIC-10-V-01 — Validate Project/Build/Commission Flow
+
+- Create a Commission, attach a Project and Build, add BOM and Files, and walk through a small job to completion.
+
+***
+
+## EPIC-11: Maker AI Assist
+
+**Goal:** A maker-focused AI assistant embedded in the UI and exposed via MCP, leveraging Creator OS AI patterns.[^1]
+
+### EPIC-11-E-01 — AI Chat UI
+
+- Implement `/ai` route reusing AIConversation/AIMessage models but with system prompts tuned for maker workflows (e.g., "You are a fabrication assistant").  
+- Add quick-prompt buttons ("Generate EVA foam pattern from measurements", "Suggest print settings for ABS on enclosed printer").
+
+### EPIC-11-E-02 — MCP Tools for Maker Tasks
+
+In `packages/mcp-server/src/tools/maker-tools.ts` define tools such as:
+
+- `suggest_print_settings` (inputs: material, printer, part size; outputs: layer height, temperature, speeds) using knowledge about Klipper/Cura/PrusaSlicer defaults.[^23][^24]
+- `estimate_filament_usage` (inputs: weight, density, job estimates).  
+- `bom_from_description` (inputs: natural language, outputs: BOMItem suggestions).
+
+### EPIC-11-V-01 — Validate AI Tools
+
+- Call tools via CLI and UI, verifying outputs are consistent and useful for common maker scenarios.
+
+***
+
+## EPIC-12: Automation (n8n / Activepieces)
+
+**Goal:** Event-driven automation for jobs, materials, and communications, mirroring Creator OS Activepieces integration.[^1]
+
+- Integrate with n8n or Activepieces as a co-process, exposing webhooks for job status changes, low inventory alerts, and commission pipeline transitions.[^25][^26]
+- Provide a simple list of available webhooks and example flows.
+
+***
+
+## EPIC-13: MCP Client & CLI (maker-cli)
+
+**Goal:** A CLI that can create projects, queue jobs, and check machine status via MCP, following the Creator OS CLI pattern but adapted to maker entities.[^1]
+
+- Implement `maker-cli` commands: `project:create`, `build:create`, `file:upload`, `job:list`, `machine:list`, `materials:list`.  
+- Validate similar to Creator OS EPIC-14, but with Maker OS tools and models.
+
+***
+
+## EPIC-14: Container Build & Packaging
+
+**Goal:** A single Docker image that runs Maker OS web app, MCP SSE server, n8n/Activepieces, and machine integration helpers, behind nginx and supervised by supervisord, analogous to Creator OS EPIC-15.[^1]
+
+- Reuse much of the Creator OS Dockerfile, adding machine helpers and any headless slicer or mesh tools needed.[^9][^10][^1]
+- Ensure volumes for `/data/db`, `/data/files`, `/data/jobs`, `/data/automation` are persistent.
+
+***
+
+## Conclusion
+
+This execution plan mirrors the structure and rigor of the Creator OS document while swapping in maker-specific entities, external tools (Klipper, OctoPrint, CNCjs, OrcaSlicer, MeshLab, Taiga, IndaBOM), and workflows tailored to cosplay and professional fabrication work.[^7][^2][^14][^5][^1]
+It is designed so a solo developer or an AI agent can execute each ticket deterministically, resulting in a cohesive Maker OS that unifies CAD, 3D printing, CNC, BOM, and automation into one integrated experience.
+
+---
+
+## References
+
+1. [Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/399744584/abd6ec54-7f74-4389-aec4-b0a0b60ab632/Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md?AWSAccessKeyId=ASIA2F3EMEYEWPV7F45X&Signature=HmOnNCxh86v4BSZse82hTxYj6H0%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEMb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIQDWulzRWx9X%2FZsDuui8Zb99gV4V346T%2Bd7pHmmrDSGYyQIfGhoXt0KALiRAk7rze%2B3Tl0mmZxxzhs0NpnpBFdWqRSr8BAiO%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAEaDDY5OTc1MzMwOTcwNSIMGj5y8oZPWxJpfCPoKtAEQEy%2BXA1yLl%2FGu7bBbGoAalqSiBlVLfgkH%2Bjr0W27dpHw5SKTLGR1N5hjsYoM8R0ly0gAzsnFgbtSwvwqAu9umV0wwGSye2Q0LQ9ywGg6lOYmQjJfId79vV5DzfxtTQ%2BpNPmB1ZZ1%2FvQC5UxlfPE4Ep04WUYMMiI9ATLqEJPztjWOlaNDRixQ%2FSJUd3LLw1KA%2Bnvg9XnQk2LqnBfr2WFty2TqVRMJVjCT4c3LvAOu%2B25m52vO9QZ%2FW%2BrQM3hnE69F3t1hWXK7V44IcORLIPujKBaO%2FDvw%2FX6c%2F44%2BSXmv9Ar3aUiqFZNv0JtdbKBSo6uwi%2BRNib%2BBpboAkHEu8fa79VJ3ehcDSThJ8%2Fke47eWn9k0SqbORcaGSDLRwQCKZGpkpZDb4OLMZuMaRNV6zEtB6k2NICfzYI6Z3OptkwtS5qYAAtYsovhOh5zU6o0HtlU%2BgpWaL%2BnVAA6VCOHCSfTQR4ecm2Po4Gf1fM9BjVcNiG9o2dXbO3eQXjfJcMP2JrUxOUjADav%2FODZZEFyO6ORUuMeYpQFOx43WOAe4P2OTnNk8ob%2FwdXhYjgGJU8Bwn4bXl9Cal9gdNM7E1TEhIKhv15%2FxO1givBRu9C0qaNPh0Ps7EN0kVlTDojZyWttLm1LlQPFNfMEi8EruH%2F2ynMn9SO7s%2BXrPWHgDHHdMzylqa0ulsWqm75t%2BruBsIg1BJ3WBJvQsPpN89n1l4XWVXNnQ8nCLYVjW29rXhkJxx6eZ740x8siz%2F3Pd%2B0xi8EkSzA30d0QQ2LyCXjhPd5R%2Ff900rTDFt%2BnPBjqZAe141hpY18krfmbNEca%2Bl4JIm6agVKEDMKwDOTBCAM%2FRT5XzxH3FMlFrPsfOFpAhxGdA%2BQk5IWQPByPfJJiclYPeA3mSGPoDjZgE5X0JqtSw34iLB%2FelWvYJy3m2QdxArw%2FDpURDElKSSQNiYPP%2B%2Bd%2FkHHct0qHV1u2THnGgp1hgX9qxtngEX8%2BYcZtvbbSBvBcT8G%2BNm4E%2FIw%3D%3D&Expires=1778018712) - # Creator OS — Full Execution Plan (Assess → Plan → Execute → Validate)
+
+## How to Use This Document...
+
+2. [Mainsail - The 3D Printer Interface for Klipper](https://docs.mainsail.xyz) - Welcome to Mainsail¶. Mainsail is a powerful and user-friendly web interface for managing and contro...
+
+3. [Mainsail Vs. Fluidd Vs. OctoPrint - A Comparison](https://www.obico.io/blog/mainsail-vs-fluidd-vs-octoprint/) - Mainsail, Fluidd, and OctoPrint are web interfaces for 3D printers that let you monitor and control ...
+
+4. [Klipper (firmware)](https://en.wikipedia.org/wiki/Klipper_(firmware)) - Klipper is an open source firmware for 3D printers that distributes the workload between a general-p...
+
+5. [LinuxCNC](https://en.wikipedia.org/wiki/LinuxCNC) - LinuxCNC is a free, open-source Linux software system that implements computer numerical control (CN...
+
+6. [LinuxCNC vs GRBL on a microcontroller](https://www.eevblog.com/forum/mechanical-engineering/linuxcnc-vs-grbl-on-a-microcontroller/) - The CNC controller software (GRBL board or linuxCNC), takes gcode and converts it into various input...
+
+7. [Orca Slicer » 3D Printing Slicer [Download Now]](https://orca-slicer.com) - Download the latest version of Orca Slicer for free to prepare 3D models for printing. Get fine-tune...
+
+8. [Orca Slicer VS PrusaSlicer: Everything You Need To Know](https://www.obico.io/blog/orca-slicer-vs-prusaslicer/) - Orca Slicer is faster than PrusaSlicer for complex models mainly because the slicing engine is optim...
+
+9. [UltiMaker Cura](https://ultimaker.com/software/ultimaker-cura/) - UltiMaker Cura is your guide. Its powerful open-source slicing engine and 400+ customizable settings...
+
+10. [MeshLab](https://www.meshlab.net) - The open source system for processing and editing 3D triangular meshes. It provides a set of tools f...
+
+11. [Meshmixer](https://meshmixer.org) - This versatile mesh editor lets you sculpt, repair, slice, hollow, and blend STL/OBJ files lightning...
+
+12. [Top Open-Source Project Management Tools in 2025](https://flowinquiry.io/blog/five-open-source-project-managements-in-2025) - Top Open-Source Project Management Tools in 2025 · 1. Taiga · 2. OpenProject · 3. Redmine · 4. Kanbo...
+
+13. [Top 5 Open Source Project Management Tools in 2025](https://www.redmineup.com/pages/blog/open-source-project-management-tools) - Top 5 Open Source Project Management Tools in 2025 · 1. RedmineUP · 2. OpenProject · 3. GitLab · 4. ...
+
+14. [IndaBOM: Free, Simple, Open Source BOM Management and ...](https://indabom.com) - A simple, free, indented bill of materials tool using an open source project. Integrated with modern...
+
+15. [Top 5 open source IT asset management software](https://virima.com/blog/top-open-source-it-asset-management-software) - Shelf.nu is an open source asset tracking application designed for hardware inventory—keyboards, mon...
+
+16. [Inkscape Laser Tool Plug-In](https://jtechphotonics.com/?page_id=2012) - For cutting and engraving on the same file in inkscape, you need to make at two “objects”. One objec...
+
+17. [Inkscape + VisiCut = Perfect Lasercutting Workflow](https://hackaday.io/project/162385/instructions) - A brief summary on how I use my K40 laser cutter with custom GRBL controller. However, this workflow...
+
+18. [MeshLab](https://en.wikipedia.org/wiki/MeshLab) - MeshLab is a 3D mesh processing software system that is oriented to the management and processing of...
+
+19. [Orca Slicer Vs Prusaslicer Vs Cura 2026](https://curaslicers.com/prusa-orca-cura-comparison-2026/) - Comprehensive comparison of PrusaSlicer, OrcaSlicer, and Cura Slicer ; Detailed analysis of user int...
+
+20. [OrcaSlicer vs Prusa, Bambu & Cura: All Features, Pros & ...](https://jlc3dp.com/blog/ai-3d-model-generator) - Curious about OrcaSlicer? Discover how it compares to PrusaSlicer, Bambu Studio, and Cura in this ex...
+
+21. [3D Printer Management solution for Print Farms](https://simplyprint.io/print-farms) - SimplyPrint is easily set up on multiple printers at once, making it quick to have the whole farm ru...
+
+22. [Open Source Software For Cosplayers](https://pinkpetal.studio/open-source-software-for-cosplayers/) - A list of Open Source Software tools for photo and graphic editing, video clipping, content creation...
+
+23. [What is Klipper Firmware and Why Would You Want it?](https://www.obico.io/blog/what-is-klipper-3d-printer-firmware/) - Klipper is an open-source 3D printer firmware developed by Kevin O'Connor, the original author and c...
+
+24. [Why Choose Klipper Firmware for Your 3D Printer?](https://www.sovol3d.com/blogs/news/why-choose-klipper-3d-printer-firmware) - Klipper firmware enhances 3D printer performance by offloading tasks to a Raspberry Pi, enabling fas...
+
+25. [9 Best Open-Source Project Management Tools in 2025](https://worklenz.com/blog/best-open-source-project-management-tools-in-2024/) - Top open-source project management software options · Worklenz · LeanTime · Tuleap · Project Libre ·...
+
+26. [5 Open Source Productivity Tools with AI to Try in 2025](https://baserow.io/blog/top-ai-productivity-tools-2025) - GitLab is an open source software development platform for managing repositories, CI/CD, and project...
+
