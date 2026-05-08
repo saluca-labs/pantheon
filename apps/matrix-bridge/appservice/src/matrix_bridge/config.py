@@ -35,6 +35,9 @@ class AppserviceConfig:
     synapse_url: str = "http://synapse:8008"
     soulwatch_url: str | None = None
     platform_api_url: str | None = None
+    server_name: str = "tiresias.local"
+    tenant_id: str = "default"
+    seed_rooms_on_boot: bool = False
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> "AppserviceConfig":
@@ -55,4 +58,14 @@ class AppserviceConfig:
             synapse_url=e.get("SYNAPSE_URL", "http://synapse:8008"),
             soulwatch_url=e.get("SOULWATCH_INGEST_URL"),
             platform_api_url=e.get("PLATFORM_API_URL"),
+            server_name=e.get("MATRIX_SERVER_NAME", "tiresias.local"),
+            tenant_id=e.get("MATRIX_TENANT_ID", "default"),
+            seed_rooms_on_boot=_truthy(e.get("SEED_ROOMS_ON_BOOT")),
         )
+
+
+def _truthy(value: str | None) -> bool:
+    """Parse a permissive boolean env var. ``None`` and unknown -> False."""
+    if not value:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
