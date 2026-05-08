@@ -12,7 +12,7 @@ new migrations.
 
 | Tree | Schema concern | Branch label | Tables |
 | ---- | -------------- | ------------ | ------ |
-| `packages/database/alembic/` | Local-auth canonical schema (the `@platform/auth` Postgres contract) | `auth` | `users`, `password_credentials`, `sessions`, `password_reset_tokens`, `audit_events`, `organizations`, `memberships` |
+| `packages/database/alembic/` | Local-auth canonical schema (the `@platform/auth` Postgres contract) + v3 platform infra | `auth` | `users`, `password_credentials`, `sessions`, `password_reset_tokens`, `audit_events`, `organizations`, `memberships`, `_platform_jobs`, `_platform_password_reset_tokens`, `_platform_email_verification_tokens` |
 | `apps/platform-api/alembic/` | SoulAuth core domain (tenants, soulkeys, policy cache, billing, contracts, detection, etc.) | _(default unlabeled chain)_ | `_soul_users`, `_soul_tenants`, `_soul_keys`, `_policy_cache`, `_audit_log`, `licenses`, `partners`, `siem_connectors`, … |
 
 The two histories never cross-reference: each has its own `Revises:`
@@ -39,8 +39,8 @@ Splitting the migrations also keeps each consumer's deploy story simple:
 
 ```
 packages/database/alembic/                  apps/platform-api/alembic/
-└── 0001_local_auth (branch: "auth")        ├── 0001_initial_schema
-                                            ├── 0002_add_waitlist_table
+├── 0001_local_auth (branch: "auth")        ├── 0001_initial_schema
+└── 0002_v3_platform_tables (head)          ├── 0002_add_waitlist_table
                                             ├── 0002_mssp_tenant_hierarchy
                                             ├── 0003_add_aletheia_cot_tables
                                             ├── 0004_audit_prev_hash_column
@@ -56,6 +56,14 @@ Notes:
 * `packages/database/alembic/versions/0001_local_auth.py` carries
   `branch_labels = ("auth",)` so future revisions can be added under the
   same independent branch via `alembic revision --head=auth ...`.
+* `packages/database/alembic/versions/0002_v3_platform_tables.py`
+  extends the `auth` chain with three v3 platform-infra tables
+  (`_platform_jobs`, `_platform_password_reset_tokens`,
+  `_platform_email_verification_tokens`). It is idempotent
+  (`CREATE TABLE IF NOT EXISTS`) so it can be applied safely on databases
+  where the worker or auth package already created the tables lazily on
+  first boot. Verified end-to-end against Postgres in the `alembic` CI
+  job, which also exercises a downgrade/upgrade cycle on the auth tree.
 * The platform-api chain is unlabeled — it is the default head for that
   config. The two `0006_local_auth` and `0001_local_auth` files are
   unrelated; the platform-api one only adds `password_hash` and

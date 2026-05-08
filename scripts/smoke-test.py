@@ -107,6 +107,17 @@ def step_bff_identity(client: httpx.Client) -> None:
     ok("bff→api identity", f"user_id={identity['user_id']} role={identity.get('role')}")
 
 
+def step_bff_auth_mode(client: httpx.Client) -> None:
+    """Confirm the auth-mode discovery endpoint reaches platform-api v2."""
+    resp = client.get(f"{WEB_URL}/api/tiresias/platform/auth/mode")
+    if resp.status_code != 200:
+        fail("bff→api auth-mode", f"HTTP {resp.status_code}: {resp.text}")
+    body = resp.json()
+    if body.get("mode") not in ("local", "oidc"):
+        fail("bff→api auth-mode", f"unexpected mode: {body}")
+    ok("bff→api auth-mode", f"mode={body['mode']} oidc_enabled={body.get('oidc_enabled')}")
+
+
 def step_memory_crud() -> None:
     """Exercise memory-service directly via its API key.
 
@@ -151,6 +162,7 @@ def main() -> int:
         step_login(client)
         step_health_full(client)
         step_bff_identity(client)
+        step_bff_auth_mode(client)
     step_memory_crud()
     print("✓ all smoke steps passed")
     return 0

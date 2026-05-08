@@ -20,6 +20,7 @@ workspace = [
   "platform-config",
   "platform-observability",
   "platform-memory-client",
+  "platform-secrets",
 ]
 
 [project.scripts]

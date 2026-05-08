@@ -62,6 +62,7 @@ jobs:
           uv pip install --system -e packages/config/python
           uv pip install --system -e packages/observability/python
           uv pip install --system -e packages/memory-client/python
+          uv pip install --system -e packages/secrets/python
           uv pip install --system -e apps/platform-api
 
   # ── Lint ─────────────────────────────────────────────────────────────────────
@@ -162,23 +163,109 @@ jobs:
           uv pip install --system -e packages/config/python
           uv pip install --system -e packages/observability/python
           uv pip install --system -e packages/memory-client/python
+          uv pip install --system -e packages/secrets/python
           uv pip install --system -e apps/platform-api
-          uv pip install --system pytest pytest-asyncio pytest-mock httpx
+          # Install platform-api runtime deps (PyYAML, cryptography, PyJWT,
+          # structlog, click, fastapi, sqlalchemy, etc.) — these are required
+          # by both the legacy gating tests and the new platform v2 tests.
+          uv pip install --system -r apps/platform-api/requirements.txt
+          uv pip install --system pytest-mock
 
       - name: Run Python tests — platform_auth
         run: cd packages/auth/python && python -m pytest --tb=short -q
 
+      - name: Run Python tests — platform_secrets
+        run: cd packages/secrets/python && python -m pytest --tb=short -q
+
       - name: Run Python tests — platform-api (platform v2)
         run: cd apps/platform-api && python -m pytest tests/platform --confcutdir=tests/platform --tb=short -q
 
-      - name: Run Python tests — platform-api (legacy)
-        run: cd apps/platform-api && python -m pytest --ignore=tests/platform --tb=short -q || true
+      - name: Run Python tests — platform-api (legacy gating)
+        # See docs/decisions/ADR-003-legacy-tests-gating.md.
+        # Allowlisted directories must pass; failures here block merge.
+        run: |
+          cd apps/platform-api
+          # Read the allowlist, strip comments/blanks, pass each path as an
+          # explicit pytest argument. This is the gating bar.
+          paths=$(grep -Ev '^(#|$)' tests/legacy_gating_allowlist.txt | tr '\n' ' ')
+          if [ -z "$paths" ]; then
+            echo "::warning::legacy_gating_allowlist.txt is empty"
+          else
+            echo "Running legacy gating tests: $paths"
+            python -m pytest $paths --tb=short -q
+          fi
+      - name: Run Python tests — platform-api (legacy advisory)
+        # Everything not in tests/platform/ and not on the allowlist.
+        # Advisory: failures reported but do not block merge.
+        run: |
+          cd apps/platform-api
+          allowlist=$(grep -Ev '^(#|$)' tests/legacy_gating_allowlist.txt | sed 's|^|--ignore=|' | tr '\n' ' ')
+          python -m pytest tests --ignore=tests/platform $allowlist --tb=short -q || true
+
+  # ── Alembic dual-tree validation ─────────────────────────────────────────────
+  alembic:
+    name: Alembic upgrade (dual tree)
+    runs-on: ubuntu-latest
+    needs: install
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: platform
+          POSTGRES_PASSWORD: platform
+          POSTGRES_DB: platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://platform:platform@localhost:5432/platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install Alembic + Postgres driver
+        run: pip install alembic 'sqlalchemy>=2.0' psycopg2-binary
+      - name: Enable pgcrypto (for gen_random_uuid)
+        env:
+          PGPASSWORD: platform
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+          psql -h localhost -U platform -d platform -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'
+      - name: Show heads (packages/database)
+        run: cd packages/database && alembic heads
+      - name: Upgrade local-auth tree (packages/database)
+        run: cd packages/database && alembic upgrade head
+      - name: Upgrade SoulAuth tree (apps/platform-api)
+        # Long-lived chain — best-effort while the legacy schema gets cleaned up.
+        # Failures are not fatal: this job's primary purpose is validating the
+        # local-auth/v3 platform-tables branch lands cleanly on Postgres.
+        run: cd apps/platform-api && alembic upgrade head || true
+      - name: Verify v3 tables exist
+        env:
+          PGPASSWORD: platform
+        run: |
+          for t in _platform_jobs _platform_password_reset_tokens _platform_email_verification_tokens; do
+            psql -h localhost -U platform -d platform -tAc "SELECT to_regclass('public.$t');" | tee /tmp/t.out
+            grep -q "$t" /tmp/t.out || { echo "missing table $t"; exit 1; }
+          done
+      - name: Verify idempotency (re-run upgrade)
+        run: cd packages/database && alembic upgrade head
+      - name: Downgrade then re-upgrade (auth tree)
+        run: |
+          cd packages/database
+          alembic downgrade 0001_local_auth
+          alembic upgrade head
 
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:
     name: Build — ${{ matrix.app }}
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, alembic]
     strategy:
       fail-fast: false
       matrix:
@@ -225,3 +312,55 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ── End-to-end smoke test ───────────────────────────────────────────────
+  smoke:
+    name: End-to-end smoke
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install httpx alembic 'sqlalchemy>=2' psycopg2-binary
+      - name: Bring up default profile
+        run: |
+          docker compose --profile default up -d --build
+          # Wait until the BFF reports liveness
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/health/live >/dev/null 2>&1; then
+              echo "web is live after ${i} attempts"
+              break
+            fi
+            sleep 5
+          done
+      - name: Apply auth-branch migrations to live db
+        env:
+          DATABASE_URL: postgresql://platform:platform@localhost:5432/platform
+        run: |
+          # Wait for postgres to accept connections on the host port
+          for i in $(seq 1 30); do
+            if pg_isready -h localhost -p 5432 -U platform >/dev/null 2>&1; then
+              echo "db is ready after ${i} attempts"
+              break
+            fi
+            sleep 2
+          done
+          cd packages/database && alembic upgrade heads
+      - name: Print compose status
+        run: docker compose ps
+      - name: Run smoke harness
+        env:
+          PLATFORM_WEB_URL: http://localhost:3000
+          TIRESIAS_API_URL: http://localhost:8000
+          MEMORY_SERVICE_URL: http://localhost:8910
+          MEMORY_SERVICE_KEY: changeme-memory-service-shared-secret
+        run: python scripts/smoke-test.py
+      - name: Capture logs on failure
+        if: failure()
+        run: |
+          docker compose logs --tail=200 platform-api platform-web memory-service db
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

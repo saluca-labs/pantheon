@@ -1,0 +1,43 @@
+# Legacy platform-api tests promoted to gating in CI.
+#
+# Listed paths are run by the "Run Python tests — platform-api (legacy gating)"
+# CI step. Failures here BLOCK MERGE to main.
+#
+# To add a path:
+#   1. Confirm `python -m pytest <path> --tb=short` passes locally (no Postgres).
+#   2. Append the path below.
+#   3. Open a PR. The CI alembic + smoke jobs will validate the larger picture.
+#
+# To move a flaky / runtime-broken path to advisory:
+#   1. Remove it from this file.
+#   2. Note the reason in docs/decisions/ADR-003-legacy-tests-gating.md.
+#
+# Paths are relative to apps/platform-api/. One per line. Blank lines and
+# lines starting with `#` are ignored.
+
+tests/test_aletheia
+tests/test_aletheia_policy.py
+tests/test_aletheia_storage.py
+tests/test_analytics
+tests/test_audit
+tests/test_billing
+tests/test_compatibility
+tests/test_detection
+tests/test_enforcement
+tests/test_idp
+tests/test_integrations
+tests/test_license
+# tests/test_partner_admin.py  — demoted to advisory (Postgres-only:
+#   ILIKE / now() / partner_type column not in SQLite bootstrap).
+#   See ADR-003.
+tests/test_partner_emails.py
+# tests/test_partner_types.py    — demoted to advisory (depends on
+#   partner_type column added by a migration not run in unit tests).
+tests/test_sanitizer_decoder.py
+tests/test_sanitizer_engine.py
+tests/test_sanitizer_patterns.py
+tests/test_sanitizer_performance.py
+tests/test_sdk
+tests/test_tenant
+tests/test_tool_policy_engine.py
+tests/test_waitlist
