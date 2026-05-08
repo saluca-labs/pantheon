@@ -78,5 +78,68 @@
         }
       }
     }
+  },
+  "TiresiasMatrix": {
+    "entityTypes": {
+      "MatrixRoom": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "room_alias": { "type": "String", "required": true },
+            "tenant_id": { "type": "String", "required": true },
+            "allowed_roles": { "type": "Set", "element": { "type": "String" }, "required": true },
+            "human_write": { "type": "Boolean", "required": true }
+          }
+        }
+      },
+      "MatrixUser": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "agent_role": { "type": "String", "required": true },
+            "tenant_id": { "type": "String", "required": true },
+            "is_human": { "type": "Boolean", "required": true },
+            "user_scope": { "type": "String", "required": true }
+          }
+        }
+      }
+    },
+    "actions": {
+      "join": {
+        "appliesTo": {
+          "principalTypes": ["MatrixUser"],
+          "resourceTypes": ["MatrixRoom"],
+          "context": { "type": "Record", "attributes": {} }
+        }
+      },
+      "send_message": {
+        "appliesTo": {
+          "principalTypes": ["MatrixUser"],
+          "resourceTypes": ["MatrixRoom"],
+          "context": { "type": "Record", "attributes": {} }
+        }
+      },
+      "read_history": {
+        "appliesTo": {
+          "principalTypes": ["MatrixUser"],
+          "resourceTypes": ["MatrixRoom"],
+          "context": { "type": "Record", "attributes": {} }
+        }
+      },
+      "invite": {
+        "appliesTo": {
+          "principalTypes": ["MatrixUser"],
+          "resourceTypes": ["MatrixRoom"],
+          "context": { "type": "Record", "attributes": {} }
+        }
+      },
+      "redact": {
+        "appliesTo": {
+          "principalTypes": ["MatrixUser"],
+          "resourceTypes": ["MatrixRoom"],
+          "context": { "type": "Record", "attributes": {} }
+        }
+      }
+    }
   }
 }
