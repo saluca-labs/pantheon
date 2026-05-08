@@ -21,6 +21,7 @@ vi.mock('lucide-react', () => {
     'Settings', 'ChevronDown', 'ChevronRight', 'Cpu', 'Menu', 'X',
     'SlidersHorizontal',
     'ClipboardList',
+    'MessagesSquare',
     // Agentic OS registry icons
     'HeartPulse', 'Wrench', 'FlaskConical', 'ShieldCheck', 'Clapperboard',
     'ShieldAlert', 'BookOpenText', 'Briefcase', 'Sparkles',
@@ -34,16 +35,25 @@ import { Sidebar, navItems } from '@/components/layout/sidebar';
 import { AGENTIC_OS_MODULES } from '@/lib/agentic-os/registry';
 
 describe('Sidebar', () => {
-  it('renders the 7 Tiresias core navigation items', () => {
+  it('renders the 8 Tiresias core navigation items (incl. Matrix Console)', () => {
     render(<Sidebar />);
-    expect(navItems).toHaveLength(7);
+    expect(navItems).toHaveLength(8);
     expect(screen.getByText('Policy')).toBeInTheDocument();
     expect(screen.getByText('Sessions')).toBeInTheDocument();
     expect(screen.getByText('Cost')).toBeInTheDocument();
     expect(screen.getByText('Providers')).toBeInTheDocument();
     expect(screen.getByText('Alerts')).toBeInTheDocument();
     expect(screen.getByText('API Keys')).toBeInTheDocument();
+    expect(screen.getByText('Matrix Console')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
+  });
+
+  it('Matrix Console nav link points at /dashboard/matrix-console and is enabled', () => {
+    render(<Sidebar />);
+    const link = screen.getByText('Matrix Console').closest('a');
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('/dashboard/matrix-console');
+    expect(link?.getAttribute('aria-disabled')).toBe('false');
   });
 
   it('renders the Agentic OS section header', () => {

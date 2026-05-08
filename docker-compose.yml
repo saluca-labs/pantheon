@@ -289,6 +289,23 @@ services:
       retries: 3
       start_period: 15s
 
+  # Element Web — embedded Matrix client for V-08.
+  # Reachable only from inside the Compose network; platform-web proxies
+  # browser traffic to it via the /_matrix/element/* rewrite in
+  # apps/platform-web/next.config.ts so the iframe stays same-origin.
+  element:
+    image: vectorim/element-web:latest
+    container_name: tiresias-element
+    restart: unless-stopped
+    profiles: [matrix]
+    volumes:
+      - ./apps/matrix-bridge/element/config.json:/app/config.json:ro
+    depends_on:
+      synapse:
+        condition: service_started
+    expose:
+      - "80"
+
 volumes:
   db_data:
   memory_data:

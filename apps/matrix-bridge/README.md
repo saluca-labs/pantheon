@@ -62,12 +62,29 @@ MATRIX_REGISTRATION_SECRET=<openssl rand -hex 32>
 
 See `.env.example` for the full reference.
 
+## Element Web embed (V-08, PR E)
+
+The Compose `matrix` profile also runs a `vectorim/element-web`
+container (see `element/config.json` and the `element` service in
+`docker-compose.yml`). It is reachable only from inside the Compose
+network; `apps/platform-web/next.config.ts` adds a rewrite so
+`/_matrix/element/*` proxies to it, keeping the dashboard iframe
+same-origin. The console page lives at `/dashboard/matrix-console`
+and is gated to `Role.ADMIN` via `RoleGate`.
+
 ## Status
 
-This is **PR A — scaffold only**. The provisioner and forwarder modules are stubs that import cleanly and have unit tests, but they don't talk to `platform-api` or `SoulWatch` yet. PR B adds the Cedar policies; PR C adds the detection rules; PR D wires the SoulWatch ingest.
+All five matrix PRs have shipped:
+
+- **PR A** — scaffold (Synapse config + appservice skeleton)
+- **PR B** — Cedar `TiresiasMatrix` policies (matrix-001..matrix-007)
+- **PR C** — detection rules (matrix-001..004) + `pb-007-isolate-matrix-room`
+- **PR D** — `event_forwarder` → `/ingest/matrix` SoulWatch wiring
+- **PR E** — Element Web dashboard embed (V-08)
 
 ## See also
 
 - [tiresias-matrix-integration-plan.md](../../tiresias-matrix-integration-plan.md) — full APE/V plan
-- [Cedar policy guide](../platform-app-proxy/docs/cedar-policy-guide.md) — how PR B will extend the schema
+- [Cedar policy guide](../platform-app-proxy/docs/cedar-policy-guide.md) — schema extended in PR B
 - [docs/security/auth-model.md](../../docs/security/auth-model.md) — the platform's auth surface that Matrix bot accounts plug into
+- [element/README.md](./element/README.md) — V-08 Element Web embed details

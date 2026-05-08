@@ -1,0 +1,37 @@
+{
+  "_comment": "Element Web config for Tiresias matrix profile. Mounted read-only at /app/config.json inside the vectorim/element-web container. Pinned to the internal Synapse URL so Element renders inside the platform-web /dashboard/matrix-console iframe without ever talking to a public homeserver. Apache-2.0.",
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "http://synapse:8008",
+      "server_name": "tiresias.local"
+    }
+  },
+  "brand": "Tiresias Matrix Console",
+  "default_country_code": "US",
+  "show_labs_settings": false,
+  "disable_custom_urls": true,
+  "disable_guests": true,
+  "disable_login_language_selector": true,
+  "disable_3pid_login": true,
+  "default_theme": "dark",
+  "permalink_prefix": "https://matrix.to",
+  "jitsi": { "preferred_domain": "" },
+  "features": {
+    "feature_video_rooms": false,
+    "feature_voice_broadcast": false,
+    "feature_new_room_decoration_ui": false
+  },
+  "room_directory": {
+    "servers": []
+  },
+  "setting_defaults": {
+    "MessageComposerInput.suggestEmoji": false,
+    "Widgets.allowedThirdPartyManagers": []
+  },
+  "integrations_ui_url": "",
+  "integrations_rest_url": "",
+  "integrations_widgets_urls": [],
+  "embedded_pages": {
+    "welcome_url": null
+  }
+}
