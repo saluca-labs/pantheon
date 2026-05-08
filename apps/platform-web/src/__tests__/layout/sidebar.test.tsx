@@ -20,6 +20,7 @@ vi.mock('lucide-react', () => {
     'Shield', 'ScrollText', 'DollarSign', 'Activity', 'Bell', 'Key',
     'Settings', 'ChevronDown', 'ChevronRight', 'Cpu', 'Menu', 'X',
     'SlidersHorizontal',
+    'ClipboardList',
     // Agentic OS registry icons
     'HeartPulse', 'Wrench', 'FlaskConical', 'ShieldCheck', 'Clapperboard',
     'ShieldAlert', 'BookOpenText', 'Briefcase', 'Sparkles',
@@ -73,6 +74,16 @@ describe('Sidebar', () => {
     expect(sessionsLink?.getAttribute('aria-disabled')).toBe('true');
   });
 
+  it('exposes an Audit log entry inside the Agentic OS group', () => {
+    render(<Sidebar />);
+    const toggle = screen.getByText('Agentic OS').closest('button');
+    fireEvent.click(toggle!);
+    const auditLink = screen.getByText('Audit log').closest('a');
+    expect(auditLink).not.toBeNull();
+    expect(auditLink?.getAttribute('href')).toBe('/dashboard/os/audit');
+    expect(auditLink?.getAttribute('aria-disabled')).toBe('false');
+  });
+
   it('exposes an OS Settings entry inside the Agentic OS group', () => {
     render(<Sidebar />);
     const toggle = screen.getByText('Agentic OS').closest('button');
@@ -92,7 +103,8 @@ describe('Sidebar', () => {
     const cyberMod = AGENTIC_OS_MODULES.find((m) => m.slug === 'cyber')!;
     expect(screen.getAllByText(healthMod.label).length).toBeGreaterThan(0);
     expect(screen.queryByText(cyberMod.label)).toBeNull();
-    // OS Settings always present.
+    // OS Settings and Audit log always present.
     expect(screen.getByText('OS Settings')).toBeInTheDocument();
+    expect(screen.getByText('Audit log')).toBeInTheDocument();
   });
 });

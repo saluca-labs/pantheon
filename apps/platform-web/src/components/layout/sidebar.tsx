@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Cpu,
   SlidersHorizontal,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 import { Logo } from '@/components/brand/logo';
@@ -42,9 +43,9 @@ export const navItems: readonly BaseItem[] = [
 /**
  * Build the Agentic OS nav items from the shared module registry,
  * filtered to the provided enabled slugs (resolved server-side from the
- * per-user feature flag store). Always appends an "OS Settings" entry at
- * the end of the group so users can reach the toggle UI even when most
- * modules are disabled.
+ * per-user feature flag store). Always appends "Audit log" and
+ * "OS Settings" entries at the end of the group so users can reach the
+ * cross-OS surfaces even when most modules are disabled.
  */
 export function agenticOsNavItems(enabledSlugs?: string[]): BaseItem[] {
   const items: BaseItem[] = AGENTIC_OS_MODULES
@@ -57,6 +58,15 @@ export function agenticOsNavItems(enabledSlugs?: string[]): BaseItem[] {
       badge: m.status === 'live' ? undefined : m.status === 'preview' ? 'Preview' : 'Soon',
     }));
 
+  // Cross-OS Audit log (Workstream D) and OS Settings (Workstream E) live
+  // at the bottom of the Agentic OS group, always visible regardless of
+  // per-user flag state.
+  items.push({
+    label: 'Audit log',
+    href: '/dashboard/os/audit',
+    icon: ClipboardList,
+    enabled: true,
+  });
   items.push({
     label: 'OS Settings',
     href: '/dashboard/os/settings',
