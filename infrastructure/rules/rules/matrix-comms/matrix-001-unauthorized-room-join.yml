@@ -1,0 +1,62 @@
+title: Unauthorized Matrix Room Join Attempt
+id: matrix-001
+status: experimental
+level: high
+description: |
+  An agent or user attempted to join a Matrix room that the Cedar policy
+  engine denied. May indicate lateral movement, misconfigured agent
+  provisioning, or an attacker-controlled identity attempting to access
+  out-of-scope inter-agent channels (e.g. pantheon-ops or another tenant's
+  console). All Matrix room access in Tiresias flows through the SoulGate
+  proxy and is authorized via the Cedar TiresiasMatrix namespace before
+  the join request reaches Synapse.
+author: Saluca LLC
+date: 2026/05/08
+references:
+  - https://attack.mitre.org/techniques/T1021/
+  - https://tiresias.network/docs/rules/matrix-001
+tags:
+  - attack.lateral_movement
+  - mitre.t1021
+  - mitre_atlas.aml.t0040
+  - tiresias.soulgate
+  - tiresias.matrix
+  - tiresias.matrix_appservice
+
+logsource:
+  product: tiresias
+  service: soulgate
+  category: ai_agent_telemetry
+
+detection:
+  selection:
+    event_type: authorization_decision
+    namespace: TiresiasMatrix
+    action: join
+    resource_type: MatrixRoom
+    decision: DENY
+  filter_provisioning:
+    # Provisioner accounts may pre-flight a join check during room
+    # creation; these denies are expected and not actionable.
+    agent_role: platform-provisioner
+  condition: selection and not filter_provisioning
+  timeframe: 5m
+  group_by:
+    - principal_id
+    - tenant_id
+
+fields:
+  - principal_id
+  - agent_role
+  - tenant_id
+  - room_alias
+  - decision_reason
+  - source_ip
+  - timestamp
+
+falsepositives:
+  - New agent role added without a matching Cedar policy update
+  - Room alias typo in agent provisioning configuration
+  - Stale client cache attempting to rejoin a redacted room
+
+response_playbook: pb-003
