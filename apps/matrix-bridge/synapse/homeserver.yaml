@@ -1,0 +1,107 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Tiresias × Synapse — Homeserver configuration
+#
+# Apache 2.0 — matches upstream Synapse and infrastructure/rules.
+#
+# This config is intentionally minimal:
+#   • Listener binds to 0.0.0.0:8008 INSIDE the tiresias-internal Docker network.
+#     The compose stanza does NOT publish 8008 to the host, so SoulGate (or the
+#     appservice itself) is the only path in. Confirm with `curl :8008` from the
+#     host — connection should be refused.
+#   • Storage uses the shared platform Postgres.
+#   • Federation is disabled. This is a single-tenant island.
+#   • The Tiresias appservice registration is loaded from /data/appservice/.
+#
+# Secrets (registration_shared_secret, macaroon_secret_key, form_secret) MUST be
+# set via env-substituted overlays at deploy time. The defaults below are
+# placeholders and will refuse to start a real homeserver.
+# ──────────────────────────────────────────────────────────────────────────────
+
+server_name: "${MATRIX_SERVER_NAME:-tiresias.local}"
+pid_file: /data/homeserver.pid
+public_baseurl: "http://synapse:8008/"
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# ── Storage ──────────────────────────────────────────────────────────────────
+database:
+  name: psycopg2
+  args:
+    user: "${POSTGRES_USER:-platform}"
+    password: "${POSTGRES_PASSWORD:-platform}"
+    database: "${MATRIX_POSTGRES_DB:-synapse}"
+    host: db
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+media_store_path: /data/media_store
+uploads_path: /data/uploads
+
+# ── Federation: disabled ─────────────────────────────────────────────────────
+federation_domain_whitelist: []
+allow_public_rooms_over_federation: false
+allow_public_rooms_without_auth: false
+
+# ── Registration: closed ─────────────────────────────────────────────────────
+# Account creation goes through user_provisioner.py only.
+enable_registration: false
+enable_registration_without_verification: false
+registration_requires_token: true
+
+# ── Secrets — overridden at deploy time ──────────────────────────────────────
+registration_shared_secret: "${MATRIX_REGISTRATION_SECRET}"
+macaroon_secret_key: "${MATRIX_MACAROON_SECRET}"
+form_secret: "${MATRIX_FORM_SECRET}"
+
+signing_key_path: /data/signing.key
+
+# ── Appservices ──────────────────────────────────────────────────────────────
+app_service_config_files:
+  - /data/appservice/tiresias-appservice.yaml
+
+# ── Reporting / metrics ──────────────────────────────────────────────────────
+report_stats: false
+enable_metrics: true
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+log_config: /data/log.config.yaml
+
+# ── Rate limits — relaxed for trusted appservice traffic ─────────────────────
+rc_message:
+  per_second: 10
+  burst_count: 50
+
+rc_registration:
+  per_second: 0.17
+  burst_count: 3
+
+rc_login:
+  address:
+    per_second: 0.17
+    burst_count: 3
+  account:
+    per_second: 0.17
+    burst_count: 3
+  failed_attempts:
+    per_second: 0.17
+    burst_count: 3
+
+# ── Retention ────────────────────────────────────────────────────────────────
+# SoulWatch is the canonical audit log; Synapse keeps a 30-day rolling buffer
+# for client-side history. Adjust per deployment.
+retention:
+  enabled: true
+  default_policy:
+    min_lifetime: 1d
+    max_lifetime: 30d
+  purge_jobs:
+    - interval: 1d

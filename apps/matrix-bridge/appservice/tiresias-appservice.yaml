@@ -1,0 +1,27 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Tiresias appservice registration
+#
+# This file is loaded by Synapse at boot via app_service_config_files.
+# Both tokens (HS_TOKEN, AS_TOKEN) MUST be substituted from environment at
+# deploy time — the literals below are placeholders that will not authenticate.
+#
+# Apache 2.0 — matches upstream Matrix appservice spec.
+# ──────────────────────────────────────────────────────────────────────────────
+
+id: tiresias-appservice
+url: http://matrix-bridge:8080
+as_token: "${MATRIX_AS_TOKEN}"
+hs_token: "${MATRIX_HS_TOKEN}"
+sender_localpart: tiresias-bot
+rate_limited: false
+
+namespaces:
+  users:
+    - exclusive: true
+      regex: "@agent-.*:${MATRIX_SERVER_NAME}"
+  rooms:
+    - exclusive: false
+      regex: "!.*:${MATRIX_SERVER_NAME}"
+  aliases:
+    - exclusive: true
+      regex: "#tiresias-.*:${MATRIX_SERVER_NAME}"

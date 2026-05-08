@@ -234,6 +234,62 @@ services:
       retries: 3
       start_period: 20s
 
+  # ── Matrix (opt-in via --profile matrix) ────────────────────────────────────
+  # Provides the inter-agent / agent⇔user communication channel.
+  # Plan: tiresias-matrix-integration-plan.md.
+  # Apache 2.0; uses upstream Synapse image.
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    restart: unless-stopped
+    profiles: [matrix]
+    environment:
+      SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
+      MATRIX_SERVER_NAME: ${MATRIX_SERVER_NAME:-tiresias.local}
+      MATRIX_HS_TOKEN: ${MATRIX_HS_TOKEN:-changeme-hs}
+      MATRIX_AS_TOKEN: ${MATRIX_AS_TOKEN:-changeme-as}
+      MATRIX_REGISTRATION_SECRET: ${MATRIX_REGISTRATION_SECRET:-changeme-registration}
+      MATRIX_MACAROON_SECRET: ${MATRIX_MACAROON_SECRET:-changeme-macaroon}
+      MATRIX_FORM_SECRET: ${MATRIX_FORM_SECRET:-changeme-form}
+      MATRIX_POSTGRES_DB: ${MATRIX_POSTGRES_DB:-synapse}
+      POSTGRES_USER: ${POSTGRES_USER:-platform}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-platform}
+    volumes:
+      - ./apps/matrix-bridge/synapse:/data:ro
+      - synapse_data:/data/media_store
+    depends_on:
+      db:
+        condition: service_healthy
+    # Synapse is intentionally NOT published to the host. SoulGate (or, for
+    # local exploration, an `exec` into the container) is the only entry path.
+    expose:
+      - "8008"
+
+  matrix-bridge:
+    build:
+      context: apps/matrix-bridge/appservice
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    profiles: [matrix]
+    environment:
+      SYNAPSE_URL: http://synapse:8008
+      PLATFORM_API_URL: http://platform-api:8000
+      SOULWATCH_INGEST_URL: ${SOULWATCH_INGEST_URL:-}
+      HS_TOKEN: ${MATRIX_HS_TOKEN:-changeme-hs}
+      AS_TOKEN: ${MATRIX_AS_TOKEN:-changeme-as}
+    depends_on:
+      synapse:
+        condition: service_started
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
 volumes:
   db_data:
   memory_data:
+  synapse_data:
