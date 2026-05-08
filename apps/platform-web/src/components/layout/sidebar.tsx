@@ -16,6 +16,7 @@ import {
   Cpu,
   SlidersHorizontal,
   ClipboardList,
+  MessagesSquare,
   type LucideIcon,
 } from 'lucide-react';
 import { Logo } from '@/components/brand/logo';
@@ -37,6 +38,16 @@ export const navItems: readonly BaseItem[] = [
   { label: 'Providers', href: '/dashboard/providers', icon: Activity, enabled: true },
   { label: 'Alerts', href: '/dashboard/alerts', icon: Bell, enabled: false },
   { label: 'API Keys', href: '/dashboard/keys', icon: Key, enabled: false },
+  // V-08 — Matrix Console (Element Web embed). Always shown but the
+  // page itself enforces RBAC via RoleGate; non-admins see the
+  // "restricted" card on click.
+  {
+    label: 'Matrix Console',
+    href: '/dashboard/matrix-console',
+    icon: MessagesSquare,
+    enabled: true,
+    badge: 'Preview',
+  },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings, enabled: false },
 ] as const;
 
