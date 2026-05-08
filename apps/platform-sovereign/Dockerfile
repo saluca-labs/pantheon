@@ -9,7 +9,7 @@ COPY src/ ./src/
 
 RUN uv venv /app/venv && \
     . /app/venv/bin/activate && \
-    uv pip install -e .
+    uv pip install .
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
 FROM python:3.11-slim AS runner
@@ -29,4 +29,4 @@ ENV PYTHONUNBUFFERED=1
 USER platform
 EXPOSE 8090
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["/app/venv/bin/uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8090"]
