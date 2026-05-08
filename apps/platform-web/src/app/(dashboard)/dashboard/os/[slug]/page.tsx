@@ -102,6 +102,50 @@ export default async function AgenticOsModulePage({ params }: Props) {
           </div>
         )}
 
+        {mod.status === 'live' && mod.slug === 'maker' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/maker/builds"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              My Builds &amp; Parts Inventory
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'research' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/research/hypotheses"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Hypothesis Ledger
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'secure-dev' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/secure-dev/threat-model"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              STRIDE Threat Model
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'cyber' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/cyber/alerts"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Alert Triage Queue
+            </Link>
+          </div>
+        )}
+
         {mod.status === 'preview' && (
           <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200/90">
             Schema and plan are live. Feature pages roll out in the parallel
