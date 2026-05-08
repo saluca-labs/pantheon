@@ -61,6 +61,7 @@ from src.platform import init_memory_client, shutdown_memory_client
 from src.platform.identity_router import router as platform_identity_router
 from src.platform.health_router import router as platform_health_router
 from src.platform.auth_router import router as platform_auth_router
+from src.matrix_ingest.router import router as matrix_ingest_router
 
 settings = get_settings()
 
@@ -525,6 +526,7 @@ app.include_router(partner_router)
 register_partner_program(app)
 app.include_router(contracts_router)
 app.include_router(siem_router)
+app.include_router(matrix_ingest_router)
 app.include_router(idp_router)
 app.include_router(notifications_router)
 app.include_router(usage_router)

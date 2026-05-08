@@ -39,5 +39,6 @@ tests/test_sanitizer_patterns.py
 tests/test_sanitizer_performance.py
 tests/test_sdk
 tests/test_tenant
+tests/test_matrix_ingest
 tests/test_tool_policy_engine.py
 tests/test_waitlist
