@@ -19,6 +19,7 @@ vi.mock('lucide-react', () => {
     // Sidebar core
     'Shield', 'ScrollText', 'DollarSign', 'Activity', 'Bell', 'Key',
     'Settings', 'ChevronDown', 'ChevronRight', 'Cpu', 'Menu', 'X',
+    'SlidersHorizontal',
     // Agentic OS registry icons
     'HeartPulse', 'Wrench', 'FlaskConical', 'ShieldCheck', 'Clapperboard',
     'ShieldAlert', 'BookOpenText', 'Briefcase', 'Sparkles',
@@ -70,5 +71,28 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     const sessionsLink = screen.getByText('Sessions').closest('a');
     expect(sessionsLink?.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('exposes an OS Settings entry inside the Agentic OS group', () => {
+    render(<Sidebar />);
+    const toggle = screen.getByText('Agentic OS').closest('button');
+    fireEvent.click(toggle!);
+    const settingsLink = screen.getByText('OS Settings').closest('a');
+    expect(settingsLink).not.toBeNull();
+    expect(settingsLink?.getAttribute('href')).toBe('/dashboard/os/settings');
+    expect(settingsLink?.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('filters Agentic OS items to enabledSlugs when provided', () => {
+    render(<Sidebar enabledSlugs={['health', 'maker']} />);
+    const toggle = screen.getByText('Agentic OS').closest('button');
+    fireEvent.click(toggle!);
+    // Health and Maker should appear; Cyber should not.
+    const healthMod = AGENTIC_OS_MODULES.find((m) => m.slug === 'health')!;
+    const cyberMod = AGENTIC_OS_MODULES.find((m) => m.slug === 'cyber')!;
+    expect(screen.getAllByText(healthMod.label).length).toBeGreaterThan(0);
+    expect(screen.queryByText(cyberMod.label)).toBeNull();
+    // OS Settings always present.
+    expect(screen.getByText('OS Settings')).toBeInTheDocument();
   });
 });

@@ -7,10 +7,15 @@ import { Menu, X, Cpu } from 'lucide-react';
 import { navItems, NavGroup, agenticOsNavItems } from './sidebar';
 import { Logo } from '@/components/brand/logo';
 
-export function MobileNav() {
+interface MobileNavProps {
+  /** Slugs resolved server-side from the per-user feature flag store. */
+  enabledSlugs?: string[];
+}
+
+export function MobileNav({ enabledSlugs }: MobileNavProps = {}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const agenticItems = agenticOsNavItems();
+  const agenticItems = agenticOsNavItems(enabledSlugs);
 
   return (
     <div className="md:hidden">
