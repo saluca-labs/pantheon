@@ -1,0 +1,27 @@
+# Synapse log config — JSON to stdout so the matrix-bridge sidecar (or, later,
+# SoulWatch) can tail Docker logs and ingest structured events.
+#
+# Apache 2.0 — matches upstream Synapse.
+
+version: 1
+
+formatters:
+  json:
+    (): synapse.logging.formatter.JsonFormatter
+
+filters:
+  context:
+    (): synapse.logging.context.LoggingContextFilter
+    request: ""
+
+handlers:
+  stdout:
+    class: logging.StreamHandler
+    formatter: json
+    filters: [context]
+
+root:
+  level: INFO
+  handlers: [stdout]
+
+disable_existing_loggers: false
