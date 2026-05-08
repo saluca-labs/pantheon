@@ -107,6 +107,16 @@ See [QUICKSTART.md](QUICKSTART.md) for setup instructions.
 - [Changelog](CHANGELOG.md)
 - [Security Policy](SECURITY.md)
 
+### Repo-Wide Docs
+
+Cross-cutting platform docs (covering both `platform-api` and `platform-web`) live in the repo root under [`docs/`](../../docs):
+
+- [Architecture overview](../../docs/architecture/system-overview.md) and [module boundaries](../../docs/architecture/module-boundaries.md)
+- [Agentic OS layer](../../docs/architecture/agentic-os.md) (lives in `platform-web`, see [ADR-005](../../docs/decisions/ADR-005-agentic-os-module-registry.md))
+- [Cross-OS audit log](../../docs/architecture/audit-log.md) and [audit trail boundary](../../docs/security/audit-trail.md) (`audit_events` vs `agos_audit`)
+- [Alembic dual-tree ordering](../../docs/operations/alembic-branches.md)
+- [Auth model](../../docs/security/auth-model.md), [smoke matrix](../../docs/operations/smoke-matrix.md), [Agentic OS rollout playbook](../../docs/operations/agentic-os-rollout.md)
+
 ## Links
 
 - Production: [https://tiresias.network](https://tiresias.network)
