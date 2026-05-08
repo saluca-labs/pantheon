@@ -23,5 +23,15 @@ namespaces:
     - exclusive: false
       regex: "!.*:${MATRIX_SERVER_NAME}"
   aliases:
+    # The bridge owns three families of room aliases on this server:
+    #   #tiresias-*       — console, audit, sub-user channels
+    #   #pantheon-*       — agent-only orchestration (pantheon-ops)
+    #   #notifications    — broadcast room
+    # Anything else under :MATRIX_SERVER_NAME is left to other appservices
+    # or to manually-created rooms by primary humans.
     - exclusive: true
       regex: "#tiresias-.*:${MATRIX_SERVER_NAME}"
+    - exclusive: true
+      regex: "#pantheon-.*:${MATRIX_SERVER_NAME}"
+    - exclusive: true
+      regex: "#notifications:${MATRIX_SERVER_NAME}"
