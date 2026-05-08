@@ -384,6 +384,73 @@ def step_agentic_os_write(client: httpx.Client, slug: str) -> None:
         fail(f"agos.{slug}.write", f"unknown verify mode: {verify}")
 
 
+def step_audit_view(client: httpx.Client) -> None:
+    """Verify the audit log endpoint returns at least one entry.
+
+    The per-OS write probes above all call recordAudit internally, so by the
+    time we reach this step the agos_audit table is guaranteed to have rows
+    for the smoke user. We just confirm the endpoint returns 200 + a non-empty
+    list.
+    """
+    path = "/api/tiresias/agentic-os/audit?limit=50"
+    resp = client.get(f"{WEB_URL}{path}")
+    if resp.status_code == 404:
+        ok("audit.view", f"GET {path} \u2192 404 (audit endpoint not yet deployed in this env — skipping)")
+        return
+    if resp.status_code != 200:
+        fail("audit.view", f"GET {path} \u2192 HTTP {resp.status_code}: {resp.text[:300]}")
+    try:
+        body = resp.json()
+    except ValueError:
+        fail("audit.view", f"GET {path} \u2192 non-JSON body: {resp.text[:200]}")
+        return
+    if not isinstance(body, dict) or "entries" not in body:
+        fail("audit.view", f"GET {path} \u2192 missing 'entries' key: {body}")
+    entries = body["entries"]
+    if not isinstance(entries, list) or len(entries) == 0:
+        fail("audit.view", f"GET {path} \u2192 entries list is empty; expected \u22651 row from smoke writes")
+    ok("audit.view", f"GET {path} \u2192 {len(entries)} entr{'y' if len(entries) == 1 else 'ies'} returned")
+
+
+
+def step_agentic_os_summary(client: httpx.Client) -> None:
+    """Verify /api/tiresias/agentic-os/summary returns 200 with a `summary` key.
+
+    Runs after all per-OS writes so the counts reflect at least the rows
+    the write probes just inserted.  This is an idempotent read — no mutations.
+    """
+    path = "/api/tiresias/agentic-os/summary"
+    resp = client.get(f"{WEB_URL}{path}")
+    if resp.status_code != 200:
+        fail("agos.summary", f"GET {path} \u2192 HTTP {resp.status_code}: {resp.text[:200]}")
+    try:
+        body = resp.json()
+    except ValueError:
+        fail("agos.summary", f"GET {path} \u2192 non-JSON body: {resp.text[:200]}")
+        return
+    if not isinstance(body, dict) or "summary" not in body:
+        fail("agos.summary", f"GET {path} \u2192 missing 'summary' key: {body}")
+    summary = body["summary"]
+    if not isinstance(summary, dict):
+        fail("agos.summary", f"GET {path} \u2192 'summary' is not an object: {summary}")
+    expected_slugs = sorted(AGENTIC_OS_PROBES.keys())
+    for slug in expected_slugs:
+        if slug not in summary:
+            fail("agos.summary", f"GET {path} \u2192 missing slug '{slug}' in summary")
+        entry = summary[slug]
+        if not isinstance(entry, dict):
+            fail("agos.summary", f"GET {path} \u2192 entry for '{slug}' is not an object")
+        if "count" not in entry:
+            fail("agos.summary", f"GET {path} \u2192 entry for '{slug}' missing 'count'")
+        if "lastUpdated" not in entry:
+            fail("agos.summary", f"GET {path} \u2192 entry for '{slug}' missing 'lastUpdated'")
+    ok(
+        "agos.summary",
+        f"GET {path} \u2192 200 summary has {len(summary)} slug(s): "
+        + ", ".join(f"{s}={summary[s].get('count', '?')}" for s in expected_slugs),
+    )
+
+
 def step_memory_crud() -> None:
     """Exercise memory-service directly via its API key.
 
@@ -469,6 +536,11 @@ def main(argv: list[str] | None = None) -> int:
             step_agentic_os_probe(client, slug)
             if args.write:
                 step_agentic_os_write(client, slug)
+        # After all per-OS writes, verify the audit log has at least one entry.
+        step_audit_view(client)
+        # After all per-OS writes, verify the cross-OS summary endpoint.
+        if slugs:
+            step_agentic_os_summary(client)
     step_memory_crud()
     print("✓ all smoke steps passed")
     return 0
