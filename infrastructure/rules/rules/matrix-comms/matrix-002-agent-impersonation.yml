@@ -1,0 +1,64 @@
+title: Matrix Agent Account Impersonation
+id: matrix-002
+status: experimental
+level: critical
+description: |
+  A Matrix message was received whose sender localpart matches the
+  reserved agent namespace (`@agent-*`) but the sender is not registered
+  in the platform-api agent registry, OR the SoulKey associated with the
+  sender does not match the agent identity claimed in the message.
+  Indicates attempted identity spoofing, a stale/unrevoked bot account,
+  or a compromised SoulKey being used to impersonate a higher-privilege
+  agent. Synapse is bound to localhost and the appservice rejects any
+  event whose sender does not pass platform-api lookup, so a hit on this
+  rule means the bridge itself observed a mismatch (most often a stale
+  cached registration) -- treat as a credential incident.
+author: Saluca LLC
+date: 2026/05/08
+references:
+  - https://attack.mitre.org/techniques/T1078/
+  - https://tiresias.network/docs/rules/matrix-002
+tags:
+  - attack.credential_access
+  - mitre.t1078
+  - mitre_atlas.aml.t0040
+  - tiresias.matrix_appservice
+  - tiresias.soulkey
+
+logsource:
+  product: tiresias
+  service: matrix_appservice
+  category: ai_agent_telemetry
+
+detection:
+  selection_unregistered:
+    event_type: matrix_event
+    sender_namespace: agent
+    sender_registered: false
+  selection_soulkey_mismatch:
+    event_type: matrix_event
+    sender_namespace: agent
+    soulkey_match: false
+  condition: selection_unregistered or selection_soulkey_mismatch
+  timeframe: 1m
+  group_by:
+    - sender
+    - tenant_id
+
+fields:
+  - sender
+  - sender_localpart
+  - tenant_id
+  - room_id
+  - room_alias
+  - event_id
+  - soulkey_match
+  - sender_registered
+  - source_ip
+  - timestamp
+
+falsepositives:
+  - Registry replication lag immediately after agent provisioning
+  - Race during SoulKey rotation where the new key is in flight
+
+response_playbook: pb-004

@@ -1,0 +1,65 @@
+title: Cross-Tenant Matrix Room Access Attempt
+id: matrix-003
+status: experimental
+level: critical
+description: |
+  An identity belonging to one tenant attempted to join, send, or read
+  history in a Matrix room owned by a different tenant. The Cedar
+  matrix-006 catch-all `forbid` policy blocks the request, but the
+  attempt itself is a strong tenant-isolation breach signal: legitimate
+  agent and user routing never crosses tenant boundaries because the
+  bridge resolves room aliases via the requester's tenant context.
+  A hit here may indicate a misconfigured client, a leaked room alias,
+  or an attacker probing for cross-tenant pivots through the agent mesh.
+author: Saluca LLC
+date: 2026/05/08
+references:
+  - https://attack.mitre.org/techniques/T1021/
+  - https://tiresias.network/docs/rules/matrix-003
+tags:
+  - attack.lateral_movement
+  - mitre.t1021
+  - mitre_atlas.aml.t0040
+  - tiresias.soulgate
+  - tiresias.matrix
+  - tiresias.tenant_isolation
+
+logsource:
+  product: tiresias
+  service: soulgate
+  category: ai_agent_telemetry
+
+detection:
+  selection:
+    event_type: authorization_decision
+    namespace: TiresiasMatrix
+    resource_type: MatrixRoom
+    decision: DENY
+    deny_reason|contains: "tenant"
+  selection_explicit:
+    event_type: authorization_decision
+    namespace: TiresiasMatrix
+    resource_type: MatrixRoom
+    decision: DENY
+    principal_tenant_id|neq_field: resource_tenant_id
+  condition: selection or selection_explicit
+  timeframe: 1m
+  group_by:
+    - principal_tenant_id
+    - resource_tenant_id
+
+fields:
+  - principal_id
+  - principal_tenant_id
+  - resource_room_alias
+  - resource_tenant_id
+  - action
+  - decision_reason
+  - source_ip
+  - timestamp
+
+falsepositives:
+  - Tenant migration or merge in progress (use a maintenance window)
+  - Shared infrastructure room mistakenly tagged with a tenant_id
+
+response_playbook: pb-005

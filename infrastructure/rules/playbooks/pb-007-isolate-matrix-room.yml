@@ -1,0 +1,149 @@
+id: pb-007
+title: Isolate Matrix Room
+description: |
+  Isolates a single Matrix room when a high- or critical-severity
+  Matrix-category detection fires. Quarantines further sends from the
+  offending principal, downgrades room power-levels so only the
+  platform-provisioner service account retains write access, captures
+  forensic state for the incident timeline, and notifies the SOC.
+
+  Designed for matrix-001 (unauthorized join), matrix-002 (agent
+  impersonation), matrix-003 (cross-tenant access), and matrix-004
+  (broadcast / fan-out abuse). For tenant-wide blast-radius events use
+  pb-005-tenant-isolation.yml; for forensic capture without blocking
+  use pb-006-forensic-capture.yml.
+
+version: "1.0"
+author: Saluca LLC
+severity: high
+
+triggers:
+  - rule_id: matrix-001
+  - rule_id: matrix-002
+  - rule_id: matrix-003
+  - rule_id: matrix-004
+
+actions:
+  - type: matrix_room_quarantine
+    description: Lock the room to platform-provisioner-only sends
+    config:
+      room_id: "{{ alert.fields.room_id }}"
+      room_alias: "{{ alert.fields.room_alias }}"
+      tenant_id: "{{ alert.fields.tenant_id }}"
+      power_levels:
+        events_default: 100        # only admins can post
+        invite: 100                # only admins can invite
+        redact: 100
+        state_default: 100
+      preserve_history: true
+      duration_minutes: 240
+
+  - type: matrix_user_quarantine
+    description: Block the offending principal from all rooms in the tenant
+    config:
+      principal_id: "{{ alert.fields.principal_id | default(alert.fields.sender) }}"
+      tenant_id: "{{ alert.fields.tenant_id }}"
+      action: revoke_membership
+      scope: tenant
+      reason_code: "{{ alert.rule_id }}"
+      duration_minutes: 240
+
+  - type: enhanced_logging
+    description: Capture all Matrix events touching the affected room
+    config:
+      target_room_id: "{{ alert.fields.room_id }}"
+      log_level: verbose
+      capture:
+        - matrix_event_envelope
+        - matrix_event_content
+        - cedar_decision_trace
+        - soulgate_request_metadata
+      duration_minutes: 240
+      destination: "{{ env.SIEM_LOG_ENDPOINT }}"
+      format: cef
+      tag: "matrix-isolate-{{ alert.alert_id }}"
+
+  - type: notify
+    description: Forward enriched alert to SIEM
+    config:
+      channel: webhook
+      url: "{{ env.SIEM_WEBHOOK_URL }}"
+      method: POST
+      headers:
+        Content-Type: application/json
+        Authorization: "Bearer {{ env.SIEM_API_TOKEN }}"
+      payload:
+        alert_id: "{{ alert.alert_id }}"
+        rule_id: "{{ alert.rule_id }}"
+        rule_title: "{{ alert.rule_title }}"
+        principal_id: "{{ alert.fields.principal_id | default(alert.fields.sender) }}"
+        tenant_id: "{{ alert.fields.tenant_id }}"
+        room_id: "{{ alert.fields.room_id }}"
+        room_alias: "{{ alert.fields.room_alias }}"
+        severity: "{{ alert.severity }}"
+        timestamp: "{{ alert.timestamp }}"
+        playbook: pb-007
+        status: room_isolated
+
+  - type: notify
+    description: Slack notification for SOC awareness
+    config:
+      channel: slack
+      webhook_url: "{{ env.SLACK_SECURITY_WEBHOOK }}"
+      channel_name: "#soc-triage"
+      message: |
+        :lock: *Matrix Room Isolated*
+        *Rule:* `{{ alert.rule_id }}` — {{ alert.rule_title }}
+        *Principal:* `{{ alert.fields.principal_id | default(alert.fields.sender) }}`
+        *Room:* `{{ alert.fields.room_alias }}` (`{{ alert.fields.room_id }}`)
+        *Tenant:* {{ alert.fields.tenant_id }}
+        *Action:* Locked to provisioner-only sends + principal quarantined for 4h
+        *Time:* {{ alert.timestamp }}
+
+  - type: create_incident
+    description: Open a P2 incident for the SOC review queue
+    config:
+      system: "{{ env.INCIDENT_MANAGEMENT_SYSTEM }}"
+      severity: high
+      title: "Matrix Room Isolated: {{ alert.rule_title }} — {{ alert.fields.room_alias }}"
+      description: |
+        {{ alert.rule_id }} fired against principal
+        {{ alert.fields.principal_id | default(alert.fields.sender) }}
+        in room {{ alert.fields.room_alias }} (tenant {{ alert.fields.tenant_id }}).
+        Room is locked to platform-provisioner sends and the principal
+        is quarantined from the tenant for 4 hours pending review.
+      assignee_group: soc-tier-2
+      queue: matrix-incidents
+      sla_response_minutes: 60
+      tags:
+        - matrix
+        - room-isolated
+        - "{{ alert.rule_id }}"
+        - "{{ alert.fields.tenant_id }}"
+
+cooldown_minutes: 30
+requires_approval: false
+
+notification_channels:
+  - slack
+  - webhook
+  - matrix_admin_room
+
+metadata:
+  created: "2026-05-08"
+  last_updated: "2026-05-08"
+  mitre_attack:
+    - T1021      # Remote Services
+    - T1078      # Valid Accounts
+    - T1499      # Endpoint Denial of Service
+    - T1567      # Exfiltration Over Web Service
+  mitre_atlas:
+    - AML.T0040  # ML Model Inference API Access
+  related_rules:
+    - matrix-001
+    - matrix-002
+    - matrix-003
+    - matrix-004
+  related_playbooks:
+    - pb-005     # tenant-wide isolation (escalation)
+    - pb-006     # forensic capture (parallel)
