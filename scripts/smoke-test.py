@@ -26,12 +26,35 @@ the first failure. Each step prints a `✓` line on success.
 
 from __future__ import annotations
 
+import argparse
 import os
 import secrets
 import sys
 from typing import Any
 
 import httpx
+
+
+# ── Agentic OS slug → probe definition ───────────────────────────────────
+# Each entry is a GET that returns 200 + JSON object with the listed key when
+# the user is authenticated. Empty result sets are valid signal — we only
+# check shape, not contents, so a fresh smoke user is enough.
+# `params` lets per-OS routes that require a query arg (filmmaker scopes shots
+# by projectId) still exercise the auth + DB read path with a known-empty UUID.
+# `null_ok` flags endpoints that return null when the user has no record yet
+# (health/profile returns { profile: null } for a fresh user).
+AGENTIC_OS_PROBES: dict[str, dict[str, Any]] = {
+    "health":         {"path": "/api/tiresias/agentic-os/health/profile",          "key": "profile",     "null_ok": True},
+    "maker":          {"path": "/api/tiresias/agentic-os/maker/builds",            "key": "builds"},
+    "research":       {"path": "/api/tiresias/agentic-os/research/hypotheses",     "key": "hypotheses"},
+    "secure-dev":     {"path": "/api/tiresias/agentic-os/secure-dev/threat-models", "key": "models"},
+    "cyber":          {"path": "/api/tiresias/agentic-os/cyber/alerts",            "key": "alerts"},
+    "filmmaker":      {"path": "/api/tiresias/agentic-os/filmmaker/shots",         "key": "shots",
+                       "params": {"projectId": "00000000-0000-0000-0000-000000000000"}},
+    "autobiographer": {"path": "/api/tiresias/agentic-os/autobiographer/chapters", "key": "chapters"},
+    "business":       {"path": "/api/tiresias/agentic-os/business/contacts",       "key": "people"},
+    "creator":        {"path": "/api/tiresias/agentic-os/creator/posts",           "key": "posts"},
+}
 
 
 WEB_URL = os.environ.get("PLATFORM_WEB_URL", "http://localhost:3000").rstrip("/")
@@ -118,6 +141,44 @@ def step_bff_auth_mode(client: httpx.Client) -> None:
     ok("bff→api auth-mode", f"mode={body['mode']} oidc_enabled={body.get('oidc_enabled')}")
 
 
+def step_agentic_os_probe(client: httpx.Client, slug: str) -> None:
+    """Round-trip an Agentic OS list endpoint as the freshly-logged-in user.
+
+    For every OS slug, the success contract is the same: a 200 with a JSON
+    object containing the documented key (`builds`, `chapters`, …). The
+    `health/profile` endpoint returns `{ profile: null }` for a fresh user
+    which still counts — we only check that the key exists.
+    """
+    probe = AGENTIC_OS_PROBES.get(slug)
+    if probe is None:
+        fail(f"agos.{slug}", f"unknown slug; known={sorted(AGENTIC_OS_PROBES)}")
+        return
+    path = probe["path"]
+    key = probe["key"]
+    params = probe.get("params")
+    null_ok = probe.get("null_ok", False)
+    resp = client.get(f"{WEB_URL}{path}", params=params)
+    if resp.status_code != 200:
+        fail(f"agos.{slug}", f"GET {path} → HTTP {resp.status_code}: {resp.text[:200]}")
+    try:
+        body = resp.json()
+    except ValueError:
+        fail(f"agos.{slug}", f"GET {path} → non-JSON body: {resp.text[:200]}")
+        return
+    if not isinstance(body, dict) or key not in body:
+        fail(f"agos.{slug}", f"GET {path} → missing key '{key}': {body}")
+    value = body[key]
+    if value is None and null_ok:
+        shape = "null"
+    elif isinstance(value, list):
+        shape = f"list[{len(value)}]"
+    elif isinstance(value, dict):
+        shape = "object"
+    else:
+        shape = type(value).__name__
+    ok(f"agos.{slug}", f"GET {path} → 200 {{{key}: {shape}}}")
+
+
 def step_memory_crud() -> None:
     """Exercise memory-service directly via its API key.
 
@@ -155,14 +216,36 @@ def step_memory_crud() -> None:
     ok("memory CRUD", f"id={memory_id} remembered → recalled → forgotten")
 
 
-def main() -> int:
-    print(f"smoke: web={WEB_URL} api={API_URL} memory={MEMORY_URL}")
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--os",
+        dest="os_slug",
+        default="all",
+        help=(
+            "Restrict the Agentic OS probe step to a single slug "
+            f"({', '.join(sorted(AGENTIC_OS_PROBES))}), 'all' (default), or 'none' to skip."
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    print(f"smoke: web={WEB_URL} api={API_URL} memory={MEMORY_URL} os={args.os_slug}")
     with httpx.Client(timeout=TIMEOUT, follow_redirects=True) as client:
         step_register(client)
         step_login(client)
         step_health_full(client)
         step_bff_identity(client)
         step_bff_auth_mode(client)
+        if args.os_slug == "none":
+            ok("agentic-os", "skipped (--os=none)")
+        elif args.os_slug == "all":
+            for slug in AGENTIC_OS_PROBES:
+                step_agentic_os_probe(client, slug)
+        else:
+            step_agentic_os_probe(client, args.os_slug)
     step_memory_crud()
     print("✓ all smoke steps passed")
     return 0
