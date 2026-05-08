@@ -106,6 +106,53 @@ For tests and bring-your-own-rooms deployments, leave `SEED_ROOMS_ON_BOOT=0`
 (the default). Bootstrap is also opt-out at runtime by passing
 `seed_bootstrap=` directly to `create_app()`.
 
+## Hardening (PR G)
+
+The appservice ships a defense-in-depth pass on the request edge,
+token handling, and observability surface:
+
+- **Constant-time HS_TOKEN compare** — `_check_hs_token` uses
+  `hmac.compare_digest` on UTF-8-encoded bytes, removing the timing
+  side-channel that a plain `==` compare would expose.
+- **Body-size cap** — `PUT /transactions/{txn_id}` rejects payloads
+  larger than `MATRIX_TRANSACTION_MAX_BYTES` (default `5242880` = 5 MiB)
+  with `413 Payload Too Large`. Enforced twice for defense in depth:
+  once on the `Content-Length` header (cheap pre-read reject) and once
+  on `len(raw)` after read (catches chunked / mis-stated bodies).
+- **Sender allowlist** — within an authenticated transaction, each
+  inbound `m.room.message` is filtered against an allowlist of senders
+  scoped to `MATRIX_SERVER_NAME`: literal `@tiresias-bot:` and
+  `@user-primary:`, plus the regex `^@agent-[A-Za-z0-9._\-]+:server$`.
+  Disallowed events are dropped and counted; the rest forward to
+  SoulWatch as normal. Set `MATRIX_SENDER_ALLOWLIST_DISABLED=1` to
+  bypass (e.g. for one-off federation-debug deployments).
+- **`/healthz` vs `/readyz` split** — `/healthz` is a cheap liveness
+  probe (always 200 if the process is up). `/readyz` is a readiness
+  probe: it issues an unauthenticated `GET` to Synapse's federation
+  `/v1/version` (2 s timeout) and a `HEAD` against the configured
+  SoulWatch ingest URL. Either failure returns `503` with a
+  structured JSON body identifying the failing dep.
+- **Structured JSON logs + redaction** — `configure_logging()`
+  installs a `JsonFormatter` and a `RedactingFilter` on the root
+  logger. The filter scrubs `Bearer <token>` patterns and known
+  sensitive header names (`authorization`, `x-as-token`, `x-hs-token`)
+  in both `record.msg` and `record.args`, replacing values with the
+  literal string `[REDACTED]` so log shippers can detect that scrubbing
+  occurred. Body excerpts in logs are truncated to 256 chars by
+  default.
+- **Forwarder lifecycle** — `EventForwarder` now keeps a long-lived
+  `httpx.AsyncClient` (lazy-init via `_get_client()`) and closes it
+  exactly once during the FastAPI lifespan shutdown. Tests can inject
+  their own client; the forwarder leaves injected clients alone on
+  `aclose()` (`_owns_client` flag).
+
+Env vars added in PR G (see `.env.example`):
+
+- `MATRIX_TRANSACTION_MAX_BYTES` — body-size cap in bytes; default
+  `5242880` (5 MiB)
+- `MATRIX_SENDER_ALLOWLIST_DISABLED` — `1`/`true`/`yes`/`on` disables
+  the allowlist (default off — allowlist is **enabled**)
+
 ## Element Web embed (V-08, PR E)
 
 The Compose `matrix` profile also runs a `vectorim/element-web`
@@ -118,15 +165,15 @@ and is gated to `Role.ADMIN` via `RoleGate`.
 
 ## Status
 
-Six of seven planned matrix PRs have shipped; PR G (hardening) is next:
+All seven planned matrix PRs have shipped:
 
 - **PR A** — scaffold (Synapse config + appservice skeleton)
 - **PR B** — Cedar `TiresiasMatrix` policies (matrix-001..matrix-007)
 - **PR C** — detection rules (matrix-001..004) + `pb-007-isolate-matrix-room`
 - **PR D** — `event_forwarder` → `/ingest/matrix` SoulWatch wiring
 - **PR E** — Element Web dashboard embed (V-08)
-- **PR F** — Seed rooms minted on appservice startup (this PR)
-- **PR G** — hardening: structured logs, body-size cap, sender allowlist, health-vs-readiness split (planned)
+- **PR F** — Seed rooms minted on appservice startup
+- **PR G** — Hardening: structured logs, body-size cap, sender allowlist, `/healthz` vs `/readyz` split, `hmac.compare_digest` on HS_TOKEN
 
 ## See also
 
