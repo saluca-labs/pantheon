@@ -1,9 +1,17 @@
 """
-Alembic environment configuration for SoulAuth.
-Supports both sync (for migrations) and async (for autogenerate).
+Alembic environment configuration for the local-auth tree.
+
+Resolution order for the database URL:
+  1. ``DATABASE_URL`` environment variable (production / CI)
+  2. ``sqlalchemy.url`` from alembic.ini (last-resort dev fallback)
+
+The SoulAuth ``config.settings`` module is intentionally NOT imported
+here — this tree owns the @platform/auth schema and must stay
+decoupled from the platform-api domain so it can be applied by services
+that don't ship the SoulAuth Python package.
 """
 
-import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -14,21 +22,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import settings to get database URL
-try:
-    from config.settings import get_settings
+sync_url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
+if sync_url and sync_url.startswith("postgresql+asyncpg://"):
+    # Alembic uses sync drivers; rewrite an async URL transparently.
+    sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 
-    settings = get_settings()
-    sync_url = settings.database_url_sync
-except Exception:
-    sync_url = config.get_main_option("sqlalchemy.url")
-
-# Import models for autogenerate support
-try:
-    from src.database.models import Base
-    target_metadata = Base.metadata
-except Exception:
-    target_metadata = None
+# This tree carries no SQLAlchemy models — migrations are written as raw
+# SQL via op.execute(...). Autogenerate is intentionally disabled.
+target_metadata = None
 
 
 def run_migrations_offline() -> None:

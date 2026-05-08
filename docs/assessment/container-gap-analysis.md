@@ -37,8 +37,25 @@ Documents containerization state before and after `platform/unification-v1`.
 
 ## Gaps Remaining
 
-1. **Worker service**: `src.worker` module may not exist yet in platform-api — needs implementation.
-2. **platform-app-proxy health check**: Not yet added to the service definition.
-3. **platform-sovereign**: Dockerfile added but `src/main.py` may not expose FastAPI app as `app`.
-4. **Secret management**: Compose uses environment variables directly. Production deployments should use Vault, AWS Secrets Manager, or GCP Secret Manager.
-5. **Non-root user in proxy/sovereign**: Old Dockerfiles may run as root — verify and fix in follow-up.
+1. ~~**Worker service**: `src.worker` module may not exist yet in platform-api~~ —
+   **Closed in v3** (`apps/platform-api/src/worker.py`, see commit history on
+   `platform/unification-v3`). Postgres-native jobs queue with handler
+   registry, exponential-backoff retries, and a tiny built-in HTTP
+   `/health/live` endpoint on `WORKER_HEALTH_PORT`.
+2. ~~**platform-app-proxy health check**~~ — **Closed in v3**. Compose service
+   now declares an HTTP healthcheck against the existing `/health` endpoint.
+   Compose port also corrected from `8080:8080` to `8081:8081` to match the
+   container's `EXPOSE 8081` and the Dockerfile `ENTRYPOINT`.
+3. ~~**platform-sovereign**: Dockerfile added but `src/main.py` missing~~ —
+   **Closed in v3**. `src/main.py` now exposes a FastAPI `app` with
+   `/health/live`, `/health/ready`, `/v1/principles`, and `/v1/route`.
+   Compose declares a corresponding healthcheck.
+4. **Secret management**: Compose uses environment variables directly. The
+   v3 work added `packages/secrets/python/platform_secrets/` — a pluggable
+   resolver facade with backends for env (default), file, AWS Secrets
+   Manager, and Vault. Production deployments should set
+   `PLATFORM_SECRETS_BACKEND` and the corresponding backend env. Compose
+   wiring of the AWS/Vault sidecars is still a follow-up.
+5. ~~**Non-root user in proxy/sovereign**~~ — **Verified in v3**:
+   - `apps/platform-app-proxy/Dockerfile` runs as `USER appproxy`.
+   - `apps/platform-sovereign/Dockerfile` runs as `USER platform` (uid 1001).

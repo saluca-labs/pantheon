@@ -1,11 +1,57 @@
-"""Pydantic Settings model for platform environment variables."""
+"""Pydantic Settings model for platform environment variables.
 
+Values may be specified as plain literals (the common case) or as secret
+references understood by ``platform_secrets`` (e.g. ``vault://...``,
+``awssm://...``, ``file:///...``). When a reference is detected during
+``get_settings()`` the secrets facade resolves it before pydantic
+validates the model, so the rest of the codebase only ever sees the
+resolved literal value.
+
+The import of ``platform_secrets`` is best-effort: if the package isn't
+installed (e.g. an old service vendoring just ``platform_config``), the
+resolver becomes a no-op pass-through and references go through pydantic
+unchanged. This keeps the dependency optional.
+"""
+
+import os
 from enum import Enum
 from functools import lru_cache
 from typing import Literal, Optional
 
 from pydantic import AnyUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+try:
+    from platform_secrets import get_facade as _get_secrets_facade
+    from platform_secrets.facade import _DEFAULT_FACTORIES as _SECRET_DEFAULT_SCHEMES
+
+    def _is_known_secret_reference(value: str) -> bool:
+        """True iff the value's scheme is registered with the facade.
+
+        Includes both built-in schemes (env/file/vault/awssm/gcpsm) and any
+        backends the app explicitly registered via ``configure(...)``.
+        ``postgres://...`` is intentionally NOT a secret reference — it's
+        a literal Postgres URL.
+        """
+        if not isinstance(value, str):
+            return False
+        idx = value.find("://")
+        if idx <= 0:
+            return False
+        scheme = value[:idx]
+        if scheme in _SECRET_DEFAULT_SCHEMES:
+            return True
+        return scheme in _get_secrets_facade().backends
+
+    def _resolve_secret_value(value: str):
+        return _get_secrets_facade().resolve(value)
+
+except ImportError:  # pragma: no cover — platform_secrets is optional
+    def _is_known_secret_reference(value: str) -> bool:  # type: ignore[misc]
+        return False
+
+    def _resolve_secret_value(value: str):  # type: ignore[misc]
+        return value
 
 
 class NodeEnv(str, Enum):
@@ -69,6 +115,33 @@ class Settings(BaseSettings):
         return v
 
 
+_SECRET_RESOLVABLE_VARS = (
+    "DATABASE_URL",
+    "SESSION_SECRET",
+    "SMTP_HOST",
+    "SMTP_FROM",
+    "REDIS_URL",
+    "COOKIE_DOMAIN",
+)
+
+
+def _resolve_env_secret_references() -> None:
+    """Replace ``vault://`` / ``awssm://`` etc. env values with their resolved
+    literals so pydantic-settings sees only plain strings.
+
+    Mutates ``os.environ`` in place; safe to call multiple times because
+    the second pass becomes a no-op once the values are literals.
+    """
+    for var in _SECRET_RESOLVABLE_VARS:
+        raw = os.environ.get(var)
+        if not raw or not _is_known_secret_reference(raw):
+            continue
+        resolved = _resolve_secret_value(raw)
+        if resolved is not None and resolved != raw:
+            os.environ[var] = resolved
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    _resolve_env_secret_references()
     return Settings()  # type: ignore[call-arg]

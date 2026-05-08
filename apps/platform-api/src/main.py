@@ -60,6 +60,7 @@ from src.chatbot.router import router as chatbot_router
 from src.platform import init_memory_client, shutdown_memory_client
 from src.platform.identity_router import router as platform_identity_router
 from src.platform.health_router import router as platform_health_router
+from src.platform.auth_router import router as platform_auth_router
 
 settings = get_settings()
 
@@ -545,6 +546,7 @@ app.include_router(portal_policy_router)
 # Platform v2 unification routers — BFF identity echo + aggregated readiness
 app.include_router(platform_identity_router)
 app.include_router(platform_health_router)
+app.include_router(platform_auth_router)
 
 
 @app.get(
@@ -646,7 +648,7 @@ async def health_live():
 async def health_ready():
     """Readiness probe — returns 200 when the DB is reachable."""
     from src.monitoring.health import run_health_checks
-    result = await run_health_checks(detail=False)
+    result = await run_health_checks()
     if result.get("status") != "healthy":
         from fastapi.responses import JSONResponse
         return JSONResponse({"status": "not_ready"}, status_code=503)

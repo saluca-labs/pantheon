@@ -9,7 +9,18 @@
 export const SESSION_COOKIE = 'platform_session';
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
-const isProd = process.env['NODE_ENV'] === 'production';
+/**
+ * Whether to mark the session cookie Secure (HTTPS-only).
+ *
+ * Default: only when NODE_ENV=production AND PLATFORM_INSECURE_COOKIES is
+ * unset. The override exists so production-built containers can still be
+ * exercised end-to-end over plain HTTP (smoke tests, local docker
+ * compose, etc.) without the Secure flag silently dropping the cookie.
+ */
+function shouldUseSecureCookie(): boolean {
+  if (process.env['PLATFORM_INSECURE_COOKIES'] === '1') return false;
+  return process.env['NODE_ENV'] === 'production';
+}
 
 export interface CookieSetOptions {
   httpOnly?: boolean;
@@ -38,7 +49,7 @@ export function setSessionCookie(
 ): void {
   cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: isProd,
+    secure: shouldUseSecureCookie(),
     sameSite: 'lax',
     maxAge: SESSION_TTL_SECONDS,
     path: '/',
@@ -52,7 +63,7 @@ export function setSessionCookie(
 export function clearSessionCookie(cookies: MutableCookieStore): void {
   cookies.set(SESSION_COOKIE, '', {
     httpOnly: true,
-    secure: isProd,
+    secure: shouldUseSecureCookie(),
     sameSite: 'lax',
     maxAge: 0,
     path: '/',

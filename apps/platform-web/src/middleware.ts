@@ -10,13 +10,19 @@ const SESSION_COOKIE = 'platform_session';
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow auth, public, and API routes
+  // Always allow auth, public, and API routes.
+  //
+  // Note: ALL /api/* routes are exempted from the middleware redirect — API
+  // handlers are responsible for their own auth (returning JSON 401/403).
+  // Otherwise the middleware would 307 to /login and clients (smoke tests,
+  // BFF proxies, the React server-actions) would receive HTML instead of
+  // the JSON contract they expect.
   if (
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
