@@ -98,7 +98,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Script breakdown, schedule, shot lists, dailies, edit notes, and post-production task tracking.',
     icon: Clapperboard,
-    status: 'preview',
+    status: 'live',
     planFile: 'filmmaker.md',
     accent: 'rose',
   },
@@ -122,7 +122,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Capture life events, learn the user’s voice, and produce ghostwritten chapters with full provenance.',
     icon: BookOpenText,
-    status: 'preview',
+    status: 'live',
     planFile: 'autobiographer.md',
     accent: 'indigo',
   },
@@ -134,7 +134,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Org profile, contacts, invoicing, finances, and ops modules that unlock as your team grows.',
     icon: Briefcase,
-    status: 'preview',
+    status: 'live',
     planFile: 'business.md',
     accent: 'teal',
   },
@@ -146,7 +146,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Editorial calendar, multi-format content, audio/video publishing, and distribution.',
     icon: Sparkles,
-    status: 'preview',
+    status: 'live',
     planFile: 'creator.md',
     accent: 'fuchsia',
   },

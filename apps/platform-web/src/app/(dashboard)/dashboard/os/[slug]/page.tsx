@@ -146,6 +146,50 @@ export default async function AgenticOsModulePage({ params }: Props) {
           </div>
         )}
 
+        {mod.status === 'live' && mod.slug === 'filmmaker' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/filmmaker/shots"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Shot list builder
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'autobiographer' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/autobiographer/chapters"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Chapter capture
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'business' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/business/contacts"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Contacts CRM
+            </Link>
+          </div>
+        )}
+
+        {mod.status === 'live' && mod.slug === 'creator' && (
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link
+              href="/dashboard/os/creator/calendar"
+              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
+            >
+              Editorial calendar
+            </Link>
+          </div>
+        )}
+
         {mod.status === 'preview' && (
           <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200/90">
             Schema and plan are live. Feature pages roll out in the parallel
