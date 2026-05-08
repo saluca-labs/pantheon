@@ -49,3 +49,50 @@ def test_from_env_overrides() -> None:
     assert cfg.synapse_url == "http://other:9000"
     assert cfg.soulwatch_url == "http://soulwatch:8000/ingest/matrix"
     assert cfg.platform_api_url == "http://platform-api:8000"
+
+
+# ─── PR G hardening fields ──────────────────────────────────────────────────────
+
+
+def test_transaction_max_bytes_defaults_to_5_MiB() -> None:
+    cfg = AppserviceConfig.from_env(env={"HS_TOKEN": "hs", "AS_TOKEN": "as"})
+    assert cfg.transaction_max_bytes == 5 * 1024 * 1024
+
+
+def test_transaction_max_bytes_override() -> None:
+    cfg = AppserviceConfig.from_env(
+        env={
+            "HS_TOKEN": "hs",
+            "AS_TOKEN": "as",
+            "MATRIX_TRANSACTION_MAX_BYTES": "1024",
+        }
+    )
+    assert cfg.transaction_max_bytes == 1024
+
+
+@pytest.mark.parametrize("bad", ["abc", "-5", ""])
+def test_transaction_max_bytes_falls_back_on_garbage(bad: str) -> None:
+    cfg = AppserviceConfig.from_env(
+        env={
+            "HS_TOKEN": "hs",
+            "AS_TOKEN": "as",
+            "MATRIX_TRANSACTION_MAX_BYTES": bad,
+        }
+    )
+    assert cfg.transaction_max_bytes == 5 * 1024 * 1024
+
+
+def test_sender_allowlist_defaults_enabled() -> None:
+    cfg = AppserviceConfig.from_env(env={"HS_TOKEN": "hs", "AS_TOKEN": "as"})
+    assert cfg.sender_allowlist_enabled is True
+
+
+def test_sender_allowlist_disable_via_env() -> None:
+    cfg = AppserviceConfig.from_env(
+        env={
+            "HS_TOKEN": "hs",
+            "AS_TOKEN": "as",
+            "MATRIX_SENDER_ALLOWLIST_DISABLED": "1",
+        }
+    )
+    assert cfg.sender_allowlist_enabled is False

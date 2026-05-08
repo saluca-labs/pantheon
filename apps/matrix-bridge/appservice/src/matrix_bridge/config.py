@@ -38,6 +38,20 @@ class AppserviceConfig:
     server_name: str = "tiresias.local"
     tenant_id: str = "default"
     seed_rooms_on_boot: bool = False
+    # Hardening (PR G).
+    transaction_max_bytes: int = 5 * 1024 * 1024
+    """Cap on ``PUT /transactions/{txn_id}`` request bodies; 5 MiB default.
+
+    Synapse normally batches well below this. Synapse will retry on the 413
+    rejection, so an oversized batch surfaces as a soft failure rather than
+    a transaction loss. Override via ``MATRIX_TRANSACTION_MAX_BYTES``.
+    """
+    sender_allowlist_enabled: bool = True
+    """When True, events whose ``sender`` is outside the agent/bot/primary
+    allowlist are dropped (logged at WARNING) before reaching SoulWatch.
+    Disable in tests by passing ``False`` to the dataclass directly; in
+    production set ``MATRIX_SENDER_ALLOWLIST=0`` to opt out (not recommended).
+    """
 
     @classmethod
     def from_env(cls, env: dict[str, str] | None = None) -> "AppserviceConfig":
@@ -61,6 +75,14 @@ class AppserviceConfig:
             server_name=e.get("MATRIX_SERVER_NAME", "tiresias.local"),
             tenant_id=e.get("MATRIX_TENANT_ID", "default"),
             seed_rooms_on_boot=_truthy(e.get("SEED_ROOMS_ON_BOOT")),
+            transaction_max_bytes=_positive_int(
+                e.get("MATRIX_TRANSACTION_MAX_BYTES"),
+                default=5 * 1024 * 1024,
+            ),
+            # Allowlist defaults on; require an explicit opt-out to disable.
+            sender_allowlist_enabled=not _truthy(
+                e.get("MATRIX_SENDER_ALLOWLIST_DISABLED")
+            ),
         )
 
 
@@ -69,3 +91,21 @@ def _truthy(value: str | None) -> bool:
     if not value:
         return False
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _positive_int(value: str | None, *, default: int) -> int:
+    """Parse a non-negative integer env var, falling back to ``default``.
+
+    Negative or unparseable values fall back to the default rather than
+    raising — config errors during boot would otherwise take down the
+    whole bridge for a setting that has a safe fallback.
+    """
+    if value is None or value == "":
+        return default
+    try:
+        parsed = int(value)
+    except ValueError:
+        return default
+    if parsed < 0:
+        return default
+    return parsed
