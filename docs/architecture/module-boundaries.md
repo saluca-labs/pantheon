@@ -9,6 +9,7 @@ Defines what each component owns and what it must NOT reach into.
 - BFF API routes (`/api/tiresias/*`) — proxy to platform-api
 - Session cookie management
 - Client-side RBAC gate rendering
+- **Agentic OS layer** — see the dedicated section below
 
 **May call:**
 - `@platform/auth` — session management
@@ -16,12 +17,48 @@ Defines what each component owns and what it must NOT reach into.
 - `@platform/types` — shared domain types
 - `@platform/memory` — agent memory (TypeScript only)
 - `apps/platform-api` — via HTTP (BFF proxy)
+- The shared Postgres database (Agentic OS tables only — `agos_*`)
 
 **Must NOT:**
-- Directly access the `platform-api` Postgres database (use the API)
+- Directly access platform-api-owned tables (`_soul_*`, billing, etc.) —
+  use the API
 - Modify Cedar policies (`infrastructure/rules`)
 - Bypass `validateSession` to serve dashboard content
 - Import from Python packages
+
+---
+
+## apps/platform-web → Agentic OS layer
+
+Lives at [`apps/platform-web/src/lib/agentic-os/`](../../apps/platform-web/src/lib/agentic-os/)
+plus the matching routes/components. See
+[`docs/architecture/agentic-os.md`](agentic-os.md) for the full
+architecture.
+
+**Owns:**
+- The module registry (`registry.ts`) — single source of truth for
+  module metadata (ADR-005)
+- All `agos_*` tables in the shared Postgres database
+- The cross-OS audit log (`agos_audit`, ADR-006)
+- Per-user feature flags (`agos_feature_flags`, ADR-007)
+- BFF routes under `/api/tiresias/agentic-os/...`
+- Feature pages under `/dashboard/os/...`
+- Per-OS plan content at `apps/platform-web/content/agentic-os/<slug>.md`
+
+**Must NOT:**
+- Add a new OS without a registry entry — the registry is canonical
+- Skip `recordAudit` on write paths — audit completeness is contractual
+- Use feature flags as a security boundary — they are UX-only (see ADR-007)
+- Import from `apps/platform-api` source (HTTP only via the BFF proxy)
+- Cross-join `agos_*` tables with platform-api tables in SQL
+
+**Per-OS conventions:**
+- Each OS owns its own `repo.ts`, `session.ts`, BFF routes, feature
+  pages, and components
+- Cross-OS schema joins are forbidden — talk through BFF routes if
+  modules need to share data
+- New OSes default to `enabled = true` for all existing users (opt-out
+  feature-flag default)
 
 ---
 
@@ -134,3 +171,11 @@ Defines what each component owns and what it must NOT reach into.
 2. **Python apps** are not pnpm workspace members — managed via `uv`/pip separately.
 3. **`packages/memory`** is TypeScript-to-TypeScript only in v1. Python access requires a separate service or HTTP bridge.
 4. **Cedar policies** are consumed by `platform-app-proxy` and `platform-api`; never modified by auth changes.
+5. **Agentic OS tables** (`agos_*`) live in the same Postgres database as
+   `@platform/auth` tables but are owned by `apps/platform-web`. They
+   migrate via `packages/database/alembic/` (the `auth` branch chain) —
+   not via `apps/platform-api/alembic/`. See
+   [`docs/operations/alembic-branches.md`](../operations/alembic-branches.md).
+6. **Audit duality**: the `audit_events` table (`@platform/auth`) is a
+   compliance-grade chained log; `agos_audit` is the product-side
+   user-visible log. They serve different audiences and never cross-join.

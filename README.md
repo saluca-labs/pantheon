@@ -1,12 +1,15 @@
 # Tiresias Platform
 
-Governance-First AI-Security — observability, governance, and audit trails for AI agents.
+Governance-First AI-Security — observability, governance, and audit trails for AI agents,
+plus the **Agentic OS** layer: nine domain-specific products (Health, Maker, Research,
+Secure-Dev, CyberSec, Filmmaker, Autobiographer, Business, Creator) shipped on top of
+the shared platform shell.
 
 ## Architecture
 
 ```
 apps/
-  platform-web          Next.js 16 dashboard + BFF
+  platform-web          Next.js 16 dashboard + BFF + Agentic OS layer
   platform-api          FastAPI core (SoulAuth, SoulGate, SoulWatch)
   platform-app-proxy    Agent-facing proxy with Cedar policy enforcement
   platform-sovereign    On-premises deployment variant
@@ -52,6 +55,9 @@ pnpm dev
 ```
 
 - Dashboard: http://localhost:3000
+- Cross-OS index: http://localhost:3000/dashboard/os
+- Audit log viewer: http://localhost:3000/dashboard/os/audit
+- OS Settings (per-user feature flags): http://localhost:3000/dashboard/os/settings
 - API docs: http://localhost:8000/docs
 - Mailhog (email): http://localhost:8025
 
@@ -128,14 +134,29 @@ cd apps/platform-api && pytest       # Python tests
 
 ## Documentation
 
-- [Architecture overview](docs/architecture/system-overview.md)
+**Architecture:**
+- [System overview](docs/architecture/system-overview.md)
 - [Module boundaries](docs/architecture/module-boundaries.md)
-- [Auth model](docs/security/auth-model.md)
+- [Agentic OS](docs/architecture/agentic-os.md) — nine OS modules + cross-OS surfaces
+- [Audit log](docs/architecture/audit-log.md) — `agos_audit` schema, viewer, conventions
+- [Feature flags](docs/architecture/feature-flags.md) — per-user OS toggles
+
+**Operations:**
 - [Local development](docs/operations/local-development.md)
 - [Container deployment](docs/operations/container-deployment.md)
+- [Alembic branches](docs/operations/alembic-branches.md) — migration topology
+
+**Security:**
+- [Auth model](docs/security/auth-model.md)
+
+**Decision records:**
 - [ADR-001: Topology](docs/decisions/ADR-001-platform-topology.md)
 - [ADR-002: Local auth](docs/decisions/ADR-002-local-auth-default.md)
 - [ADR-003: Elysium vendoring](docs/decisions/ADR-003-elysium-internal-package.md)
+- [ADR-004: Secret management facade](docs/decisions/ADR-004-secret-management-facade.md)
+- [ADR-005: Agentic OS module registry](docs/decisions/ADR-005-agentic-os-module-registry.md)
+- [ADR-006: Cross-OS audit log](docs/decisions/ADR-006-cross-os-audit-log.md)
+- [ADR-007: Per-user feature flags](docs/decisions/ADR-007-per-user-feature-flags.md)
 
 ## License
 
