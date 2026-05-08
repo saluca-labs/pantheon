@@ -62,7 +62,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Track projects, parts, tools, and builds across hardware, electronics, and fabrication workflows.',
     icon: Wrench,
-    status: 'preview',
+    status: 'live',
     planFile: 'maker.md',
     accent: 'amber',
   },
@@ -74,7 +74,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Electronic lab notebook, literature mapping, hypothesis ledger, and experiment design for solo PhDs and small labs.',
     icon: FlaskConical,
-    status: 'preview',
+    status: 'live',
     planFile: 'research.md',
     accent: 'sky',
   },
@@ -86,7 +86,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Conversational requirements gathering, threat modeling, secure architecture, and DevSecOps pipeline scaffolding.',
     icon: ShieldCheck,
-    status: 'preview',
+    status: 'live',
     planFile: 'secure-dev.md',
     accent: 'violet',
   },
@@ -110,7 +110,7 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     description:
       'Aggregates SIEM/IDS/EDR telemetry, agentic copilots for triage, hunting, and response drafting.',
     icon: ShieldAlert,
-    status: 'preview',
+    status: 'live',
     planFile: 'cyber.md',
     accent: 'red',
   },
