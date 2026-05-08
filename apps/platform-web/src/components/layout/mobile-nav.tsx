@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
-import { navItems } from './sidebar';
+import { Menu, X, Cpu } from 'lucide-react';
+import { navItems, NavGroup, agenticOsNavItems } from './sidebar';
 import { Logo } from '@/components/brand/logo';
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const agenticItems = agenticOsNavItems();
 
   return (
     <div className="md:hidden">
@@ -24,7 +25,7 @@ export function MobileNav() {
       {open && (
         <div className="fixed inset-0 z-50 bg-black/60" onClick={() => setOpen(false)}>
           <div
-            className="w-64 h-full bg-[#1a1d27] border-r border-[#2a2d3e] p-4"
+            className="w-72 h-full bg-[#1a1d27] border-r border-[#2a2d3e] p-4 overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -62,6 +63,15 @@ export function MobileNav() {
                   </Link>
                 );
               })}
+
+              <NavGroup
+                title="Agentic OS"
+                icon={Cpu}
+                items={agenticItems}
+                pathname={pathname}
+                defaultOpen={pathname.startsWith('/dashboard/os')}
+                onItemClick={() => setOpen(false)}
+              />
             </nav>
           </div>
         </div>
