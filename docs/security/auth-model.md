@@ -97,6 +97,35 @@ All auth events are written to the `audit_events` table via `packages/auth/src/a
 
 Audit events are non-blocking — failures are logged to stderr but do not interrupt the auth flow.
 
+### `audit_events` vs `agos_audit`
+
+The platform now has **two** audit log tables with intentionally different ownership and retention:
+
+| Table | Owner | Purpose | Lifetime |
+|-------|-------|---------|----------|
+| `audit_events` | `packages/auth` | Compliance / security log for auth + session events | Long retention, immutable |
+| `agos_audit` | `apps/platform-web` (Agentic OS layer) | Per-OS product event stream surfaced in `/dashboard/os/audit` | Product-tier retention, see [audit-trail.md](./audit-trail.md) |
+
+When instrumenting a new event, pick by audience:
+
+- **Auth, session, password, or anything an auditor would ask for** → `audit_events`
+- **A user action inside a per-OS surface (Maker, Filmmaker, Cyber, …)** → `agos_audit` via the per-OS BFF route
+
+Full boundary discussion: [docs/security/audit-trail.md](./audit-trail.md). Schema and retention: [docs/architecture/audit-log.md](../architecture/audit-log.md). Decision record: [ADR-006](../decisions/ADR-006-cross-os-audit-log.md).
+
+## Agentic OS Session Helpers
+
+The Agentic OS BFF routes share the platform-web auth surface but each per-OS module gets a thinly aliased re-export so call sites read naturally:
+
+- **Canonical**: `getCurrentHealthUser` / `getHealthPool` in `apps/platform-web/src/lib/agentic-os/health/session.ts` — the original session-validation + pool plumbing.
+- **Per-OS aliases**: each per-OS `session.ts` re-exports the canonical helpers under OS-specific names. For example:
+  - `apps/platform-web/src/lib/agentic-os/audit/session.ts` exports `getCurrentAuditUser`
+  - `apps/platform-web/src/lib/agentic-os/maker/session.ts` exports `getCurrentMakerUser`
+
+The aliases exist so per-OS routes can be searched by usage (`grep getCurrentMakerUser`) without leaking that everything ultimately resolves to Health OS plumbing. The validation path is the same `validateSession` chain documented above — only the import name differs.
+
+When adding a new OS module, follow the same pattern: create `lib/agentic-os/<slug>/session.ts` that re-exports from `../health/session` under `getCurrent<Slug>User`.
+
 ## Schema
 
 See `packages/auth/src/schema.sql` for the canonical DDL, and `packages/database/alembic/versions/0001_local_auth.py` for the Alembic migration.

@@ -115,6 +115,48 @@ mailhog   # UI at http://localhost:8025
 | platform-web (Dashboard) | http://localhost:3000 |
 | platform-api (FastAPI docs) | http://localhost:8000/docs |
 | Mailhog UI | http://localhost:8025 |
+| Agentic OS index | http://localhost:3000/dashboard/os |
+| Cross-OS audit log | http://localhost:3000/dashboard/os/audit |
+| Per-user OS settings (flags) | http://localhost:3000/dashboard/os/settings |
+
+Per-OS plan pages live at `/dashboard/os/<slug>` for every slug registered in `apps/platform-web/src/lib/agentic-os/registry.ts` (e.g. `/dashboard/os/maker`, `/dashboard/os/filmmaker`).
+
+## Agentic OS Local Development
+
+The Agentic OS layer (see [docs/architecture/agentic-os.md](../architecture/agentic-os.md)) ships enabled-by-default for every signed-in user. After running migrations through `0013` you can:
+
+```bash
+# Migrations bring up agos_audit (0003) and agos_feature_flags (0013)
+cd apps/platform-api && python -m alembic upgrade head && cd ../..
+
+# Visit the dashboard — every OS module is enabled by default
+open http://localhost:3000/dashboard/os
+```
+
+### Toggling feature flags locally
+
+There is no seeding step — `agos_feature_flags` is opt-out. To disable an OS for your dev user, either:
+
+1. Use the UI at `/dashboard/os/settings` (recommended), or
+2. Insert a row directly:
+
+```sql
+INSERT INTO agos_feature_flags (user_id, os_slug, enabled)
+VALUES ('<your-user-id>', 'filmmaker', false)
+ON CONFLICT (user_id, os_slug) DO UPDATE SET enabled = EXCLUDED.enabled;
+```
+
+Flag resolution is server-side per request — see [docs/architecture/feature-flags.md](../architecture/feature-flags.md) and [ADR-007](../decisions/ADR-007-per-user-feature-flags.md).
+
+### Inspecting the audit log
+
+Every write through a per-OS BFF route appends to `agos_audit`. Tail it during local dev with:
+
+```bash
+psql $DATABASE_URL -c "SELECT created_at, os_slug, action FROM agos_audit ORDER BY created_at DESC LIMIT 20;"
+```
+
+Or use the UI at `/dashboard/os/audit` (cursor-paginated, filterable by os_slug). See [docs/architecture/audit-log.md](../architecture/audit-log.md) and [docs/security/audit-trail.md](../security/audit-trail.md) for the full schema and the `agos_audit` vs `audit_events` boundary.
 
 ## Running Tests
 

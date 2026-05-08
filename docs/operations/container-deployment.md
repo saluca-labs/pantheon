@@ -41,6 +41,9 @@ docker compose down -v   # -v removes volumes (db data)
 | platform-api docs | http://localhost:8000/docs |
 | platform-app-proxy | http://localhost:8080 |
 | Mailhog UI | http://localhost:8025 |
+| Agentic OS index | http://localhost:3000/dashboard/os |
+| Cross-OS audit log | http://localhost:3000/dashboard/os/audit |
+| Per-user OS settings | http://localhost:3000/dashboard/os/settings |
 
 ### Running migrations inside Docker
 
@@ -102,6 +105,15 @@ Set these in your container orchestrator (Kubernetes, ECS, etc.):
 | `API_PUBLIC_URL` | Public URL of platform-api |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_FROM` | Production mailer |
 | `REDIS_URL` | Redis connection for distributed rate limiting |
+
+### Agentic OS Configuration
+
+The Agentic OS layer needs no extra environment variables — it shares `DATABASE_URL` with the rest of the platform and resolves feature flags server-side per request from `agos_feature_flags`. Two operational details to verify on every deploy:
+
+1. **Migration chain through `0013`** — the `agos_audit` (introduced in `0003_agentic_os.py`) and `agos_feature_flags` (introduced in `0013_agos_feature_flags.py`) tables must exist before serving `/dashboard/os/*` traffic. Run `python -m alembic upgrade head` in the `platform-api` Alembic tree as part of the rollout job. See [docs/operations/alembic-branches.md](./alembic-branches.md).
+2. **Staged rollout safety** — the audit/flags/summary BFF routes return 404 when the registry is empty or migrations haven't run yet. This is intentional. See [docs/operations/agentic-os-rollout.md](./agentic-os-rollout.md) for the rollout playbook.
+
+No per-OS feature toggle env var exists — enable/disable is per user via the settings UI or direct SQL. See [docs/architecture/feature-flags.md](../architecture/feature-flags.md) and [ADR-007](../decisions/ADR-007-per-user-feature-flags.md).
 
 ### Health Checks
 
