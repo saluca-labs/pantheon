@@ -68,6 +68,12 @@ spec:
               value: "https://pantheon.saluca.com"
             - name: API_PUBLIC_URL
               value: "http://soulauth.pantheon.svc.cluster.local"
+            # Used by packages/auth/src/tiresias-session.ts verifyTiresiasSession()
+            # for the token exchange BFF (/api/auth/exchange) to validate portal-issued
+            # tiresias_session cookies against SoulAuth. The default fallback in code
+            # points at the wrong namespace (soulauth.tiresias.svc); set explicitly here.
+            - name: SOULAUTH_INTERNAL_URL
+              value: "http://soulauth.pantheon.svc.cluster.local"
             - name: MEMORY_SERVICE_URL
               value: "http://memory-service.pantheon.svc.cluster.local:8910"
             - name: MEMORY_SERVICE_KEY
