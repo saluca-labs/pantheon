@@ -18,6 +18,16 @@ import type {
   PhaseProgress,
 } from './projects';
 import { coercePhaseProgress, phaseProgressDefault } from './projects';
+import {
+  STORY_DOCUMENT_KIND_VALUES,
+  extractPlainText,
+  countWords,
+  getStoryDocumentKindInfo,
+  type StoryDocument,
+  type StoryDocumentKind,
+  type StoryDocumentVersion,
+  type ProseMirrorJson,
+} from './story-documents';
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
 
@@ -344,6 +354,299 @@ export async function toggleShotCompleted(shotId: string): Promise<void> {
 
 /** @deprecated — use FilmmakerProject from projects.ts instead */
 export type FilmProject = FilmmakerProject;
+
+// ─── Story Documents ────────────────────────────────────────────────────────
+
+const STORY_DOC_COLUMNS = `id, project_id, kind, title, content_json,
+                           content_text, version, word_count, metadata,
+                           created_at, updated_at`;
+
+function rowToStoryDocument(row: any): StoryDocument {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    kind: row.kind as StoryDocumentKind,
+    title: row.title,
+    contentJson: (row.content_json as ProseMirrorJson) ?? {},
+    contentText: row.content_text ?? '',
+    version: Number(row.version),
+    wordCount: Number(row.word_count),
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToStoryDocumentVersion(row: any): StoryDocumentVersion {
+  return {
+    id: row.id,
+    documentId: row.document_id,
+    version: Number(row.version),
+    contentJson: (row.content_json as ProseMirrorJson) ?? {},
+    contentText: row.content_text ?? '',
+    wordCount: Number(row.word_count),
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+/**
+ * List all story documents for a project. The caller is responsible
+ * for verifying project ownership through `getProject` first; this
+ * function does its own ownership check via the project join so a
+ * cross-tenant call returns an empty array rather than leaking rows.
+ *
+ * `tenantId` is currently accepted for API parity with the rest of the
+ * Agentic OS suite but is not used directly: the filmmaker project
+ * table is user-scoped (no tenant_id column). Once filmmaker grows a
+ * tenant_id column the join here gains an `AND tenant_id = $3` clause.
+ */
+export async function listStoryDocuments(
+  projectId: string,
+  _tenantId: string,
+  userId: string,
+): Promise<StoryDocument[]> {
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${STORY_DOC_COLUMNS.split(',').map((c) => `d.${c.trim()}`).join(', ')}
+       FROM agos_filmmaker_story_documents d
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+      WHERE d.project_id = $1 AND p.user_id = $2
+      ORDER BY d.updated_at DESC`,
+    [projectId, userId],
+  );
+  return r.rows.map(rowToStoryDocument);
+}
+
+export async function getStoryDocument(
+  documentId: string,
+  _tenantId: string,
+  userId: string,
+): Promise<StoryDocument | null> {
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${STORY_DOC_COLUMNS.split(',').map((c) => `d.${c.trim()}`).join(', ')}
+       FROM agos_filmmaker_story_documents d
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+      WHERE d.id = $1 AND p.user_id = $2`,
+    [documentId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToStoryDocument(r.rows[0]);
+}
+
+export interface CreateStoryDocumentArgs {
+  projectId: string;
+  tenantId: string;
+  userId: string;
+  kind: StoryDocumentKind;
+  title?: string;
+  contentJson?: ProseMirrorJson;
+}
+
+export async function createStoryDocument(
+  args: CreateStoryDocumentArgs,
+): Promise<StoryDocument> {
+  const { projectId, userId, kind } = args;
+  if (!(STORY_DOCUMENT_KIND_VALUES as readonly string[]).includes(kind)) {
+    throw new Error(`Invalid story document kind: ${kind}`);
+  }
+
+  const project = await getProject(projectId, userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const title =
+    args.title && args.title.trim().length > 0
+      ? args.title.trim()
+      : getStoryDocumentKindInfo(kind).defaultTitle(project.name);
+
+  const contentJson = args.contentJson ?? {};
+  const contentText = extractPlainText(contentJson);
+  const wordCount = countWords(contentText);
+
+  const id = randomUUID();
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_story_documents
+       (id, project_id, kind, title, content_json, content_text,
+        version, word_count, metadata)
+     VALUES ($1,$2,$3,$4,$5::jsonb,$6,1,$7,'{}'::jsonb)`,
+    [id, projectId, kind, title, JSON.stringify(contentJson), contentText, wordCount],
+  );
+
+  const created = await getStoryDocument(id, args.tenantId, userId);
+  if (!created) throw new Error('Failed to create story document');
+  return created;
+}
+
+export interface UpdateStoryDocumentArgs {
+  id: string;
+  tenantId: string;
+  userId: string;
+  contentJson?: ProseMirrorJson;
+  title?: string;
+}
+
+/**
+ * Update content and/or title. Recomputes content_text + word_count from
+ * the new contentJson server-side and bumps `version`. Does NOT auto-write
+ * a version-history row; snapshotting is a separate explicit action.
+ */
+export async function updateStoryDocument(
+  args: UpdateStoryDocumentArgs,
+): Promise<StoryDocument | null> {
+  const existing = await getStoryDocument(args.id, args.tenantId, args.userId);
+  if (!existing) return null;
+
+  const nextContentJson = args.contentJson ?? existing.contentJson;
+  const nextTitle =
+    typeof args.title === 'string' && args.title.trim().length > 0
+      ? args.title.trim()
+      : existing.title;
+  const nextContentText =
+    args.contentJson !== undefined ? extractPlainText(nextContentJson) : existing.contentText;
+  const nextWordCount =
+    args.contentJson !== undefined ? countWords(nextContentText) : existing.wordCount;
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_story_documents
+        SET title        = $2,
+            content_json = $3::jsonb,
+            content_text = $4,
+            word_count   = $5,
+            version      = version + 1,
+            updated_at   = now()
+      WHERE id = $1`,
+    [args.id, nextTitle, JSON.stringify(nextContentJson), nextContentText, nextWordCount],
+  );
+
+  return getStoryDocument(args.id, args.tenantId, args.userId);
+}
+
+/**
+ * Copy the document's current state into the version-history table.
+ * Returns the freshly-written version row.
+ */
+export async function snapshotStoryDocument(args: {
+  id: string;
+  tenantId: string;
+  userId: string;
+}): Promise<StoryDocumentVersion | null> {
+  const doc = await getStoryDocument(args.id, args.tenantId, args.userId);
+  if (!doc) return null;
+
+  const versionId = randomUUID();
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_story_document_versions
+       (id, document_id, version, content_json, content_text, word_count)
+     VALUES ($1,$2,$3,$4::jsonb,$5,$6)`,
+    [
+      versionId,
+      doc.id,
+      doc.version,
+      JSON.stringify(doc.contentJson),
+      doc.contentText,
+      doc.wordCount,
+    ],
+  );
+
+  const r = await pool.query(
+    `SELECT id, document_id, version, content_json, content_text,
+            word_count, created_at
+       FROM agos_filmmaker_story_document_versions
+      WHERE id = $1`,
+    [versionId],
+  );
+  return rowToStoryDocumentVersion(r.rows[0]);
+}
+
+export async function listStoryDocumentVersions(
+  documentId: string,
+  tenantId: string,
+  userId: string,
+): Promise<StoryDocumentVersion[]> {
+  // Ownership gate: must own the document via project FK.
+  const doc = await getStoryDocument(documentId, tenantId, userId);
+  if (!doc) return [];
+
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT id, document_id, version, content_json, content_text,
+            word_count, created_at
+       FROM agos_filmmaker_story_document_versions
+      WHERE document_id = $1
+      ORDER BY version DESC, created_at DESC`,
+    [documentId],
+  );
+  return r.rows.map(rowToStoryDocumentVersion);
+}
+
+/**
+ * Restore a prior version back into the live document. Before
+ * overwriting, snapshots the current state so the restore itself can be
+ * undone. The live document's `version` is bumped by 1.
+ */
+export async function restoreStoryDocumentVersion(args: {
+  documentId: string;
+  versionId: string;
+  tenantId: string;
+  userId: string;
+}): Promise<StoryDocument | null> {
+  const doc = await getStoryDocument(args.documentId, args.tenantId, args.userId);
+  if (!doc) return null;
+
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT id, document_id, version, content_json, content_text, word_count, created_at
+       FROM agos_filmmaker_story_document_versions
+      WHERE id = $1 AND document_id = $2`,
+    [args.versionId, args.documentId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  const target = rowToStoryDocumentVersion(r.rows[0]);
+
+  // Snapshot the pre-restore state so the restore is itself undoable.
+  await snapshotStoryDocument({
+    id: args.documentId,
+    tenantId: args.tenantId,
+    userId: args.userId,
+  });
+
+  await pool.query(
+    `UPDATE agos_filmmaker_story_documents
+        SET content_json = $2::jsonb,
+            content_text = $3,
+            word_count   = $4,
+            version      = version + 1,
+            updated_at   = now()
+      WHERE id = $1`,
+    [
+      args.documentId,
+      JSON.stringify(target.contentJson),
+      target.contentText,
+      target.wordCount,
+    ],
+  );
+
+  return getStoryDocument(args.documentId, args.tenantId, args.userId);
+}
+
+export async function deleteStoryDocument(
+  documentId: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const doc = await getStoryDocument(documentId, tenantId, userId);
+  if (!doc) return false;
+
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_filmmaker_story_documents WHERE id = $1`,
+    [documentId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
 
 // ─── Audit ──────────────────────────────────────────────────────────────────
 
