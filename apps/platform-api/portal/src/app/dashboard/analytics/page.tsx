@@ -132,7 +132,7 @@ function exportReport(
 ) {
   const now = new Date().toISOString();
   const lines: string[] = [
-    "Tiresias Security Analytics Report",
+    "Pantheon Security Analytics Report",
     `Generated: ${now}`,
     `Period: Last ${analytics?.period_hours ?? "N/A"} hours`,
     "",

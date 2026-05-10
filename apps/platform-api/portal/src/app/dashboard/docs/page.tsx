@@ -26,7 +26,7 @@ export const DOCS_REGISTRY: Array<{
   {
     slug: "user-guide",
     title: "User & Developer Guide",
-    description: "Getting started with Tiresias: authentication, SDK, capability tokens, best practices.",
+    description: "Getting started with Pantheon: authentication, SDK, capability tokens, best practices.",
     file: "USER_GUIDE.md",
     minTier: "community",
     icon: <FileText className="w-5 h-5" />,

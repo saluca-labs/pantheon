@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 
-const COMPOSE_YAML = `# Tiresias — Self-Hosted Production Deployment
+const COMPOSE_YAML = `# Pantheon — Self-Hosted Production Deployment
 #
 # Single-file deploy for all tiers. No overlays needed.
 #
@@ -20,7 +20,7 @@ const COMPOSE_YAML = `# Tiresias — Self-Hosted Production Deployment
 
 services:
   # ---------------------------------------------------------------------------
-  # PostgreSQL — shared database for all Tiresias services
+  # PostgreSQL — shared database for all Pantheon services
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
@@ -52,7 +52,7 @@ services:
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
-  # Tiresias Proxy — LLM audit proxy with encrypted logging
+  # Pantheon Proxy — LLM audit proxy with encrypted logging
   # ---------------------------------------------------------------------------
   tiresias-proxy:
     build:

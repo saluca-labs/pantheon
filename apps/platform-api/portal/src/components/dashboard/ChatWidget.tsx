@@ -360,7 +360,7 @@ export default function ChatWidget() {
             </div>
             <div>
               <p className="text-sm font-bold text-of-on-surface leading-none">
-                Tiresias Support
+                Pantheon Support
               </p>
               <p className="text-[10px] text-of-on-surface-variant mt-0.5">
                 AI-powered · 24/7
@@ -404,7 +404,7 @@ export default function ChatWidget() {
                   How can I help?
                 </p>
                 <p className="text-xs text-of-on-surface-variant mt-1 max-w-[200px]">
-                  Ask about Tiresias features, APIs, detection rules, or troubleshooting.
+                  Ask about Pantheon features, APIs, detection rules, or troubleshooting.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center mt-1">
@@ -507,7 +507,7 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about Tiresias..."
+              placeholder="Ask anything about Pantheon..."
               rows={1}
               disabled={streaming}
               className="flex-1 resize-none bg-transparent text-sm text-of-on-surface placeholder:text-of-on-surface-variant/50 outline-none leading-relaxed min-h-[28px] max-h-[100px] overflow-y-auto"
