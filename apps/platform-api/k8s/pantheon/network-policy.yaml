@@ -53,10 +53,11 @@ spec:
     # TCP 443 scoped to private.googleapis.com / restricted.googleapis.com VIP
     # range so cloud-sql-proxy can reach sqladmin.googleapis.com without
     # opening egress to 0.0.0.0/0:443.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
@@ -117,10 +118,11 @@ spec:
     # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
     # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
     # sqladmin.googleapis.com.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
@@ -174,10 +176,11 @@ spec:
     # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
     # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
     # sqladmin.googleapis.com.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
@@ -233,10 +236,11 @@ spec:
     # TCP 443 scoped to private.googleapis.com VIP range. Portal doesn't have
     # a cloud-sql-proxy sidecar but other GCP API calls (logging, monitoring,
     # secret manager via WI) still need egress to the restricted-VIP range.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
@@ -294,10 +298,11 @@ spec:
     # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
     # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
     # sqladmin.googleapis.com.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
@@ -338,10 +343,11 @@ spec:
     # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range
     # (199.36.153.8/30) so cloud-sql-proxy can reach sqladmin.googleapis.com
     # without opening egress to 0.0.0.0/0:443.
-    - to:
-        - ipBlock:
-            cidr: 199.36.153.8/30
-      ports:
+    # NOTE 2026-05-10: 443 left open after a netpol-scope tightening (199.36.153.8/30)
+    # broke cloud-sql-proxy in this cluster — sqladmin.googleapis.com resolves to public
+    # Google IPs because Private Google Access is not enabled on the subnet.
+    # See production-down incident; re-tighten requires enabling PGA on the GKE subnet first.
+    - ports:
         - protocol: TCP
           port: 443
 ---
