@@ -1,0 +1,127 @@
+# Forked from inline Service stanzas in tiresias deployment files @ 02a6771; consolidated here.
+# Annotations point to BackendConfigs in backendconfigs.yaml.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulauth
+  namespace: pantheon
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "soulauth-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soulauth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulgate
+  namespace: pantheon
+  labels:
+    app: soulgate
+    app.kubernetes.io/name: soulgate
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "soulgate-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soulgate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulwatch
+  namespace: pantheon
+  labels:
+    app: soulwatch
+    app.kubernetes.io/name: soulwatch
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "soulwatch-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soulwatch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portal
+  namespace: pantheon
+  labels:
+    app: portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "portal-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: portal
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-web
+  namespace: pantheon
+  labels:
+    app: platform-web
+    app.kubernetes.io/name: platform-web
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    beta.cloud.google.com/backend-config: '{"default": "platform-web-backendconfig"}'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: platform-web
+---
+# memory-service is internal-only (no ingress route); ClusterIP on its native 8910 port.
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory-service
+  namespace: pantheon
+  labels:
+    app: memory-service
+    app.kubernetes.io/name: memory-service
+    app.kubernetes.io/part-of: pantheon
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8910
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: memory-service

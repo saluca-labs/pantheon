@@ -11,9 +11,19 @@ RUN npm ci
 COPY . .
 RUN rm -rf .next
 
-# Build-time env vars (override at build or runtime)
+# Build-time env vars (override at build via --build-arg)
+# IMPORTANT: NEXT_PUBLIC_* are inlined by webpack at build time. Setting them
+# at runtime (k8s env) is a no-op for client bundles AND for any server-side
+# code that reads them via process.env in a statically-analyzable way.
+# Defaults below are tiresias-compatible; pantheon builds MUST override.
+ARG NEXT_PUBLIC_APP_URL=https://tiresias.network
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_SOULAUTH_API_URL=http://soulauth.tiresias.svc.cluster.local
 ENV NEXT_PUBLIC_SOULAUTH_API_URL=$NEXT_PUBLIC_SOULAUTH_API_URL
+ARG NEXT_PUBLIC_SOULGATE_API_URL=http://soulgate.tiresias.svc.cluster.local
+ENV NEXT_PUBLIC_SOULGATE_API_URL=$NEXT_PUBLIC_SOULGATE_API_URL
+ARG NEXT_PUBLIC_SOULWATCH_API_URL=http://soulwatch.tiresias.svc.cluster.local
+ENV NEXT_PUBLIC_SOULWATCH_API_URL=$NEXT_PUBLIC_SOULWATCH_API_URL
 
 RUN npm run build
 

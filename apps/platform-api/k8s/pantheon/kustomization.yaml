@@ -1,0 +1,36 @@
+# Pantheon namespace kustomization — apply with `kubectl apply -k apps/platform-api/k8s/pantheon/`
+# Resource order matches dependency: namespace + SA first, then config/policy, then workloads,
+# then ingress, then job. Kustomize itself does NOT enforce ordering; this is documentation.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pantheon
+
+commonLabels:
+  app.kubernetes.io/part-of: pantheon
+
+resources:
+  # Foundation
+  - namespace.yaml
+  - serviceaccount.yaml
+  # Network + backend config
+  - network-policy.yaml
+  - backendconfigs.yaml
+  # Workloads
+  - soulauth-deployment.yaml
+  - soulgate-deployment.yaml
+  - soulwatch-deployment.yaml
+  - portal-deployment.yaml
+  - platform-web-deployment.yaml
+  - memory-service-deployment.yaml
+  # Service surface
+  - services.yaml
+  # Reliability
+  - hpa.yaml
+  - pdb.yaml
+  # Ingress + TLS
+  - cert.yaml
+  - ingress.yaml
+  # Migration job (one-off, can be applied separately)
+  - migrate-job.yaml
+  # Observability
+  - prometheus-monitor.yaml

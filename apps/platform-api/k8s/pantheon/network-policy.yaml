@@ -1,0 +1,346 @@
+# Forked from apps/platform-api/k8s/network-policy.yaml @ 02a6771 for pantheon namespace.
+# CRITICAL change: pod selectors switched from `app.kubernetes.io/part-of: tiresias` to `pantheon`
+# (the source had per-namespace policies that selected on the part-of label; that label is now `pantheon`
+# in this namespace). Drops the tiresias-proxy and redis sections (not deployed in pantheon MVP).
+# Adds platform-web + memory-service netpols.
+---
+# SoulAuth: accepts from pantheon pods + GCE health probers, egress to DB + DNS + WI metadata
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soulauth-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soulauth
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8000
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8000
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # 3307 is loopback to the cloud-sql-proxy sidecar; sidecar-local traffic
+    # doesn't traverse netpol so no allow rule is required.
+    # TCP 443 scoped to private.googleapis.com / restricted.googleapis.com VIP
+    # range so cloud-sql-proxy can reach sqladmin.googleapis.com without
+    # opening egress to 0.0.0.0/0:443.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soulgate-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soulgate
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8002
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8002
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulauth
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulwatch
+      ports:
+        - protocol: TCP
+          port: 8001
+    # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
+    # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
+    # sqladmin.googleapis.com.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soulwatch-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soulwatch
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8001
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 8001
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulauth
+      ports:
+        - protocol: TCP
+          port: 8000
+    # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
+    # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
+    # sqladmin.googleapis.com.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portal-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: portal
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8001
+        - protocol: TCP
+          port: 8002
+        - protocol: TCP
+          port: 8910
+    # TCP 443 scoped to private.googleapis.com VIP range. Portal doesn't have
+    # a cloud-sql-proxy sidecar but other GCP API calls (logging, monitoring,
+    # secret manager via WI) still need egress to the restricted-VIP range.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# platform-web: accepts ingress + GCE probers, egress to soulauth/memory-service + DB (cloud-sql sidecar) + DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-web-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: platform-web
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulauth
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to:
+        - podSelector:
+            matchLabels:
+              app: memory-service
+      ports:
+        - protocol: TCP
+          port: 8910
+    # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
+    # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range for
+    # sqladmin.googleapis.com.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
+---
+# memory-service: only accepts from pantheon pods, egress to DB + DNS + WI metadata + GCP APIs (sqladmin via cloud-sql-proxy)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: memory-service-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: memory-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8910
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # 3307 is loopback to the cloud-sql-proxy sidecar (sidecar-local — netpol
+    # doesn't apply). TCP 443 scoped to private.googleapis.com VIP range
+    # (199.36.153.8/30) so cloud-sql-proxy can reach sqladmin.googleapis.com
+    # without opening egress to 0.0.0.0/0:443.
+    - to:
+        - ipBlock:
+            cidr: 199.36.153.8/30
+      ports:
+        - protocol: TCP
+          port: 443
