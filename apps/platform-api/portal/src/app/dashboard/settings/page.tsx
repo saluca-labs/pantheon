@@ -1745,7 +1745,7 @@ function SettingsPageInner() {
                     {/* Document title preview */}
                     <div className="rounded-lg border border-of-outline-variant/10 bg-of-surface-container-high px-3 py-2">
                       <p className="text-[10px] text-of-on-surface-variant font-mono">
-                        Page Title: Dashboard | {draftBranding.company_name ?? "Tiresias"}
+                        Page Title: Dashboard | {draftBranding.company_name ?? "Pantheon"}
                       </p>
                     </div>
                   </div>
