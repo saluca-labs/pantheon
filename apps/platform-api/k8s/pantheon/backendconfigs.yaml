@@ -1,0 +1,67 @@
+# Forked from apps/platform-api/k8s/backendconfigs.yaml @ 02a6771 for pantheon namespace.
+# Adds portal-backendconfig + platform-web-backendconfig (which the tiresias source lacked
+# for portal — relied on default health checks. We add explicit configs for symmetry).
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulauth-backendconfig
+  namespace: pantheon
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8000
+    type: HTTP
+    requestPath: /health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulgate-backendconfig
+  namespace: pantheon
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8002
+    type: HTTP
+    requestPath: /gate/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: soulwatch-backendconfig
+  namespace: pantheon
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 8001
+    type: HTTP
+    requestPath: /watch/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: portal-backendconfig
+  namespace: pantheon
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 3000
+    type: HTTP
+    # Portal "/" returns 307 (auth redirect); GCE HCs require 2xx. Use Next.js
+    # API health route which returns 200 unauthenticated.
+    requestPath: /api/health
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: platform-web-backendconfig
+  namespace: pantheon
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    port: 3000
+    type: HTTP
+    # platform-web "/" returns 200 from pod IP, but use the explicit health
+    # route for parity with portal and to avoid breaking when auth is wired.
+    requestPath: /api/health

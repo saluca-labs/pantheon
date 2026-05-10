@@ -1,0 +1,8 @@
+# Forked from apps/platform-api/k8s/namespace.yaml @ 02a6771 for pantheon namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/managed-by: kubectl
