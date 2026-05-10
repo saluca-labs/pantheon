@@ -1,18 +1,19 @@
 /**
  * Public-domain mental health screeners used by Health OS.
  *
- * PHQ-9 (Patient Health Questionnaire-9) and GAD-7 (Generalized Anxiety
- * Disorder-7) are validated, freely-redistributable instruments. They are
- * embedded here as internal questionnaires for self-awareness tracking;
- * Health OS never returns a clinical diagnosis.
+ * PHQ-9, GAD-7, and PSS-10 are validated, freely-redistributable
+ * instruments. They are embedded here as internal questionnaires for
+ * self-awareness tracking; Health OS never returns a clinical diagnosis.
  *
  * References (also linked in the in-app caveat block):
  *   - PHQ-9: Kroenke, Spitzer, Williams (2001) — public domain
  *   - GAD-7: Spitzer, Kroenke, Williams, Löwe (2006) — public domain
+ *   - PSS-10: Cohen, Kamarck, Mermelstein (1983); Cohen & Williamson (1988)
+ *     — public domain (distributed via Mind Garden / NHS / NIMH)
  *   - Crisis safety: 988 Suicide & Crisis Lifeline, Crisis Text Line
  */
 
-export type ScreenerKey = 'phq9' | 'gad7';
+export type ScreenerKey = 'phq9' | 'gad7' | 'pss';
 
 export type Severity =
   | 'minimal'
@@ -114,13 +115,104 @@ export const GAD7: ScreenerDef = {
   ],
 };
 
+// ─── PSS-10 (Perceived Stress Scale) ───────────────────────────────────────
+// Five-point response scale (0..4). Items 4, 5, 7, 8 are reverse-scored —
+// see `scorePss10` for the math. Severity bands per the plan doc:
+//   low      total < 14
+//   moderate 14 ≤ total < 27
+//   high     total ≥ 27
+// (Standard PSS-10 max is 40; the bands above match the project's chosen
+// cutoffs which favor surfacing referrals at moderate stress.)
+
+const FIVE_POINT_SCALE = [
+  { value: 0, label: 'Never' },
+  { value: 1, label: 'Almost never' },
+  { value: 2, label: 'Sometimes' },
+  { value: 3, label: 'Fairly often' },
+  { value: 4, label: 'Very often' },
+];
+
+/** Item indices (1-based) that are reverse-scored on the PSS-10. */
+export const PSS10_REVERSE_ITEMS: readonly number[] = [4, 5, 7, 8];
+
+export const PSS10: ScreenerDef = {
+  key: 'pss',
+  title: 'PSS-10',
+  description:
+    'Self-administered perceived-stress screener. Tracks how stressful life has felt over the last month — for awareness, not a diagnosis.',
+  prompt:
+    'In the last month, how often have you felt or thought a certain way?',
+  options: FIVE_POINT_SCALE,
+  questions: [
+    { id: 1, text: 'Been upset because of something that happened unexpectedly' },
+    { id: 2, text: 'Felt that you were unable to control the important things in your life' },
+    { id: 3, text: 'Felt nervous and stressed' },
+    { id: 4, text: 'Felt confident about your ability to handle your personal problems' },
+    { id: 5, text: 'Felt that things were going your way' },
+    { id: 6, text: 'Found that you could not cope with all the things you had to do' },
+    { id: 7, text: 'Been able to control irritations in your life' },
+    { id: 8, text: 'Felt that you were on top of things' },
+    { id: 9, text: 'Been angered because of things that happened that were outside of your control' },
+    { id: 10, text: 'Felt difficulties were piling up so high that you could not overcome them' },
+  ],
+  // Severity buckets used internally; mapped from the project-chosen bands.
+  cutoffs: [
+    { max: 13, severity: 'minimal' },
+    { max: 26, severity: 'moderate' },
+    { max: 40, severity: 'severe' },
+  ],
+};
+
 export const SCREENERS: Record<ScreenerKey, ScreenerDef> = {
   phq9: PHQ9,
   gad7: GAD7,
+  pss: PSS10,
 };
 
 export function getScreener(key: string): ScreenerDef | null {
-  return key === 'phq9' || key === 'gad7' ? SCREENERS[key] : null;
+  return key === 'phq9' || key === 'gad7' || key === 'pss'
+    ? SCREENERS[key as ScreenerKey]
+    : null;
+}
+
+/**
+ * Score a PSS-10 response.
+ *
+ * Items 4, 5, 7, 8 are reverse-scored (response value subtracted from 4).
+ * Total range is 0..40. Severity per project bands:
+ *   low      total < 14
+ *   moderate 14..26
+ *   high     total >= 27
+ *
+ * Returns the same `{ score, severity, crisisFlag }` shape as
+ * `scoreScreener` for parity with PHQ-9 / GAD-7 callers, plus a
+ * caller-friendly `band` field with the project-specific labels.
+ */
+export interface PssScoreResult {
+  totalScore: number;
+  severity: 'low' | 'moderate' | 'high';
+}
+
+export function scorePss10(answers: number[]): PssScoreResult {
+  const def = SCREENERS.pss;
+  if (answers.length !== def.questions.length) {
+    throw new Error(`Expected ${def.questions.length} answers for pss, got ${answers.length}`);
+  }
+  let total = 0;
+  for (let i = 0; i < answers.length; i++) {
+    const a = answers[i];
+    if (typeof a !== 'number' || a < 0 || a > 4 || !Number.isInteger(a)) {
+      throw new Error(`Answer ${i + 1} must be an integer 0..4`);
+    }
+    // PSS10_REVERSE_ITEMS is 1-based; items 4, 5, 7, 8 → indices 3, 4, 6, 7.
+    const oneBased = i + 1;
+    const value = PSS10_REVERSE_ITEMS.includes(oneBased) ? 4 - a : a;
+    total += value;
+  }
+  let severity: 'low' | 'moderate' | 'high' = 'low';
+  if (total >= 27) severity = 'high';
+  else if (total >= 14) severity = 'moderate';
+  return { totalScore: total, severity };
 }
 
 export interface ScreenerResult {
@@ -141,6 +233,19 @@ export function scoreScreener(
   const def = SCREENERS[key];
   if (!def) {
     throw new Error(`Unknown screener: ${key}`);
+  }
+  // PSS-10 uses a 0..4 scale and reverse-scores 4 items; delegate to the
+  // dedicated helper and lift its result into the shared `ScreenerResult`
+  // envelope so callers (BFF route, repo) stay generic.
+  if (key === 'pss') {
+    const r = scorePss10(answers);
+    const severity: Severity =
+      r.severity === 'high'
+        ? 'severe'
+        : r.severity === 'moderate'
+          ? 'moderate'
+          : 'minimal';
+    return { score: r.totalScore, severity, crisisFlag: false };
   }
   if (answers.length !== def.questions.length) {
     throw new Error(

@@ -85,6 +85,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Self-track mood and anxiety with clinical instruments.',
       },
       {
+        href: '/dashboard/os/health/mood',
+        label: 'Mood check-in',
+        description: 'Track mood, energy, and anxiety with optional journal.',
+      },
+      {
+        href: '/dashboard/os/health/journal',
+        label: 'Journal',
+        description: 'Reflective entries with CBT-derived prompts.',
+      },
+      {
         href: '/dashboard/os/health/plan',
         label: 'Plan generator',
         description: 'Draft citation-backed nutrition, activity, and sleep plans.',
