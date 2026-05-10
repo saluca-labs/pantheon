@@ -234,3 +234,100 @@ a new cluster + new domain pair) and the manual flow above is unambiguous.
 **Certificate Manager** cert (CCM, not the in-cluster `ManagedCertificate` CRD) or move to
 DNS-01 validation via cert-manager + Cloudflare, the ACME-over-HTTP path goes away and the
 redirect can be on from t=0. Until then, follow the flow above on every fresh stand-up.
+
+## Releasing pantheon — tag-triggered CD
+
+The `.github/workflows/cd.yml` workflow ships every release. It is triggered by:
+
+- `git tag vX.Y.Z && git push origin vX.Y.Z` on `main` (production cut), or
+- `gh workflow run cd.yml -R saluca-labs/pantheon -f tag=vX.Y.Z` (re-deploy an existing tag — also the rollback handle).
+
+The workflow:
+
+1. **resolve** — pins the deploy to a specific tag + commit SHA.
+2. **build-and-push** (matrix) — builds six images in parallel and pushes both `:vX.Y.Z` and `:latest` to `us-central1-docker.pkg.dev/salucainfrastructure/pantheon/{portal,platform-web,soulauth,soulgate,soulwatch,memory-service}`.
+3. **apply** — `kustomize edit set image` for each of the six service images, `kubectl apply -k apps/platform-api/k8s/pantheon/`, then deletes + re-creates the `pantheon-migrate` Job (the manifest uses a fixed `name:` per Cristian's locked decision, not `generateName:`, so it must be recycled), then `kubectl rollout status` for each Deployment.
+4. **smoke** — hits `https://pantheon.saluca.com/health` (routed to soulauth) and `/` (routed to portal). Any non-2xx/3xx fails the run.
+
+### Cutting a release
+
+```bash
+# From a clean main with all desired commits merged.
+git checkout main && git pull --ff-only origin main
+git tag -a v0.4.2 -m "pantheon v0.4.2"
+git push origin v0.4.2
+gh run watch -R saluca-labs/pantheon
+```
+
+### Rolling back
+
+The fastest, most surgical rollback is to re-deploy the previous good tag:
+
+```bash
+gh workflow run cd.yml -R saluca-labs/pantheon -f tag=v0.4.1
+gh run watch -R saluca-labs/pantheon
+```
+
+That triggers the full pipeline again with the older tag, so each Deployment's image is bumped back to the prior version and migrations re-run (alembic is idempotent at HEAD). The `:latest` floating tag is also reset to the older version.
+
+If a database migration in the bad release was destructive, **do not** rely on rolling back the image alone — alembic will not auto-downgrade. In that case, before re-applying the older tag, run `kubectl exec -n pantheon deploy/soulauth -- alembic downgrade <prev_revision>` for each tree (`packages/database` and `apps/platform-api`). Capture the revisions BEFORE cutting the next release.
+
+If the cluster itself is wedged (rollout stuck, Pods CrashLooping after rollback), use the immediate-mitigation handle:
+
+```bash
+# Per-deployment rollback to the previous ReplicaSet (faster than a full re-deploy).
+for d in portal platform-web soulauth soulgate soulwatch memory-service; do
+  kubectl rollout undo deployment/$d -n pantheon
+done
+```
+
+### One-time CD bootstrap (orchestrator runs these)
+
+The CD workflow authenticates to GCP via Workload Identity Federation — no JSON key is stored in GitHub. The bindings below are one-time. After they exist, every subsequent release is just a `git push --tags`.
+
+```bash
+# 1. Create the dedicated CD service account (separate from runtime pantheon-sa).
+gcloud iam service-accounts create pantheon-ci \
+  --display-name="Pantheon CI/CD service account" \
+  --project=salucainfrastructure
+
+# 2. Project-level roles — push images, deploy to GKE, impersonate the runtime SA if needed.
+for role in roles/artifactregistry.writer \
+            roles/container.developer \
+            roles/iam.serviceAccountUser; do
+  gcloud projects add-iam-policy-binding salucainfrastructure \
+    --member="serviceAccount:pantheon-ci@salucainfrastructure.iam.gserviceaccount.com" \
+    --role="$role" --condition=None
+done
+
+# 3. Workload Identity Pool for GitHub Actions.
+gcloud iam workload-identity-pools create github-actions-pool \
+  --location=global --display-name="GitHub Actions" \
+  --project=salucainfrastructure
+
+# 4. OIDC provider scoped to saluca-labs/pantheon ONLY.
+gcloud iam workload-identity-pools providers create-oidc github-actions-provider \
+  --location=global \
+  --workload-identity-pool=github-actions-pool \
+  --display-name="GitHub Actions OIDC" \
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
+  --attribute-condition="assertion.repository=='saluca-labs/pantheon'" \
+  --project=salucainfrastructure
+
+# 5. Bind the GH repo principal to pantheon-ci@.
+PROJECT_NUMBER="$(gcloud projects describe salucainfrastructure --format='value(projectNumber)')"
+gcloud iam service-accounts add-iam-policy-binding \
+  pantheon-ci@salucainfrastructure.iam.gserviceaccount.com \
+  --role=roles/iam.workloadIdentityUser \
+  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/attribute.repository/saluca-labs/pantheon" \
+  --project=salucainfrastructure
+
+# 6. Set the two GH repo secrets the workflow consumes.
+gh secret set WIF_PROVIDER --repo saluca-labs/pantheon \
+  --body "projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider"
+gh secret set WIF_SERVICE_ACCOUNT --repo saluca-labs/pantheon \
+  --body "pantheon-ci@salucainfrastructure.iam.gserviceaccount.com"
+```
+
+After step 6, push any `vX.Y.Z` tag to trigger a deploy.
