@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import {
   AGENTIC_OS_MODULES,
   findAgenticOsModule,
@@ -42,6 +42,7 @@ export default async function AgenticOsModulePage({ params }: Props) {
   const plan = await loadAgenticOsPlan(slug);
   const Icon = mod.icon;
   const badge = STATUS_BADGE[mod.status] ?? STATUS_BADGE['planned']!;
+  const hasFeatures = mod.features.length > 0;
 
   return (
     <div className="max-w-5xl">
@@ -53,169 +54,93 @@ export default async function AgenticOsModulePage({ params }: Props) {
         All Agentic OS modules
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 mb-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-[#0f1117] p-3 border border-[#2a2d3e]">
-              <Icon className="w-7 h-7 text-[#4361EE]" />
+      {/* Compact metadata header — icon, name, status, tagline, description. */}
+      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-5">
+        <div className="flex items-start gap-4">
+          <div className="rounded-lg bg-[#0f1117] p-2.5 border border-[#2a2d3e]">
+            <Icon className="w-6 h-6 text-[#4361EE]" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-xl font-semibold text-white">{mod.label}</h1>
+              <span
+                className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border ${badge.className}`}
+              >
+                {badge.label}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-semibold text-white">
-                  {mod.label}
-                </h1>
-                <span
-                  className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border ${badge.className}`}
-                >
-                  {badge.label}
-                </span>
-              </div>
-              <p className="text-[#94a3b8]">{mod.tagline}</p>
-            </div>
+            <p className="text-[#94a3b8] text-sm">{mod.tagline}</p>
+            <p className="text-sm text-[#cbd5e1]/80 mt-2 leading-relaxed">
+              {mod.description}
+            </p>
           </div>
         </div>
-
-        <p className="text-sm text-[#cbd5e1]/80 mt-4 leading-relaxed">
-          {mod.description}
-        </p>
-
-        {mod.status === 'live' && mod.slug === 'health' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <Link
-              href="/dashboard/os/health/intake"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Intake & profile
-            </Link>
-            <Link
-              href="/dashboard/os/health/screeners"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Screeners (PHQ-9 / GAD-7)
-            </Link>
-            <Link
-              href="/dashboard/os/health/plan"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Plan generator
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'maker' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/maker/builds"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              My Builds &amp; Parts Inventory
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'research' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/research/hypotheses"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Hypothesis Ledger
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'secure-dev' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/secure-dev/threat-model"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              STRIDE Threat Model
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'cyber' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/cyber/alerts"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Alert Triage Queue
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'filmmaker' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/filmmaker/projects"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              My Projects
-            </Link>
-            <Link
-              href="/dashboard/os/filmmaker/shots"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Shot list builder
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'autobiographer' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/autobiographer/chapters"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Chapter capture
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'business' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/business/contacts"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Contacts CRM
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'live' && mod.slug === 'creator' && (
-          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Link
-              href="/dashboard/os/creator/calendar"
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-sm text-white hover:border-[#4361EE]/60 transition"
-            >
-              Editorial calendar
-            </Link>
-          </div>
-        )}
-
-        {mod.status === 'preview' && (
-          <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-200/90">
-            Schema and plan are live. Feature pages roll out in the parallel
-            rollout phase — track progress in the linked execution plan below.
-          </div>
-        )}
       </header>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">
-          Execution plan
-        </h2>
-        {plan ? (
-          <PlanViewer markdown={plan} />
+      {/* Primary content: feature grid. */}
+      <section className="mb-6">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-base font-semibold text-white">Features</h2>
+          {hasFeatures && (
+            <span className="text-xs text-[#94a3b8]">
+              {mod.features.length}{' '}
+              {mod.features.length === 1 ? 'feature' : 'features'} available
+            </span>
+          )}
+        </div>
+
+        {hasFeatures ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {mod.features.map((feature) => (
+              <Link
+                key={feature.href}
+                href={feature.href}
+                className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition flex items-start justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-base font-semibold text-white mb-1">
+                    {feature.label}
+                  </div>
+                  <p className="text-sm text-[#94a3b8] leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] mt-1 shrink-0 transition" />
+              </Link>
+            ))}
+          </div>
         ) : (
-          <p className="text-[#94a3b8] text-sm">
-            Execution plan not available for this module yet.
-          </p>
+          <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center">
+            <p className="text-sm font-medium text-white mb-1">Coming soon</p>
+            <p className="text-xs text-[#94a3b8]">
+              {mod.status === 'preview'
+                ? 'Schema and plan are live. Feature pages roll out in the parallel rollout phase.'
+                : 'Feature pages for this module have not shipped yet.'}{' '}
+              Track progress in the execution roadmap below.
+            </p>
+          </div>
         )}
       </section>
+
+      {/* Secondary content: collapsed execution roadmap. */}
+      <details className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27]">
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-[#cbd5e1] hover:text-white transition">
+          <span className="flex items-center gap-2">
+            <ChevronDown className="w-4 h-4 text-[#94a3b8] transition group-open:rotate-180" />
+            <span className="font-medium">View execution roadmap</span>
+            <span className="text-xs text-[#94a3b8]">(full plan markdown)</span>
+          </span>
+        </summary>
+        <div className="px-6 pb-6 pt-2 border-t border-[#2a2d3e]">
+          {plan ? (
+            <PlanViewer markdown={plan} />
+          ) : (
+            <p className="text-[#94a3b8] text-sm">
+              Execution plan not available for this module yet.
+            </p>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
