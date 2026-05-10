@@ -60,6 +60,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -125,6 +133,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -183,6 +199,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -243,6 +267,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 # platform-web: accepts ingress + GCE probers, egress to soulauth/memory-service + DB (cloud-sql sidecar) + DNS
 apiVersion: networking.k8s.io/v1
@@ -305,6 +337,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 # memory-service: only accepts from pantheon pods, egress to DB + DNS + WI metadata + GCP APIs (sqladmin via cloud-sql-proxy)
 apiVersion: networking.k8s.io/v1
@@ -350,6 +390,14 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+    # 3307 is the cloud-sql-proxy sidecar's egress to the Cloud SQL backend
+    # (the original "loopback to sidecar" comment was incorrect — sidecar-local
+    # traffic IS loopback, but the sidecar's OUTBOUND traffic to Cloud SQL on
+    # 3307 traverses netpol). Required for any workload with cloud-sql-proxy.
+    # Portal has no sidecar but the unused rule is harmless.
+    - ports:
+        - protocol: TCP
+          port: 3307
 ---
 # tiresias-proxy: accepts from portal (server-side dashboard fetches), egress to DB via
 # cloud-sql-proxy sidecar + GCP Secret Manager (for KEK provider) + soulgate (off by default,
