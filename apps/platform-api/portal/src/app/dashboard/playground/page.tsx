@@ -246,7 +246,7 @@ function PlaygroundInner() {
               <div className="text-center">
                 <p className="text-sm text-of-on-surface-variant">Send a message to start a conversation</p>
                 <p className="text-[10px] text-of-on-surface-variant/60 mt-1">
-                  All requests are routed through the Tiresias audited proxy
+                  All requests are routed through the Pantheon audited proxy
                 </p>
               </div>
             </div>

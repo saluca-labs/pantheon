@@ -66,7 +66,7 @@ export default async function LoginPage({
     <div className="min-h-screen flex items-center justify-center bg-[#0f1117]">
       <div className="w-full max-w-md p-8 rounded-xl bg-[#1a1d27] border border-[#2a2d3e] shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Tiresias</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Pantheon</h1>
           <p className="text-sm text-[#94a3b8]">Governance-First AI-Security&#8482;</p>
         </div>
 

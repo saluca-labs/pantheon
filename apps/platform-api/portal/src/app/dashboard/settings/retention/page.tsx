@@ -224,7 +224,7 @@ export default function RetentionSettingsPage() {
             Data Retention
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            Configure how long Tiresias retains your data before automatic purge
+            Configure how long Pantheon retains your data before automatic purge
           </p>
         </div>
       </div>

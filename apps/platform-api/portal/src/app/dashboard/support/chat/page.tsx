@@ -229,7 +229,7 @@ export default function SupportChatPage() {
               Support Chat
             </h1>
             <p className="text-xs text-of-on-surface-variant">
-              AI-powered support assistant for Tiresias
+              AI-powered support assistant for Pantheon
             </p>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function SupportChatPage() {
           <div className="flex flex-col items-center justify-center h-full text-of-on-surface-variant gap-3">
             <MessageCircle className="w-10 h-10 opacity-20" />
             <p className="text-sm">
-              Ask a question about Tiresias configuration, APIs, or
+              Ask a question about Pantheon configuration, APIs, or
               troubleshooting.
             </p>
           </div>

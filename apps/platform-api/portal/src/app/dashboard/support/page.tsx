@@ -237,7 +237,7 @@ export default function SupportPage() {
           <div>
             <h1 className="text-2xl font-black text-of-on-surface tracking-tight">Support</h1>
             <p className="text-sm text-of-on-surface-variant mt-0.5">
-              Report issues, track tickets, and get help from the Tiresias team.
+              Report issues, track tickets, and get help from the Pantheon team.
             </p>
           </div>
         </div>

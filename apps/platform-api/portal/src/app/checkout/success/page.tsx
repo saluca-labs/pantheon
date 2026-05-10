@@ -51,7 +51,7 @@ const QUICKSTART_STEPS = [
   {
     step: "3",
     title: "Send your first request",
-    code: 'curl -H "X-SoulKey: $TIRESIAS_API_KEY" \\\n  https://tiresias.network/v1/auth/whoami',
+    code: 'curl -H "X-SoulKey: $TIRESIAS_API_KEY" \\\n  https://pantheon.saluca.com/v1/auth/whoami',
     note: "Returns your tenant and persona details",
   },
 ];
@@ -208,7 +208,7 @@ function SuccessContent() {
           </svg>
         </div>
         <h1 className="text-3xl font-bold mb-2">
-          Welcome to Tiresias{" "}
+          Welcome to Pantheon{" "}
           <span className="text-of-primary">{planLabel}</span>
         </h1>
         <p className="text-of-on-surface-variant">
@@ -260,9 +260,9 @@ function SuccessContent() {
         <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-7 mb-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-semibold text-sm text-foreground">Tiresias Proxy API Key</h2>
+              <h2 className="font-semibold text-sm text-foreground">Pantheon Proxy API Key</h2>
               <p className="text-xs text-of-outline mt-0.5">
-                Point your AI agents at https://proxy.tiresias.network/v1 with this key
+                Point your AI agents at https://pantheon.saluca.com/v1 with this key
               </p>
             </div>
             <CopyButton text={session.proxy_api_key} label="Copy proxy API key" />
@@ -285,12 +285,12 @@ function SuccessContent() {
             <p className="text-xs text-of-outline uppercase tracking-wide mb-2">Configuration</p>
             <div className="relative">
               <pre className="bg-of-surface-container-low/60 border border-of-outline-variant/15 rounded-lg px-4 py-3 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">
-{`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1
+{`export OPENAI_BASE_URL=https://pantheon.saluca.com/v1
 export TIRESIAS_API_KEY=${session.proxy_api_key}`}
               </pre>
               <div className="absolute top-2 right-2">
                 <CopyButton
-                  text={`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1\nexport TIRESIAS_API_KEY=${session.proxy_api_key}`}
+                  text={`export OPENAI_BASE_URL=https://pantheon.saluca.com/v1\nexport TIRESIAS_API_KEY=${session.proxy_api_key}`}
                   label="Copy configuration"
                 />
               </div>
@@ -358,7 +358,7 @@ export TIRESIAS_API_KEY=${session.proxy_api_key}`}
       {session?.tenant_id && rawKey && (
         <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-2xl p-7 mb-8">
           <h2 className="font-semibold mb-1">Deploy on Your Infrastructure</h2>
-          <p className="text-xs text-of-on-surface-variant mb-5">Run Tiresias on your own servers with Docker Compose.</p>
+          <p className="text-xs text-of-on-surface-variant mb-5">Run Pantheon on your own servers with Docker Compose.</p>
 
           <div className="space-y-5">
             {/* Step 1 */}
@@ -444,7 +444,7 @@ export TIRESIAS_API_KEY=${session.proxy_api_key}`}
           Open Dashboard
         </Link>
         <Link
-          href="https://tiresias.network/docs"
+          href="https://pantheon.saluca.com/docs"
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 text-center rounded-lg border border-of-outline-variant/15 px-6 py-3 text-sm font-medium text-foreground hover:border-of-outline-variant/15-hover hover:bg-of-surface-container/50 transition-all"

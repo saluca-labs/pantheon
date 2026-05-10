@@ -169,7 +169,7 @@ export default function WelcomePage() {
     {
       number: 3,
       title: "Send your first request",
-      description: "Make an API call through Tiresias to complete setup.",
+      description: "Make an API call through Pantheon to complete setup.",
       content: (
         <div className="mt-3 space-y-3">
           <div className="bg-of-surface-container-high rounded-lg px-4 py-3 border border-of-outline-variant/10 overflow-x-auto">
@@ -191,7 +191,7 @@ export default function WelcomePage() {
       {/* Page title */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-of-on-surface" style={{ fontFamily: "Manrope, sans-serif" }}>
-          Get started with Tiresias
+          Get started with Pantheon
         </h1>
         <p className="text-sm text-of-on-surface-variant mt-1">
           Complete these steps to send your first protected API request.
