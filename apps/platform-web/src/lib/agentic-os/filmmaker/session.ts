@@ -1,16 +1,16 @@
 /**
  * Filmmaker OS — session helpers.
  *
- * Re-exports the shared session utility from Health OS so every vertical OS
- * uses a single, tested session layer rather than duplicating cookie logic.
+ * Re-exports the shared OS session utility under Filmmaker-flavoured names.
+ * The session/auth machinery is identical across every vertical, so the real
+ * implementation lives in `../_shared/session`.
  *
- * @license MIT — see /LICENSE
- * @see https://nextjs.org/docs/app/api-reference/functions/cookies (Next.js cookies API, MIT)
+ * @license MIT — Tiresias Filmmaker OS (internal).
  */
 
 export {
-  getCurrentHealthUser as getCurrentFilmmakerUser,
-  getHealthPool as getFilmmakerPool,
-} from '../health/session';
+  getCurrentOsUser as getCurrentFilmmakerUser,
+  getOsPool as getFilmmakerPool,
+} from '../_shared/session';
 
-export type { HealthSessionUser as FilmmakerSessionUser } from '../health/session';
+export type { OsSessionUser as FilmmakerSessionUser } from '../_shared/session';
