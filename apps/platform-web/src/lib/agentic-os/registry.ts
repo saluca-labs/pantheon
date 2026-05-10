@@ -95,6 +95,17 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Reflective entries with CBT-derived prompts.',
       },
       {
+        href: '/dashboard/os/health/cbt',
+        label: 'CBT exercises',
+        description:
+          'Thought records, behavioral activation, grounding, and more.',
+      },
+      {
+        href: '/dashboard/os/health/meditate',
+        label: 'Meditation',
+        description: 'Track sessions and follow a weekly plan.',
+      },
+      {
         href: '/dashboard/os/health/plan',
         label: 'Plan generator',
         description: 'Draft citation-backed nutrition, activity, and sleep plans.',
