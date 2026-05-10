@@ -18,6 +18,10 @@
     "./csrf": {
       "import": "./dist/csrf.js",
       "types": "./dist/csrf.d.ts"
+    },
+    "./tiresias-session": {
+      "import": "./dist/tiresias-session.js",
+      "types": "./dist/tiresias-session.d.ts"
     }
   },
   "scripts": {

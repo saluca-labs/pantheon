@@ -14,5 +14,7 @@ export { setSessionCookie, clearSessionCookie, getSessionToken } from './cookies
 export { generateCsrfToken, validateCsrfToken } from './csrf.js';
 export { checkLoginRateLimit, resetLoginRateLimit } from './rate-limit.js';
 export { emitAuditEvent } from './audit.js';
+export { verifyTiresiasSession } from './tiresias-session.js';
 
 export type { Session, User } from './types.js';
+export type { TiresiasIdentity } from './tiresias-session.js';
