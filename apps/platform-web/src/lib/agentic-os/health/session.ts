@@ -14,6 +14,13 @@ export function getHealthPool(): Pool {
 
 export interface HealthSessionUser {
   userId: string;
+  /**
+   * Tenant id for tenant-scoped writes (`agos_mh_profile`,
+   * `agos_health_consent`, `agos_health_risk_flag`). Resolved from the
+   * user's `organization_id` in the local auth schema; falls back to
+   * `userId` for solo-user installs that do not provision orgs.
+   */
+  tenantId: string;
   email: string;
   displayName?: string | null;
 }
@@ -30,6 +37,7 @@ export async function getCurrentHealthUser(): Promise<HealthSessionUser | null> 
   if (!result) return null;
   return {
     userId: result.user.id,
+    tenantId: result.user.organizationId ?? result.user.id,
     email: result.user.email,
     displayName: result.user.displayName ?? null,
   };
