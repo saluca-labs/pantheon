@@ -17,23 +17,54 @@ const monorepoRoot = path.resolve(__dirname, '../..');
 const MATRIX_ELEMENT_UPSTREAM =
   process.env['MATRIX_ELEMENT_UPSTREAM'] ?? 'http://element';
 
+// Asset routing collision fix (2026-05-10):
+// Both portal and platform-web are Next.js apps and emit static assets at
+// /_next/static/*. The pantheon ingress catch-all (/*) sends every /_next/*
+// request to portal, so platform-web's chunk hashes 404 → unstyled pages.
+// Fix: prefix platform-web's emitted asset URLs with /_pw, and add a matching
+// /_pw/* ingress rule that targets platform-web. We do NOT set basePath here
+// because that would shift all routes (e.g. /dashboard/os/maker → /_pw/...)
+// and break the ingress route carve-outs in apps/platform-api/k8s/pantheon/ingress.yaml.
+//
+// Because Next.js's standalone server does not actually serve under assetPrefix
+// (assetPrefix is the CDN-side prefix; the origin still serves at /_next/*),
+// we add a server-side rewrite below that maps incoming /_pw/_next/* requests
+// back to /_next/* before Next's internal handler picks them up.
+const ASSET_PREFIX = '/_pw';
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: monorepoRoot,
+  assetPrefix: ASSET_PREFIX,
   turbopack: {
     root: monorepoRoot,
   },
   async rewrites() {
-    return [
-      {
-        source: '/_matrix/element',
-        destination: `${MATRIX_ELEMENT_UPSTREAM}/`,
-      },
-      {
-        source: '/_matrix/element/:path*',
-        destination: `${MATRIX_ELEMENT_UPSTREAM}/:path*`,
-      },
-    ];
+    return {
+      // beforeFiles runs before Next.js's internal /_next/* static handler,
+      // so it's the correct hook for stripping the asset prefix on the way in.
+      beforeFiles: [
+        {
+          source: '/_pw/_next/:path*',
+          destination: '/_next/:path*',
+        },
+        {
+          source: '/_pw/static/:path*',
+          destination: '/static/:path*',
+        },
+      ],
+      afterFiles: [
+        {
+          source: '/_matrix/element',
+          destination: `${MATRIX_ELEMENT_UPSTREAM}/`,
+        },
+        {
+          source: '/_matrix/element/:path*',
+          destination: `${MATRIX_ELEMENT_UPSTREAM}/:path*`,
+        },
+      ],
+      fallback: [],
+    };
   },
 };
 

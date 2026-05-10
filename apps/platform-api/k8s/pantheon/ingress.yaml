@@ -152,6 +152,14 @@ spec:
                 name: platform-web
                 port:
                   number: 80
+          # Static assets for platform-web Next.js (assetPrefix=/_pw); see next.config
+          - path: /_pw/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
           # Portal Next.js API routes
           - path: /api/*
             pathType: ImplementationSpecific
