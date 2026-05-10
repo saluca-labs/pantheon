@@ -1,0 +1,153 @@
+# Forked from tiresias/k8s/tiresias-proxy-deployment.yaml @ tiresias-monorepo for pantheon namespace.
+# Differences from tiresias source:
+#   - namespace: tiresias -> pantheon
+#   - serviceAccountName: tiresias-sa -> pantheon-sa
+#   - replicas: 3 -> 2 (MVP)
+#   - secretKeyRef.name: tiresias-secrets -> pantheon-secrets (DB url shared with soulauth tree)
+#   - TIRESIAS_REDIS_URL: dropped — Redis is optional; proxy gracefully falls back to in-memory
+#     rate limiting (see proxy/rate_limit.py:118-129). Skipping Redis avoids deploying a stateful
+#     dependency for MVP. Limitation: rate-limit counters do not survive pod restarts and are
+#     per-pod (not cluster-wide). Acceptable for MVP traffic; revisit if rate-limit accuracy
+#     becomes a problem.
+#   - Image stays in `tiresias/` AR path (not pantheon/) — cross-AR-path reference. pantheon-sa
+#     needs roles/artifactregistry.reader on the tiresias repo (or project-wide); flagged in
+#     report. No re-tag/copy of the image.
+#   - Service moved to services.yaml; HPA + PDB intentionally NOT included (MVP, only 2 replicas).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiresias-proxy
+  namespace: pantheon
+  labels:
+    app: tiresias-proxy
+    app.kubernetes.io/name: tiresias-proxy
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tiresias-proxy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: tiresias-proxy
+        app.kubernetes.io/name: tiresias-proxy
+        app.kubernetes.io/part-of: pantheon
+        app.kubernetes.io/component: proxy
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: tiresias-proxy
+          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:v0.6.9
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: TIRESIAS_MODE
+              value: "saas"
+            - name: TIRESIAS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url
+            # KEK provider for envelope encryption of audit log payloads. Reuses the
+            # existing tiresias-kek secret in Secret Manager (same KEK the tiresias
+            # namespace deploy uses). PRE-DEPLOY: pantheon-sa needs
+            # roles/secretmanager.secretAccessor granted on `tiresias-kek` (currently
+            # only tiresias-sa has it). Without this, the proxy errors at first
+            # encrypt op (audit-log writes for any /v1/chat/completions call).
+            - name: TIRESIAS_KEK_PROVIDER
+              value: "gcp-sm"
+            - name: TIRESIAS_GCP_PROJECT_ID
+              value: "salucainfrastructure"
+            - name: TIRESIAS_GCP_SECRET_ID
+              value: "tiresias-kek"
+            - name: TIRESIAS_PROVIDERS
+              value: "anthropic,openai"
+            - name: TIRESIAS_RETENTION_DAYS
+              value: "90"
+            - name: TIRESIAS_USAGE_RETENTION_DAYS
+              value: "365"
+            # SOULGATE_ENABLED defaults to "off" upstream; not set here so the proxy
+            # skips the soulgate evaluation path entirely (MVP — no policy enforcement
+            # at the LLM-egress layer yet). Wire when soulgate policies are authored.
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+              ephemeral-storage: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 100Mi

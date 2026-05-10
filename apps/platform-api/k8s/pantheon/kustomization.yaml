@@ -22,6 +22,7 @@ resources:
   - portal-deployment.yaml
   - platform-web-deployment.yaml
   - memory-service-deployment.yaml
+  - tiresias-proxy-deployment.yaml
   # Service surface
   - services.yaml
   # Reliability
