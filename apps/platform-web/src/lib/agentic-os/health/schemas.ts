@@ -472,3 +472,95 @@ export const MealPlanSlotUpdateBody = MealPlanSlotBody.partial();
 export type MealPlanSlotUpdateInputBody = z.infer<
   typeof MealPlanSlotUpdateBody
 >;
+
+// ─── Workout templates (Phase 5c) ─────────────────────────────────────────
+
+export const WORKOUT_TEMPLATE_BLOCK_KINDS = [
+  'exercise',
+  'rest',
+  'note',
+] as const;
+export const WorkoutTemplateBlockKindEnum = z.enum(
+  WORKOUT_TEMPLATE_BLOCK_KINDS,
+);
+export type WorkoutTemplateBlockKindValue = z.infer<
+  typeof WorkoutTemplateBlockKindEnum
+>;
+
+export const WorkoutTemplateBody = z.object({
+  name: z.string().min(1).max(200).trim(),
+  description: z.string().max(4000).nullable().optional(),
+  category: z.string().min(1).max(80).trim(),
+  targetIntensity: ActivityIntensityEnum.optional(),
+  estDurationMin: z.number().int().min(1).max(1440),
+  tags: z.array(z.string().min(1).max(40)).max(20).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type WorkoutTemplateInputBody = z.infer<typeof WorkoutTemplateBody>;
+
+export const WorkoutTemplateUpdateBody = WorkoutTemplateBody.partial();
+export type WorkoutTemplateUpdateInputBody = z.infer<
+  typeof WorkoutTemplateUpdateBody
+>;
+
+export const WorkoutTemplateBlockBody = z.object({
+  kind: WorkoutTemplateBlockKindEnum.optional(),
+  name: z.string().min(1).max(200).trim(),
+  sets: z.number().int().min(0).max(100).nullable().optional(),
+  reps: z.string().max(40).nullable().optional(),
+  durationSec: z.number().int().min(0).max(86_400).nullable().optional(),
+  restSec: z.number().int().min(0).max(86_400).nullable().optional(),
+  weightHint: z.string().max(80).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  position: z.number().int().min(0).max(10_000).optional(),
+});
+export type WorkoutTemplateBlockInputBody = z.infer<
+  typeof WorkoutTemplateBlockBody
+>;
+
+export const WorkoutTemplateBlockUpdateBody = WorkoutTemplateBlockBody.partial();
+export type WorkoutTemplateBlockUpdateInputBody = z.infer<
+  typeof WorkoutTemplateBlockUpdateBody
+>;
+
+export const WorkoutTemplateBlockReorderBody = z.object({
+  orderedIds: z.array(z.string().uuid()).min(1).max(200),
+});
+export type WorkoutTemplateBlockReorderInputBody = z.infer<
+  typeof WorkoutTemplateBlockReorderBody
+>;
+
+// ─── Activity plans (Phase 5c) ────────────────────────────────────────────
+
+export const ActivityPlanBody = z.object({
+  weekStartDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD required'),
+  name: z.string().max(200).nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
+});
+export type ActivityPlanInputBody = z.infer<typeof ActivityPlanBody>;
+
+export const ActivityPlanUpdateBody = z.object({
+  name: z.string().max(200).nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
+});
+export type ActivityPlanUpdateInputBody = z.infer<
+  typeof ActivityPlanUpdateBody
+>;
+
+export const ActivityPlanSlotBody = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  templateId: z.string().uuid().nullable().optional(),
+  freeformText: z.string().max(500).nullable().optional(),
+  targetDurationMin: z.number().int().min(1).max(1440).nullable().optional(),
+  targetIntensity: ActivityIntensityEnum.nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  position: z.number().int().min(0).max(10_000).optional(),
+});
+export type ActivityPlanSlotInputBody = z.infer<typeof ActivityPlanSlotBody>;
+
+export const ActivityPlanSlotUpdateBody = ActivityPlanSlotBody.partial();
+export type ActivityPlanSlotUpdateInputBody = z.infer<
+  typeof ActivityPlanSlotUpdateBody
+>;
