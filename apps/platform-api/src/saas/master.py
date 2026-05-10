@@ -30,7 +30,7 @@ from src.mssp.isolation import (
     get_tenant_subtree,
     validate_depth_for_new_child,
 )
-from src.tier import TIER_ALLOWED_CHILDREN, TIER_MAX_CHILDREN, VALID_TIERS, can_create_child
+from src.tier import TIER_ALLOWED_CHILDREN, TIER_MAX_CHILDREN, VALID_TIERS, can_create_child, tier_meets
 
 logger = structlog.get_logger(__name__)
 
@@ -125,7 +125,7 @@ async def _require_saas_master(db: AsyncSession, request: Request) -> SoulTenant
     tenant = result.scalar_one_or_none()
     if not tenant:
         raise HTTPException(status_code=404, detail="Caller tenant not found")
-    if tenant.tier not in ("saas", "mssp", "owner") or tenant.hierarchy_depth != 0 or tenant.parent_tenant_id is not None:
+    if not tier_meets(tenant.tier, "mssp") or tenant.hierarchy_depth != 0 or tenant.parent_tenant_id is not None:
         raise HTTPException(status_code=403, detail="Only the platform master can access this endpoint")
     return tenant
 

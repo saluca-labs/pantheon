@@ -39,6 +39,21 @@ def tier_rank(tier: str) -> int:
         return 0
 
 
+def tier_meets(actual_tier: str, required_tier: str) -> bool:
+    """Return True if actual_tier >= required_tier in TIER_ORDER.
+
+    Owner tier is treated as a superuser tier that meets any requirement.
+    Unknown actual_tier falls back to community (rank 0); unknown required_tier
+    returns False to fail closed. Mirrors the frontend tierMeets() helper in
+    portal/src/components/dashboard/TierGate.tsx.
+    """
+    if actual_tier == "owner":
+        return True
+    if required_tier not in VALID_TIERS:
+        return False
+    return tier_rank(actual_tier) >= tier_rank(required_tier)
+
+
 def effective_tier(install_tier: str, tenant_tier: str) -> str:
     """
     Compute effective tier = min(install_license_tier, tenant_subscription_tier).

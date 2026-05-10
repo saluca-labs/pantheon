@@ -40,6 +40,7 @@ from src.mssp.models import (
 from src.auth.rbac import require_permission
 from src.enforcement.router import get_quarantine_engine
 from src.detection._state import get_sigma_engine
+from src.tier import tier_meets
 
 logger = structlog.get_logger(__name__)
 
@@ -79,10 +80,10 @@ async def _require_mssp_tier(db: AsyncSession, tenant_id: uuid.UUID) -> SoulTena
     tenant = result.scalar_one_or_none()
     if not tenant:
         raise HTTPException(status_code=404, detail="Caller tenant not found.")
-    if tenant.tier not in ("mssp", "saas"):
+    if not tier_meets(tenant.tier, "mssp"):
         raise HTTPException(
             status_code=403,
-            detail=f"MSSP features require mssp or saas tier. Current tier: {tenant.tier}",
+            detail=f"MSSP features require mssp tier or higher. Current tier: {tenant.tier}",
         )
     return tenant
 
