@@ -257,6 +257,9 @@ spec:
           port: 8002
         - protocol: TCP
           port: 8910
+        # tiresias-proxy listens on 8080. Portal proxies /api/dash/v1/* through it.
+        - protocol: TCP
+          port: 8080
     # TCP 443 scoped to private.googleapis.com VIP range. Portal doesn't have
     # a cloud-sql-proxy sidecar but other GCP API calls (logging, monitoring,
     # secret manager via WI) still need egress to the restricted-VIP range.
