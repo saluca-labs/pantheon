@@ -148,6 +148,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Multi-series mood, screener, and tag trends over 7/30/90 days.',
       },
+      {
+        href: '/dashboard/os/health/coach',
+        label: 'AI coach',
+        description:
+          'Streaming chat grounded in your recent state. Never diagnoses; defers crises to 988.',
+      },
+      {
+        href: '/dashboard/os/health/holistic-plan',
+        label: 'Holistic plan',
+        description:
+          '1-week recommendations across activity, nutrition, sleep, and mental health.',
+      },
     ],
   },
   {
