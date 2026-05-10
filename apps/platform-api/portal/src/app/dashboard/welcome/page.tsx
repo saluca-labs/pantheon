@@ -71,7 +71,10 @@ export default function WelcomePage() {
 
     const poll = async () => {
       try {
-        const res = await fetch("/api/v1/auth/whoami", {
+        // The portal proxies /v1/* to soulauth via the catch-all route at
+        // src/app/v1/[...path]/route.ts -- there is no /api prefix. Calling
+        // /api/v1/auth/whoami used to spam the smoke test with 404s.
+        const res = await fetch("/v1/auth/whoami", {
           headers: { Authorization: `Bearer ${session.soulkey}` },
         });
         if (res.ok) {

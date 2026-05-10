@@ -189,6 +189,62 @@ function getSessionFromCookies(): AuthSession | null {
   }
 }
 
+// -- Whoami refresh helper --------------------------------------------------
+
+/**
+ * Refresh tier / tenant_name from `/v1/auth/whoami` and rewrite the client-side
+ * session_data / oidc_data cookies in place so the dashboard UI sees current
+ * values without a re-login.
+ *
+ * Best-effort: returns the refreshed session on success or `null` on any
+ * failure. Keeps existing cookie shape intact; only tier / tenant_name fields
+ * are updated when the server returns them.
+ */
+async function refreshSessionFromWhoami(
+  current: AuthSession,
+): Promise<AuthSession | null> {
+  try {
+    const data = await api.get<WhoamiResponse>("/v1/auth/whoami");
+    if (!data || !data.tier) return null;
+    const changed =
+      data.tier !== current.tier ||
+      (data.tenant_name ?? undefined) !== current.tenant_name;
+    if (!changed) return null;
+
+    // Rewrite the cookie that originally produced `current`. We don't know the
+    // server-side HttpOnly cookie, but the *_data sibling is JS-readable.
+    if (typeof document !== "undefined") {
+      const targetCookie =
+        current.auth_method === "oidc"
+          ? "tiresias_oidc_data"
+          : "tiresias_session_data";
+      const m = document.cookie.match(
+        new RegExp(`(?:^|; )${targetCookie}=([^;]*)`),
+      );
+      if (m) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(m[1]));
+          parsed.tier = data.tier;
+          if (data.tenant_name) parsed.tenant_name = data.tenant_name;
+          document.cookie = `${targetCookie}=${encodeURIComponent(
+            JSON.stringify(parsed),
+          )}; path=/; SameSite=Lax`;
+        } catch {
+          // malformed — skip the cookie rewrite, still return refreshed state
+        }
+      }
+    }
+
+    return {
+      ...current,
+      tier: data.tier,
+      tenant_name: data.tenant_name ?? current.tenant_name,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // -- OIDC logout helper -----------------------------------------------------
 
 /**
@@ -251,6 +307,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(existing);
     }
     setLoading(false);
+
+    // Refresh stale tier / tenant_name from /v1/auth/whoami on hydrate.
+    // Cookies persist across deploys, so a tenant tier upgrade (e.g.
+    // community -> owner via seed-admin) won't reach the UI until the cookie
+    // is rewritten. Calling whoami once here brings the dashboard into sync
+    // with the welcome page, which already polls whoami live (defect 4).
+    if (existing) {
+      void refreshSessionFromWhoami(existing).then((refreshed) => {
+        if (refreshed) setSession(refreshed);
+      });
+    }
   }, []);
 
     /**

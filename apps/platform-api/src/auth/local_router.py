@@ -39,6 +39,11 @@ class LoginResponse(BaseModel):
     display_name: str | None
     admin_role: str
     expires_in: int
+    # Tenant tier + display name fetched from the DB at login so the portal's
+    # /api/auth/login route can write a fresh session cookie with current tier
+    # data, fixing the defect-4 stale-cookie tenant flip after a tier upgrade.
+    tier: str | None = None
+    tenant_name: str | None = None
 
 
 class RegisterRequest(BaseModel):
@@ -136,6 +141,13 @@ async def local_login(request: LoginRequest, http_request: Request, db: AsyncSes
     raw_token, session = await create_session(db, user, ip, ua)
     await db.commit()
 
+    # Resolve tenant tier + name so the portal cookie can be primed with
+    # current values at login time (see LoginResponse.tier comment).
+    tenant_result = await db.execute(
+        select(SoulTenant).where(SoulTenant.id == user.tenant_id)
+    )
+    tenant_row = tenant_result.scalar_one_or_none()
+
     logger.info("local_auth.login_success", email=request.email, user_id=str(user.id))
 
     return LoginResponse(
@@ -146,6 +158,8 @@ async def local_login(request: LoginRequest, http_request: Request, db: AsyncSes
         display_name=user.display_name,
         admin_role=user.admin_role or "viewer",
         expires_in=settings.oidc_session_ttl,
+        tier=tenant_row.tier if tenant_row else None,
+        tenant_name=tenant_row.name if tenant_row else None,
     )
 
 

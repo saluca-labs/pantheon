@@ -94,6 +94,11 @@ class WhoamiResponse(BaseModel):
     tenant_id: uuid.UUID
     soulkey_id: uuid.UUID
     status: str
+    # Tenant tier + display name resolved from the DB so the portal can refresh
+    # stale cookie data without a separate /tenant lookup. Optional for
+    # backward compatibility with older clients.
+    tier: Optional[str] = None
+    tenant_name: Optional[str] = None
     active_capabilities: int = 0
     policy_summary: Optional[dict] = None
 

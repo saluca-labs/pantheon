@@ -74,7 +74,15 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
     Injects TenantContext into request.state for downstream handlers.
 
     For admin endpoints, X-Tenant-ID header is used.
-    For auth endpoints, tenant is resolved from the soulkey.
+    For auth endpoints (e.g. portal-session-fronted /v1/prh, /v1/mssp), the
+    tenant is resolved from the SoulKey carried in X-SoulKey or
+    Authorization: Bearer when no explicit X-Tenant-ID is present.
+
+    Sets BOTH ``request.state.tenant_context`` and ``request.state.tenant``;
+    different consumers historically read one or the other (PRH router and
+    PRHMiddleware look up ``request.state.tenant``), so we publish under both
+    names to avoid 401s on SoulKey-authenticated requests that omit the
+    explicit X-Tenant-ID header.
     """
 
     async def dispatch(
@@ -85,6 +93,8 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
         # Skip tenant resolution for exempt paths
         if _is_tenant_exempt(path):
             return await call_next(request)
+
+        tenant_ctx: Optional[TenantContext] = None
 
         # Extract tenant ID from header if present
         tenant_id_header = request.headers.get("X-Tenant-ID")
@@ -98,13 +108,66 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
 
             # For now, create a lightweight context from the header
             # Full resolution happens when needed by specific endpoints
-            request.state.tenant_context = TenantContext(
+            tenant_ctx = TenantContext(
                 tenant_id=tenant_id,
                 tenant_slug="",  # Resolved lazily
                 tenant_name="",
                 tier="",
                 status="active",
             )
+        else:
+            # No explicit X-Tenant-ID — fall back to resolving the tenant from
+            # the SoulKey. Portal sessions (cookie -> proxy -> X-SoulKey on the
+            # backend) don't carry the tenant header, so without this fallback
+            # endpoints like /v1/prh/* and /v1/mssp/* would 401/403 even for
+            # the seeded admin. Best-effort: silently skip on any DB / lookup
+            # failure so we never make this middleware itself a hard dependency
+            # for endpoints that don't actually need tenant context.
+            soulkey_header = request.headers.get(
+                "X-SoulKey"
+            ) or request.headers.get("X-Soulkey")
+            authz = request.headers.get("Authorization", "")
+            if not soulkey_header and authz.startswith("Bearer "):
+                soulkey_header = authz[len("Bearer ") :]
+
+            if soulkey_header:
+                try:
+                    from src.database.connection import async_session_factory
+                    from src.auth.oidc_session import validate_session
+                    from src.auth.soulkey import resolve_identity
+
+                    resolved_tenant_id: Optional[uuid.UUID] = None
+                    async with async_session_factory() as session:
+                        # Portal sessions (most callers) verify via SoulOIDCSession.
+                        sess_result = await validate_session(session, soulkey_header)
+                        if sess_result is not None:
+                            _sess, user = sess_result
+                            resolved_tenant_id = user.tenant_id
+                        else:
+                            # Agent SoulKeys verify via _soulkeys.
+                            soulkey = await resolve_identity(session, soulkey_header)
+                            if soulkey is not None:
+                                resolved_tenant_id = soulkey.tenant_id
+
+                    if resolved_tenant_id is not None:
+                        tenant_ctx = TenantContext(
+                            tenant_id=resolved_tenant_id,
+                            tenant_slug="",
+                            tenant_name="",
+                            tier="",
+                            status="active",
+                        )
+                except Exception as exc:  # pragma: no cover - defensive
+                    logger.debug(
+                        "tenant_middleware.bearer_lookup_failed",
+                        error=str(exc),
+                        path=path,
+                    )
+
+        if tenant_ctx is not None:
+            request.state.tenant_context = tenant_ctx
+            # PRH router and PRHMiddleware read request.state.tenant; alias it.
+            request.state.tenant = tenant_ctx
 
         response = await call_next(request)
         return response

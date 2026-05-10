@@ -229,10 +229,23 @@ async def whoami(
             "allowed_nodes": policy.jit.allowed_nodes,
         }
 
+    # Resolve tenant tier + display name from the DB so the portal can refresh
+    # stale cookie data on the next whoami round-trip. Once the seeded admin's
+    # tenant is upgraded (defect 2A), whoami will return the corrected tier and
+    # the dashboard / welcome pages can re-write their session_data cookie from
+    # this response without needing a dedicated refresh endpoint (defect 4).
+    from src.middleware.tenant import resolve_tenant
+
+    tenant_row = await resolve_tenant(db, soulkey.tenant_id)
+    tier = tenant_row.tier if tenant_row else None
+    tenant_name = tenant_row.name if tenant_row else None
+
     return WhoamiResponse(
         persona_id=soulkey.persona_id,
         tenant_id=soulkey.tenant_id,
         soulkey_id=soulkey.id,
         status=soulkey.status,
+        tier=tier,
+        tenant_name=tenant_name,
         policy_summary=policy_summary,
     )
