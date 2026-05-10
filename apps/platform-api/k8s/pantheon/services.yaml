@@ -125,3 +125,25 @@ spec:
       name: http
   selector:
     app: memory-service
+---
+# tiresias-proxy is internal-only (portal proxies to it server-side via TIRESIAS_PROXY_URL).
+# No backendconfig — not on the GCE ingress. Port 80 -> targetPort 8080 (matches portal default
+# server-config which expects http://tiresias-proxy on standard service port).
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiresias-proxy
+  namespace: pantheon
+  labels:
+    app: tiresias-proxy
+    app.kubernetes.io/name: tiresias-proxy
+    app.kubernetes.io/part-of: pantheon
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: tiresias-proxy

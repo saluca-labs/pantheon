@@ -75,6 +75,13 @@ spec:
               value: "production"
             - name: COOKIE_DOMAIN
               value: "pantheon.saluca.com"
+            # Server-side URL the portal API routes use to fetch dashboard data
+            # (/api/dash/v1/*, etc) from tiresias-proxy. The default in
+            # portal/src/lib/server-config.ts is http://tiresias-proxy:8080;
+            # we override to :80 because the new pantheon Service exposes the
+            # ClusterIP on the standard service port (port 80 -> targetPort 8080).
+            - name: TIRESIAS_PROXY_URL
+              value: "http://tiresias-proxy.pantheon.svc.cluster.local"
           resources:
             requests:
               cpu: 250m
