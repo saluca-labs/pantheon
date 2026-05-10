@@ -72,12 +72,14 @@ describe('GAD-7 scoring', () => {
 });
 
 describe('getScreener', () => {
-  it('returns PHQ-9 / GAD-7 by key', () => {
+  it('returns PHQ-9 / GAD-7 / PSS-10 by key', () => {
     expect(getScreener('phq9')).toBe(PHQ9);
     expect(getScreener('gad7')).toBe(GAD7);
+    // PSS-10 was added in Phase 2; getScreener now returns it.
+    expect(getScreener('pss')?.title).toBe('PSS-10');
   });
   it('returns null for unknown screeners', () => {
-    expect(getScreener('pss')).toBeNull();
+    expect(getScreener('mmpi')).toBeNull();
     expect(getScreener('')).toBeNull();
   });
 });
