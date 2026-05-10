@@ -177,6 +177,9 @@ jobs:
       - name: Run Python tests — platform_auth
         run: cd packages/auth/python && python -m pytest --tb=short -q
 
+      - name: Run Python tests — platform_config
+        run: cd packages/config/python && python -m pytest --tb=short -q
+
       - name: Run Python tests — platform_secrets
         run: cd packages/secrets/python && python -m pytest --tb=short -q
 
@@ -234,8 +237,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install Alembic + Postgres driver
-        run: pip install alembic 'sqlalchemy>=2.0' psycopg2-binary
+      - name: Install Alembic + Postgres driver (via uv)
+        run: |
+          pip install uv
+          uv pip install --system alembic 'sqlalchemy>=2.0' psycopg2-binary
       - name: Enable pgcrypto (for gen_random_uuid)
         env:
           PGPASSWORD: platform
@@ -347,7 +352,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: pip install httpx alembic 'sqlalchemy>=2' psycopg2-binary
+      - run: |
+          pip install uv
+          uv pip install --system httpx alembic 'sqlalchemy>=2' psycopg2-binary
       - name: Bring up default profile
         run: |
           docker compose --profile default up -d --build

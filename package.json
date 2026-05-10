@@ -1,5 +1,5 @@
 {
-  "name": "tiresias-platform",
+  "name": "pantheon",
   "private": true,
   "packageManager": "pnpm@9.12.0",
   "engines": {
@@ -11,8 +11,8 @@
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
-    "db:migrate": "pnpm --filter @platform/database run migrate",
-    "db:seed": "pnpm --filter @platform/database run seed",
+    "db:migrate": "bash scripts/db-migrate.sh",
+    "db:seed": "./.venv/bin/python scripts/seed-admin.py",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down -v",
     "bootstrap": "bash scripts/bootstrap.sh"
