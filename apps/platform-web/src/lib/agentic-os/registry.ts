@@ -233,8 +233,8 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     features: [
       {
         href: '/dashboard/os/filmmaker/projects',
-        label: 'My projects',
-        description: 'Active films, scripts, and their production status.',
+        label: 'Project hub',
+        description: 'Per-project cover, logline, phase tracker, and shot list.',
       },
       {
         href: '/dashboard/os/filmmaker/shots',
