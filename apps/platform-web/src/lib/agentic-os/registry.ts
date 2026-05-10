@@ -241,6 +241,11 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Shot list builder',
         description: 'Plan scenes, framing, and coverage for each shoot day.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Story documents',
+        description: 'Bible, treatment, logline, outline, and pitch-deck text per project.',
+      },
     ],
   },
   {
