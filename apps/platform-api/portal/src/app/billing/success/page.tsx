@@ -63,7 +63,7 @@ function SuccessContent() {
                 Subscription activated
               </h1>
               <p className="text-of-on-surface-variant mb-8">
-                Your Tiresias subscription is now active. Your license tier has
+                Your Pantheon subscription is now active. Your license tier has
                 been updated and all features are available immediately.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">

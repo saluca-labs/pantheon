@@ -5,27 +5,27 @@ import { config } from "@/lib/config";
 
 /** Partner onboarding application — standalone, unlisted page. */
 
-const TOS_TEXT = `TIRESIAS PARTNER PROGRAM TERMS AND CONDITIONS
+const TOS_TEXT = `PANTHEON PARTNER PROGRAM TERMS AND CONDITIONS
 
 Effective Date: Upon submission of this application.
 
 1. PARTNER RELATIONSHIP
-By submitting this application, you ("Partner") are applying to join the Tiresias Partner Program operated by Saluca LLC ("Company"). Acceptance into the program is at the sole discretion of the Company. This agreement governs the terms of your participation upon approval.
+By submitting this application, you ("Partner") are applying to join the Pantheon Partner Program operated by Saluca LLC ("Company"). Acceptance into the program is at the sole discretion of the Company. This agreement governs the terms of your participation upon approval.
 
 2. SCOPE OF PARTNERSHIP
-Partners are granted access to the Tiresias platform for the purposes of evaluation, integration, and resale of Tiresias security services (SoulAuth, SoulWatch, SoulGate) to their clients. Partners may not sublicense, reverse engineer, or redistribute platform components outside the scope of this agreement.
+Partners are granted access to the Pantheon platform for the purposes of evaluation, integration, and resale of Pantheon security services (SoulAuth, SoulWatch, SoulGate) to their clients. Partners may not sublicense, reverse engineer, or redistribute platform components outside the scope of this agreement.
 
 3. CONFIDENTIALITY
 Partner agrees to maintain strict confidentiality of all proprietary information, including but not limited to: API credentials, soulkeys, platform architecture, pricing structures, roadmap details, and client data. Disclosure of confidential information to unauthorized third parties constitutes grounds for immediate termination.
 
 4. DATA HANDLING AND PRIVACY
-Partner acknowledges that Tiresias processes security telemetry and agent identity data. Partner agrees to handle all data in accordance with applicable data protection regulations including GDPR and CCPA where applicable. Partner shall not attempt to extract, correlate, or deanonymize data belonging to other tenants on the platform.
+Partner acknowledges that Pantheon processes security telemetry and agent identity data. Partner agrees to handle all data in accordance with applicable data protection regulations including GDPR and CCPA where applicable. Partner shall not attempt to extract, correlate, or deanonymize data belonging to other tenants on the platform.
 
 5. COMMISSION AND COMPENSATION
 Commission rates, payout schedules, and revenue sharing terms will be established upon approval and documented in your partner dashboard. The Company reserves the right to modify commission structures with 30 days written notice. All payouts are processed through Stripe Connect.
 
 6. INTELLECTUAL PROPERTY
-All intellectual property rights in the Tiresias platform, including trademarks, patents, copyrights, and trade secrets, remain the exclusive property of Saluca LLC. Partner is granted a limited, non-exclusive, revocable license to use Tiresias trademarks solely for the purpose of promoting and reselling the platform.
+All intellectual property rights in the Pantheon platform, including trademarks, patents, copyrights, and trade secrets, remain the exclusive property of Saluca LLC. Partner is granted a limited, non-exclusive, revocable license to use Pantheon trademarks solely for the purpose of promoting and reselling the platform.
 
 7. TERM AND TERMINATION
 This agreement remains in effect until terminated by either party with 30 days written notice. The Company may terminate immediately for cause, including breach of confidentiality, misuse of credentials, or conduct detrimental to the Company's reputation. Upon termination, Partner must cease all use of platform credentials and destroy confidential materials.
@@ -145,7 +145,7 @@ export default function OnboardingForm() {
           <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 sm:p-10">
             <h2 className="text-xl font-bold mb-1">Partner Application</h2>
             <p className="text-sm text-foreground-muted mb-8">
-              Apply to join the Tiresias partner program. All applications are reviewed personally.
+              Apply to join the Pantheon partner program. All applications are reviewed personally.
             </p>
 
             {error && (
@@ -259,7 +259,7 @@ export default function OnboardingForm() {
 
         {/* Footer */}
         <p className="text-center text-xs text-foreground-subtle mt-8">
-          Tiresias by Saluca Labs
+          Pantheon by Saluca Labs
         </p>
       </div>
     </main>

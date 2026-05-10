@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-const ENV_TEMPLATE = `# Tiresias — Self-Hosted Configuration
+const ENV_TEMPLATE = `# Pantheon — Self-Hosted Configuration
 # Generated for your deployment. Review and set your Postgres password.
 #
 # Quick start:

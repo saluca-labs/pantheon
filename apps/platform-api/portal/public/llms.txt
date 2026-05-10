@@ -2,13 +2,13 @@
 
 > Zero-knowledge agent security for the enterprise. Identity, authorization, and runtime protection — without ever accessing your data.
 
-Tiresias is a runtime security platform purpose-built for AI agents. It provides cryptographic agent identity (SoulAuth), zero-trust policy enforcement, behavioral anomaly detection, and automated quarantine — all operating on metadata only, never touching agent payloads.
+Pantheon is a runtime security platform purpose-built for AI agents. It provides cryptographic agent identity (SoulAuth), zero-trust policy enforcement, behavioral anomaly detection, and automated quarantine — all operating on metadata only, never touching agent payloads.
 
 ## Core Products
 
-- [SoulAuth](https://tiresias.network/platform): Cryptographic agent identity and just-in-time authorization. Hardware-bound soulkey identity, policy-as-code (YAML, git-versioned), zero standing permissions.
-- [SoulWatch](https://tiresias.network/platform): Real-time behavioral analytics with Sigma-compatible detection rules. 18 anomaly types with per-agent baselines, 60 threat patterns scored in 0.39ms.
-- [SoulGate](https://tiresias.network/platform): API security gateway with rate limiting, schema validation, and threat detection at the API layer.
+- [SoulAuth](https://pantheon.saluca.com/platform): Cryptographic agent identity and just-in-time authorization. Hardware-bound soulkey identity, policy-as-code (YAML, git-versioned), zero standing permissions.
+- [SoulWatch](https://pantheon.saluca.com/platform): Real-time behavioral analytics with Sigma-compatible detection rules. 18 anomaly types with per-agent baselines, 60 threat patterns scored in 0.39ms.
+- [SoulGate](https://pantheon.saluca.com/platform): API security gateway with rate limiting, schema validation, and threat detection at the API layer.
 
 ## Key Capabilities
 
@@ -26,7 +26,7 @@ Tiresias is a runtime security platform purpose-built for AI agents. It provides
 
 ## Architecture
 
-Tiresias uses a zero-knowledge architecture. Agent payloads never leave customer infrastructure. Policy evaluation uses metadata only. Cryptographic proofs replace data inspection. Privacy is architectural, not policy-based.
+Pantheon uses a zero-knowledge architecture. Agent payloads never leave customer infrastructure. Policy evaluation uses metadata only. Cryptographic proofs replace data inspection. Privacy is architectural, not policy-based.
 
 ## Use Cases
 
@@ -40,13 +40,13 @@ Tiresias uses a zero-knowledge architecture. Agent payloads never leave customer
 
 - Free tier: 1,000 agent authentications/month
 - Enterprise plans available
-- Contact: https://tiresias.network/company#contact
+- Contact: https://pantheon.saluca.com/company#contact
 
 ## Company
 
 - Built by Saluca LLC (San Diego, CA)
-- Website: https://tiresias.network
-- Documentation: https://tiresias.network/docs
-- Developers: https://tiresias.network/developers
-- Security: https://tiresias.network/security
-- Pricing: https://tiresias.network/pricing
+- Website: https://pantheon.saluca.com
+- Documentation: https://pantheon.saluca.com/docs
+- Developers: https://pantheon.saluca.com/developers
+- Security: https://pantheon.saluca.com/security
+- Pricing: https://pantheon.saluca.com/pricing
