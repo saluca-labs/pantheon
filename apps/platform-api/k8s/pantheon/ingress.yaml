@@ -142,6 +142,16 @@ spec:
                 name: platform-web
                 port:
                   number: 80
+          # Token exchange BFF (PR #19) — must precede /api/* catch-all.
+          # Portal-issued tiresias_session is exchanged here for a platform-web
+          # platform_session via SoulAuth verify + local users/sessions upsert.
+          - path: /api/auth/exchange
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
           # Portal Next.js API routes
           - path: /api/*
             pathType: ImplementationSpecific
