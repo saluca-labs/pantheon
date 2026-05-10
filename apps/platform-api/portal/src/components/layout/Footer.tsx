@@ -71,9 +71,9 @@ export default function Footer() {
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-3 mb-4 group">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden animate-breathe" style={{ animationDuration: "6s" }}>
-                  <img src="/tiresias-icon.png" alt="Tiresias" className="w-full h-full object-cover" />
+                  <img src="/tiresias-icon.png" alt="Pantheon" className="w-full h-full object-cover" />
                 </div>
-                <span className="text-lg font-semibold">Tiresias</span>
+                <span className="text-lg font-semibold">Pantheon</span>
               </div>
               <p className="text-sm text-of-on-surface-variant leading-relaxed">
                 Zero-knowledge agent security for the enterprise. We see threats. Never data.

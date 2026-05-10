@@ -27,7 +27,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Tiresias - AI Agent Security Platform",
+  title: "Pantheon - AI Agent Security Platform",
   description:
     "Zero-knowledge agent security for the enterprise. Identity, authorization, and runtime protection - without ever accessing your data.",
   keywords: [
@@ -39,15 +39,15 @@ export const metadata: Metadata = {
     "privacy-first",
   ],
   openGraph: {
-    title: "Tiresias - The Blind Prophet of AI Security",
+    title: "Pantheon - Governance-First AI Security",
     description:
-      "Tiresias sees threats. Never data. Enterprise-grade agent identity and zero-trust authorization.",
+      "Pantheon provides governance-first AI security. Enterprise-grade agent identity and zero-trust authorization.",
     type: "website",
-    siteName: "Tiresias",
+    siteName: "Pantheon",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tiresias - AI Agent Security Platform",
+    title: "Pantheon - AI Agent Security Platform",
     description: "Zero-knowledge agent security for the enterprise.",
   },
 };

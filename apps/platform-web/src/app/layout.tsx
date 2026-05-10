@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tiresias | Governance-First AI-Security",
+  title: "Pantheon | Governance-First AI-Security",
   description: "Full-stack agentic security — observability, governance, and audit trails for AI agents.",
 };
 
