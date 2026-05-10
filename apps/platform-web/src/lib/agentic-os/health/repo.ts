@@ -4214,3 +4214,1049 @@ export async function addPlanSlotToMealLog(
     notes: slot.notes,
   });
 }
+
+// ─── Workout templates (Phase 5c) ───────────────────────────────────────────
+
+export type WorkoutTemplateSource = 'system' | 'custom';
+export type WorkoutTemplateBlockKind = 'exercise' | 'rest' | 'note';
+
+export interface WorkoutTemplateBlock {
+  id: string;
+  templateId: string;
+  position: number;
+  kind: WorkoutTemplateBlockKind;
+  name: string;
+  sets: number | null;
+  reps: string | null;
+  durationSec: number | null;
+  restSec: number | null;
+  weightHint: string | null;
+  notes: string | null;
+}
+
+export interface WorkoutTemplate {
+  id: string;
+  tenantId: string | null;
+  userId: string | null;
+  source: WorkoutTemplateSource;
+  name: string;
+  description: string | null;
+  category: string;
+  targetIntensity: ActivityIntensityValue;
+  estDurationMin: number;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  blocks?: WorkoutTemplateBlock[];
+  blockCount?: number;
+}
+
+const WORKOUT_TEMPLATE_COLS = `
+  id, tenant_id, user_id, source, name, description, category,
+  target_intensity, est_duration_min, tags, metadata, created_at, updated_at
+`;
+
+const WORKOUT_TEMPLATE_BLOCK_COLS = `
+  id, template_id, position, kind, name, sets, reps, duration_sec,
+  rest_sec, weight_hint, notes
+`;
+
+function rowToWorkoutTemplate(
+  row: any,
+  blocks?: WorkoutTemplateBlock[],
+  blockCount?: number,
+): WorkoutTemplate {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    source: row.source as WorkoutTemplateSource,
+    name: row.name,
+    description: row.description,
+    category: row.category,
+    targetIntensity: row.target_intensity as ActivityIntensityValue,
+    estDurationMin: Number(row.est_duration_min),
+    tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+    blocks,
+    blockCount:
+      blockCount ??
+      (row.block_count !== undefined ? Number(row.block_count) : undefined),
+  };
+}
+
+function rowToWorkoutTemplateBlock(row: any): WorkoutTemplateBlock {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    position: Number(row.position),
+    kind: row.kind as WorkoutTemplateBlockKind,
+    name: row.name,
+    sets: row.sets === null ? null : Number(row.sets),
+    reps: row.reps,
+    durationSec: row.duration_sec === null ? null : Number(row.duration_sec),
+    restSec: row.rest_sec === null ? null : Number(row.rest_sec),
+    weightHint: row.weight_hint,
+    notes: row.notes,
+  };
+}
+
+export interface ListWorkoutTemplatesInput {
+  tenantId: string;
+  userId: string;
+  q?: string;
+  category?: string;
+  source?: WorkoutTemplateSource | 'all';
+  limit?: number;
+  offset?: number;
+}
+
+export async function listWorkoutTemplates(
+  input: ListWorkoutTemplatesInput,
+): Promise<WorkoutTemplate[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 100, 1), 500);
+  const offset = Math.max(input.offset ?? 0, 0);
+  const params: any[] = [input.tenantId, input.userId];
+  // Visibility: system rows (cross-tenant) OR your own customs.
+  let where = `WHERE (source = 'system'
+                     OR (source = 'custom' AND tenant_id = $1 AND user_id = $2))`;
+  if (input.source === 'system') {
+    where += ` AND source = 'system'`;
+  } else if (input.source === 'custom') {
+    where += ` AND source = 'custom'`;
+  }
+  if (input.category && input.category.trim().length > 0) {
+    params.push(input.category.trim());
+    where += ` AND category = $${params.length}`;
+  }
+  if (input.q && input.q.trim().length > 0) {
+    params.push(`%${input.q.trim()}%`);
+    where += ` AND name ILIKE $${params.length}`;
+  }
+  params.push(limit);
+  params.push(offset);
+  const r = await pool.query(
+    `SELECT ${WORKOUT_TEMPLATE_COLS},
+            (SELECT COUNT(*)::int FROM agos_mh_workout_template_block b
+              WHERE b.template_id = t.id) AS block_count
+       FROM agos_mh_workout_template t
+       ${where}
+      ORDER BY source DESC, name ASC
+      LIMIT $${params.length - 1}
+      OFFSET $${params.length}`,
+    params,
+  );
+  return r.rows.map((row: any) => rowToWorkoutTemplate(row));
+}
+
+export async function getWorkoutTemplate(
+  id: string,
+  tenantId: string,
+  userId?: string,
+): Promise<WorkoutTemplate | null> {
+  const pool = getHealthPool();
+  // System rows visible to all; customs only to their owner.
+  const params: any[] = [id, tenantId];
+  let where = `WHERE id = $1 AND (source = 'system'
+                                  OR (source = 'custom' AND tenant_id = $2`;
+  if (userId !== undefined) {
+    params.push(userId);
+    where += ` AND user_id = $${params.length}`;
+  }
+  where += '))';
+  const r = await pool.query(
+    `SELECT ${WORKOUT_TEMPLATE_COLS} FROM agos_mh_workout_template ${where}`,
+    params,
+  );
+  if (r.rowCount === 0) return null;
+  const blocks = await listWorkoutTemplateBlocks(id);
+  return rowToWorkoutTemplate(r.rows[0], blocks, blocks.length);
+}
+
+export interface CreateWorkoutTemplateInput {
+  name: string;
+  description?: string | null;
+  category: string;
+  targetIntensity?: ActivityIntensityValue;
+  estDurationMin: number;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export async function createWorkoutTemplate(
+  tenantId: string,
+  userId: string,
+  input: CreateWorkoutTemplateInput,
+): Promise<WorkoutTemplate> {
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_workout_template (
+        id, tenant_id, user_id, source, name, description, category,
+        target_intensity, est_duration_min, tags, metadata)
+     VALUES ($1,$2,$3,'custom',$4,$5,$6,$7,$8,$9,$10::jsonb)
+     RETURNING ${WORKOUT_TEMPLATE_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      input.name.trim(),
+      input.description ?? null,
+      input.category,
+      input.targetIntensity ?? 'moderate',
+      input.estDurationMin,
+      input.tags ?? [],
+      JSON.stringify(input.metadata ?? {}),
+    ],
+  );
+  return rowToWorkoutTemplate(r.rows[0], [], 0);
+}
+
+export interface UpdateWorkoutTemplateInput {
+  name?: string;
+  description?: string | null;
+  category?: string;
+  targetIntensity?: ActivityIntensityValue;
+  estDurationMin?: number;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export async function updateWorkoutTemplate(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateWorkoutTemplateInput,
+): Promise<WorkoutTemplate | null> {
+  const pool = getHealthPool();
+  // Customs-only — system rows are immutable.
+  const r = await pool.query(
+    `UPDATE agos_mh_workout_template
+        SET name             = COALESCE($4, name),
+            description      = COALESCE($5, description),
+            category         = COALESCE($6, category),
+            target_intensity = COALESCE($7, target_intensity),
+            est_duration_min = COALESCE($8, est_duration_min),
+            tags             = COALESCE($9, tags),
+            metadata         = COALESCE($10::jsonb, metadata),
+            updated_at       = now()
+      WHERE id = $1 AND source = 'custom' AND tenant_id = $2 AND user_id = $3
+      RETURNING ${WORKOUT_TEMPLATE_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      patch.name ?? null,
+      patch.description ?? null,
+      patch.category ?? null,
+      patch.targetIntensity ?? null,
+      patch.estDurationMin ?? null,
+      patch.tags ?? null,
+      patch.metadata !== undefined ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const blocks = await listWorkoutTemplateBlocks(id);
+  return rowToWorkoutTemplate(r.rows[0], blocks, blocks.length);
+}
+
+export async function deleteWorkoutTemplate(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_workout_template
+      WHERE id = $1 AND source = 'custom' AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Copy a system template's header + blocks into a new ``source='custom'``
+ * template owned by the user. Returns the new template id, or null when
+ * the source template does not exist or is not a system template.
+ */
+export async function cloneSystemTemplate(
+  systemTemplateId: string,
+  tenantId: string,
+  userId: string,
+): Promise<WorkoutTemplate | null> {
+  const pool = getHealthPool();
+  const src = await pool.query(
+    `SELECT ${WORKOUT_TEMPLATE_COLS}
+       FROM agos_mh_workout_template
+      WHERE id = $1 AND source = 'system'`,
+    [systemTemplateId],
+  );
+  if (src.rowCount === 0) return null;
+  const s = src.rows[0];
+  const newId = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_mh_workout_template (
+        id, tenant_id, user_id, source, name, description, category,
+        target_intensity, est_duration_min, tags, metadata)
+     VALUES ($1,$2,$3,'custom',$4,$5,$6,$7,$8,$9,$10::jsonb)`,
+    [
+      newId,
+      tenantId,
+      userId,
+      s.name, // user can rename after clone
+      s.description,
+      s.category,
+      s.target_intensity,
+      s.est_duration_min,
+      s.tags ?? [],
+      JSON.stringify(s.metadata ?? {}),
+    ],
+  );
+  // Copy blocks preserving ordering.
+  await pool.query(
+    `INSERT INTO agos_mh_workout_template_block
+        (template_id, position, kind, name, sets, reps,
+         duration_sec, rest_sec, weight_hint, notes)
+     SELECT $1, position, kind, name, sets, reps,
+            duration_sec, rest_sec, weight_hint, notes
+       FROM agos_mh_workout_template_block
+      WHERE template_id = $2
+      ORDER BY position`,
+    [newId, systemTemplateId],
+  );
+  const fresh = await getWorkoutTemplate(newId, tenantId, userId);
+  return fresh;
+}
+
+// ─── Workout template blocks ────────────────────────────────────────────────
+
+async function listWorkoutTemplateBlocks(
+  templateId: string,
+): Promise<WorkoutTemplateBlock[]> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${WORKOUT_TEMPLATE_BLOCK_COLS}
+       FROM agos_mh_workout_template_block
+      WHERE template_id = $1
+      ORDER BY position`,
+    [templateId],
+  );
+  return r.rows.map(rowToWorkoutTemplateBlock);
+}
+
+export interface AddWorkoutTemplateBlockInput {
+  kind?: WorkoutTemplateBlockKind;
+  name: string;
+  sets?: number | null;
+  reps?: string | null;
+  durationSec?: number | null;
+  restSec?: number | null;
+  weightHint?: string | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function addTemplateBlock(
+  templateId: string,
+  tenantId: string,
+  userId: string,
+  input: AddWorkoutTemplateBlockInput,
+): Promise<WorkoutTemplateBlock | null> {
+  const pool = getHealthPool();
+  // Ownership check — customs only.
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_workout_template
+      WHERE id = $1 AND source = 'custom' AND tenant_id = $2 AND user_id = $3`,
+    [templateId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return null;
+  let position = input.position;
+  if (position === undefined || position === null) {
+    const tail = await pool.query(
+      `SELECT COALESCE(MAX(position), -1) AS p
+         FROM agos_mh_workout_template_block
+        WHERE template_id = $1`,
+      [templateId],
+    );
+    position = Number(tail.rows[0].p) + 1;
+  }
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_workout_template_block (
+        id, template_id, position, kind, name, sets, reps,
+        duration_sec, rest_sec, weight_hint, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+     RETURNING ${WORKOUT_TEMPLATE_BLOCK_COLS}`,
+    [
+      id,
+      templateId,
+      position,
+      input.kind ?? 'exercise',
+      input.name,
+      input.sets ?? null,
+      input.reps ?? null,
+      input.durationSec ?? null,
+      input.restSec ?? null,
+      input.weightHint ?? null,
+      input.notes ?? null,
+    ],
+  );
+  return rowToWorkoutTemplateBlock(r.rows[0]);
+}
+
+export interface UpdateWorkoutTemplateBlockInput {
+  kind?: WorkoutTemplateBlockKind;
+  name?: string;
+  sets?: number | null;
+  reps?: string | null;
+  durationSec?: number | null;
+  restSec?: number | null;
+  weightHint?: string | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function updateTemplateBlock(
+  blockId: string,
+  templateId: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateWorkoutTemplateBlockInput,
+): Promise<WorkoutTemplateBlock | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_workout_template_block b
+        SET kind         = COALESCE($4, b.kind),
+            name         = COALESCE($5, b.name),
+            sets         = COALESCE($6, b.sets),
+            reps         = COALESCE($7, b.reps),
+            duration_sec = COALESCE($8, b.duration_sec),
+            rest_sec     = COALESCE($9, b.rest_sec),
+            weight_hint  = COALESCE($10, b.weight_hint),
+            notes        = COALESCE($11, b.notes),
+            position     = COALESCE($12, b.position)
+      FROM agos_mh_workout_template t
+     WHERE b.id = $1 AND b.template_id = $2 AND t.id = b.template_id
+       AND t.source = 'custom' AND t.tenant_id = $3 AND t.user_id = $13
+     RETURNING ${WORKOUT_TEMPLATE_BLOCK_COLS
+       .split(',')
+       .map((c) => 'b.' + c.trim())
+       .join(', ')}`,
+    [
+      blockId,
+      templateId,
+      tenantId,
+      patch.kind ?? null,
+      patch.name ?? null,
+      patch.sets ?? null,
+      patch.reps ?? null,
+      patch.durationSec ?? null,
+      patch.restSec ?? null,
+      patch.weightHint ?? null,
+      patch.notes ?? null,
+      patch.position ?? null,
+      userId,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  return rowToWorkoutTemplateBlock(r.rows[0]);
+}
+
+export async function deleteTemplateBlock(
+  blockId: string,
+  templateId: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_workout_template_block b
+      USING agos_mh_workout_template t
+     WHERE b.id = $1 AND b.template_id = $2 AND t.id = b.template_id
+       AND t.source = 'custom' AND t.tenant_id = $3 AND t.user_id = $4`,
+    [blockId, templateId, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function reorderTemplateBlocks(
+  templateId: string,
+  tenantId: string,
+  userId: string,
+  orderedIds: string[],
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_workout_template
+      WHERE id = $1 AND source = 'custom' AND tenant_id = $2 AND user_id = $3`,
+    [templateId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return false;
+  await pool.query(
+    `UPDATE agos_mh_workout_template_block
+        SET position = position + 1000
+      WHERE template_id = $1`,
+    [templateId],
+  );
+  for (let i = 0; i < orderedIds.length; i++) {
+    await pool.query(
+      `UPDATE agos_mh_workout_template_block
+          SET position = $3
+        WHERE id = $1 AND template_id = $2`,
+      [orderedIds[i], templateId, i],
+    );
+  }
+  return true;
+}
+
+// ─── Activity plans (Phase 5c) ──────────────────────────────────────────────
+
+export interface ActivityPlanSlot {
+  id: string;
+  planId: string;
+  dayOfWeek: number;
+  templateId: string | null;
+  template?: WorkoutTemplate | null;
+  freeformText: string | null;
+  targetDurationMin: number | null;
+  targetIntensity: ActivityIntensityValue | null;
+  notes: string | null;
+  position: number;
+}
+
+export interface ActivityPlan {
+  id: string;
+  tenantId: string;
+  userId: string;
+  weekStartDate: string;
+  name: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  slots?: ActivityPlanSlot[];
+}
+
+const ACTIVITY_PLAN_COLS = `
+  id, tenant_id, user_id, week_start_date, name, notes, created_at, updated_at
+`;
+
+const ACTIVITY_PLAN_SLOT_COLS = `
+  id, plan_id, day_of_week, template_id, freeform_text,
+  target_duration_min, target_intensity, notes, position
+`;
+
+function rowToActivityPlan(
+  row: any,
+  slots?: ActivityPlanSlot[],
+): ActivityPlan {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    weekStartDate:
+      row.week_start_date instanceof Date
+        ? row.week_start_date.toISOString().slice(0, 10)
+        : String(row.week_start_date).slice(0, 10),
+    name: row.name,
+    notes: row.notes,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+    slots,
+  };
+}
+
+function rowToActivityPlanSlot(
+  row: any,
+  template?: WorkoutTemplate | null,
+): ActivityPlanSlot {
+  return {
+    id: row.id,
+    planId: row.plan_id,
+    dayOfWeek: Number(row.day_of_week),
+    templateId: row.template_id,
+    template: template ?? null,
+    freeformText: row.freeform_text,
+    targetDurationMin:
+      row.target_duration_min === null ? null : Number(row.target_duration_min),
+    targetIntensity:
+      row.target_intensity === null
+        ? null
+        : (row.target_intensity as ActivityIntensityValue),
+    notes: row.notes,
+    position: Number(row.position),
+  };
+}
+
+export class ActivityPlanValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ActivityPlanValidationError';
+  }
+}
+
+export interface CreateActivityPlanInput {
+  weekStartDate: string;
+  name?: string | null;
+  notes?: string | null;
+}
+
+export async function createActivityPlan(
+  tenantId: string,
+  userId: string,
+  input: CreateActivityPlanInput,
+): Promise<ActivityPlan> {
+  const monday = mondayOf(input.weekStartDate);
+  if (monday !== input.weekStartDate) {
+    throw new ActivityPlanValidationError(
+      `weekStartDate must be a Monday (got ${input.weekStartDate}, Monday is ${monday})`,
+    );
+  }
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_activity_plan
+        (id, tenant_id, user_id, week_start_date, name, notes)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (tenant_id, user_id, week_start_date) DO UPDATE SET
+        name       = COALESCE(EXCLUDED.name, agos_mh_activity_plan.name),
+        notes      = COALESCE(EXCLUDED.notes, agos_mh_activity_plan.notes),
+        updated_at = now()
+     RETURNING ${ACTIVITY_PLAN_COLS}`,
+    [id, tenantId, userId, input.weekStartDate, input.name ?? null, input.notes ?? null],
+  );
+  return rowToActivityPlan(r.rows[0], []);
+}
+
+export async function getActivityPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<ActivityPlan | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${ACTIVITY_PLAN_COLS}
+       FROM agos_mh_activity_plan
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listActivityPlanSlots(r.rows[0].id, tenantId);
+  return rowToActivityPlan(r.rows[0], slots);
+}
+
+export interface ListActivityPlansInput {
+  tenantId: string;
+  userId: string;
+  fromWeek?: string;
+  toWeek?: string;
+  limit?: number;
+}
+
+export async function listActivityPlans(
+  input: ListActivityPlansInput,
+): Promise<ActivityPlan[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 26, 1), 200);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE tenant_id = $1 AND user_id = $2`;
+  if (input.fromWeek) {
+    params.push(input.fromWeek);
+    where += ` AND week_start_date >= $${params.length}`;
+  }
+  if (input.toWeek) {
+    params.push(input.toWeek);
+    where += ` AND week_start_date <= $${params.length}`;
+  }
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT ${ACTIVITY_PLAN_COLS}
+       FROM agos_mh_activity_plan
+       ${where}
+      ORDER BY week_start_date DESC
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map((row: any) => rowToActivityPlan(row));
+}
+
+export async function getActivityPlanForWeek(
+  tenantId: string,
+  userId: string,
+  weekStartDate: string,
+): Promise<ActivityPlan | null> {
+  const monday = mondayOf(weekStartDate);
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${ACTIVITY_PLAN_COLS}
+       FROM agos_mh_activity_plan
+      WHERE tenant_id = $1 AND user_id = $2 AND week_start_date = $3`,
+    [tenantId, userId, monday],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listActivityPlanSlots(r.rows[0].id, tenantId);
+  return rowToActivityPlan(r.rows[0], slots);
+}
+
+export interface UpdateActivityPlanInput {
+  name?: string | null;
+  notes?: string | null;
+}
+
+export async function updateActivityPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateActivityPlanInput,
+): Promise<ActivityPlan | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_activity_plan
+        SET name       = COALESCE($4, name),
+            notes      = COALESCE($5, notes),
+            updated_at = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
+      RETURNING ${ACTIVITY_PLAN_COLS}`,
+    [id, tenantId, userId, patch.name ?? null, patch.notes ?? null],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listActivityPlanSlots(id, tenantId);
+  return rowToActivityPlan(r.rows[0], slots);
+}
+
+export async function deleteActivityPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_activity_plan
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Activity plan slots ────────────────────────────────────────────────────
+
+async function listActivityPlanSlots(
+  planId: string,
+  tenantId: string,
+): Promise<ActivityPlanSlot[]> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT s.id, s.plan_id, s.day_of_week, s.template_id, s.freeform_text,
+            s.target_duration_min, s.target_intensity, s.notes, s.position,
+            t.id AS t_id, t.tenant_id AS t_tenant_id, t.user_id AS t_user_id,
+            t.source AS t_source, t.name AS t_name, t.description AS t_description,
+            t.category AS t_category, t.target_intensity AS t_target_intensity,
+            t.est_duration_min AS t_est_duration_min, t.tags AS t_tags,
+            t.metadata AS t_metadata, t.created_at AS t_created_at,
+            t.updated_at AS t_updated_at
+       FROM agos_mh_activity_plan_slot s
+       JOIN agos_mh_activity_plan p ON p.id = s.plan_id
+       LEFT JOIN agos_mh_workout_template t ON t.id = s.template_id
+      WHERE s.plan_id = $1 AND p.tenant_id = $2
+      ORDER BY s.day_of_week, s.position`,
+    [planId, tenantId],
+  );
+  return r.rows.map((row: any) => {
+    const template: WorkoutTemplate | null = row.t_id
+      ? rowToWorkoutTemplate({
+          id: row.t_id,
+          tenant_id: row.t_tenant_id,
+          user_id: row.t_user_id,
+          source: row.t_source,
+          name: row.t_name,
+          description: row.t_description,
+          category: row.t_category,
+          target_intensity: row.t_target_intensity,
+          est_duration_min: row.t_est_duration_min,
+          tags: row.t_tags,
+          metadata: row.t_metadata,
+          created_at: row.t_created_at,
+          updated_at: row.t_updated_at,
+        })
+      : null;
+    return rowToActivityPlanSlot(row, template);
+  });
+}
+
+export interface AddActivityPlanSlotInput {
+  dayOfWeek: number;
+  templateId?: string | null;
+  freeformText?: string | null;
+  targetDurationMin?: number | null;
+  targetIntensity?: ActivityIntensityValue | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function addActivityPlanSlot(
+  planId: string,
+  tenantId: string,
+  userId: string,
+  input: AddActivityPlanSlotInput,
+): Promise<ActivityPlanSlot | null> {
+  const pool = getHealthPool();
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_activity_plan
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [planId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return null;
+  let position = input.position;
+  if (position === undefined || position === null) {
+    const tail = await pool.query(
+      `SELECT COALESCE(MAX(position), -1) AS p
+         FROM agos_mh_activity_plan_slot
+        WHERE plan_id = $1 AND day_of_week = $2`,
+      [planId, input.dayOfWeek],
+    );
+    position = Number(tail.rows[0].p) + 1;
+  }
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_activity_plan_slot (
+        id, plan_id, day_of_week, template_id, freeform_text,
+        target_duration_min, target_intensity, notes, position)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+     RETURNING ${ACTIVITY_PLAN_SLOT_COLS}`,
+    [
+      id,
+      planId,
+      input.dayOfWeek,
+      input.templateId ?? null,
+      input.freeformText ?? null,
+      input.targetDurationMin ?? null,
+      input.targetIntensity ?? null,
+      input.notes ?? null,
+      position,
+    ],
+  );
+  const template = input.templateId
+    ? await getWorkoutTemplate(input.templateId, tenantId, userId)
+    : null;
+  return rowToActivityPlanSlot(r.rows[0], template);
+}
+
+export interface UpdateActivityPlanSlotInput {
+  dayOfWeek?: number;
+  templateId?: string | null;
+  freeformText?: string | null;
+  targetDurationMin?: number | null;
+  targetIntensity?: ActivityIntensityValue | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function updateActivityPlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateActivityPlanSlotInput,
+): Promise<ActivityPlanSlot | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_activity_plan_slot s
+        SET day_of_week         = COALESCE($3, s.day_of_week),
+            template_id         = COALESCE($4, s.template_id),
+            freeform_text       = COALESCE($5, s.freeform_text),
+            target_duration_min = COALESCE($6, s.target_duration_min),
+            target_intensity    = COALESCE($7, s.target_intensity),
+            notes               = COALESCE($8, s.notes),
+            position            = COALESCE($9, s.position)
+      FROM agos_mh_activity_plan p
+     WHERE s.id = $1 AND p.id = s.plan_id
+       AND p.tenant_id = $2 AND p.user_id = $10
+     RETURNING ${ACTIVITY_PLAN_SLOT_COLS
+       .split(',')
+       .map((c) => 's.' + c.trim())
+       .join(', ')}`,
+    [
+      slotId,
+      tenantId,
+      patch.dayOfWeek ?? null,
+      patch.templateId ?? null,
+      patch.freeformText ?? null,
+      patch.targetDurationMin ?? null,
+      patch.targetIntensity ?? null,
+      patch.notes ?? null,
+      patch.position ?? null,
+      userId,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const row = r.rows[0];
+  const template = row.template_id
+    ? await getWorkoutTemplate(row.template_id, tenantId, userId)
+    : null;
+  return rowToActivityPlanSlot(row, template);
+}
+
+export async function deleteActivityPlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_activity_plan_slot s
+      USING agos_mh_activity_plan p
+     WHERE s.id = $1 AND p.id = s.plan_id
+       AND p.tenant_id = $2 AND p.user_id = $3`,
+    [slotId, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function moveActivityPlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  dayOfWeek: number,
+  position: number,
+): Promise<ActivityPlanSlot | null> {
+  return updateActivityPlanSlot(slotId, tenantId, userId, {
+    dayOfWeek,
+    position,
+  });
+}
+
+/**
+ * Turn a planned activity slot into an actual ``agos_mh_activity_entry``
+ * for the given date. If the slot has a workout template, derive
+ * activity_type from the template's category, duration from the slot's
+ * target_duration_min (falling back to template.est_duration_min), and
+ * intensity from slot.target_intensity (falling back to template.target_intensity).
+ * Freeform-only slots use freeform_text as activity_type.
+ */
+export async function addActivityPlanSlotToActivityLog(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  entryDate: string,
+): Promise<ActivityEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT s.template_id, s.freeform_text, s.target_duration_min,
+            s.target_intensity, s.notes,
+            t.name AS t_name, t.category AS t_category,
+            t.target_intensity AS t_target_intensity,
+            t.est_duration_min AS t_est_duration_min
+       FROM agos_mh_activity_plan_slot s
+       JOIN agos_mh_activity_plan p ON p.id = s.plan_id
+       LEFT JOIN agos_mh_workout_template t ON t.id = s.template_id
+      WHERE s.id = $1 AND p.tenant_id = $2 AND p.user_id = $3`,
+    [slotId, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  const slot = r.rows[0];
+
+  const activityType: string =
+    slot.template_id !== null
+      ? String(slot.t_category ?? slot.t_name ?? 'workout')
+      : String(slot.freeform_text ?? 'activity').trim() || 'activity';
+  const durationMin = Number(
+    slot.target_duration_min ?? slot.t_est_duration_min ?? 30,
+  );
+  const intensity: ActivityIntensityValue =
+    (slot.target_intensity as ActivityIntensityValue | null) ??
+    (slot.t_target_intensity as ActivityIntensityValue | null) ??
+    'moderate';
+
+  return createActivityEntry(tenantId, userId, {
+    entryDate,
+    activityType,
+    durationMin,
+    intensity,
+    notes: slot.notes,
+    metadata: {
+      source: 'activity_plan_slot',
+      slot_id: slotId,
+      template_id: slot.template_id,
+    },
+  });
+}
+
+// ─── Activity suggestion data (Phase 5c) ────────────────────────────────────
+
+/**
+ * Pull the data shape the suggestion helper consumes, derived from the
+ * last 7 days of mood entries + the most recent screener of each kind.
+ * Pure DB reads; the rules engine lives in ``activity-suggestions.ts``.
+ */
+export async function getActivitySuggestionInputs(userId: string): Promise<{
+  recentMoodAvg: number | null;
+  recentAnxietyAvg: number | null;
+  recentSleepAvg: number | null;
+  lastPhq9: number | null;
+  lastGad7: number | null;
+  lastPss10: number | null;
+}> {
+  const pool = getHealthPool();
+  const moodRes = await pool.query(
+    `SELECT
+        AVG(mood_score)::float    AS mood,
+        AVG(anxiety_score)::float AS anxiety,
+        AVG(CASE sleep_quality
+              WHEN 'poor' THEN 1
+              WHEN 'fair' THEN 2
+              WHEN 'good' THEN 3
+              WHEN 'excellent' THEN 4
+              ELSE NULL
+            END)::float AS sleep
+       FROM agos_mh_mood_entry
+      WHERE user_id = $1 AND entry_at >= now() - INTERVAL '7 days'`,
+    [userId],
+  );
+  const moodRow = moodRes.rows[0] ?? {};
+
+  // Most recent screener of each kind. Three round-trips kept simple
+  // since per-user screener tables are tiny and indexed.
+  const phqRes = await pool.query(
+    `SELECT score FROM agos_health_screeners
+      WHERE user_id = $1 AND screener = 'phq9'
+      ORDER BY created_at DESC LIMIT 1`,
+    [userId],
+  );
+  const gadRes = await pool.query(
+    `SELECT score FROM agos_health_screeners
+      WHERE user_id = $1 AND screener = 'gad7'
+      ORDER BY created_at DESC LIMIT 1`,
+    [userId],
+  );
+  const pssRes = await pool.query(
+    `SELECT score FROM agos_health_screeners
+      WHERE user_id = $1 AND screener = 'pss'
+      ORDER BY created_at DESC LIMIT 1`,
+    [userId],
+  );
+
+  return {
+    recentMoodAvg: moodRow.mood === null || moodRow.mood === undefined
+      ? null
+      : Number(moodRow.mood),
+    recentAnxietyAvg:
+      moodRow.anxiety === null || moodRow.anxiety === undefined
+        ? null
+        : Number(moodRow.anxiety),
+    recentSleepAvg:
+      moodRow.sleep === null || moodRow.sleep === undefined
+        ? null
+        : Number(moodRow.sleep),
+    lastPhq9: phqRes.rowCount && phqRes.rowCount > 0
+      ? Number(phqRes.rows[0].score)
+      : null,
+    lastGad7: gadRes.rowCount && gadRes.rowCount > 0
+      ? Number(gadRes.rows[0].score)
+      : null,
+    lastPss10: pssRes.rowCount && pssRes.rowCount > 0
+      ? Number(pssRes.rows[0].score)
+      : null,
+  };
+}
