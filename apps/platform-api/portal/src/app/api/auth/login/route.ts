@@ -82,6 +82,11 @@ export async function POST(request: NextRequest) {
     const display_name = data.display_name || data.name || null;
     const role = data.admin_role || data.role || "viewer";
     const tenant_name = data.tenant_name || null;
+    // Tier comes from soulauth's LoginResponse (post-D2A enrichment). Fall back
+    // to "community" rather than "mssp" so a missing tier never silently
+    // grants MSSP UI to a community tenant. Once the seeded admin's tenant is
+    // upgraded to owner this will reflect that on the next login.
+    const tier: string = data.tier || "community";
     const expires_in = data.expires_in || SESSION_TTL;
     const expires_at = new Date(Date.now() + expires_in * 1000).toISOString();
 
@@ -112,7 +117,7 @@ export async function POST(request: NextRequest) {
       name: display_name,
       picture: null,
       role,
-      tier: data.tier || "mssp",
+      tier,
       tenant_id,
       tenant_name,
       expires_at,

@@ -37,6 +37,9 @@ Environment:
                         and we need to create one to attach the admin to.
     ADMIN_TENANT_NAME   (default 'Default Tenant')
     ADMIN_TENANT_TIER   (default 'owner') Tier of an auto-created tenant.
+                        If an existing tenant is reused but ranks lower than
+                        this value (e.g. a stale community row), it will be
+                        UPGRADED in place so MSSP/feature checks pass.
     NODE_ENV / ENVIRONMENT — production short-circuits and exits 1.
 """
 
@@ -56,25 +59,61 @@ def _hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def _resolve_tenant_id(cur, slug: str, name: str, tier: str) -> str:
-    """Return a tenant id, preferring tier='owner', then 'mssp', then any.
-    Creates one with the given slug/name/tier if the table is empty.
-    Mirrors local_bootstrap._resolve_tenant ordering.
+# Tier ordering — mirrors TIER_ORDER in
+# apps/platform-api/portal/src/components/dashboard/TierGate.tsx. The seeded
+# admin tenant should hold the highest tier (owner) so MSSP/PRH/feature-gate
+# checks (which require tier in {mssp, saas, owner}) pass for the seeded admin.
+_TIER_PRIORITY = {
+    "community": 0,
+    "starter": 1,
+    "pro": 2,
+    "enterprise": 3,
+    "mssp": 4,
+    "saas": 5,
+    "owner": 6,
+}
+
+
+def _resolve_tenant_id(cur, slug: str, name: str, tier: str) -> tuple[str, str]:
+    """Return ``(tenant_id, action)`` where ``action`` is one of
+    ``'reused'``, ``'upgraded'``, or ``'created'``.
+
+    Preference order matches local_bootstrap._resolve_tenant: tier='owner',
+    then 'mssp', then any row. If the best candidate's tier ranks below the
+    requested ``tier``, upgrade it in place — so re-running the seeder against
+    an existing community-tier tenant lifts it to owner without creating a
+    second row. Creates a fresh tenant with ``tier`` only when the table is
+    empty.
     """
-    cur.execute("SELECT id FROM _soul_tenants WHERE tier = 'owner' LIMIT 1")
-    row = cur.fetchone()
-    if row:
-        return row[0]
+    requested_priority = _TIER_PRIORITY.get(tier, 0)
 
-    cur.execute("SELECT id FROM _soul_tenants WHERE tier = 'mssp' LIMIT 1")
+    cur.execute("SELECT id, tier FROM _soul_tenants WHERE tier = 'owner' LIMIT 1")
     row = cur.fetchone()
     if row:
-        return row[0]
+        return row[0], "reused"
 
-    cur.execute("SELECT id FROM _soul_tenants LIMIT 1")
+    cur.execute("SELECT id, tier FROM _soul_tenants WHERE tier = 'mssp' LIMIT 1")
     row = cur.fetchone()
     if row:
-        return row[0]
+        # Only upgrade if the requested tier strictly outranks 'mssp' (i.e. 'owner').
+        if requested_priority > _TIER_PRIORITY.get(row[1], 0):
+            cur.execute(
+                "UPDATE _soul_tenants SET tier = %s WHERE id = %s",
+                (tier, row[0]),
+            )
+            return row[0], "upgraded"
+        return row[0], "reused"
+
+    cur.execute("SELECT id, tier FROM _soul_tenants LIMIT 1")
+    row = cur.fetchone()
+    if row:
+        if requested_priority > _TIER_PRIORITY.get(row[1], 0):
+            cur.execute(
+                "UPDATE _soul_tenants SET tier = %s WHERE id = %s",
+                (tier, row[0]),
+            )
+            return row[0], "upgraded"
+        return row[0], "reused"
 
     # Empty — create one.
     tenant_id = str(uuid.uuid4())
@@ -87,7 +126,7 @@ def _resolve_tenant_id(cur, slug: str, name: str, tier: str) -> str:
         """,
         (tenant_id, name, slug, tier),
     )
-    return cur.fetchone()[0]
+    return cur.fetchone()[0], "created"
 
 
 def main() -> int:
@@ -113,7 +152,9 @@ def main() -> int:
     try:
         with conn.cursor() as cur:
             try:
-                tenant_id = _resolve_tenant_id(cur, tenant_slug, tenant_name, tenant_tier)
+                tenant_id, tenant_action = _resolve_tenant_id(
+                    cur, tenant_slug, tenant_name, tenant_tier
+                )
 
                 # Look up existing admin in the target tenant.
                 cur.execute(
@@ -169,7 +210,7 @@ def main() -> int:
 
         print(f"[seed-admin] OK Admin user {action}")
         print(f"[seed-admin]   Email:     {admin_email}")
-        print(f"[seed-admin]   Tenant ID: {tenant_id}")
+        print(f"[seed-admin]   Tenant ID: {tenant_id} ({tenant_action} -> tier='{tenant_tier}')")
         print(f"[seed-admin]   User ID:   {user_id}")
         if not password_supplied or action == "created":
             print(f"[seed-admin]   Password:  {admin_password}")
