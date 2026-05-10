@@ -487,6 +487,8 @@ export default function DashboardSidebar() {
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
   const isSaasTier = (session?.tier ?? "") === "saas" || (session?.tier ?? "") === "owner";
   const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
+  // Oscar Suite is a paid-tier feature; community users see no OS items in the sidebar.
+  const isOscarSuiteVisible = tierMeets(session?.tier ?? "community", "starter");
   const isSalucaUser = session?.user_email?.endsWith("@saluca.com") ?? false;
   const isInvestigationActive = pathname === "/dashboard/investigation";
   const isSupportActive = pathname === "/dashboard/support" || pathname === "/dashboard/support/chat";
@@ -494,8 +496,11 @@ export default function DashboardSidebar() {
 
   // Build group list conditionally -- MSSP group only for mssp/saas tier (DTIER-01)
   // Aletheia group only for enterprise+ tier (ALETH-14)
+  // Oscar Suite group hidden for community tier (paid-tier feature)
   const groups: Array<{ key: GroupKey; label: string }> = (() => {
-    const base: Array<{ key: GroupKey; label: string }> = [...BASE_GROUPS];
+    const base: Array<{ key: GroupKey; label: string }> = [...BASE_GROUPS].filter(
+      (g) => g.key !== "oscar-suite" || isOscarSuiteVisible,
+    );
     // Insert Aletheia between security and soulwatch when enterprise+
     if (isEnterprisePlus) {
       const soulwatchIdx = base.findIndex((g) => g.key === "soulwatch");
