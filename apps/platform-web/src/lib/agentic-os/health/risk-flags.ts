@@ -93,7 +93,7 @@ export function evaluateOnIntake(
 
 // ─── Screener heuristics ───────────────────────────────────────────────────
 
-export type ScreenerKind = 'phq9' | 'gad7';
+export type ScreenerKind = 'phq9' | 'gad7' | 'pss';
 
 export interface ScreenerContext {
   /** All raw answers in score order. Required for PHQ-9 Q9 detection. */
@@ -183,9 +183,111 @@ export function evaluateOnScreener(
         payload: { score },
       });
     }
+  } else if (screenerKind === 'pss') {
+    // PSS-10 thresholds (project-chosen bands):
+    //   >= 27 → 'pss-severe'   (high severity)
+    //   14-26 → 'pss-moderate' (low severity)
+    if (score >= 27) {
+      flags.push({
+        kind: 'pss-severe',
+        severity: 'high',
+        source,
+        payload: { score },
+      });
+    } else if (score >= 14) {
+      flags.push({
+        kind: 'pss-moderate',
+        severity: 'low',
+        source,
+        payload: { score },
+      });
+    }
   }
 
   return flags;
+}
+
+// ─── Referral prompt evaluator ─────────────────────────────────────────────
+
+export interface ReferralResource {
+  label: string;
+  url: string;
+  detail?: string;
+}
+
+export interface ReferralPrompt {
+  /** True when at least one threshold crossed and resources should surface. */
+  shouldSurface: boolean;
+  /** Headline copy for the callout. */
+  headline: string;
+  /** One-line nudge — "Reaching out is a strong move." per spec. */
+  nudge: string;
+  /** Reasons that triggered surfacing (e.g. 'phq9-moderate-or-worse'). */
+  reasons: string[];
+  /** Public, non-clinical referral resources. */
+  resources: ReferralResource[];
+}
+
+export interface ReferralInput {
+  phq9?: number;
+  gad7?: number;
+  pss?: number;
+}
+
+const REFERRAL_RESOURCES: ReferralResource[] = [
+  {
+    label: 'SAMHSA National Helpline',
+    url: 'https://www.samhsa.gov/find-help/national-helpline',
+    detail: 'Free, confidential treatment referral and information service. 1-800-662-4357 (HELP). 24/7.',
+  },
+  {
+    label: 'Psychology Today — find a therapist',
+    url: 'https://www.psychologytoday.com/us/therapists',
+    detail: 'Searchable directory of licensed therapists by location, insurance, and specialty.',
+  },
+  {
+    label: '988 Suicide & Crisis Lifeline',
+    url: 'https://988lifeline.org/',
+    detail: 'Call or text 988. 24/7 free crisis support — for yourself or a loved one.',
+  },
+];
+
+/**
+ * Evaluate referral thresholds across the supplied screener scores.
+ * Surfaces (NOT blocks) the standard SAMHSA + Psychology Today + 988
+ * resource block when any of:
+ *
+ *   PHQ-9   ≥ 10  (moderate or worse — clinically significant depression)
+ *   GAD-7   ≥ 10  (moderate or worse — clinically significant anxiety)
+ *   PSS-10  ≥ 14  (moderate-or-higher perceived stress per project bands)
+ *
+ * Returns `{ shouldSurface: false, ... }` (with empty reasons) when no
+ * threshold crosses; callers can still render the empty state if they
+ * want a "you're under the bar — keep going" copy.
+ */
+export function evaluateReferralPrompt(input: ReferralInput): ReferralPrompt {
+  const reasons: string[] = [];
+  if (typeof input.phq9 === 'number' && input.phq9 >= 10) {
+    reasons.push('phq9-moderate-or-worse');
+  }
+  if (typeof input.gad7 === 'number' && input.gad7 >= 10) {
+    reasons.push('gad7-moderate-or-worse');
+  }
+  if (typeof input.pss === 'number' && input.pss >= 14) {
+    reasons.push('pss-moderate-or-worse');
+  }
+  const shouldSurface = reasons.length > 0;
+  return {
+    shouldSurface,
+    headline: shouldSurface
+      ? "It might be worth talking to someone."
+      : "Resources are here whenever you want them.",
+    nudge: 'Reaching out is a strong move.',
+    reasons,
+    // Always return the resource list — callers (UI, audit) decide
+    // whether to render based on `shouldSurface`.
+    resources: REFERRAL_RESOURCES,
+  };
 }
 
 // ─── Free-text heuristics ──────────────────────────────────────────────────
