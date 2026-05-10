@@ -19,6 +19,7 @@ import {
 import { TrendChart, type TrendSeries } from '@/components/agentic-os/_shared/trend-chart';
 import { TagHeatmap } from '@/components/agentic-os/_shared/tag-heatmap';
 import { StatCard } from '@/components/agentic-os/_shared/stat-card';
+import { ActivitySuggestionCard } from '@/components/agentic-os/health/activity/activity-suggestion-card';
 
 export type TrendWindow = '7d' | '30d' | '90d';
 
@@ -221,6 +222,8 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         )}
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
+
+      <ActivitySuggestionCard />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard
