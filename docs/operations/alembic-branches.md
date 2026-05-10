@@ -145,18 +145,15 @@ Both upgrade commands are idempotent and safe to re-run.
 ## Seeding an admin user
 
 After both upgrade chains finish on a fresh database, seed the local
-admin. Two equivalent scripts are provided so you can pick the runtime
-already installed on your host:
+admin via the canonical Python seeder:
 
 ```bash
-# Node / TypeScript
 DATABASE_URL=postgres://platform:platform@localhost:5432/platform \
-    npx tsx scripts/seed-admin.ts
-
-# Python
-DATABASE_URL=postgres://platform:platform@localhost:5432/platform \
-    python scripts/seed-admin.py
+    ./.venv/bin/python scripts/seed-admin.py
 ```
 
-Both refuse to run when `NODE_ENV=production` / `ENVIRONMENT=production`
-and print the generated password exactly once on success.
+The seeder refuses to run when `NODE_ENV=production` /
+`ENVIRONMENT=production` and prints the generated password exactly once
+on success. Python is the single canonical implementation so argon2
+password hashing matches the Python auth system — no risk of drift
+between two parallel implementations.

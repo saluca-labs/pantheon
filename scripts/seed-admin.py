@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Seed admin user for local development (Python equivalent of seed-admin.ts).
+"""Seed admin user for local development.
 
-Mirrors scripts/seed-admin.ts so backend services that already have the
-Python toolchain can bootstrap an admin user without a Node.js runtime.
+Canonical seeder for the platform. The TypeScript seeder previously at
+scripts/seed-admin.ts was deleted in favor of this single Python
+implementation: argon2 password hashing must match the Python auth
+system; one implementation = no drift between two parallel seeders.
 
 Refuses to run when NODE_ENV/ENVIRONMENT is 'production'.
 

@@ -23,7 +23,7 @@ docker-compose.yml,new,Root compose with profiles default/full/ci,platform
 .nvmrc,new,Pin Node 22,platform
 .tool-versions,new,Pin node/python/pnpm via asdf,platform
 scripts/bootstrap.sh,new,Dev environment setup script,platform
-scripts/seed-admin.ts,new,Dev admin user seed,platform
+scripts/seed-admin.py,new,Dev admin user seed (canonical Python seeder; argon2 must match Python auth),platform
 turbo.json,new,Turborepo pipeline config,platform
 package.json (root),new,pnpm workspace root,platform
 pnpm-workspace.yaml,new,pnpm workspace members,platform

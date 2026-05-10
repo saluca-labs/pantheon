@@ -2,14 +2,20 @@
 
 This guide covers running the platform services directly on your machine without Docker.
 
+> **Windows users: WSL2 only.** Native Windows shells (cmd, PowerShell)
+> are not supported. Install WSL2 with Ubuntu 22.04+ via Microsoft's
+> [WSL install guide](https://learn.microsoft.com/en-us/windows/wsl/install)
+> and run all commands below from inside the WSL shell. A
+> `scripts/bootstrap.ps1` stub exists only to redirect you there.
+
 ## Prerequisites
 
 | Tool | Version | Install |
 |------|---------|---------|
 | Node.js | 22.x | `nvm install 22` |
 | pnpm | 9.x | `corepack enable && corepack prepare pnpm@9.12.0 --activate` |
-| Python | 3.11.x | `pyenv install 3.11.10` |
-| uv | latest | `pip install uv` or `curl -Ls https://astral.sh/uv/install.sh | sh` |
+| Python | 3.11.x or 3.12.x | `pyenv install 3.11.10` (Linux/macOS/WSL) |
+| uv | latest | `pip install uv` or `curl -Ls https://astral.sh/uv/install.sh \| sh` |
 | PostgreSQL | 16.x | `brew install postgresql@16` or Docker: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=platform postgres:16-alpine` |
 | Mailhog | optional | `brew install mailhog` or Docker (see below) |
 
@@ -19,7 +25,7 @@ Use `.tool-versions` with [asdf](https://asdf-vm.com/) to pin all versions autom
 
 ```bash
 # 1. Clone and enter repo
-cd /path/to/tiresias
+cd /path/to/pantheon
 
 # 2. Bootstrap (installs deps, copies .env, runs migrations, seeds admin)
 pnpm bootstrap
@@ -46,14 +52,28 @@ pnpm install
 
 ### 3. Install Python dependencies
 
+All Python packages install into a single repo-root virtualenv via `uv`.
+Prefer `pnpm bootstrap` (which runs `scripts/bootstrap.sh`) — these
+manual commands match what the bootstrap does:
+
 ```bash
-# Install packages/auth/python, packages/config/python, packages/observability/python
-uv pip install -e packages/auth/python
+# Create + activate venv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install all five shared Python packages (editable)
+uv pip install -e packages/secrets/python
 uv pip install -e packages/config/python
 uv pip install -e packages/observability/python
+uv pip install -e packages/auth/python
+uv pip install -e packages/memory-client/python
 
-# Install platform-api
+# Install platform-api (editable + runtime requirements)
 uv pip install -e apps/platform-api
+uv pip install -r apps/platform-api/requirements.txt
+
+# Install database package (provides alembic CLI helpers)
+uv pip install -e packages/database
 ```
 
 ### 4. Database setup
@@ -61,7 +81,7 @@ uv pip install -e apps/platform-api
 Start PostgreSQL (if not already running):
 ```bash
 # Docker one-liner for local Postgres:
-docker run -d --name tiresias-db \
+docker run -d --name pantheon-db \
   -p 5432:5432 \
   -e POSTGRES_USER=platform \
   -e POSTGRES_PASSWORD=platform \
@@ -86,7 +106,7 @@ cd ../..
 
 ```bash
 # Creates admin@local with a randomly generated password
-npx tsx scripts/seed-admin.ts
+./.venv/bin/python scripts/seed-admin.py
 ```
 
 ### 6. Start services
