@@ -1,70 +1,272 @@
-name: CD — Build and Publish Images
+name: CD — Build and Deploy Pantheon
+
+# Tag-triggered CD for saluca-labs/pantheon. A `git tag vX.Y.Z` push (or a manual
+# workflow_dispatch with the same tag string) builds all six pantheon service images,
+# pushes them to Artifact Registry, bumps the kustomize image tags, applies the
+# manifests to GKE tiresias-prod (namespace: pantheon), runs the migration job,
+# and smokes the public ingress.
+#
+# AUTH MODEL — Workload Identity Federation (WIF), no JSON keys.
+#   The pantheon-ci@salucainfrastructure.iam.gserviceaccount.com service account is
+#   bound to a GitHub OIDC provider, scoped to this repo only. The two repo secrets
+#   needed at runtime are:
+#     - WIF_PROVIDER          (full provider resource path)
+#     - WIF_SERVICE_ACCOUNT   (pantheon-ci@... email)
+#   IAM + provider provisioning is captured in apps/platform-api/k8s/pantheon/RUNBOOK.md
+#   under "Releasing pantheon — one-time CD bootstrap".
+#
+# ROLLBACK
+#   Re-run this workflow via workflow_dispatch with a previous good tag. Or
+#   `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z` and cut a fresh tag
+#   from a known-good commit. See RUNBOOK.md.
 
 on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to deploy (e.g. v0.4.2). Must already exist on origin.'
+        required: true
+        type: string
+
+concurrency:
+  # Serialize CD runs — never two deploys in flight at once.
+  group: cd-pantheon
+  cancel-in-progress: false
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/cristianxruvalcaba-coder
+  GCP_PROJECT: salucainfrastructure
+  GCP_REGION: us-central1
+  AR_HOST: us-central1-docker.pkg.dev
+  AR_REPO: pantheon
+  GKE_CLUSTER: tiresias-prod
+  GKE_NAMESPACE: pantheon
+  KUSTOMIZE_DIR: apps/platform-api/k8s/pantheon
 
 jobs:
-  publish:
-    name: Publish ${{ matrix.service }}
+  # ── Resolve the tag we are deploying ───────────────────────────────────────
+  resolve:
+    name: Resolve tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Determine tag + SHA
+        id: tag
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+].+)?$ ]]; then
+            echo "::error ::Tag $TAG does not match vX.Y.Z[-+suffix]"
+            exit 1
+          fi
+          SHA="$(git rev-list -n 1 "$TAG")"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Deploying tag=$TAG sha=$SHA"
+
+  # ── Build + push each service image in parallel ────────────────────────────
+  build-and-push:
+    name: Build ${{ matrix.service }}
+    needs: resolve
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - service: web
+          # portal — Next.js, self-contained context (npm + COPY .)
+          - service: portal
+            image: portal
+            dockerfile: apps/platform-api/portal/Dockerfile
+            context: apps/platform-api/portal
+          # platform-web — Next.js, pnpm monorepo, context = repo root
+          - service: platform-web
+            image: platform-web
             dockerfile: apps/platform-web/Dockerfile
-            image_suffix: tiresias-web
-          - service: api
+            context: .
+          # soulauth — Python FastAPI, monorepo context (COPYs packages/*)
+          - service: soulauth
+            image: soulauth
             dockerfile: apps/platform-api/Dockerfile
-            image_suffix: tiresias-api
-          - service: app-proxy
-            dockerfile: apps/platform-app-proxy/Dockerfile
-            image_suffix: tiresias-app-proxy
-            context: apps/platform-app-proxy
-          - service: sovereign
-            dockerfile: apps/platform-sovereign/Dockerfile
-            image_suffix: tiresias-sovereign
-            context: apps/platform-sovereign
+            context: .
+          # soulgate — Python, context is apps/platform-api/ (Dockerfile COPYs soulGate/, config/)
+          - service: soulgate
+            image: soulgate
+            dockerfile: apps/platform-api/soulGate/Dockerfile
+            context: apps/platform-api
+          # soulwatch — Python, context is apps/platform-api/ (Dockerfile COPYs soulWatch/, src/, config/)
+          - service: soulwatch
+            image: soulwatch
+            dockerfile: apps/platform-api/soulWatch/Dockerfile
+            context: apps/platform-api
+          # memory-service — Node, pnpm monorepo, context = repo root
+          - service: memory-service
+            image: memory-service
+            dockerfile: apps/memory-service/Dockerfile
+            context: .
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Authenticate to Google Cloud (WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.image_suffix }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-
+      - name: Configure Docker for Artifact Registry
+        run: |
+          echo "${{ steps.auth.outputs.access_token }}" | \
+            docker login -u oauth2accesstoken --password-stdin "https://${{ env.AR_HOST }}"
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context || '.' }}
+          context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:${{ needs.resolve.outputs.tag }}
+            ${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${{ matrix.image }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ needs.resolve.outputs.sha }}
+            org.opencontainers.image.version=${{ needs.resolve.outputs.tag }}
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
+
+  # ── Apply manifests + run migrations ───────────────────────────────────────
+  apply:
+    name: Apply to GKE tiresias-prod
+    needs: [resolve, build-and-push]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud + GKE auth plugin
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GCP_REGION }}
+
+      - name: Setup kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Bump image tags via kustomize edit
+        working-directory: ${{ env.KUSTOMIZE_DIR }}
+        env:
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for svc in portal platform-web soulauth soulgate soulwatch memory-service; do
+            kustomize edit set image \
+              "${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}=${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}:${TAG}"
+          done
+          echo "── kustomization.yaml after edit ──"
+          cat kustomization.yaml
+
+      - name: Apply manifests (server-side dry-run first)
+        run: |
+          set -euo pipefail
+          kubectl apply --dry-run=server -k "${{ env.KUSTOMIZE_DIR }}"
+          kubectl apply -k "${{ env.KUSTOMIZE_DIR }}"
+
+      - name: Run pantheon-migrate Job
+        run: |
+          set -euo pipefail
+          # migrate-job.yaml uses a fixed name (intentional, per RUNBOOK), so we
+          # delete-then-create rather than apply (Jobs are largely immutable).
+          kubectl delete job pantheon-migrate -n "${{ env.GKE_NAMESPACE }}" --ignore-not-found=true --wait=true
+          kubectl apply -f "${{ env.KUSTOMIZE_DIR }}/migrate-job.yaml"
+          # Wait up to 15 min for completion. --for=condition=complete returns immediately
+          # on success; on failure we surface the logs.
+          if ! kubectl wait --for=condition=complete --timeout=900s \
+                job/pantheon-migrate -n "${{ env.GKE_NAMESPACE }}"; then
+            echo "::error ::pantheon-migrate Job did not complete successfully"
+            kubectl describe job/pantheon-migrate -n "${{ env.GKE_NAMESPACE }}" || true
+            kubectl logs job/pantheon-migrate -n "${{ env.GKE_NAMESPACE }}" --all-containers=true --tail=200 || true
+            exit 1
+          fi
+
+      - name: Wait for deployments to roll out
+        run: |
+          set -euo pipefail
+          for d in portal platform-web soulauth soulgate soulwatch memory-service; do
+            echo "── rollout: $d ──"
+            kubectl rollout status deployment/$d -n "${{ env.GKE_NAMESPACE }}" --timeout=600s
+          done
+
+  # ── Smoke test the public ingress ──────────────────────────────────────────
+  smoke:
+    name: Smoke test pantheon.saluca.com
+    needs: [resolve, apply]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe public endpoints
+        run: |
+          set -euo pipefail
+          BASE="https://pantheon.saluca.com"
+          # /health is routed to soulauth via the ingress.
+          # / is routed to portal (Next.js) via the catch-all.
+          # We hit each and require 2xx or 3xx.
+          probe() {
+            local path="$1"
+            local url="${BASE}${path}"
+            local code
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 --retry 3 --retry-delay 5 "$url")
+            echo "GET $url -> $code"
+            case "$code" in
+              2*|3*) return 0 ;;
+              *) echo "::error ::$url returned $code"; return 1 ;;
+            esac
+          }
+          probe "/health"
+          probe "/"
+
+      - name: Summary
+        run: |
+          echo "## Pantheon CD complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tag: \`${{ needs.resolve.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ needs.resolve.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Cluster: \`${{ env.GKE_CLUSTER }}\` / namespace \`${{ env.GKE_NAMESPACE }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Public: https://pantheon.saluca.com" >> "$GITHUB_STEP_SUMMARY"
