@@ -126,6 +126,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Track exercise with MET-based kcal estimation.',
       },
       {
+        href: '/dashboard/os/health/workouts',
+        label: 'Workouts',
+        description:
+          'Built-in + custom workout templates with editable block lists.',
+      },
+      {
+        href: '/dashboard/os/health/activity-plan',
+        label: 'Activity plan',
+        description:
+          'Plan the week with workout templates + smart intensity suggestions.',
+      },
+      {
         href: '/dashboard/os/health/plan',
         label: 'Plan generator',
         description: 'Draft citation-backed nutrition, activity, and sleep plans.',
