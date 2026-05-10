@@ -1,9 +1,11 @@
-# Tiresias Platform
+# Pantheon
 
 Governance-First AI-Security — observability, governance, and audit trails for AI agents,
 plus the **Agentic OS** layer: nine domain-specific products (Health, Maker, Research,
 Secure-Dev, CyberSec, Filmmaker, Autobiographer, Business, Creator) shipped on top of
 the shared platform shell.
+
+> Historical note: this codebase was previously known as "Tiresias Platform"; the top-level project has been renamed to Pantheon. Internal `@platform/*` package names and Synapse `tiresias-*` matrix aliases are intentionally preserved.
 
 ## Architecture
 
@@ -36,18 +38,26 @@ infrastructure/
 | Node.js | 22+ |
 | pnpm | 9.x (`corepack enable`) |
 | Python | 3.11+ |
-| uv | latest |
+| uv | latest (`pip install uv`) |
 | Docker | 24+ (for container stack) |
 | PostgreSQL | 16 (or use Docker) |
+
+> **Windows users: use WSL2.** Native Windows is not supported for local
+> development — the bootstrap, alembic, and pytest paths assume POSIX
+> semantics. Install WSL2 (Ubuntu 22.04+) via Microsoft's
+> [WSL install guide](https://learn.microsoft.com/en-us/windows/wsl/install)
+> and run the bash commands below from a WSL shell. A small
+> `scripts/bootstrap.ps1` stub will detect non-WSL PowerShell and point
+> you at the install docs.
 
 ## Local (Non-Container) Setup
 
 ```bash
 # 1. Clone
 git clone <repo-url>
-cd tiresias
+cd pantheon
 
-# 2. Bootstrap — installs deps, copies .env, runs migrations, seeds admin
+# 2. Bootstrap — installs deps, creates .venv, copies .env, runs migrations
 pnpm bootstrap
 
 # 3. Start all services
@@ -61,7 +71,10 @@ pnpm dev
 - API docs: http://localhost:8000/docs
 - Mailhog (email): http://localhost:8025
 
-See [docs/operations/local-development.md](docs/operations/local-development.md) for detailed steps.
+See [docs/operations/quickstart.md](docs/operations/quickstart.md) for the
+15-minute clone-to-running path, or
+[docs/operations/local-development.md](docs/operations/local-development.md)
+for the full reference.
 
 ## Container Setup
 
@@ -81,7 +94,7 @@ docker compose config
 
 ## Default Dev Credentials
 
-After running `pnpm bootstrap` or `npx tsx scripts/seed-admin.ts`:
+After running `pnpm bootstrap` or `pnpm db:seed` (which invokes `scripts/seed-admin.py`):
 
 | Field | Value |
 |-------|-------|

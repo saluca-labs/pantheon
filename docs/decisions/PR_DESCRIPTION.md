@@ -88,7 +88,7 @@ README.md                Rewritten
 - Set `SESSION_SECRET` (min 32 chars) in your `.env`
 - Remove `WORKOS_CLIENT_ID`, `WORKOS_API_KEY`, `WORKOS_REDIRECT_URI` env vars
 - Run `packages/database` Alembic migration `0001_local_auth` to create the new schema
-- Run `scripts/seed-admin.ts` to create the initial admin user
+- Run `scripts/seed-admin.py` (via `pnpm db:seed`) to create the initial admin user
 
 ### 2. New database schema
 

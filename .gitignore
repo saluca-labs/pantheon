@@ -1,5 +1,9 @@
 # Dependencies
 node_modules/
+# pnpm is the canonical package manager (root pnpm-lock.yaml).
+# Per-app npm/yarn lockfiles are stale and must not be committed.
+apps/*/package-lock.json
+apps/*/yarn.lock
 __pycache__/
 *.pyc
 *.pyo
@@ -35,6 +39,10 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local verification artifacts (created by scripts/bootstrap.sh + manual runs)
+.mvp-verify.log
+.bootstrap.log
 
 # Coverage
 coverage/
