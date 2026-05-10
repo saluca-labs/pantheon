@@ -1805,3 +1805,190 @@ export function planFromSignals(
   }
   return slots;
 }
+
+// ─── Trends (Phase 4) ───────────────────────────────────────────────────────
+
+export type TrendWindow = '7d' | '30d' | '90d';
+
+export interface TrendsResult {
+  window: TrendWindow;
+  windowDays: number;
+  mood_series: {
+    date: string;
+    mood: number | null;
+    energy: number | null;
+    anxiety: number | null;
+    sleep: number | null;
+  }[];
+  screener_series: {
+    date: string;
+    kind: ScreenerKey;
+    score: number;
+  }[];
+  tag_heatmap: { tag: string; bucket: string; count: number }[];
+  stats: {
+    avg_mood: number | null;
+    journal_count: number;
+    cbt_count: number;
+    meditation_count: number;
+    screener_trend: 'up' | 'down' | 'flat';
+  };
+}
+
+/** Map the sleep_quality string enum to a 1-4 numeric for charting. */
+const SLEEP_QUALITY_TO_NUMERIC: Record<string, number> = {
+  poor: 1,
+  fair: 2,
+  good: 3,
+  excellent: 4,
+};
+
+const WINDOW_DAYS: Record<TrendWindow, number> = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+};
+
+/**
+ * Aggregate trends across mood entries, screeners, journal entries, CBT
+ * logs, meditation sessions, and mood tags. One repo call, multiple
+ * server-side queries — kept here so the route stays a thin BFF wrapper.
+ *
+ * All time windows are computed in UTC; the API will eventually become
+ * timezone-aware (issue #TBD), but day-bucketing on entry_at is good
+ * enough for the v0.1.12 cut.
+ */
+export async function getTrends(
+  userId: string,
+  _tenantId: string,
+  window: TrendWindow,
+): Promise<TrendsResult> {
+  const pool = getHealthPool();
+  const windowDays = WINDOW_DAYS[window];
+  const sinceClause = `now() - INTERVAL '${windowDays} days'`;
+
+  // Per-day mood/energy/anxiety/sleep averages.
+  const moodRes = await pool.query(
+    `SELECT
+        to_char(date_trunc('day', entry_at), 'YYYY-MM-DD') AS day,
+        AVG(mood_score)::float    AS mood,
+        AVG(energy_score)::float  AS energy,
+        AVG(anxiety_score)::float AS anxiety,
+        AVG(CASE sleep_quality
+              WHEN 'poor' THEN 1
+              WHEN 'fair' THEN 2
+              WHEN 'good' THEN 3
+              WHEN 'excellent' THEN 4
+              ELSE NULL
+            END)::float AS sleep
+       FROM agos_mh_mood_entry
+      WHERE user_id = $1 AND entry_at >= ${sinceClause}
+      GROUP BY 1
+      ORDER BY 1`,
+    [userId],
+  );
+  const mood_series = moodRes.rows.map((r: any) => ({
+    date: r.day,
+    mood: r.mood === null ? null : Number(r.mood),
+    energy: r.energy === null ? null : Number(r.energy),
+    anxiety: r.anxiety === null ? null : Number(r.anxiety),
+    sleep: r.sleep === null ? null : Number(r.sleep),
+  }));
+
+  // Screener scores over time.
+  const screenerRes = await pool.query(
+    `SELECT
+        to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+        screener,
+        score
+       FROM agos_health_screeners
+      WHERE user_id = $1 AND created_at >= ${sinceClause}
+      ORDER BY created_at`,
+    [userId],
+  );
+  const screener_series = screenerRes.rows.map((r: any) => ({
+    date: r.day,
+    kind: r.screener as ScreenerKey,
+    score: Number(r.score),
+  }));
+
+  // Mood tag × day-of-week heatmap.
+  // dow: 0=Sun..6=Sat from extract(dow ...); we relabel as Mon..Sun for
+  // a more conventional left-to-right axis.
+  const tagRes = await pool.query(
+    `SELECT
+        t.name AS tag,
+        EXTRACT(dow FROM e.entry_at)::int AS dow,
+        COUNT(*)::int AS count
+       FROM agos_mh_mood_entry e
+       JOIN agos_mh_mood_entry_tag met ON met.mood_entry_id = e.id
+       JOIN agos_mh_mood_tag t ON t.id = met.tag_id
+      WHERE e.user_id = $1 AND e.entry_at >= ${sinceClause}
+      GROUP BY t.name, dow
+      ORDER BY t.name, dow`,
+    [userId],
+  );
+  const DOW_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const tag_heatmap = tagRes.rows.map((r: any) => ({
+    tag: r.tag as string,
+    bucket: DOW_LABELS[Number(r.dow)] ?? 'Sun',
+    count: Number(r.count),
+  }));
+
+  // Aggregate stats — three counts + avg mood + screener-trend direction.
+  const statsRes = await pool.query(
+    `SELECT
+        (SELECT AVG(mood_score)::float
+           FROM agos_mh_mood_entry
+          WHERE user_id = $1 AND entry_at >= ${sinceClause}) AS avg_mood,
+        (SELECT COUNT(*)::int
+           FROM agos_mh_journal_entry
+          WHERE user_id = $1 AND entry_at >= ${sinceClause}) AS journal_count,
+        (SELECT COUNT(*)::int
+           FROM agos_mh_cbt_log
+          WHERE user_id = $1
+            AND COALESCE(completed_at, started_at) >= ${sinceClause}) AS cbt_count,
+        (SELECT COUNT(*)::int
+           FROM agos_mh_meditation_session
+          WHERE user_id = $1 AND completed_at >= ${sinceClause}) AS meditation_count`,
+    [userId],
+  );
+  const statsRow = statsRes.rows[0] ?? {};
+
+  // Screener trend: compare the two most recent PHQ-9 scores within the
+  // window. Returns 'flat' if fewer than two exist or the delta is zero.
+  const phqRes = await pool.query(
+    `SELECT score
+       FROM agos_health_screeners
+      WHERE user_id = $1 AND screener = 'phq9'
+        AND created_at >= ${sinceClause}
+      ORDER BY created_at DESC
+      LIMIT 2`,
+    [userId],
+  );
+  let screenerTrend: 'up' | 'down' | 'flat' = 'flat';
+  if (phqRes.rowCount === 2) {
+    const latest = Number(phqRes.rows[0].score);
+    const prev = Number(phqRes.rows[1].score);
+    if (latest > prev) screenerTrend = 'up';
+    else if (latest < prev) screenerTrend = 'down';
+  }
+
+  return {
+    window,
+    windowDays,
+    mood_series,
+    screener_series,
+    tag_heatmap,
+    stats: {
+      avg_mood: statsRow.avg_mood === null ? null : Number(statsRow.avg_mood),
+      journal_count: Number(statsRow.journal_count ?? 0),
+      cbt_count: Number(statsRow.cbt_count ?? 0),
+      meditation_count: Number(statsRow.meditation_count ?? 0),
+      screener_trend: screenerTrend,
+    },
+  };
+}
+
+// Re-export the numeric sleep mapping so the UI can label the y-axis.
+export { SLEEP_QUALITY_TO_NUMERIC };
