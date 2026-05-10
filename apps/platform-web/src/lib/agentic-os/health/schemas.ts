@@ -43,3 +43,55 @@ export type RiskFlagSeverityValue = (typeof RISK_FLAG_SEVERITY_VALUES)[number];
 export const RiskFlagDismissQuery = z.object({
   id: z.string().uuid(),
 });
+
+// ─── Mood entries (Phase 2) ───────────────────────────────────────────────
+
+const ScoreField = z.number().int().min(1).max(10).nullable().optional();
+
+export const MoodEntryBody = z.object({
+  moodScore: ScoreField,
+  energyScore: ScoreField,
+  anxietyScore: ScoreField,
+  sleepQuality: z.enum(SLEEP_QUALITY_VALUES).nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
+  entryAt: z.string().datetime().nullable().optional(),
+  tagIds: z.array(z.string().uuid()).max(20).optional(),
+});
+export type MoodEntryInputBody = z.infer<typeof MoodEntryBody>;
+
+export const MoodEntryUpdateBody = MoodEntryBody.partial();
+export type MoodEntryUpdateInputBody = z.infer<typeof MoodEntryUpdateBody>;
+
+export const MoodTagBody = z.object({
+  name: z.string().min(1).max(64).trim(),
+  color: z.string().max(32).nullable().optional(),
+});
+export type MoodTagInputBody = z.infer<typeof MoodTagBody>;
+
+// ─── Journal entries (Phase 2) ────────────────────────────────────────────
+
+export const JOURNAL_PROMPT_CATEGORIES = [
+  'cbt-thought-record',
+  'gratitude',
+  'values-clarification',
+  'behavioral-activation',
+  'self-compassion',
+] as const;
+export type JournalPromptCategoryValue =
+  (typeof JOURNAL_PROMPT_CATEGORIES)[number];
+
+export const JournalEntryBody = z.object({
+  promptId: z.string().uuid().nullable().optional(),
+  title: z.string().max(200).nullable().optional(),
+  body: z.string().min(1).max(50_000),
+  entryAt: z.string().datetime().nullable().optional(),
+});
+export type JournalEntryInputBody = z.infer<typeof JournalEntryBody>;
+
+export const JournalEntryUpdateBody = z.object({
+  promptId: z.string().uuid().nullable().optional(),
+  title: z.string().max(200).nullable().optional(),
+  body: z.string().min(1).max(50_000).optional(),
+  entryAt: z.string().datetime().nullable().optional(),
+});
+export type JournalEntryUpdateInputBody = z.infer<typeof JournalEntryUpdateBody>;
