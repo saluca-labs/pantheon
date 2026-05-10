@@ -1,4 +1,4 @@
-# Tiresias - AI Agent Security Platform
+# Pantheon - AI Agent Security Platform
 
 > Zero-knowledge agent security for the enterprise. Identity, authorization, and runtime protection — without ever accessing your data.
 

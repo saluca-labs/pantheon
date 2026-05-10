@@ -114,7 +114,7 @@ export default function WelcomePage() {
 
   const soulkeyDisplay = session?.soulkey ?? "<YOUR_SOULKEY>";
   const curlExample = [
-    "curl -X POST https://tiresias.network/v1/chat/completions \\",
+    "curl -X POST https://pantheon.saluca.com/v1/chat/completions \\",
     '  -H "Authorization: Bearer ' + soulkeyDisplay + '" \\',
     '  -H "Content-Type: application/json" \\',
     "  -d '{\"model\": \"gpt-4o\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'",
@@ -144,7 +144,7 @@ export default function WelcomePage() {
     {
       number: 2,
       title: "Install the SDK",
-      description: "Use the Tiresias SDK to instrument your AI application.",
+      description: "Use the Pantheon SDK to instrument your AI application.",
       content: (
         <div className="mt-3 space-y-3">
           <div className="bg-of-surface-container-high rounded-lg px-4 py-3 border border-of-outline-variant/10">

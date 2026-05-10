@@ -18,7 +18,7 @@ export const DOCS_REGISTRY: Array<{
   {
     slug: "platform-overview",
     title: "Platform Overview",
-    description: "Tiresias AI agent security platform overview, features, and capabilities.",
+    description: "Pantheon AI agent security platform overview, features, and capabilities.",
     file: "PLATFORM_OVERVIEW.md",
     minTier: "community",
     icon: <BookOpen className="w-5 h-5" />,

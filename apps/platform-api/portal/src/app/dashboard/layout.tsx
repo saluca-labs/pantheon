@@ -6,8 +6,8 @@ import ChatWidget from "@/components/dashboard/ChatWidget";
 export const metadata: Metadata = {
 
 /** Dashboard shell layout -- renders header, sidebar, and scrollable content area. */
-  title: "Dashboard | Tiresias",
-  description: "Tiresias enterprise dashboard -- monitor agents, policies, and security events.",
+  title: "Dashboard | Pantheon",
+  description: "Pantheon enterprise dashboard -- monitor agents, policies, and security events.",
 };
 
 export default function DashboardLayout({

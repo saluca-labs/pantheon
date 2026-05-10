@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props) {
   const doc = DOCS_MAP[slug];
   if (!doc) return { title: "Not Found" };
   return {
-    title: `${doc.title} - Tiresias Docs`,
+    title: `${doc.title} - Pantheon Docs`,
     description: `Tiresias documentation: ${doc.title}`,
   };
 }
