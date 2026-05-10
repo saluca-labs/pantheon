@@ -318,3 +318,84 @@ export const MeditationPlanBody = z.object({
   weeklyMinutes: z.number().int().min(5).max(420).optional(),
 });
 export type MeditationPlanInputBody = z.infer<typeof MeditationPlanBody>;
+
+// ─── Food items (Phase 5a) ────────────────────────────────────────────────
+
+export const FOOD_SOURCE_VALUES = ['usda', 'custom'] as const;
+export const FoodSourceEnum = z.enum(FOOD_SOURCE_VALUES);
+export type FoodSource = z.infer<typeof FoodSourceEnum>;
+
+const NonNegativeNumber = z.number().min(0).nullable().optional();
+
+export const FoodItemBody = z.object({
+  name: z.string().min(1).max(200).trim(),
+  brand: z.string().max(200).nullable().optional(),
+  servingSizeG: NonNegativeNumber,
+  servingLabel: z.string().max(80).nullable().optional(),
+  kcal: NonNegativeNumber,
+  proteinG: NonNegativeNumber,
+  carbsG: NonNegativeNumber,
+  fatG: NonNegativeNumber,
+  fiberG: NonNegativeNumber,
+  sugarG: NonNegativeNumber,
+  sodiumMg: NonNegativeNumber,
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type FoodItemInputBody = z.infer<typeof FoodItemBody>;
+
+export const FoodItemUpdateBody = FoodItemBody.partial();
+export type FoodItemUpdateInputBody = z.infer<typeof FoodItemUpdateBody>;
+
+// ─── Meal entries (Phase 5a) ──────────────────────────────────────────────
+
+export const MEAL_SLOT_VALUES = [
+  'breakfast',
+  'lunch',
+  'dinner',
+  'snack',
+] as const;
+export const MealSlotEnum = z.enum(MEAL_SLOT_VALUES);
+export type MealSlot = z.infer<typeof MealSlotEnum>;
+
+export const MealEntryBody = z.object({
+  entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD required'),
+  mealSlot: MealSlotEnum,
+  foodItemId: z.string().uuid().nullable().optional(),
+  freeformDescription: z.string().max(500).nullable().optional(),
+  servings: z.number().min(0).max(1000).optional(),
+  kcalOverride: NonNegativeNumber,
+  proteinGOverride: NonNegativeNumber,
+  carbsGOverride: NonNegativeNumber,
+  fatGOverride: NonNegativeNumber,
+  notes: z.string().max(2000).nullable().optional(),
+});
+export type MealEntryInputBody = z.infer<typeof MealEntryBody>;
+
+export const MealEntryUpdateBody = MealEntryBody.partial();
+export type MealEntryUpdateInputBody = z.infer<typeof MealEntryUpdateBody>;
+
+// ─── Activity entries (Phase 5a) ──────────────────────────────────────────
+
+export const ACTIVITY_INTENSITY_VALUES = [
+  'light',
+  'moderate',
+  'vigorous',
+] as const;
+export const ActivityIntensityEnum = z.enum(ACTIVITY_INTENSITY_VALUES);
+export type ActivityIntensity = z.infer<typeof ActivityIntensityEnum>;
+
+export const ActivityEntryBody = z.object({
+  entryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD required'),
+  activityType: z.string().min(1).max(80).trim(),
+  durationMin: z.number().int().min(1).max(1440),
+  intensity: ActivityIntensityEnum.optional(),
+  kcalBurned: NonNegativeNumber,
+  notes: z.string().max(2000).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type ActivityEntryInputBody = z.infer<typeof ActivityEntryBody>;
+
+export const ActivityEntryUpdateBody = ActivityEntryBody.partial();
+export type ActivityEntryUpdateInputBody = z.infer<
+  typeof ActivityEntryUpdateBody
+>;
