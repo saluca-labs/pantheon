@@ -204,21 +204,29 @@ jobs:
           echo "── kustomization.yaml after edit ──"
           cat kustomization.yaml
 
+      - name: Pre-delete migrate-job (immutable Job blocks kustomize apply)
+        run: |
+          set -euo pipefail
+          # migrate-job.yaml is included in the kustomize tree but Jobs are
+          # immutable in their pod template. After `kustomize edit set image`
+          # bumps the image tag, `kubectl apply -k` would otherwise fail with
+          # "field is immutable" when re-applying the existing Job. Delete it
+          # first so the apply step creates a fresh Job from the new spec.
+          # --wait=true ensures the controller is fully gone before we hand off.
+          kubectl delete job pantheon-migrate -n "${{ env.GKE_NAMESPACE }}" --ignore-not-found=true --wait=true
+
       - name: Apply manifests (server-side dry-run first)
         run: |
           set -euo pipefail
           kubectl apply --dry-run=server -k "${{ env.KUSTOMIZE_DIR }}"
           kubectl apply -k "${{ env.KUSTOMIZE_DIR }}"
 
-      - name: Run pantheon-migrate Job
+      - name: Wait for pantheon-migrate Job
         run: |
           set -euo pipefail
-          # migrate-job.yaml uses a fixed name (intentional, per RUNBOOK), so we
-          # delete-then-create rather than apply (Jobs are largely immutable).
-          kubectl delete job pantheon-migrate -n "${{ env.GKE_NAMESPACE }}" --ignore-not-found=true --wait=true
-          kubectl apply -f "${{ env.KUSTOMIZE_DIR }}/migrate-job.yaml"
-          # Wait up to 15 min for completion. --for=condition=complete returns immediately
-          # on success; on failure we surface the logs.
+          # Job was created by `kubectl apply -k` (migrate-job.yaml is in the
+          # kustomization resources). Wait up to 15 min for completion;
+          # --for=condition=complete returns on success, otherwise we surface logs.
           if ! kubectl wait --for=condition=complete --timeout=900s \
                 job/pantheon-migrate -n "${{ env.GKE_NAMESPACE }}"; then
             echo "::error ::pantheon-migrate Job did not complete successfully"
