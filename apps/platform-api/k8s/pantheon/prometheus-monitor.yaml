@@ -1,0 +1,59 @@
+# NEW for pantheon — observability into the existing prometheus-operator install in tiresias-prod.
+# Verified CRD presence at Day 1: `kubectl get crd` shows servicemonitors.monitoring.coreos.com
+# (kube-prometheus-stack via prometheus-operator). Operator pod is running in `monitoring` namespace.
+# We use ServiceMonitor (operator-native CRD).
+#
+# Selector strategy: per-service ServiceMonitor (rather than one wildcard) so that scrape paths can
+# differ. Currently only soulauth exposes /metrics; other services are placeholders for when they
+# gain Prometheus instrumentation.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pantheon-soulauth-monitor
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    # match the prometheus-operator's serviceMonitorSelector — the kube-prometheus-stack default
+    # is `release: prometheus`, but tiresias-prod's prometheus may use a different label. The
+    # operator will pick up any ServiceMonitor in any namespace that matches its selector;
+    # operators typically allow all namespaces. Adjust the label here if the operator filters.
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - pantheon
+  selector:
+    matchLabels:
+      app: soulauth
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# Generic ServiceMonitor for any pantheon service that exposes /metrics on its http port.
+# Once soulgate/soulwatch/portal/platform-web add metrics endpoints, they will be auto-discovered
+# by virtue of the part-of label.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pantheon-services-monitor
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - pantheon
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: pantheon
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      # If the endpoint doesn't exist on a given service, prometheus simply records up=0; that's
+      # acceptable until each service adds metrics support.

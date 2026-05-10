@@ -1,0 +1,172 @@
+# Forked from apps/platform-api/k8s/ingress.yaml @ 02a6771 for pantheon namespace.
+# Single host (pantheon.saluca.com) — no marketing/proxy splits.
+# Static IP: pantheon-ip (reserved 2026-05-10, address 136.110.201.212).
+# Path order matters for GCE ingress (specific routes before catch-all).
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pantheon-ingress
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "pantheon-cert"
+    kubernetes.io/ingress.global-static-ip-name: "pantheon-ip"
+    networking.gke.io/v1beta1.FrontendConfig: "pantheon-frontend"
+spec:
+  rules:
+    - host: pantheon.saluca.com
+      http:
+        # ── Path routing invariant ────────────────────────────────────────
+        # GCE ingress with pathType: ImplementationSpecific evaluates rules
+        # in *declaration order*, NOT longest-prefix. Order below is the
+        # contract:
+        #   1. Service-specific prefixes, most specific first
+        #      (/gate/*, /watch/*, /auth/*, /api/web/*, /dashboard/os/*,
+        #       /api/tiresias/*, …)
+        #   2. Portal Next.js API namespace  /api/*  → portal
+        #   3. Portal frontend catch-all     /*      → portal  (MUST be last)
+        # Adding a new route: place it ABOVE every less-specific rule that
+        # would swallow it. e.g. a new /api/tiresias/foo to a new Service
+        # MUST go above /api/tiresias/* or it silently routes to platform-web.
+        # Never add anything below /*.
+        paths:
+          # SoulGate routes
+          - path: /gate/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulgate
+                port:
+                  number: 80
+          # SoulWatch routes
+          - path: /watch/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulwatch
+                port:
+                  number: 80
+          # SoulAuth API surface
+          - path: /health
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /auth/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tokens/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /policies/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /tenants/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /admin/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /sdk/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /metrics
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          - path: /v1/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soulauth
+                port:
+                  number: 80
+          # platform-web (Next.js) — owns /api/web/* and /web/*
+          - path: /api/web/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
+          - path: /web/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
+          - path: /dashboard/os/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
+          - path: /api/tiresias/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
+          # Portal Next.js API routes
+          - path: /api/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal
+                port:
+                  number: 80
+          # Portal frontend catch-all (must be last)
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal
+                port:
+                  number: 80
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: pantheon-frontend
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT

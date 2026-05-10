@@ -1,0 +1,92 @@
+# Forked from apps/platform-api/k8s/pdb.yaml @ 02a6771 for pantheon namespace.
+# Adds platform-web + memory-service PDBs (no tiresias precedent).
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulauth-pdb
+  namespace: pantheon
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulauth
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulgate-pdb
+  namespace: pantheon
+  labels:
+    app: soulgate
+    app.kubernetes.io/name: soulgate
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulgate
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soulwatch-pdb
+  namespace: pantheon
+  labels:
+    app: soulwatch
+    app.kubernetes.io/name: soulwatch
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soulwatch
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: portal-pdb
+  namespace: pantheon
+  labels:
+    app: portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: portal
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-web-pdb
+  namespace: pantheon
+  labels:
+    app: platform-web
+    app.kubernetes.io/name: platform-web
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: platform-web
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: memory-service-pdb
+  namespace: pantheon
+  labels:
+    app: memory-service
+    app.kubernetes.io/name: memory-service
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: memory-service

@@ -1,0 +1,178 @@
+# Forked from apps/platform-api/k8s/soulauth-deployment.yaml @ 02a6771 for pantheon namespace
+# Changes from tiresias source:
+#   - namespace: tiresias -> pantheon
+#   - serviceAccountName: tiresias-sa -> pantheon-sa
+#   - image registry: tiresias/* -> pantheon/* (tag :latest is a placeholder; CD pipeline replaces in Day 2)
+#   - secretKeyRef.name: tiresias-secrets -> pantheon-secrets
+#   - SOULAUTH_PUBLIC_URL: tiresias.network -> pantheon.saluca.com
+#   - TRIAL_VERIFY_BASE_URL: api.tiresias.network -> pantheon.saluca.com
+#   - SOULAUTH_OIDC_ENABLED: true -> false (deferred per MVP locked decision)
+#   - SOULAUTH_LICENSE_REQUIRED: true -> false (deferred per MVP locked decision)
+#   - Stripe envs (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_*): dropped (deferred from MVP)
+#   - LINEAR_API_KEY, OPENROUTER_API_KEY, METRICS_AUTH_TOKEN, RESEND_API_KEY, OIDC keys: dropped from MVP secret set
+#   - TIRESIAS_LICENSE_*: dropped from MVP secret set
+#   - SOULAUTH_TRIAL_FROM_EMAIL: dropped from MVP (no Resend wiring yet)
+#   - Cloud SQL connection string: kept (same instance salucainfrastructure:us-central1:tiresias-db)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soulauth
+  namespace: pantheon
+  labels:
+    app: soulauth
+    app.kubernetes.io/name: soulauth
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: identity-engine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: soulauth
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: soulauth
+        app.kubernetes.io/name: soulauth
+        app.kubernetes.io/part-of: pantheon
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: soulauth
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulauth:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: SOULAUTH_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url
+            - name: SOULAUTH_DATABASE_URL_SYNC
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+            - name: SOULAUTH_JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: jwt-private-key
+            - name: SOULAUTH_JWT_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: jwt-public-key
+            - name: SOULAUTH_JWT_KID
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: jwt-kid
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: internal-api-key
+            - name: SOULAUTH_LOG_LEVEL
+              value: "INFO"
+            - name: SOULAUTH_DEBUG
+              value: "false"
+            - name: SOULAUTH_MODE
+              value: "enterprise"
+            - name: SOULAUTH_LICENSE_REQUIRED
+              value: "false"
+            - name: SOULAUTH_OIDC_ENABLED
+              value: "false"
+            # SOULAUTH_AUTH_MODE controls which login routers (local / oidc / ldap) are
+            # active. Defaults to "oidc" upstream; we run local-only in pantheon MVP so
+            # /v1/auth/local/login responds (otherwise it 404s with "Local auth is not
+            # enabled"). Multi-mode is comma-separated, e.g. "local,ldap".
+            - name: SOULAUTH_AUTH_MODE
+              value: "local"
+            - name: SOULAUTH_PUBLIC_URL
+              value: "https://pantheon.saluca.com"
+            - name: TRIAL_VERIFY_BASE_URL
+              value: "https://pantheon.saluca.com"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi

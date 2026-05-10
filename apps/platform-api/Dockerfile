@@ -11,6 +11,7 @@ COPY packages/config/python/ ./packages/config/python/
 COPY packages/observability/python/ ./packages/observability/python/
 COPY packages/memory-client/python/ ./packages/memory-client/python/
 COPY packages/secrets/python/ ./packages/secrets/python/
+COPY packages/database/ ./packages/database/
 
 # Install into a virtual env so we can copy it cleanly.
 # Runtime deps (uvicorn, fastapi, sqlalchemy, etc.) live in requirements.txt;
@@ -22,7 +23,8 @@ RUN uv venv /app/venv && \
     uv pip install ./packages/config/python && \
     uv pip install ./packages/observability/python && \
     uv pip install ./packages/memory-client/python && \
-    uv pip install ./packages/secrets/python
+    uv pip install ./packages/secrets/python && \
+    uv pip install ./packages/database
 
 COPY apps/platform-api/ ./apps/platform-api/
 RUN . /app/venv/bin/activate && \
@@ -37,6 +39,9 @@ RUN groupadd --gid 1001 platform && \
 
 COPY --from=builder /app/venv /app/venv
 COPY --from=builder /repo/apps/platform-api /app/apps/platform-api
+# packages/database is included so the migrate-job's stage-1 (local-auth tree)
+# can `cd /app/packages/database && alembic upgrade head` from the soulauth image.
+COPY --from=builder /repo/packages/database /app/packages/database
 
 ENV PATH="/app/venv/bin:$PATH"
 ENV PYTHONPATH="/app/apps/platform-api"

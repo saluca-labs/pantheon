@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown, MessageCircle } from "lucide-react";
+import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown, MessageCircle, Heart, Wrench, Microscope, Shield, Film, PenTool, Briefcase, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { tierMeets, type Tier } from "@/components/dashboard/TierGate";
@@ -31,7 +31,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "platform-admin";
+  group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "platform-admin" | "oscar-suite";
   /** When true, only visible for saas-tier tenants. */
   saasOnly?: boolean;
   /** Minimum tier required to see this nav item. Hidden for lower tiers. */
@@ -406,12 +406,68 @@ const NAV_ITEMS: NavItem[] = [
     group: "aletheia",
     icon: <FileCode className="w-5 h-5" />,
   },
+  // Oscar Suite -- the 9 OSes (routed to platform-web via /dashboard/os/<slug>)
+  {
+    label: "Health",
+    href: "/dashboard/os/health",
+    group: "oscar-suite",
+    icon: <Heart className="w-5 h-5" />,
+  },
+  {
+    label: "Maker",
+    href: "/dashboard/os/maker",
+    group: "oscar-suite",
+    icon: <Wrench className="w-5 h-5" />,
+  },
+  {
+    label: "Research",
+    href: "/dashboard/os/research",
+    group: "oscar-suite",
+    icon: <Microscope className="w-5 h-5" />,
+  },
+  {
+    label: "Secure Dev",
+    href: "/dashboard/os/secure-dev",
+    group: "oscar-suite",
+    icon: <ShieldCheck className="w-5 h-5" />,
+  },
+  {
+    label: "Cyber",
+    href: "/dashboard/os/cyber",
+    group: "oscar-suite",
+    icon: <Shield className="w-5 h-5" />,
+  },
+  {
+    label: "Filmmaker",
+    href: "/dashboard/os/filmmaker",
+    group: "oscar-suite",
+    icon: <Film className="w-5 h-5" />,
+  },
+  {
+    label: "Autobiographer",
+    href: "/dashboard/os/autobiographer",
+    group: "oscar-suite",
+    icon: <PenTool className="w-5 h-5" />,
+  },
+  {
+    label: "Business",
+    href: "/dashboard/os/business",
+    group: "oscar-suite",
+    icon: <Briefcase className="w-5 h-5" />,
+  },
+  {
+    label: "Creator",
+    href: "/dashboard/os/creator",
+    group: "oscar-suite",
+    icon: <Sparkles className="w-5 h-5" />,
+  },
 ];
 
 // All groups including mssp -- mssp rendered conditionally below
 const BASE_GROUPS = [
   { key: "observability", label: "Observability" },
   { key: "main", label: "Overview" },
+  { key: "oscar-suite", label: "Oscar Suite" },
   { key: "security", label: "Detection" },
   { key: "soulwatch", label: "SoulWatch" },
   { key: "soulgate", label: "SoulGate" },

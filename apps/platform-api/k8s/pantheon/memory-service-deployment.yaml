@@ -1,0 +1,138 @@
+# NEW for pantheon — Postgres-backed durability per Cristian's locked decision (no emptyDir).
+# Memory-service code: apps/memory-service/src/server.ts confirms MEMORY_BACKEND=postgres + DATABASE_URL
+# (or ASPHODEL_DATABASE_URL) routes through PostgresAdapter. Uses pantheon DB on tiresias-db SQL instance.
+# Cloud SQL proxy sidecar with auto-iam-authn — talks to DB as pantheon-sa@salucainfrastructure.iam.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-service
+  namespace: pantheon
+  labels:
+    app: memory-service
+    app.kubernetes.io/name: memory-service
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: memory-sidecar
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: memory-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: memory-service
+        app.kubernetes.io/name: memory-service
+        app.kubernetes.io/part-of: pantheon
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: memory-service
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/memory-service:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8910
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: MEMORY_BACKEND
+              value: "postgres"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+            - name: ASPHODEL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+            - name: MEMORY_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: memory-service-key
+            - name: MEMORY_SERVICE_PORT
+              value: "8910"
+            - name: MEMORY_SERVICE_HOST
+              value: "0.0.0.0"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 50Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            failureThreshold: 20
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi

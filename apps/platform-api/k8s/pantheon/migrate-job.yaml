@@ -1,0 +1,94 @@
+# Forked from apps/platform-api/k8s/migrate-job.yaml @ 02a6771 (single-tree) and reshaped to a
+# two-stage Job per Day-1 plan: local-auth (packages/database) runs first as an initContainer,
+# soulauth (apps/platform-api) runs second as the main container. Cloud SQL proxy is a sidecar.
+# Both alembic trees migrate against the pantheon DB on tiresias-db.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pantheon-migrate
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: migration
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: pantheon-migrate
+        app.kubernetes.io/part-of: pantheon
+    spec:
+      serviceAccountName: pantheon-sa
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        # cloud-sql-proxy as a long-running init container (sidecar) — exits when main container exits.
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          restartPolicy: Always
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "--exit-zero-on-sigterm"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            runAsNonRoot: true
+          resources:
+            requests: {cpu: "50m",  memory: "64Mi"}
+            limits:   {cpu: "200m", memory: "128Mi"}
+        # Stage 1 — local-auth migrations (packages/database tree), runs to completion before soulauth.
+        # Reuses the soulauth image: the platform-api Dockerfile copies packages/database/ into
+        # /app/packages/database for exactly this purpose (avoids needing a separate image).
+        - name: migrate-local-auth
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulauth:v0.1.3
+          imagePullPolicy: Always
+          workingDir: /app/packages/database
+          command: ["alembic", "upgrade", "head"]
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+          resources:
+            requests: {cpu: "100m", memory: "128Mi"}
+            limits:   {cpu: "500m", memory: "256Mi"}
+      containers:
+        # Stage 2 — soulauth migrations (apps/platform-api tree).
+        - name: migrate-soulauth
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulauth:v0.1.3
+          imagePullPolicy: Always
+          workingDir: /app/apps/platform-api
+          command: ["alembic", "upgrade", "head"]
+          securityContext:
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          env:
+            - name: SOULAUTH_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url
+            - name: SOULAUTH_DATABASE_URL_SYNC
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+          resources:
+            requests: {cpu: "100m", memory: "128Mi"}
+            limits:   {cpu: "500m", memory: "256Mi"}

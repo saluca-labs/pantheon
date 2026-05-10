@@ -1,0 +1,11 @@
+# Forked from apps/platform-api/k8s/ingress.yaml (ManagedCertificate stanza) @ 02a6771 for pantheon.saluca.com
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: pantheon-cert
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+spec:
+  domains:
+    - pantheon.saluca.com

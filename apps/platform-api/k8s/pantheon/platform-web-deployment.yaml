@@ -1,0 +1,142 @@
+# NEW for pantheon — no tiresias precedent at apps/platform-api/k8s/.
+# Image source: apps/platform-web/ (Next.js).
+# Listens on :3000, routes via /api/web/* in ingress.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-web
+  namespace: pantheon
+  labels:
+    app: platform-web
+    app.kubernetes.io/name: platform-web
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: web-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: platform-web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: platform-web
+        app.kubernetes.io/name: platform-web
+        app.kubernetes.io/part-of: pantheon
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: platform-web
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/platform-web:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nextjs-cache
+              mountPath: /app/.next/cache
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: database-url-sync
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: session-secret
+            - name: WEB_PUBLIC_URL
+              value: "https://pantheon.saluca.com"
+            - name: API_PUBLIC_URL
+              value: "http://soulauth.pantheon.svc.cluster.local"
+            - name: MEMORY_SERVICE_URL
+              value: "http://memory-service.pantheon.svc.cluster.local:8910"
+            - name: MEMORY_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: memory-service-key
+            - name: COOKIE_DOMAIN
+              value: "pantheon.saluca.com"
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+          args:
+            - "--structured-logs"
+            - "--auto-iam-authn"
+            - "salucainfrastructure:us-central1:tiresias-db"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: nextjs-cache
+          emptyDir:
+            sizeLimit: 256Mi
