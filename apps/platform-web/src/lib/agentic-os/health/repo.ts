@@ -1826,12 +1826,26 @@ export interface TrendsResult {
     score: number;
   }[];
   tag_heatmap: { tag: string; bucket: string; count: number }[];
+  nutrition_series: {
+    date: string;
+    kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  }[];
+  activity_series: {
+    date: string;
+    duration_min: number;
+    kcal_burned: number;
+  }[];
   stats: {
     avg_mood: number | null;
     journal_count: number;
     cbt_count: number;
     meditation_count: number;
     screener_trend: 'up' | 'down' | 'flat';
+    avg_daily_kcal: number | null;
+    avg_daily_active_min: number | null;
   };
 }
 
@@ -1974,21 +1988,1001 @@ export async function getTrends(
     else if (latest < prev) screenerTrend = 'down';
   }
 
+  // Per-day nutrition rollups. Pulls the food_item via LEFT JOIN so the
+  // override-vs-food-item-vs-null resolution happens in SQL (mirrors
+  // `mergeMealEntryNutrients`). Days with no meal entries are simply absent
+  // from the series — the UI fills gaps if it wants a contiguous axis.
+  const nutritionRes = await pool.query(
+    `SELECT
+        to_char(m.entry_date, 'YYYY-MM-DD') AS day,
+        SUM(COALESCE(m.kcal_override,      f.kcal      * m.servings, 0))::float AS kcal,
+        SUM(COALESCE(m.protein_g_override, f.protein_g * m.servings, 0))::float AS protein_g,
+        SUM(COALESCE(m.carbs_g_override,   f.carbs_g   * m.servings, 0))::float AS carbs_g,
+        SUM(COALESCE(m.fat_g_override,     f.fat_g     * m.servings, 0))::float AS fat_g
+       FROM agos_mh_meal_entry m
+       LEFT JOIN agos_mh_food_item f ON f.id = m.food_item_id
+      WHERE m.user_id = $1 AND m.entry_date >= (now() - INTERVAL '${windowDays} days')::date
+      GROUP BY 1
+      ORDER BY 1`,
+    [userId],
+  );
+  const nutrition_series = nutritionRes.rows.map((r: any) => ({
+    date: r.day,
+    kcal: Number(r.kcal ?? 0),
+    protein_g: Number(r.protein_g ?? 0),
+    carbs_g: Number(r.carbs_g ?? 0),
+    fat_g: Number(r.fat_g ?? 0),
+  }));
+
+  // Per-day activity rollups.
+  const activityRes = await pool.query(
+    `SELECT
+        to_char(entry_date, 'YYYY-MM-DD') AS day,
+        SUM(duration_min)::int  AS duration_min,
+        SUM(kcal_burned)::float AS kcal_burned
+       FROM agos_mh_activity_entry
+      WHERE user_id = $1 AND entry_date >= (now() - INTERVAL '${windowDays} days')::date
+      GROUP BY 1
+      ORDER BY 1`,
+    [userId],
+  );
+  const activity_series = activityRes.rows.map((r: any) => ({
+    date: r.day,
+    duration_min: Number(r.duration_min ?? 0),
+    kcal_burned: Number(r.kcal_burned ?? 0),
+  }));
+
+  // Daily averages for the stat cards. Use the window length as the denominator
+  // (not just observed days) so the average reflects "how I'm doing across the
+  // window," not just "across days I logged."
+  const avg_daily_kcal =
+    nutrition_series.length === 0
+      ? null
+      : Number(
+          (
+            nutrition_series.reduce((s, r) => s + (r.kcal || 0), 0) / windowDays
+          ).toFixed(1),
+        );
+  const avg_daily_active_min =
+    activity_series.length === 0
+      ? null
+      : Number(
+          (
+            activity_series.reduce((s, r) => s + (r.duration_min || 0), 0) /
+            windowDays
+          ).toFixed(1),
+        );
+
   return {
     window,
     windowDays,
     mood_series,
     screener_series,
     tag_heatmap,
+    nutrition_series,
+    activity_series,
     stats: {
       avg_mood: statsRow.avg_mood === null ? null : Number(statsRow.avg_mood),
       journal_count: Number(statsRow.journal_count ?? 0),
       cbt_count: Number(statsRow.cbt_count ?? 0),
       meditation_count: Number(statsRow.meditation_count ?? 0),
       screener_trend: screenerTrend,
+      avg_daily_kcal,
+      avg_daily_active_min,
     },
   };
 }
 
 // Re-export the numeric sleep mapping so the UI can label the y-axis.
 export { SLEEP_QUALITY_TO_NUMERIC };
+
+// ─── Nutrition + activity (Phase 5a) ────────────────────────────────────────
+
+export type FoodSourceValue = 'usda' | 'custom';
+export type MealSlotValue = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type ActivityIntensityValue = 'light' | 'moderate' | 'vigorous';
+
+export interface FoodItem {
+  id: string;
+  tenantId: string;
+  userId: string | null;
+  source: FoodSourceValue;
+  usdaFdcId: string | null;
+  name: string;
+  brand: string | null;
+  servingSizeG: number | null;
+  servingLabel: string | null;
+  kcal: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
+  sugarG: number | null;
+  sodiumMg: number | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const FOOD_ITEM_COLS = `
+  id, tenant_id, user_id, source, usda_fdc_id, name, brand,
+  serving_size_g, serving_label, kcal, protein_g, carbs_g, fat_g,
+  fiber_g, sugar_g, sodium_mg, metadata, created_at, updated_at
+`;
+
+const num = (v: unknown): number | null =>
+  v === null || v === undefined ? null : Number(v);
+
+function rowToFoodItem(row: any): FoodItem {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    source: row.source as FoodSourceValue,
+    usdaFdcId: row.usda_fdc_id,
+    name: row.name,
+    brand: row.brand,
+    servingSizeG: num(row.serving_size_g),
+    servingLabel: row.serving_label,
+    kcal: num(row.kcal),
+    proteinG: num(row.protein_g),
+    carbsG: num(row.carbs_g),
+    fatG: num(row.fat_g),
+    fiberG: num(row.fiber_g),
+    sugarG: num(row.sugar_g),
+    sodiumMg: num(row.sodium_mg),
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export interface CreateFoodItemInput {
+  name: string;
+  brand?: string | null;
+  servingSizeG?: number | null;
+  servingLabel?: string | null;
+  kcal?: number | null;
+  proteinG?: number | null;
+  carbsG?: number | null;
+  fatG?: number | null;
+  fiberG?: number | null;
+  sugarG?: number | null;
+  sodiumMg?: number | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function createFoodItem(
+  tenantId: string,
+  userId: string,
+  input: CreateFoodItemInput,
+): Promise<FoodItem> {
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_food_item (
+        id, tenant_id, user_id, source, name, brand,
+        serving_size_g, serving_label, kcal, protein_g, carbs_g, fat_g,
+        fiber_g, sugar_g, sodium_mg, metadata)
+     VALUES ($1,$2,$3,'custom',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
+     RETURNING ${FOOD_ITEM_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      input.name,
+      input.brand ?? null,
+      input.servingSizeG ?? null,
+      input.servingLabel ?? null,
+      input.kcal ?? null,
+      input.proteinG ?? null,
+      input.carbsG ?? null,
+      input.fatG ?? null,
+      input.fiberG ?? null,
+      input.sugarG ?? null,
+      input.sodiumMg ?? null,
+      JSON.stringify(input.metadata ?? {}),
+    ],
+  );
+  return rowToFoodItem(r.rows[0]);
+}
+
+export interface SearchFoodItemsInput {
+  tenantId: string;
+  userId: string;
+  query?: string;
+  limit?: number;
+}
+
+export async function searchFoodItems(
+  input: SearchFoodItemsInput,
+): Promise<FoodItem[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE tenant_id = $1 AND (user_id = $2 OR user_id IS NULL)`;
+  if (input.query && input.query.trim().length > 0) {
+    params.push(`%${input.query.trim()}%`);
+    where += ` AND name ILIKE $${params.length}`;
+  }
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT ${FOOD_ITEM_COLS}
+       FROM agos_mh_food_item
+       ${where}
+      ORDER BY name
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map(rowToFoodItem);
+}
+
+export async function getFoodItem(
+  id: string,
+  tenantId: string,
+): Promise<FoodItem | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${FOOD_ITEM_COLS}
+       FROM agos_mh_food_item
+      WHERE id = $1 AND tenant_id = $2`,
+    [id, tenantId],
+  );
+  if (r.rowCount === 0) return null;
+  return rowToFoodItem(r.rows[0]);
+}
+
+export async function listUserFoodItems(
+  tenantId: string,
+  userId: string,
+  limit = 200,
+): Promise<FoodItem[]> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${FOOD_ITEM_COLS}
+       FROM agos_mh_food_item
+      WHERE tenant_id = $1 AND user_id = $2
+      ORDER BY name
+      LIMIT $3`,
+    [tenantId, userId, Math.min(Math.max(limit, 1), 500)],
+  );
+  return r.rows.map(rowToFoodItem);
+}
+
+export interface UpdateFoodItemInput {
+  name?: string;
+  brand?: string | null;
+  servingSizeG?: number | null;
+  servingLabel?: string | null;
+  kcal?: number | null;
+  proteinG?: number | null;
+  carbsG?: number | null;
+  fatG?: number | null;
+  fiberG?: number | null;
+  sugarG?: number | null;
+  sodiumMg?: number | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function updateFoodItem(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateFoodItemInput,
+): Promise<FoodItem | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_food_item
+        SET name           = COALESCE($4, name),
+            brand          = COALESCE($5, brand),
+            serving_size_g = COALESCE($6, serving_size_g),
+            serving_label  = COALESCE($7, serving_label),
+            kcal           = COALESCE($8, kcal),
+            protein_g      = COALESCE($9, protein_g),
+            carbs_g        = COALESCE($10, carbs_g),
+            fat_g          = COALESCE($11, fat_g),
+            fiber_g        = COALESCE($12, fiber_g),
+            sugar_g        = COALESCE($13, sugar_g),
+            sodium_mg      = COALESCE($14, sodium_mg),
+            metadata       = COALESCE($15::jsonb, metadata),
+            updated_at     = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3 AND source = 'custom'
+      RETURNING ${FOOD_ITEM_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      patch.name ?? null,
+      patch.brand ?? null,
+      patch.servingSizeG ?? null,
+      patch.servingLabel ?? null,
+      patch.kcal ?? null,
+      patch.proteinG ?? null,
+      patch.carbsG ?? null,
+      patch.fatG ?? null,
+      patch.fiberG ?? null,
+      patch.sugarG ?? null,
+      patch.sodiumMg ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  return rowToFoodItem(r.rows[0]);
+}
+
+export async function deleteFoodItem(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_food_item
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3 AND source = 'custom'`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Meal entries (Phase 5a) ────────────────────────────────────────────────
+
+export interface MealEntry {
+  id: string;
+  tenantId: string;
+  userId: string;
+  entryDate: string;
+  mealSlot: MealSlotValue;
+  foodItemId: string | null;
+  foodItem?: FoodItem | null;
+  freeformDescription: string | null;
+  servings: number;
+  kcalOverride: number | null;
+  proteinGOverride: number | null;
+  carbsGOverride: number | null;
+  fatGOverride: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Resolved nutrient totals: override → food_item × servings → null. */
+  nutrients: { kcal: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null };
+}
+
+const MEAL_ENTRY_COLS = `
+  id, tenant_id, user_id, entry_date, meal_slot, food_item_id,
+  freeform_description, servings, kcal_override, protein_g_override,
+  carbs_g_override, fat_g_override, notes, created_at, updated_at
+`;
+
+function rowToMealEntry(row: any, food?: FoodItem | null): MealEntry {
+  const entry: MealEntry = {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    entryDate:
+      row.entry_date instanceof Date
+        ? row.entry_date.toISOString().slice(0, 10)
+        : String(row.entry_date).slice(0, 10),
+    mealSlot: row.meal_slot as MealSlotValue,
+    foodItemId: row.food_item_id,
+    foodItem: food ?? null,
+    freeformDescription: row.freeform_description,
+    servings: Number(row.servings),
+    kcalOverride: num(row.kcal_override),
+    proteinGOverride: num(row.protein_g_override),
+    carbsGOverride: num(row.carbs_g_override),
+    fatGOverride: num(row.fat_g_override),
+    notes: row.notes,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+    nutrients: { kcal: null, protein_g: null, carbs_g: null, fat_g: null },
+  };
+  entry.nutrients = mergeMealEntryNutrients(entry);
+  return entry;
+}
+
+/**
+ * Resolve final nutrient totals for a meal entry. Overrides take precedence;
+ * otherwise the food_item nutrient × servings; otherwise null. Each macro is
+ * resolved independently — partial overrides are allowed.
+ */
+export function mergeMealEntryNutrients(entry: {
+  servings: number;
+  foodItem?: FoodItem | null;
+  kcalOverride: number | null;
+  proteinGOverride: number | null;
+  carbsGOverride: number | null;
+  fatGOverride: number | null;
+}): { kcal: number | null; protein_g: number | null; carbs_g: number | null; fat_g: number | null } {
+  const fi = entry.foodItem;
+  const s = entry.servings ?? 1;
+  const fromFood = (v: number | null | undefined): number | null =>
+    typeof v === 'number' ? Number((v * s).toFixed(2)) : null;
+  return {
+    kcal: entry.kcalOverride ?? fromFood(fi?.kcal ?? null),
+    protein_g: entry.proteinGOverride ?? fromFood(fi?.proteinG ?? null),
+    carbs_g: entry.carbsGOverride ?? fromFood(fi?.carbsG ?? null),
+    fat_g: entry.fatGOverride ?? fromFood(fi?.fatG ?? null),
+  };
+}
+
+export interface CreateMealEntryInput {
+  entryDate: string;
+  mealSlot: MealSlotValue;
+  foodItemId?: string | null;
+  freeformDescription?: string | null;
+  servings?: number;
+  kcalOverride?: number | null;
+  proteinGOverride?: number | null;
+  carbsGOverride?: number | null;
+  fatGOverride?: number | null;
+  notes?: string | null;
+}
+
+export class MealEntryValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MealEntryValidationError';
+  }
+}
+
+export async function createMealEntry(
+  tenantId: string,
+  userId: string,
+  input: CreateMealEntryInput,
+): Promise<MealEntry> {
+  const hasFood = !!input.foodItemId;
+  const hasFreeform = !!(input.freeformDescription && input.freeformDescription.trim());
+  const hasOverride =
+    input.kcalOverride !== null && input.kcalOverride !== undefined ||
+    input.proteinGOverride !== null && input.proteinGOverride !== undefined ||
+    input.carbsGOverride !== null && input.carbsGOverride !== undefined ||
+    input.fatGOverride !== null && input.fatGOverride !== undefined;
+  if (!hasFood && !hasFreeform && !hasOverride) {
+    throw new MealEntryValidationError(
+      'Meal entry requires either a food item, a freeform description, or a nutrient override.',
+    );
+  }
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_meal_entry (
+        id, tenant_id, user_id, entry_date, meal_slot, food_item_id,
+        freeform_description, servings, kcal_override, protein_g_override,
+        carbs_g_override, fat_g_override, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+     RETURNING ${MEAL_ENTRY_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      input.entryDate,
+      input.mealSlot,
+      input.foodItemId ?? null,
+      input.freeformDescription ?? null,
+      input.servings ?? 1,
+      input.kcalOverride ?? null,
+      input.proteinGOverride ?? null,
+      input.carbsGOverride ?? null,
+      input.fatGOverride ?? null,
+      input.notes ?? null,
+    ],
+  );
+  const food = input.foodItemId ? await getFoodItem(input.foodItemId, tenantId) : null;
+  return rowToMealEntry(r.rows[0], food);
+}
+
+export interface ListMealEntriesInput {
+  tenantId: string;
+  userId: string;
+  fromDate?: string;
+  toDate?: string;
+  limit?: number;
+}
+
+export async function listMealEntries(
+  input: ListMealEntriesInput,
+): Promise<MealEntry[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE m.tenant_id = $1 AND m.user_id = $2`;
+  if (input.fromDate) {
+    params.push(input.fromDate);
+    where += ` AND m.entry_date >= $${params.length}`;
+  }
+  if (input.toDate) {
+    params.push(input.toDate);
+    where += ` AND m.entry_date <= $${params.length}`;
+  }
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT m.id, m.tenant_id, m.user_id, m.entry_date, m.meal_slot,
+            m.food_item_id, m.freeform_description, m.servings,
+            m.kcal_override, m.protein_g_override, m.carbs_g_override,
+            m.fat_g_override, m.notes, m.created_at, m.updated_at,
+            f.id AS f_id, f.tenant_id AS f_tenant_id, f.user_id AS f_user_id,
+            f.source AS f_source, f.usda_fdc_id AS f_usda_fdc_id,
+            f.name AS f_name, f.brand AS f_brand,
+            f.serving_size_g AS f_serving_size_g, f.serving_label AS f_serving_label,
+            f.kcal AS f_kcal, f.protein_g AS f_protein_g, f.carbs_g AS f_carbs_g,
+            f.fat_g AS f_fat_g, f.fiber_g AS f_fiber_g, f.sugar_g AS f_sugar_g,
+            f.sodium_mg AS f_sodium_mg, f.metadata AS f_metadata,
+            f.created_at AS f_created_at, f.updated_at AS f_updated_at
+       FROM agos_mh_meal_entry m
+       LEFT JOIN agos_mh_food_item f ON f.id = m.food_item_id
+       ${where}
+      ORDER BY m.entry_date DESC, m.meal_slot, m.created_at
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map((row: any) => {
+    let food: FoodItem | null = null;
+    if (row.f_id) {
+      food = rowToFoodItem({
+        id: row.f_id,
+        tenant_id: row.f_tenant_id,
+        user_id: row.f_user_id,
+        source: row.f_source,
+        usda_fdc_id: row.f_usda_fdc_id,
+        name: row.f_name,
+        brand: row.f_brand,
+        serving_size_g: row.f_serving_size_g,
+        serving_label: row.f_serving_label,
+        kcal: row.f_kcal,
+        protein_g: row.f_protein_g,
+        carbs_g: row.f_carbs_g,
+        fat_g: row.f_fat_g,
+        fiber_g: row.f_fiber_g,
+        sugar_g: row.f_sugar_g,
+        sodium_mg: row.f_sodium_mg,
+        metadata: row.f_metadata,
+        created_at: row.f_created_at,
+        updated_at: row.f_updated_at,
+      });
+    }
+    return rowToMealEntry(row, food);
+  });
+}
+
+export async function getMealEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<MealEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${MEAL_ENTRY_COLS}
+       FROM agos_mh_meal_entry
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  const row = r.rows[0];
+  const food = row.food_item_id ? await getFoodItem(row.food_item_id, tenantId) : null;
+  return rowToMealEntry(row, food);
+}
+
+export interface UpdateMealEntryInput {
+  entryDate?: string;
+  mealSlot?: MealSlotValue;
+  foodItemId?: string | null;
+  freeformDescription?: string | null;
+  servings?: number;
+  kcalOverride?: number | null;
+  proteinGOverride?: number | null;
+  carbsGOverride?: number | null;
+  fatGOverride?: number | null;
+  notes?: string | null;
+}
+
+export async function updateMealEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateMealEntryInput,
+): Promise<MealEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_meal_entry
+        SET entry_date           = COALESCE($4, entry_date),
+            meal_slot            = COALESCE($5, meal_slot),
+            food_item_id         = COALESCE($6, food_item_id),
+            freeform_description = COALESCE($7, freeform_description),
+            servings             = COALESCE($8, servings),
+            kcal_override        = COALESCE($9, kcal_override),
+            protein_g_override   = COALESCE($10, protein_g_override),
+            carbs_g_override     = COALESCE($11, carbs_g_override),
+            fat_g_override       = COALESCE($12, fat_g_override),
+            notes                = COALESCE($13, notes),
+            updated_at           = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
+      RETURNING ${MEAL_ENTRY_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      patch.entryDate ?? null,
+      patch.mealSlot ?? null,
+      patch.foodItemId ?? null,
+      patch.freeformDescription ?? null,
+      patch.servings ?? null,
+      patch.kcalOverride ?? null,
+      patch.proteinGOverride ?? null,
+      patch.carbsGOverride ?? null,
+      patch.fatGOverride ?? null,
+      patch.notes ?? null,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const row = r.rows[0];
+  const food = row.food_item_id ? await getFoodItem(row.food_item_id, tenantId) : null;
+  return rowToMealEntry(row, food);
+}
+
+export async function deleteMealEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_meal_entry
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Activity entries (Phase 5a) ────────────────────────────────────────────
+
+export interface ActivityEntry {
+  id: string;
+  tenantId: string;
+  userId: string;
+  entryDate: string;
+  activityType: string;
+  durationMin: number;
+  intensity: ActivityIntensityValue;
+  kcalBurned: number | null;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const ACTIVITY_ENTRY_COLS = `
+  id, tenant_id, user_id, entry_date, activity_type, duration_min,
+  intensity, kcal_burned, notes, metadata, created_at, updated_at
+`;
+
+function rowToActivityEntry(row: any): ActivityEntry {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    entryDate:
+      row.entry_date instanceof Date
+        ? row.entry_date.toISOString().slice(0, 10)
+        : String(row.entry_date).slice(0, 10),
+    activityType: row.activity_type,
+    durationMin: Number(row.duration_min),
+    intensity: row.intensity as ActivityIntensityValue,
+    kcalBurned: num(row.kcal_burned),
+    notes: row.notes,
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+/**
+ * MET (Metabolic Equivalent of Task) lookup. Values are the steady-state
+ * MET for the named activity at moderate intensity. The estimator scales
+ * ±20% for 'light' / 'vigorous'. Sourced from the Compendium of Physical
+ * Activities (Ainsworth et al., 2011, public-domain summary tables) —
+ * paraphrased / typical values, not the full code-level catalog.
+ */
+export const MET_TABLE: Record<string, number> = {
+  walk: 3.5,
+  walking: 3.5,
+  run: 9.0,
+  running: 9.0,
+  jog: 7.0,
+  jogging: 7.0,
+  cycling: 7.5,
+  bike: 7.5,
+  biking: 7.5,
+  swim: 8.0,
+  swimming: 8.0,
+  hike: 6.0,
+  hiking: 6.0,
+  yoga: 2.5,
+  pilates: 3.0,
+  weights: 5.0,
+  lifting: 5.0,
+  strength: 5.0,
+  hiit: 8.0,
+  dance: 5.0,
+  dancing: 5.0,
+  rowing: 7.0,
+  elliptical: 5.0,
+  stretching: 2.3,
+  basketball: 6.5,
+  soccer: 7.0,
+  tennis: 7.3,
+  climbing: 8.0,
+};
+
+const DEFAULT_MET = 4.0;
+const DEFAULT_WEIGHT_KG = 75;
+
+export function estimateActivityKcal(
+  activityType: string,
+  durationMin: number,
+  intensity: ActivityIntensityValue,
+  weightKg: number | null | undefined,
+): number {
+  const key = activityType.trim().toLowerCase();
+  const baseMet = MET_TABLE[key] ?? DEFAULT_MET;
+  const intensityFactor =
+    intensity === 'light' ? 0.8 : intensity === 'vigorous' ? 1.2 : 1.0;
+  const met = baseMet * intensityFactor;
+  const w = typeof weightKg === 'number' && weightKg > 0 ? weightKg : DEFAULT_WEIGHT_KG;
+  const kcal = met * w * (durationMin / 60);
+  return Number(kcal.toFixed(1));
+}
+
+async function getProfileWeightKg(
+  userId: string,
+  tenantId: string,
+): Promise<number | null> {
+  const pool = getHealthPool();
+  // Try the cross-domain physical profile first (height/weight live here).
+  const phys = await pool.query(
+    `SELECT weight_kg FROM agos_health_profile WHERE user_id = $1`,
+    [userId],
+  );
+  if ((phys.rowCount ?? 0) > 0 && phys.rows[0].weight_kg !== null) {
+    return Number(phys.rows[0].weight_kg);
+  }
+  // Fall back to the mental-health profile (no weight column today; reserved
+  // for future use). Returning null is fine — the estimator has its own
+  // default. Tenant lookup is kept here so future shape changes can land.
+  void tenantId;
+  return null;
+}
+
+export interface CreateActivityEntryInput {
+  entryDate: string;
+  activityType: string;
+  durationMin: number;
+  intensity?: ActivityIntensityValue;
+  kcalBurned?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function createActivityEntry(
+  tenantId: string,
+  userId: string,
+  input: CreateActivityEntryInput,
+): Promise<ActivityEntry> {
+  const pool = getHealthPool();
+  const intensity: ActivityIntensityValue = input.intensity ?? 'moderate';
+  let kcal = input.kcalBurned ?? null;
+  if (kcal === null) {
+    const weightKg = await getProfileWeightKg(userId, tenantId);
+    kcal = estimateActivityKcal(
+      input.activityType,
+      input.durationMin,
+      intensity,
+      weightKg,
+    );
+  }
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_activity_entry (
+        id, tenant_id, user_id, entry_date, activity_type, duration_min,
+        intensity, kcal_burned, notes, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
+     RETURNING ${ACTIVITY_ENTRY_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      input.entryDate,
+      input.activityType.trim(),
+      input.durationMin,
+      intensity,
+      kcal,
+      input.notes ?? null,
+      JSON.stringify(input.metadata ?? {}),
+    ],
+  );
+  return rowToActivityEntry(r.rows[0]);
+}
+
+export interface ListActivityEntriesInput {
+  tenantId: string;
+  userId: string;
+  fromDate?: string;
+  toDate?: string;
+  limit?: number;
+}
+
+export async function listActivityEntries(
+  input: ListActivityEntriesInput,
+): Promise<ActivityEntry[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE tenant_id = $1 AND user_id = $2`;
+  if (input.fromDate) {
+    params.push(input.fromDate);
+    where += ` AND entry_date >= $${params.length}`;
+  }
+  if (input.toDate) {
+    params.push(input.toDate);
+    where += ` AND entry_date <= $${params.length}`;
+  }
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT ${ACTIVITY_ENTRY_COLS}
+       FROM agos_mh_activity_entry
+       ${where}
+      ORDER BY entry_date DESC, created_at
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map(rowToActivityEntry);
+}
+
+export async function getActivityEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<ActivityEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${ACTIVITY_ENTRY_COLS}
+       FROM agos_mh_activity_entry
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  return rowToActivityEntry(r.rows[0]);
+}
+
+export interface UpdateActivityEntryInput {
+  entryDate?: string;
+  activityType?: string;
+  durationMin?: number;
+  intensity?: ActivityIntensityValue;
+  kcalBurned?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export async function updateActivityEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateActivityEntryInput,
+): Promise<ActivityEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_activity_entry
+        SET entry_date    = COALESCE($4, entry_date),
+            activity_type = COALESCE($5, activity_type),
+            duration_min  = COALESCE($6, duration_min),
+            intensity     = COALESCE($7, intensity),
+            kcal_burned   = COALESCE($8, kcal_burned),
+            notes         = COALESCE($9, notes),
+            metadata      = COALESCE($10::jsonb, metadata),
+            updated_at    = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
+      RETURNING ${ACTIVITY_ENTRY_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      patch.entryDate ?? null,
+      patch.activityType ? patch.activityType.trim() : null,
+      patch.durationMin ?? null,
+      patch.intensity ?? null,
+      patch.kcalBurned ?? null,
+      patch.notes ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  return rowToActivityEntry(r.rows[0]);
+}
+
+export async function deleteActivityEntry(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_activity_entry
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Daily summaries (Phase 5a) ─────────────────────────────────────────────
+
+export interface DailyNutritionSummary {
+  date: string;
+  kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  meal_count: number;
+}
+
+export async function getDailyNutritionSummary(
+  tenantId: string,
+  userId: string,
+  date: string,
+): Promise<DailyNutritionSummary> {
+  const entries = await listMealEntries({
+    tenantId,
+    userId,
+    fromDate: date,
+    toDate: date,
+    limit: 100,
+  });
+  let kcal = 0,
+    protein = 0,
+    carbs = 0,
+    fat = 0;
+  for (const e of entries) {
+    if (e.nutrients.kcal !== null) kcal += e.nutrients.kcal;
+    if (e.nutrients.protein_g !== null) protein += e.nutrients.protein_g;
+    if (e.nutrients.carbs_g !== null) carbs += e.nutrients.carbs_g;
+    if (e.nutrients.fat_g !== null) fat += e.nutrients.fat_g;
+  }
+  return {
+    date,
+    kcal: Number(kcal.toFixed(1)),
+    protein_g: Number(protein.toFixed(1)),
+    carbs_g: Number(carbs.toFixed(1)),
+    fat_g: Number(fat.toFixed(1)),
+    meal_count: entries.length,
+  };
+}
+
+export interface DailyActivitySummary {
+  date: string;
+  duration_min: number;
+  kcal_burned: number;
+  activity_count: number;
+}
+
+export async function getDailyActivitySummary(
+  tenantId: string,
+  userId: string,
+  date: string,
+): Promise<DailyActivitySummary> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT
+        COALESCE(SUM(duration_min), 0)::int AS duration_min,
+        COALESCE(SUM(kcal_burned), 0)::float AS kcal_burned,
+        COUNT(*)::int AS activity_count
+       FROM agos_mh_activity_entry
+      WHERE tenant_id = $1 AND user_id = $2 AND entry_date = $3`,
+    [tenantId, userId, date],
+  );
+  const row = r.rows[0] ?? {};
+  return {
+    date,
+    duration_min: Number(row.duration_min ?? 0),
+    kcal_burned: Number((Number(row.kcal_burned ?? 0)).toFixed(1)),
+    activity_count: Number(row.activity_count ?? 0),
+  };
+}

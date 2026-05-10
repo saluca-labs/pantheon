@@ -8,11 +8,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Activity,
   ActivitySquare,
   BookOpen,
   Brain,
   Flower2,
   TrendingUp,
+  Utensils,
 } from 'lucide-react';
 import { TrendChart, type TrendSeries } from '@/components/agentic-os/_shared/trend-chart';
 import { TagHeatmap } from '@/components/agentic-os/_shared/tag-heatmap';
@@ -32,12 +34,26 @@ export interface TrendsPayload {
   }[];
   screener_series: { date: string; kind: string; score: number }[];
   tag_heatmap: { tag: string; bucket: string; count: number }[];
+  nutrition_series: {
+    date: string;
+    kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  }[];
+  activity_series: {
+    date: string;
+    duration_min: number;
+    kcal_burned: number;
+  }[];
   stats: {
     avg_mood: number | null;
     journal_count: number;
     cbt_count: number;
     meditation_count: number;
     screener_trend: 'up' | 'down' | 'flat';
+    avg_daily_kcal: number | null;
+    avg_daily_active_min: number | null;
   };
 }
 
@@ -69,6 +85,56 @@ function buildMoodSeries(rows: TrendsPayload['mood_series']): TrendSeries[] {
       label: 'Sleep (1-4)',
       color: '#a855f7',
       data: rows.map((r) => ({ date: r.date, value: r.sleep })),
+    },
+  ];
+}
+
+function buildNutritionSeries(
+  rows: TrendsPayload['nutrition_series'],
+): TrendSeries[] {
+  return [
+    {
+      key: 'kcal',
+      label: 'kcal',
+      color: '#10b981',
+      data: rows.map((r) => ({ date: r.date, value: r.kcal })),
+    },
+    {
+      key: 'protein_g',
+      label: 'Protein g',
+      color: '#4361EE',
+      data: rows.map((r) => ({ date: r.date, value: r.protein_g })),
+    },
+    {
+      key: 'carbs_g',
+      label: 'Carbs g',
+      color: '#f59e0b',
+      data: rows.map((r) => ({ date: r.date, value: r.carbs_g })),
+    },
+    {
+      key: 'fat_g',
+      label: 'Fat g',
+      color: '#a855f7',
+      data: rows.map((r) => ({ date: r.date, value: r.fat_g })),
+    },
+  ];
+}
+
+function buildActivitySeries(
+  rows: TrendsPayload['activity_series'],
+): TrendSeries[] {
+  return [
+    {
+      key: 'duration_min',
+      label: 'Duration (min)',
+      color: '#10b981',
+      data: rows.map((r) => ({ date: r.date, value: r.duration_min })),
+    },
+    {
+      key: 'kcal_burned',
+      label: 'kcal burned',
+      color: '#f59e0b',
+      data: rows.map((r) => ({ date: r.date, value: r.kcal_burned })),
     },
   ];
 }
@@ -156,7 +222,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard
           label={`Avg mood (${window})`}
           value={
@@ -180,6 +246,24 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
           label="Meditations"
           value={data.stats.meditation_count}
           icon={<Flower2 className="w-3.5 h-3.5" />}
+        />
+        <StatCard
+          label="Avg daily kcal"
+          value={
+            data.stats.avg_daily_kcal === null
+              ? '—'
+              : data.stats.avg_daily_kcal.toFixed(0)
+          }
+          icon={<Utensils className="w-3.5 h-3.5" />}
+        />
+        <StatCard
+          label="Avg daily active min"
+          value={
+            data.stats.avg_daily_active_min === null
+              ? '—'
+              : data.stats.avg_daily_active_min.toFixed(0)
+          }
+          icon={<Activity className="w-3.5 h-3.5" />}
         />
       </div>
 
@@ -224,6 +308,28 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         <TrendChart
           series={buildScreenerSeries(data.screener_series)}
           emptyLabel="No screeners in this window — take PHQ-9 / GAD-7 / PSS-10 to start the trend."
+        />
+      </section>
+
+      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Utensils className="w-4 h-4 text-[#4361EE]" />
+          <h2 className="text-sm font-semibold text-white">Nutrition</h2>
+        </div>
+        <TrendChart
+          series={buildNutritionSeries(data.nutrition_series)}
+          emptyLabel="No meals logged in this window — start tracking on the Nutrition page."
+        />
+      </section>
+
+      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Activity className="w-4 h-4 text-[#4361EE]" />
+          <h2 className="text-sm font-semibold text-white">Activity</h2>
+        </div>
+        <TrendChart
+          series={buildActivitySeries(data.activity_series)}
+          emptyLabel="No activity logged in this window — start tracking on the Activity page."
         />
       </section>
 

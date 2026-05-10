@@ -106,6 +106,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Track sessions and follow a weekly plan.',
       },
       {
+        href: '/dashboard/os/health/nutrition',
+        label: 'Nutrition log',
+        description: 'Log meals manually or from your custom food catalog.',
+      },
+      {
+        href: '/dashboard/os/health/activity',
+        label: 'Activity log',
+        description: 'Track exercise with MET-based kcal estimation.',
+      },
+      {
         href: '/dashboard/os/health/plan',
         label: 'Plan generator',
         description: 'Draft citation-backed nutrition, activity, and sleep plans.',
