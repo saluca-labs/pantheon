@@ -111,6 +111,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Log meals manually or from your custom food catalog.',
       },
       {
+        href: '/dashboard/os/health/recipes',
+        label: 'Recipes',
+        description: 'Build reusable recipes with per-serving nutrition rollup.',
+      },
+      {
+        href: '/dashboard/os/health/meal-plan',
+        label: 'Meal plan',
+        description: 'Plan the week — recipes, foods, and freeform meals.',
+      },
+      {
         href: '/dashboard/os/health/activity',
         label: 'Activity log',
         description: 'Track exercise with MET-based kcal estimation.',

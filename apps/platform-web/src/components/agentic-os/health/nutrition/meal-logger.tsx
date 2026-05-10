@@ -15,9 +15,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Trash2, Utensils, X } from 'lucide-react';
 import {
-  Combobox,
-  type ComboboxOption,
-} from '@/components/agentic-os/_shared/combobox';
+  FoodCombobox,
+  type FoodPickerItem,
+} from '@/components/agentic-os/health/nutrition/food-combobox';
 
 type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -304,10 +304,6 @@ function SlotCard({
   );
 }
 
-interface FoodOption {
-  item: FoodItem;
-}
-
 function MealDrawer({
   date,
   slot,
@@ -325,8 +321,6 @@ function MealDrawer({
     editing?.foodItem?.name ?? editing?.freeformDescription ?? '',
   );
   const [foodId, setFoodId] = useState<string | null>(editing?.foodItemId ?? null);
-  const [foodOptions, setFoodOptions] = useState<ComboboxOption<FoodOption>[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [servings, setServings] = useState<number>(editing?.servings ?? 1);
   const [kcal, setKcal] = useState<string>(
     editing?.kcalOverride !== null && editing?.kcalOverride !== undefined
@@ -351,40 +345,6 @@ function MealDrawer({
   const [notes, setNotes] = useState(editing?.notes ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const handle = window.setTimeout(async () => {
-      if (foodQuery.trim().length < 2) {
-        setFoodOptions([]);
-        return;
-      }
-      setSearchLoading(true);
-      try {
-        const r = await fetch(
-          `/api/tiresias/agentic-os/health/food?q=${encodeURIComponent(foodQuery)}&limit=15`,
-          { cache: 'no-store' },
-        );
-        const j = await r.json();
-        if (!active) return;
-        const items: FoodItem[] = j.items ?? [];
-        setFoodOptions(
-          items.map((it) => ({
-            id: it.id,
-            label: it.name,
-            sublabel: it.brand ?? undefined,
-            data: { item: it },
-          })),
-        );
-      } finally {
-        if (active) setSearchLoading(false);
-      }
-    }, 200);
-    return () => {
-      active = false;
-      window.clearTimeout(handle);
-    };
-  }, [foodQuery]);
 
   const numOrNull = (s: string): number | null =>
     s.trim().length === 0 ? null : Number(s);
@@ -450,19 +410,14 @@ function MealDrawer({
             <label className="mb-1 block text-xs text-[#94a3b8]">
               Food (search the catalog or type freeform)
             </label>
-            <Combobox<FoodOption>
+            <FoodCombobox
               value={foodQuery}
-              onChange={(v) => {
-                setFoodQuery(v);
-                if (foodId) setFoodId(null);
+              onChange={setFoodQuery}
+              onSelect={(it: FoodPickerItem | null) => {
+                setFoodId(it?.id ?? null);
+                if (it?.name) setFoodQuery(it.name);
               }}
-              onSelect={(opt) => {
-                setFoodId(opt.data.item.id);
-              }}
-              options={foodOptions}
-              loading={searchLoading}
-              placeholder="e.g. oatmeal, chicken breast, …"
-              emptyLabel="No matches — type freeform or add a custom food"
+              selectedId={foodId}
             />
           </div>
 

@@ -7,6 +7,12 @@ import type {
   MentalProfileInput,
 } from './schemas';
 import type { RiskFlagInput, RiskFlagSeverity } from '../_shared/types';
+import {
+  getFood as fdcGetFood,
+  isUsdaConfigured,
+  mapFdcToFoodItem,
+  searchFoods as fdcSearchFoods,
+} from './usda-fdc';
 
 // ─── Profile ───────────────────────────────────────────────────────────────
 
@@ -2985,4 +2991,1226 @@ export async function getDailyActivitySummary(
     kcal_burned: Number((Number(row.kcal_burned ?? 0)).toFixed(1)),
     activity_count: Number(row.activity_count ?? 0),
   };
+}
+
+// ─── USDA cache (Phase 5b) ──────────────────────────────────────────────────
+
+export interface SearchUsdaAndCacheInput {
+  tenantId: string;
+  query: string;
+  limit?: number;
+}
+
+/**
+ * Search USDA FoodData Central, upsert each hit into ``agos_mh_food_item``
+ * with ``source='usda'`` and ``user_id=NULL``, and return the cached rows.
+ *
+ * If ``USDA_FDC_API_KEY`` is unset, returns ``[]`` — callers branch on
+ * that to surface an inline "USDA not configured" notice.
+ */
+export async function searchUsdaAndCache(
+  input: SearchUsdaAndCacheInput,
+): Promise<FoodItem[]> {
+  if (!isUsdaConfigured()) return [];
+  const hits = await fdcSearchFoods(input.query, {
+    pageSize: Math.min(Math.max(input.limit ?? 15, 1), 50),
+  });
+  if (hits.length === 0) return [];
+  const pool = getHealthPool();
+  const out: FoodItem[] = [];
+  for (const hit of hits) {
+    // The search endpoint returns a partial nutrient list; we still map it
+    // so the row has macros for the common case. Detail-fetch on import
+    // backfills anything missing.
+    const detail = {
+      fdcId: hit.fdcId,
+      description: hit.description,
+      brandName: hit.brandName ?? null,
+      brandOwner: hit.brandOwner ?? null,
+      dataType: hit.dataType,
+      servingSize: hit.servingSize ?? null,
+      servingSizeUnit: hit.servingSizeUnit ?? null,
+      foodNutrients: hit.foodNutrients ?? [],
+    };
+    const mapped = mapFdcToFoodItem(detail);
+    const id = randomUUID();
+    const r = await pool.query(
+      `INSERT INTO agos_mh_food_item (
+          id, tenant_id, user_id, source, usda_fdc_id, name, brand,
+          serving_size_g, serving_label, kcal, protein_g, carbs_g, fat_g,
+          fiber_g, sugar_g, sodium_mg, metadata)
+       VALUES ($1,$2,NULL,'usda',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
+       ON CONFLICT (usda_fdc_id) WHERE usda_fdc_id IS NOT NULL DO UPDATE SET
+          name           = EXCLUDED.name,
+          brand          = EXCLUDED.brand,
+          serving_size_g = EXCLUDED.serving_size_g,
+          serving_label  = EXCLUDED.serving_label,
+          kcal           = COALESCE(EXCLUDED.kcal, agos_mh_food_item.kcal),
+          protein_g      = COALESCE(EXCLUDED.protein_g, agos_mh_food_item.protein_g),
+          carbs_g        = COALESCE(EXCLUDED.carbs_g, agos_mh_food_item.carbs_g),
+          fat_g          = COALESCE(EXCLUDED.fat_g, agos_mh_food_item.fat_g),
+          fiber_g        = COALESCE(EXCLUDED.fiber_g, agos_mh_food_item.fiber_g),
+          sugar_g        = COALESCE(EXCLUDED.sugar_g, agos_mh_food_item.sugar_g),
+          sodium_mg      = COALESCE(EXCLUDED.sodium_mg, agos_mh_food_item.sodium_mg),
+          metadata       = EXCLUDED.metadata,
+          updated_at     = now()
+       RETURNING ${FOOD_ITEM_COLS}`,
+      [
+        id,
+        input.tenantId,
+        mapped.usdaFdcId,
+        mapped.name,
+        mapped.brand ?? null,
+        mapped.servingSizeG ?? null,
+        mapped.servingLabel ?? null,
+        mapped.kcal ?? null,
+        mapped.proteinG ?? null,
+        mapped.carbsG ?? null,
+        mapped.fatG ?? null,
+        mapped.fiberG ?? null,
+        mapped.sugarG ?? null,
+        mapped.sodiumMg ?? null,
+        JSON.stringify(mapped.metadata ?? {}),
+      ],
+    );
+    out.push(rowToFoodItem(r.rows[0]));
+  }
+  return out;
+}
+
+export interface ImportUsdaFoodInput {
+  tenantId: string;
+  fdcId: number;
+}
+
+/**
+ * Fetch a single USDA food by fdcId, upsert into the cache, return it.
+ * Used by "import this USDA result" buttons in the UI.
+ */
+export async function importUsdaFood(
+  input: ImportUsdaFoodInput,
+): Promise<FoodItem> {
+  const detail = await fdcGetFood(input.fdcId);
+  const mapped = mapFdcToFoodItem(detail);
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_food_item (
+        id, tenant_id, user_id, source, usda_fdc_id, name, brand,
+        serving_size_g, serving_label, kcal, protein_g, carbs_g, fat_g,
+        fiber_g, sugar_g, sodium_mg, metadata)
+     VALUES ($1,$2,NULL,'usda',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
+     ON CONFLICT (usda_fdc_id) WHERE usda_fdc_id IS NOT NULL DO UPDATE SET
+        name           = EXCLUDED.name,
+        brand          = EXCLUDED.brand,
+        serving_size_g = EXCLUDED.serving_size_g,
+        serving_label  = EXCLUDED.serving_label,
+        kcal           = COALESCE(EXCLUDED.kcal, agos_mh_food_item.kcal),
+        protein_g      = COALESCE(EXCLUDED.protein_g, agos_mh_food_item.protein_g),
+        carbs_g        = COALESCE(EXCLUDED.carbs_g, agos_mh_food_item.carbs_g),
+        fat_g          = COALESCE(EXCLUDED.fat_g, agos_mh_food_item.fat_g),
+        fiber_g        = COALESCE(EXCLUDED.fiber_g, agos_mh_food_item.fiber_g),
+        sugar_g        = COALESCE(EXCLUDED.sugar_g, agos_mh_food_item.sugar_g),
+        sodium_mg      = COALESCE(EXCLUDED.sodium_mg, agos_mh_food_item.sodium_mg),
+        metadata       = EXCLUDED.metadata,
+        updated_at     = now()
+     RETURNING ${FOOD_ITEM_COLS}`,
+    [
+      id,
+      input.tenantId,
+      mapped.usdaFdcId,
+      mapped.name,
+      mapped.brand ?? null,
+      mapped.servingSizeG ?? null,
+      mapped.servingLabel ?? null,
+      mapped.kcal ?? null,
+      mapped.proteinG ?? null,
+      mapped.carbsG ?? null,
+      mapped.fatG ?? null,
+      mapped.fiberG ?? null,
+      mapped.sugarG ?? null,
+      mapped.sodiumMg ?? null,
+      JSON.stringify(mapped.metadata ?? {}),
+    ],
+  );
+  return rowToFoodItem(r.rows[0]);
+}
+
+// ─── Unit conversion (Phase 5b) ─────────────────────────────────────────────
+
+const UNIT_TO_GRAMS: Record<string, number> = {
+  g: 1,
+  gram: 1,
+  grams: 1,
+  kg: 1000,
+  oz: 28.3495,
+  lb: 453.592,
+  cup: 240,
+  tbsp: 15,
+  tsp: 5,
+};
+
+/**
+ * Convert ``quantity`` of ``unit`` to grams. Returns null for unknown
+ * units so recipe nutrition aggregates can show "partial" honestly
+ * rather than guessing.
+ */
+export function gramsFor(
+  quantity: number,
+  unit: string | null | undefined,
+): number | null {
+  if (typeof quantity !== 'number' || quantity < 0) return null;
+  if (!unit) return null;
+  const factor = UNIT_TO_GRAMS[unit.trim().toLowerCase()];
+  if (factor === undefined) return null;
+  return quantity * factor;
+}
+
+/**
+ * Return the ISO Monday for any date. Locale-independent: uses UTC date
+ * math so a Sunday late-night in a western TZ doesn't get bucketed into
+ * next week.
+ */
+export function mondayOf(input: Date | string): string {
+  const d = input instanceof Date ? new Date(input) : new Date(input);
+  // Anchor to UTC midnight so DST + locale never shift the bucket.
+  const utc = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+  );
+  const dow = utc.getUTCDay(); // 0=Sun..6=Sat
+  const delta = dow === 0 ? -6 : 1 - dow;
+  utc.setUTCDate(utc.getUTCDate() + delta);
+  return utc.toISOString().slice(0, 10);
+}
+
+// ─── Recipes (Phase 5b) ─────────────────────────────────────────────────────
+
+export interface RecipeIngredient {
+  id: string;
+  recipeId: string;
+  foodItemId: string | null;
+  foodItem?: FoodItem | null;
+  freeformName: string | null;
+  quantity: number;
+  unit: string | null;
+  position: number;
+  notes: string | null;
+}
+
+export interface Recipe {
+  id: string;
+  tenantId: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  servings: number;
+  prepMinutes: number | null;
+  cookMinutes: number | null;
+  instructions: string | null;
+  tags: string[];
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  ingredients?: RecipeIngredient[];
+}
+
+const RECIPE_COLS = `
+  id, tenant_id, user_id, name, description, servings, prep_minutes,
+  cook_minutes, instructions, tags, image_url, created_at, updated_at
+`;
+
+const INGREDIENT_COLS = `
+  id, recipe_id, food_item_id, freeform_name, quantity, unit, position, notes
+`;
+
+function rowToRecipe(row: any, ingredients?: RecipeIngredient[]): Recipe {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    name: row.name,
+    description: row.description,
+    servings: Number(row.servings),
+    prepMinutes: row.prep_minutes === null ? null : Number(row.prep_minutes),
+    cookMinutes: row.cook_minutes === null ? null : Number(row.cook_minutes),
+    instructions: row.instructions,
+    tags: row.tags ?? [],
+    imageUrl: row.image_url,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+    ingredients,
+  };
+}
+
+function rowToIngredient(
+  row: any,
+  food?: FoodItem | null,
+): RecipeIngredient {
+  return {
+    id: row.id,
+    recipeId: row.recipe_id,
+    foodItemId: row.food_item_id,
+    foodItem: food ?? null,
+    freeformName: row.freeform_name,
+    quantity: Number(row.quantity),
+    unit: row.unit,
+    position: Number(row.position),
+    notes: row.notes,
+  };
+}
+
+export interface CreateRecipeInput {
+  name: string;
+  description?: string | null;
+  servings?: number;
+  prepMinutes?: number | null;
+  cookMinutes?: number | null;
+  instructions?: string | null;
+  tags?: string[];
+  imageUrl?: string | null;
+}
+
+export async function createRecipe(
+  tenantId: string,
+  userId: string,
+  input: CreateRecipeInput,
+): Promise<Recipe> {
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_recipe (
+        id, tenant_id, user_id, name, description, servings,
+        prep_minutes, cook_minutes, instructions, tags, image_url)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+     RETURNING ${RECIPE_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      input.name,
+      input.description ?? null,
+      input.servings ?? 1,
+      input.prepMinutes ?? null,
+      input.cookMinutes ?? null,
+      input.instructions ?? null,
+      input.tags ?? [],
+      input.imageUrl ?? null,
+    ],
+  );
+  return rowToRecipe(r.rows[0], []);
+}
+
+export async function getRecipe(
+  id: string,
+  tenantId: string,
+): Promise<Recipe | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${RECIPE_COLS}
+       FROM agos_mh_recipe
+      WHERE id = $1 AND tenant_id = $2`,
+    [id, tenantId],
+  );
+  if (r.rowCount === 0) return null;
+  const ingredients = await listRecipeIngredients(id, tenantId);
+  return rowToRecipe(r.rows[0], ingredients);
+}
+
+export interface ListRecipesInput {
+  tenantId: string;
+  userId: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listRecipes(
+  input: ListRecipesInput,
+): Promise<Recipe[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
+  const offset = Math.max(input.offset ?? 0, 0);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE tenant_id = $1 AND user_id = $2`;
+  if (input.q && input.q.trim().length > 0) {
+    params.push(`%${input.q.trim()}%`);
+    where += ` AND name ILIKE $${params.length}`;
+  }
+  params.push(limit);
+  params.push(offset);
+  const r = await pool.query(
+    `SELECT ${RECIPE_COLS}
+       FROM agos_mh_recipe
+       ${where}
+      ORDER BY updated_at DESC
+      LIMIT $${params.length - 1}
+      OFFSET $${params.length}`,
+    params,
+  );
+  return r.rows.map((row: any) => rowToRecipe(row));
+}
+
+export interface UpdateRecipeInput {
+  name?: string;
+  description?: string | null;
+  servings?: number;
+  prepMinutes?: number | null;
+  cookMinutes?: number | null;
+  instructions?: string | null;
+  tags?: string[];
+  imageUrl?: string | null;
+}
+
+export async function updateRecipe(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateRecipeInput,
+): Promise<Recipe | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_recipe
+        SET name         = COALESCE($4, name),
+            description  = COALESCE($5, description),
+            servings     = COALESCE($6, servings),
+            prep_minutes = COALESCE($7, prep_minutes),
+            cook_minutes = COALESCE($8, cook_minutes),
+            instructions = COALESCE($9, instructions),
+            tags         = COALESCE($10, tags),
+            image_url    = COALESCE($11, image_url),
+            updated_at   = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
+      RETURNING ${RECIPE_COLS}`,
+    [
+      id,
+      tenantId,
+      userId,
+      patch.name ?? null,
+      patch.description ?? null,
+      patch.servings ?? null,
+      patch.prepMinutes ?? null,
+      patch.cookMinutes ?? null,
+      patch.instructions ?? null,
+      patch.tags ?? null,
+      patch.imageUrl ?? null,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const ingredients = await listRecipeIngredients(id, tenantId);
+  return rowToRecipe(r.rows[0], ingredients);
+}
+
+export async function deleteRecipe(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_recipe
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Recipe ingredients ─────────────────────────────────────────────────────
+
+export async function listRecipeIngredients(
+  recipeId: string,
+  tenantId: string,
+): Promise<RecipeIngredient[]> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT i.id, i.recipe_id, i.food_item_id, i.freeform_name, i.quantity,
+            i.unit, i.position, i.notes,
+            f.id AS f_id, f.tenant_id AS f_tenant_id, f.user_id AS f_user_id,
+            f.source AS f_source, f.usda_fdc_id AS f_usda_fdc_id,
+            f.name AS f_name, f.brand AS f_brand,
+            f.serving_size_g AS f_serving_size_g, f.serving_label AS f_serving_label,
+            f.kcal AS f_kcal, f.protein_g AS f_protein_g, f.carbs_g AS f_carbs_g,
+            f.fat_g AS f_fat_g, f.fiber_g AS f_fiber_g, f.sugar_g AS f_sugar_g,
+            f.sodium_mg AS f_sodium_mg, f.metadata AS f_metadata,
+            f.created_at AS f_created_at, f.updated_at AS f_updated_at
+       FROM agos_mh_recipe_ingredient i
+       JOIN agos_mh_recipe r ON r.id = i.recipe_id
+       LEFT JOIN agos_mh_food_item f ON f.id = i.food_item_id
+      WHERE i.recipe_id = $1 AND r.tenant_id = $2
+      ORDER BY i.position`,
+    [recipeId, tenantId],
+  );
+  return r.rows.map((row: any) => {
+    let food: FoodItem | null = null;
+    if (row.f_id) {
+      food = rowToFoodItem({
+        id: row.f_id,
+        tenant_id: row.f_tenant_id,
+        user_id: row.f_user_id,
+        source: row.f_source,
+        usda_fdc_id: row.f_usda_fdc_id,
+        name: row.f_name,
+        brand: row.f_brand,
+        serving_size_g: row.f_serving_size_g,
+        serving_label: row.f_serving_label,
+        kcal: row.f_kcal,
+        protein_g: row.f_protein_g,
+        carbs_g: row.f_carbs_g,
+        fat_g: row.f_fat_g,
+        fiber_g: row.f_fiber_g,
+        sugar_g: row.f_sugar_g,
+        sodium_mg: row.f_sodium_mg,
+        metadata: row.f_metadata,
+        created_at: row.f_created_at,
+        updated_at: row.f_updated_at,
+      });
+    }
+    return rowToIngredient(row, food);
+  });
+}
+
+export interface AddRecipeIngredientInput {
+  foodItemId?: string | null;
+  freeformName?: string | null;
+  quantity: number;
+  unit?: string | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function addRecipeIngredient(
+  recipeId: string,
+  tenantId: string,
+  userId: string,
+  input: AddRecipeIngredientInput,
+): Promise<RecipeIngredient | null> {
+  const pool = getHealthPool();
+  // Verify recipe ownership before insert.
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_recipe WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [recipeId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return null;
+  const id = randomUUID();
+  // Default position = end of list.
+  let position = input.position;
+  if (position === undefined || position === null) {
+    const tail = await pool.query(
+      `SELECT COALESCE(MAX(position), -1) AS p FROM agos_mh_recipe_ingredient WHERE recipe_id = $1`,
+      [recipeId],
+    );
+    position = Number(tail.rows[0].p) + 1;
+  }
+  const r = await pool.query(
+    `INSERT INTO agos_mh_recipe_ingredient (
+        id, recipe_id, food_item_id, freeform_name, quantity, unit, position, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     RETURNING ${INGREDIENT_COLS}`,
+    [
+      id,
+      recipeId,
+      input.foodItemId ?? null,
+      input.freeformName ?? null,
+      input.quantity,
+      input.unit ?? null,
+      position,
+      input.notes ?? null,
+    ],
+  );
+  const food = input.foodItemId
+    ? await getFoodItem(input.foodItemId, tenantId)
+    : null;
+  return rowToIngredient(r.rows[0], food);
+}
+
+export interface UpdateRecipeIngredientInput {
+  foodItemId?: string | null;
+  freeformName?: string | null;
+  quantity?: number;
+  unit?: string | null;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function updateRecipeIngredient(
+  ingredientId: string,
+  recipeId: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateRecipeIngredientInput,
+): Promise<RecipeIngredient | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_recipe_ingredient i
+        SET food_item_id  = COALESCE($4, i.food_item_id),
+            freeform_name = COALESCE($5, i.freeform_name),
+            quantity      = COALESCE($6, i.quantity),
+            unit          = COALESCE($7, i.unit),
+            position      = COALESCE($8, i.position),
+            notes         = COALESCE($9, i.notes)
+      FROM agos_mh_recipe r
+     WHERE i.id = $1 AND i.recipe_id = $2 AND r.id = i.recipe_id
+       AND r.tenant_id = $3 AND r.user_id = $10
+     RETURNING ${INGREDIENT_COLS.split(',').map((c) => 'i.' + c.trim()).join(', ')}`,
+    [
+      ingredientId,
+      recipeId,
+      tenantId,
+      patch.foodItemId ?? null,
+      patch.freeformName ?? null,
+      patch.quantity ?? null,
+      patch.unit ?? null,
+      patch.position ?? null,
+      patch.notes ?? null,
+      userId,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const row = r.rows[0];
+  const food = row.food_item_id ? await getFoodItem(row.food_item_id, tenantId) : null;
+  return rowToIngredient(row, food);
+}
+
+export async function deleteRecipeIngredient(
+  ingredientId: string,
+  recipeId: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_recipe_ingredient i
+      USING agos_mh_recipe r
+     WHERE i.id = $1 AND i.recipe_id = $2 AND r.id = i.recipe_id
+       AND r.tenant_id = $3 AND r.user_id = $4`,
+    [ingredientId, recipeId, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Re-assign positions to the supplied ingredient ids in order. Caller
+ * passes the full set in the desired new order; we rewrite ``position``
+ * to match the array index. Cross-tenant attempts are filtered out.
+ */
+export async function reorderRecipeIngredients(
+  recipeId: string,
+  tenantId: string,
+  userId: string,
+  orderedIds: string[],
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_recipe WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [recipeId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return false;
+  // Two-phase so we never collide on a (recipe_id, position) constraint
+  // even if we add one later: bump everything out of the way first.
+  await pool.query(
+    `UPDATE agos_mh_recipe_ingredient
+        SET position = position + 1000
+      WHERE recipe_id = $1`,
+    [recipeId],
+  );
+  for (let i = 0; i < orderedIds.length; i++) {
+    await pool.query(
+      `UPDATE agos_mh_recipe_ingredient
+          SET position = $3
+        WHERE id = $1 AND recipe_id = $2`,
+      [orderedIds[i], recipeId, i],
+    );
+  }
+  return true;
+}
+
+// ─── Recipe nutrition rollup ────────────────────────────────────────────────
+
+export interface RecipeNutrition {
+  recipeId: string;
+  servings: number;
+  total: {
+    kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+    fiber_g: number;
+    sugar_g: number;
+    sodium_mg: number;
+  };
+  perServing: {
+    kcal: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+    fiber_g: number;
+    sugar_g: number;
+    sodium_mg: number;
+  };
+  /** Ingredient count that we couldn't convert to grams (unit unknown). */
+  partial: number;
+}
+
+/**
+ * Aggregate ingredients × quantity-in-grams → recipe totals. Falls back to
+ * "1 unit ≈ 1 serving of the food item" when the unit is unknown but the
+ * food has nutrients per-serving; reports the remainder as ``partial``.
+ */
+export async function computeRecipeNutrition(
+  recipeId: string,
+  tenantId: string,
+): Promise<RecipeNutrition | null> {
+  const recipe = await getRecipe(recipeId, tenantId);
+  if (!recipe) return null;
+  let kcal = 0,
+    protein = 0,
+    carbs = 0,
+    fat = 0,
+    fiber = 0,
+    sugar = 0,
+    sodium = 0;
+  let partial = 0;
+  for (const ing of recipe.ingredients ?? []) {
+    const food = ing.foodItem;
+    if (!food) {
+      partial += 1;
+      continue;
+    }
+    const grams = gramsFor(ing.quantity, ing.unit);
+    // Two paths: grams-based (food row is per-100g) vs serving-based.
+    const servingSizeG = food.servingSizeG;
+    let factor: number | null = null;
+    if (grams !== null && servingSizeG && servingSizeG > 0) {
+      factor = grams / servingSizeG;
+    } else if (grams === null && (!ing.unit || ing.unit.trim() === '')) {
+      // No unit at all → treat quantity as # of servings of the food item.
+      factor = ing.quantity;
+    }
+    if (factor === null) {
+      partial += 1;
+      continue;
+    }
+    if (food.kcal !== null) kcal += food.kcal * factor;
+    if (food.proteinG !== null) protein += food.proteinG * factor;
+    if (food.carbsG !== null) carbs += food.carbsG * factor;
+    if (food.fatG !== null) fat += food.fatG * factor;
+    if (food.fiberG !== null) fiber += food.fiberG * factor;
+    if (food.sugarG !== null) sugar += food.sugarG * factor;
+    if (food.sodiumMg !== null) sodium += food.sodiumMg * factor;
+  }
+  const total = {
+    kcal: Number(kcal.toFixed(1)),
+    protein_g: Number(protein.toFixed(1)),
+    carbs_g: Number(carbs.toFixed(1)),
+    fat_g: Number(fat.toFixed(1)),
+    fiber_g: Number(fiber.toFixed(1)),
+    sugar_g: Number(sugar.toFixed(1)),
+    sodium_mg: Number(sodium.toFixed(1)),
+  };
+  const s = recipe.servings > 0 ? recipe.servings : 1;
+  const perServing = {
+    kcal: Number((total.kcal / s).toFixed(1)),
+    protein_g: Number((total.protein_g / s).toFixed(1)),
+    carbs_g: Number((total.carbs_g / s).toFixed(1)),
+    fat_g: Number((total.fat_g / s).toFixed(1)),
+    fiber_g: Number((total.fiber_g / s).toFixed(1)),
+    sugar_g: Number((total.sugar_g / s).toFixed(1)),
+    sodium_mg: Number((total.sodium_mg / s).toFixed(1)),
+  };
+  return {
+    recipeId,
+    servings: recipe.servings,
+    total,
+    perServing,
+    partial,
+  };
+}
+
+// ─── Meal plans (Phase 5b) ──────────────────────────────────────────────────
+
+export interface MealPlanSlot {
+  id: string;
+  planId: string;
+  dayOfWeek: number;
+  mealSlot: MealSlotValue;
+  recipeId: string | null;
+  recipe?: Recipe | null;
+  foodItemId: string | null;
+  foodItem?: FoodItem | null;
+  freeformText: string | null;
+  servings: number;
+  notes: string | null;
+  position: number;
+}
+
+export interface MealPlan {
+  id: string;
+  tenantId: string;
+  userId: string;
+  weekStartDate: string;
+  name: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  slots?: MealPlanSlot[];
+}
+
+const PLAN_COLS = `
+  id, tenant_id, user_id, week_start_date, name, notes, created_at, updated_at
+`;
+
+const PLAN_SLOT_COLS = `
+  id, plan_id, day_of_week, meal_slot, recipe_id, food_item_id,
+  freeform_text, servings, notes, position
+`;
+
+function rowToPlan(row: any, slots?: MealPlanSlot[]): MealPlan {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    userId: row.user_id,
+    weekStartDate:
+      row.week_start_date instanceof Date
+        ? row.week_start_date.toISOString().slice(0, 10)
+        : String(row.week_start_date).slice(0, 10),
+    name: row.name,
+    notes: row.notes,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+    slots,
+  };
+}
+
+function rowToSlot(
+  row: any,
+  recipe?: Recipe | null,
+  food?: FoodItem | null,
+): MealPlanSlot {
+  return {
+    id: row.id,
+    planId: row.plan_id,
+    dayOfWeek: Number(row.day_of_week),
+    mealSlot: row.meal_slot as MealSlotValue,
+    recipeId: row.recipe_id,
+    recipe: recipe ?? null,
+    foodItemId: row.food_item_id,
+    foodItem: food ?? null,
+    freeformText: row.freeform_text,
+    servings: Number(row.servings),
+    notes: row.notes,
+    position: Number(row.position),
+  };
+}
+
+export interface CreateMealPlanInput {
+  weekStartDate: string;
+  name?: string | null;
+  notes?: string | null;
+}
+
+export class MealPlanValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MealPlanValidationError';
+  }
+}
+
+export async function createMealPlan(
+  tenantId: string,
+  userId: string,
+  input: CreateMealPlanInput,
+): Promise<MealPlan> {
+  const monday = mondayOf(input.weekStartDate);
+  if (monday !== input.weekStartDate) {
+    throw new MealPlanValidationError(
+      `weekStartDate must be a Monday (got ${input.weekStartDate}, Monday is ${monday})`,
+    );
+  }
+  const pool = getHealthPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_meal_plan
+        (id, tenant_id, user_id, week_start_date, name, notes)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (tenant_id, user_id, week_start_date) DO UPDATE SET
+        name       = COALESCE(EXCLUDED.name, agos_mh_meal_plan.name),
+        notes      = COALESCE(EXCLUDED.notes, agos_mh_meal_plan.notes),
+        updated_at = now()
+     RETURNING ${PLAN_COLS}`,
+    [id, tenantId, userId, input.weekStartDate, input.name ?? null, input.notes ?? null],
+  );
+  return rowToPlan(r.rows[0], []);
+}
+
+export async function getMealPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<MealPlan | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${PLAN_COLS}
+       FROM agos_mh_meal_plan
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listMealPlanSlots(r.rows[0].id, tenantId);
+  return rowToPlan(r.rows[0], slots);
+}
+
+export interface ListMealPlansInput {
+  tenantId: string;
+  userId: string;
+  fromWeek?: string;
+  toWeek?: string;
+  limit?: number;
+}
+
+export async function listMealPlans(
+  input: ListMealPlansInput,
+): Promise<MealPlan[]> {
+  const pool = getHealthPool();
+  const limit = Math.min(Math.max(input.limit ?? 26, 1), 200);
+  const params: any[] = [input.tenantId, input.userId];
+  let where = `WHERE tenant_id = $1 AND user_id = $2`;
+  if (input.fromWeek) {
+    params.push(input.fromWeek);
+    where += ` AND week_start_date >= $${params.length}`;
+  }
+  if (input.toWeek) {
+    params.push(input.toWeek);
+    where += ` AND week_start_date <= $${params.length}`;
+  }
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT ${PLAN_COLS}
+       FROM agos_mh_meal_plan
+       ${where}
+      ORDER BY week_start_date DESC
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map((row: any) => rowToPlan(row));
+}
+
+export interface UpdateMealPlanInput {
+  name?: string | null;
+  notes?: string | null;
+}
+
+export async function updateMealPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdateMealPlanInput,
+): Promise<MealPlan | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_meal_plan
+        SET name       = COALESCE($4, name),
+            notes      = COALESCE($5, notes),
+            updated_at = now()
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
+      RETURNING ${PLAN_COLS}`,
+    [id, tenantId, userId, patch.name ?? null, patch.notes ?? null],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listMealPlanSlots(id, tenantId);
+  return rowToPlan(r.rows[0], slots);
+}
+
+export async function deleteMealPlan(
+  id: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_meal_plan
+      WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [id, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Fetch (or create-on-empty? — we just return null when missing so the UI
+ * can choose to lazy-create) the plan for a given Monday, with all slots,
+ * recipe + food joins included.
+ */
+export async function getMealPlanForWeek(
+  tenantId: string,
+  userId: string,
+  weekStartDate: string,
+): Promise<MealPlan | null> {
+  const monday = mondayOf(weekStartDate);
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT ${PLAN_COLS}
+       FROM agos_mh_meal_plan
+      WHERE tenant_id = $1 AND user_id = $2 AND week_start_date = $3`,
+    [tenantId, userId, monday],
+  );
+  if (r.rowCount === 0) return null;
+  const slots = await listMealPlanSlots(r.rows[0].id, tenantId);
+  return rowToPlan(r.rows[0], slots);
+}
+
+// ─── Meal plan slots ────────────────────────────────────────────────────────
+
+async function listMealPlanSlots(
+  planId: string,
+  tenantId: string,
+): Promise<MealPlanSlot[]> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT s.id, s.plan_id, s.day_of_week, s.meal_slot, s.recipe_id,
+            s.food_item_id, s.freeform_text, s.servings, s.notes, s.position,
+            r.id AS r_id, r.tenant_id AS r_tenant_id, r.user_id AS r_user_id,
+            r.name AS r_name, r.description AS r_description, r.servings AS r_servings,
+            r.prep_minutes AS r_prep_minutes, r.cook_minutes AS r_cook_minutes,
+            r.instructions AS r_instructions, r.tags AS r_tags,
+            r.image_url AS r_image_url, r.created_at AS r_created_at,
+            r.updated_at AS r_updated_at,
+            f.id AS f_id, f.tenant_id AS f_tenant_id, f.user_id AS f_user_id,
+            f.source AS f_source, f.usda_fdc_id AS f_usda_fdc_id,
+            f.name AS f_name, f.brand AS f_brand,
+            f.serving_size_g AS f_serving_size_g, f.serving_label AS f_serving_label,
+            f.kcal AS f_kcal, f.protein_g AS f_protein_g, f.carbs_g AS f_carbs_g,
+            f.fat_g AS f_fat_g, f.fiber_g AS f_fiber_g, f.sugar_g AS f_sugar_g,
+            f.sodium_mg AS f_sodium_mg, f.metadata AS f_metadata,
+            f.created_at AS f_created_at, f.updated_at AS f_updated_at
+       FROM agos_mh_meal_plan_slot s
+       JOIN agos_mh_meal_plan p ON p.id = s.plan_id
+       LEFT JOIN agos_mh_recipe r ON r.id = s.recipe_id
+       LEFT JOIN agos_mh_food_item f ON f.id = s.food_item_id
+      WHERE s.plan_id = $1 AND p.tenant_id = $2
+      ORDER BY s.day_of_week, s.meal_slot, s.position`,
+    [planId, tenantId],
+  );
+  return r.rows.map((row: any) => {
+    const recipe: Recipe | null = row.r_id
+      ? rowToRecipe({
+          id: row.r_id,
+          tenant_id: row.r_tenant_id,
+          user_id: row.r_user_id,
+          name: row.r_name,
+          description: row.r_description,
+          servings: row.r_servings,
+          prep_minutes: row.r_prep_minutes,
+          cook_minutes: row.r_cook_minutes,
+          instructions: row.r_instructions,
+          tags: row.r_tags,
+          image_url: row.r_image_url,
+          created_at: row.r_created_at,
+          updated_at: row.r_updated_at,
+        })
+      : null;
+    let food: FoodItem | null = null;
+    if (row.f_id) {
+      food = rowToFoodItem({
+        id: row.f_id,
+        tenant_id: row.f_tenant_id,
+        user_id: row.f_user_id,
+        source: row.f_source,
+        usda_fdc_id: row.f_usda_fdc_id,
+        name: row.f_name,
+        brand: row.f_brand,
+        serving_size_g: row.f_serving_size_g,
+        serving_label: row.f_serving_label,
+        kcal: row.f_kcal,
+        protein_g: row.f_protein_g,
+        carbs_g: row.f_carbs_g,
+        fat_g: row.f_fat_g,
+        fiber_g: row.f_fiber_g,
+        sugar_g: row.f_sugar_g,
+        sodium_mg: row.f_sodium_mg,
+        metadata: row.f_metadata,
+        created_at: row.f_created_at,
+        updated_at: row.f_updated_at,
+      });
+    }
+    return rowToSlot(row, recipe, food);
+  });
+}
+
+export interface AddPlanSlotInput {
+  dayOfWeek: number;
+  mealSlot: MealSlotValue;
+  recipeId?: string | null;
+  foodItemId?: string | null;
+  freeformText?: string | null;
+  servings?: number;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function addPlanSlot(
+  planId: string,
+  tenantId: string,
+  userId: string,
+  input: AddPlanSlotInput,
+): Promise<MealPlanSlot | null> {
+  const pool = getHealthPool();
+  const owner = await pool.query(
+    `SELECT 1 FROM agos_mh_meal_plan WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
+    [planId, tenantId, userId],
+  );
+  if (owner.rowCount === 0) return null;
+  let position = input.position;
+  if (position === undefined || position === null) {
+    const tail = await pool.query(
+      `SELECT COALESCE(MAX(position), -1) AS p
+         FROM agos_mh_meal_plan_slot
+        WHERE plan_id = $1 AND day_of_week = $2 AND meal_slot = $3`,
+      [planId, input.dayOfWeek, input.mealSlot],
+    );
+    position = Number(tail.rows[0].p) + 1;
+  }
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_mh_meal_plan_slot (
+        id, plan_id, day_of_week, meal_slot, recipe_id, food_item_id,
+        freeform_text, servings, notes, position)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+     RETURNING ${PLAN_SLOT_COLS}`,
+    [
+      id,
+      planId,
+      input.dayOfWeek,
+      input.mealSlot,
+      input.recipeId ?? null,
+      input.foodItemId ?? null,
+      input.freeformText ?? null,
+      input.servings ?? 1,
+      input.notes ?? null,
+      position,
+    ],
+  );
+  const recipe = input.recipeId ? await getRecipe(input.recipeId, tenantId) : null;
+  const food = input.foodItemId ? await getFoodItem(input.foodItemId, tenantId) : null;
+  return rowToSlot(r.rows[0], recipe, food);
+}
+
+export interface UpdatePlanSlotInput {
+  dayOfWeek?: number;
+  mealSlot?: MealSlotValue;
+  recipeId?: string | null;
+  foodItemId?: string | null;
+  freeformText?: string | null;
+  servings?: number;
+  notes?: string | null;
+  position?: number;
+}
+
+export async function updatePlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  patch: UpdatePlanSlotInput,
+): Promise<MealPlanSlot | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `UPDATE agos_mh_meal_plan_slot s
+        SET day_of_week   = COALESCE($3, s.day_of_week),
+            meal_slot     = COALESCE($4, s.meal_slot),
+            recipe_id     = COALESCE($5, s.recipe_id),
+            food_item_id  = COALESCE($6, s.food_item_id),
+            freeform_text = COALESCE($7, s.freeform_text),
+            servings      = COALESCE($8, s.servings),
+            notes         = COALESCE($9, s.notes),
+            position      = COALESCE($10, s.position)
+      FROM agos_mh_meal_plan p
+     WHERE s.id = $1 AND p.id = s.plan_id
+       AND p.tenant_id = $2 AND p.user_id = $11
+     RETURNING ${PLAN_SLOT_COLS.split(',').map((c) => 's.' + c.trim()).join(', ')}`,
+    [
+      slotId,
+      tenantId,
+      patch.dayOfWeek ?? null,
+      patch.mealSlot ?? null,
+      patch.recipeId ?? null,
+      patch.foodItemId ?? null,
+      patch.freeformText ?? null,
+      patch.servings ?? null,
+      patch.notes ?? null,
+      patch.position ?? null,
+      userId,
+    ],
+  );
+  if (r.rowCount === 0) return null;
+  const row = r.rows[0];
+  const recipe = row.recipe_id ? await getRecipe(row.recipe_id, tenantId) : null;
+  const food = row.food_item_id ? await getFoodItem(row.food_item_id, tenantId) : null;
+  return rowToSlot(row, recipe, food);
+}
+
+export async function deletePlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `DELETE FROM agos_mh_meal_plan_slot s
+      USING agos_mh_meal_plan p
+     WHERE s.id = $1 AND p.id = s.plan_id
+       AND p.tenant_id = $2 AND p.user_id = $3`,
+    [slotId, tenantId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function movePlanSlot(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  dayOfWeek: number,
+  mealSlot: MealSlotValue,
+  position: number,
+): Promise<MealPlanSlot | null> {
+  return updatePlanSlot(slotId, tenantId, userId, {
+    dayOfWeek,
+    mealSlot,
+    position,
+  });
+}
+
+/**
+ * Convenience: turn a planned slot into an actual ``agos_mh_meal_entry``
+ * for the given date. Used by the "I ate this" button on the calendar.
+ */
+export async function addPlanSlotToMealLog(
+  slotId: string,
+  tenantId: string,
+  userId: string,
+  entryDate: string,
+): Promise<MealEntry | null> {
+  const pool = getHealthPool();
+  const r = await pool.query(
+    `SELECT s.meal_slot, s.recipe_id, s.food_item_id, s.freeform_text,
+            s.servings, s.notes
+       FROM agos_mh_meal_plan_slot s
+       JOIN agos_mh_meal_plan p ON p.id = s.plan_id
+      WHERE s.id = $1 AND p.tenant_id = $2 AND p.user_id = $3`,
+    [slotId, tenantId, userId],
+  );
+  if (r.rowCount === 0) return null;
+  const slot = r.rows[0];
+  // If the slot points at a recipe, log the recipe name as freeform (we don't
+  // currently expand recipes into ingredient-level meal entries — that's a
+  // future enhancement once nutrition rollup is per-serving solid).
+  let freeform: string | null = slot.freeform_text;
+  if (slot.recipe_id) {
+    const recipe = await getRecipe(slot.recipe_id, tenantId);
+    freeform = recipe?.name ?? freeform;
+  }
+  return createMealEntry(tenantId, userId, {
+    entryDate,
+    mealSlot: slot.meal_slot as MealSlotValue,
+    foodItemId: slot.food_item_id,
+    freeformDescription: slot.food_item_id ? null : freeform,
+    servings: Number(slot.servings),
+    notes: slot.notes,
+  });
 }

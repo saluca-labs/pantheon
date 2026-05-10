@@ -399,3 +399,76 @@ export const ActivityEntryUpdateBody = ActivityEntryBody.partial();
 export type ActivityEntryUpdateInputBody = z.infer<
   typeof ActivityEntryUpdateBody
 >;
+
+// ─── Recipes (Phase 5b) ───────────────────────────────────────────────────
+
+export const RecipeBody = z.object({
+  name: z.string().min(1).max(200).trim(),
+  description: z.string().max(4000).nullable().optional(),
+  servings: z.number().min(0.1).max(1000).optional(),
+  prepMinutes: z.number().int().min(0).max(1440).nullable().optional(),
+  cookMinutes: z.number().int().min(0).max(1440).nullable().optional(),
+  instructions: z.string().max(20_000).nullable().optional(),
+  tags: z.array(z.string().min(1).max(40)).max(20).optional(),
+  imageUrl: z.string().url().max(500).nullable().optional(),
+});
+export type RecipeInputBody = z.infer<typeof RecipeBody>;
+
+export const RecipeUpdateBody = RecipeBody.partial();
+export type RecipeUpdateInputBody = z.infer<typeof RecipeUpdateBody>;
+
+export const RecipeIngredientBody = z.object({
+  foodItemId: z.string().uuid().nullable().optional(),
+  freeformName: z.string().min(1).max(200).nullable().optional(),
+  quantity: z.number().min(0).max(100_000),
+  unit: z.string().max(40).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+  position: z.number().int().min(0).max(10_000).optional(),
+});
+export type RecipeIngredientInputBody = z.infer<typeof RecipeIngredientBody>;
+
+export const RecipeIngredientUpdateBody = RecipeIngredientBody.partial();
+export type RecipeIngredientUpdateInputBody = z.infer<
+  typeof RecipeIngredientUpdateBody
+>;
+
+export const RecipeIngredientReorderBody = z.object({
+  orderedIds: z.array(z.string().uuid()).min(1).max(200),
+});
+export type RecipeIngredientReorderInputBody = z.infer<
+  typeof RecipeIngredientReorderBody
+>;
+
+// ─── Meal plans (Phase 5b) ────────────────────────────────────────────────
+
+export const MealPlanBody = z.object({
+  weekStartDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD required'),
+  name: z.string().max(200).nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
+});
+export type MealPlanInputBody = z.infer<typeof MealPlanBody>;
+
+export const MealPlanUpdateBody = z.object({
+  name: z.string().max(200).nullable().optional(),
+  notes: z.string().max(4000).nullable().optional(),
+});
+export type MealPlanUpdateInputBody = z.infer<typeof MealPlanUpdateBody>;
+
+export const MealPlanSlotBody = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  mealSlot: MealSlotEnum,
+  recipeId: z.string().uuid().nullable().optional(),
+  foodItemId: z.string().uuid().nullable().optional(),
+  freeformText: z.string().max(500).nullable().optional(),
+  servings: z.number().min(0).max(1000).optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  position: z.number().int().min(0).max(10_000).optional(),
+});
+export type MealPlanSlotInputBody = z.infer<typeof MealPlanSlotBody>;
+
+export const MealPlanSlotUpdateBody = MealPlanSlotBody.partial();
+export type MealPlanSlotUpdateInputBody = z.infer<
+  typeof MealPlanSlotUpdateBody
+>;
