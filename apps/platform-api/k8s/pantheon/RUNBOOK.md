@@ -167,3 +167,70 @@ gcloud compute addresses describe pantheon-ip --global
 - Run the `pantheon-migrate` Job (Day 2; after images exist).
 - Create Cloudflare DNS A record `pantheon.saluca.com -> 136.110.201.212` (Day 3).
 - Verify ManagedCertificate provisioning (Day 3; depends on DNS).
+
+## Day 3 — Fresh-deploy ACME chicken-and-egg (FrontendConfig HTTPS redirect)
+
+**Problem (observed 2026-05-09):** On the first apply, `pantheon-cert` (ManagedCertificate)
+got stuck in `Provisioning` and never moved to `Active`. Root cause: `pantheon-frontend`
+(FrontendConfig) ships with `redirectToHttps.enabled: true`, so the GCE LB 301-redirected
+the Let's Encrypt **HTTP-01** ACME challenge from `http://pantheon.saluca.com/.well-known/acme-challenge/...`
+to `https://...` BEFORE the certificate that would terminate that HTTPS request existed.
+ACME validation requires a 200 on the plaintext HTTP challenge URL; a 301 fails the check.
+This is a documented GKE gotcha — see Google issue tracker for the GCE Ingress controller.
+
+**Resolution flow (run on every fresh ingress + cert + frontendconfig stand-up):**
+
+1. **Apply the bundle with the redirect disabled.** Either temporarily flip `enabled: false`
+   in `ingress.yaml` (the FrontendConfig stanza at the bottom of the file) or apply with a
+   patch:
+   ```bash
+   kubectl apply -k apps/platform-api/k8s/pantheon/
+   kubectl patch frontendconfig pantheon-frontend -n pantheon --type=merge \
+     -p '{"spec":{"redirectToHttps":{"enabled":false}}}'
+   ```
+2. **Confirm DNS resolves to the static IP.** ACME hits the apex `A` record:
+   ```bash
+   dig +short pantheon.saluca.com   # expect 136.110.201.212
+   ```
+3. **Poll for `ManagedCertificate` to reach `Active`.** Typical wall-clock: 15–60 min after
+   DNS is correct; can take up to a few hours on first issuance.
+   ```bash
+   kubectl get managedcertificate pantheon-cert -n pantheon \
+     -o jsonpath='{.status.certificateStatus}{"\n"}'
+   # Loop until output is "Active":
+   until [ "$(kubectl get managedcertificate pantheon-cert -n pantheon \
+                -o jsonpath='{.status.certificateStatus}')" = "Active" ]; do
+     echo "cert status: $(kubectl get managedcertificate pantheon-cert -n pantheon \
+       -o jsonpath='{.status.certificateStatus}') — waiting 30s"
+     sleep 30
+   done
+   ```
+   Useful detail when stuck:
+   ```bash
+   kubectl describe managedcertificate pantheon-cert -n pantheon
+   # look at status.domainStatus[].status — should be FailedNotVisible / Provisioning / Active
+   ```
+4. **Re-enable the HTTPS redirect.** Either revert the `enabled: false` edit in
+   `ingress.yaml` and `kubectl apply -k ...` again, or patch in place:
+   ```bash
+   kubectl patch frontendconfig pantheon-frontend -n pantheon --type=merge \
+     -p '{"spec":{"redirectToHttps":{"enabled":true,"responseCodeName":"MOVED_PERMANENTLY_DEFAULT"}}}'
+   ```
+5. **Verify end-to-end.** A plain `curl http://pantheon.saluca.com/` should now `301` to
+   the `https://` equivalent and the HTTPS endpoint should serve a valid cert:
+   ```bash
+   curl -sSI http://pantheon.saluca.com/ | head -n1   # HTTP/1.1 301 Moved Permanently
+   curl -sSI https://pantheon.saluca.com/ | head -n1  # HTTP/2 200 (or 3xx, but TLS valid)
+   echo | openssl s_client -connect pantheon.saluca.com:443 -servername pantheon.saluca.com 2>/dev/null \
+     | openssl x509 -noout -issuer -dates
+   ```
+
+**Why we didn't automate this in an apply script:** there is no apply script — `kubectl apply -k`
+is the deploy primitive, and adding a wrapper just to handle the first-issuance window
+introduces an orchestration layer that doesn't earn its keep. The two-step is rare (only on
+a new cluster + new domain pair) and the manual flow above is unambiguous.
+
+**When this section becomes obsolete:** if/when we migrate the LB to use a Google-issued
+**Certificate Manager** cert (CCM, not the in-cluster `ManagedCertificate` CRD) or move to
+DNS-01 validation via cert-manager + Cloudflare, the ACME-over-HTTP path goes away and the
+redirect can be on from t=0. Until then, follow the flow above on every fresh stand-up.

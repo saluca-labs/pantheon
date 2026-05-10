@@ -159,6 +159,12 @@ spec:
                 port:
                   number: 80
 ---
+# FRESH-DEPLOY GOTCHA: `redirectToHttps.enabled: true` breaks the Let's Encrypt HTTP-01
+# challenge for ManagedCertificate on first issuance — the GCE LB 301s the ACME
+# challenge URL to HTTPS before any cert exists to terminate it. On a fresh stand-up,
+# disable the redirect, wait for `kubectl get managedcertificate pantheon-cert -n pantheon`
+# to report `Active`, then re-enable. Full flow: see RUNBOOK.md → "Day 3 — Fresh-deploy
+# ACME chicken-and-egg (FrontendConfig HTTPS redirect)".
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
