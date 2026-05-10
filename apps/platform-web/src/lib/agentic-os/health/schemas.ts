@@ -95,3 +95,226 @@ export const JournalEntryUpdateBody = z.object({
   entryAt: z.string().datetime().nullable().optional(),
 });
 export type JournalEntryUpdateInputBody = z.infer<typeof JournalEntryUpdateBody>;
+
+// ─── CBT exercise logs (Phase 3) ──────────────────────────────────────────
+
+export const CBT_KIND_VALUES = [
+  'thought-record',
+  'behavioral-activation',
+  'worry-time',
+  'grounding-54321',
+  'gratitude',
+  'values-clarification',
+  'sleep-hygiene',
+] as const;
+export const CbtKindEnum = z.enum(CBT_KIND_VALUES);
+export type CbtKind = z.infer<typeof CbtKindEnum>;
+
+const MoodScoreField = z.number().int().min(1).max(10).nullable().optional();
+
+/**
+ * Per-kind structured payload schemas. The DB stores ``data JSONB``;
+ * each ``CbtLogBody.kind`` selects the matching payload schema via the
+ * discriminated union below. Adding an eighth kind is a one-line change
+ * to ``CBT_KIND_VALUES``, the migration's CHECK, and a new schema here.
+ */
+export const CbtThoughtRecordData = z.object({
+  situation: z.string().min(1).max(2000),
+  automatic_thought: z.string().min(1).max(2000),
+  evidence_for: z.string().max(2000).optional().default(''),
+  evidence_against: z.string().max(2000).optional().default(''),
+  balanced_thought: z.string().min(1).max(2000),
+  mood_before: z.number().int().min(1).max(10).optional(),
+  mood_after: z.number().int().min(1).max(10).optional(),
+});
+export type CbtThoughtRecordPayload = z.infer<typeof CbtThoughtRecordData>;
+
+export const CbtBehavioralActivationData = z.object({
+  activity: z.string().min(1).max(500),
+  scheduled_for: z.string().min(1).max(200),
+  completed: z.boolean().default(false),
+  mood_before: z.number().int().min(1).max(10).optional(),
+  mood_after: z.number().int().min(1).max(10).optional(),
+  reflection: z.string().max(2000).optional().default(''),
+});
+export type CbtBehavioralActivationPayload = z.infer<
+  typeof CbtBehavioralActivationData
+>;
+
+export const CbtWorryTimeData = z.object({
+  scheduled_at: z.string().min(1).max(200),
+  duration_min: z.number().int().min(1).max(120),
+  worries: z.array(z.string().min(1).max(500)).min(1).max(20),
+  reflection: z.string().max(2000).optional().default(''),
+});
+export type CbtWorryTimePayload = z.infer<typeof CbtWorryTimeData>;
+
+export const CbtGroundingData = z.object({
+  five_see: z.array(z.string().min(1).max(120)).length(5),
+  four_feel: z.array(z.string().min(1).max(120)).length(4),
+  three_hear: z.array(z.string().min(1).max(120)).length(3),
+  two_smell: z.array(z.string().min(1).max(120)).length(2),
+  one_taste: z.array(z.string().min(1).max(120)).length(1),
+});
+export type CbtGroundingPayload = z.infer<typeof CbtGroundingData>;
+
+export const CbtGratitudeData = z.object({
+  entries: z.array(z.string().min(1).max(500)).length(3),
+});
+export type CbtGratitudePayload = z.infer<typeof CbtGratitudeData>;
+
+export const CbtValuesData = z.object({
+  values: z
+    .array(
+      z.object({
+        domain: z.string().min(1).max(120),
+        importance: z.number().int().min(1).max(10),
+        current_alignment: z.number().int().min(1).max(10),
+        action: z.string().min(1).max(500),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+export type CbtValuesPayload = z.infer<typeof CbtValuesData>;
+
+export const CbtSleepHygieneData = z.object({
+  checklist: z
+    .array(
+      z.object({
+        item: z.string().min(1).max(200),
+        met: z.boolean(),
+      }),
+    )
+    .min(1)
+    .max(30),
+  notes: z.string().max(2000).optional().default(''),
+});
+export type CbtSleepHygienePayload = z.infer<typeof CbtSleepHygieneData>;
+
+/**
+ * Discriminated union — one entry per CBT kind. Routes parse the body
+ * via this schema; the DB column ``kind`` is set from the discriminator
+ * and ``data`` holds the validated per-kind payload.
+ */
+export const CbtLogBody = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('thought-record'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtThoughtRecordData,
+  }),
+  z.object({
+    kind: z.literal('behavioral-activation'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtBehavioralActivationData,
+  }),
+  z.object({
+    kind: z.literal('worry-time'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtWorryTimeData,
+  }),
+  z.object({
+    kind: z.literal('grounding-54321'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtGroundingData,
+  }),
+  z.object({
+    kind: z.literal('gratitude'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtGratitudeData,
+  }),
+  z.object({
+    kind: z.literal('values-clarification'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtValuesData,
+  }),
+  z.object({
+    kind: z.literal('sleep-hygiene'),
+    exerciseId: z.string().uuid().nullable().optional(),
+    moodBefore: MoodScoreField,
+    moodAfter: MoodScoreField,
+    notes: z.string().max(2000).nullable().optional(),
+    completed: z.boolean().optional(),
+    data: CbtSleepHygieneData,
+  }),
+]);
+export type CbtLogInputBody = z.infer<typeof CbtLogBody>;
+
+/**
+ * Update body — all fields optional, but if `data` is supplied the caller
+ * MUST also supply `kind` so we know which payload schema to validate
+ * against. We don't use a discriminated union here because callers may
+ * patch only mood / notes without touching the structured data.
+ */
+export const CbtLogUpdateBody = z.object({
+  moodBefore: MoodScoreField,
+  moodAfter: MoodScoreField,
+  notes: z.string().max(2000).nullable().optional(),
+  completed: z.boolean().optional(),
+  // When updating `data`, callers also pass `kind` so the route can
+  // re-validate via the matching per-kind schema.
+  kind: CbtKindEnum.optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+});
+export type CbtLogUpdateInputBody = z.infer<typeof CbtLogUpdateBody>;
+
+// ─── Meditation (Phase 3) ─────────────────────────────────────────────────
+
+export const MEDITATION_SOURCE_VALUES = ['medito', 'manual', 'plan'] as const;
+export const MeditationSourceEnum = z.enum(MEDITATION_SOURCE_VALUES);
+export type MeditationSource = z.infer<typeof MeditationSourceEnum>;
+
+export const MeditationSessionBody = z.object({
+  source: MeditationSourceEnum,
+  sourceRef: z.string().max(200).nullable().optional(),
+  durationMin: z.number().int().min(1).max(240),
+  completedAt: z.string().datetime().nullable().optional(),
+  moodBefore: MoodScoreField,
+  moodAfter: MoodScoreField,
+  notes: z.string().max(2000).nullable().optional(),
+});
+export type MeditationSessionInputBody = z.infer<typeof MeditationSessionBody>;
+
+export const MeditationSessionUpdateBody = MeditationSessionBody.partial();
+export type MeditationSessionUpdateInputBody = z.infer<
+  typeof MeditationSessionUpdateBody
+>;
+
+export const MEDITATION_PLAN_GOALS = [
+  'stress',
+  'sleep',
+  'focus',
+  'general',
+] as const;
+export const MeditationPlanGoalEnum = z.enum(MEDITATION_PLAN_GOALS);
+export type MeditationPlanGoal = z.infer<typeof MeditationPlanGoalEnum>;
+
+export const MeditationPlanBody = z.object({
+  goal: MeditationPlanGoalEnum.optional(),
+  weeklyMinutes: z.number().int().min(5).max(420).optional(),
+});
+export type MeditationPlanInputBody = z.infer<typeof MeditationPlanBody>;

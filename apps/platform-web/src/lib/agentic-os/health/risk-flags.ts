@@ -19,8 +19,12 @@
 
 import 'server-only';
 import { detectCrisisLanguage } from '../_shared/safety/crisis-guard';
+import {
+  detectMoodDropPattern,
+  type MoodDeltaRecord,
+} from '../_shared/safety/cbt-mood-watch';
 import type { RiskFlagInput } from '../_shared/types';
-import type { HealthProfile, MentalProfile } from './repo';
+import type { CbtLog, HealthProfile, MentalProfile } from './repo';
 
 // ─── Intake heuristics ─────────────────────────────────────────────────────
 
@@ -315,4 +319,160 @@ export function evaluateOnFreeText(
       payload: { matches: result.matches, sample: (text ?? '').slice(0, 240) },
     },
   ];
+}
+
+// ─── CBT-log heuristics (Phase 3) ──────────────────────────────────────────
+
+export interface CbtLogContext {
+  source?: string;
+  /** Override "now" for tests. */
+  now?: Date;
+}
+
+/**
+ * Evaluate a fresh CBT log and the user's recent log history for risk
+ * patterns. Triggers covered:
+ *
+ *   - free-text crisis language inside the just-saved log's structured
+ *     fields (`automatic_thought`, `balanced_thought`, `notes`, etc.) →
+ *     `crisis-language` (critical). The shape mirrors `evaluateOnFreeText`
+ *     so the BFF can also wrap the route via `withCrisisGuard` for the
+ *     same fields and end up with one flag (the guard is the canonical
+ *     emitter).
+ *
+ *   - mood-drop pattern across recent CBT logs: when ≥3 logs in the
+ *     last 7 days show a drop of ≥3 from `mood_before` to `mood_after`,
+ *     emit `cbt-mood-drop` (medium). Uses the cross-OS detector in
+ *     `_shared/safety/cbt-mood-watch.ts`.
+ *
+ * The function is pure; the BFF route wires the persistence call.
+ */
+export function evaluateOnCbtLog(
+  log: CbtLog,
+  recentLogs: CbtLog[],
+  ctx: CbtLogContext = {},
+): RiskFlagInput[] {
+  const source = ctx.source ?? 'cbt-log';
+  const flags: RiskFlagInput[] = [];
+
+  // Free-text scan over likely-prose fields inside `data` plus `notes`.
+  const fields = collectCbtFreeText(log);
+  const seen = new Set<string>();
+  for (const text of fields) {
+    if (!text || typeof text !== 'string') continue;
+    if (seen.has(text)) continue;
+    seen.add(text);
+    const result = detectCrisisLanguage(text);
+    if (result.matched) {
+      flags.push({
+        kind: 'crisis-language',
+        severity: result.severity ?? 'critical',
+        source,
+        payload: {
+          matches: result.matches,
+          sample: text.slice(0, 240),
+          cbtKind: log.kind,
+          logId: log.id,
+        },
+      });
+      // One crisis-language flag per save is enough.
+      break;
+    }
+  }
+
+  // Mood-drop pattern across recent logs (include the just-saved log).
+  const records: MoodDeltaRecord[] = [log, ...recentLogs].map((l) => ({
+    id: l.id,
+    at: l.completedAt ?? l.startedAt,
+    moodBefore: l.moodBefore,
+    moodAfter: l.moodAfter,
+  }));
+  const drop = detectMoodDropPattern(records, { now: ctx.now });
+  if (drop.triggered) {
+    flags.push({
+      kind: 'cbt-mood-drop',
+      severity: 'medium',
+      source,
+      payload: {
+        matchCount: drop.matchCount,
+        matchIds: drop.matchIds,
+        windowDays: 7,
+        dropMagnitude: drop.dropMagnitude,
+      },
+    });
+  }
+
+  return flags;
+}
+
+/**
+ * Pull free-text strings out of a CBT log's structured `data` payload so
+ * the crisis-language guard / detector has uniform input. The set of
+ * fields scanned is determined by the log's `kind`.
+ */
+export function collectCbtFreeText(log: CbtLog): string[] {
+  const out: string[] = [];
+  if (typeof log.notes === 'string' && log.notes.length > 0) {
+    out.push(log.notes);
+  }
+  const data = log.data ?? {};
+  const push = (key: string) => {
+    const v = (data as Record<string, unknown>)[key];
+    if (typeof v === 'string' && v.length > 0) out.push(v);
+  };
+  switch (log.kind) {
+    case 'thought-record':
+      push('situation');
+      push('automatic_thought');
+      push('evidence_for');
+      push('evidence_against');
+      push('balanced_thought');
+      break;
+    case 'behavioral-activation':
+      push('activity');
+      push('reflection');
+      break;
+    case 'worry-time': {
+      push('reflection');
+      const worries = (data as Record<string, unknown>)['worries'];
+      if (Array.isArray(worries)) {
+        for (const w of worries) {
+          if (typeof w === 'string' && w.length > 0) out.push(w);
+        }
+      }
+      break;
+    }
+    case 'gratitude': {
+      const entries = (data as Record<string, unknown>)['entries'];
+      if (Array.isArray(entries)) {
+        for (const e of entries) {
+          if (typeof e === 'string' && e.length > 0) out.push(e);
+        }
+      }
+      break;
+    }
+    case 'values-clarification': {
+      const values = (data as Record<string, unknown>)['values'];
+      if (Array.isArray(values)) {
+        for (const v of values) {
+          if (v && typeof v === 'object') {
+            const action = (v as Record<string, unknown>)['action'];
+            if (typeof action === 'string' && action.length > 0) {
+              out.push(action);
+            }
+          }
+        }
+      }
+      break;
+    }
+    case 'sleep-hygiene': {
+      const notes = (data as Record<string, unknown>)['notes'];
+      if (typeof notes === 'string' && notes.length > 0) out.push(notes);
+      break;
+    }
+    case 'grounding-54321':
+      // Sense items are short tokens; skipping reduces false positives.
+      break;
+  }
+  return out;
 }
