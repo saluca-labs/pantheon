@@ -110,6 +110,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Plan generator',
         description: 'Draft citation-backed nutrition, activity, and sleep plans.',
       },
+      {
+        href: '/dashboard/os/health/trends',
+        label: 'Trends & analytics',
+        description:
+          'Multi-series mood, screener, and tag trends over 7/30/90 days.',
+      },
     ],
   },
   {

@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { ArrowLeft, ListChecks } from 'lucide-react';
+import { ArrowLeft, ListChecks, Pencil } from 'lucide-react';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentHealthUser } from '@/lib/agentic-os/health/session';
 import {
   getActiveConsent,
   getCbtLog,
 } from '@/lib/agentic-os/health/repo';
+import { CbtLogFormatter } from '@/components/agentic-os/health/cbt/formatters';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,11 +61,20 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
         All logs
       </Link>
 
-      <div className="flex items-center gap-3 mb-2">
-        <ListChecks className="w-6 h-6 text-[#4361EE]" />
-        <h1 className="text-2xl font-semibold text-white">
-          {KIND_LABELS[log.kind] ?? log.kind}
-        </h1>
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <ListChecks className="w-6 h-6 text-[#4361EE]" />
+          <h1 className="text-2xl font-semibold text-white truncate">
+            {KIND_LABELS[log.kind] ?? log.kind}
+          </h1>
+        </div>
+        <Link
+          href={`/dashboard/os/health/cbt/logs/${log.id}/edit`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#1f2230] text-[#cbd5e1] text-xs font-medium px-3 py-1.5 transition"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          Edit
+        </Link>
       </div>
       <p className="text-xs text-[#94a3b8] mb-5">
         {fmt(log.completedAt ?? log.startedAt)}
@@ -81,14 +91,7 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
             </p>
           </div>
         )}
-        <div>
-          <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
-            Captured fields
-          </h3>
-          <pre className="text-xs text-[#cbd5e1] bg-[#0f1117] border border-[#2a2d3e] rounded-lg p-3 overflow-auto leading-relaxed whitespace-pre-wrap">
-            {JSON.stringify(log.data, null, 2)}
-          </pre>
-        </div>
+        <CbtLogFormatter log={log} />
         {log.notes && (
           <div>
             <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
