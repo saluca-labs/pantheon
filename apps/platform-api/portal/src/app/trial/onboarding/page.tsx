@@ -20,7 +20,7 @@ const steps = [
     number: 2,
     title: "Install the SDK",
     description:
-      "Install the Tiresias Python SDK to integrate agent authentication into your application.",
+      "Install the Pantheon Python SDK to integrate agent authentication into your application.",
     code: `pip install tiresias-sdk`,
     language: "bash",
   },
@@ -49,7 +49,7 @@ const steps = [
     number: 5,
     title: "Explore the dashboard",
     description:
-      "Sign in to the Tiresias dashboard with your SoulKey to monitor your agents, view audit logs, and manage policies.",
+      "Sign in to the Pantheon dashboard with your SoulKey to monitor your agents, view audit logs, and manage policies.",
     hasLink: true,
   },
 ];
@@ -82,10 +82,10 @@ export default function OnboardingPage() {
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
                 Get started with{" "}
-                <span className="text-of-primary">Tiresias</span>
+                <span className="text-of-primary">Pantheon</span>
               </h1>
               <p className="mt-4 text-of-on-surface-variant leading-relaxed">
-                Follow these steps to integrate Tiresias into your agent
+                Follow these steps to integrate Pantheon into your agent
                 infrastructure. You will be up and running in under 5 minutes.
               </p>
             </div>

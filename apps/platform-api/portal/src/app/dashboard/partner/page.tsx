@@ -79,7 +79,7 @@ function NotActivated() {
         <ShieldOff className="h-10 w-10 text-of-on-surface-variant/30 mx-auto" />
         <h2 className="text-lg font-bold text-of-on-surface">Partner Program Not Activated</h2>
         <p className="text-sm text-of-on-surface-variant max-w-md mx-auto">
-          The Tiresias Partner Program lets MSSPs and resellers earn recurring commissions
+          The Pantheon Partner Program lets MSSPs and resellers earn recurring commissions
           on referred customers. Partners get branded promo codes, commission tracking, and
           payouts through Stripe Connect.
         </p>
@@ -121,7 +121,7 @@ function PartnerContent() {
 
   const copyReferralLink = () => {
     if (dashboard?.referral_code) {
-      navigator.clipboard.writeText(`https://tiresias.network/signup?ref=${dashboard.referral_code}`);
+      navigator.clipboard.writeText(`https://pantheon.saluca.com/signup?ref=${dashboard.referral_code}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -228,7 +228,7 @@ function PartnerContent() {
         <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-3">Your Referral Link</p>
         <div className="flex items-center gap-3">
           <code className="flex-1 px-4 py-2 rounded-lg bg-of-surface-container-high border border-of-outline-variant/20 text-sm text-of-on-surface font-mono truncate">
-            https://tiresias.network/signup?ref={dashboard.referral_code}
+            https://pantheon.saluca.com/signup?ref={dashboard.referral_code}
           </code>
           <button onClick={copyReferralLink}
             className="px-4 h-9 rounded-lg bg-of-primary/15 border border-of-primary/25 text-sm font-bold text-of-primary hover:bg-of-primary/25 transition-colors flex items-center gap-2 shrink-0">

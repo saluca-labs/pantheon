@@ -195,7 +195,7 @@ export default function TrialForm() {
                 <span className="text-gradient-gold">free trial</span>
               </h1>
               <p className="mt-6 text-lg text-foreground-muted leading-relaxed max-w-2xl mx-auto">
-                Get full Pro access to the Tiresias platform for 14 days &mdash;
+                Get full Pro access to the Pantheon platform for 14 days &mdash;
                 SoulAuth, SoulWatch, and SoulGate. No credit card. No commitment.
               </p>
             </div>

@@ -1474,7 +1474,7 @@ function SettingsPageInner() {
                         : "Contact your account manager for details"}
                     </p>
                     <p className="text-xs text-foreground-muted mt-0.5">
-                      To renew or modify your license, contact your Tiresias account representative.
+                      To renew or modify your license, contact your Pantheon account representative.
                     </p>
                   </div>
                 </div>

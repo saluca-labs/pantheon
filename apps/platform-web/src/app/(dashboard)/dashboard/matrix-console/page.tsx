@@ -14,7 +14,7 @@ import { Role } from '@/lib/rbac/permissions';
 import { RoleGate } from '@/components/rbac/role-gate';
 
 export const metadata = {
-  title: 'Matrix Console — Tiresias',
+  title: 'Matrix Console — Pantheon',
   description: 'Embedded Element Web client for primary-human Matrix rooms.',
 };
 

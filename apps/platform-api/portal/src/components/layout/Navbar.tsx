@@ -75,9 +75,9 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-110">
-                <img src="/tiresias-icon.png" alt="Tiresias" className="w-full h-full object-cover" />
+                <img src="/tiresias-icon.png" alt="Pantheon" className="w-full h-full object-cover" />
               </div>
-              <span className="text-lg font-semibold tracking-tight">Tiresias</span>
+              <span className="text-lg font-semibold tracking-tight">Pantheon</span>
             </Link>
 
             {/* Desktop nav */}

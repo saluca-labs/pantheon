@@ -436,7 +436,7 @@ export default function ReportsPage() {
   <thead><tr><th>Status</th><th>Control</th><th>Title</th><th>Description</th><th>Evidence</th></tr></thead>
   <tbody>${controlRows}</tbody>
 </table>
-<div class="footer">Tiresias SoulWatch Compliance Report | Generated ${new Date().toISOString()} | ${passingControls} of ${controls} controls passing</div>
+<div class="footer">Pantheon SoulWatch Compliance Report | Generated ${new Date().toISOString()} | ${passingControls} of ${controls} controls passing</div>
 <script>window.onload=function(){window.print();}</script>
 </body></html>`;
 

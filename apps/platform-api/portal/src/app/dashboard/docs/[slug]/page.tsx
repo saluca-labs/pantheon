@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props) {
   if (!doc) return { title: "Not Found" };
   return {
     title: `${doc.title} - Pantheon Docs`,
-    description: `Tiresias documentation: ${doc.title}`,
+    description: `Pantheon documentation: ${doc.title}`,
   };
 }
 

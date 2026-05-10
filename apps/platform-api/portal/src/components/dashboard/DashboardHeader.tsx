@@ -131,7 +131,7 @@ export default function DashboardHeader() {
     if (branding.company_name) {
       document.title = `${title} | ${branding.company_name}`;
     } else {
-      document.title = `${title} | Tiresias`;
+      document.title = `${title} | Pantheon`;
     }
   }, [title, branding.company_name]);
 

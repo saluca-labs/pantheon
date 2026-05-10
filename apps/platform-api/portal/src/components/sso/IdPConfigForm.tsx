@@ -244,7 +244,7 @@ export function IdPConfigForm({
           required
         />
         <p className="mt-1 text-label-sm text-of-on-surface-variant/60">
-          The IdP&apos;s OIDC discovery endpoint base URL. Tiresias will append
+          The IdP&apos;s OIDC discovery endpoint base URL. Pantheon will append
           <code className="ml-1 text-of-primary/80">/.well-known/openid-configuration</code>.
         </p>
       </div>

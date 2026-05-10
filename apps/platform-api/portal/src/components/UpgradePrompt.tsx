@@ -36,7 +36,7 @@ export function UpgradePrompt({ feature, requiredTier }: UpgradePromptProps) {
       </div>
       <div className="flex items-center gap-3">
         <a
-          href="https://tiresias.ai/pricing"
+          href="https://pantheon.saluca.com/pricing"
           target="_blank"
           rel="noopener noreferrer"
           className="px-4 py-2 rounded-lg bg-of-primary/15 border border-of-primary/25 text-xs font-bold text-of-primary hover:bg-of-primary/25 transition-colors"

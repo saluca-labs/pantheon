@@ -7,7 +7,7 @@ export function Logo({ collapsed = false }: { collapsed?: boolean }) {
         T
       </div>
       {!collapsed && (
-        <span className="font-semibold text-white text-lg">Tiresias</span>
+        <span className="font-semibold text-white text-lg">Pantheon</span>
       )}
     </div>
   );

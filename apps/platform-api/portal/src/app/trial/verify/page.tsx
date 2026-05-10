@@ -99,7 +99,7 @@ function VerifyContent() {
                 </svg>
               </div>
               <h1 className="text-3xl font-bold mb-4">Verifying your email...</h1>
-              <p className="text-of-on-surface-variant">Activating your Tiresias platform trial. This takes just a moment.</p>
+              <p className="text-of-on-surface-variant">Activating your Pantheon platform trial. This takes just a moment.</p>
             </div>
           )}
 
@@ -113,7 +113,7 @@ function VerifyContent() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold">Trial Activated</h1>
-                  <p className="text-sm text-of-on-surface-variant">Your 14-day Tiresias platform trial is live.</p>
+                  <p className="text-sm text-of-on-surface-variant">Your 14-day Pantheon platform trial is live.</p>
                 </div>
               </div>
 
@@ -162,7 +162,7 @@ function VerifyContent() {
                 <div className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 space-y-4 mb-8">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs text-of-outline uppercase tracking-wide">Tiresias Proxy API Key (shown once)</p>
+                      <p className="text-xs text-of-outline uppercase tracking-wide">Pantheon Proxy API Key (shown once)</p>
                       <button
                         onClick={copyProxyKey}
                         className="text-xs text-of-primary hover:text-of-primary/70 transition-colors"
@@ -171,7 +171,7 @@ function VerifyContent() {
                       </button>
                     </div>
                     <p className="text-xs text-of-on-surface-variant mb-2">
-                      Point your AI agents at https://proxy.tiresias.network/v1 with this key
+                      Point your AI agents at https://pantheon.saluca.com/v1 with this key
                     </p>
                     <div className="bg-of-surface-container-low rounded-lg p-3 border border-of-primary/20">
                       <p className="text-sm font-mono text-of-primary break-all">{activation.proxy_api_key}</p>
@@ -183,7 +183,7 @@ function VerifyContent() {
                   <div>
                     <p className="text-xs text-of-outline uppercase tracking-wide mb-2">Configuration</p>
                     <pre className="bg-of-surface-container-low rounded-lg p-3 border border-of-outline-variant/15 text-xs font-mono text-of-on-surface-variant overflow-x-auto leading-relaxed">
-{`export OPENAI_BASE_URL=https://proxy.tiresias.network/v1
+{`export OPENAI_BASE_URL=https://pantheon.saluca.com/v1
 export TIRESIAS_API_KEY=${activation.proxy_api_key}`}
                     </pre>
                   </div>
@@ -201,14 +201,14 @@ export SOULAUTH_API_KEY="${activation.raw_key.slice(0, 12)}..."
 
 # Verify it works
 curl -H "X-SoulKey: $SOULAUTH_API_KEY" \\
-  https://api.tiresias.network/v1/auth/whoami`}
+  https://pantheon.saluca.com/v1/auth/whoami`}
                 </pre>
               </div>
 
               {/* Deploy on Your Infrastructure */}
               <div className="bg-of-background border border-of-outline-variant/15 rounded-xl p-5 mb-8">
                 <h3 className="text-sm font-semibold mb-1">Deploy on Your Infrastructure</h3>
-                <p className="text-xs text-of-on-surface-variant mb-4">Run Tiresias on your own servers with Docker Compose.</p>
+                <p className="text-xs text-of-on-surface-variant mb-4">Run Pantheon on your own servers with Docker Compose.</p>
 
                 <div className="space-y-4">
                   {/* Step 1 */}

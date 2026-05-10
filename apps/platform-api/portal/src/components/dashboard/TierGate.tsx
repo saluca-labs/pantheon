@@ -71,7 +71,7 @@ export function TierGate({ requiredTier, featureLabel, children }: TierGateProps
         </p>
       </div>
       <a
-        href="https://tiresias.ai/pricing"
+        href="https://pantheon.saluca.com/pricing"
         target="_blank"
         rel="noopener noreferrer"
         className="mt-1 px-4 py-2 rounded-lg bg-of-primary/15 border border-of-primary/25 text-xs font-bold text-of-primary hover:bg-of-primary/25 transition-colors"
