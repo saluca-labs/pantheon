@@ -1,11 +1,7 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
-import {
-  AGENTIC_OS_MODULES,
-  findAgenticOsModule,
-} from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
+import type { ReactNode } from 'react';
+import type { AgenticOsModule } from '@/lib/agentic-os/registry';
 import { PlanViewer } from '@/components/agentic-os/plan-viewer';
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -23,31 +19,44 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   },
 };
 
-// Generate the static slug list at build time so Next can prerender.
-// Health OS is excluded — its dedicated page lives at
-// `/dashboard/os/health/page.tsx` with the Phase 1 hub (risk flags,
-// consent gate, etc.). Listing it here would create a route collision.
-export function generateStaticParams() {
-  return AGENTIC_OS_MODULES.filter((m) => m.slug !== 'health').map((m) => ({
-    slug: m.slug,
-  }));
+export interface DashboardHubProps {
+  /** The OS module from `lib/agentic-os/registry.ts`. */
+  module: AgenticOsModule;
+  /**
+   * Optional banner rendered above the feature grid — used by Health OS
+   * for the active-risk-flags surface, but reusable for any
+   * cross-feature alert (e.g. licensing, integration outages).
+   */
+  flagBanner?: ReactNode;
+  /**
+   * Optional consent gate rendered below the feature grid — kept inline
+   * (not modal) so it never blocks navigation back to /dashboard/os.
+   */
+  consentGate?: ReactNode;
+  /**
+   * Roadmap markdown to render in the collapsed accordion. Pass `null`
+   * to suppress the accordion entirely.
+   */
+  roadmapMarkdown?: string | null;
 }
 
-interface Props {
-  params: Promise<{ slug: string }>;
-}
-
-export default async function AgenticOsModulePage({ params }: Props) {
-  const { slug } = await params;
-  const mod = findAgenticOsModule(slug);
-  if (!mod) {
-    notFound();
-  }
-
-  const plan = await loadAgenticOsPlan(slug);
-  const Icon = mod.icon;
-  const badge = STATUS_BADGE[mod.status] ?? STATUS_BADGE['planned']!;
-  const hasFeatures = mod.features.length > 0;
+/**
+ * Cross-OS dashboard hub. Replaces the per-OS implementation of the
+ * features-first shell from `[slug]/page.tsx` so each OS only needs to
+ * supply its module + optional surfaces (flag banner, consent gate).
+ *
+ * Phase 1 of Health OS uses this as its primary page; subsequent OSes
+ * adopt it in their own phase to keep diffs small.
+ */
+export function DashboardHub({
+  module,
+  flagBanner,
+  consentGate,
+  roadmapMarkdown,
+}: DashboardHubProps) {
+  const Icon = module.icon;
+  const badge = STATUS_BADGE[module.status] ?? STATUS_BADGE['planned']!;
+  const hasFeatures = module.features.length > 0;
 
   return (
     <div className="max-w-5xl">
@@ -67,20 +76,22 @@ export default async function AgenticOsModulePage({ params }: Props) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-xl font-semibold text-white">{mod.label}</h1>
+              <h1 className="text-xl font-semibold text-white">{module.label}</h1>
               <span
                 className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border ${badge.className}`}
               >
                 {badge.label}
               </span>
             </div>
-            <p className="text-[#94a3b8] text-sm">{mod.tagline}</p>
+            <p className="text-[#94a3b8] text-sm">{module.tagline}</p>
             <p className="text-sm text-[#cbd5e1]/80 mt-2 leading-relaxed">
-              {mod.description}
+              {module.description}
             </p>
           </div>
         </div>
       </header>
+
+      {flagBanner ? <div className="mb-5">{flagBanner}</div> : null}
 
       {/* Primary content: feature grid. */}
       <section className="mb-6">
@@ -88,15 +99,15 @@ export default async function AgenticOsModulePage({ params }: Props) {
           <h2 className="text-base font-semibold text-white">Features</h2>
           {hasFeatures && (
             <span className="text-xs text-[#94a3b8]">
-              {mod.features.length}{' '}
-              {mod.features.length === 1 ? 'feature' : 'features'} available
+              {module.features.length}{' '}
+              {module.features.length === 1 ? 'feature' : 'features'} available
             </span>
           )}
         </div>
 
         {hasFeatures ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {mod.features.map((feature) => (
+            {module.features.map((feature) => (
               <Link
                 key={feature.href}
                 href={feature.href}
@@ -118,7 +129,7 @@ export default async function AgenticOsModulePage({ params }: Props) {
           <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center">
             <p className="text-sm font-medium text-white mb-1">Coming soon</p>
             <p className="text-xs text-[#94a3b8]">
-              {mod.status === 'preview'
+              {module.status === 'preview'
                 ? 'Schema and plan are live. Feature pages roll out in the parallel rollout phase.'
                 : 'Feature pages for this module have not shipped yet.'}{' '}
               Track progress in the execution roadmap below.
@@ -127,25 +138,29 @@ export default async function AgenticOsModulePage({ params }: Props) {
         )}
       </section>
 
+      {consentGate ? <div className="mb-6">{consentGate}</div> : null}
+
       {/* Secondary content: collapsed execution roadmap. */}
-      <details className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27]">
-        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-[#cbd5e1] hover:text-white transition">
-          <span className="flex items-center gap-2">
-            <ChevronDown className="w-4 h-4 text-[#94a3b8] transition group-open:rotate-180" />
-            <span className="font-medium">View execution roadmap</span>
-            <span className="text-xs text-[#94a3b8]">(full plan markdown)</span>
-          </span>
-        </summary>
-        <div className="px-6 pb-6 pt-2 border-t border-[#2a2d3e]">
-          {plan ? (
-            <PlanViewer markdown={plan} />
-          ) : (
-            <p className="text-[#94a3b8] text-sm">
-              Execution plan not available for this module yet.
-            </p>
-          )}
-        </div>
-      </details>
+      {roadmapMarkdown !== null && (
+        <details className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27]">
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-[#cbd5e1] hover:text-white transition">
+            <span className="flex items-center gap-2">
+              <ChevronDown className="w-4 h-4 text-[#94a3b8] transition group-open:rotate-180" />
+              <span className="font-medium">View execution roadmap</span>
+              <span className="text-xs text-[#94a3b8]">(full plan markdown)</span>
+            </span>
+          </summary>
+          <div className="px-6 pb-6 pt-2 border-t border-[#2a2d3e]">
+            {roadmapMarkdown ? (
+              <PlanViewer markdown={roadmapMarkdown} />
+            ) : (
+              <p className="text-[#94a3b8] text-sm">
+                Execution plan not available for this module yet.
+              </p>
+            )}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
