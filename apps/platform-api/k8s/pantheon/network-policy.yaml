@@ -1,8 +1,8 @@
 # Forked from apps/platform-api/k8s/network-policy.yaml @ 02a6771 for pantheon namespace.
 # CRITICAL change: pod selectors switched from `app.kubernetes.io/part-of: tiresias` to `pantheon`
 # (the source had per-namespace policies that selected on the part-of label; that label is now `pantheon`
-# in this namespace). Drops the tiresias-proxy and redis sections (not deployed in pantheon MVP).
-# Adds platform-web + memory-service netpols.
+# in this namespace). Adds platform-web, memory-service, and tiresias-proxy netpols.
+# Redis is intentionally not deployed in pantheon MVP (proxy falls back to in-memory rate limiting).
 ---
 # SoulAuth: accepts from pantheon pods + GCE health probers, egress to DB + DNS + WI metadata
 apiVersion: networking.k8s.io/v1
@@ -342,5 +342,64 @@ spec:
         - ipBlock:
             cidr: 199.36.153.8/30
       ports:
+        - protocol: TCP
+          port: 443
+---
+# tiresias-proxy: accepts from portal (server-side dashboard fetches), egress to DB via
+# cloud-sql-proxy sidecar + GCP Secret Manager (for KEK provider) + soulgate (off by default,
+# but reachable when SOULGATE_ENABLED is flipped) + LLM upstreams (anthropic/openai over 443).
+# No ingress from GCE health probers — proxy is not behind the GCE LB.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tiresias-proxy-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: tiresias-proxy
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: portal
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # DNS — required for Cloud SQL proxy hostname + GCP API hostnames + LLM upstream DNS.
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # GKE metadata server (Workload Identity token issuance).
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # cloud-sql-proxy sidecar listens on localhost:3307; this rule allows the
+    # sidecar's own egress to the Cloud SQL backend over its provisioned port.
+    - ports:
+        - protocol: TCP
+          port: 3307
+    # soulgate (off by default; rule preserved so flipping SOULGATE_ENABLED=shadow|enforce
+    # doesn't require a netpol change).
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soulgate
+      ports:
+        - protocol: TCP
+          port: 8002
+    # GCP Secret Manager (for TIRESIAS_KEK_PROVIDER=gcp-sm) + LLM upstreams (anthropic/openai)
+    # both ride 443. Scoping to GCP private CIDR (199.36.153.8/30) would block the LLM
+    # upstreams which use public CDN IPs, so 443 is left open.
+    - ports:
         - protocol: TCP
           port: 443
