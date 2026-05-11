@@ -1,5 +1,111 @@
 # Maker OS — Full Execution Plan (Assess → Plan → Execute → Validate)
 
+## Phase 6 — Milestones-as-Deadlines + Cross-Project Dependencies + Top Blockers (locked decisions)
+
+**Migration:** `0039_maker_phase6`, down_revision `0038_maker_phase5`.
+
+**Scope:** Two additive surface changes that turn the Maker milestone strip
+into a deadline tracker and stitch a cross-project dependency graph over the
+per-user project list. The Top Blockers widget unifies both into a single
+workshop-wide feed surfaced on the hub and a dedicated page.
+
+**Schema changes (1 ALTER + 1 new table, all under `agos_maker_*`):**
+
+1. `agos_maker_build_milestones` — promoted to deadline tracker. The
+   existing `due_at DATE` column is preserved (calendar-date semantics are
+   still load-bearing for the milestone strip and the routing layer
+   round-trips DATE through YYYY-MM-DD strings; the Phase 6 spec called
+   for TIMESTAMPTZ but the column stays DATE per the explicit judgment
+   call documented in the migration). New columns:
+
+   * `priority TEXT NOT NULL DEFAULT 'medium'` with CHECK in
+     `('low','medium','high','critical')`.
+   * `is_blocker BOOLEAN NOT NULL DEFAULT false`.
+   * `blocked_reason TEXT` (optional explanation).
+   * `status TEXT NOT NULL DEFAULT 'pending'` with CHECK in
+     `('pending','at_risk','blocked','on_track','done','missed')`.
+
+   The migration is purely additive — no existing CHECK on `status`
+   existed (the column did not exist before Phase 6). Existing rows
+   inherit `status='pending'` from the column default; rows with
+   `completed_at IS NOT NULL` are remapped to `status='done'` on upgrade
+   so the new column matches the legacy completion semantics. The
+   downgrade strips the four new columns + the two new CHECK constraints
+   in reverse order; rows in the new tier values
+   (`at_risk` / `blocked` / `missed` / `on_track`) remap to `pending`
+   first to keep the column drop deterministic.
+
+   New indexes:
+   * `(project_id, due_at) WHERE due_at IS NOT NULL` — deadline scan.
+   * `(project_id, status) WHERE status IN ('at_risk','blocked','missed')` —
+     blockers query path.
+   * `(is_blocker) WHERE is_blocker = true` — blocker filter.
+
+2. `agos_maker_project_dependencies` — directed edges in a per-user
+   cross-project graph. Edge `(from_project_id → to_project_id, kind)`
+   means "from depends on to" (or "to blocks from"). Per-user scope.
+   Per-OS project UUIDs carry NO FK to a single project table — matches
+   the v0.1.30 platform contract for cross-cutting per-OS columns.
+   Columns: `id`, `user_id NOT NULL`, `from_project_id UUID NOT NULL`,
+   `to_project_id UUID NOT NULL`, `kind TEXT NOT NULL DEFAULT 'blocks'`
+   CHECK in `('blocks','informs','consumes','related')`, `status TEXT NOT
+   NULL DEFAULT 'open'` CHECK in `('open','cleared')`, `notes`,
+   `metadata JSONB`, `created_at`, `updated_at`.
+
+   Constraints: UNIQUE `(from_project_id, to_project_id, kind)` (no
+   duplicate edges of the same kind); CHECK `from != to` (no self-loops).
+
+   Indexes: `(user_id, status)`, `(from_project_id)`, `(to_project_id)`,
+   partial `(user_id) WHERE status = 'open'` (blockers widget path).
+
+**Routes:**
+
+- Milestones — existing routes accept the new fields on POST + PATCH
+  (`status`, `priority`, `is_blocker`, `blocked_reason`). The PATCH route
+  keeps `completed_at` in sync with `status='done'` so the legacy
+  `/complete` toggle stays working without surface changes.
+- `/api/tiresias/agentic-os/maker/projects/[id]/dependencies` (GET both
+  directions, POST create — 400 self-loop, 404 cross-ownership, 409
+  duplicate edge).
+- `/api/tiresias/agentic-os/maker/projects/[id]/dependencies/[depId]`
+  (PATCH status/notes/kind, DELETE).
+- `/api/tiresias/agentic-os/maker/blockers` (GET top blockers feed,
+  `limit` query param default 25 max 100). Items combined from:
+  milestones in `missed`/`blocked`/overdue/`at_risk`-in-7-days, and
+  open `blocks` dependency edges.
+
+**Severity ranking (deterministic, exercised by unit tests):**
+missed → blocked → overdue → at_risk → open_dependency. Tie-break:
+oldest `due_at` first for milestones; oldest `created_at` for
+dependencies; finally `id` ASC for total stability.
+
+**Pages:**
+
+- `/dashboard/os/maker` — Top Blockers widget mounted alongside the
+  Phase 3 Recent activity widget (two-column responsive grid in the
+  `flagBanner` slot). Widget shows the top 5; "View all" link goes to:
+- `/dashboard/os/maker/blockers` — full workshop blockers list, grouped
+  by project, with filter chips for kind (milestone / dependency) and
+  severity.
+- Per-project Milestones tab now surfaces stored `status` + `priority` +
+  `is_blocker` pills, the derived due/overdue/done badge stays, and each
+  row has an inline editor for the four new fields (open via chevron).
+- Per-project new **Dependencies tab** — two lists (Upstream — what this
+  project depends on; Downstream — what depends on this project). Add
+  picker modal scopes candidate projects to the user's own list.
+
+**Hub registry card:** added `Top blockers` entry pointing at
+`/dashboard/os/maker/blockers`. Phase 5's PDF / Specs / References cards
+remain in place.
+
+**Cross-ownership safety:** every read filters by user_id. Dependency
+POST validates `to_project_id` belongs to the caller (404 if not).
+Edge listing joins against `agos_maker_projects` with the caller's
+user_id on both `from` and `to` so edges pointing at projects the
+caller can't see are dropped from the response entirely.
+
+***
+
 ## Phase 5 — Spec Sheets + References + PDF Export (locked decisions)
 
 **Migration:** `0038_maker_phase5`, down_revision `0037_maker_phase4`.
