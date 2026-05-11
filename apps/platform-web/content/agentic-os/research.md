@@ -92,6 +92,52 @@ that to mirror the rest of the platform — see Open Question #1.
 
 ## 3. Phased plan
 
+### Phase 1 — SHIPPED (v0.1.x, 2026-05-11)
+
+**Migration shipped:** `0041_research_phase1`, down_revision
+`0040_maker_phase7`.
+
+**What landed:**
+
+- `agos_research_experiments` promoted to a first-class per-OS project
+  entity. Legacy `hypothesis_id NOT NULL FK CASCADE` relaxed to nullable
+  + FK dropped (kept as an optional polymorphic pointer; Phase 3
+  introduces the authoritative N:M join).
+- New project-shape columns: `cover_image_url`, `description`,
+  `target_completion_date`, `team_size`, `tags TEXT[]`, `phase_progress
+  JSONB`, `archived_at`, `metadata JSONB`. MCP-storage column comment on
+  `cover_image_url`.
+- Status taxonomy widened to
+  `planning | running | analysis | writeup | published | archived` with
+  a CASE remap on upgrade (legacy `done` → `published`; unrecognized →
+  `planning`).
+- Indexes: `(user_id, status, updated_at DESC)`, GIN on `tags`, partial
+  `(archived_at) WHERE archived_at IS NOT NULL`.
+- BFF routes under `app/api/tiresias/agentic-os/research/experiments/`:
+  GET / POST list+create, GET / PATCH / DELETE detail (soft-archive by
+  default, hard delete on `?hard=true`), POST `restore`. Audited on
+  every mutation with `projectId = experiment.id`.
+- Pages: hub page replaced (experiments grid + quick-link to hypothesis
+  ledger), standalone `/dashboard/os/research/experiments` list, and
+  per-experiment detail at `/experiments/[id]` with Overview / Notebook
+  (Phase 2 placeholder) / Hypotheses (Phase 3 placeholder) tabs.
+  Legacy hypotheses page kept functional with a Phase 3 notice.
+- Components under `components/agentic-os/research/`:
+  `experiment-card.tsx`, `experiment-form.tsx`, `experiment-filters.tsx`,
+  `experiment-list.tsx`, `experiment-phase-progress.tsx`.
+- Registry updated: research's `features` now lists
+  `Experiments hub` + `Hypothesis ledger`.
+- Tests: ~120 new Vitest cases covering migration shape, experiment
+  pure-helpers, repo CRUD, route gating + cross-ownership, status
+  remap, soft-archive vs hard-delete, NULL `hypothesis_id` acceptance,
+  GIN-on-tags filter path, registry contract.
+
+**Open question resolutions for Phase 1:** Q1 (relax `hypothesis_id`) —
+**yes**. Q2 (workshop-global hypotheses) — **yes**, prepared by Phase 1's
+FK relaxation; concrete join lands Phase 3.
+
+***
+
 ### Phase 1 — Experiment Hub + Foundation Polish
 
 **Migration:** `0041_research_phase1`, down_revision `0040_maker_phase7`.
