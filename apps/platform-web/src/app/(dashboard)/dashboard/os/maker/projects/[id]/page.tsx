@@ -1,13 +1,13 @@
 /**
  * Maker OS — Project Hub (per-project detail page).
  *
- * The per-project landing page every later Maker phase (BOM, build log,
- * tools, spec sheets, AI Coach) attaches to. Header carries cover image,
- * title, status pill, target date, and team size. Body has a 7-phase
- * progress tracker plus a tab strip:
+ * The per-project landing page every later Maker phase (BOM, build log, tools,
+ * spec sheets, AI Coach) attaches to. Header carries cover image, title,
+ * status pill, target date, and team size. Body has a 7-phase progress tracker
+ * plus a tab strip:
  *
  *   - Overview   — phase tracker, description, stats
- *   - Parts      — the existing parts UI lifted to this page (Phase 1)
+ *   - BOM        — Phase 2 BOM editor (lines, deficits, est-cost)
  *   - Build log  — placeholder (Phase 3)
  *   - Tools      — placeholder (Phase 4)
  *   - Spec sheets— placeholder (Phase 5)
@@ -25,20 +25,24 @@ import {
   Users,
   TrendingUp,
   Layers,
-  ClipboardList,
+  ListChecks,
   Hammer,
   FileText,
   Sparkles,
 } from 'lucide-react';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
-import { getProject, listParts } from '@/lib/agentic-os/maker/repo';
+import {
+  getProject,
+  getBomSummary,
+  listCatalog,
+} from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUS_LABELS,
   projectPhaseAvg,
 } from '@/lib/agentic-os/maker/projects';
 import { PhaseProgressEditor } from '@/components/agentic-os/maker/phase-progress-editor';
 import { ProjectHubActions } from '@/components/agentic-os/maker/project-hub-actions';
-import { ProjectPartsManager } from '@/components/agentic-os/maker/project-parts-manager';
+import { BomEditor } from '@/components/agentic-os/maker/bom-editor';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
 
 export const dynamic = 'force-dynamic';
@@ -48,11 +52,11 @@ interface Props {
   searchParams: Promise<{ tab?: string }>;
 }
 
-type TabKey = 'overview' | 'parts' | 'log' | 'tools' | 'specs' | 'coach';
+type TabKey = 'overview' | 'bom' | 'log' | 'tools' | 'specs' | 'coach';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
-  { key: 'parts', label: 'Parts', icon: ClipboardList },
+  { key: 'bom', label: 'BOM', icon: ListChecks },
   { key: 'log', label: 'Build log', icon: Hammer, phase: 'Phase 3' },
   { key: 'tools', label: 'Tools', icon: Wrench, phase: 'Phase 4' },
   { key: 'specs', label: 'Spec sheets', icon: FileText, phase: 'Phase 5' },
@@ -69,7 +73,7 @@ function daysUntil(target: string | null): number | null {
 function isTabKey(value: string | undefined): value is TabKey {
   return (
     value === 'overview' ||
-    value === 'parts' ||
+    value === 'bom' ||
     value === 'log' ||
     value === 'tools' ||
     value === 'specs' ||
@@ -91,9 +95,15 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
   const countdown = daysUntil(project.targetCompletionDate);
   const avg = projectPhaseAvg(project.phaseProgress);
 
-  // Parts are loaded for the Parts tab so the SSR pass returns hydrated data;
-  // the client component refreshes via the route on mount.
-  const initialParts = activeTab === 'parts' ? await listParts(project.id) : [];
+  // BOM summary + catalog rows preloaded for the BOM tab so SSR hydrates
+  // immediately; the client component refreshes on mount.
+  const [bomSummary, catalogRows] =
+    activeTab === 'bom'
+      ? await Promise.all([
+          getBomSummary(project.id, user.userId),
+          listCatalog({ userId: user.userId }),
+        ])
+      : [null, []];
 
   return (
     <div className="max-w-5xl">
@@ -223,16 +233,26 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
         </div>
       )}
 
-      {activeTab === 'parts' && (
+      {activeTab === 'bom' && bomSummary && (
         <div>
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
-            Parts inventory
+            Bill of materials
           </h2>
           <p className="text-xs text-[#94a3b8] mb-4">
-            Phase 2 will replace this with a proper BOM editor (suppliers, prices, deficits).
-            For now, parts are a flat list per project.
+            Each line picks a workshop catalog row. Need a part that isn&apos;t in the catalog?{' '}
+            <Link
+              href="/dashboard/os/maker/catalog"
+              className="text-[#4361EE] hover:underline"
+            >
+              Add it to the catalog
+            </Link>
+            , then come back here.
           </p>
-          <ProjectPartsManager projectId={project.id} initialParts={initialParts} />
+          <BomEditor
+            projectId={project.id}
+            initialSummary={bomSummary}
+            catalogRows={catalogRows}
+          />
         </div>
       )}
 
