@@ -28,6 +28,18 @@ import {
   type StoryDocumentVersion,
   type ProseMirrorJson,
 } from './story-documents';
+import {
+  CHARACTER_ROLE_VALUES,
+  RELATIONSHIP_KIND_VALUES,
+  RELATIONSHIP_DIRECTION_VALUES,
+  type Character,
+  type CharacterRole,
+  type CharacterUpsert,
+  type CharacterRelationship,
+  type RelationshipKind,
+  type RelationshipDirection,
+  type CharacterRelationshipUpsert,
+} from './characters';
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
 
@@ -644,6 +656,428 @@ export async function deleteStoryDocument(
   const r = await pool.query(
     `DELETE FROM agos_filmmaker_story_documents WHERE id = $1`,
     [documentId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Characters ─────────────────────────────────────────────────────────────
+
+const CHARACTER_COLUMNS = `id, project_id, name, role, archetype, logline,
+                           age, pronouns, gender, occupation,
+                           backstory, goals, needs, fears, wounds, arc,
+                           voice_notes, physical_description, portrait_url,
+                           tags, metadata, created_at, updated_at`;
+
+function rowToCharacter(row: any): Character {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    name: row.name,
+    role: row.role as CharacterRole,
+    archetype: row.archetype ?? null,
+    logline: row.logline ?? null,
+    age: row.age ?? null,
+    pronouns: row.pronouns ?? null,
+    gender: row.gender ?? null,
+    occupation: row.occupation ?? null,
+    backstory: row.backstory ?? null,
+    goals: row.goals ?? null,
+    needs: row.needs ?? null,
+    fears: row.fears ?? null,
+    wounds: row.wounds ?? null,
+    arc: row.arc ?? null,
+    voiceNotes: row.voice_notes ?? null,
+    physicalDescription: row.physical_description ?? null,
+    portraitUrl: row.portrait_url ?? null,
+    tags: row.tags ?? [],
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export interface ListCharactersArgs {
+  projectId: string;
+  tenantId: string;
+  userId: string;
+  q?: string;
+  role?: CharacterRole;
+}
+
+export async function listCharacters(args: ListCharactersArgs): Promise<Character[]> {
+  const pool = getFilmmakerPool();
+  const columns = CHARACTER_COLUMNS.split(',').map((c) => `c.${c.trim()}`).join(', ');
+  const params: any[] = [args.projectId, args.userId];
+  const where: string[] = [`c.project_id = $1`, `p.user_id = $2`];
+  if (args.role) {
+    params.push(args.role);
+    where.push(`c.role = $${params.length}`);
+  }
+  if (args.q && args.q.trim().length > 0) {
+    params.push(`%${args.q.trim()}%`);
+    where.push(`c.name ILIKE $${params.length}`);
+  }
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_characters c
+       JOIN agos_filmmaker_projects p ON p.id = c.project_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY c.name ASC`,
+    params,
+  );
+  return r.rows.map(rowToCharacter);
+}
+
+export async function getCharacter(
+  characterId: string,
+  userId: string,
+): Promise<Character | null> {
+  const pool = getFilmmakerPool();
+  const columns = CHARACTER_COLUMNS.split(',').map((c) => `c.${c.trim()}`).join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_characters c
+       JOIN agos_filmmaker_projects p ON p.id = c.project_id
+      WHERE c.id = $1 AND p.user_id = $2`,
+    [characterId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToCharacter(r.rows[0]);
+}
+
+export interface CreateCharacterArgs {
+  projectId: string;
+  tenantId: string;
+  userId: string;
+  data: CharacterUpsert;
+}
+
+export async function createCharacter(args: CreateCharacterArgs): Promise<Character> {
+  const { projectId, userId, data } = args;
+  if (typeof data.name !== 'string' || data.name.trim().length === 0) {
+    throw new Error('Character name is required');
+  }
+  const role: CharacterRole = data.role ?? 'supporting';
+  if (!(CHARACTER_ROLE_VALUES as readonly string[]).includes(role)) {
+    throw new Error(`Invalid character role: ${role}`);
+  }
+
+  const project = await getProject(projectId, userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const id = randomUUID();
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_characters
+       (id, project_id, name, role, archetype, logline,
+        age, pronouns, gender, occupation,
+        backstory, goals, needs, fears, wounds, arc,
+        voice_notes, physical_description, portrait_url,
+        tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+             $11,$12,$13,$14,$15,$16,$17,$18,$19,
+             $20,$21::jsonb)`,
+    [
+      id,
+      projectId,
+      data.name.trim(),
+      role,
+      data.archetype ?? null,
+      data.logline ?? null,
+      data.age ?? null,
+      data.pronouns ?? null,
+      data.gender ?? null,
+      data.occupation ?? null,
+      data.backstory ?? null,
+      data.goals ?? null,
+      data.needs ?? null,
+      data.fears ?? null,
+      data.wounds ?? null,
+      data.arc ?? null,
+      data.voiceNotes ?? null,
+      data.physicalDescription ?? null,
+      data.portraitUrl ?? null,
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+
+  const created = await getCharacter(id, userId);
+  if (!created) throw new Error('Failed to create character');
+  return created;
+}
+
+export interface UpdateCharacterArgs {
+  id: string;
+  tenantId: string;
+  userId: string;
+  patch: Partial<CharacterUpsert>;
+}
+
+export async function updateCharacter(args: UpdateCharacterArgs): Promise<Character | null> {
+  const existing = await getCharacter(args.id, args.userId);
+  if (!existing) return null;
+
+  const patch = args.patch;
+  if (
+    patch.role !== undefined &&
+    !(CHARACTER_ROLE_VALUES as readonly string[]).includes(patch.role)
+  ) {
+    throw new Error(`Invalid character role: ${patch.role}`);
+  }
+  if (patch.name !== undefined) {
+    if (typeof patch.name !== 'string' || patch.name.trim().length === 0) {
+      throw new Error('Character name cannot be empty');
+    }
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_characters
+        SET name                 = COALESCE($2,  name),
+            role                 = COALESCE($3,  role),
+            archetype            = COALESCE($4,  archetype),
+            logline              = COALESCE($5,  logline),
+            age                  = COALESCE($6,  age),
+            pronouns             = COALESCE($7,  pronouns),
+            gender               = COALESCE($8,  gender),
+            occupation           = COALESCE($9,  occupation),
+            backstory            = COALESCE($10, backstory),
+            goals                = COALESCE($11, goals),
+            needs                = COALESCE($12, needs),
+            fears                = COALESCE($13, fears),
+            wounds               = COALESCE($14, wounds),
+            arc                  = COALESCE($15, arc),
+            voice_notes          = COALESCE($16, voice_notes),
+            physical_description = COALESCE($17, physical_description),
+            portrait_url         = COALESCE($18, portrait_url),
+            tags                 = COALESCE($19, tags),
+            metadata             = COALESCE($20::jsonb, metadata),
+            updated_at           = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      patch.name?.trim() ?? null,
+      patch.role ?? null,
+      patch.archetype ?? null,
+      patch.logline ?? null,
+      patch.age ?? null,
+      patch.pronouns ?? null,
+      patch.gender ?? null,
+      patch.occupation ?? null,
+      patch.backstory ?? null,
+      patch.goals ?? null,
+      patch.needs ?? null,
+      patch.fears ?? null,
+      patch.wounds ?? null,
+      patch.arc ?? null,
+      patch.voiceNotes ?? null,
+      patch.physicalDescription ?? null,
+      patch.portraitUrl ?? null,
+      patch.tags ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getCharacter(args.id, args.userId);
+}
+
+export async function deleteCharacter(
+  characterId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getCharacter(characterId, userId);
+  if (!existing) return false;
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_filmmaker_characters WHERE id = $1`,
+    [characterId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Character relationships ─────────────────────────────────────────────────
+
+const RELATIONSHIP_COLUMNS = `id, project_id, from_id, to_id, kind, direction,
+                              description, tension, created_at, updated_at`;
+
+function rowToRelationship(row: any): CharacterRelationship {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    fromId: row.from_id,
+    toId: row.to_id,
+    kind: row.kind as RelationshipKind,
+    direction: row.direction as RelationshipDirection,
+    description: row.description ?? null,
+    tension: row.tension == null ? null : Number(row.tension),
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export interface ListRelationshipsArgs {
+  projectId: string;
+  tenantId: string;
+  userId: string;
+  characterId?: string;
+}
+
+export async function listCharacterRelationships(
+  args: ListRelationshipsArgs,
+): Promise<CharacterRelationship[]> {
+  const pool = getFilmmakerPool();
+  const columns = RELATIONSHIP_COLUMNS.split(',').map((c) => `r.${c.trim()}`).join(', ');
+  const params: any[] = [args.projectId, args.userId];
+  const where: string[] = [`r.project_id = $1`, `p.user_id = $2`];
+  if (args.characterId) {
+    params.push(args.characterId);
+    where.push(`(r.from_id = $${params.length} OR r.to_id = $${params.length})`);
+  }
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_character_relationships r
+       JOIN agos_filmmaker_projects p ON p.id = r.project_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY r.created_at ASC`,
+    params,
+  );
+  return r.rows.map(rowToRelationship);
+}
+
+export async function getCharacterRelationship(
+  relationshipId: string,
+  userId: string,
+): Promise<CharacterRelationship | null> {
+  const pool = getFilmmakerPool();
+  const columns = RELATIONSHIP_COLUMNS.split(',').map((c) => `r.${c.trim()}`).join(', ');
+  const res = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_character_relationships r
+       JOIN agos_filmmaker_projects p ON p.id = r.project_id
+      WHERE r.id = $1 AND p.user_id = $2`,
+    [relationshipId, userId],
+  );
+  if ((res.rowCount ?? 0) === 0) return null;
+  return rowToRelationship(res.rows[0]);
+}
+
+export interface CreateRelationshipArgs {
+  tenantId: string;
+  userId: string;
+  data: CharacterRelationshipUpsert;
+}
+
+export async function createCharacterRelationship(
+  args: CreateRelationshipArgs,
+): Promise<CharacterRelationship> {
+  const { userId, data } = args;
+  if (data.fromId === data.toId) {
+    throw new Error('A character cannot have a relationship with themselves');
+  }
+  const kind: RelationshipKind = data.kind ?? 'other';
+  if (!(RELATIONSHIP_KIND_VALUES as readonly string[]).includes(kind)) {
+    throw new Error(`Invalid relationship kind: ${kind}`);
+  }
+  const direction: RelationshipDirection = data.direction ?? 'mutual';
+  if (!(RELATIONSHIP_DIRECTION_VALUES as readonly string[]).includes(direction)) {
+    throw new Error(`Invalid relationship direction: ${direction}`);
+  }
+  if (data.tension != null && (data.tension < 0 || data.tension > 10)) {
+    throw new Error('Tension must be between 0 and 10');
+  }
+
+  const from = await getCharacter(data.fromId, userId);
+  const to = await getCharacter(data.toId, userId);
+  if (!from || !to) {
+    throw new Error('Character not found or not owned by user');
+  }
+  if (from.projectId !== to.projectId) {
+    throw new Error('Both characters must belong to the same project');
+  }
+
+  const id = randomUUID();
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_character_relationships
+       (id, project_id, from_id, to_id, kind, direction, description, tension)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [
+      id,
+      from.projectId,
+      data.fromId,
+      data.toId,
+      kind,
+      direction,
+      data.description ?? null,
+      data.tension ?? null,
+    ],
+  );
+
+  const created = await getCharacterRelationship(id, userId);
+  if (!created) throw new Error('Failed to create relationship');
+  return created;
+}
+
+export interface UpdateRelationshipArgs {
+  id: string;
+  tenantId: string;
+  userId: string;
+  patch: Partial<Omit<CharacterRelationshipUpsert, 'fromId' | 'toId'>>;
+}
+
+export async function updateCharacterRelationship(
+  args: UpdateRelationshipArgs,
+): Promise<CharacterRelationship | null> {
+  const existing = await getCharacterRelationship(args.id, args.userId);
+  if (!existing) return null;
+
+  const patch = args.patch;
+  if (
+    patch.kind !== undefined &&
+    !(RELATIONSHIP_KIND_VALUES as readonly string[]).includes(patch.kind)
+  ) {
+    throw new Error(`Invalid relationship kind: ${patch.kind}`);
+  }
+  if (
+    patch.direction !== undefined &&
+    !(RELATIONSHIP_DIRECTION_VALUES as readonly string[]).includes(patch.direction)
+  ) {
+    throw new Error(`Invalid relationship direction: ${patch.direction}`);
+  }
+  if (patch.tension != null && (patch.tension < 0 || patch.tension > 10)) {
+    throw new Error('Tension must be between 0 and 10');
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_character_relationships
+        SET kind        = COALESCE($2, kind),
+            direction   = COALESCE($3, direction),
+            description = COALESCE($4, description),
+            tension     = COALESCE($5, tension),
+            updated_at  = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      patch.kind ?? null,
+      patch.direction ?? null,
+      patch.description ?? null,
+      patch.tension ?? null,
+    ],
+  );
+  return getCharacterRelationship(args.id, args.userId);
+}
+
+export async function deleteCharacterRelationship(
+  relationshipId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getCharacterRelationship(relationshipId, userId);
+  if (!existing) return false;
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_filmmaker_character_relationships WHERE id = $1`,
+    [relationshipId],
   );
   return (r.rowCount ?? 0) > 0;
 }
