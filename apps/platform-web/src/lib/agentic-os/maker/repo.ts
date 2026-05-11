@@ -366,18 +366,30 @@ interface LegacyRecordAuditArgs {
   projectId?: string | null;
 }
 
-/** Slug-parameterized audit writer. The `osSlug` is locked to `'maker'`. */
+/** Slug-parameterized audit writer. The `osSlug` is locked to `'maker'`.
+ *
+ * NOTE on `projectId`: agos_audit.project_id has a FK → agos_projects.id (the
+ * generic projects table from 0003 that no per-OS code writes to). Maker
+ * projects live in agos_maker_projects, so passing a maker UUID would FK-fail.
+ * Callers may still pass `projectId` for symmetry with other OSes; we capture
+ * it inside `payload.projectId` and store NULL in the FK column. The audit
+ * row remains queryable via payload→>'projectId'.
+ */
 export async function recordAudit(
   args: LegacyRecordAuditArgs | Omit<RecordAuditArgs, 'pool' | 'osSlug'>,
 ): Promise<void> {
   const pool = getMakerPool();
+  const payload: Record<string, unknown> = { ...(args.payload ?? {}) };
+  if (args.projectId && payload.projectId === undefined) {
+    payload.projectId = args.projectId;
+  }
   await sharedRecordAudit({
     pool,
     osSlug: 'maker',
     actorId: args.actorId,
     action: args.action,
-    payload: args.payload,
-    projectId: args.projectId ?? null,
+    payload,
+    projectId: null,
   });
 }
 
