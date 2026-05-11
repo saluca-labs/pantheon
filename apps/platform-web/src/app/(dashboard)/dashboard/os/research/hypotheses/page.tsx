@@ -37,11 +37,18 @@ export default async function ResearchHypothesesPage() {
         <h1 className="text-2xl font-semibold text-white">Hypothesis Ledger</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-[#94a3b8] mb-4">
         Track your scientific hypotheses in the standard{' '}
         <span className="italic">If…then…because</span> format. Update status as experiments
         progress from draft through testing to a conclusion.
       </p>
+
+      <div className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27]/60 p-3 mb-6 text-xs text-[#94a3b8]">
+        Hypothesis ledger gets a real surface in{' '}
+        <span className="text-white font-medium">Phase 3</span> — per-hypothesis detail
+        pages, predictions and falsifiers, evidence links, and the experiment ↔ hypothesis
+        many-to-many surface land then. Phase 1 keeps this list functional.
+      </div>
 
       <HypothesisLedger initialHypotheses={hypotheses} />
     </div>
