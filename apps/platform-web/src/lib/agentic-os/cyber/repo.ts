@@ -1658,3 +1658,673 @@ export async function reorderTasks(
     client.release();
   }
 }
+
+// ===========================================================================
+// Phase 3: Detection rules + playbook runner
+// ===========================================================================
+
+import type {
+  DetectionRule,
+  DetectionRulePatch,
+  DetectionRuleUpsert,
+  DetectionRun,
+  DetectionRunInsert,
+  DetectionLifecycle,
+  DetectionSeverity,
+} from './detections';
+import type {
+  Playbook,
+  PlaybookPatch,
+  PlaybookRun,
+  PlaybookRunDetail,
+  PlaybookRunStatus,
+  PlaybookStep,
+  PlaybookStepRun,
+  PlaybookStepRunStatus,
+  PlaybookUpsert,
+} from './playbooks';
+
+// ----- Detection rules -----
+
+function rowToDetectionRule(row: any): DetectionRule {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    description: row.description ?? null,
+    author: row.author ?? null,
+    lifecycle: row.lifecycle as DetectionLifecycle,
+    severity: row.severity as DetectionSeverity,
+    tactic: row.tactic ?? null,
+    technique: row.technique ?? null,
+    logSourceKind: row.log_source_kind ?? null,
+    detection: row.detection ?? {},
+    falsePositives: row.false_positives ?? [],
+    references: row.references ?? [],
+    tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const DETECTION_RULE_COLS = `id, owner_id, name, description, author, lifecycle, severity, tactic, technique, log_source_kind, detection, false_positives, "references", tags, metadata, created_at, updated_at`;
+
+export interface ListDetectionRulesArgs {
+  ownerId: string;
+  lifecycle?: DetectionLifecycle;
+  severity?: DetectionSeverity;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listDetectionRules(args: ListDetectionRulesArgs): Promise<DetectionRule[]> {
+  const pool = getCyberPool();
+  const { ownerId, lifecycle, severity, q, limit = 200, offset = 0 } = args;
+  let sql = `SELECT ${DETECTION_RULE_COLS} FROM agos_cyber_detection_rules WHERE owner_id = $1`;
+  const params: any[] = [ownerId];
+  let paramIndex = 2;
+
+  if (lifecycle) {
+    sql += ` AND lifecycle = $${paramIndex++}`;
+    params.push(lifecycle);
+  }
+  if (severity) {
+    sql += ` AND severity = $${paramIndex++}`;
+    params.push(severity);
+  }
+  if (q) {
+    sql += ` AND (name ILIKE $${paramIndex++} OR description ILIKE $${paramIndex++})`;
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  sql += ` ORDER BY CASE severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END, updated_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+  params.push(limit, offset);
+
+  const res = await pool.query(sql, params);
+  return res.rows.map(rowToDetectionRule);
+}
+
+export async function getDetectionRule(id: string, ownerId: string): Promise<DetectionRule | null> {
+  const pool = getCyberPool();
+  const res = await pool.query(
+    `SELECT ${DETECTION_RULE_COLS} FROM agos_cyber_detection_rules WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId]
+  );
+  return res.rows.length ? rowToDetectionRule(res.rows[0]) : null;
+}
+
+export async function createDetectionRule(ownerId: string, data: DetectionRuleUpsert): Promise<DetectionRule> {
+  const pool = getCyberPool();
+  const id = randomUUID();
+  const res = await pool.query(
+    `INSERT INTO agos_cyber_detection_rules (id, owner_id, name, description, author, lifecycle, severity, tactic, technique, log_source_kind, detection, false_positives, "references", tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15::jsonb)
+     RETURNING id, owner_id, name, description, author, lifecycle, severity, tactic, technique, log_source_kind, detection, false_positives, "references", tags, metadata, created_at, updated_at`,
+    [
+      id,
+      ownerId,
+      data.name,
+      data.description ?? null,
+      data.author ?? null,
+      data.lifecycle ?? 'draft',
+      data.severity ?? 'medium',
+      data.tactic ?? null,
+      data.technique ?? null,
+      data.logSourceKind ?? null,
+      JSON.stringify(data.detection ?? {}),
+      data.falsePositives ?? [],
+      data.references ?? [],
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {})
+    ]
+  );
+  return rowToDetectionRule(res.rows[0]);
+}
+
+export async function updateDetectionRule(id: string, ownerId: string, patch: DetectionRulePatch): Promise<DetectionRule | null> {
+  const pool = getCyberPool();
+  const fields: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (patch.name !== undefined) {
+    fields.push(`name = $${paramIndex++}`);
+    values.push(patch.name);
+  }
+  if (patch.description !== undefined) {
+    fields.push(`description = $${paramIndex++}`);
+    values.push(patch.description);
+  }
+  if (patch.author !== undefined) {
+    fields.push(`author = $${paramIndex++}`);
+    values.push(patch.author);
+  }
+  if (patch.lifecycle !== undefined) {
+    fields.push(`lifecycle = $${paramIndex++}`);
+    values.push(patch.lifecycle);
+  }
+  if (patch.severity !== undefined) {
+    fields.push(`severity = $${paramIndex++}`);
+    values.push(patch.severity);
+  }
+  if (patch.tactic !== undefined) {
+    fields.push(`tactic = $${paramIndex++}`);
+    values.push(patch.tactic);
+  }
+  if (patch.technique !== undefined) {
+    fields.push(`technique = $${paramIndex++}`);
+    values.push(patch.technique);
+  }
+  if (patch.logSourceKind !== undefined) {
+    fields.push(`log_source_kind = $${paramIndex++}`);
+    values.push(patch.logSourceKind);
+  }
+  if (patch.detection !== undefined) {
+    fields.push(`detection = $${paramIndex++}::jsonb`);
+    values.push(JSON.stringify(patch.detection));
+  }
+  if (patch.falsePositives !== undefined) {
+    fields.push(`false_positives = $${paramIndex++}`);
+    values.push(patch.falsePositives);
+  }
+  if (patch.references !== undefined) {
+    fields.push(`"references" = $${paramIndex++}`);
+    values.push(patch.references);
+  }
+  if (patch.tags !== undefined) {
+    fields.push(`tags = $${paramIndex++}`);
+    values.push(patch.tags);
+  }
+  if (patch.metadata !== undefined) {
+    fields.push(`metadata = $${paramIndex++}::jsonb`);
+    values.push(JSON.stringify(patch.metadata));
+  }
+
+  if (fields.length === 0) {
+    return getDetectionRule(id, ownerId);
+  }
+
+  const whereIdIdx = paramIndex++;
+  const whereOwnerIdIdx = paramIndex++;
+  values.push(id, ownerId);
+
+  const res = await pool.query(
+    `UPDATE agos_cyber_detection_rules SET ${fields.join(', ')} WHERE id = $${whereIdIdx} AND owner_id = $${whereOwnerIdIdx} RETURNING ${DETECTION_RULE_COLS}`,
+    values
+  );
+
+  return res.rows.length ? rowToDetectionRule(res.rows[0]) : null;
+}
+
+export async function deleteDetectionRule(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const res = await pool.query(
+    'DELETE FROM agos_cyber_detection_rules WHERE id = $1 AND owner_id = $2',
+    [id, ownerId]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+// ----- Detection runs -----
+
+function rowToDetectionRun(row: any): DetectionRun {
+  return {
+    id: row.id,
+    ruleId: row.rule_id,
+    alertId: row.alert_id ?? null,
+    triggeredAt: row.triggered_at.toISOString(),
+    payload: row.payload ?? {},
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listDetectionRuns(args: { ruleId: string; ownerId: string; limit?: number }): Promise<DetectionRun[]> {
+  const pool = getCyberPool();
+  const { ruleId, ownerId, limit = 100 } = args;
+  const res = await pool.query(
+    `
+    SELECT dr.id, dr.rule_id, dr.alert_id, dr.triggered_at, dr.payload, dr.created_at
+    FROM agos_cyber_detection_runs dr
+    JOIN agos_cyber_detection_rules drr ON drr.id = dr.rule_id
+    WHERE dr.rule_id = $1 AND drr.owner_id = $2
+    ORDER BY dr.triggered_at DESC
+    LIMIT $3
+    `,
+    [ruleId, ownerId, limit]
+  );
+  return res.rows.map(rowToDetectionRun);
+}
+
+export async function recordDetectionRun(args: {
+  ownerId: string;
+  ruleId: string;
+  alertId?: string | null;
+  payload?: Record<string, unknown>;
+  triggeredAt?: string
+}): Promise<DetectionRun | null> {
+  const pool = getCyberPool();
+  const { ownerId, ruleId, alertId, payload, triggeredAt } = args;
+  const id = randomUUID();
+  const effectiveTriggeredAt = triggeredAt ?? new Date().toISOString();
+
+  const checkRes = await pool.query(
+    'SELECT 1 FROM agos_cyber_detection_rules WHERE id = $1 AND owner_id = $2',
+    [ruleId, ownerId]
+  );
+  if ((checkRes.rowCount ?? 0) === 0) {
+    return null;
+  }
+
+  const res = await pool.query(
+    `INSERT INTO agos_cyber_detection_runs (id, rule_id, alert_id, triggered_at, payload)
+     VALUES ($1,$2,$3,$4,$5::jsonb)
+     RETURNING id, rule_id, alert_id, triggered_at, payload, created_at`,
+    [id, ruleId, alertId ?? null, effectiveTriggeredAt, JSON.stringify(payload ?? {})]
+  );
+
+  return rowToDetectionRun(res.rows[0]);
+}
+
+// ----- Playbooks -----
+
+function rowToPlaybook(row: any): Playbook {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    category: row.category ?? null,
+    description: row.description ?? null,
+    lifecycle: row.lifecycle as 'draft' | 'testing' | 'active' | 'deprecated' | 'archived',
+    tactic: row.tactic ?? null,
+    steps: row.steps ?? [],
+    tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const PLAYBOOK_COLS = `id, owner_id, name, category, description, lifecycle, tactic, steps, tags, metadata, created_at, updated_at`;
+
+export interface ListPlaybooksArgs {
+  ownerId: string;
+  lifecycle?: 'draft' | 'testing' | 'active' | 'deprecated' | 'archived';
+  q?: string;
+}
+
+export async function listPlaybooks(args: ListPlaybooksArgs): Promise<Playbook[]> {
+  const pool = getCyberPool();
+  const { ownerId, lifecycle, q } = args;
+  let sql = `SELECT ${PLAYBOOK_COLS} FROM agos_cyber_playbooks WHERE owner_id = $1`;
+  const params: any[] = [ownerId];
+  let paramIndex = 2;
+
+  if (lifecycle) {
+    sql += ` AND lifecycle = $${paramIndex++}`;
+    params.push(lifecycle);
+  }
+  if (q) {
+    sql += ` AND (name ILIKE $${paramIndex++} OR description ILIKE $${paramIndex++})`;
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  sql += ` ORDER BY name ASC`;
+  const res = await pool.query(sql, params);
+  return res.rows.map(rowToPlaybook);
+}
+
+export async function getPlaybook(id: string, ownerId: string): Promise<Playbook | null> {
+  const pool = getCyberPool();
+  const res = await pool.query(
+    `SELECT ${PLAYBOOK_COLS} FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId]
+  );
+  return res.rows.length ? rowToPlaybook(res.rows[0]) : null;
+}
+
+export async function createPlaybook(ownerId: string, data: PlaybookUpsert): Promise<Playbook> {
+  const pool = getCyberPool();
+  const id = randomUUID();
+  const res = await pool.query(
+    `INSERT INTO agos_cyber_playbooks (id, owner_id, name, category, description, lifecycle, tactic, steps, tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10::jsonb)
+     RETURNING id, owner_id, name, category, description, lifecycle, tactic, steps, tags, metadata, created_at, updated_at`,
+    [
+      id,
+      ownerId,
+      data.name,
+      data.category ?? null,
+      data.description ?? null,
+      data.lifecycle ?? 'active',
+      data.tactic ?? null,
+      JSON.stringify(data.steps ?? []),
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {})
+    ]
+  );
+  return rowToPlaybook(res.rows[0]);
+}
+
+export async function updatePlaybook(id: string, ownerId: string, patch: PlaybookPatch): Promise<Playbook | null> {
+  const pool = getCyberPool();
+  const fields: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (patch.name !== undefined) {
+    fields.push(`name = $${paramIndex++}`);
+    values.push(patch.name);
+  }
+  if (patch.category !== undefined) {
+    fields.push(`category = $${paramIndex++}`);
+    values.push(patch.category);
+  }
+  if (patch.description !== undefined) {
+    fields.push(`description = $${paramIndex++}`);
+    values.push(patch.description);
+  }
+  if (patch.lifecycle !== undefined) {
+    fields.push(`lifecycle = $${paramIndex++}`);
+    values.push(patch.lifecycle);
+  }
+  if (patch.tactic !== undefined) {
+    fields.push(`tactic = $${paramIndex++}`);
+    values.push(patch.tactic);
+  }
+  if (patch.steps !== undefined) {
+    fields.push(`steps = $${paramIndex++}::jsonb`);
+    values.push(JSON.stringify(patch.steps));
+  }
+  if (patch.tags !== undefined) {
+    fields.push(`tags = $${paramIndex++}`);
+    values.push(patch.tags);
+  }
+  if (patch.metadata !== undefined) {
+    fields.push(`metadata = $${paramIndex++}::jsonb`);
+    values.push(JSON.stringify(patch.metadata));
+  }
+
+  if (fields.length === 0) {
+    return getPlaybook(id, ownerId);
+  }
+
+  const whereIdIdx = paramIndex++;
+  const whereOwnerIdIdx = paramIndex++;
+  values.push(id, ownerId);
+
+  const res = await pool.query(
+    `UPDATE agos_cyber_playbooks SET ${fields.join(', ')} WHERE id = $${whereIdIdx} AND owner_id = $${whereOwnerIdIdx} RETURNING ${PLAYBOOK_COLS}`,
+    values
+  );
+
+  return res.rows.length ? rowToPlaybook(res.rows[0]) : null;
+}
+
+export async function deletePlaybook(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const res = await pool.query(
+    'DELETE FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2',
+    [id, ownerId]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function replacePlaybookSteps(args: {
+  id: string;
+  ownerId: string;
+  steps: PlaybookStep[]
+}): Promise<Playbook | null> {
+  const pool = getCyberPool();
+  const check = await pool.query(
+    'SELECT 1 FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2',
+    [args.id, args.ownerId]
+  );
+  if ((check.rowCount ?? 0) === 0) return null;
+  await pool.query(
+    `UPDATE agos_cyber_playbooks SET steps = $1::jsonb, updated_at = now() WHERE id = $2 AND owner_id = $3`,
+    [JSON.stringify(args.steps), args.id, args.ownerId]
+  );
+  return getPlaybook(args.id, args.ownerId);
+}
+
+// ----- Playbook runs -----
+
+function rowToPlaybookRun(row: any): PlaybookRun {
+  return {
+    id: row.id,
+    playbookId: row.playbook_id,
+    ownerId: row.owner_id,
+    caseId: row.case_id ?? null,
+    status: row.status,
+    startedAt: row.started_at.toISOString(),
+    completedAt: row.completed_at ? row.completed_at.toISOString() : null,
+    notes: row.notes,
+    metadata: row.metadata,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToPlaybookStepRun(row: any): PlaybookStepRun {
+  return {
+    id: row.id,
+    runId: row.run_id,
+    stepIndex: row.step_index,
+    stepSnapshot: row.step_snapshot,
+    status: row.status,
+    input: row.input,
+    notes: row.notes,
+    startedAt: row.started_at ? row.started_at.toISOString() : null,
+    completedAt: row.completed_at ? row.completed_at.toISOString() : null,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const PLAYBOOK_RUN_COLS = `id, playbook_id, owner_id, case_id, status, started_at, completed_at, notes, metadata, created_at, updated_at`;
+const PLAYBOOK_STEP_RUN_COLS = `id, run_id, step_index, step_snapshot, status, input, notes, started_at, completed_at, created_at, updated_at`;
+
+export interface ListPlaybookRunsArgs {
+  ownerId: string;
+  status?: PlaybookRunStatus;
+  playbookId?: string;
+  limit?: number;
+}
+
+export async function listPlaybookRuns(args: ListPlaybookRunsArgs): Promise<(PlaybookRun & { playbookName: string })[]> {
+  const pool = getCyberPool();
+  const { ownerId, status, playbookId, limit = 100 } = args;
+  let sql = `
+    SELECT pr.*, pb.name AS playbook_name
+    FROM agos_cyber_playbook_runs pr
+    JOIN agos_cyber_playbooks pb ON pr.playbook_id = pb.id
+    WHERE pr.owner_id = $1
+  `;
+  const params: any[] = [ownerId];
+  let paramIndex = 2;
+
+  if (status) {
+    sql += ` AND pr.status = $${paramIndex++}`;
+    params.push(status);
+  }
+  if (playbookId) {
+    sql += ` AND pr.playbook_id = $${paramIndex++}`;
+    params.push(playbookId);
+  }
+  sql += ` ORDER BY pr.started_at DESC LIMIT $${paramIndex++}`;
+  params.push(limit);
+
+  const res = await pool.query(sql, params);
+  return res.rows.map(row => ({
+    ...rowToPlaybookRun(row),
+    playbookName: row.playbook_name,
+  }));
+}
+
+export async function getPlaybookRun(id: string, ownerId: string): Promise<PlaybookRunDetail | null> {
+  const pool = getCyberPool();
+  const runRes = await pool.query(
+    `
+    SELECT pr.*, pb.name AS playbook_name
+    FROM agos_cyber_playbook_runs pr
+    JOIN agos_cyber_playbooks pb ON pb.id = pr.playbook_id
+    WHERE pr.id = $1 AND pr.owner_id = $2
+    `,
+    [id, ownerId]
+  );
+  if ((runRes.rowCount ?? 0) === 0) return null;
+  const run = rowToPlaybookRun(runRes.rows[0]);
+  const playbookName = (runRes.rows[0].playbook_name as string | null) ?? '';
+  const stepsRes = await pool.query(
+    `SELECT ${PLAYBOOK_STEP_RUN_COLS} FROM agos_cyber_playbook_step_runs WHERE run_id = $1 ORDER BY step_index ASC`,
+    [id]
+  );
+  return {
+    ...run,
+    playbookName,
+    stepRuns: stepsRes.rows.map(rowToPlaybookStepRun),
+  };
+}
+
+export async function startPlaybookRun(args: {
+  ownerId: string;
+  playbookId: string;
+  caseId?: string | null
+}): Promise<PlaybookRunDetail | null> {
+  const pool = getCyberPool();
+  const { ownerId, playbookId, caseId } = args;
+
+  const playbookCheck = await pool.query(
+    'SELECT 1 FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2',
+    [playbookId, ownerId]
+  );
+  if ((playbookCheck.rowCount ?? 0) === 0) {
+    return null;
+  }
+
+  const playbookRes = await pool.query(
+    `SELECT steps FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2`,
+    [playbookId, ownerId]
+  );
+  const steps = playbookRes.rows[0].steps as any[];
+
+  const runId = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_cyber_playbook_runs (id, playbook_id, owner_id, case_id, status, notes, metadata)
+     VALUES ($1,$2,$3,$4,'in_progress',$5,$6::jsonb)`,
+    [runId, playbookId, ownerId, caseId ?? null, null, JSON.stringify({})]
+  );
+
+  for (let i = 0; i < steps.length; i++) {
+    const stepRunId = randomUUID();
+    await pool.query(
+      `INSERT INTO agos_cyber_playbook_step_runs (id, run_id, step_index, step_snapshot, status, input)
+       VALUES ($1,$2,$3,$4::jsonb,'pending','{}'::jsonb)`,
+      [stepRunId, runId, i, JSON.stringify(steps[i])]
+    );
+  }
+
+  return getPlaybookRun(runId, ownerId);
+}
+
+export async function updateStepRun(args: {
+  id: string;
+  ownerId: string;
+  patch: { status?: PlaybookStepRunStatus; input?: Record<string, unknown>; notes?: string | null }
+}): Promise<PlaybookStepRun | null> {
+  const pool = getCyberPool();
+  const currentRes = await pool.query(
+    `SELECT ${PLAYBOOK_STEP_RUN_COLS} FROM agos_cyber_playbook_step_runs WHERE id = $1 AND run_id IN (SELECT id FROM agos_cyber_playbook_runs WHERE owner_id = $2)`,
+    [args.id, args.ownerId]
+  );
+  if ((currentRes.rowCount ?? 0) === 0) return null;
+  const current = rowToPlaybookStepRun(currentRes.rows[0]);
+
+  const setFields: string[] = [];
+  const setValues: any[] = [];
+  let setParamIndex = 1;
+
+  if (args.patch.status !== undefined) {
+    const newStatus = args.patch.status;
+    if (newStatus === 'in_progress' && current.startedAt === null) {
+      setFields.push(`started_at = now()`);
+    }
+    if ((newStatus === 'completed' || newStatus === 'skipped') && current.completedAt === null) {
+      setFields.push(`completed_at = now()`);
+    }
+    setFields.push(`status = $${setParamIndex++}`);
+    setValues.push(newStatus);
+  }
+
+  if (args.patch.input !== undefined) {
+    setFields.push(`input = $${setParamIndex++}::jsonb`);
+    setValues.push(JSON.stringify(args.patch.input));
+  }
+
+  if (args.patch.notes !== undefined) {
+    setFields.push(`notes = $${setParamIndex++}`);
+    setValues.push(args.patch.notes);
+  }
+
+  if (setFields.length === 0) {
+    return current;
+  }
+
+  const whereIdIdx = setParamIndex++;
+  const whereRunIdIdx = setParamIndex++;
+  setValues.push(args.id);
+  setValues.push(args.ownerId);
+
+  const res = await pool.query(
+    `UPDATE agos_cyber_playbook_step_runs SET ${setFields.join(', ')} WHERE id = $${whereIdIdx} AND run_id IN (SELECT id FROM agos_cyber_playbook_runs WHERE owner_id = $${whereRunIdIdx})`,
+    setValues
+  );
+
+  if ((res.rowCount ?? 0) === 0) return null;
+  const updatedRes = await pool.query(
+    `SELECT ${PLAYBOOK_STEP_RUN_COLS} FROM agos_cyber_playbook_step_runs WHERE id = $1`,
+    [args.id]
+  );
+  return rowToPlaybookStepRun(updatedRes.rows[0]);
+}
+
+export async function completeRun(args: {
+  runId: string;
+  ownerId: string;
+  status: 'completed' | 'abandoned';
+  notes?: string | null
+}): Promise<PlaybookRunDetail | null> {
+  const pool = getCyberPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const res = await client.query(
+      `UPDATE agos_cyber_playbook_runs
+       SET status = $1, completed_at = now(), notes = COALESCE($2, notes)
+       WHERE id = $3 AND owner_id = $4
+       RETURNING *`,
+      [args.status, args.notes ?? null, args.runId, args.ownerId]
+    );
+
+    if ((res.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    await recordAudit({
+      actorId: args.ownerId,
+      action: `cyber.playbook_run.${args.status === 'completed' ? 'complete' : 'abandon'}`,
+      payload: { runId: args.runId, status: args.status },
+    });
+
+    await client.query('COMMIT');
+
+    return getPlaybookRun(args.runId, args.ownerId);
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
