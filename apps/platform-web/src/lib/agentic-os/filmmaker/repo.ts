@@ -50,6 +50,31 @@ import {
   type ScreenplayVersion,
   type ScreenplayScene,
 } from './screenplays';
+import {
+  BREAKDOWN_CATEGORY_VALUES,
+  SCENE_COMPLEXITY_VALUES,
+  SCENE_STATUS_VALUES,
+  type BreakdownCategory,
+  type BreakdownElement,
+  type BreakdownElementUpsert,
+  type SceneBreakdownMeta,
+  type SceneBreakdownMetaUpsert,
+  type SceneComplexity,
+  type SceneStatus,
+  type ProjectBreakdownSummary,
+} from './breakdown';
+import {
+  SHOOTING_UNIT_VALUES,
+  SHOOTING_DAY_STATUS_VALUES,
+  type ShootingDay,
+  type ShootingDayUpsert,
+  type ShootingDayStatus,
+  type ShootingUnit,
+  type ScheduleStrip,
+  type ScheduleStripJoined,
+  type ShootingDayWithStrips,
+  type ProjectScheduleSummary,
+} from './schedule';
 import { parseFountain, countWords as countFountainWords } from './fountain-parser';
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
@@ -1540,6 +1565,1182 @@ export async function getOrCreateScreenplayForProject(
 
 // Re-export for fountain-text word counting parity in tests / routes.
 export { countFountainWords };
+
+// ─── Breakdown elements ─────────────────────────────────────────────────────
+
+const BREAKDOWN_ELEMENT_COLUMNS = `id, screenplay_id, scene_id, category, name,
+                                   description, quantity, is_principal,
+                                   character_id, metadata, created_at, updated_at`;
+
+const SCENE_META_COLUMNS = `id, scene_id, eighths, est_shoot_minutes, notes,
+                            complexity, status, metadata,
+                            created_at, updated_at`;
+
+function rowToBreakdownElement(row: any): BreakdownElement {
+  return {
+    id: row.id,
+    screenplayId: row.screenplay_id,
+    sceneId: row.scene_id,
+    category: row.category as BreakdownCategory,
+    name: row.name,
+    description: row.description ?? null,
+    quantity: Number(row.quantity),
+    isPrincipal: Boolean(row.is_principal),
+    characterId: row.character_id ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToSceneMeta(row: any): SceneBreakdownMeta {
+  return {
+    id: row.id,
+    sceneId: row.scene_id,
+    eighths: Number(row.eighths),
+    estShootMinutes: row.est_shoot_minutes == null ? null : Number(row.est_shoot_minutes),
+    notes: row.notes ?? null,
+    complexity: (row.complexity ?? null) as SceneComplexity | null,
+    status: row.status as SceneStatus,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export async function listBreakdownElements(args: {
+  sceneId: string;
+  userId: string;
+}): Promise<BreakdownElement[]> {
+  const pool = getFilmmakerPool();
+  const columns = BREAKDOWN_ELEMENT_COLUMNS.split(',')
+    .map((c) => `e.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_breakdown_elements e
+       JOIN agos_filmmaker_screenplay_scenes sc ON sc.id = e.scene_id
+       JOIN agos_filmmaker_screenplays s ON s.id = e.screenplay_id
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE e.scene_id = $1 AND p.user_id = $2
+      ORDER BY e.category ASC, e.name ASC`,
+    [args.sceneId, args.userId],
+  );
+  return r.rows.map(rowToBreakdownElement);
+}
+
+export async function listBreakdownElementsForScreenplay(args: {
+  screenplayId: string;
+  userId: string;
+}): Promise<BreakdownElement[]> {
+  const pool = getFilmmakerPool();
+  const columns = BREAKDOWN_ELEMENT_COLUMNS.split(',')
+    .map((c) => `e.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_breakdown_elements e
+       JOIN agos_filmmaker_screenplays s ON s.id = e.screenplay_id
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE e.screenplay_id = $1 AND p.user_id = $2
+      ORDER BY e.category ASC, e.name ASC`,
+    [args.screenplayId, args.userId],
+  );
+  return r.rows.map(rowToBreakdownElement);
+}
+
+export async function getBreakdownElement(
+  elementId: string,
+  userId: string,
+): Promise<BreakdownElement | null> {
+  const pool = getFilmmakerPool();
+  const columns = BREAKDOWN_ELEMENT_COLUMNS.split(',')
+    .map((c) => `e.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_breakdown_elements e
+       JOIN agos_filmmaker_screenplays s ON s.id = e.screenplay_id
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE e.id = $1 AND p.user_id = $2`,
+    [elementId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToBreakdownElement(r.rows[0]);
+}
+
+export interface AddBreakdownElementArgs {
+  sceneId: string;
+  userId: string;
+  data: BreakdownElementUpsert;
+}
+
+export async function addBreakdownElement(
+  args: AddBreakdownElementArgs,
+): Promise<BreakdownElement> {
+  const { sceneId, userId, data } = args;
+  if (!(BREAKDOWN_CATEGORY_VALUES as readonly string[]).includes(data.category)) {
+    throw new Error(`Invalid breakdown category: ${data.category}`);
+  }
+  if (typeof data.name !== 'string' || data.name.trim().length === 0) {
+    throw new Error('Breakdown element name is required');
+  }
+  const scene = await getScreenplayScene(sceneId, userId);
+  if (!scene) throw new Error('Scene not found or not owned by user');
+
+  const id = randomUUID();
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_breakdown_elements
+       (id, screenplay_id, scene_id, category, name, description,
+        quantity, is_principal, character_id, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)`,
+    [
+      id,
+      scene.screenplayId,
+      sceneId,
+      data.category,
+      data.name.trim(),
+      data.description ?? null,
+      data.quantity ?? 1,
+      data.isPrincipal ?? false,
+      data.characterId ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const created = await getBreakdownElement(id, userId);
+  if (!created) throw new Error('Failed to create breakdown element');
+  return created;
+}
+
+export interface UpdateBreakdownElementArgs {
+  id: string;
+  userId: string;
+  patch: Partial<BreakdownElementUpsert>;
+}
+
+export async function updateBreakdownElement(
+  args: UpdateBreakdownElementArgs,
+): Promise<BreakdownElement | null> {
+  const existing = await getBreakdownElement(args.id, args.userId);
+  if (!existing) return null;
+
+  const { patch } = args;
+  if (
+    patch.category !== undefined &&
+    !(BREAKDOWN_CATEGORY_VALUES as readonly string[]).includes(patch.category)
+  ) {
+    throw new Error(`Invalid breakdown category: ${patch.category}`);
+  }
+  if (patch.name !== undefined && patch.name.trim().length === 0) {
+    throw new Error('Breakdown element name cannot be empty');
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_breakdown_elements
+        SET category     = COALESCE($2, category),
+            name         = COALESCE($3, name),
+            description  = COALESCE($4, description),
+            quantity     = COALESCE($5, quantity),
+            is_principal = COALESCE($6, is_principal),
+            character_id = COALESCE($7, character_id),
+            metadata     = COALESCE($8::jsonb, metadata),
+            updated_at   = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      patch.category ?? null,
+      patch.name?.trim() ?? null,
+      patch.description ?? null,
+      patch.quantity ?? null,
+      patch.isPrincipal ?? null,
+      patch.characterId ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getBreakdownElement(args.id, args.userId);
+}
+
+export async function deleteBreakdownElement(
+  elementId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getBreakdownElement(elementId, userId);
+  if (!existing) return false;
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_filmmaker_breakdown_elements WHERE id = $1`,
+    [elementId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Scene breakdown meta ───────────────────────────────────────────────────
+
+export async function listSceneBreakdownMeta(args: {
+  screenplayId: string;
+  userId: string;
+}): Promise<SceneBreakdownMeta[]> {
+  const pool = getFilmmakerPool();
+  const columns = SCENE_META_COLUMNS.split(',')
+    .map((c) => `m.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_scene_breakdown_meta m
+       JOIN agos_filmmaker_screenplay_scenes sc ON sc.id = m.scene_id
+       JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE s.id = $1 AND p.user_id = $2`,
+    [args.screenplayId, args.userId],
+  );
+  return r.rows.map(rowToSceneMeta);
+}
+
+/**
+ * Get the per-scene production meta, auto-creating a defaulted row on
+ * first access. Returns null only when the scene itself is missing /
+ * not owned by the user.
+ */
+export async function getSceneBreakdownMeta(
+  sceneId: string,
+  userId: string,
+): Promise<SceneBreakdownMeta | null> {
+  const scene = await getScreenplayScene(sceneId, userId);
+  if (!scene) return null;
+
+  const pool = getFilmmakerPool();
+  const existing = await pool.query(
+    `SELECT ${SCENE_META_COLUMNS}
+       FROM agos_filmmaker_scene_breakdown_meta
+      WHERE scene_id = $1`,
+    [sceneId],
+  );
+  if ((existing.rowCount ?? 0) > 0) return rowToSceneMeta(existing.rows[0]);
+
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_scene_breakdown_meta
+       (id, scene_id, eighths, est_shoot_minutes, notes, complexity, status, metadata)
+     VALUES ($1,$2,0,NULL,NULL,NULL,'unscheduled','{}'::jsonb)
+     ON CONFLICT (scene_id) DO NOTHING`,
+    [id, sceneId],
+  );
+  const created = await pool.query(
+    `SELECT ${SCENE_META_COLUMNS}
+       FROM agos_filmmaker_scene_breakdown_meta
+      WHERE scene_id = $1`,
+    [sceneId],
+  );
+  return rowToSceneMeta(created.rows[0]);
+}
+
+export interface UpdateSceneBreakdownMetaArgs {
+  sceneId: string;
+  userId: string;
+  patch: SceneBreakdownMetaUpsert;
+}
+
+export async function updateSceneBreakdownMeta(
+  args: UpdateSceneBreakdownMetaArgs,
+): Promise<SceneBreakdownMeta | null> {
+  const current = await getSceneBreakdownMeta(args.sceneId, args.userId);
+  if (!current) return null;
+
+  const { patch } = args;
+  if (
+    patch.complexity !== undefined &&
+    patch.complexity !== null &&
+    !(SCENE_COMPLEXITY_VALUES as readonly string[]).includes(patch.complexity)
+  ) {
+    throw new Error(`Invalid scene complexity: ${patch.complexity}`);
+  }
+  if (
+    patch.status !== undefined &&
+    !(SCENE_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid scene status: ${patch.status}`);
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_scene_breakdown_meta
+        SET eighths           = COALESCE($2, eighths),
+            est_shoot_minutes = COALESCE($3, est_shoot_minutes),
+            notes             = COALESCE($4, notes),
+            complexity        = COALESCE($5, complexity),
+            status            = COALESCE($6, status),
+            metadata          = COALESCE($7::jsonb, metadata),
+            updated_at        = now()
+      WHERE scene_id = $1`,
+    [
+      args.sceneId,
+      patch.eighths ?? null,
+      patch.estShootMinutes ?? null,
+      patch.notes ?? null,
+      patch.complexity ?? null,
+      patch.status ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getSceneBreakdownMeta(args.sceneId, args.userId);
+}
+
+export async function getProjectBreakdownSummary(
+  projectId: string,
+  userId: string,
+): Promise<ProjectBreakdownSummary> {
+  const project = await getProject(projectId, userId);
+  if (!project) {
+    return {
+      totalScenes: 0,
+      scenesWithBreakdown: 0,
+      totalElements: 0,
+      totalEighths: 0,
+      totalPages: 0,
+      byCategory: [],
+    };
+  }
+  const pool = getFilmmakerPool();
+  const sceneCountRow = await pool.query(
+    `SELECT COUNT(*) AS total
+       FROM agos_filmmaker_screenplay_scenes sc
+       JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+      WHERE s.project_id = $1 AND sc.version_id = s.head_version_id`,
+    [projectId],
+  );
+  const totalScenes = Number(sceneCountRow.rows[0]?.total ?? 0);
+
+  const elementBreakdown = await pool.query(
+    `SELECT e.category AS category, COUNT(*) AS count
+       FROM agos_filmmaker_breakdown_elements e
+       JOIN agos_filmmaker_screenplay_scenes sc ON sc.id = e.scene_id
+       JOIN agos_filmmaker_screenplays s ON s.id = e.screenplay_id
+      WHERE s.project_id = $1 AND sc.version_id = s.head_version_id
+      GROUP BY e.category
+      ORDER BY count DESC`,
+    [projectId],
+  );
+  const byCategory = elementBreakdown.rows.map((row: any) => ({
+    category: row.category as BreakdownCategory,
+    count: Number(row.count),
+  }));
+  const totalElements = byCategory.reduce((acc, x) => acc + x.count, 0);
+
+  const scenesWithBreakdownRow = await pool.query(
+    `SELECT COUNT(DISTINCT sc.id) AS scenes_with_breakdown,
+            COALESCE(SUM(m.eighths), 0) AS total_eighths
+       FROM agos_filmmaker_screenplay_scenes sc
+       JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+       LEFT JOIN agos_filmmaker_scene_breakdown_meta m ON m.scene_id = sc.id
+       LEFT JOIN agos_filmmaker_breakdown_elements e ON e.scene_id = sc.id
+      WHERE s.project_id = $1 AND sc.version_id = s.head_version_id
+        AND (e.id IS NOT NULL OR (m.id IS NOT NULL AND m.eighths > 0))`,
+    [projectId],
+  );
+  const scenesWithBreakdown = Number(
+    scenesWithBreakdownRow.rows[0]?.scenes_with_breakdown ?? 0,
+  );
+  const totalEighths = Number(scenesWithBreakdownRow.rows[0]?.total_eighths ?? 0);
+
+  return {
+    totalScenes,
+    scenesWithBreakdown,
+    totalElements,
+    totalEighths,
+    totalPages: totalEighths / 8,
+    byCategory,
+  };
+}
+
+// ─── Shooting days ──────────────────────────────────────────────────────────
+
+const SHOOTING_DAY_COLUMNS = `id, project_id, shoot_date, day_number, label,
+                              call_time, wrap_time, unit, status, notes,
+                              metadata, created_at, updated_at`;
+
+const SCHEDULE_STRIP_COLUMNS = `id, shooting_day_id, scene_id, order_index,
+                                est_minutes, notes, created_at, updated_at`;
+
+function rowToShootingDay(row: any): ShootingDay {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    shootDate: row.shoot_date
+      ? new Date(row.shoot_date).toISOString().slice(0, 10)
+      : null,
+    dayNumber: Number(row.day_number),
+    label: row.label ?? null,
+    callTime: row.call_time ?? null,
+    wrapTime: row.wrap_time ?? null,
+    unit: row.unit as ShootingUnit,
+    status: row.status as ShootingDayStatus,
+    notes: row.notes ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToStrip(row: any): ScheduleStrip {
+  return {
+    id: row.id,
+    shootingDayId: row.shooting_day_id,
+    sceneId: row.scene_id,
+    orderIndex: Number(row.order_index),
+    estMinutes: row.est_minutes == null ? null : Number(row.est_minutes),
+    notes: row.notes ?? null,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export async function listShootingDays(args: {
+  projectId: string;
+  userId: string;
+  unit?: ShootingUnit;
+}): Promise<ShootingDay[]> {
+  const pool = getFilmmakerPool();
+  const columns = SHOOTING_DAY_COLUMNS.split(',')
+    .map((c) => `d.${c.trim()}`)
+    .join(', ');
+  const params: any[] = [args.projectId, args.userId];
+  const where: string[] = ['d.project_id = $1', 'p.user_id = $2'];
+  if (args.unit) {
+    if (!(SHOOTING_UNIT_VALUES as readonly string[]).includes(args.unit)) {
+      throw new Error(`Invalid shooting unit: ${args.unit}`);
+    }
+    params.push(args.unit);
+    where.push(`d.unit = $${params.length}`);
+  }
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_shooting_days d
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY d.unit ASC, d.day_number ASC`,
+    params,
+  );
+  return r.rows.map(rowToShootingDay);
+}
+
+async function getShootingDayBare(
+  id: string,
+  userId: string,
+): Promise<ShootingDay | null> {
+  const pool = getFilmmakerPool();
+  const columns = SHOOTING_DAY_COLUMNS.split(',')
+    .map((c) => `d.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_shooting_days d
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+      WHERE d.id = $1 AND p.user_id = $2`,
+    [id, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToShootingDay(r.rows[0]);
+}
+
+export async function getShootingDay(
+  id: string,
+  userId: string,
+): Promise<ShootingDayWithStrips | null> {
+  const day = await getShootingDayBare(id, userId);
+  if (!day) return null;
+  const strips = await listStripsForDay(id, userId);
+  return { ...day, strips };
+}
+
+export interface CreateShootingDayArgs {
+  projectId: string;
+  userId: string;
+  data: ShootingDayUpsert;
+}
+
+export async function createShootingDay(
+  args: CreateShootingDayArgs,
+): Promise<ShootingDay> {
+  const { projectId, userId, data } = args;
+  const project = await getProject(projectId, userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const unit: ShootingUnit = data.unit ?? 'main';
+  if (!(SHOOTING_UNIT_VALUES as readonly string[]).includes(unit)) {
+    throw new Error(`Invalid shooting unit: ${unit}`);
+  }
+  const status: ShootingDayStatus = data.status ?? 'planned';
+  if (!(SHOOTING_DAY_STATUS_VALUES as readonly string[]).includes(status)) {
+    throw new Error(`Invalid shooting day status: ${status}`);
+  }
+
+  const pool = getFilmmakerPool();
+  let dayNumber = data.dayNumber;
+  if (dayNumber == null) {
+    const numRow = await pool.query(
+      `SELECT COALESCE(MAX(day_number), 0) + 1 AS next_num
+         FROM agos_filmmaker_shooting_days
+        WHERE project_id = $1 AND unit = $2`,
+      [projectId, unit],
+    );
+    dayNumber = Number(numRow.rows[0].next_num);
+  }
+
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_shooting_days
+       (id, project_id, shoot_date, day_number, label, call_time, wrap_time,
+        unit, status, notes, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)`,
+    [
+      id,
+      projectId,
+      data.shootDate ?? null,
+      dayNumber,
+      data.label ?? null,
+      data.callTime ?? null,
+      data.wrapTime ?? null,
+      unit,
+      status,
+      data.notes ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const created = await getShootingDayBare(id, userId);
+  if (!created) throw new Error('Failed to create shooting day');
+  return created;
+}
+
+export interface UpdateShootingDayArgs {
+  id: string;
+  userId: string;
+  patch: ShootingDayUpsert;
+}
+
+export async function updateShootingDay(
+  args: UpdateShootingDayArgs,
+): Promise<ShootingDay | null> {
+  const existing = await getShootingDayBare(args.id, args.userId);
+  if (!existing) return null;
+
+  const { patch } = args;
+  if (
+    patch.unit !== undefined &&
+    !(SHOOTING_UNIT_VALUES as readonly string[]).includes(patch.unit)
+  ) {
+    throw new Error(`Invalid shooting unit: ${patch.unit}`);
+  }
+  if (
+    patch.status !== undefined &&
+    !(SHOOTING_DAY_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid shooting day status: ${patch.status}`);
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_shooting_days
+        SET shoot_date = COALESCE($2, shoot_date),
+            day_number = COALESCE($3, day_number),
+            label      = COALESCE($4, label),
+            call_time  = COALESCE($5, call_time),
+            wrap_time  = COALESCE($6, wrap_time),
+            unit       = COALESCE($7, unit),
+            status     = COALESCE($8, status),
+            notes      = COALESCE($9, notes),
+            metadata   = COALESCE($10::jsonb, metadata),
+            updated_at = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      patch.shootDate ?? null,
+      patch.dayNumber ?? null,
+      patch.label ?? null,
+      patch.callTime ?? null,
+      patch.wrapTime ?? null,
+      patch.unit ?? null,
+      patch.status ?? null,
+      patch.notes ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getShootingDayBare(args.id, args.userId);
+}
+
+export async function deleteShootingDay(
+  id: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getShootingDayBare(id, userId);
+  if (!existing) return false;
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Find scenes that will become unscheduled when this day's strips
+    // disappear (those whose only strip is on this day).
+    const orphans = await client.query(
+      `SELECT s1.scene_id AS scene_id
+         FROM agos_filmmaker_schedule_strips s1
+        WHERE s1.shooting_day_id = $1
+          AND NOT EXISTS (
+            SELECT 1 FROM agos_filmmaker_schedule_strips s2
+             WHERE s2.scene_id = s1.scene_id AND s2.id <> s1.id
+          )`,
+      [id],
+    );
+    await client.query(
+      `DELETE FROM agos_filmmaker_shooting_days WHERE id = $1`,
+      [id],
+    );
+    if (orphans.rows.length > 0) {
+      const ids = orphans.rows.map((r: any) => r.scene_id);
+      await client.query(
+        `UPDATE agos_filmmaker_scene_breakdown_meta
+            SET status = 'unscheduled', updated_at = now()
+          WHERE scene_id = ANY($1::uuid[])`,
+        [ids],
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  return true;
+}
+
+/**
+ * Renumber all of a project's shooting days (per unit) into 1..N using
+ * the provided ordering. Unknown ids are ignored; missing ids stay
+ * appended at the end keeping their existing order.
+ */
+export async function reorderShootingDays(
+  projectId: string,
+  userId: string,
+  orderedDayIds: string[],
+): Promise<void> {
+  const project = await getProject(projectId, userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT id, unit FROM agos_filmmaker_shooting_days WHERE project_id = $1`,
+      [projectId],
+    );
+    const byUnit: Record<string, string[]> = {};
+    for (const row of existing.rows) {
+      if (!byUnit[row.unit]) byUnit[row.unit] = [];
+      byUnit[row.unit].push(row.id);
+    }
+    // For each unit, rebuild order: ordered ids first (filtered to ones
+    // belonging to that unit), then any leftovers in their original order.
+    for (const unit of Object.keys(byUnit)) {
+      const unitIds = new Set(byUnit[unit]);
+      const seen = new Set<string>();
+      const finalOrder: string[] = [];
+      for (const id of orderedDayIds) {
+        if (unitIds.has(id) && !seen.has(id)) {
+          finalOrder.push(id);
+          seen.add(id);
+        }
+      }
+      for (const id of byUnit[unit]) {
+        if (!seen.has(id)) {
+          finalOrder.push(id);
+          seen.add(id);
+        }
+      }
+      // Two-pass renumber to avoid colliding with the (project, day, unit)
+      // unique constraint mid-update.
+      for (let i = 0; i < finalOrder.length; i++) {
+        await client.query(
+          `UPDATE agos_filmmaker_shooting_days
+              SET day_number = -($2::int + 1), updated_at = now()
+            WHERE id = $1`,
+          [finalOrder[i], i],
+        );
+      }
+      for (let i = 0; i < finalOrder.length; i++) {
+        await client.query(
+          `UPDATE agos_filmmaker_shooting_days
+              SET day_number = $2, updated_at = now()
+            WHERE id = $1`,
+          [finalOrder[i], i + 1],
+        );
+      }
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─── Schedule strips ────────────────────────────────────────────────────────
+
+async function listStripsForDay(
+  shootingDayId: string,
+  userId: string,
+): Promise<ScheduleStripJoined[]> {
+  const pool = getFilmmakerPool();
+  const stripCols = SCHEDULE_STRIP_COLUMNS.split(',')
+    .map((c) => `st.${c.trim()}`)
+    .join(', ');
+  const sceneCols = SCREENPLAY_SCENE_COLUMNS.split(',')
+    .map((c) => `sc.${c.trim()}`)
+    .join(', ');
+  const metaCols = SCENE_META_COLUMNS.split(',')
+    .map((c) => `m.${c.trim()} AS m_${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${stripCols},
+            ${sceneCols},
+            ${metaCols}
+       FROM agos_filmmaker_schedule_strips st
+       JOIN agos_filmmaker_screenplay_scenes sc ON sc.id = st.scene_id
+       JOIN agos_filmmaker_shooting_days d ON d.id = st.shooting_day_id
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+       LEFT JOIN agos_filmmaker_scene_breakdown_meta m ON m.scene_id = sc.id
+      WHERE st.shooting_day_id = $1 AND p.user_id = $2
+      ORDER BY st.order_index ASC`,
+    [shootingDayId, userId],
+  );
+  return r.rows.map((row: any): ScheduleStripJoined => {
+    const strip = rowToStrip(row);
+    const scene = rowToScreenplayScene(row);
+    const sceneMeta: SceneBreakdownMeta | null = row.m_id
+      ? rowToSceneMeta({
+          id: row.m_id,
+          scene_id: row.m_scene_id,
+          eighths: row.m_eighths,
+          est_shoot_minutes: row.m_est_shoot_minutes,
+          notes: row.m_notes,
+          complexity: row.m_complexity,
+          status: row.m_status,
+          metadata: row.m_metadata,
+          created_at: row.m_created_at,
+          updated_at: row.m_updated_at,
+        })
+      : null;
+    return { ...strip, scene, sceneMeta };
+  });
+}
+
+async function getStrip(
+  stripId: string,
+  userId: string,
+): Promise<ScheduleStrip | null> {
+  const pool = getFilmmakerPool();
+  const columns = SCHEDULE_STRIP_COLUMNS.split(',')
+    .map((c) => `st.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_schedule_strips st
+       JOIN agos_filmmaker_shooting_days d ON d.id = st.shooting_day_id
+       JOIN agos_filmmaker_projects p ON p.id = d.project_id
+      WHERE st.id = $1 AND p.user_id = $2`,
+    [stripId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToStrip(r.rows[0]);
+}
+
+export interface AddStripArgs {
+  shootingDayId: string;
+  sceneId: string;
+  userId: string;
+  orderIndex?: number;
+  estMinutes?: number | null;
+  notes?: string | null;
+}
+
+export async function addStripToDay(args: AddStripArgs): Promise<ScheduleStrip> {
+  const day = await getShootingDayBare(args.shootingDayId, args.userId);
+  if (!day) throw new Error('Shooting day not found or not owned by user');
+  const scene = await getScreenplayScene(args.sceneId, args.userId);
+  if (!scene) throw new Error('Scene not found or not owned by user');
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  const id = randomUUID();
+  try {
+    await client.query('BEGIN');
+
+    let orderIndex = args.orderIndex;
+    if (orderIndex == null) {
+      const r = await client.query(
+        `SELECT COALESCE(MAX(order_index), -1) + 1 AS next_idx
+           FROM agos_filmmaker_schedule_strips
+          WHERE shooting_day_id = $1`,
+        [args.shootingDayId],
+      );
+      orderIndex = Number(r.rows[0].next_idx);
+    } else {
+      // Shift siblings at or after the requested index up by one.
+      await client.query(
+        `UPDATE agos_filmmaker_schedule_strips
+            SET order_index = order_index + 1, updated_at = now()
+          WHERE shooting_day_id = $1 AND order_index >= $2`,
+        [args.shootingDayId, orderIndex],
+      );
+    }
+
+    await client.query(
+      `INSERT INTO agos_filmmaker_schedule_strips
+         (id, shooting_day_id, scene_id, order_index, est_minutes, notes)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        id,
+        args.shootingDayId,
+        args.sceneId,
+        orderIndex,
+        args.estMinutes ?? null,
+        args.notes ?? null,
+      ],
+    );
+
+    // Ensure the meta row exists, then flip status to scheduled.
+    await client.query(
+      `INSERT INTO agos_filmmaker_scene_breakdown_meta
+         (id, scene_id, eighths, status)
+       VALUES ($1, $2, 0, 'scheduled')
+       ON CONFLICT (scene_id) DO UPDATE
+         SET status = 'scheduled', updated_at = now()`,
+      [randomUUID(), args.sceneId],
+    );
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  const created = await getStrip(id, args.userId);
+  if (!created) throw new Error('Failed to create strip');
+  return created;
+}
+
+export async function removeStripFromDay(
+  stripId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getStrip(stripId, userId);
+  if (!existing) return false;
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `DELETE FROM agos_filmmaker_schedule_strips WHERE id = $1`,
+      [stripId],
+    );
+    // Reindex siblings on the source day.
+    await client.query(
+      `UPDATE agos_filmmaker_schedule_strips
+          SET order_index = order_index - 1, updated_at = now()
+        WHERE shooting_day_id = $1 AND order_index > $2`,
+      [existing.shootingDayId, existing.orderIndex],
+    );
+    // If the scene has no remaining strips, flip its meta back.
+    const remaining = await client.query(
+      `SELECT COUNT(*) AS c
+         FROM agos_filmmaker_schedule_strips
+        WHERE scene_id = $1`,
+      [existing.sceneId],
+    );
+    if (Number(remaining.rows[0].c) === 0) {
+      await client.query(
+        `UPDATE agos_filmmaker_scene_breakdown_meta
+            SET status = 'unscheduled', updated_at = now()
+          WHERE scene_id = $1`,
+        [existing.sceneId],
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  return true;
+}
+
+export interface MoveStripArgs {
+  stripId: string;
+  toShootingDayId?: string | null;
+  toOrderIndex: number;
+  userId: string;
+}
+
+/**
+ * Move a strip within or across shooting days. Reindexes order_index on
+ * both source and destination day so siblings stay contiguous. If
+ * `toShootingDayId` is null/omitted the strip stays in its current day.
+ */
+export async function moveStrip(args: MoveStripArgs): Promise<ScheduleStrip> {
+  const existing = await getStrip(args.stripId, args.userId);
+  if (!existing) throw new Error('Strip not found or not owned by user');
+  const targetDayId = args.toShootingDayId ?? existing.shootingDayId;
+
+  // Verify ownership of the destination day even if same.
+  const day = await getShootingDayBare(targetDayId, args.userId);
+  if (!day) throw new Error('Destination shooting day not found or not owned by user');
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const sourceDayId = existing.shootingDayId;
+    const sourceIdx = existing.orderIndex;
+    const sameDay = sourceDayId === targetDayId;
+
+    // Vacate the strip from the source day's order before re-inserting.
+    await client.query(
+      `UPDATE agos_filmmaker_schedule_strips
+          SET order_index = -1, updated_at = now()
+        WHERE id = $1`,
+      [args.stripId],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_schedule_strips
+          SET order_index = order_index - 1, updated_at = now()
+        WHERE shooting_day_id = $1 AND order_index > $2`,
+      [sourceDayId, sourceIdx],
+    );
+
+    // Compute the actual destination index after re-numbering.
+    const maxRow = await client.query(
+      `SELECT COALESCE(MAX(order_index), -1) AS max_idx
+         FROM agos_filmmaker_schedule_strips
+        WHERE shooting_day_id = $1 AND id <> $2`,
+      [targetDayId, args.stripId],
+    );
+    const currentMax = Number(maxRow.rows[0].max_idx);
+    let targetIdx = args.toOrderIndex;
+    if (targetIdx < 0) targetIdx = 0;
+    if (targetIdx > currentMax + 1) targetIdx = currentMax + 1;
+
+    // Make room on the destination day (skipping the strip's row which
+    // is currently parked at -1).
+    await client.query(
+      `UPDATE agos_filmmaker_schedule_strips
+          SET order_index = order_index + 1, updated_at = now()
+        WHERE shooting_day_id = $1 AND order_index >= $2 AND id <> $3`,
+      [targetDayId, targetIdx, args.stripId],
+    );
+
+    await client.query(
+      `UPDATE agos_filmmaker_schedule_strips
+          SET shooting_day_id = $1,
+              order_index = $2,
+              updated_at = now()
+        WHERE id = $3`,
+      [targetDayId, targetIdx, args.stripId],
+    );
+
+    // If we moved away from the source day, possibly leaving the scene
+    // unscheduled... but the scene is still on the destination day so
+    // status stays 'scheduled'. No meta flip needed across days.
+    // (`sameDay` referenced to silence unused.)
+    void sameDay;
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  const updated = await getStrip(args.stripId, args.userId);
+  if (!updated) throw new Error('Strip vanished after move');
+  return updated;
+}
+
+export async function reorderStripsWithinDay(
+  shootingDayId: string,
+  userId: string,
+  orderedStripIds: string[],
+): Promise<void> {
+  const day = await getShootingDayBare(shootingDayId, userId);
+  if (!day) throw new Error('Shooting day not found or not owned by user');
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT id FROM agos_filmmaker_schedule_strips
+        WHERE shooting_day_id = $1`,
+      [shootingDayId],
+    );
+    const known = new Set<string>(existing.rows.map((r: any) => r.id));
+    const seen = new Set<string>();
+    const finalOrder: string[] = [];
+    for (const id of orderedStripIds) {
+      if (known.has(id) && !seen.has(id)) {
+        finalOrder.push(id);
+        seen.add(id);
+      }
+    }
+    for (const row of existing.rows) {
+      if (!seen.has(row.id)) {
+        finalOrder.push(row.id);
+        seen.add(row.id);
+      }
+    }
+    for (let i = 0; i < finalOrder.length; i++) {
+      await client.query(
+        `UPDATE agos_filmmaker_schedule_strips
+            SET order_index = $2, updated_at = now()
+          WHERE id = $1`,
+        [finalOrder[i], i],
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export interface UpdateStripArgs {
+  id: string;
+  userId: string;
+  patch: { estMinutes?: number | null; notes?: string | null };
+}
+
+export async function updateStrip(
+  args: UpdateStripArgs,
+): Promise<ScheduleStrip | null> {
+  const existing = await getStrip(args.id, args.userId);
+  if (!existing) return null;
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_schedule_strips
+        SET est_minutes = COALESCE($2, est_minutes),
+            notes       = COALESCE($3, notes),
+            updated_at  = now()
+      WHERE id = $1`,
+    [args.id, args.patch.estMinutes ?? null, args.patch.notes ?? null],
+  );
+  return getStrip(args.id, args.userId);
+}
+
+export async function getStripPublic(
+  stripId: string,
+  userId: string,
+): Promise<ScheduleStrip | null> {
+  return getStrip(stripId, userId);
+}
+
+// ─── Schedule queries (helpers for UI) ──────────────────────────────────────
+
+export async function getUnscheduledScenes(
+  projectId: string,
+  userId: string,
+): Promise<ScreenplayScene[]> {
+  const project = await getProject(projectId, userId);
+  if (!project) return [];
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${SCREENPLAY_SCENE_COLUMNS}
+       FROM agos_filmmaker_screenplay_scenes sc
+       JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+      WHERE s.project_id = $1
+        AND sc.version_id = s.head_version_id
+        AND NOT EXISTS (
+          SELECT 1 FROM agos_filmmaker_schedule_strips st
+           WHERE st.scene_id = sc.id
+        )
+      ORDER BY sc.scene_number ASC`,
+    [projectId],
+  );
+  return r.rows.map(rowToScreenplayScene);
+}
+
+export async function getProjectScheduleSummary(
+  projectId: string,
+  userId: string,
+): Promise<ProjectScheduleSummary> {
+  const project = await getProject(projectId, userId);
+  if (!project) {
+    return {
+      totalDays: 0,
+      scheduledScenes: 0,
+      unscheduledScenes: 0,
+      totalScenes: 0,
+      totalEighths: 0,
+      scheduledEighths: 0,
+      totalScheduledMinutes: 0,
+    };
+  }
+  const pool = getFilmmakerPool();
+  const summary = await pool.query(
+    `WITH head_scenes AS (
+       SELECT sc.id, sc.id AS scene_id
+         FROM agos_filmmaker_screenplay_scenes sc
+         JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+        WHERE s.project_id = $1 AND sc.version_id = s.head_version_id
+     ),
+     scheduled AS (
+       SELECT DISTINCT st.scene_id
+         FROM agos_filmmaker_schedule_strips st
+         JOIN head_scenes hs ON hs.id = st.scene_id
+     )
+     SELECT
+       (SELECT COUNT(*) FROM agos_filmmaker_shooting_days WHERE project_id = $1) AS total_days,
+       (SELECT COUNT(*) FROM head_scenes) AS total_scenes,
+       (SELECT COUNT(*) FROM scheduled) AS scheduled_scenes,
+       COALESCE((
+         SELECT SUM(m.eighths)
+           FROM agos_filmmaker_scene_breakdown_meta m
+           JOIN head_scenes hs ON hs.id = m.scene_id
+       ), 0) AS total_eighths,
+       COALESCE((
+         SELECT SUM(m.eighths)
+           FROM agos_filmmaker_scene_breakdown_meta m
+           JOIN scheduled s ON s.scene_id = m.scene_id
+       ), 0) AS scheduled_eighths,
+       COALESCE((
+         SELECT SUM(COALESCE(st.est_minutes, m.est_shoot_minutes, 0))
+           FROM agos_filmmaker_schedule_strips st
+           JOIN head_scenes hs ON hs.id = st.scene_id
+           LEFT JOIN agos_filmmaker_scene_breakdown_meta m ON m.scene_id = st.scene_id
+       ), 0) AS total_scheduled_minutes`,
+    [projectId],
+  );
+  const row = summary.rows[0];
+  const totalScenes = Number(row.total_scenes);
+  const scheduledScenes = Number(row.scheduled_scenes);
+  return {
+    totalDays: Number(row.total_days),
+    scheduledScenes,
+    unscheduledScenes: totalScenes - scheduledScenes,
+    totalScenes,
+    totalEighths: Number(row.total_eighths),
+    scheduledEighths: Number(row.scheduled_eighths),
+    totalScheduledMinutes: Number(row.total_scheduled_minutes),
+  };
+}
 
 // ─── Audit ──────────────────────────────────────────────────────────────────
 

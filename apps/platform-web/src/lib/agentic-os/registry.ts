@@ -256,6 +256,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Screenplay',
         description: 'Fountain-format screenplay editor with scenes, characters, and versions.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Breakdown',
+        description: 'Tag scenes with cast, props, vehicles, costume, makeup, fx, sound, music.',
+      },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Schedule',
+        description: 'Stripboard scheduling — drop scenes onto shooting days, per-unit ordering.',
+      },
     ],
   },
   {
