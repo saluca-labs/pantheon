@@ -27,6 +27,26 @@ import type {
   LogSourceStatus,
   LogSourceUpsert,
 } from './log-sources';
+import type {
+  Case,
+  CaseDetail,
+  CaseEvent,
+  CaseEventKind,
+  CasePatch,
+  CasePriority,
+  CaseSeverity,
+  CaseStatus,
+  CaseUpsert,
+  CaseWithCounts,
+  Evidence,
+  EvidenceKind,
+  EvidencePatch,
+  EvidenceUpsert,
+  Task,
+  TaskPatch,
+  TaskStatus,
+  TaskUpsert,
+} from './cases';
 
 // ─── Alerts ────────────────────────────────────────────────────────────────
 
@@ -772,4 +792,869 @@ export async function recordAudit(args: {
      VALUES ($1,$2,$3,$4,$5::jsonb)`,
     [randomUUID(), args.actorId, 'cyber', args.action, JSON.stringify(args.payload ?? {})],
   );
+}
+
+// ─── Cases ─────────────────────────────────────────────────────────────────
+
+function rowToCase(row: any): Case {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    title: row.title,
+    summary: row.summary ?? null,
+    severity: row.severity as CaseSeverity,
+    status: row.status as CaseStatus,
+    priority: row.priority as CasePriority,
+    assignedTo: row.assigned_to ?? null,
+    tactic: row.tactic ?? null,
+    technique: row.technique ?? null,
+    tags: row.tags ?? [],
+    closedAt: row.closed_at ? row.closed_at.toISOString() : null,
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const CASE_COLS = `
+  id, owner_id, title, summary, severity, status, priority, assigned_to,
+  tactic, technique, tags, closed_at, metadata, created_at, updated_at
+`;
+
+export interface ListCasesArgs {
+  ownerId: string;
+  status?: CaseStatus;
+  severity?: CaseSeverity;
+  priority?: CasePriority;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listCases(args: ListCasesArgs): Promise<CaseWithCounts[]> {
+  const pool = getCyberPool();
+  const where: string[] = [`c.owner_id = $1`];
+  const params: unknown[] = [args.ownerId];
+  let i = 2;
+
+  if (args.status)   { where.push(`c.status = $${i++}`);   params.push(args.status); }
+  if (args.severity) { where.push(`c.severity = $${i++}`); params.push(args.severity); }
+  if (args.priority) { where.push(`c.priority = $${i++}`); params.push(args.priority); }
+  if (args.q && args.q.trim().length > 0) {
+    where.push(`(c.title ILIKE $${i} OR c.summary ILIKE $${i} OR c.assigned_to ILIKE $${i})`);
+    params.push(`%${args.q.trim()}%`);
+    i++;
+  }
+
+  params.push(args.limit ?? 200);
+  const limitIdx = i++;
+  params.push(args.offset ?? 0);
+  const offsetIdx = i++;
+
+  const r = await pool.query(
+    `SELECT c.id, c.owner_id, c.title, c.summary, c.severity, c.status, c.priority,
+            c.assigned_to, c.tactic, c.technique, c.tags, c.closed_at, c.metadata,
+            c.created_at, c.updated_at,
+            (SELECT COUNT(*) FROM agos_cyber_case_alerts  WHERE case_id = c.id) AS alert_count,
+            (SELECT COUNT(*) FROM agos_cyber_case_events  WHERE case_id = c.id) AS event_count,
+            (SELECT COUNT(*) FROM agos_cyber_evidence     WHERE case_id = c.id) AS evidence_count,
+            (SELECT COUNT(*) FROM agos_cyber_tasks        WHERE case_id = c.id AND status NOT IN ('done','cancelled')) AS open_task_count
+       FROM agos_cyber_cases c
+      WHERE ${where.join(' AND ')}
+      ORDER BY
+        CASE c.severity
+          WHEN 'critical' THEN 0
+          WHEN 'high'     THEN 1
+          WHEN 'medium'   THEN 2
+          ELSE                 3
+        END,
+        c.updated_at DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    params,
+  );
+  return r.rows.map((row) => ({
+    ...rowToCase(row),
+    alertCount: Number(row.alert_count ?? 0),
+    eventCount: Number(row.event_count ?? 0),
+    evidenceCount: Number(row.evidence_count ?? 0),
+    openTaskCount: Number(row.open_task_count ?? 0),
+  }));
+}
+
+export async function getCase(id: string, ownerId: string): Promise<Case | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${CASE_COLS}
+       FROM agos_cyber_cases
+      WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToCase(r.rows[0]);
+}
+
+export async function getCaseDetail(
+  id: string,
+  ownerId: string,
+): Promise<CaseDetail | null> {
+  const c = await getCase(id, ownerId);
+  if (!c) return null;
+  const pool = getCyberPool();
+
+  const [alertsR, eventsR, evidenceR, tasksR] = await Promise.all([
+    pool.query(
+      `SELECT a.id, a.title, a.severity, a.occurred_at
+         FROM agos_cyber_alerts a
+         JOIN agos_cyber_case_alerts ca ON ca.alert_id = a.id
+        WHERE ca.case_id = $1 AND a.owner_id = $2
+        ORDER BY a.occurred_at DESC`,
+      [id, ownerId],
+    ),
+    pool.query(
+      `SELECT id, case_id, kind, author, body, payload, created_at
+         FROM agos_cyber_case_events
+        WHERE case_id = $1
+        ORDER BY created_at DESC`,
+      [id],
+    ),
+    pool.query(
+      `SELECT ${EVIDENCE_COLS}
+         FROM agos_cyber_evidence
+        WHERE case_id = $1
+        ORDER BY collected_at DESC`,
+      [id],
+    ),
+    pool.query(
+      `SELECT ${TASK_COLS}
+         FROM agos_cyber_tasks
+        WHERE case_id = $1
+        ORDER BY position ASC, created_at ASC`,
+      [id],
+    ),
+  ]);
+
+  return {
+    ...c,
+    linkedAlerts: alertsR.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      severity: row.severity,
+      occurredAt: row.occurred_at.toISOString(),
+    })),
+    events: eventsR.rows.map(rowToCaseEvent),
+    evidence: evidenceR.rows.map(rowToEvidence),
+    tasks: tasksR.rows.map(rowToTask),
+  };
+}
+
+export async function createCase(ownerId: string, data: CaseUpsert): Promise<Case> {
+  const pool = getCyberPool();
+  const id = randomUUID();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO agos_cyber_cases
+         (id, owner_id, title, summary, severity, status, priority, assigned_to,
+          tactic, technique, tags, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)`,
+      [
+        id, ownerId,
+        data.title, data.summary ?? null,
+        data.severity ?? 'medium',
+        data.status ?? 'open',
+        data.priority ?? 'p3',
+        data.assignedTo ?? null,
+        data.tactic ?? null,
+        data.technique ?? null,
+        data.tags ?? [],
+        JSON.stringify(data.metadata ?? {}),
+      ],
+    );
+    if (data.assignedTo) {
+      await insertCaseEvent(client, {
+        caseId: id,
+        kind: 'assignment_change',
+        body: `Assigned to ${data.assignedTo}`,
+        payload: { assignedTo: data.assignedTo },
+      });
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  const c = await getCase(id, ownerId);
+  if (!c) throw new Error('Failed to create case');
+  return c;
+}
+
+export async function updateCase(
+  id: string,
+  ownerId: string,
+  patch: CasePatch,
+): Promise<Case | null> {
+  const pool = getCyberPool();
+  const before = await getCase(id, ownerId);
+  if (!before) return null;
+
+  const sets: string[] = [];
+  const params: unknown[] = [id, ownerId];
+  let i = 3;
+  if (patch.title !== undefined)       { sets.push(`title = $${i++}`);       params.push(patch.title); }
+  if (patch.summary !== undefined)     { sets.push(`summary = $${i++}`);     params.push(patch.summary); }
+  if (patch.severity !== undefined)    { sets.push(`severity = $${i++}`);    params.push(patch.severity); }
+  if (patch.status !== undefined)      { sets.push(`status = $${i++}`);      params.push(patch.status); }
+  if (patch.priority !== undefined)    { sets.push(`priority = $${i++}`);    params.push(patch.priority); }
+  if (patch.assignedTo !== undefined)  { sets.push(`assigned_to = $${i++}`); params.push(patch.assignedTo); }
+  if (patch.tactic !== undefined)      { sets.push(`tactic = $${i++}`);      params.push(patch.tactic); }
+  if (patch.technique !== undefined)   { sets.push(`technique = $${i++}`);   params.push(patch.technique); }
+  if (patch.tags !== undefined)        { sets.push(`tags = $${i++}`);        params.push(patch.tags); }
+  if (patch.metadata !== undefined)    { sets.push(`metadata = $${i++}::jsonb`); params.push(JSON.stringify(patch.metadata)); }
+
+  const movingToClosed =
+    patch.status !== undefined &&
+    (patch.status === 'closed' || patch.status === 'false_positive') &&
+    before.status !== 'closed' &&
+    before.status !== 'false_positive';
+  const movingOffClosed =
+    patch.status !== undefined &&
+    patch.status !== 'closed' &&
+    patch.status !== 'false_positive' &&
+    (before.status === 'closed' || before.status === 'false_positive');
+
+  if (movingToClosed) sets.push(`closed_at = now()`);
+  if (movingOffClosed) sets.push(`closed_at = NULL`);
+
+  if (sets.length === 0) return before;
+
+  sets.push(`updated_at = now()`);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE agos_cyber_cases
+          SET ${sets.join(', ')}
+        WHERE id = $1 AND owner_id = $2`,
+      params,
+    );
+
+    if (patch.status !== undefined && patch.status !== before.status) {
+      await insertCaseEvent(client, {
+        caseId: id,
+        kind: 'status_change',
+        body: `Status: ${before.status} → ${patch.status}`,
+        payload: { from: before.status, to: patch.status },
+      });
+    }
+    if (patch.severity !== undefined && patch.severity !== before.severity) {
+      await insertCaseEvent(client, {
+        caseId: id,
+        kind: 'severity_change',
+        body: `Severity: ${before.severity} → ${patch.severity}`,
+        payload: { from: before.severity, to: patch.severity },
+      });
+    }
+    if (patch.priority !== undefined && patch.priority !== before.priority) {
+      await insertCaseEvent(client, {
+        caseId: id,
+        kind: 'priority_change',
+        body: `Priority: ${before.priority} → ${patch.priority}`,
+        payload: { from: before.priority, to: patch.priority },
+      });
+    }
+    if (patch.assignedTo !== undefined && patch.assignedTo !== before.assignedTo) {
+      await insertCaseEvent(client, {
+        caseId: id,
+        kind: 'assignment_change',
+        body: patch.assignedTo
+          ? `Assigned to ${patch.assignedTo}`
+          : `Unassigned (was ${before.assignedTo ?? '—'})`,
+        payload: { from: before.assignedTo, to: patch.assignedTo },
+      });
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  return getCase(id, ownerId);
+}
+
+export async function deleteCase(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `DELETE FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ─── Case events ───────────────────────────────────────────────────────────
+
+function rowToCaseEvent(row: any): CaseEvent {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    kind: row.kind as CaseEventKind,
+    author: row.author ?? null,
+    body: row.body ?? null,
+    payload: row.payload ?? {},
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+interface PgLike {
+  query: (sql: string, params?: any[]) => Promise<{ rows: any[]; rowCount: number | null }>;
+}
+
+async function insertCaseEvent(
+  client: PgLike,
+  args: {
+    caseId: string;
+    kind: CaseEventKind;
+    author?: string | null;
+    body?: string | null;
+    payload?: Record<string, unknown>;
+  },
+): Promise<CaseEvent> {
+  const id = randomUUID();
+  const r = await client.query(
+    `INSERT INTO agos_cyber_case_events
+       (id, case_id, kind, author, body, payload)
+     VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+     RETURNING id, case_id, kind, author, body, payload, created_at`,
+    [
+      id, args.caseId, args.kind,
+      args.author ?? null,
+      args.body ?? null,
+      JSON.stringify(args.payload ?? {}),
+    ],
+  );
+  return rowToCaseEvent(r.rows[0]);
+}
+
+export async function listCaseEvents(
+  caseId: string,
+  ownerId: string,
+  limit = 200,
+): Promise<CaseEvent[]> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT e.id, e.case_id, e.kind, e.author, e.body, e.payload, e.created_at
+       FROM agos_cyber_case_events e
+       JOIN agos_cyber_cases c ON c.id = e.case_id
+      WHERE e.case_id = $1 AND c.owner_id = $2
+      ORDER BY e.created_at DESC
+      LIMIT $3`,
+    [caseId, ownerId, limit],
+  );
+  return r.rows.map(rowToCaseEvent);
+}
+
+export async function appendCaseEvent(args: {
+  caseId: string;
+  ownerId: string;
+  kind: CaseEventKind;
+  author?: string | null;
+  body?: string | null;
+  payload?: Record<string, unknown>;
+}): Promise<CaseEvent | null> {
+  const pool = getCyberPool();
+  const own = await pool.query(
+    `SELECT 1 FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+    [args.caseId, args.ownerId],
+  );
+  if ((own.rowCount ?? 0) === 0) return null;
+  return insertCaseEvent(pool, {
+    caseId: args.caseId,
+    kind: args.kind,
+    author: args.author,
+    body: args.body,
+    payload: args.payload,
+  });
+}
+
+// ─── Case ↔ alert N:N ──────────────────────────────────────────────────────
+
+export async function attachAlertToCase(args: {
+  caseId: string;
+  alertId: string;
+  ownerId: string;
+}): Promise<boolean> {
+  const pool = getCyberPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const check = await client.query(
+      `SELECT
+         (SELECT title FROM agos_cyber_cases  WHERE id = $1 AND owner_id = $3) AS case_title,
+         (SELECT title FROM agos_cyber_alerts WHERE id = $2 AND owner_id = $3) AS alert_title`,
+      [args.caseId, args.alertId, args.ownerId],
+    );
+    const row = check.rows[0];
+    if (!row || !row.case_title || !row.alert_title) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    await client.query(
+      `INSERT INTO agos_cyber_case_alerts (case_id, alert_id)
+       VALUES ($1, $2)
+       ON CONFLICT (case_id, alert_id) DO NOTHING`,
+      [args.caseId, args.alertId],
+    );
+    await insertCaseEvent(client, {
+      caseId: args.caseId,
+      kind: 'alert_attached',
+      body: `Alert attached: ${row.alert_title}`,
+      payload: { alertId: args.alertId, title: row.alert_title },
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function detachAlertFromCase(args: {
+  caseId: string;
+  alertId: string;
+  ownerId: string;
+}): Promise<boolean> {
+  const pool = getCyberPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const own = await client.query(
+      `SELECT 1 FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+      [args.caseId, args.ownerId],
+    );
+    if ((own.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    const del = await client.query(
+      `DELETE FROM agos_cyber_case_alerts WHERE case_id = $1 AND alert_id = $2`,
+      [args.caseId, args.alertId],
+    );
+    if ((del.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    await insertCaseEvent(client, {
+      caseId: args.caseId,
+      kind: 'alert_detached',
+      body: `Alert detached`,
+      payload: { alertId: args.alertId },
+    });
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function listLinkedAlerts(
+  caseId: string,
+  ownerId: string,
+): Promise<Alert[]> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${ALERT_COLS.split(',').map((c) => `a.${c.trim()}`).join(', ')}
+       FROM agos_cyber_alerts a
+       JOIN agos_cyber_case_alerts ca ON ca.alert_id = a.id
+       JOIN agos_cyber_cases c        ON c.id = ca.case_id
+      WHERE ca.case_id = $1 AND c.owner_id = $2 AND a.owner_id = $2
+      ORDER BY a.occurred_at DESC`,
+    [caseId, ownerId],
+  );
+  return r.rows.map(rowToAlert);
+}
+
+// ─── Evidence ──────────────────────────────────────────────────────────────
+
+function rowToEvidence(row: any): Evidence {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    kind: row.kind as EvidenceKind,
+    title: row.title,
+    description: row.description ?? null,
+    url: row.url ?? null,
+    content: row.content ?? null,
+    mimeType: row.mime_type ?? null,
+    sha256: row.sha256 ?? null,
+    collectedAt: row.collected_at.toISOString(),
+    collectedBy: row.collected_by ?? null,
+    tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const EVIDENCE_COLS = `
+  id, case_id, kind, title, description, url, content, mime_type, sha256,
+  collected_at, collected_by, tags, metadata, created_at, updated_at
+`;
+
+export async function listEvidence(
+  caseId: string,
+  ownerId: string,
+): Promise<Evidence[]> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${EVIDENCE_COLS.split(',').map((c) => `e.${c.trim()}`).join(', ')}
+       FROM agos_cyber_evidence e
+       JOIN agos_cyber_cases c ON c.id = e.case_id
+      WHERE e.case_id = $1 AND c.owner_id = $2
+      ORDER BY e.collected_at DESC`,
+    [caseId, ownerId],
+  );
+  return r.rows.map(rowToEvidence);
+}
+
+export async function getEvidence(
+  id: string,
+  ownerId: string,
+): Promise<Evidence | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${EVIDENCE_COLS.split(',').map((c) => `e.${c.trim()}`).join(', ')}
+       FROM agos_cyber_evidence e
+       JOIN agos_cyber_cases c ON c.id = e.case_id
+      WHERE e.id = $1 AND c.owner_id = $2`,
+    [id, ownerId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToEvidence(r.rows[0]);
+}
+
+export async function addEvidence(args: { ownerId: string } & EvidenceUpsert): Promise<Evidence | null> {
+  const pool = getCyberPool();
+  const own = await pool.query(
+    `SELECT 1 FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+    [args.caseId, args.ownerId],
+  );
+  if ((own.rowCount ?? 0) === 0) return null;
+
+  const id = randomUUID();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO agos_cyber_evidence
+         (id, case_id, kind, title, description, url, content, mime_type, sha256,
+          collected_at, collected_by, tags, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb)`,
+      [
+        id, args.caseId, args.kind, args.title,
+        args.description ?? null,
+        args.url ?? null,
+        args.content ?? null,
+        args.mimeType ?? null,
+        args.sha256 ?? null,
+        args.collectedAt ? new Date(args.collectedAt) : new Date(),
+        args.collectedBy ?? null,
+        args.tags ?? [],
+        JSON.stringify(args.metadata ?? {}),
+      ],
+    );
+    await insertCaseEvent(client, {
+      caseId: args.caseId,
+      kind: 'evidence_added',
+      body: `Evidence: ${args.title}`,
+      payload: { evidenceId: id, title: args.title, kind: args.kind },
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  return getEvidence(id, args.ownerId);
+}
+
+export async function updateEvidence(
+  args: { id: string; ownerId: string } & Partial<EvidencePatch>,
+): Promise<Evidence | null> {
+  const pool = getCyberPool();
+  const existing = await getEvidence(args.id, args.ownerId);
+  if (!existing) return null;
+
+  const sets: string[] = [];
+  const params: unknown[] = [args.id];
+  let i = 2;
+  if (args.kind !== undefined)        { sets.push(`kind = $${i++}`);        params.push(args.kind); }
+  if (args.title !== undefined)       { sets.push(`title = $${i++}`);       params.push(args.title); }
+  if (args.description !== undefined) { sets.push(`description = $${i++}`); params.push(args.description); }
+  if (args.url !== undefined)         { sets.push(`url = $${i++}`);         params.push(args.url); }
+  if (args.content !== undefined)     { sets.push(`content = $${i++}`);     params.push(args.content); }
+  if (args.mimeType !== undefined)    { sets.push(`mime_type = $${i++}`);   params.push(args.mimeType); }
+  if (args.sha256 !== undefined)      { sets.push(`sha256 = $${i++}`);      params.push(args.sha256); }
+  if (args.collectedAt !== undefined) { sets.push(`collected_at = $${i++}`); params.push(new Date(args.collectedAt)); }
+  if (args.collectedBy !== undefined) { sets.push(`collected_by = $${i++}`); params.push(args.collectedBy); }
+  if (args.tags !== undefined)        { sets.push(`tags = $${i++}`);        params.push(args.tags); }
+  if (args.metadata !== undefined)    { sets.push(`metadata = $${i++}::jsonb`); params.push(JSON.stringify(args.metadata)); }
+
+  if (sets.length === 0) return existing;
+  sets.push(`updated_at = now()`);
+  await pool.query(
+    `UPDATE agos_cyber_evidence SET ${sets.join(', ')} WHERE id = $1`,
+    params,
+  );
+  return getEvidence(args.id, args.ownerId);
+}
+
+export async function deleteEvidence(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const existing = await getEvidence(id, ownerId);
+  if (!existing) return false;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await insertCaseEvent(client, {
+      caseId: existing.caseId,
+      kind: 'evidence_removed',
+      body: `Evidence removed: ${existing.title}`,
+      payload: { evidenceId: id, title: existing.title },
+    });
+    await client.query(`DELETE FROM agos_cyber_evidence WHERE id = $1`, [id]);
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─── Tasks ─────────────────────────────────────────────────────────────────
+
+function rowToTask(row: any): Task {
+  return {
+    id: row.id,
+    caseId: row.case_id,
+    title: row.title,
+    description: row.description ?? null,
+    status: row.status as TaskStatus,
+    assignedTo: row.assigned_to ?? null,
+    priority: row.priority,
+    dueAt: row.due_at ? row.due_at.toISOString() : null,
+    completedAt: row.completed_at ? row.completed_at.toISOString() : null,
+    position: row.position,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const TASK_COLS = `
+  id, case_id, title, description, status, assigned_to, priority,
+  due_at, completed_at, position, created_at, updated_at
+`;
+
+export async function listTasks(caseId: string, ownerId: string): Promise<Task[]> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${TASK_COLS.split(',').map((c) => `t.${c.trim()}`).join(', ')}
+       FROM agos_cyber_tasks t
+       JOIN agos_cyber_cases c ON c.id = t.case_id
+      WHERE t.case_id = $1 AND c.owner_id = $2
+      ORDER BY t.position ASC, t.created_at ASC`,
+    [caseId, ownerId],
+  );
+  return r.rows.map(rowToTask);
+}
+
+export async function getTask(id: string, ownerId: string): Promise<Task | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${TASK_COLS.split(',').map((c) => `t.${c.trim()}`).join(', ')}
+       FROM agos_cyber_tasks t
+       JOIN agos_cyber_cases c ON c.id = t.case_id
+      WHERE t.id = $1 AND c.owner_id = $2`,
+    [id, ownerId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToTask(r.rows[0]);
+}
+
+export async function addTask(
+  args: { ownerId: string } & TaskUpsert,
+): Promise<Task | null> {
+  const pool = getCyberPool();
+  const own = await pool.query(
+    `SELECT 1 FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+    [args.caseId, args.ownerId],
+  );
+  if ((own.rowCount ?? 0) === 0) return null;
+
+  const id = randomUUID();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    let position = args.position;
+    if (position === undefined) {
+      const m = await client.query(
+        `SELECT COALESCE(MAX(position), -1) + 1 AS next FROM agos_cyber_tasks WHERE case_id = $1`,
+        [args.caseId],
+      );
+      position = Number(m.rows[0]?.next ?? 0);
+    }
+
+    await client.query(
+      `INSERT INTO agos_cyber_tasks
+         (id, case_id, title, description, status, assigned_to, priority,
+          due_at, position)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [
+        id, args.caseId, args.title,
+        args.description ?? null,
+        args.status ?? 'open',
+        args.assignedTo ?? null,
+        args.priority ?? 'medium',
+        args.dueAt ? new Date(args.dueAt) : null,
+        position,
+      ],
+    );
+    await insertCaseEvent(client, {
+      caseId: args.caseId,
+      kind: 'task_added',
+      body: `Task added: ${args.title}`,
+      payload: { taskId: id, title: args.title },
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  return getTask(id, args.ownerId);
+}
+
+export async function updateTask(
+  args: { id: string; ownerId: string } & Partial<TaskPatch>,
+): Promise<Task | null> {
+  const pool = getCyberPool();
+  const before = await getTask(args.id, args.ownerId);
+  if (!before) return null;
+
+  const sets: string[] = [];
+  const params: unknown[] = [args.id];
+  let i = 2;
+  if (args.title !== undefined)       { sets.push(`title = $${i++}`);       params.push(args.title); }
+  if (args.description !== undefined) { sets.push(`description = $${i++}`); params.push(args.description); }
+  if (args.status !== undefined)      { sets.push(`status = $${i++}`);      params.push(args.status); }
+  if (args.assignedTo !== undefined)  { sets.push(`assigned_to = $${i++}`); params.push(args.assignedTo); }
+  if (args.priority !== undefined)    { sets.push(`priority = $${i++}`);    params.push(args.priority); }
+  if (args.dueAt !== undefined)       { sets.push(`due_at = $${i++}`);      params.push(args.dueAt ? new Date(args.dueAt) : null); }
+  if (args.position !== undefined)    { sets.push(`position = $${i++}`);    params.push(args.position); }
+
+  const movingToDone =
+    args.status !== undefined && args.status === 'done' && before.status !== 'done';
+  const movingOffDone =
+    args.status !== undefined && args.status !== 'done' && before.status === 'done';
+
+  if (movingToDone) sets.push(`completed_at = now()`);
+  if (movingOffDone) sets.push(`completed_at = NULL`);
+  if (args.completedAt !== undefined && !movingToDone && !movingOffDone) {
+    sets.push(`completed_at = $${i++}`);
+    params.push(args.completedAt ? new Date(args.completedAt) : null);
+  }
+
+  if (sets.length === 0) return before;
+  sets.push(`updated_at = now()`);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE agos_cyber_tasks SET ${sets.join(', ')} WHERE id = $1`,
+      params,
+    );
+    if (movingToDone) {
+      await insertCaseEvent(client, {
+        caseId: before.caseId,
+        kind: 'task_completed',
+        body: `Task completed: ${before.title}`,
+        payload: { taskId: args.id, title: before.title },
+      });
+    } else if (movingOffDone) {
+      await insertCaseEvent(client, {
+        caseId: before.caseId,
+        kind: 'task_reopened',
+        body: `Task reopened: ${before.title}`,
+        payload: { taskId: args.id, title: before.title },
+      });
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  return getTask(args.id, args.ownerId);
+}
+
+export async function deleteTask(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `DELETE FROM agos_cyber_tasks t
+      USING agos_cyber_cases c
+      WHERE t.id = $1 AND c.id = t.case_id AND c.owner_id = $2`,
+    [id, ownerId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function reorderTasks(
+  caseId: string,
+  ownerId: string,
+  orderedTaskIds: string[],
+): Promise<boolean> {
+  const pool = getCyberPool();
+  const own = await pool.query(
+    `SELECT 1 FROM agos_cyber_cases WHERE id = $1 AND owner_id = $2`,
+    [caseId, ownerId],
+  );
+  if ((own.rowCount ?? 0) === 0) return false;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (let i = 0; i < orderedTaskIds.length; i++) {
+      await client.query(
+        `UPDATE agos_cyber_tasks
+            SET position = $1, updated_at = now()
+          WHERE id = $2 AND case_id = $3`,
+        [i, orderedTaskIds[i], caseId],
+      );
+    }
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }

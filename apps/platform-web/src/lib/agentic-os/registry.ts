@@ -297,6 +297,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Work the live alert backlog with copilot-assisted triage.',
       },
       {
+        href: '/dashboard/os/cyber/cases',
+        label: 'Cases',
+        description:
+          'Investigation cases linking alerts, evidence, tasks, and a full timeline.',
+      },
+      {
         href: '/dashboard/os/cyber/assets',
         label: 'Assets',
         description:
