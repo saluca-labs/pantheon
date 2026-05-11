@@ -8,7 +8,7 @@
 
 export type DetectionLifecycle = 'draft' | 'testing' | 'active' | 'deprecated' | 'archived';
 export type DetectionSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-export type DetectionLogSourceKind = 'siem' | 'edr' | 'ids' | 'cloud_audit' | 'firewall' | 'osquery' | 'syslog' | 'webhook' | 'other';
+export type DetectionLogSourceKind = 'siem' | 'edr' | 'network_ids' | 'cloud_audit' | 'firewall' | 'app_log' | 'identity_provider' | 'webhook' | 'other';
 
 export interface DetectionRule {
   id: string;
@@ -66,7 +66,7 @@ export interface DetectionRunInsert {
 
 export const DETECTION_LIFECYCLE_VALUES = ['draft','testing','active','deprecated','archived'] as const;
 export const DETECTION_SEVERITY_VALUES = ['critical','high','medium','low','info'] as const;
-export const DETECTION_LOG_SOURCE_KIND_VALUES = ['siem','edr','ids','cloud_audit','firewall','osquery','syslog','webhook','other'] as const;
+export const DETECTION_LOG_SOURCE_KIND_VALUES = ['siem','edr','network_ids','cloud_audit','firewall','app_log','identity_provider','webhook','other'] as const;
 
 export const DETECTION_LIFECYCLES: { value: DetectionLifecycle; label: string; description: string }[] = [
   { value: 'draft', label: 'Draft', description: 'Work in progress, not deployed.' },
@@ -194,7 +194,7 @@ export const STARTER_PACK_RULES: Pick<DetectionRuleUpsert, 'name' | 'description
     severity: 'high',
     tactic: 'persistence',
     technique: 'T1098',
-    logSourceKind: 'osquery',
+    logSourceKind: 'app_log',
     detection: {
       condition: 'selection',
       selection: { file_path: '/etc/passwd', action: ['modify','create','delete'] }
@@ -247,7 +247,7 @@ export const STARTER_PACK_RULES: Pick<DetectionRuleUpsert, 'name' | 'description
     severity: 'medium',
     tactic: 'command-and-control',
     technique: 'T1071',
-    logSourceKind: 'ids',
+    logSourceKind: 'network_ids',
     detection: {
       condition: 'selection',
       selection: { query_name_tld: ['xyz','top','tk','onion'] }

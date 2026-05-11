@@ -47,6 +47,27 @@ import type {
   TaskStatus,
   TaskUpsert,
 } from './cases';
+import type {
+  Vulnerability,
+  VulnerabilityPatch,
+  VulnerabilitySeverity,
+  VulnerabilityUpsert,
+} from './vulnerabilities';
+import type {
+  Exposure,
+  ExposurePatch,
+  ExposurePriority,
+  ExposureStatus,
+  ExposureUpsert,
+  ExposureWithRefs,
+} from './exposures';
+import type {
+  Ioc,
+  IocKind,
+  IocPatch,
+  IocUpsert,
+  ThreatType,
+} from './iocs';
 
 // ─── Alerts ────────────────────────────────────────────────────────────────
 
@@ -2327,4 +2348,812 @@ export async function completeRun(args: {
   } finally {
     client.release();
   }
+}
+
+// ─── Vulnerabilities ───────────────────────────────────────────────────────
+
+const VULN_COLS = `id, owner_id, cve_id, title, description, severity, cvss_score, cvss_vector, cwe_id, vendor, product, affected_versions, fixed_versions, published_at, "references", tags, metadata, created_at, updated_at`;
+
+function rowToVulnerability(row: any): Vulnerability {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    cveId: row.cve_id ?? null,
+    title: row.title,
+    description: row.description ?? null,
+    severity: row.severity as VulnerabilitySeverity,
+    cvssScore: row.cvss_score == null ? null : Number(row.cvss_score),
+    cvssVector: row.cvss_vector ?? null,
+    cweId: row.cwe_id ?? null,
+    vendor: row.vendor ?? null,
+    product: row.product ?? null,
+    affectedVersions: row.affected_versions ?? [],
+    fixedVersions: row.fixed_versions ?? [],
+    publishedAt: row.published_at ? row.published_at.toISOString() : null,
+    references: row.references ?? [],
+    tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export interface ListVulnerabilitiesArgs {
+  ownerId: string;
+  severity?: VulnerabilitySeverity;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listVulnerabilities(args: ListVulnerabilitiesArgs): Promise<Vulnerability[]> {
+  const pool = getCyberPool();
+  const { ownerId, severity, q, limit = 200, offset = 0 } = args;
+  let sql = `SELECT ${VULN_COLS} FROM agos_cyber_vulnerabilities WHERE owner_id = $1`;
+  const params: any[] = [ownerId];
+  let i = 2;
+  if (severity) {
+    sql += ` AND severity = $${i++}`;
+    params.push(severity);
+  }
+  if (q && q.trim().length > 0) {
+    sql += ` AND (title ILIKE $${i} OR description ILIKE $${i} OR cve_id ILIKE $${i} OR product ILIKE $${i})`;
+    params.push(`%${q.trim()}%`);
+    i++;
+  }
+  sql += ` ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END, updated_at DESC LIMIT $${i++} OFFSET $${i++}`;
+  params.push(limit, offset);
+  const r = await pool.query(sql, params);
+  return r.rows.map(rowToVulnerability);
+}
+
+export async function getVulnerability(id: string, ownerId: string): Promise<Vulnerability | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${VULN_COLS} FROM agos_cyber_vulnerabilities WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return r.rows.length ? rowToVulnerability(r.rows[0]) : null;
+}
+
+export async function createVulnerability(ownerId: string, data: VulnerabilityUpsert): Promise<Vulnerability> {
+  const pool = getCyberPool();
+  const id = randomUUID();
+  const r = await pool.query(
+    `INSERT INTO agos_cyber_vulnerabilities
+       (id, owner_id, cve_id, title, description, severity, cvss_score, cvss_vector, cwe_id,
+        vendor, product, affected_versions, fixed_versions, published_at, "references", tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb)
+     RETURNING ${VULN_COLS}`,
+    [
+      id,
+      ownerId,
+      data.cveId ?? null,
+      data.title,
+      data.description ?? null,
+      data.severity ?? 'medium',
+      data.cvssScore ?? null,
+      data.cvssVector ?? null,
+      data.cweId ?? null,
+      data.vendor ?? null,
+      data.product ?? null,
+      data.affectedVersions ?? [],
+      data.fixedVersions ?? [],
+      data.publishedAt ? new Date(data.publishedAt) : null,
+      data.references ?? [],
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  return rowToVulnerability(r.rows[0]);
+}
+
+export async function updateVulnerability(
+  id: string,
+  ownerId: string,
+  patch: VulnerabilityPatch,
+): Promise<Vulnerability | null> {
+  const pool = getCyberPool();
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let i = 1;
+  if (patch.cveId !== undefined)            { sets.push(`cve_id = $${i++}`);            params.push(patch.cveId); }
+  if (patch.title !== undefined)            { sets.push(`title = $${i++}`);             params.push(patch.title); }
+  if (patch.description !== undefined)      { sets.push(`description = $${i++}`);       params.push(patch.description); }
+  if (patch.severity !== undefined)         { sets.push(`severity = $${i++}`);          params.push(patch.severity); }
+  if (patch.cvssScore !== undefined)        { sets.push(`cvss_score = $${i++}`);        params.push(patch.cvssScore); }
+  if (patch.cvssVector !== undefined)       { sets.push(`cvss_vector = $${i++}`);       params.push(patch.cvssVector); }
+  if (patch.cweId !== undefined)            { sets.push(`cwe_id = $${i++}`);            params.push(patch.cweId); }
+  if (patch.vendor !== undefined)           { sets.push(`vendor = $${i++}`);            params.push(patch.vendor); }
+  if (patch.product !== undefined)          { sets.push(`product = $${i++}`);           params.push(patch.product); }
+  if (patch.affectedVersions !== undefined) { sets.push(`affected_versions = $${i++}`); params.push(patch.affectedVersions); }
+  if (patch.fixedVersions !== undefined)    { sets.push(`fixed_versions = $${i++}`);    params.push(patch.fixedVersions); }
+  if (patch.publishedAt !== undefined)      { sets.push(`published_at = $${i++}`);      params.push(patch.publishedAt ? new Date(patch.publishedAt) : null); }
+  if (patch.references !== undefined)       { sets.push(`"references" = $${i++}`);      params.push(patch.references); }
+  if (patch.tags !== undefined)             { sets.push(`tags = $${i++}`);              params.push(patch.tags); }
+  if (patch.metadata !== undefined)         { sets.push(`metadata = $${i++}::jsonb`);   params.push(JSON.stringify(patch.metadata)); }
+  if (sets.length === 0) return getVulnerability(id, ownerId);
+  sets.push(`updated_at = now()`);
+  const whereIdIdx = i++;
+  const whereOwnerIdx = i++;
+  params.push(id, ownerId);
+  const r = await pool.query(
+    `UPDATE agos_cyber_vulnerabilities SET ${sets.join(', ')} WHERE id = $${whereIdIdx} AND owner_id = $${whereOwnerIdx} RETURNING ${VULN_COLS}`,
+    params,
+  );
+  return r.rows.length ? rowToVulnerability(r.rows[0]) : null;
+}
+
+export async function deleteVulnerability(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `DELETE FROM agos_cyber_vulnerabilities WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Bulk-upsert vulnerabilities. When `cve_id` is present and an existing row
+ * for that (owner, cve_id) is found, the existing row is UPDATEd; otherwise
+ * a new row is INSERTed. Non-CVE rows are always INSERTed.
+ *
+ * Returns counts so the importer UI can show "imported N, updated M".
+ */
+export async function bulkUpsertVulnerabilities(args: {
+  ownerId: string;
+  vulnerabilities: VulnerabilityUpsert[];
+}): Promise<{ inserted: number; updated: number; skipped: number }> {
+  const pool = getCyberPool();
+  const client = await pool.connect();
+  let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
+  try {
+    await client.query('BEGIN');
+    for (const v of args.vulnerabilities) {
+      const cveId = v.cveId ?? null;
+      let existingId: string | null = null;
+      if (cveId) {
+        const r = await client.query(
+          `SELECT id FROM agos_cyber_vulnerabilities WHERE owner_id = $1 AND cve_id = $2 LIMIT 1`,
+          [args.ownerId, cveId],
+        );
+        existingId = (r.rows[0]?.id as string | undefined) ?? null;
+      }
+      if (existingId) {
+        await client.query(
+          `UPDATE agos_cyber_vulnerabilities SET
+             title = $3,
+             description = COALESCE($4, description),
+             severity = $5,
+             cvss_score = COALESCE($6, cvss_score),
+             cvss_vector = COALESCE($7, cvss_vector),
+             cwe_id = COALESCE($8, cwe_id),
+             vendor = COALESCE($9, vendor),
+             product = COALESCE($10, product),
+             affected_versions = $11,
+             fixed_versions = $12,
+             published_at = COALESCE($13, published_at),
+             "references" = $14,
+             tags = $15,
+             metadata = $16::jsonb,
+             updated_at = now()
+           WHERE id = $1 AND owner_id = $2`,
+          [
+            existingId,
+            args.ownerId,
+            v.title,
+            v.description ?? null,
+            v.severity ?? 'medium',
+            v.cvssScore ?? null,
+            v.cvssVector ?? null,
+            v.cweId ?? null,
+            v.vendor ?? null,
+            v.product ?? null,
+            v.affectedVersions ?? [],
+            v.fixedVersions ?? [],
+            v.publishedAt ? new Date(v.publishedAt) : null,
+            v.references ?? [],
+            v.tags ?? [],
+            JSON.stringify(v.metadata ?? {}),
+          ],
+        );
+        updated += 1;
+      } else {
+        try {
+          await client.query(
+            `INSERT INTO agos_cyber_vulnerabilities
+               (id, owner_id, cve_id, title, description, severity, cvss_score, cvss_vector, cwe_id,
+                vendor, product, affected_versions, fixed_versions, published_at, "references", tags, metadata)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb)`,
+            [
+              randomUUID(),
+              args.ownerId,
+              cveId,
+              v.title,
+              v.description ?? null,
+              v.severity ?? 'medium',
+              v.cvssScore ?? null,
+              v.cvssVector ?? null,
+              v.cweId ?? null,
+              v.vendor ?? null,
+              v.product ?? null,
+              v.affectedVersions ?? [],
+              v.fixedVersions ?? [],
+              v.publishedAt ? new Date(v.publishedAt) : null,
+              v.references ?? [],
+              v.tags ?? [],
+              JSON.stringify(v.metadata ?? {}),
+            ],
+          );
+          inserted += 1;
+        } catch {
+          skipped += 1;
+        }
+      }
+    }
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+  return { inserted, updated, skipped };
+}
+
+// ─── Exposures ─────────────────────────────────────────────────────────────
+
+const EXPOSURE_COLS = `id, vulnerability_id, asset_id, owner_id, status, detected_at, remediated_at, detected_by, assigned_to, priority, notes, evidence_url, metadata, created_at, updated_at`;
+
+function rowToExposure(row: any): Exposure {
+  return {
+    id: row.id,
+    vulnerabilityId: row.vulnerability_id,
+    assetId: row.asset_id,
+    ownerId: row.owner_id,
+    status: row.status as ExposureStatus,
+    detectedAt: row.detected_at.toISOString(),
+    remediatedAt: row.remediated_at ? row.remediated_at.toISOString() : null,
+    detectedBy: row.detected_by ?? null,
+    assignedTo: row.assigned_to ?? null,
+    priority: row.priority as ExposurePriority,
+    notes: row.notes ?? null,
+    evidenceUrl: row.evidence_url ?? null,
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToExposureWithRefs(row: any): ExposureWithRefs {
+  return {
+    ...rowToExposure(row),
+    vulnerabilityTitle: row.vuln_title,
+    vulnerabilityCveId: row.vuln_cve_id ?? null,
+    vulnerabilitySeverity: row.vuln_severity,
+    assetName: row.asset_name,
+    assetCriticality: row.asset_criticality,
+  };
+}
+
+export interface ListExposuresArgs {
+  ownerId: string;
+  status?: ExposureStatus;
+  priority?: ExposurePriority;
+  assetId?: string;
+  vulnerabilityId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listExposures(args: ListExposuresArgs): Promise<ExposureWithRefs[]> {
+  const pool = getCyberPool();
+  const { ownerId, status, priority, assetId, vulnerabilityId, limit = 200, offset = 0 } = args;
+  const where: string[] = [`e.owner_id = $1`];
+  const params: any[] = [ownerId];
+  let i = 2;
+  if (status)         { where.push(`e.status = $${i++}`);          params.push(status); }
+  if (priority)       { where.push(`e.priority = $${i++}`);        params.push(priority); }
+  if (assetId)        { where.push(`e.asset_id = $${i++}`);        params.push(assetId); }
+  if (vulnerabilityId){ where.push(`e.vulnerability_id = $${i++}`);params.push(vulnerabilityId); }
+  params.push(limit, offset);
+  const limitIdx = i++;
+  const offsetIdx = i++;
+  const r = await pool.query(
+    `SELECT e.id, e.vulnerability_id, e.asset_id, e.owner_id, e.status, e.detected_at,
+            e.remediated_at, e.detected_by, e.assigned_to, e.priority, e.notes, e.evidence_url,
+            e.metadata, e.created_at, e.updated_at,
+            v.title AS vuln_title, v.cve_id AS vuln_cve_id, v.severity AS vuln_severity,
+            a.name AS asset_name, a.criticality AS asset_criticality
+       FROM agos_cyber_exposures e
+       JOIN agos_cyber_vulnerabilities v ON v.id = e.vulnerability_id
+       JOIN agos_cyber_assets a          ON a.id = e.asset_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY
+        CASE e.priority WHEN 'p1' THEN 0 WHEN 'p2' THEN 1 WHEN 'p3' THEN 2 WHEN 'p4' THEN 3 ELSE 4 END,
+        CASE e.status WHEN 'open' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
+        e.detected_at DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    params,
+  );
+  return r.rows.map(rowToExposureWithRefs);
+}
+
+export async function getExposure(id: string, ownerId: string): Promise<ExposureWithRefs | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT e.id, e.vulnerability_id, e.asset_id, e.owner_id, e.status, e.detected_at,
+            e.remediated_at, e.detected_by, e.assigned_to, e.priority, e.notes, e.evidence_url,
+            e.metadata, e.created_at, e.updated_at,
+            v.title AS vuln_title, v.cve_id AS vuln_cve_id, v.severity AS vuln_severity,
+            a.name AS asset_name, a.criticality AS asset_criticality
+       FROM agos_cyber_exposures e
+       JOIN agos_cyber_vulnerabilities v ON v.id = e.vulnerability_id
+       JOIN agos_cyber_assets a          ON a.id = e.asset_id
+      WHERE e.id = $1 AND e.owner_id = $2`,
+    [id, ownerId],
+  );
+  return r.rows.length ? rowToExposureWithRefs(r.rows[0]) : null;
+}
+
+export async function createExposure(ownerId: string, data: ExposureUpsert): Promise<Exposure | null> {
+  const pool = getCyberPool();
+  // Confirm both parent rows belong to this owner.
+  const refCheck = await pool.query(
+    `SELECT
+       (SELECT 1 FROM agos_cyber_vulnerabilities WHERE id = $1 AND owner_id = $3) AS vuln_ok,
+       (SELECT 1 FROM agos_cyber_assets         WHERE id = $2 AND owner_id = $3) AS asset_ok`,
+    [data.vulnerabilityId, data.assetId, ownerId],
+  );
+  const row = refCheck.rows[0] ?? {};
+  if (!row.vuln_ok || !row.asset_ok) return null;
+  const id = randomUUID();
+  try {
+    const r = await pool.query(
+      `INSERT INTO agos_cyber_exposures
+         (id, vulnerability_id, asset_id, owner_id, status, detected_by, assigned_to,
+          priority, notes, evidence_url, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
+       RETURNING ${EXPOSURE_COLS}`,
+      [
+        id,
+        data.vulnerabilityId,
+        data.assetId,
+        ownerId,
+        data.status ?? 'open',
+        data.detectedBy ?? null,
+        data.assignedTo ?? null,
+        data.priority ?? 'p3',
+        data.notes ?? null,
+        data.evidenceUrl ?? null,
+        JSON.stringify(data.metadata ?? {}),
+      ],
+    );
+    return rowToExposure(r.rows[0]);
+  } catch {
+    // unique constraint violation = exposure already exists for this pair
+    return null;
+  }
+}
+
+export async function updateExposure(
+  id: string,
+  ownerId: string,
+  patch: ExposurePatch,
+): Promise<Exposure | null> {
+  const pool = getCyberPool();
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let i = 1;
+  if (patch.status !== undefined)      { sets.push(`status = $${i++}`);       params.push(patch.status); }
+  if (patch.detectedBy !== undefined)  { sets.push(`detected_by = $${i++}`);  params.push(patch.detectedBy); }
+  if (patch.assignedTo !== undefined)  { sets.push(`assigned_to = $${i++}`);  params.push(patch.assignedTo); }
+  if (patch.priority !== undefined)    { sets.push(`priority = $${i++}`);     params.push(patch.priority); }
+  if (patch.notes !== undefined)       { sets.push(`notes = $${i++}`);        params.push(patch.notes); }
+  if (patch.evidenceUrl !== undefined) { sets.push(`evidence_url = $${i++}`); params.push(patch.evidenceUrl); }
+  if (patch.metadata !== undefined)    { sets.push(`metadata = $${i++}::jsonb`); params.push(JSON.stringify(patch.metadata)); }
+  if (sets.length === 0) {
+    const r = await pool.query(
+      `SELECT ${EXPOSURE_COLS} FROM agos_cyber_exposures WHERE id = $1 AND owner_id = $2`,
+      [id, ownerId],
+    );
+    return r.rows.length ? rowToExposure(r.rows[0]) : null;
+  }
+  sets.push(`updated_at = now()`);
+  const whereIdIdx = i++;
+  const whereOwnerIdx = i++;
+  params.push(id, ownerId);
+  const r = await pool.query(
+    `UPDATE agos_cyber_exposures SET ${sets.join(', ')}
+      WHERE id = $${whereIdIdx} AND owner_id = $${whereOwnerIdx}
+      RETURNING ${EXPOSURE_COLS}`,
+    params,
+  );
+  return r.rows.length ? rowToExposure(r.rows[0]) : null;
+}
+
+export async function deleteExposure(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `DELETE FROM agos_cyber_exposures WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function listExposuresByAsset(assetId: string, ownerId: string): Promise<ExposureWithRefs[]> {
+  return listExposures({ ownerId, assetId, limit: 500 });
+}
+
+export async function listExposuresByVuln(vulnerabilityId: string, ownerId: string): Promise<ExposureWithRefs[]> {
+  return listExposures({ ownerId, vulnerabilityId, limit: 500 });
+}
+
+/**
+ * Create one exposure per assetId for the same vulnerability. Idempotent —
+ * the (vulnerability_id, asset_id) unique constraint silently swallows
+ * duplicates so re-running with the same set is safe.
+ */
+export async function bulkCreateExposures(args: {
+  ownerId: string;
+  vulnerabilityId: string;
+  assetIds: string[];
+  detectedBy?: string | null;
+  priority?: ExposurePriority;
+}): Promise<{ created: number; skipped: number }> {
+  const pool = getCyberPool();
+  const client = await pool.connect();
+  let created = 0;
+  let skipped = 0;
+  try {
+    await client.query('BEGIN');
+    // Ownership gate
+    const ownerCheck = await client.query(
+      `SELECT 1 FROM agos_cyber_vulnerabilities WHERE id = $1 AND owner_id = $2`,
+      [args.vulnerabilityId, args.ownerId],
+    );
+    if ((ownerCheck.rowCount ?? 0) === 0) {
+      await client.query('ROLLBACK');
+      return { created: 0, skipped: args.assetIds.length };
+    }
+    for (const assetId of args.assetIds) {
+      const ok = await client.query(
+        `SELECT 1 FROM agos_cyber_assets WHERE id = $1 AND owner_id = $2`,
+        [assetId, args.ownerId],
+      );
+      if ((ok.rowCount ?? 0) === 0) { skipped += 1; continue; }
+      try {
+        await client.query(
+          `INSERT INTO agos_cyber_exposures
+             (id, vulnerability_id, asset_id, owner_id, status, detected_by, priority)
+           VALUES ($1,$2,$3,$4,'open',$5,$6)
+           ON CONFLICT (vulnerability_id, asset_id) DO NOTHING`,
+          [
+            randomUUID(),
+            args.vulnerabilityId,
+            assetId,
+            args.ownerId,
+            args.detectedBy ?? null,
+            args.priority ?? 'p3',
+          ],
+        );
+        created += 1;
+      } catch {
+        skipped += 1;
+      }
+    }
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+  return { created, skipped };
+}
+
+/** Transition an exposure into a closed state, stamping remediated_at. */
+export async function closeExposure(args: {
+  id: string;
+  ownerId: string;
+  status: 'mitigated' | 'resolved' | 'false_positive';
+  notes?: string | null;
+}): Promise<Exposure | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `UPDATE agos_cyber_exposures
+        SET status = $1,
+            remediated_at = COALESCE(remediated_at, now()),
+            notes = COALESCE($2, notes),
+            updated_at = now()
+      WHERE id = $3 AND owner_id = $4
+      RETURNING ${EXPOSURE_COLS}`,
+    [args.status, args.notes ?? null, args.id, args.ownerId],
+  );
+  return r.rows.length ? rowToExposure(r.rows[0]) : null;
+}
+
+// ─── IOCs ──────────────────────────────────────────────────────────────────
+
+const IOC_COLS = `id, owner_id, kind, value, title, description, threat_type, confidence, first_seen_at, last_seen_at, expires_at, source, tags, "references", metadata, created_at, updated_at`;
+
+function rowToIoc(row: any): Ioc {
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    kind: row.kind as IocKind,
+    value: row.value,
+    title: row.title ?? null,
+    description: row.description ?? null,
+    threatType: (row.threat_type ?? null) as ThreatType | null,
+    confidence: Number(row.confidence ?? 50),
+    firstSeenAt: row.first_seen_at.toISOString(),
+    lastSeenAt: row.last_seen_at.toISOString(),
+    expiresAt: row.expires_at ? row.expires_at.toISOString() : null,
+    source: row.source ?? null,
+    tags: row.tags ?? [],
+    references: row.references ?? [],
+    metadata: row.metadata ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export interface SearchIocsArgs {
+  ownerId: string;
+  q?: string;
+  kind?: IocKind;
+  threatType?: ThreatType;
+  limit?: number;
+  offset?: number;
+}
+
+export async function searchIocs(args: SearchIocsArgs): Promise<Ioc[]> {
+  const pool = getCyberPool();
+  const { ownerId, q, kind, threatType, limit = 200, offset = 0 } = args;
+  const where: string[] = [`owner_id = $1`];
+  const params: any[] = [ownerId];
+  let i = 2;
+  if (kind)       { where.push(`kind = $${i++}`);        params.push(kind); }
+  if (threatType) { where.push(`threat_type = $${i++}`); params.push(threatType); }
+  if (q && q.trim().length > 0) {
+    where.push(`(value ILIKE $${i} OR title ILIKE $${i} OR description ILIKE $${i})`);
+    params.push(`%${q.trim()}%`);
+    i++;
+  }
+  params.push(limit, offset);
+  const limitIdx = i++;
+  const offsetIdx = i++;
+  const r = await pool.query(
+    `SELECT ${IOC_COLS} FROM agos_cyber_iocs
+      WHERE ${where.join(' AND ')}
+      ORDER BY last_seen_at DESC
+      LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    params,
+  );
+  return r.rows.map(rowToIoc);
+}
+
+export async function listIocs(args: SearchIocsArgs): Promise<Ioc[]> {
+  return searchIocs(args);
+}
+
+export async function getIoc(id: string, ownerId: string): Promise<Ioc | null> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT ${IOC_COLS} FROM agos_cyber_iocs WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return r.rows.length ? rowToIoc(r.rows[0]) : null;
+}
+
+export async function createIoc(ownerId: string, data: IocUpsert): Promise<Ioc | null> {
+  const pool = getCyberPool();
+  const id = randomUUID();
+  try {
+    const r = await pool.query(
+      `INSERT INTO agos_cyber_iocs
+         (id, owner_id, kind, value, title, description, threat_type, confidence,
+          first_seen_at, last_seen_at, expires_at, source, tags, "references", metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15::jsonb)
+       RETURNING ${IOC_COLS}`,
+      [
+        id,
+        ownerId,
+        data.kind,
+        data.value,
+        data.title ?? null,
+        data.description ?? null,
+        data.threatType ?? null,
+        data.confidence ?? 50,
+        data.firstSeenAt ? new Date(data.firstSeenAt) : new Date(),
+        data.lastSeenAt ? new Date(data.lastSeenAt) : new Date(),
+        data.expiresAt ? new Date(data.expiresAt) : null,
+        data.source ?? null,
+        data.tags ?? [],
+        data.references ?? [],
+        JSON.stringify(data.metadata ?? {}),
+      ],
+    );
+    return rowToIoc(r.rows[0]);
+  } catch {
+    // duplicate (owner_id, kind, value) — caller can treat as no-op
+    return null;
+  }
+}
+
+export async function updateIoc(id: string, ownerId: string, patch: IocPatch): Promise<Ioc | null> {
+  const pool = getCyberPool();
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let i = 1;
+  if (patch.title !== undefined)        { sets.push(`title = $${i++}`);         params.push(patch.title); }
+  if (patch.description !== undefined)  { sets.push(`description = $${i++}`);   params.push(patch.description); }
+  if (patch.threatType !== undefined)   { sets.push(`threat_type = $${i++}`);   params.push(patch.threatType); }
+  if (patch.confidence !== undefined)   { sets.push(`confidence = $${i++}`);    params.push(patch.confidence); }
+  if (patch.firstSeenAt !== undefined)  { sets.push(`first_seen_at = $${i++}`); params.push(new Date(patch.firstSeenAt)); }
+  if (patch.lastSeenAt !== undefined)   { sets.push(`last_seen_at = $${i++}`);  params.push(new Date(patch.lastSeenAt)); }
+  if (patch.expiresAt !== undefined)    { sets.push(`expires_at = $${i++}`);    params.push(patch.expiresAt ? new Date(patch.expiresAt) : null); }
+  if (patch.source !== undefined)       { sets.push(`source = $${i++}`);        params.push(patch.source); }
+  if (patch.tags !== undefined)         { sets.push(`tags = $${i++}`);          params.push(patch.tags); }
+  if (patch.references !== undefined)   { sets.push(`"references" = $${i++}`);  params.push(patch.references); }
+  if (patch.metadata !== undefined)     { sets.push(`metadata = $${i++}::jsonb`); params.push(JSON.stringify(patch.metadata)); }
+  if (sets.length === 0) return getIoc(id, ownerId);
+  sets.push(`updated_at = now()`);
+  const whereIdIdx = i++;
+  const whereOwnerIdx = i++;
+  params.push(id, ownerId);
+  const r = await pool.query(
+    `UPDATE agos_cyber_iocs SET ${sets.join(', ')}
+      WHERE id = $${whereIdIdx} AND owner_id = $${whereOwnerIdx}
+      RETURNING ${IOC_COLS}`,
+    params,
+  );
+  return r.rows.length ? rowToIoc(r.rows[0]) : null;
+}
+
+export async function deleteIoc(id: string, ownerId: string): Promise<boolean> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `DELETE FROM agos_cyber_iocs WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Return alerts whose source_ip / source / raw fields match any active IOC
+ * value owned by this user, within the given lookback window (default 7d).
+ * Used by the trends dashboard ("IOC hits last 7d") and ad-hoc hunting.
+ */
+export async function matchIocAgainstAlerts(args: {
+  ownerId: string;
+  withinDays?: number;
+}): Promise<{ alertId: string; iocId: string; iocValue: string; iocKind: IocKind; occurredAt: string }[]> {
+  const pool = getCyberPool();
+  const r = await pool.query(
+    `SELECT a.id AS alert_id, a.occurred_at,
+            i.id AS ioc_id, i.value AS ioc_value, i.kind AS ioc_kind
+       FROM agos_cyber_alerts a
+       JOIN agos_cyber_iocs i ON i.owner_id = a.owner_id
+        AND (
+              (i.kind IN ('ipv4','ipv6') AND a.source_ip = i.value)
+           OR (i.kind = 'domain' AND (a.source ILIKE '%' || i.value || '%'
+                                   OR a.raw_jsonb::text ILIKE '%' || i.value || '%'))
+           OR (i.kind = 'url'    AND a.raw_jsonb::text ILIKE '%' || i.value || '%')
+           OR (i.kind IN ('file_hash_md5','file_hash_sha1','file_hash_sha256')
+               AND a.raw_jsonb::text ILIKE '%' || i.value || '%')
+        )
+      WHERE a.owner_id = $1
+        AND a.occurred_at >= now() - ($2::int || ' days')::interval
+        AND (i.expires_at IS NULL OR i.expires_at > now())
+      ORDER BY a.occurred_at DESC
+      LIMIT 1000`,
+    [args.ownerId, args.withinDays ?? 7],
+  );
+  return r.rows.map((row: any) => ({
+    alertId: row.alert_id,
+    iocId: row.ioc_id,
+    iocValue: row.ioc_value,
+    iocKind: row.ioc_kind as IocKind,
+    occurredAt: row.occurred_at.toISOString(),
+  }));
+}
+
+// ─── Trends + dashboard analytics ──────────────────────────────────────────
+
+export interface TrendsPayload {
+  alertsByDay: { date: string; total: number; critical: number; high: number }[];
+  openVulnsBySeverity: { severity: string; count: number }[];
+  exposuresMttrDays: number | null;
+  exposuresOpen: number;
+  exposuresClosedLast30d: number;
+  iocHitsLast7d: number;
+  iocHitsLast30d: number;
+  topVulnerableAssets: { assetId: string; assetName: string; openExposures: number }[];
+}
+
+export async function getCyberTrendsData(args: {
+  ownerId: string;
+  windowDays?: number; // for alertsByDay; default 30
+}): Promise<TrendsPayload> {
+  const pool = getCyberPool();
+  const windowDays = args.windowDays ?? 30;
+
+  const alertsByDayRes = await pool.query(
+    `SELECT to_char(date_trunc('day', occurred_at), 'YYYY-MM-DD') AS day,
+            COUNT(*)::int AS total,
+            SUM(CASE WHEN severity = 'critical' THEN 1 ELSE 0 END)::int AS critical,
+            SUM(CASE WHEN severity = 'high'     THEN 1 ELSE 0 END)::int AS high
+       FROM agos_cyber_alerts
+      WHERE owner_id = $1
+        AND occurred_at >= now() - ($2::int || ' days')::interval
+      GROUP BY day
+      ORDER BY day ASC`,
+    [args.ownerId, windowDays],
+  );
+
+  const vulnsRes = await pool.query(
+    `SELECT v.severity AS severity, COUNT(DISTINCT v.id)::int AS count
+       FROM agos_cyber_vulnerabilities v
+       JOIN agos_cyber_exposures e ON e.vulnerability_id = v.id
+                                   AND e.owner_id = v.owner_id
+      WHERE v.owner_id = $1
+        AND e.status IN ('open','in_progress','accepted')
+      GROUP BY v.severity`,
+    [args.ownerId],
+  );
+
+  const mttrRes = await pool.query(
+    `SELECT
+       AVG(EXTRACT(EPOCH FROM (remediated_at - detected_at)) / 86400.0) AS mttr_days,
+       SUM(CASE WHEN status IN ('open','in_progress','accepted') THEN 1 ELSE 0 END)::int AS open_count,
+       SUM(CASE WHEN status IN ('resolved','mitigated','false_positive')
+                 AND remediated_at >= now() - INTERVAL '30 days' THEN 1 ELSE 0 END)::int AS closed_30d
+       FROM agos_cyber_exposures
+      WHERE owner_id = $1`,
+    [args.ownerId],
+  );
+
+  const hits7 = await matchIocAgainstAlerts({ ownerId: args.ownerId, withinDays: 7 });
+  const hits30 = await matchIocAgainstAlerts({ ownerId: args.ownerId, withinDays: 30 });
+
+  const topRes = await pool.query(
+    `SELECT a.id AS asset_id, a.name AS asset_name, COUNT(e.id)::int AS open_exposures
+       FROM agos_cyber_assets a
+       JOIN agos_cyber_exposures e ON e.asset_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.owner_id = $1
+        AND e.status IN ('open','in_progress','accepted')
+      GROUP BY a.id, a.name
+      ORDER BY open_exposures DESC
+      LIMIT 10`,
+    [args.ownerId],
+  );
+
+  return {
+    alertsByDay: alertsByDayRes.rows.map((r: any) => ({
+      date: r.day,
+      total: Number(r.total ?? 0),
+      critical: Number(r.critical ?? 0),
+      high: Number(r.high ?? 0),
+    })),
+    openVulnsBySeverity: vulnsRes.rows.map((r: any) => ({
+      severity: r.severity,
+      count: Number(r.count ?? 0),
+    })),
+    exposuresMttrDays: mttrRes.rows[0]?.mttr_days != null
+      ? Number(mttrRes.rows[0].mttr_days)
+      : null,
+    exposuresOpen: Number(mttrRes.rows[0]?.open_count ?? 0),
+    exposuresClosedLast30d: Number(mttrRes.rows[0]?.closed_30d ?? 0),
+    iocHitsLast7d: hits7.length,
+    iocHitsLast30d: hits30.length,
+    topVulnerableAssets: topRes.rows.map((r: any) => ({
+      assetId: r.asset_id,
+      assetName: r.asset_name,
+      openExposures: Number(r.open_exposures ?? 0),
+    })),
+  };
 }

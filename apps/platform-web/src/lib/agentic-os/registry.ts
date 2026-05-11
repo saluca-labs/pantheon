@@ -338,6 +338,30 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Track in-progress and recent playbook executions across cases.',
       },
+      {
+        href: '/dashboard/os/cyber/vulnerabilities',
+        label: 'Vulnerabilities',
+        description:
+          'CVE/CVSS registry — manual entry plus Trivy / OpenVAS JSON importers.',
+      },
+      {
+        href: '/dashboard/os/cyber/exposures',
+        label: 'Exposures',
+        description:
+          'Vulnerability × asset workflow — track remediation across six statuses with MTTR.',
+      },
+      {
+        href: '/dashboard/os/cyber/iocs',
+        label: 'IOCs',
+        description:
+          'Indicator catalogue (12 kinds, 8 threat types) with per-kind value validation.',
+      },
+      {
+        href: '/dashboard/os/cyber/trends',
+        label: 'Trends',
+        description:
+          'Rolling alert volume, open vulns by severity, exposure MTTR, IOC hit rate + PDF export.',
+      },
     ],
   },
   {
