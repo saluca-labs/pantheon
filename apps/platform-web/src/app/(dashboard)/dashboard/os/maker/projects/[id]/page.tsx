@@ -41,6 +41,8 @@ import {
   listBuildSteps,
   listLogEntries,
   listMilestones,
+  listToolsForProject,
+  listTools,
 } from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUS_LABELS,
@@ -52,6 +54,7 @@ import { BomEditor } from '@/components/agentic-os/maker/bom-editor';
 import { StepListEditor } from '@/components/agentic-os/maker/step-list-editor';
 import { BuildLogFeed } from '@/components/agentic-os/maker/build-log-feed';
 import { MilestoneStrip } from '@/components/agentic-os/maker/milestone-strip';
+import { ProjectToolsPicker } from '@/components/agentic-os/maker/project-tools-picker';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
 
 export const dynamic = 'force-dynamic';
@@ -77,7 +80,7 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[
   { key: 'steps', label: 'Steps', icon: CheckSquare },
   { key: 'log', label: 'Log', icon: Hammer },
   { key: 'milestones', label: 'Milestones', icon: Flag },
-  { key: 'tools', label: 'Tools', icon: Wrench, phase: 'Phase 4' },
+  { key: 'tools', label: 'Tools', icon: Wrench },
   { key: 'specs', label: 'Spec sheets', icon: FileText, phase: 'Phase 5' },
   { key: 'coach', label: 'AI Coach', icon: Sparkles, phase: 'Phase 7' },
 ];
@@ -135,6 +138,16 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
       : [];
   const initialMilestones =
     activeTab === 'milestones' ? await listMilestones(project.id, user.userId) : [];
+
+  // Phase 4 tools tab — preload joined tool links + the full workshop catalog
+  // so the picker has both lists hydrated on first paint.
+  const [initialProjectTools, initialWorkshopTools] =
+    activeTab === 'tools'
+      ? await Promise.all([
+          listToolsForProject(project.id, user.userId),
+          listTools({ userId: user.userId }),
+        ])
+      : [[], []];
 
   return (
     <div className="max-w-5xl">
@@ -330,7 +343,29 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
         </div>
       )}
 
-      {activeTab === 'tools' && <ComingSoon phase="Phase 4" feature="Tools + jigs + maintenance" />}
+      {activeTab === 'tools' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Tools &amp; jigs
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Workshop tools this build depends on. Mark which ones are required vs
+            nice-to-have. Need a tool that isn&apos;t in your workshop yet?{' '}
+            <Link
+              href="/dashboard/os/maker/tools"
+              className="text-[#4361EE] hover:underline"
+            >
+              Add it to the workshop
+            </Link>
+            , then come back here.
+          </p>
+          <ProjectToolsPicker
+            projectId={project.id}
+            initialLinks={initialProjectTools}
+            initialWorkshopTools={initialWorkshopTools}
+          />
+        </div>
+      )}
       {activeTab === 'specs' && <ComingSoon phase="Phase 5" feature="Spec sheets + reports" />}
       {activeTab === 'coach' && <ComingSoon phase="Phase 7" feature="AI coach" />}
     </div>
