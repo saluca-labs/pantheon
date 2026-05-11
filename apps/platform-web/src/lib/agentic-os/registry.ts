@@ -362,6 +362,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Rolling alert volume, open vulns by severity, exposure MTTR, IOC hit rate + PDF export.',
       },
+      {
+        href: '/dashboard/os/cyber/coach',
+        label: 'AI coach',
+        description:
+          'SOC copilot — triage / hunt / respond / detection-engineer. Streaming Anthropic with secret-redaction output filter.',
+      },
     ],
   },
   {
