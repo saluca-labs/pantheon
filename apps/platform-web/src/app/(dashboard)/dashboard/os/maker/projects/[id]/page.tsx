@@ -2,16 +2,18 @@
  * Maker OS — Project Hub (per-project detail page).
  *
  * The per-project landing page every later Maker phase attaches to. Header
- * carries cover image, title, status pill, target date, and team size. Body
- * has a 7-phase progress tracker plus a tab strip:
+ * carries cover image, title, status pill, target date, team size, and
+ * (Phase 5+) an Export PDF button. Body has a 7-phase progress tracker
+ * plus a tab strip:
  *
  *   - Overview   — phase tracker, description, stats
  *   - BOM        — Phase 2 BOM editor (lines, deficits, est-cost)
  *   - Steps      — Phase 3 ordered build-step checklist
  *   - Log        — Phase 3 timestamped build log with photo / link attachments
  *   - Milestones — Phase 3 Gantt-style milestone strip
- *   - Tools      — placeholder (Phase 4)
- *   - Spec sheets— placeholder (Phase 5)
+ *   - Tools      — Phase 4 project↔tool picker
+ *   - Specs      — Phase 5 spec sheet list (union of project / parts / tools)
+ *   - References — Phase 5 project↔reference picker
  *   - AI Coach   — placeholder (Phase 7)
  *
  * @license MIT — Tiresias Maker OS (internal).
@@ -29,6 +31,7 @@ import {
   ListChecks,
   Hammer,
   FileText,
+  BookOpen,
   Sparkles,
   CheckSquare,
   Flag,
@@ -43,6 +46,9 @@ import {
   listMilestones,
   listToolsForProject,
   listTools,
+  listSpecSheetsForProject,
+  listReferencesForProject,
+  listReferences,
 } from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUS_LABELS,
@@ -55,6 +61,9 @@ import { StepListEditor } from '@/components/agentic-os/maker/step-list-editor';
 import { BuildLogFeed } from '@/components/agentic-os/maker/build-log-feed';
 import { MilestoneStrip } from '@/components/agentic-os/maker/milestone-strip';
 import { ProjectToolsPicker } from '@/components/agentic-os/maker/project-tools-picker';
+import { SpecSheetList } from '@/components/agentic-os/maker/spec-sheet-list';
+import { ProjectReferencesPicker } from '@/components/agentic-os/maker/project-references-picker';
+import { PdfExportButton } from '@/components/agentic-os/maker/pdf-export-button';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +81,7 @@ type TabKey =
   | 'milestones'
   | 'tools'
   | 'specs'
+  | 'references'
   | 'coach';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
@@ -81,7 +91,8 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[
   { key: 'log', label: 'Log', icon: Hammer },
   { key: 'milestones', label: 'Milestones', icon: Flag },
   { key: 'tools', label: 'Tools', icon: Wrench },
-  { key: 'specs', label: 'Spec sheets', icon: FileText, phase: 'Phase 5' },
+  { key: 'specs', label: 'Specs', icon: FileText },
+  { key: 'references', label: 'References', icon: BookOpen },
   { key: 'coach', label: 'AI Coach', icon: Sparkles, phase: 'Phase 7' },
 ];
 
@@ -101,6 +112,7 @@ function isTabKey(value: string | undefined): value is TabKey {
     value === 'milestones' ||
     value === 'tools' ||
     value === 'specs' ||
+    value === 'references' ||
     value === 'coach'
   );
 }
@@ -148,6 +160,44 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           listTools({ userId: user.userId }),
         ])
       : [[], []];
+
+  // Phase 5 specs tab — union of project / parts-in-BOM / project-tool sheets.
+  const initialSpecSheets =
+    activeTab === 'specs'
+      ? await listSpecSheetsForProject(project.id, user.userId)
+      : [];
+
+  // Phase 5 references tab — joined links + full library for the picker.
+  const [initialProjectRefs, initialRefLibrary] =
+    activeTab === 'references'
+      ? await Promise.all([
+          listReferencesForProject(project.id, user.userId),
+          listReferences({ userId: user.userId }),
+        ])
+      : [[], []];
+
+  // Phase 5 export-PDF button — disabled when the project has nothing to
+  // export. Cheap aggregate counts via the BOM summary + step/milestone/
+  // tool/reference list-for-project queries; we don't load the full rows
+  // for the count, just enough to know "is non-empty".
+  const exportSummary = await getBomSummary(project.id, user.userId);
+  const [
+    exportStepsCount,
+    exportMilestonesCount,
+    exportToolsCount,
+    exportRefsCount,
+  ] = await Promise.all([
+    listBuildSteps(project.id, user.userId).then((rs) => rs.length),
+    listMilestones(project.id, user.userId).then((rs) => rs.length),
+    listToolsForProject(project.id, user.userId).then((rs) => rs.length),
+    listReferencesForProject(project.id, user.userId).then((rs) => rs.length),
+  ]);
+  const hasExportData =
+    (exportSummary?.linesCount ?? 0) > 0 ||
+    exportStepsCount > 0 ||
+    exportMilestonesCount > 0 ||
+    exportToolsCount > 0 ||
+    exportRefsCount > 0;
 
   return (
     <div className="max-w-5xl">
@@ -200,7 +250,10 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
               </div>
             )}
           </div>
-          <ProjectHubActions project={project} />
+          <div className="flex items-start gap-2 flex-wrap">
+            <PdfExportButton projectId={project.id} hasData={hasExportData} />
+            <ProjectHubActions project={project} />
+          </div>
         </div>
       </div>
 
@@ -366,7 +419,46 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           />
         </div>
       )}
-      {activeTab === 'specs' && <ComingSoon phase="Phase 5" feature="Spec sheets + reports" />}
+      {activeTab === 'specs' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Spec sheets
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Datasheets, drawings, manuals, and compliance certificates for this build
+            — directly attached to the project, or pulled in from parts on the BOM
+            and tools linked to the project. URL-only — link to your cloud drive,
+            vendor site, or any external host.
+          </p>
+          <SpecSheetList
+            scope={{ kind: 'project', projectId: project.id }}
+            initialSheets={initialSpecSheets}
+          />
+        </div>
+      )}
+      {activeTab === 'references' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            References
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Papers, tutorials, standards, articles, videos, books, and bare links
+            attached to this build. Pull existing entries from your workshop-global{' '}
+            <Link
+              href="/dashboard/os/maker/references"
+              className="text-[#4361EE] hover:underline"
+            >
+              references library
+            </Link>{' '}
+            or create a new one inline.
+          </p>
+          <ProjectReferencesPicker
+            projectId={project.id}
+            initialLinks={initialProjectRefs}
+            initialLibrary={initialRefLibrary}
+          />
+        </div>
+      )}
       {activeTab === 'coach' && <ComingSoon phase="Phase 7" feature="AI coach" />}
     </div>
   );
