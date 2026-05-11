@@ -1,14 +1,15 @@
 /**
  * Maker OS — Project Hub (per-project detail page).
  *
- * The per-project landing page every later Maker phase (BOM, build log, tools,
- * spec sheets, AI Coach) attaches to. Header carries cover image, title,
- * status pill, target date, and team size. Body has a 7-phase progress tracker
- * plus a tab strip:
+ * The per-project landing page every later Maker phase attaches to. Header
+ * carries cover image, title, status pill, target date, and team size. Body
+ * has a 7-phase progress tracker plus a tab strip:
  *
  *   - Overview   — phase tracker, description, stats
  *   - BOM        — Phase 2 BOM editor (lines, deficits, est-cost)
- *   - Build log  — placeholder (Phase 3)
+ *   - Steps      — Phase 3 ordered build-step checklist
+ *   - Log        — Phase 3 timestamped build log with photo / link attachments
+ *   - Milestones — Phase 3 Gantt-style milestone strip
  *   - Tools      — placeholder (Phase 4)
  *   - Spec sheets— placeholder (Phase 5)
  *   - AI Coach   — placeholder (Phase 7)
@@ -29,12 +30,17 @@ import {
   Hammer,
   FileText,
   Sparkles,
+  CheckSquare,
+  Flag,
 } from 'lucide-react';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
 import {
   getProject,
   getBomSummary,
   listCatalog,
+  listBuildSteps,
+  listLogEntries,
+  listMilestones,
 } from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUS_LABELS,
@@ -43,6 +49,9 @@ import {
 import { PhaseProgressEditor } from '@/components/agentic-os/maker/phase-progress-editor';
 import { ProjectHubActions } from '@/components/agentic-os/maker/project-hub-actions';
 import { BomEditor } from '@/components/agentic-os/maker/bom-editor';
+import { StepListEditor } from '@/components/agentic-os/maker/step-list-editor';
+import { BuildLogFeed } from '@/components/agentic-os/maker/build-log-feed';
+import { MilestoneStrip } from '@/components/agentic-os/maker/milestone-strip';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
 
 export const dynamic = 'force-dynamic';
@@ -52,12 +61,22 @@ interface Props {
   searchParams: Promise<{ tab?: string }>;
 }
 
-type TabKey = 'overview' | 'bom' | 'log' | 'tools' | 'specs' | 'coach';
+type TabKey =
+  | 'overview'
+  | 'bom'
+  | 'steps'
+  | 'log'
+  | 'milestones'
+  | 'tools'
+  | 'specs'
+  | 'coach';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
   { key: 'bom', label: 'BOM', icon: ListChecks },
-  { key: 'log', label: 'Build log', icon: Hammer, phase: 'Phase 3' },
+  { key: 'steps', label: 'Steps', icon: CheckSquare },
+  { key: 'log', label: 'Log', icon: Hammer },
+  { key: 'milestones', label: 'Milestones', icon: Flag },
   { key: 'tools', label: 'Tools', icon: Wrench, phase: 'Phase 4' },
   { key: 'specs', label: 'Spec sheets', icon: FileText, phase: 'Phase 5' },
   { key: 'coach', label: 'AI Coach', icon: Sparkles, phase: 'Phase 7' },
@@ -74,7 +93,9 @@ function isTabKey(value: string | undefined): value is TabKey {
   return (
     value === 'overview' ||
     value === 'bom' ||
+    value === 'steps' ||
     value === 'log' ||
+    value === 'milestones' ||
     value === 'tools' ||
     value === 'specs' ||
     value === 'coach'
@@ -104,6 +125,16 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           listCatalog({ userId: user.userId }),
         ])
       : [null, []];
+
+  // Phase 3 tabs preload server-side for instant SSR; clients refresh on mount.
+  const initialSteps =
+    activeTab === 'steps' ? await listBuildSteps(project.id, user.userId) : [];
+  const initialLogEntries =
+    activeTab === 'log'
+      ? await listLogEntries({ projectId: project.id, userId: user.userId, limit: 50 })
+      : [];
+  const initialMilestones =
+    activeTab === 'milestones' ? await listMilestones(project.id, user.userId) : [];
 
   return (
     <div className="max-w-5xl">
@@ -256,7 +287,49 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
         </div>
       )}
 
-      {activeTab === 'log' && <ComingSoon phase="Phase 3" feature="Build log + photos" />}
+      {activeTab === 'steps' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Build steps
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Ordered checklist of what needs to happen. Tick each step as you go, jot
+            blocker notes, and use the up/down arrows to re-sequence.
+          </p>
+          <StepListEditor projectId={project.id} initialSteps={initialSteps} />
+        </div>
+      )}
+
+      {activeTab === 'log' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Build log
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Timestamped feed of build notes, photos, and reference links. Photos and
+            files are URL-only — paste links from your phone, cloud drive, or any
+            external host.
+          </p>
+          <BuildLogFeed projectId={project.id} initialEntries={initialLogEntries} />
+        </div>
+      )}
+
+      {activeTab === 'milestones' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Milestones
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Named beats in the project timeline. Set a due date to surface overdue and
+            due-soon warnings; tick the box when each beat lands.
+          </p>
+          <MilestoneStrip
+            projectId={project.id}
+            initialMilestones={initialMilestones}
+          />
+        </div>
+      )}
+
       {activeTab === 'tools' && <ComingSoon phase="Phase 4" feature="Tools + jigs + maintenance" />}
       {activeTab === 'specs' && <ComingSoon phase="Phase 5" feature="Spec sheets + reports" />}
       {activeTab === 'coach' && <ComingSoon phase="Phase 7" feature="AI coach" />}
