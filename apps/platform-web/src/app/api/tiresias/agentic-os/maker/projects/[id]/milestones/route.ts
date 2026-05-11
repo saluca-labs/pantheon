@@ -3,9 +3,10 @@
  *
  * GET  — list milestones for the project, ordered by sort_order ASC.
  * POST — create a milestone. `label` is required; due_at / sort_order /
- *        notes / metadata are optional.
+ *        notes / metadata + Phase 6 fields (status, priority, is_blocker,
+ *        blocked_reason) are optional.
  *
- * @license MIT — Tiresias Maker OS Phase 3 (internal).
+ * @license MIT — Tiresias Maker OS Phase 3 + Phase 6 (internal).
  */
 
 import 'server-only';
@@ -17,6 +18,17 @@ import {
   createMilestone,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import {
+  MILESTONE_STORED_STATUS_VALUES,
+  MILESTONE_PRIORITY_VALUES,
+} from '@/lib/agentic-os/maker/milestones';
+
+const STATUS_ENUM = z.enum(
+  MILESTONE_STORED_STATUS_VALUES as unknown as [string, ...string[]],
+);
+const PRIORITY_ENUM = z.enum(
+  MILESTONE_PRIORITY_VALUES as unknown as [string, ...string[]],
+);
 
 const CreateBody = z.object({
   label: z.string().min(1).max(200),
@@ -27,6 +39,10 @@ const CreateBody = z.object({
     .optional(),
   sortOrder: z.number().int().min(-100_000).max(100_000).optional(),
   notes: z.string().max(4000).nullable().optional(),
+  status: STATUS_ENUM.optional(),
+  priority: PRIORITY_ENUM.optional(),
+  isBlocker: z.boolean().optional(),
+  blockedReason: z.string().max(4000).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -63,7 +79,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const milestone = await createMilestone(projectId, user.userId, parsed.data);
+    const milestone = await createMilestone(projectId, user.userId, parsed.data as any);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.milestone.created',
