@@ -74,6 +74,30 @@ import type {
   BuildMilestonePatch,
 } from './milestones';
 import {
+  TOOL_KIND_VALUES,
+  TOOL_STATUS_VALUES,
+  type Tool,
+  type ToolKind,
+  type ToolStatus,
+  type ToolUpsert,
+  type ToolPatch,
+  type ProjectToolLink,
+  type ProjectToolLinkUpsert,
+  type ProjectToolJoined,
+} from './tools';
+import type {
+  ToolConsumable,
+  ToolConsumableUpsert,
+  ToolConsumablePatch,
+} from './consumables';
+import {
+  MAINTENANCE_EVENT_KIND_VALUES,
+  type MaintenanceEvent,
+  type MaintenanceEventKind,
+  type MaintenanceEventUpsert,
+  type MaintenanceEventPatch,
+} from './maintenance';
+import {
   recordAudit as sharedRecordAudit,
   type RecordAuditArgs,
 } from '../_shared/audit';
@@ -1639,6 +1663,680 @@ export async function toggleMilestoneComplete(
     [id, projectId],
   );
   return getMilestone(id, projectId, userId);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tools (Phase 4)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TOOL_COLUMNS = `id, user_id, name, kind, manufacturer, model, serial,
+                      location, status, purchased_at, image_url, datasheet_url,
+                      manual_url, notes, tags, metadata,
+                      created_at, updated_at`;
+
+function rowToTool(row: any): Tool {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    kind: row.kind as ToolKind,
+    manufacturer: row.manufacturer ?? null,
+    model: row.model ?? null,
+    serial: row.serial ?? null,
+    location: row.location ?? null,
+    status: (row.status as ToolStatus) ?? 'active',
+    purchasedAt: row.purchased_at
+      ? row.purchased_at instanceof Date
+        ? row.purchased_at.toISOString().slice(0, 10)
+        : String(row.purchased_at).slice(0, 10)
+      : null,
+    imageUrl: row.image_url ?? null,
+    datasheetUrl: row.datasheet_url ?? null,
+    manualUrl: row.manual_url ?? null,
+    notes: row.notes ?? null,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export interface ListToolsArgs {
+  userId: string;
+  status?: ToolStatus;
+  kind?: ToolKind;
+  tag?: string;
+}
+
+export async function listTools(args: ListToolsArgs): Promise<Tool[]> {
+  const pool = getMakerPool();
+  const params: any[] = [args.userId];
+  const where: string[] = ['user_id = $1'];
+  if (args.status) {
+    if (!(TOOL_STATUS_VALUES as readonly string[]).includes(args.status)) {
+      throw new Error(`Invalid status: ${args.status}`);
+    }
+    params.push(args.status);
+    where.push(`status = $${params.length}`);
+  }
+  if (args.kind) {
+    if (!(TOOL_KIND_VALUES as readonly string[]).includes(args.kind)) {
+      throw new Error(`Invalid kind: ${args.kind}`);
+    }
+    params.push(args.kind);
+    where.push(`kind = $${params.length}`);
+  }
+  if (args.tag && args.tag.trim()) {
+    params.push(args.tag.trim().toLowerCase());
+    where.push(`$${params.length} = ANY(tags)`);
+  }
+  const r = await pool.query(
+    `SELECT ${TOOL_COLUMNS}
+       FROM agos_maker_tools
+      WHERE ${where.join(' AND ')}
+      ORDER BY status ASC, name ASC`,
+    params,
+  );
+  return r.rows.map(rowToTool);
+}
+
+export async function getTool(
+  id: string,
+  userId: string,
+): Promise<Tool | null> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${TOOL_COLUMNS}
+       FROM agos_maker_tools
+      WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToTool(r.rows[0]);
+}
+
+export async function createTool(
+  userId: string,
+  data: ToolUpsert,
+): Promise<Tool> {
+  if (!(TOOL_KIND_VALUES as readonly string[]).includes(data.kind)) {
+    throw new Error(`Invalid kind: ${data.kind}`);
+  }
+  const status: ToolStatus = data.status ?? 'active';
+  if (!(TOOL_STATUS_VALUES as readonly string[]).includes(status)) {
+    throw new Error(`Invalid status: ${status}`);
+  }
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_tools
+       (id, user_id, name, kind, manufacturer, model, serial, location,
+        status, purchased_at, image_url, datasheet_url, manual_url,
+        notes, tags, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+             $11, $12, $13, $14, $15::text[], $16::jsonb)`,
+    [
+      id,
+      userId,
+      data.name,
+      data.kind,
+      data.manufacturer ?? null,
+      data.model ?? null,
+      data.serial ?? null,
+      data.location ?? null,
+      status,
+      data.purchasedAt ?? null,
+      data.imageUrl ?? null,
+      data.datasheetUrl ?? null,
+      data.manualUrl ?? null,
+      data.notes ?? null,
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const tool = await getTool(id, userId);
+  if (!tool) throw new Error('Failed to create tool');
+  return tool;
+}
+
+export async function updateTool(
+  id: string,
+  userId: string,
+  patch: ToolPatch,
+): Promise<Tool | null> {
+  if (
+    patch.kind !== undefined &&
+    !(TOOL_KIND_VALUES as readonly string[]).includes(patch.kind)
+  ) {
+    throw new Error(`Invalid kind: ${patch.kind}`);
+  }
+  if (
+    patch.status !== undefined &&
+    !(TOOL_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid status: ${patch.status}`);
+  }
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_tools
+        SET name          = COALESCE($3,  name),
+            kind          = COALESCE($4,  kind),
+            manufacturer  = COALESCE($5,  manufacturer),
+            model         = COALESCE($6,  model),
+            serial        = COALESCE($7,  serial),
+            location      = COALESCE($8,  location),
+            status        = COALESCE($9,  status),
+            purchased_at  = COALESCE($10, purchased_at),
+            image_url     = COALESCE($11, image_url),
+            datasheet_url = COALESCE($12, datasheet_url),
+            manual_url    = COALESCE($13, manual_url),
+            notes         = COALESCE($14, notes),
+            tags          = COALESCE($15::text[], tags),
+            metadata      = COALESCE($16::jsonb, metadata),
+            updated_at    = now()
+      WHERE id = $1 AND user_id = $2`,
+    [
+      id,
+      userId,
+      patch.name ?? null,
+      patch.kind ?? null,
+      patch.manufacturer ?? null,
+      patch.model ?? null,
+      patch.serial ?? null,
+      patch.location ?? null,
+      patch.status ?? null,
+      patch.purchasedAt ?? null,
+      patch.imageUrl ?? null,
+      patch.datasheetUrl ?? null,
+      patch.manualUrl ?? null,
+      patch.notes ?? null,
+      patch.tags ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getTool(id, userId);
+}
+
+export async function deleteTool(id: string, userId: string): Promise<boolean> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_tools WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+async function assertToolOwnership(
+  toolId: string,
+  userId: string,
+): Promise<void> {
+  const tool = await getTool(toolId, userId);
+  if (!tool) throw new Error('Tool not found or not owned by user');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tool consumables (Phase 4)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const CONSUMABLE_COLUMNS = `id, tool_id, name, kind, hours_remaining,
+                            max_hours, last_replaced_at, notes, metadata,
+                            created_at, updated_at`;
+
+function rowToConsumable(row: any): ToolConsumable {
+  return {
+    id: row.id,
+    toolId: row.tool_id,
+    name: row.name,
+    kind: row.kind ?? null,
+    hoursRemaining:
+      row.hours_remaining == null ? null : Number(row.hours_remaining),
+    maxHours: row.max_hours == null ? null : Number(row.max_hours),
+    lastReplacedAt:
+      row.last_replaced_at instanceof Date
+        ? row.last_replaced_at.toISOString()
+        : row.last_replaced_at ?? null,
+    notes: row.notes ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export async function listConsumables(
+  toolId: string,
+  userId: string,
+): Promise<ToolConsumable[]> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${CONSUMABLE_COLUMNS}
+       FROM agos_maker_tool_consumables
+      WHERE tool_id = $1
+      ORDER BY name ASC`,
+    [toolId],
+  );
+  return r.rows.map(rowToConsumable);
+}
+
+export async function getConsumable(
+  id: string,
+  toolId: string,
+  userId: string,
+): Promise<ToolConsumable | null> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${CONSUMABLE_COLUMNS}
+       FROM agos_maker_tool_consumables
+      WHERE id = $1 AND tool_id = $2`,
+    [id, toolId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToConsumable(r.rows[0]);
+}
+
+export async function createConsumable(
+  toolId: string,
+  userId: string,
+  data: ToolConsumableUpsert,
+): Promise<ToolConsumable> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_tool_consumables
+       (id, tool_id, name, kind, hours_remaining, max_hours,
+        last_replaced_at, notes, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+    [
+      id,
+      toolId,
+      data.name,
+      data.kind ?? null,
+      data.hoursRemaining ?? null,
+      data.maxHours ?? null,
+      data.lastReplacedAt ?? null,
+      data.notes ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const c = await getConsumable(id, toolId, userId);
+  if (!c) throw new Error('Failed to create consumable');
+  return c;
+}
+
+export async function updateConsumable(
+  id: string,
+  toolId: string,
+  userId: string,
+  patch: ToolConsumablePatch,
+): Promise<ToolConsumable | null> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_tool_consumables
+        SET name             = COALESCE($3, name),
+            kind             = COALESCE($4, kind),
+            hours_remaining  = COALESCE($5, hours_remaining),
+            max_hours        = COALESCE($6, max_hours),
+            last_replaced_at = COALESCE($7, last_replaced_at),
+            notes            = COALESCE($8, notes),
+            metadata         = COALESCE($9::jsonb, metadata),
+            updated_at       = now()
+      WHERE id = $1 AND tool_id = $2`,
+    [
+      id,
+      toolId,
+      patch.name ?? null,
+      patch.kind ?? null,
+      patch.hoursRemaining ?? null,
+      patch.maxHours ?? null,
+      patch.lastReplacedAt ?? null,
+      patch.notes ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getConsumable(id, toolId, userId);
+}
+
+export async function deleteConsumable(
+  id: string,
+  toolId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_tool_consumables
+      WHERE id = $1 AND tool_id = $2`,
+    [id, toolId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Tool maintenance events (Phase 4)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MAINTENANCE_COLUMNS = `id, tool_id, event_kind, performed_at,
+                             cost_cents, currency, vendor, notes,
+                             next_due_at, metadata, created_at`;
+
+function rowToMaintenanceEvent(row: any): MaintenanceEvent {
+  return {
+    id: row.id,
+    toolId: row.tool_id,
+    eventKind: row.event_kind as MaintenanceEventKind,
+    performedAt:
+      row.performed_at instanceof Date
+        ? row.performed_at.toISOString()
+        : String(row.performed_at),
+    costCents: row.cost_cents == null ? null : Number(row.cost_cents),
+    currency: row.currency ?? 'USD',
+    vendor: row.vendor ?? null,
+    notes: row.notes ?? null,
+    nextDueAt:
+      row.next_due_at instanceof Date
+        ? row.next_due_at.toISOString()
+        : row.next_due_at ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+  };
+}
+
+export async function listMaintenanceEvents(
+  toolId: string,
+  userId: string,
+): Promise<MaintenanceEvent[]> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${MAINTENANCE_COLUMNS}
+       FROM agos_maker_tool_maintenance
+      WHERE tool_id = $1
+      ORDER BY performed_at DESC`,
+    [toolId],
+  );
+  return r.rows.map(rowToMaintenanceEvent);
+}
+
+export async function getMaintenanceEvent(
+  id: string,
+  toolId: string,
+  userId: string,
+): Promise<MaintenanceEvent | null> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${MAINTENANCE_COLUMNS}
+       FROM agos_maker_tool_maintenance
+      WHERE id = $1 AND tool_id = $2`,
+    [id, toolId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToMaintenanceEvent(r.rows[0]);
+}
+
+export async function createMaintenanceEvent(
+  toolId: string,
+  userId: string,
+  data: MaintenanceEventUpsert,
+): Promise<MaintenanceEvent> {
+  if (
+    !(MAINTENANCE_EVENT_KIND_VALUES as readonly string[]).includes(data.eventKind)
+  ) {
+    throw new Error(`Invalid event_kind: ${data.eventKind}`);
+  }
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_tool_maintenance
+       (id, tool_id, event_kind, performed_at, cost_cents, currency,
+        vendor, notes, next_due_at, metadata)
+     VALUES ($1, $2, $3, COALESCE($4, now()), $5, $6, $7, $8, $9, $10::jsonb)`,
+    [
+      id,
+      toolId,
+      data.eventKind,
+      data.performedAt ?? null,
+      data.costCents ?? null,
+      data.currency ?? 'USD',
+      data.vendor ?? null,
+      data.notes ?? null,
+      data.nextDueAt ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const ev = await getMaintenanceEvent(id, toolId, userId);
+  if (!ev) throw new Error('Failed to create maintenance event');
+  return ev;
+}
+
+export async function updateMaintenanceEvent(
+  id: string,
+  toolId: string,
+  userId: string,
+  patch: MaintenanceEventPatch,
+): Promise<MaintenanceEvent | null> {
+  if (
+    patch.eventKind !== undefined &&
+    !(MAINTENANCE_EVENT_KIND_VALUES as readonly string[]).includes(patch.eventKind)
+  ) {
+    throw new Error(`Invalid event_kind: ${patch.eventKind}`);
+  }
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_tool_maintenance
+        SET event_kind   = COALESCE($3, event_kind),
+            performed_at = COALESCE($4, performed_at),
+            cost_cents   = COALESCE($5, cost_cents),
+            currency     = COALESCE($6, currency),
+            vendor       = COALESCE($7, vendor),
+            notes        = COALESCE($8, notes),
+            next_due_at  = COALESCE($9, next_due_at),
+            metadata     = COALESCE($10::jsonb, metadata)
+      WHERE id = $1 AND tool_id = $2`,
+    [
+      id,
+      toolId,
+      patch.eventKind ?? null,
+      patch.performedAt ?? null,
+      patch.costCents ?? null,
+      patch.currency ?? null,
+      patch.vendor ?? null,
+      patch.notes ?? null,
+      patch.nextDueAt ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getMaintenanceEvent(id, toolId, userId);
+}
+
+export async function deleteMaintenanceEvent(
+  id: string,
+  toolId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_tool_maintenance
+      WHERE id = $1 AND tool_id = $2`,
+    [id, toolId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Project-tool join (Phase 4)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PROJECT_TOOL_COLUMNS = `id, project_id, tool_id, required, notes, created_at`;
+
+function rowToProjectToolLink(row: any): ProjectToolLink {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    toolId: row.tool_id,
+    required: row.required === true,
+    notes: row.notes ?? null,
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+  };
+}
+
+/**
+ * List the tools attached to a project, joined with each tool's name, kind,
+ * and status so the UI can render a row without a second fetch.
+ *
+ * Cross-ownership check: only returns rows where BOTH the project and the
+ * tool belong to the requesting user. A stale link to a tool transferred
+ * to another user would be silently filtered out.
+ */
+export async function listToolsForProject(
+  projectId: string,
+  userId: string,
+): Promise<ProjectToolJoined[]> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT pt.id, pt.project_id, pt.tool_id, pt.required, pt.notes,
+            pt.created_at,
+            t.name AS tool_name, t.kind AS tool_kind, t.status AS tool_status
+       FROM agos_maker_project_tools pt
+       JOIN agos_maker_tools t ON t.id = pt.tool_id
+      WHERE pt.project_id = $1
+        AND t.user_id = $2
+      ORDER BY pt.required DESC, t.name ASC`,
+    [projectId, userId],
+  );
+  return r.rows.map((row: any) => ({
+    ...rowToProjectToolLink(row),
+    toolName: row.tool_name,
+    toolKind: row.tool_kind as ToolKind,
+    toolStatus: (row.tool_status as ToolStatus) ?? 'active',
+  }));
+}
+
+/**
+ * Attach a tool to a project. Cross-ownership check: BOTH the project and
+ * the tool must belong to the requesting user; otherwise throws. Duplicate
+ * (project_id, tool_id) attaches throw a unique-constraint error which the
+ * route maps to 409.
+ */
+export async function attachToolToProject(
+  projectId: string,
+  toolId: string,
+  userId: string,
+  options: { required?: boolean; notes?: string | null } = {},
+): Promise<ProjectToolLink> {
+  await assertProjectOwnership(projectId, userId);
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_project_tools
+       (id, project_id, tool_id, required, notes)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [
+      id,
+      projectId,
+      toolId,
+      options.required ?? true,
+      options.notes ?? null,
+    ],
+  );
+  const links = await listToolsForProject(projectId, userId);
+  const link = links.find((l) => l.id === id);
+  if (!link) throw new Error('Failed to attach tool to project');
+  return link;
+}
+
+/**
+ * Update an existing project-tool link — toggle `required` or rewrite the
+ * notes. Returns the joined row on success, or null when no row matched.
+ */
+export async function updateProjectToolLink(
+  projectId: string,
+  toolId: string,
+  userId: string,
+  patch: { required?: boolean; notes?: string | null },
+): Promise<ProjectToolJoined | null> {
+  await assertProjectOwnership(projectId, userId);
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_project_tools
+        SET required = COALESCE($3, required),
+            notes    = COALESCE($4, notes)
+      WHERE project_id = $1 AND tool_id = $2`,
+    [
+      projectId,
+      toolId,
+      patch.required === undefined ? null : patch.required,
+      patch.notes ?? null,
+    ],
+  );
+  const links = await listToolsForProject(projectId, userId);
+  return links.find((l) => l.toolId === toolId) ?? null;
+}
+
+export async function detachToolFromProject(
+  projectId: string,
+  toolId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(projectId, userId);
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_project_tools
+      WHERE project_id = $1 AND tool_id = $2`,
+    [projectId, toolId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * List the projects that link a given tool. Used by the tool detail page's
+ * "Projects using this tool" panel.
+ */
+export interface ToolProjectUsage {
+  projectId: string;
+  projectName: string;
+  projectStatus: string;
+  required: boolean;
+}
+
+export async function listProjectsUsingTool(
+  toolId: string,
+  userId: string,
+): Promise<ToolProjectUsage[]> {
+  await assertToolOwnership(toolId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT p.id AS project_id, p.name AS project_name, p.status AS project_status,
+            pt.required
+       FROM agos_maker_project_tools pt
+       JOIN agos_maker_projects p ON p.id = pt.project_id
+      WHERE pt.tool_id = $1
+        AND p.user_id = $2
+      ORDER BY p.updated_at DESC`,
+    [toolId, userId],
+  );
+  return r.rows.map((row: any) => ({
+    projectId: row.project_id,
+    projectName: row.project_name,
+    projectStatus: row.project_status,
+    required: row.required === true,
+  }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

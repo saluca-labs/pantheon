@@ -1,5 +1,63 @@
 # Maker OS — Full Execution Plan (Assess → Plan → Execute → Validate)
 
+## Phase 4 — Tools + Jigs + Maintenance (locked decisions)
+
+**Migration:** `0037_maker_phase4`, down_revision `0036_maker_phase3`.
+
+**Scope:** Workshop-global tools (NOT project-scoped — these belong to the
+workshop, not a build). Consumables that wear out (bits/blades/filters with
+hours_remaining). Maintenance event log per tool. Join table linking tools
+to projects (which builds need which tools).
+
+**Tables (4 new, all under `agos_maker_*`):**
+
+1. `agos_maker_tools` — workshop-global. `user_id NOT NULL` (workshop owner),
+   `name`, `kind` CHECK in `(cnc, 3d_printer, laser, soldering, oscilloscope,
+   multimeter, handtool, powertool, other)`, `status` CHECK in
+   `(active, down, retired)` default `active`, optional `manufacturer`,
+   `model`, `serial`, `location`, `purchased_at`, `image_url`,
+   `datasheet_url`, `manual_url`, `notes`, `tags[]`, `metadata JSONB`.
+   Index `(user_id, status)`, GIN on tags.
+
+2. `agos_maker_tool_consumables` — children (drill bits, blades, filters).
+   FK CASCADE → `agos_maker_tools(id)`. `name`, optional `kind` (free-form
+   text), `hours_remaining`, `max_hours`, `last_replaced_at`, `notes`,
+   `metadata`. Index `(tool_id)`.
+
+3. `agos_maker_tool_maintenance` — event log. FK CASCADE → tools.
+   `event_kind` CHECK in `(cleaned, serviced, calibrated, repaired,
+   inspected)`, `performed_at` (default now), `cost_cents`, `currency`
+   (default USD), `vendor`, `notes`, `next_due_at`, `metadata`. Index
+   `(tool_id, performed_at DESC)`.
+
+4. `agos_maker_project_tools` — join. FK CASCADE → both projects + tools.
+   `required BOOLEAN` default true, `notes`. **Unique on `(project_id,
+   tool_id)`** to prevent duplicate links. Index `(project_id)`.
+
+**Routes:**
+
+- `/api/tiresias/agentic-os/maker/tools` (GET list, filterable by status/
+  kind/tag; POST create).
+- `/api/tiresias/agentic-os/maker/tools/[toolId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/maker/tools/[toolId]/consumables` (GET, POST)
+  + `/[consumableId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance` (GET, POST)
+  + `/[eventId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/maker/projects/[id]/tools` (GET joined, POST
+  attach — returns 409 on duplicate) + `/[toolId]` (PATCH required/notes,
+  DELETE unlink).
+
+**Pages:** new `/dashboard/os/maker/tools` (workshop list) +
+`/dashboard/os/maker/tools/[toolId]` (detail with consumables tracker,
+maintenance log, projects-using list). Per-project Tools tab on the
+project hub. Hub feature card pointing at the workshop tools list.
+
+**URL columns** (`image_url`, `datasheet_url`, `manual_url`) follow the
+established URL-only convention with column comments referencing
+`docs/architecture/mcp-storage-transfer.md`.
+
+***
+
 ## How to Use This Document
 
 Every ticket follows **EPIC-XX-[A|P|E|V]-NN** where A = Assess, P = Plan, E = Execute, V = Validate, mirroring the Creator OS plan structure.[^1]
