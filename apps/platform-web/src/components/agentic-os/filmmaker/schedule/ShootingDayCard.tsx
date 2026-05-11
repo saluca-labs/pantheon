@@ -11,7 +11,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, Save, Trash2, X } from 'lucide-react';
+import { Download, Pencil, Save, Trash2, X } from 'lucide-react';
 import type {
   ShootingDay,
   ShootingDayWithStrips,
@@ -133,6 +133,16 @@ export function ShootingDayCard({ day, allDays }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <a
+            href={`/api/tiresias/agentic-os/filmmaker/shooting-days/${day.id}/exports/call-sheet.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#94a3b8] hover:text-white p-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide"
+            title="Call sheet PDF"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Call sheet
+          </a>
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
