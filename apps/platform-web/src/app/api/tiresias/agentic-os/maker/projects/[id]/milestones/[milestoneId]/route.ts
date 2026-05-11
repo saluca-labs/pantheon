@@ -2,10 +2,11 @@
  * Maker OS — /api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]
  *
  * GET    — fetch one milestone.
- * PATCH  — partial update (label/due_at/notes/sort_order/metadata).
+ * PATCH  — partial update (label/due_at/notes/sort_order/metadata +
+ *          Phase 6: status, priority, is_blocker, blocked_reason).
  * DELETE — remove one milestone.
  *
- * @license MIT — Tiresias Maker OS Phase 3 (internal).
+ * @license MIT — Tiresias Maker OS Phase 3 + Phase 6 (internal).
  */
 
 import 'server-only';
@@ -18,6 +19,17 @@ import {
   deleteMilestone,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import {
+  MILESTONE_STORED_STATUS_VALUES,
+  MILESTONE_PRIORITY_VALUES,
+} from '@/lib/agentic-os/maker/milestones';
+
+const STATUS_ENUM = z.enum(
+  MILESTONE_STORED_STATUS_VALUES as unknown as [string, ...string[]],
+);
+const PRIORITY_ENUM = z.enum(
+  MILESTONE_PRIORITY_VALUES as unknown as [string, ...string[]],
+);
 
 const PatchBody = z.object({
   label: z.string().min(1).max(200).optional(),
@@ -28,6 +40,10 @@ const PatchBody = z.object({
     .optional(),
   sortOrder: z.number().int().min(-100_000).max(100_000).optional(),
   notes: z.string().max(4000).nullable().optional(),
+  status: STATUS_ENUM.optional(),
+  priority: PRIORITY_ENUM.optional(),
+  isBlocker: z.boolean().optional(),
+  blockedReason: z.string().max(4000).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -69,7 +85,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       milestoneId,
       projectId,
       user.userId,
-      parsed.data,
+      parsed.data as any,
     );
     if (!milestone) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({

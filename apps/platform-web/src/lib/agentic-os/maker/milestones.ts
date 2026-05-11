@@ -7,12 +7,58 @@
  * renders them in a Gantt-like horizontal layout ordered by due date (with
  * `sort_order` as the tiebreaker when due dates collide or are NULL).
  *
+ * Phase 6 promotes milestones into deadlines: explicit `status`, `priority`,
+ * `isBlocker`, and `blockedReason` columns lift the milestone strip into a
+ * cross-project Top Blockers feed. The derived status helper
+ * (`derivedMilestoneStatus`) remains for the legacy Gantt strip; the new
+ * stored `status` column is used by the deadline view and blockers query.
+ *
  * No database calls here — those live in `repo.ts`.
  *
- * @license MIT — Tiresias Maker OS Phase 3 (internal).
+ * @license MIT — Tiresias Maker OS Phase 3 + Phase 6 (internal).
  */
 
 // ─── Build-milestone entity ────────────────────────────────────────────────
+
+/**
+ * Phase 6 status taxonomy — stored on the row. CHECK in the DB matches.
+ *
+ *   pending  — fresh milestone, nothing started.
+ *   at_risk  — author flagged the milestone as in danger of slipping.
+ *   blocked  — milestone is actively blocked (see blockedReason).
+ *   on_track — author affirms progress against the due date.
+ *   done     — completed; the legacy completed_at timestamp is set too.
+ *   missed   — author acknowledges the milestone slipped past its due date.
+ */
+export const MILESTONE_STORED_STATUS_VALUES = [
+  'pending',
+  'at_risk',
+  'blocked',
+  'on_track',
+  'done',
+  'missed',
+] as const;
+
+export type MilestoneStoredStatus = (typeof MILESTONE_STORED_STATUS_VALUES)[number];
+
+export const MILESTONE_STORED_STATUS_LABELS: Record<MilestoneStoredStatus, string> = {
+  pending: 'Pending',
+  at_risk: 'At risk',
+  blocked: 'Blocked',
+  on_track: 'On track',
+  done: 'Done',
+  missed: 'Missed',
+};
+
+export const MILESTONE_PRIORITY_VALUES = ['low', 'medium', 'high', 'critical'] as const;
+export type MilestonePriority = (typeof MILESTONE_PRIORITY_VALUES)[number];
+
+export const MILESTONE_PRIORITY_LABELS: Record<MilestonePriority, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  critical: 'Critical',
+};
 
 export interface BuildMilestone {
   id: string;
@@ -23,6 +69,14 @@ export interface BuildMilestone {
   completedAt: string | null;
   sortOrder: number;
   notes: string | null;
+  /** Phase 6 — stored status. */
+  status: MilestoneStoredStatus;
+  /** Phase 6 — priority pill. */
+  priority: MilestonePriority;
+  /** Phase 6 — flag the milestone as a hard blocker. */
+  isBlocker: boolean;
+  /** Phase 6 — explanation for at_risk / blocked / missed / is_blocker. */
+  blockedReason: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +87,10 @@ export interface BuildMilestoneUpsert {
   dueAt?: string | null;
   sortOrder?: number;
   notes?: string | null;
+  status?: MilestoneStoredStatus;
+  priority?: MilestonePriority;
+  isBlocker?: boolean;
+  blockedReason?: string | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -41,7 +99,9 @@ export type BuildMilestonePatch = Partial<BuildMilestoneUpsert>;
 // ─── Pure helpers ──────────────────────────────────────────────────────────
 
 /**
- * Status pill values — derived from completedAt + dueAt rather than stored.
+ * Derived (legacy) status pill values — computed from completedAt + dueAt
+ * rather than stored. Used by the Phase 3 milestone strip; the deadline
+ * view and Top Blockers feed use the stored `status` column.
  *
  *   done     — completedAt != null
  *   overdue  — !done && dueAt < today
@@ -184,5 +244,96 @@ export function validateSortOrder(value: unknown): string | null {
     return 'sortOrder must be a number.';
   }
   if (!Number.isInteger(value)) return 'sortOrder must be an integer.';
+  return null;
+}
+
+export function validateMilestoneStatus(value: unknown): string | null {
+  if (
+    typeof value !== 'string' ||
+    !(MILESTONE_STORED_STATUS_VALUES as readonly string[]).includes(value)
+  ) {
+    return `status must be one of: ${MILESTONE_STORED_STATUS_VALUES.join(', ')}.`;
+  }
+  return null;
+}
+
+export function validateMilestonePriority(value: unknown): string | null {
+  if (
+    typeof value !== 'string' ||
+    !(MILESTONE_PRIORITY_VALUES as readonly string[]).includes(value)
+  ) {
+    return `priority must be one of: ${MILESTONE_PRIORITY_VALUES.join(', ')}.`;
+  }
+  return null;
+}
+
+// ─── Phase 6 deadline / blocker helpers ───────────────────────────────────
+
+/**
+ * Sort milestones for the deadline view: dated rows first by dueAt ASC,
+ * then undated by sortOrder ASC then createdAt ASC. This is the same shape
+ * as `sortMilestones` but exported as a deadline-specific alias for
+ * readability at the call site.
+ */
+export const sortMilestonesByDeadline = sortMilestones;
+
+/**
+ * Severity score order — used by the Top Blockers feed ranking:
+ *
+ *   missed              → 5
+ *   blocked             → 4
+ *   overdue (derived)   → 3
+ *   at_risk             → 2
+ *   open_dependency     → 1
+ *
+ * Higher value = ranks first.
+ */
+export const SEVERITY_SCORES = {
+  missed: 5,
+  blocked: 4,
+  overdue: 3,
+  at_risk: 2,
+  open_dependency: 1,
+} as const;
+
+export type SeverityKind = keyof typeof SEVERITY_SCORES;
+
+/**
+ * Determine which severity bucket a milestone falls into for the Top
+ * Blockers feed. Returns null if the milestone does not qualify as a
+ * blocker under the v1 rules.
+ *
+ * Rules (highest first wins):
+ *   * status = 'missed'                                       → missed
+ *   * status = 'blocked'                                      → blocked
+ *   * dueAt < today AND status != 'done'                      → overdue
+ *   * status = 'at_risk' AND dueAt <= today + 7 days          → at_risk
+ *   * else                                                    → null
+ */
+export function milestoneSeverity(
+  milestone: Pick<BuildMilestone, 'status' | 'dueAt' | 'completedAt'>,
+  today: Date = new Date(),
+): SeverityKind | null {
+  if (milestone.status === 'done') return null;
+  if (milestone.status === 'missed') return 'missed';
+  if (milestone.status === 'blocked') return 'blocked';
+
+  if (milestone.dueAt) {
+    const dueMs = Date.parse(`${milestone.dueAt}T00:00:00Z`);
+    if (Number.isFinite(dueMs)) {
+      const todayStart = Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+      );
+      const diffDays = Math.round((dueMs - todayStart) / 86_400_000);
+      if (diffDays < 0) return 'overdue';
+      if (milestone.status === 'at_risk' && diffDays <= 7) return 'at_risk';
+    }
+  } else if (milestone.status === 'at_risk') {
+    // Undated at_risk milestones still qualify (lowest of the at_risk tier).
+    return 'at_risk';
+  }
+
   return null;
 }
