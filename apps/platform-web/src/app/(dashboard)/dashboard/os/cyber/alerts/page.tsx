@@ -1,8 +1,9 @@
 /**
  * CyberSec OS — Alert Triage Queue page.
  *
- * Server component: loads alerts for the authenticated user (seeding sample
- * alerts on first visit) and renders the AlertTriageQueue client component.
+ * Server component: loads alerts, assets, and log sources for the
+ * authenticated user (seeding sample alerts on first visit) and renders
+ * the AlertTriageQueue client component with enrichment pickers.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
@@ -11,7 +12,13 @@ import Link from 'next/link';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentCyberUser } from '@/lib/agentic-os/cyber/session';
-import { listAlerts, hasAlerts, createAlert } from '@/lib/agentic-os/cyber/repo';
+import {
+  listAlerts,
+  hasAlerts,
+  createAlert,
+  listAssets,
+  listLogSources,
+} from '@/lib/agentic-os/cyber/repo';
 import { sampleAlerts } from '@/lib/agentic-os/cyber/triage';
 import { AlertTriageQueue } from '@/components/agentic-os/cyber/AlertTriageQueue';
 
@@ -28,7 +35,11 @@ export default async function CyberAlertsPage() {
     await Promise.all(seeds.map((s) => createAlert(user.userId, s)));
   }
 
-  const alerts = await listAlerts(user.userId);
+  const [alerts, assets, logSources] = await Promise.all([
+    listAlerts(user.userId),
+    listAssets({ ownerId: user.userId }),
+    listLogSources({ ownerId: user.userId }),
+  ]);
 
   return (
     <div className="max-w-4xl">
@@ -47,10 +58,15 @@ export default async function CyberAlertsPage() {
 
       <p className="text-sm text-[#94a3b8] mb-6">
         Review and triage security alerts sorted by severity. Assign alerts to analysts, add
-        investigation notes, and close or mark them as false positives.
+        investigation notes, link them to assets and log sources, and close or mark them as
+        false positives.
       </p>
 
-      <AlertTriageQueue initialAlerts={alerts} />
+      <AlertTriageQueue
+        initialAlerts={alerts}
+        assets={assets}
+        logSources={logSources}
+      />
     </div>
   );
 }

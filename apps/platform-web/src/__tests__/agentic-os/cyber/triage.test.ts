@@ -29,6 +29,13 @@ function fakeAlert(overrides: Partial<Alert> = {}): Alert {
     occurredAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    assetId: null,
+    logSourceId: null,
+    tactic: null,
+    technique: null,
+    correlationId: null,
+    tags: [],
+    raw: {},
     ...overrides,
   };
 }

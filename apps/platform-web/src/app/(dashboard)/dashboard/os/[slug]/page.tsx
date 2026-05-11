@@ -24,11 +24,13 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 // Generate the static slug list at build time so Next can prerender.
-// Health OS is excluded — its dedicated page lives at
-// `/dashboard/os/health/page.tsx` with the Phase 1 hub (risk flags,
-// consent gate, etc.). Listing it here would create a route collision.
+// Health OS and Cyber OS are excluded — they have dedicated hub pages
+// (`/dashboard/os/health/page.tsx` with risk flags + consent gate;
+// `/dashboard/os/cyber/page.tsx` with stats + recent panels). Listing
+// either here would create a route collision.
+const HUB_SLUGS = new Set(['health', 'cyber']);
 export function generateStaticParams() {
-  return AGENTIC_OS_MODULES.filter((m) => m.slug !== 'health').map((m) => ({
+  return AGENTIC_OS_MODULES.filter((m) => !HUB_SLUGS.has(m.slug)).map((m) => ({
     slug: m.slug,
   }));
 }

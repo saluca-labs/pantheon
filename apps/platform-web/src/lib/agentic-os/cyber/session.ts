@@ -1,14 +1,16 @@
 /**
- * CyberSec OS session helper.
+ * CyberSec OS — session helpers.
  *
- * Re-exports shared session utilities from Health OS.
+ * Re-exports the shared OS session utility under Cyber-flavoured names.
+ * The session/auth machinery is identical across every vertical, so the real
+ * implementation lives in `../_shared/session`.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
 export {
-  getCurrentHealthUser as getCurrentCyberUser,
-  getHealthPool as getCyberPool,
-} from '../health/session';
+  getCurrentOsUser as getCurrentCyberUser,
+  getOsPool as getCyberPool,
+} from '../_shared/session';
 
-export type { HealthSessionUser as CyberSessionUser } from '../health/session';
+export type { OsSessionUser as CyberSessionUser } from '../_shared/session';
