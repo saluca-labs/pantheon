@@ -181,10 +181,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
           'Per-project cover, status, target date, and 7-phase progress tracker.',
       },
       {
-        href: '/dashboard/os/maker/projects',
-        label: 'Parts inventory',
+        href: '/dashboard/os/maker/catalog',
+        label: 'Parts catalog',
         description:
-          'Each project has its own parts list — pick a project to open it.',
+          'Workshop-global SKUs with variants, tags, and on-hand counts.',
+      },
+      {
+        href: '/dashboard/os/maker/suppliers',
+        label: 'Suppliers',
+        description:
+          'Vendor directory — link suppliers to catalog rows for unit prices and lead times.',
       },
     ],
   },

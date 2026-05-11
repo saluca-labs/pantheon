@@ -7,8 +7,8 @@
  * target completion). Clicking a card opens the Project Hub. A "New project"
  * button opens a drawer with the full create form.
  *
- * Lifted from the Phase 0 `BuildsManager`. The legacy component is kept as a
- * deprecated re-export for one release.
+ * Lifted from the Phase 0 `BuildsManager` (deleted in Phase 2 along with the
+ * legacy parts-per-project surface).
  *
  * @license MIT — Tiresias Maker OS (internal).
  */

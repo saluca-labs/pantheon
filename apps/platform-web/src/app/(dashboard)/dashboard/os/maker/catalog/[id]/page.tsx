@@ -1,0 +1,72 @@
+/**
+ * Maker OS — Catalog row detail page.
+ *
+ * Loads the row, its variants, supplier links, suppliers, and the list of
+ * projects whose BOM references it. All hand-off to client-side
+ * `CatalogDetail` for interactive editing.
+ *
+ * @license MIT — Tiresias Maker OS Phase 2 (internal).
+ */
+
+import 'server-only';
+import { redirect, notFound } from 'next/navigation';
+import { getCurrentMakerUser, getMakerPool } from '@/lib/agentic-os/maker/session';
+import {
+  getCatalogRow,
+  listVariants,
+  listSupplierLinks,
+  listSuppliers,
+} from '@/lib/agentic-os/maker/repo';
+import { CatalogDetail } from '@/components/agentic-os/maker/catalog-detail';
+
+export const dynamic = 'force-dynamic';
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+async function loadProjectUsage(catalogId: string, userId: string) {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT p.id, p.name, p.status, SUM(b.quantity_needed) AS qty
+       FROM agos_maker_bom_lines b
+       JOIN agos_maker_projects p ON p.id = b.project_id
+      WHERE b.part_catalog_id = $1
+        AND p.user_id = $2
+      GROUP BY p.id, p.name, p.status
+      ORDER BY p.updated_at DESC`,
+    [catalogId, userId],
+  );
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    status: row.status as string,
+    quantityNeeded: Number(row.qty ?? 0),
+  }));
+}
+
+export default async function MakerCatalogDetailPage({ params }: Props) {
+  const user = await getCurrentMakerUser();
+  if (!user) redirect('/login');
+
+  const { id } = await params;
+  const row = await getCatalogRow(id, user.userId);
+  if (!row) notFound();
+
+  const [variants, links, suppliers, usage] = await Promise.all([
+    listVariants(id, user.userId),
+    listSupplierLinks(id, user.userId),
+    listSuppliers(user.userId),
+    loadProjectUsage(id, user.userId),
+  ]);
+
+  return (
+    <CatalogDetail
+      row={row}
+      initialVariants={variants}
+      initialLinks={links}
+      suppliers={suppliers}
+      usage={usage}
+    />
+  );
+}
