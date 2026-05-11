@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, BookOpenText } from 'lucide-react';
+import { ArrowLeft, BookOpenText, Info } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import { listChapters, listEvents } from '@/lib/agentic-os/autobiographer/repo';
@@ -30,16 +30,47 @@ export default async function AutobiographerChaptersPage() {
         <BookOpenText className="w-6 h-6 text-[#4361EE]" />
         <h1 className="text-2xl font-semibold text-white">Chapter Capture</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-2">
+      <p className="text-sm text-[#94a3b8] mb-4">
         Write a chapter of your life story and attach structured life events to anchor it in time.
       </p>
+
+      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 mb-6 flex items-start gap-3">
+        <Info className="w-5 h-5 text-[#4361EE] shrink-0 mt-0.5" />
+        <div className="text-xs text-[#cbd5e1] leading-relaxed">
+          <p>
+            <span className="font-medium text-white">
+              The full chapter surface ships in Phase 4.
+            </span>{' '}
+            This is the legacy single-chapter editor from the original
+            Autobiographer scaffold and continues to work for one-off chapter
+            drafts.
+          </p>
+          <p className="mt-1">
+            For the Phase 1 model, raw memory captures live at{' '}
+            <Link
+              href="/dashboard/os/autobiographer/memories"
+              className="text-[#4361EE] hover:underline"
+            >
+              /autobiographer/memories
+            </Link>
+            , and books — the new per-OS project entity — live at{' '}
+            <Link
+              href="/dashboard/os/autobiographer"
+              className="text-[#4361EE] hover:underline"
+            >
+              /autobiographer
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+
       {chapters.length > 1 && (
         <p className="text-xs text-[#94a3b8] mb-6">
           You have {chapters.length} chapters.{' '}
           Editing the most recently updated one. Future versions will let you switch chapters.
         </p>
       )}
-      {chapters.length <= 1 && <div className="mb-6" />}
 
       <ChapterEditor initial={activeChapter} events={events} />
     </div>
