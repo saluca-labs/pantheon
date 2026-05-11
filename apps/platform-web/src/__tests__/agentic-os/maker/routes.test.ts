@@ -313,54 +313,8 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
   });
 });
 
-// ─── Legacy 308 proxy ────────────────────────────────────────────────────────
-
-describe('GET /api/tiresias/agentic-os/maker/builds (308 proxy)', () => {
-  it('returns 308 with the projects Location', async () => {
-    const { GET } = await import(
-      '@/app/api/tiresias/agentic-os/maker/builds/route'
-    );
-    const res = await GET(
-      jsonReq('http://example.com/api/tiresias/agentic-os/maker/builds', 'GET') as any,
-    );
-    expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toMatch(
-      /\/api\/tiresias\/agentic-os\/maker\/projects$/,
-    );
-  });
-});
-
-describe('POST /api/tiresias/agentic-os/maker/builds (308 proxy)', () => {
-  it('returns 308 — clients should resubmit against /projects', async () => {
-    const { POST } = await import(
-      '@/app/api/tiresias/agentic-os/maker/builds/route'
-    );
-    const res = await POST(
-      jsonReq(
-        'http://example.com/api/tiresias/agentic-os/maker/builds',
-        'POST',
-        { name: 'X' },
-      ) as any,
-    );
-    expect(res.status).toBe(308);
-  });
-});
-
-describe('GET /api/tiresias/agentic-os/maker/builds/[buildId]/parts (308 proxy)', () => {
-  it('rewrites the buildId into the projects path', async () => {
-    const { GET } = await import(
-      '@/app/api/tiresias/agentic-os/maker/builds/[buildId]/parts/route'
-    );
-    const res = await GET(
-      jsonReq(
-        'http://example.com/api/tiresias/agentic-os/maker/builds/abc-123/parts',
-        'GET',
-      ) as any,
-      { params: Promise.resolve({ buildId: 'abc-123' }) },
-    );
-    expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toMatch(
-      /\/api\/tiresias\/agentic-os\/maker\/projects\/abc-123\/parts$/,
-    );
-  });
-});
+// Phase 2 deletes the legacy /builds 308 proxy routes — Maker is replacing
+// per-project parts with the catalog + BOM design, so the old surface goes
+// away entirely. The 308 tests that used to live here have been removed; the
+// new BOM + catalog + supplier route tests live in catalog-routes.test.ts,
+// bom-routes.test.ts, and supplier-routes.test.ts.
