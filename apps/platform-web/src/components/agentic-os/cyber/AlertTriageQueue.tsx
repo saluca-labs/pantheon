@@ -4,7 +4,8 @@
  * CyberSec OS — AlertTriageQueue client component.
  *
  * Displays the alert queue with severity sorting. Allows analysts to
- * assign alerts and close/resolve them.
+ * assign alerts, close/resolve them, and (Phase 1) enrich each alert
+ * with asset + log source + MITRE tactic/technique + tags.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
@@ -12,6 +13,9 @@
 import { useState } from 'react';
 import type { Alert, AlertSeverity, AlertStatus } from '@/lib/agentic-os/cyber/triage';
 import { sortAlerts, activeAlerts, countByStatus, ALERT_STATUSES } from '@/lib/agentic-os/cyber/triage';
+import type { Asset } from '@/lib/agentic-os/cyber/assets';
+import type { LogSource } from '@/lib/agentic-os/cyber/log-sources';
+import { AlertEnrichmentForm } from './AlertEnrichmentForm';
 
 const API = '/api/tiresias/agentic-os/cyber/alerts';
 
@@ -35,9 +39,13 @@ const inputCls =
 
 function AlertCard({
   alert,
+  assets,
+  logSources,
   onUpdated,
 }: {
   alert: Alert;
+  assets: Asset[];
+  logSources: LogSource[];
   onUpdated: (a: Alert) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -48,6 +56,8 @@ function AlertCard({
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const sev = SEVERITY_STYLE[alert.severity];
+  const asset = assets.find((a) => a.id === alert.assetId) ?? null;
+  const logSource = logSources.find((s) => s.id === alert.logSourceId) ?? null;
 
   async function save() {
     setSaving(true);
@@ -93,9 +103,29 @@ function AlertCard({
               {alert.status.replace('_', ' ')}
             </span>
             <span className="text-[10px] text-[#94a3b8]">{alert.category.replace('_', ' ')}</span>
+            {asset && (
+              <span className="text-[10px] text-[#94a3b8]">· asset: <span className="text-white">{asset.name}</span></span>
+            )}
+            {(alert.tactic || alert.technique) && (
+              <span className="text-[10px] text-[#94a3b8]">
+                · {[alert.tactic, alert.technique].filter(Boolean).join(' / ')}
+              </span>
+            )}
           </div>
           <p className="text-sm text-white font-medium">{alert.title}</p>
           <p className="text-xs text-[#94a3b8] mt-0.5">{alert.source} · {ts}</p>
+          {alert.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {alert.tags.map((t) => (
+                <span
+                  key={t}
+                  className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <span className="text-[#94a3b8] text-xs pt-1">{expanded ? '▲' : '▼'}</span>
       </button>
@@ -106,6 +136,12 @@ function AlertCard({
 
           {alert.sourceIp && (
             <p className="text-xs text-[#94a3b8]">Source IP: <span className="font-mono text-white">{alert.sourceIp}</span></p>
+          )}
+          {logSource && (
+            <p className="text-xs text-[#94a3b8]">
+              Log source: <span className="text-white">{logSource.name}</span>{' '}
+              <span className="text-[#94a3b8]">({logSource.kind})</span>
+            </p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -151,6 +187,13 @@ function AlertCard({
             </button>
             {saveError && <span className="text-sm text-red-300">{saveError}</span>}
           </div>
+
+          <AlertEnrichmentForm
+            alert={alert}
+            assets={assets}
+            logSources={logSources}
+            onSaved={onUpdated}
+          />
         </div>
       )}
     </div>
@@ -159,7 +202,15 @@ function AlertCard({
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export function AlertTriageQueue({ initialAlerts }: { initialAlerts: Alert[] }) {
+export function AlertTriageQueue({
+  initialAlerts,
+  assets = [],
+  logSources = [],
+}: {
+  initialAlerts: Alert[];
+  assets?: Asset[];
+  logSources?: LogSource[];
+}) {
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [showAll, setShowAll] = useState(false);
 
@@ -196,7 +247,13 @@ export function AlertTriageQueue({ initialAlerts }: { initialAlerts: Alert[] }) 
       ) : (
         <div className="space-y-3">
           {displayed.map((a) => (
-            <AlertCard key={a.id} alert={a} onUpdated={onUpdated} />
+            <AlertCard
+              key={a.id}
+              alert={a}
+              assets={assets}
+              logSources={logSources}
+              onUpdated={onUpdated}
+            />
           ))}
         </div>
       )}

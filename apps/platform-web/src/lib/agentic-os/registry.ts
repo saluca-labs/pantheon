@@ -296,6 +296,24 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Alert triage queue',
         description: 'Work the live alert backlog with copilot-assisted triage.',
       },
+      {
+        href: '/dashboard/os/cyber/assets',
+        label: 'Assets',
+        description:
+          'Hosts, containers, accounts, repos — every entity worth protecting and linking to alerts.',
+      },
+      {
+        href: '/dashboard/os/cyber/asset-groups',
+        label: 'Asset groups',
+        description:
+          'Bundle related assets so future case management can scope actions to many at once.',
+      },
+      {
+        href: '/dashboard/os/cyber/log-sources',
+        label: 'Log sources',
+        description:
+          'SIEM, EDR, IDS, cloud audit, firewall — catalogue every alert-producing system.',
+      },
     ],
   },
   {

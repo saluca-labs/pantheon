@@ -44,6 +44,14 @@ export interface Alert {
   occurredAt: string;
   createdAt: string;
   updatedAt: string;
+  // Phase 1 enrichment fields (nullable until linked).
+  assetId: string | null;
+  logSourceId: string | null;
+  tactic: string | null;
+  technique: string | null;
+  correlationId: string | null;
+  tags: string[];
+  raw: Record<string, unknown>;
 }
 
 export const SEVERITY_ORDER: Record<AlertSeverity, number> = {
@@ -123,7 +131,25 @@ export function countByStatus(alerts: Alert[]): Record<AlertStatus, number> {
  *   - Common Wazuh alert IDs: https://documentation.wazuh.com/current/user-manual/ruleset/
  *   - MITRE ATT&CK techniques (CC BY 4.0): https://attack.mitre.org/techniques/enterprise/
  */
-export function sampleAlerts(): Omit<Alert, 'id' | 'createdAt' | 'updatedAt'>[] {
+/**
+ * Seed sample alert shape — what `createAlert` actually consumes. Mirrors
+ * `AlertInsert` in repo.ts; enrichment fields are added later via
+ * `/alerts/[id]/enrich` so they are not part of this seed.
+ */
+export interface SampleAlert {
+  title: string;
+  description: string;
+  severity: AlertSeverity;
+  category: AlertCategory;
+  status: AlertStatus;
+  source: string;
+  sourceIp: string | null;
+  assignedTo: string | null;
+  notes: string | null;
+  occurredAt: string;
+}
+
+export function sampleAlerts(): SampleAlert[] {
   const now = new Date();
   function hoursAgo(h: number): string {
     return new Date(now.getTime() - h * 3600 * 1000).toISOString();
