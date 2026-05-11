@@ -16,8 +16,10 @@ import {
   listVariants,
   listSupplierLinks,
   listSuppliers,
+  listSpecSheets,
 } from '@/lib/agentic-os/maker/repo';
 import { CatalogDetail } from '@/components/agentic-os/maker/catalog-detail';
+import { SpecSheetList } from '@/components/agentic-os/maker/spec-sheet-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,20 +55,32 @@ export default async function MakerCatalogDetailPage({ params }: Props) {
   const row = await getCatalogRow(id, user.userId);
   if (!row) notFound();
 
-  const [variants, links, suppliers, usage] = await Promise.all([
+  const [variants, links, suppliers, usage, specSheets] = await Promise.all([
     listVariants(id, user.userId),
     listSupplierLinks(id, user.userId),
     listSuppliers(user.userId),
     loadProjectUsage(id, user.userId),
+    listSpecSheets({ userId: user.userId, partId: id }),
   ]);
 
   return (
-    <CatalogDetail
-      row={row}
-      initialVariants={variants}
-      initialLinks={links}
-      suppliers={suppliers}
-      usage={usage}
-    />
+    <div className="space-y-6">
+      <CatalogDetail
+        row={row}
+        initialVariants={variants}
+        initialLinks={links}
+        suppliers={suppliers}
+        usage={usage}
+      />
+      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 max-w-5xl">
+        <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3">
+          Spec sheets
+        </h3>
+        <SpecSheetList
+          scope={{ kind: 'part', partId: id }}
+          initialSheets={specSheets}
+        />
+      </div>
+    </div>
   );
 }

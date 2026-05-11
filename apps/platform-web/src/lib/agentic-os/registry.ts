@@ -198,6 +198,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Workshop-global tools with consumable wear tracking, maintenance log, and project links.',
       },
+      {
+        href: '/dashboard/os/maker/spec-sheets',
+        label: 'Spec sheets',
+        description:
+          'Datasheets, drawings, manuals, and certificates attached to parts, tools, or projects.',
+      },
+      {
+        href: '/dashboard/os/maker/references',
+        label: 'References',
+        description:
+          'Workshop-global library of papers, tutorials, standards, articles, and other links.',
+      },
     ],
   },
   {
