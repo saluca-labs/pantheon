@@ -56,6 +56,23 @@ import {
   type BomPriority,
   type BomSummary,
 } from './bom';
+import type {
+  BuildStep,
+  BuildStepUpsert,
+  BuildStepPatch,
+} from './steps';
+import {
+  coerceAttachedUrls,
+  type BuildLogEntry,
+  type BuildLogEntryUpsert,
+  type BuildLogEntryPatch,
+  type RecentLogEntry,
+} from './log';
+import type {
+  BuildMilestone,
+  BuildMilestoneUpsert,
+  BuildMilestonePatch,
+} from './milestones';
 import {
   recordAudit as sharedRecordAudit,
   type RecordAuditArgs,
@@ -1038,6 +1055,590 @@ export async function getBomSummary(
     variantById,
     linksByCatalog,
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Build steps (Phase 3)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const STEP_COLUMNS = `id, project_id, ordinal, title, body, est_minutes,
+                      completed_at, blocker_text, metadata,
+                      created_at, updated_at`;
+
+function rowToStep(row: any): BuildStep {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    ordinal: Number(row.ordinal ?? 0),
+    title: row.title,
+    body: row.body ?? null,
+    estMinutes: row.est_minutes == null ? null : Number(row.est_minutes),
+    completedAt:
+      row.completed_at instanceof Date
+        ? row.completed_at.toISOString()
+        : row.completed_at ?? null,
+    blockerText: row.blocker_text ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export async function listBuildSteps(
+  projectId: string,
+  userId: string,
+): Promise<BuildStep[]> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${STEP_COLUMNS}
+       FROM agos_maker_build_steps
+      WHERE project_id = $1
+      ORDER BY ordinal ASC, created_at ASC`,
+    [projectId],
+  );
+  return r.rows.map(rowToStep);
+}
+
+export async function getBuildStep(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<BuildStep | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${STEP_COLUMNS}
+       FROM agos_maker_build_steps
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToStep(r.rows[0]);
+}
+
+export async function createBuildStep(
+  projectId: string,
+  userId: string,
+  data: BuildStepUpsert,
+): Promise<BuildStep> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+
+  // Compute the next ordinal in the same transaction-window as the insert.
+  // If the caller passed an explicit ordinal we honour it; otherwise grab
+  // MAX(ordinal)+1, defaulting to 1 for the first step.
+  let ordinal = data.ordinal;
+  if (ordinal == null) {
+    const maxRes = await pool.query(
+      `SELECT COALESCE(MAX(ordinal), 0) + 1 AS next_ordinal
+         FROM agos_maker_build_steps
+        WHERE project_id = $1`,
+      [projectId],
+    );
+    ordinal = Number(maxRes.rows[0]?.next_ordinal ?? 1);
+  }
+
+  await pool.query(
+    `INSERT INTO agos_maker_build_steps
+       (id, project_id, ordinal, title, body, est_minutes,
+        blocker_text, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
+    [
+      id,
+      projectId,
+      ordinal,
+      data.title,
+      data.body ?? null,
+      data.estMinutes ?? null,
+      data.blockerText ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const step = await getBuildStep(id, projectId, userId);
+  if (!step) throw new Error('Failed to create build step');
+  return step;
+}
+
+export async function updateBuildStep(
+  id: string,
+  projectId: string,
+  userId: string,
+  patch: BuildStepPatch,
+): Promise<BuildStep | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_build_steps
+        SET title        = COALESCE($3,  title),
+            body         = COALESCE($4,  body),
+            est_minutes  = COALESCE($5,  est_minutes),
+            blocker_text = COALESCE($6,  blocker_text),
+            ordinal      = COALESCE($7,  ordinal),
+            metadata     = COALESCE($8::jsonb, metadata),
+            updated_at   = now()
+      WHERE id = $1 AND project_id = $2`,
+    [
+      id,
+      projectId,
+      patch.title ?? null,
+      patch.body ?? null,
+      patch.estMinutes ?? null,
+      patch.blockerText ?? null,
+      patch.ordinal ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getBuildStep(id, projectId, userId);
+}
+
+export async function deleteBuildStep(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_build_steps
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * One-click complete (or undo) for a build step.
+ *
+ * Idempotent: calling twice with the same `undo` flag is a no-op against
+ * the persisted state. The implementation uses a conditional UPDATE so the
+ * row is only written when the toggle actually changes the value.
+ *
+ * @param undo When false (default) sets completed_at = now() if NULL.
+ *             When true clears completed_at to NULL if currently set.
+ */
+export async function completeStep(
+  stepId: string,
+  projectId: string,
+  userId: string,
+  options: { undo?: boolean } = {},
+): Promise<BuildStep | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  if (options.undo) {
+    await pool.query(
+      `UPDATE agos_maker_build_steps
+          SET completed_at = NULL, updated_at = now()
+        WHERE id = $1 AND project_id = $2 AND completed_at IS NOT NULL`,
+      [stepId, projectId],
+    );
+  } else {
+    await pool.query(
+      `UPDATE agos_maker_build_steps
+          SET completed_at = now(), updated_at = now()
+        WHERE id = $1 AND project_id = $2 AND completed_at IS NULL`,
+      [stepId, projectId],
+    );
+  }
+  return getBuildStep(stepId, projectId, userId);
+}
+
+/**
+ * Reorder all of a project's build steps into 1..N using the given
+ * sequence. Unknown ids are ignored; steps not mentioned in the input keep
+ * their relative order and are appended to the end.
+ *
+ * Implemented as a two-pass UPDATE inside a single transaction so the
+ * (project, ordinal) unique-by-convention sort order never collides
+ * mid-update. (There is no DB-level unique constraint on (project_id,
+ * ordinal); the two-pass renumber is still the cleanest pattern, mirroring
+ * `reorderShootingDays` in the Filmmaker repo.)
+ */
+export async function reorderBuildSteps(
+  projectId: string,
+  userId: string,
+  orderedStepIds: string[],
+): Promise<void> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existingRes = await client.query(
+      `SELECT id FROM agos_maker_build_steps
+        WHERE project_id = $1
+        ORDER BY ordinal ASC, created_at ASC`,
+      [projectId],
+    );
+    const existing: string[] = existingRes.rows.map((r: any) => r.id);
+    const existingSet = new Set(existing);
+    const seen = new Set<string>();
+    const finalOrder: string[] = [];
+    for (const id of orderedStepIds) {
+      if (existingSet.has(id) && !seen.has(id)) {
+        finalOrder.push(id);
+        seen.add(id);
+      }
+    }
+    for (const id of existing) {
+      if (!seen.has(id)) {
+        finalOrder.push(id);
+        seen.add(id);
+      }
+    }
+    // Two-pass renumber.
+    for (let i = 0; i < finalOrder.length; i++) {
+      await client.query(
+        `UPDATE agos_maker_build_steps
+            SET ordinal = -($2::int + 1), updated_at = now()
+          WHERE id = $1`,
+        [finalOrder[i], i],
+      );
+    }
+    for (let i = 0; i < finalOrder.length; i++) {
+      await client.query(
+        `UPDATE agos_maker_build_steps
+            SET ordinal = $2, updated_at = now()
+          WHERE id = $1`,
+        [finalOrder[i], i + 1],
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Build log entries (Phase 3)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const LOG_COLUMNS = `id, project_id, step_id, body, attached_urls,
+                     author_id, created_at`;
+
+function rowToLogEntry(row: any): BuildLogEntry {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    stepId: row.step_id ?? null,
+    body: row.body,
+    attachedUrls: coerceAttachedUrls(row.attached_urls),
+    authorId: row.author_id ?? null,
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+  };
+}
+
+export interface ListLogEntriesArgs {
+  projectId: string;
+  userId: string;
+  stepId?: string | null;
+  limit?: number;
+  before?: string;
+}
+
+export async function listLogEntries(args: ListLogEntriesArgs): Promise<BuildLogEntry[]> {
+  await assertProjectOwnership(args.projectId, args.userId);
+  const pool = getMakerPool();
+  const params: any[] = [args.projectId];
+  const where: string[] = ['project_id = $1'];
+  if (args.stepId !== undefined && args.stepId !== null) {
+    params.push(args.stepId);
+    where.push(`step_id = $${params.length}`);
+  }
+  if (args.before) {
+    params.push(args.before);
+    where.push(`created_at < $${params.length}`);
+  }
+  const limit = Math.min(Math.max(args.limit ?? 50, 1), 200);
+  params.push(limit);
+  const r = await pool.query(
+    `SELECT ${LOG_COLUMNS}
+       FROM agos_maker_build_log_entries
+      WHERE ${where.join(' AND ')}
+      ORDER BY created_at DESC
+      LIMIT $${params.length}`,
+    params,
+  );
+  return r.rows.map(rowToLogEntry);
+}
+
+export async function getLogEntry(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<BuildLogEntry | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${LOG_COLUMNS}
+       FROM agos_maker_build_log_entries
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToLogEntry(r.rows[0]);
+}
+
+export async function createLogEntry(
+  projectId: string,
+  userId: string,
+  data: BuildLogEntryUpsert,
+): Promise<BuildLogEntry> {
+  await assertProjectOwnership(projectId, userId);
+  // If the caller scoped the entry to a step, verify the step belongs to
+  // the same project so cross-project leakage is impossible.
+  if (data.stepId) {
+    const step = await getBuildStep(data.stepId, projectId, userId);
+    if (!step) throw new Error('Step not found or not owned by user');
+  }
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_build_log_entries
+       (id, project_id, step_id, body, attached_urls, author_id)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
+    [
+      id,
+      projectId,
+      data.stepId ?? null,
+      data.body,
+      JSON.stringify(data.attachedUrls ?? []),
+      userId,
+    ],
+  );
+  const entry = await getLogEntry(id, projectId, userId);
+  if (!entry) throw new Error('Failed to create build log entry');
+  return entry;
+}
+
+export async function updateLogEntry(
+  id: string,
+  projectId: string,
+  userId: string,
+  patch: BuildLogEntryPatch,
+): Promise<BuildLogEntry | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const attached =
+    patch.attachedUrls !== undefined ? JSON.stringify(patch.attachedUrls) : null;
+  await pool.query(
+    `UPDATE agos_maker_build_log_entries
+        SET body          = COALESCE($3, body),
+            attached_urls = COALESCE($4::jsonb, attached_urls)
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId, patch.body ?? null, attached],
+  );
+  return getLogEntry(id, projectId, userId);
+}
+
+export async function deleteLogEntry(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_build_log_entries
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Top-N recent log entries across all of a user's projects, joined to the
+ * project name. Used by the hub-level recent-activity widget — bounded by
+ * `limit` (default 5, max 25). Ordered by created_at DESC.
+ */
+export async function listRecentLogEntries(
+  userId: string,
+  limit = 5,
+): Promise<RecentLogEntry[]> {
+  const pool = getMakerPool();
+  const safeLimit = Math.min(Math.max(limit, 1), 25);
+  const r = await pool.query(
+    `SELECT e.id, e.project_id, e.step_id, e.body, e.attached_urls,
+            e.author_id, e.created_at, p.name AS project_name
+       FROM agos_maker_build_log_entries e
+       JOIN agos_maker_projects p ON p.id = e.project_id
+      WHERE p.user_id = $1
+      ORDER BY e.created_at DESC
+      LIMIT $2`,
+    [userId, safeLimit],
+  );
+  return r.rows.map((row: any) => ({
+    ...rowToLogEntry(row),
+    projectName: row.project_name ?? 'Untitled project',
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Build milestones (Phase 3)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MILESTONE_COLUMNS = `id, project_id, label, due_at, completed_at,
+                           sort_order, notes, metadata,
+                           created_at, updated_at`;
+
+function rowToMilestone(row: any): BuildMilestone {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    label: row.label,
+    dueAt: row.due_at
+      ? row.due_at instanceof Date
+        ? row.due_at.toISOString().slice(0, 10)
+        : String(row.due_at).slice(0, 10)
+      : null,
+    completedAt:
+      row.completed_at instanceof Date
+        ? row.completed_at.toISOString()
+        : row.completed_at ?? null,
+    sortOrder: Number(row.sort_order ?? 0),
+    notes: row.notes ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export async function listMilestones(
+  projectId: string,
+  userId: string,
+): Promise<BuildMilestone[]> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${MILESTONE_COLUMNS}
+       FROM agos_maker_build_milestones
+      WHERE project_id = $1
+      ORDER BY sort_order ASC, created_at ASC`,
+    [projectId],
+  );
+  return r.rows.map(rowToMilestone);
+}
+
+export async function getMilestone(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<BuildMilestone | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${MILESTONE_COLUMNS}
+       FROM agos_maker_build_milestones
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToMilestone(r.rows[0]);
+}
+
+export async function createMilestone(
+  projectId: string,
+  userId: string,
+  data: BuildMilestoneUpsert,
+): Promise<BuildMilestone> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_build_milestones
+       (id, project_id, label, due_at, sort_order, notes, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+    [
+      id,
+      projectId,
+      data.label,
+      data.dueAt ?? null,
+      data.sortOrder ?? 0,
+      data.notes ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const m = await getMilestone(id, projectId, userId);
+  if (!m) throw new Error('Failed to create milestone');
+  return m;
+}
+
+export async function updateMilestone(
+  id: string,
+  projectId: string,
+  userId: string,
+  patch: BuildMilestonePatch,
+): Promise<BuildMilestone | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_build_milestones
+        SET label      = COALESCE($3, label),
+            due_at     = CASE WHEN $4::boolean THEN $5::date ELSE due_at END,
+            sort_order = COALESCE($6, sort_order),
+            notes      = COALESCE($7, notes),
+            metadata   = COALESCE($8::jsonb, metadata),
+            updated_at = now()
+      WHERE id = $1 AND project_id = $2`,
+    [
+      id,
+      projectId,
+      patch.label ?? null,
+      patch.dueAt !== undefined,
+      patch.dueAt ?? null,
+      patch.sortOrder ?? null,
+      patch.notes ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getMilestone(id, projectId, userId);
+}
+
+export async function deleteMilestone(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_build_milestones
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Toggle a milestone's `completed_at`. When currently NULL, sets to now();
+ * when set, clears to NULL. Both branches are idempotent against repeated
+ * calls in the same state (no row write when the target state matches the
+ * current state).
+ */
+export async function toggleMilestoneComplete(
+  id: string,
+  projectId: string,
+  userId: string,
+): Promise<BuildMilestone | null> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_build_milestones
+        SET completed_at = CASE WHEN completed_at IS NULL THEN now() ELSE NULL END,
+            updated_at   = now()
+      WHERE id = $1 AND project_id = $2`,
+    [id, projectId],
+  );
+  return getMilestone(id, projectId, userId);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
