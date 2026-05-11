@@ -175,9 +175,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'amber',
     features: [
       {
-        href: '/dashboard/os/maker/builds',
-        label: 'Builds & parts inventory',
-        description: 'Manage active builds and the parts bin behind them.',
+        href: '/dashboard/os/maker/projects',
+        label: 'Projects hub',
+        description:
+          'Per-project cover, status, target date, and 7-phase progress tracker.',
+      },
+      {
+        href: '/dashboard/os/maker/projects',
+        label: 'Parts inventory',
+        description:
+          'Each project has its own parts list — pick a project to open it.',
       },
     ],
   },
