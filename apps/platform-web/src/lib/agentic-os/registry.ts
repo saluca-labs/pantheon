@@ -320,6 +320,24 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'SIEM, EDR, IDS, cloud audit, firewall — catalogue every alert-producing system.',
       },
+      {
+        href: '/dashboard/os/cyber/detections',
+        label: 'Detection rules',
+        description:
+          'Sigma-style detection registry — author, test, and lifecycle rules feeding the alert pipeline.',
+      },
+      {
+        href: '/dashboard/os/cyber/playbooks',
+        label: 'Playbooks',
+        description:
+          'Response playbooks — orderable steps, executable runs, full audit of each step.',
+      },
+      {
+        href: '/dashboard/os/cyber/playbook-runs',
+        label: 'Active runs',
+        description:
+          'Track in-progress and recent playbook executions across cases.',
+      },
     ],
   },
   {
