@@ -432,9 +432,22 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'indigo',
     features: [
       {
+        href: '/dashboard/os/autobiographer',
+        label: 'Books',
+        description:
+          'Per-book cover, status, target date, audience, and 4-phase progress tracker.',
+      },
+      {
+        href: '/dashboard/os/autobiographer/memories',
+        label: 'Memory captures',
+        description:
+          'Workshop-global memory atoms with era, location, emotion + content tags, and photo/audio refs.',
+      },
+      {
         href: '/dashboard/os/autobiographer/chapters',
         label: 'Chapter capture',
-        description: 'Record memories and turn them into ghostwritten chapters.',
+        description:
+          'Legacy single-chapter editor — full chapter surface ships in Phase 4.',
       },
     ],
   },
