@@ -702,6 +702,60 @@ person linking validates both rows belong to caller.
 
 ***
 
+## Phase 1 — Shipped (locked decisions, build executed)
+
+The Phase 1 plan below was carried out end-to-end. The locked decisions
+that landed in code, with their concrete artifacts, are:
+
+- **Books-as-projects.** `agos_autobiographer_books` is the per-OS project
+  entity (5-status taxonomy: drafting / revising / done / paused / archived).
+- **Workshop-global memories with optional book attachment.**
+  `agos_autobiographer_memories` is keyed by `(user_id, optional book_id)`;
+  `book_id` is `ON DELETE SET NULL` so memories survive book deletion.
+- **Hard lock-chapter gate** — Phase 6 will enforce; Phase 1 plants the
+  schema fields (`is_sensitive`, source taxonomy, era + emotion + content
+  tag arrays) the gate will read.
+- **Trauma coach policy** — Phase 7 will execute; Phase 1 unaffected.
+- **Voice profile shape** (JSON markers + RAG few-shot) — Phase 3 will
+  ship; Phase 1 unaffected.
+- **Audio: transcript-only** for v1 — `transcript TEXT` + `audio_url TEXT`
+  columns land on the memory row per MCP contract; no whisper integration.
+- **Default coach mode: interviewer** — Phase 7 will ship; Phase 1 unaffected.
+- **Phase progress mirror of Maker.** Books carry a `phase_progress JSONB`
+  with one int 0-100 per non-archived status (drafting / revising / done /
+  paused).
+
+**Phase 1 deliverables (in branch `feat/autobiographer-phase1`):**
+
+- Migration `0041_autobiographer_phase1` — two new tables under
+  `agos_autobiographer_*`, idempotent DDL, reversible downgrade.
+- Lib: `books.ts`, `books-repo.ts`, `memories.ts`, `memories-repo.ts`,
+  plus an extended `recordAudit` that carries `projectId` for book-scoped
+  audits.
+- API routes:
+  `/api/tiresias/agentic-os/autobiographer/books`,
+  `/books/[id]`,
+  `/books/[id]/memories`,
+  `/memories`,
+  `/memories/[id]`.
+- Pages:
+  `/dashboard/os/autobiographer` (hub),
+  `/dashboard/os/autobiographer/books/[id]`,
+  `/dashboard/os/autobiographer/memories`,
+  `/dashboard/os/autobiographer/memories/[id]`,
+  plus a soft-notice update on the legacy chapters page.
+- Components: `book-card`, `book-list`, `book-form`, `book-actions`,
+  `memory-card`, `memory-list`, `memory-filters`, `memory-form`,
+  `memory-actions`, `memory-edit-button`.
+- Registry entry updated — `Books` + `Memory captures` + retained
+  `Chapter capture` (legacy).
+
+**Legacy `agos_autobiographer_chapters`** table (from migration 0009) is
+left in place. Phase 4 will introduce the book-scoped chapter entity in
+a new table and migrate forward.
+
+***
+
 ## Phase 1 — Books and Memory Capture (locked decisions)
 
 **Migration:** `0041_autobiographer_phase1`, down_revision

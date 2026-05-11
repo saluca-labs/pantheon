@@ -164,15 +164,29 @@ export async function createEvent(args: {
 
 // ─── Audit ──────────────────────────────────────────────────────────────────
 
+/**
+ * Record an audit row for an autobiographer mutation. Phase 1 expands the
+ * call shape to accept `projectId` (the book id for book-scoped actions)
+ * so audit consumers can filter the timeline per book. Workshop-global
+ * memory mutations pass `projectId: null`.
+ */
 export async function recordAudit(args: {
   actorId: string;
   action: string;
   payload?: Record<string, unknown>;
+  projectId?: string | null;
 }): Promise<void> {
   const pool = getAutobiographerPool();
   await pool.query(
-    `INSERT INTO agos_audit (id, actor_id, os_slug, action, payload)
-     VALUES ($1,$2,$3,$4,$5::jsonb)`,
-    [randomUUID(), args.actorId, 'autobiographer', args.action, JSON.stringify(args.payload ?? {})],
+    `INSERT INTO agos_audit (id, project_id, actor_id, os_slug, action, payload)
+     VALUES ($1,$2,$3,$4,$5,$6::jsonb)`,
+    [
+      randomUUID(),
+      args.projectId ?? null,
+      args.actorId,
+      'autobiographer',
+      args.action,
+      JSON.stringify(args.payload ?? {}),
+    ],
   );
 }
