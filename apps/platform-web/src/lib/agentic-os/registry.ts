@@ -210,6 +210,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Workshop-global library of papers, tutorials, standards, articles, and other links.',
       },
+      {
+        href: '/dashboard/os/maker/blockers',
+        label: 'Top blockers',
+        description:
+          'Cross-project deadline + dependency feed — missed, blocked, overdue, and at-risk milestones plus open block edges.',
+      },
     ],
   },
   {

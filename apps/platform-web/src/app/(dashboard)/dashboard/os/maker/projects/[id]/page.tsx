@@ -35,6 +35,7 @@ import {
   Sparkles,
   CheckSquare,
   Flag,
+  Network,
 } from 'lucide-react';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
 import {
@@ -49,6 +50,8 @@ import {
   listSpecSheetsForProject,
   listReferencesForProject,
   listReferences,
+  listProjectDependencies,
+  listProjects,
 } from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUS_LABELS,
@@ -64,6 +67,7 @@ import { ProjectToolsPicker } from '@/components/agentic-os/maker/project-tools-
 import { SpecSheetList } from '@/components/agentic-os/maker/spec-sheet-list';
 import { ProjectReferencesPicker } from '@/components/agentic-os/maker/project-references-picker';
 import { PdfExportButton } from '@/components/agentic-os/maker/pdf-export-button';
+import { DependenciesTab } from '@/components/agentic-os/maker/dependencies-tab';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
 
 export const dynamic = 'force-dynamic';
@@ -82,6 +86,7 @@ type TabKey =
   | 'tools'
   | 'specs'
   | 'references'
+  | 'dependencies'
   | 'coach';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
@@ -93,6 +98,7 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[
   { key: 'tools', label: 'Tools', icon: Wrench },
   { key: 'specs', label: 'Specs', icon: FileText },
   { key: 'references', label: 'References', icon: BookOpen },
+  { key: 'dependencies', label: 'Dependencies', icon: Network },
   { key: 'coach', label: 'AI Coach', icon: Sparkles, phase: 'Phase 7' },
 ];
 
@@ -113,6 +119,7 @@ function isTabKey(value: string | undefined): value is TabKey {
     value === 'tools' ||
     value === 'specs' ||
     value === 'references' ||
+    value === 'dependencies' ||
     value === 'coach'
   );
 }
@@ -175,6 +182,16 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           listReferences({ userId: user.userId }),
         ])
       : [[], []];
+
+  // Phase 6 dependencies tab — bidirectional edge view + all candidate
+  // projects for the add-dependency picker.
+  const [initialDependencies, candidateProjects] =
+    activeTab === 'dependencies'
+      ? await Promise.all([
+          listProjectDependencies(project.id, user.userId),
+          listProjects(user.userId),
+        ])
+      : [{ upstream: [], downstream: [] }, []];
 
   // Phase 5 export-PDF button — disabled when the project has nothing to
   // export. Cheap aggregate counts via the BOM summary + step/milestone/
@@ -456,6 +473,27 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
             projectId={project.id}
             initialLinks={initialProjectRefs}
             initialLibrary={initialRefLibrary}
+          />
+        </div>
+      )}
+      {activeTab === 'dependencies' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            Cross-project dependencies
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Wire up which other Maker projects this build depends on (upstream) and
+            which builds depend on this one (downstream). Open{' '}
+            <code className="text-[#cbd5e1]">blocks</code> edges feed the workshop-wide{' '}
+            <Link href="/dashboard/os/maker/blockers" className="text-[#4361EE] hover:underline">
+              Top Blockers
+            </Link>{' '}
+            list.
+          </p>
+          <DependenciesTab
+            projectId={project.id}
+            initial={initialDependencies}
+            candidateProjects={candidateProjects}
           />
         </div>
       )}
