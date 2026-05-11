@@ -1,16 +1,20 @@
 /**
- * Maker OS session helper.
+ * Maker OS — session helpers.
  *
- * Re-exports the shared session utilities from Health OS so we don't
- * duplicate cookie/pool logic. The alias `getCurrentMakerUser` is a
- * thin rename for clarity in Maker OS code paths.
+ * Re-exports the shared OS session utility under Maker-flavoured names.
+ * The session/auth machinery is identical across every vertical, so the real
+ * implementation lives in `../_shared/session`.
  *
- * @license MIT — original session pattern from Tiresias Health OS (internal).
+ * Phase 1 (v0.1.29) switched the source from `../health/session` to
+ * `../_shared/session` — matches Filmmaker / Cyber and unblocks Health from
+ * carrying every other OS's session coupling.
+ *
+ * @license MIT — Tiresias Maker OS (internal).
  */
 
 export {
-  getCurrentHealthUser as getCurrentMakerUser,
-  getHealthPool as getMakerPool,
-} from '../health/session';
+  getCurrentOsUser as getCurrentMakerUser,
+  getOsPool as getMakerPool,
+} from '../_shared/session';
 
-export type { HealthSessionUser as MakerSessionUser } from '../health/session';
+export type { OsSessionUser as MakerSessionUser } from '../_shared/session';

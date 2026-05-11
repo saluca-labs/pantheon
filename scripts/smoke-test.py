@@ -75,13 +75,13 @@ AGENTIC_OS_PROBES: dict[str, dict[str, Any]] = {
         },
     },
     "maker": {
-        "path": "/api/tiresias/agentic-os/maker/builds",
-        "key": "builds",
+        "path": "/api/tiresias/agentic-os/maker/projects",
+        "key": "projects",
         "write": {
             "method": "POST",
-            "path": "/api/tiresias/agentic-os/maker/builds",
-            "body": {"name": "smoke-build"},
-            "response_key": "build",
+            "path": "/api/tiresias/agentic-os/maker/projects",
+            "body": {"name": "smoke-project"},
+            "response_key": "project",
             "verify": "list_grew",
         },
     },
