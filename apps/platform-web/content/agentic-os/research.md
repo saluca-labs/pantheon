@@ -1,746 +1,850 @@
-# Research OS — Full Execution Plan (Assess → Plan → Execute → Validate)
+# Research OS — Execution Plan
 
-## How to Use This Document
-
-Every ticket follows **EPIC-XX-[A|P|E|V]-NN** where A = Assess, P = Plan, E = Execute, V = Validate, mirroring Creator OS / Maker OS / Business OS.[^1]
-Epics are independent enough to be parallelized after EPIC-01 and EPIC-02 complete.
-Execute tickets include concrete file paths, package names, and commands; Validate tickets include pass/fail criteria that an automated agent can check without interpretation.
-
-### Target User
-
-Research OS is designed for:
-
-- Solo PhD students or postdocs running a personal bench + computational workflow.
-- Small academic labs (PI + a few trainees) needing shared ELN, inventory, and data management.[^2][^3]
-- Industrial research teams that can start on the same stack and swap in their own infrastructure.
-
-The system assumes heavy use of **arXiv**, journal PDFs, and lab experiments, with AI support tuned for **hypothesis generation, experiment design, and literature mapping** rather than content publishing.
-
-***
-
-## Frozen Tech Stack (All Tickets Assume This)
-
-Same foundation as the other OSes for consistency.[^1]
-
-| Layer | Package | License | Pin |
-|---|---|---|---|
-| Monorepo | `turborepo` | MIT | latest |
-| Framework | `next` (App Router) | MIT | 14.x |
-| Language | TypeScript | Apache-2.0 | 5.x |
-| Package mgr | `pnpm` | MIT | 9.x |
-| Styling | `tailwindcss` + `shadcn/ui` | MIT | 3.x |
-| ORM | `prisma` + `@prisma/client` | Apache-2.0 | 5.x |
-| Database | SQLite (dev) / Postgres (prod) | — | — |
-| Auth | `next-auth` v5 | MIT | 5.x |
-| State | `zustand` | MIT | 4.x |
-| MCP | `@modelcontextprotocol/sdk` | MIT | latest |
-| AI SDK | `ai` (Vercel AI SDK) | Apache-2.0 | 3.x |
-| Process mgr | `supervisord` | MIT | 4.x |
-| Proxy | `nginx` | BSD | 1.25.x |
-| Container | Docker multi-stage | Apache-2.0 | 25.x |
-
-### Domain Co‑Processes (External Apps)
-
-All run as separate services behind nginx, not as libraries.
-
-| Function | Default Tool | License | Notes |
-|---|---|---|---|
-| Electronic lab notebook (ELN) | eLabFTW | AGPL 3.0 | Open-source ELN + inventory + booking; used in universities; supports APIs.[^2][^3][^4][^5][^6] |
-| Computational notebooks | JupyterHub (JupyterLab) | BSD 3 | Multi-user Jupyter; integrates with HPC and containers.[^7][^8][^9] |
-| Reference management | Zotero | AGPL 3.0 | Open-source reference manager with rich plugin ecosystem.[^10][^11][^12][^13] |
-| Literature mapping | ResearchRabbit (external SaaS) | — | Not open source but widely used; integrated via API/bookmarklet + Zotero sync.[^14][^15][^16][^17] |
-| Data repository | Dataverse | Apache-2.0 | Open-source research data repository platform with DOIs and rich metadata.[^18][^19][^20][^21] |
-| LIMS/bench ops | eLabFTW inventory or Benchling alternative | AGPL/commercial | For sample & reagent inventory, optionally extended via MCP.[^2][^22][^23][^24] |
-| Automation | n8n | Fair-code | Orchestration of ingest, ETL, notifications, and data publishing.[^17] |
+> **Status:** Plan-only. No phase has shipped yet. The only on-disk artifact is
+> the Phase 3 stub (hypothesis ledger) sitting on top of migration
+> `0005_research_os`, which predates the agos sequence the rest of the
+> Pantheon OSes use. The phase tables below are written in the Maker OS
+> "locked decisions" style so they can be lifted into the per-phase
+> commit messages verbatim once execution begins.
+>
+> **Migration numbering:** Maker OS took revisions `0033`–`0040`. **The next
+> free revision is `0041`.** Each phase below names its target revision; if
+> Cristian ships an unrelated platform migration in between, slide the whole
+> Research stack forward — keep the chain contiguous.
+>
+> Legacy ticket-style EPIC content (the original Perplexity-built outline)
+> is preserved at `research.md.legacy-epic.md` for reference.
 
 ***
 
-## EPIC-01: Project Scaffold & Monorepo
+## 1. Inventory
 
-**Goal:** Create `~/research-os/` Turborepo with Next.js app, shared packages, and infra skeleton, identical in structure to the other OSes but with `@research-os/*` prefixes.[^1]
+### Registry entry
 
-(Commands and files match the patterns already used for Maker OS and Business OS; only names differ.)[^1]
+`apps/platform-web/src/lib/agentic-os/registry.ts` — slug `research`,
+status `live`, accent `sky`, tagline *"ELN + literature + experiments."*,
+description *"Electronic lab notebook, literature mapping, hypothesis
+ledger, and experiment design for solo PhDs and small labs."* One feature
+card today: `/dashboard/os/research/hypotheses` → Hypothesis ledger.
 
-***
+### Shipped surface (what already exists)
 
-## EPIC-02: Database Schema (Prisma)
+| Path | Purpose |
+|---|---|
+| `apps/platform-web/src/app/(dashboard)/dashboard/os/research/hypotheses/page.tsx` | Server component; loads the user's hypotheses and renders the ledger. |
+| `apps/platform-web/src/app/api/tiresias/agentic-os/research/hypotheses/route.ts` | BFF — GET list / POST create with Zod body validation + audit. |
+| `apps/platform-web/src/app/api/tiresias/agentic-os/research/hypotheses/[id]/route.ts` | BFF — GET / PATCH / DELETE single hypothesis (status transitions audited). |
+| `apps/platform-web/src/components/agentic-os/research/HypothesisLedger.tsx` | Client component — list + create/edit form for the ledger. |
+| `apps/platform-web/src/lib/agentic-os/research/hypotheses.ts` | Pure-logic helpers — `HypothesisStatus`, `ConfidenceLevel`, `renderHypothesisStatement`, `validateHypothesis`, `isValidStatusTransition`. |
+| `apps/platform-web/src/lib/agentic-os/research/repo.ts` | DB repository — `listHypotheses`, `getHypothesis`, `createHypothesis`, `updateHypothesis`, `listExperiments`, `recordAudit` (writes to `agos_audit` with `os_slug='research'`). |
+| `apps/platform-web/src/lib/agentic-os/research/session.ts` | Per-OS session helper — `getCurrentResearchUser`, `getResearchPool`. |
+| `apps/platform-web/src/__tests__/agentic-os/research/hypotheses.test.ts` | Vitest suite on the pure-logic helpers. |
 
-**Goal:** A schema representing **experiments, samples, protocols, datasets, papers, hypotheses, and analyses**, designed for both individual bench work and small lab operations.
+### Shipped migrations touching `agos_research_*`
 
-### EPIC-02-A-01 — Audit Entities
+| Revision | Summary |
+|---|---|
+| `0005_research_os` | Creates `agos_research_hypotheses` (If/Then/Because ledger with status, confidence, tags) and `agos_research_experiments` (hypothesis-as-parent, FK to hypotheses with `ON DELETE CASCADE`, fields: independent / dependent / controls / protocol / success_criteria, status `planned\|running\|done`). Predates the Maker / Filmmaker / Cyber / Health agos sequence and uses the early hypothesis-as-parent shape. |
 
-**Type:** Assess
+### What is NOT yet built (everything else)
 
-Write `packages/db/ENTITIES.md` with exactly:
-
-```text
-User, Session, Account (NextAuth)
-Lab (logical group – lab, group, or PI umbrella)
-LabMember (user membership with role)
-OrgSetting (feature flags and configuration)
-Project (research project or sub-project)
-Experiment (unit of bench work, linked to ELN)
-Protocol (standard procedure template)
-Sample (physical sample or aliquot)
-SampleType
-Reagent (chemical/antibody/plasmid/primer etc.)
-InventoryLocation
-Instrument (equipment used in lab)
-InstrumentBooking
-Hypothesis (explicitly tracked hypothesis)
-HypothesisStatusChange
-Paper (literature item; arXiv or journal)
-PaperCollection (sets for topics/lit review)
-CitationLink (relationship between papers)
-ReadingNote (notes on a paper)
-CodeRepository (analysis code or pipeline)
-AnalysisRun (computational notebook run)
-Dataset (internal dataset)
-DatasetVersion
-DatasetPublication (link to Dataverse/DOI)
-Tag (shared tags)
-AIConversation
-AIMessage
-MCPServerConfig
-AutomationTrigger
-AutomationLog
-ActivityLog
-```
-
-### EPIC-02-P-01 — Plan Relationships
-
-**Type:** Plan
-
-`packages/db/SCHEMA_PLAN.md` describes:
-
-- Multi-lab support: `Lab` 1→N `LabMember`; `LabMember` references `User`, with `role` (pi, postdoc, phd, tech, visitor).
-- `Lab` 1→N `Project`, `Instrument`, `Sample`, `Reagent`, `Dataset`.
-- `Project` 1→N `Experiment`, 1→N `Hypothesis`, 1→N `CodeRepository`, 1→N `Dataset`.
-- `Experiment` 1→N `Sample` (produced/consumed), N→N `Reagent` via `ExperimentReagent` join.
-- `Experiment` links to eLabFTW via `externalElnId` and to JupyterHub via `externalNotebookUrl`.
-- `Hypothesis` 1→N `HypothesisStatusChange`; each change logs status (idea, under_test, supported, refuted, abandoned) and createdAt.
-- `Paper` has `source` (arxiv, pubmed, doi, manual) and unique `identifier` (arXiv ID, DOI, PMID).[^14][^25][^15]
-- `PaperCollection` N→N `Paper` (for topic-specific reading lists).
-- `CitationLink` models directed citation (`citingPaperId` → `citedPaperId`).
-- `ReadingNote` attaches to `Paper` and optionally to `Project` or `Hypothesis`.
-- `CodeRepository` tracks Git URL and main branch; `AnalysisRun` links to a Git commit, notebook path, and environment.
-- `Dataset` and `DatasetVersion` track internal data; `DatasetPublication` links to Dataverse DOI.[^19][^20][^21]
-
-### EPIC-02-E-01 — Implement Schema
-
-**Type:** Execute
-
-Use the same Prisma pattern as the other OSes; key domain-specific models include:
-
-```prisma
-model Lab {
-  id        String      @id @default(cuid())
-  name      String
-  piName    String?
-  institution String?
-  members   LabMember[]
-  projects  Project[]
-  instruments Instrument[]
-  samples   Sample[]
-  reagents  Reagent[]
-  datasets  Dataset[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model LabMember {
-  id        String   @id @default(cuid())
-  labId     String
-  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
-  userId    String
-  role      String   @default("phd") // pi | postdoc | phd | master | tech | visitor
-  joinedAt  DateTime @default(now())
-}
-
-model Project {
-  id          String      @id @default(cuid())
-  labId       String
-  lab         Lab         @relation(fields: [labId], references: [id])
-  title       String
-  description String?
-  status      String      @default("active") // active | paused | completed | archived
-  hypotheses  Hypothesis[]
-  experiments Experiment[]
-  papers      PaperCollection? @relation("ProjectPapers", fields: [paperCollectionId], references: [id])
-  paperCollectionId String?
-  datasets    Dataset[]
-  codeRepos   CodeRepository[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-
-model Experiment {
-  id             String      @id @default(cuid())
-  projectId      String
-  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  title          String
-  description    String?
-  date           DateTime    @default(now())
-  externalElnId  String?     // eLabFTW experiment ID
-  status         String      @default("planned") // planned | running | complete | failed
-  samples        Sample[]
-  reagents       ExperimentReagent[]
-  instrumentId   String?
-  instrument     Instrument? @relation(fields: [instrumentId], references: [id])
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
-
-model Hypothesis {
-  id          String                @id @default(cuid())
-  projectId   String
-  project     Project               @relation(fields: [projectId], references: [id])
-  title       String
-  description String?
-  status      String                @default("idea")
-  statusHistory HypothesisStatusChange[]
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-}
-
-model HypothesisStatusChange {
-  id           String     @id @default(cuid())
-  hypothesisId String
-  hypothesis   Hypothesis @relation(fields: [hypothesisId], references: [id], onDelete: Cascade)
-  fromStatus   String?
-  toStatus     String
-  note         String?
-  createdAt    DateTime   @default(now())
-}
-
-model Sample {
-  id          String   @id @default(cuid())
-  label       String
-  typeId      String?
-  type        SampleType? @relation(fields: [typeId], references: [id])
-  labId       String
-  lab         Lab       @relation(fields: [labId], references: [id])
-  parentId    String?
-  parent      Sample?   @relation("SampleLineage", fields: [parentId], references: [id])
-  children    Sample[]  @relation("SampleLineage")
-  locationId  String?
-  location    InventoryLocation? @relation(fields: [locationId], references: [id])
-  experimentId String?
-  experiment  Experiment? @relation(fields: [experimentId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model SampleType {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  samples   Sample[]
-}
-
-model Reagent {
-  id          String   @id @default(cuid())
-  name        String
-  vendor      String?
-  catalogNo   String?
-  lot         String?
-  labId       String
-  lab         Lab      @relation(fields: [labId], references: [id])
-  experiments ExperimentReagent[]
-}
-
-model ExperimentReagent {
-  id           String     @id @default(cuid())
-  experimentId String
-  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  reagentId    String
-  reagent      Reagent    @relation(fields: [reagentId], references: [id])
-  amount       String?
-}
-
-model InventoryLocation {
-  id        String   @id @default(cuid())
-  label     String
-  labId     String
-  lab       Lab      @relation(fields: [labId], references: [id])
-  samples   Sample[]
-}
-
-model Instrument {
-  id          String            @id @default(cuid())
-  labId       String
-  lab         Lab               @relation(fields: [labId], references: [id])
-  name        String
-  model       String?
-  serial      String?
-  calendarUrl String?
-  bookings    InstrumentBooking[]
-}
-
-model InstrumentBooking {
-  id           String     @id @default(cuid())
-  instrumentId String
-  instrument   Instrument @relation(fields: [instrumentId], references: [id])
-  userId       String
-  startTime    DateTime
-  endTime      DateTime
-  purpose      String?
-}
-
-model Paper {
-  id         String    @id @default(cuid())
-  title      String
-  identifier String?   @unique // DOI or arXiv ID
-  source     String?   // arxiv | pubmed | crossref | manual
-  url        String?
-  journal    String?
-  year       Int?
-  abstract   String?
-  tags       Tag[]
-  notes      ReadingNote[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-model PaperCollection {
-  id        String   @id @default(cuid())
-  name      String
-  papers    Paper[]
-  project   Project?
-}
-
-model ReadingNote {
-  id        String   @id @default(cuid())
-  paperId   String
-  paper     Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id])
-  content   String
-  createdAt DateTime @default(now())
-}
-
-model CitationLink {
-  id            String @id @default(cuid())
-  citingPaperId String
-  citedPaperId  String
-}
-
-model Dataset {
-  id          String          @id @default(cuid())
-  labId       String
-  lab         Lab             @relation(fields: [labId], references: [id])
-  projectId   String?
-  project     Project?        @relation(fields: [projectId], references: [id])
-  name        String
-  description String?
-  field       String? // genomics, single-cell, imaging, etc.
-  versions    DatasetVersion[]
-  publications DatasetPublication[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-}
-
-model DatasetVersion {
-  id         String   @id @default(cuid())
-  datasetId  String
-  dataset    Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  version    Int
-  storageUrl String   // internal storage path
-  checksum   String?
-  createdAt  DateTime @default(now())
-}
-
-model DatasetPublication {
-  id         String   @id @default(cuid())
-  datasetId  String
-  dataset    Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  doi        String
-  repository String   @default("dataverse")
-  url        String
-  createdAt  DateTime @default(now())
-}
-
-model CodeRepository {
-  id         String        @id @default(cuid())
-  projectId  String?
-  project    Project?      @relation(fields: [projectId], references: [id])
-  name       String
-  gitUrl     String
-  mainBranch String @default("main")
-  analysisRuns AnalysisRun[]
-}
-
-model AnalysisRun {
-  id          String        @id @default(cuid())
-  repoId      String
-  repo        CodeRepository @relation(fields: [repoId], references: [id], onDelete: Cascade)
-  commitHash  String
-  notebookPath String
-  params      String?       // JSON
-  status      String        @default("running") // running | completed | failed
-  logUrl      String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-}
-
-model Tag {
-  id      String   @id @default(cuid())
-  label   String   @unique
-  papers  Paper[]
-}
-```
-
-Include AI, MCP, Automation, and ActivityLog models using the same shapes as in the other OSes.[^1]
-
-### EPIC-02-E-02 — Seed Data
-
-Seed a default `Lab`, one `LabMember` PI user, a few sample `SampleType` entries (cell_line, plasmid, antibody, small_molecule), and default `OrgSetting` flags like `eln_enabled`, `jupyter_enabled`, `dataverse_enabled`.
-
-### EPIC-02-V-01 — Validate Schema
-
-- `pnpm prisma validate` exits 0.
-- Prisma Studio shows Lab, Project, Experiment, Hypothesis, Sample, Reagent, Paper, Dataset.
+- No experiment hub page or detail page. The `agos_research_experiments`
+  table exists but has no UI surface and no POST/PATCH routes — only the
+  internal `listExperiments(hypothesisId)` helper is wired.
+- No lab notebook entries, no per-experiment timeline.
+- No literature library — papers, authors, tags, DOIs.
+- No datasets, protocols, or PDF export.
+- No reproducibility checklist or cross-experiment dependency graph.
+- No AI coach.
+- No registry hub-feature surfaces beyond Hypothesis ledger.
 
 ***
 
-## EPIC-03: Authentication & Lab Membership
+## 2. Vision
 
-**Goal:** Same NextAuth credentials flow as other OSes, with lab membership and roles determining access to lab-scoped resources.
+The Research OS serves **solo PhDs, postdocs, and small labs (PI + a few
+trainees)** running a mixed bench / computational workflow. It is **not**
+designed for industrial-scale labs with dedicated LIMS, ELN, and data-stewardship
+teams — those have built-out tooling already; this OS targets the user who is
+their own PI, lab manager, librarian, and data steward.
 
-Implementation is identical to Creator OS EPIC-03 with additional `LabMember` check that ensures a user belongs to a Lab before accessing lab resources.[^1]
+The platform stitches together five core surfaces: an **electronic lab notebook
+(ELN)** for timestamped entries per experiment, a **hypothesis ledger** for
+explicit prediction + falsifier tracking, a **literature library** for paper
+ingestion + reading notes + per-experiment citation links, **experiment design**
+with datasets and protocols, and a **reproducibility tracker** that nudges raw
+data archival, methods documentation, and code publication for every active
+project. An **AI coach** assists with lit review, hypothesis critique, and
+methods advice without filtering content (academic prose isn't credential-sensitive
+the way Cyber output is, nor crisis-adjacent the way Health output is).
 
-***
-
-## EPIC-04: Org Profile & Feature Flags
-
-**Goal:** A research-specific Org/Lab profile controlling which modules appear (ELN, Jupyter, Dataverse, etc.).
-
-Org flags include: `eln_enabled`, `lims_enabled`, `jupyter_enabled`, `dataverse_enabled`, `reference_sync_enabled`, `literature_maps_enabled`.
-
-Behavior: a solo PhD can start with only Projects, Experiments, Papers; a larger lab turns on ELN and Dataverse integration later.[^2][^19]
-
-***
-
-## EPIC-05: Shell UI & Navigation
-
-**Goal:** Sidebar tailored to researcher workflows.
-
-Core groups:
-
-- Dashboard
-- Projects
-- Experiments
-- Samples & Reagents
-- Hypotheses
-- Literature
-- Notebooks
-- Data
-- AI Assist
-- Automation
-- MCP
-- Settings
-
-Visibility of Experiments, Samples, Notebooks, Data is governed by feature flags and Org settings.
+Where Research differs from existing OSes: project-as-parent works (Filmmaker /
+Maker pattern), but **"project" maps to "experiment"** and several entities
+(ELN entries, literature refs, hypotheses) span multiple experiments. Workshop-global
+tables work for the literature library (Cyber pattern). The streaming coach uses
+the same wire format as Filmmaker / Maker / Cyber / Health (UTF-8 deltas,
+U+001E sentinel, JSON trailer). Crucially, **hypotheses pre-date experiments**
+in this OS: the existing `0005_research_os` migration models experiments as
+children of hypotheses (`hypothesis_id NOT NULL FK CASCADE`). Phase 1 inverts
+that to mirror the rest of the platform — see Open Question #1.
 
 ***
 
-## EPIC-06: Research Dashboard
+## 3. Phased plan
 
-**Goal:** Home screen summarizing:
+### Phase 1 — Experiment Hub + Foundation Polish
 
-- Experiments by status (planned/running/complete/failed) this week.
-- Projects with upcoming milestones.
-- Hypotheses recently updated and their status.
-- Newly added papers in collections.
-- Recently updated datasets and analysis runs.
+**Migration:** `0041_research_phase1`, down_revision `0040_maker_phase7`.
 
-All computed from the local DB; this EPIC is analogous to Business OS dashboard but with research-oriented metrics.
+**Scope:** Promote `agos_research_experiments` from a child-of-hypothesis
+table to the **per-OS parent** the rest of the platform expects. Mirror
+Maker Phase 1 / Filmmaker Phase 1 — cover image, status enum, lifecycle,
+hub page, per-experiment detail page. The current Phase 3 stub
+(hypothesis ledger) remains live; this phase adds the experiment surface
+without breaking it.
 
-***
+**Schema changes (1 ALTER + retention, all under `agos_research_*`):**
 
-## EPIC-07: Project & Hypothesis Management
+1. `agos_research_experiments` — promoted to per-OS parent. Existing
+   columns retained. The `hypothesis_id UUID NOT NULL REFERENCES
+   agos_research_hypotheses(id) ON DELETE CASCADE` **constraint is
+   relaxed to nullable + FK dropped** (per the v0.1.30 platform contract
+   — per-OS UUIDs are not FK-enforced across cross-cutting tables).
+   `hypothesis_id` survives as an optional polymorphic link; the
+   hypothesis-experiment join is moved to a dedicated table in Phase 3
+   so an experiment can ladder multiple hypotheses.
 
-**Goal:** Provide a "project board" with explicit hypotheses, associated experiments, and evidence.
+   New columns:
+   * `description TEXT NOT NULL DEFAULT ''`.
+   * `cover_url TEXT` (URL-only; column comment references
+     `docs/architecture/mcp-storage-transfer.md`).
+   * `target_date DATE` (nullable; analogous to Maker's `target_date`).
+   * `tags TEXT[] NOT NULL DEFAULT '{}'`.
+   * `metadata JSONB NOT NULL DEFAULT '{}'`.
+   * `archived_at TIMESTAMPTZ` (nullable; soft-archive marker).
 
-### EPIC-07-E-01 — Project API
+   The existing `status` CHECK is widened from `(planned, running, done)`
+   to the locked taxonomy below.
 
-- `api/projects` — `GET`, `POST`.
-- `api/projects/[id]` — `GET`, `PATCH`, `DELETE`.
+   New indexes: `(user_id, updated_at DESC)`, partial
+   `(user_id) WHERE archived_at IS NULL` (active-experiments default
+   list), GIN on `tags`.
 
-### EPIC-07-E-02 — Hypothesis API
+**Locked decisions:**
 
-- `api/projects/[id]/hypotheses` — `GET`, `POST`.
-- `api/hypotheses/[id]` — `GET`, `PATCH`.
-- `api/hypotheses/[id]/status` — `POST` to append a `HypothesisStatusChange`.
+- **Status taxonomy:** `planning \| running \| analysis \| writeup \| published \| archived`.
+  Existing `done` rows migrate to `published` on upgrade (best guess for
+  the bench-side meaning of the legacy value); downgrade collapses the
+  new tier back to the legacy three before dropping the CHECK
+  (`planning` → `planned`, `running` → `running`,
+  `analysis\|writeup\|published` → `done`, `archived` → `planned`).
+- **Lifecycle:** soft-archive via `archived_at` timestamp (matches
+  Maker / Filmmaker). No hard delete from the UI.
+- **Audit action names:** `research.experiment.created`,
+  `research.experiment.updated`, `research.experiment.status_changed`,
+  `research.experiment.archived`, `research.experiment.restored`.
 
-### EPIC-07-E-03 — UI
+**Routes (BFF, under `app/api/tiresias/agentic-os/research/`):**
 
-Project detail page: three-panel layout — hypotheses list, experiments, and literature (papers and notes).
+- `GET  /experiments` — list current user's experiments. Filters:
+  `?status=`, `?tag=`, `?archived=true\|false` (default false). Paginated.
+- `POST /experiments` — create. Body `{ title, description?, cover_url?,
+  target_date?, status?, tags? }`. Audited.
+- `GET  /experiments/[id]` — full experiment payload + derived counts
+  (notebook entries, hypotheses linked, references linked, datasets, etc.
+  Phase-dependent fields return zero until the relevant phase ships).
+- `PATCH /experiments/[id]` — title / description / cover / target_date
+  / status / tags edits. Status-change writes a separate audit row.
+- `DELETE /experiments/[id]` — soft archive (sets `archived_at`); a
+  query parameter `?hard=true` is reserved but **not** exposed in the UI.
+- `POST /experiments/[id]/restore` — clears `archived_at`.
 
-Each hypothesis has a dedicated page summarizing linked experiments, datasets, and reading notes; AI Assist uses this to generate new experiment ideas.
+All mutating routes audit via `recordAudit({ actorId, action:
+'research.experiment.<verb>', projectId: experiment.id, payload })`.
 
-***
+**Pages:**
 
-## EPIC-08: Experiments & ELN Bridge
+- `/dashboard/os/research` — hub. Two-column responsive grid:
+  experiment list + feature cards (existing Hypothesis ledger card stays;
+  later phases add cards beneath it).
+- `/dashboard/os/research/experiments` — full experiment list with
+  status filter chips + archived toggle.
+- `/dashboard/os/research/experiments/[id]` — per-experiment detail
+  with tab strip — `Overview \| Notebook \| Hypotheses \| Literature \|
+  Datasets \| Protocols \| Reproducibility \| Coach`. Tabs render the
+  Phase-3+ placeholder until those phases ship.
 
-**Goal:** Local experiment registry with deep links into eLabFTW experiments for full ELN detail.[^3][^5][^6][^2]
-
-### EPIC-08-E-01 — Experiment Registry API
-
-- `api/experiments` — `GET` (filter by project, date, status), `POST`.
-- `api/experiments/[id]` — `GET`, `PATCH`.
-
-Each `Experiment` record stores `externalElnId` and `status`.
-
-### EPIC-08-E-02 — eLabFTW Integration
-
-`packages/integrations/src/elabftw.ts`:
-
-- `createExperiment(experiment)` — call eLabFTW REST API to create experiment entry; store `externalElnId` and back-link URL.[^4][^26]
-- `getExperimentStatus(externalElnId)` — sync status and timestamp back from eLabFTW.
-
-Activation: when `eln_enabled = true`, new experiments auto-create eLabFTW entries; else, Experiment works as a standalone local log.
-
-### EPIC-08-E-03 — Experiments UI
-
-Experiments page: table with filters, quick creation, and badges for linked ELN.
-
-Experiment detail page: metadata at top, quick link "Open in ELN", list of samples consumed/produced, reagents used, instrument booking link.
-
-***
-
-## EPIC-09: Samples, Reagents, and Instruments
-
-**Goal:** Simple LIMS-like module for tracking samples, reagents, storage locations, and instrument bookings.
-
-### EPIC-09-E-01 — Samples & Reagents API
-
-- `api/samples` — `GET`, `POST`.
-- `api/samples/[id]` — `GET`, `PATCH`.
-- `api/reagents` — `GET`, `POST`.
-- `api/reagents/[id]` — `GET`, `PATCH`.
-
-### EPIC-09-E-02 — Instrument Booking API
-
-- `api/instruments` — `GET`, `POST`.
-- `api/instruments/[id]/bookings` — `GET`, `POST`.
-
-### EPIC-09-E-03 — UI
-
-- Samples: tree view showing lineage (parent and derived samples), with locations.
-- Reagents: table with vendor, catalog, lot, and stock.
-- Instruments: calendar view (weekly) of bookings.
-
-***
-
-## EPIC-10: Literature Management (Papers, Collections, Notes)
-
-**Goal:** A first-class literature workspace around Zotero + ResearchRabbit + arXiv/DOI ingestion.[^10][^11][^12][^13][^27][^15][^16][^17][^14]
-
-### EPIC-10-E-01 — Paper Ingestion API
-
-`api/papers/import`:
-
-- Accepts DOIs, arXiv IDs, PubMed IDs, or BibTeX; uses external APIs (Crossref, arXiv) to populate `Paper` fields.
-
-`api/papers` and `api/papers/[id]` implement list/detail.
-
-### EPIC-10-E-02 — Zotero Bridge
-
-`packages/integrations/src/zotero.ts`:
-
-- `syncLibrary()` — fetch items via Zotero Web API and upsert `Paper` entries and `ReadingNote`s created from Zotero annotations.[^11][^10]
-- `pushCollection(collection)` — create Zotero collection for a Research OS `PaperCollection`.
-
-### EPIC-10-E-03 — Literature UI
-
-`/literature` route:
-
-- Left: collections (e.g., "thesis intro", "method X", "competing hypotheses").
-- Middle: paper list with filters (tag, year, journal).
-- Right: reading pane (title, abstract, tags, internal notes).
-
-A "Map" button deep-links to ResearchRabbit using a collection or seed paper; ResearchRabbit handles visualization, while Research OS logs that mapping event for reproducibility.[^15][^17]
+**Components:** `ExperimentList`, `ExperimentForm` (create + edit modal),
+`ExperimentDetailShell`, `ExperimentStatusPill`,
+`ExperimentTargetDateBadge`, `ExperimentTagInput`.
 
 ***
 
-## EPIC-11: Notebooks & JupyterHub
+### Phase 2 — Lab Notebook Entries
 
-**Goal:** Integrate with JupyterHub so each Project has associated notebooks and AnalysisRuns that can be tracked and reproduced.[^7][^8][^9]
+**Migration:** `0042_research_phase2`, down_revision `0041_research_phase1`.
 
-### EPIC-11-E-01 — JupyterHub Integration
+**Scope:** Per-experiment ELN entries — timestamped markdown body with
+URL-only attachment list (figures, raw-data links, screenshots), an author
+column, and a soft `entry_kind` taxonomy. Mirrors Maker Phase 3's build
+step / build log shape but with two-way ENL-style framing (entries are
+chronological, not phased).
 
-`packages/integrations/src/jupyterhub.ts`:
+**Tables (1 new, all under `agos_research_*`):**
 
-- `spawnServer(userId)` — call JupyterHub API to spawn or connect to user server.
-- `generateNotebookLink(projectId)` — derive URL to a pre-populated notebook template for that project.
+1. `agos_research_notebook_entries` — per-experiment. `user_id NOT NULL`
+   (author / lab member), `experiment_id UUID NOT NULL` (no FK — per
+   platform contract; the API enforces ownership via JOIN against
+   `agos_research_experiments`), `entry_kind TEXT NOT NULL DEFAULT 'note'`
+   CHECK in `(note, observation, result, decision, question, todo)`,
+   `title TEXT NOT NULL`, `body_md TEXT NOT NULL DEFAULT ''`,
+   `attached_urls TEXT[] NOT NULL DEFAULT '{}'` (URL-only; column
+   comment references the MCP storage transfer contract), `tags TEXT[]
+   NOT NULL DEFAULT '{}'`, `entry_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+   (separately editable from `created_at` so backfilling a paper journal
+   into the system preserves the lab-time), `metadata JSONB`,
+   `created_at`, `updated_at`.
 
-### EPIC-11-E-02 — AnalysisRun Tracking
+   Indexes: `(experiment_id, entry_at DESC)` (timeline view),
+   `(user_id, entry_at DESC)` (cross-experiment author timeline), GIN on
+   `tags`, partial `(experiment_id) WHERE entry_kind = 'todo'` (open-todos
+   widget).
 
-APIs to log an AnalysisRun when a notebook finishes, storing commit hash, parameters, and outputs.
+**Locked decisions:**
 
-`/notebooks` UI lists recent runs, with links into JupyterLab.
+- **No hard delete.** Notebook entries are append-only by tradition.
+  PATCH allows edits; DELETE sets `archived_at` on the row (add nullable
+  `archived_at TIMESTAMPTZ` column). Archived entries hide from the
+  default timeline; the API exposes them with `?archived=true`.
+- **Markdown rendering:** server-side render of `body_md` using the
+  same `react-markdown` pipeline Maker uses in build-step descriptions.
+  No raw HTML allowed (no `rehype-raw`).
+- **Audit action names:** `research.notebook.created`,
+  `research.notebook.updated`, `research.notebook.archived`,
+  `research.notebook.restored`.
 
-***
+**Routes:**
 
-## EPIC-12: Data & Dataverse Integration
+- `/api/tiresias/agentic-os/research/experiments/[id]/notebook` (GET
+  list + POST create — 404 cross-ownership).
+- `/api/tiresias/agentic-os/research/notebook/[entryId]` (GET, PATCH,
+  DELETE — DELETE soft-archives).
+- `/api/tiresias/agentic-os/research/notebook/[entryId]/restore` (POST).
 
-**Goal:** Manage internal datasets and publish them to Dataverse with DOIs when ready.
+**Pages:**
 
-### EPIC-12-E-01 — Dataset API
+- `/dashboard/os/research/experiments/[id]` → Notebook tab — chronological
+  reverse-time timeline with per-entry "edit" + "archive" affordances.
+  Entry composer pinned to top (collapsible). Filter chips by
+  `entry_kind`.
 
-- `api/datasets` — `GET`, `POST`.
-- `api/datasets/[id]` — `GET`, `PATCH`.
-- `api/datasets/[id]/versions` — `GET`, `POST` (add dataset version with storage path).
-
-### EPIC-12-E-02 — Dataverse Bridge
-
-`packages/integrations/src/dataverse.ts`:
-
-- `publishDataset(datasetId)` — package latest version and metadata, call Dataverse API, create `DatasetPublication` with DOI and URL.[^18][^20][^21][^19]
-
-### EPIC-12-E-03 — Data UI
-
-`/data` route shows datasets with field tags (genomics, imaging, survey, etc.) and publication status.
-
-***
-
-## EPIC-13: Research AI Assistant
-
-**Goal:** A PhD-level AI copilot that is **grounded** in:
-
-- Local hypotheses, experiments, and datasets.
-- Local literature (Papers, ReadingNotes).
-- External arXiv/DOI lookups when allowed.
-
-### EPIC-13-E-01 — Org-Aware System Prompt
-
-System prompt includes:
-
-- Lab name, field, typical modalities (wet lab, computational, both).
-- Active projects and their hypotheses.
-- Preferential use of **cited papers and local notes**; AI should always suggest explicit follow-up experiments and analyses.
-
-### EPIC-13-E-02 — MCP Tools for Research
-
-`packages/mcp-server/src/tools/research-tools.ts`:
-
-- `suggest_hypotheses(projectId)` — uses project description, hypotheses, and papers to propose new testable hypotheses.
-- `design_experiments(hypothesisId)` — outputs candidate experimental designs, with variables, controls, and predicted outcomes.
-- `summarize_paper(paperId)` — summarises paper and links to relevant hypotheses.
-- `map_literature(topic)` — given a query or seed papers, imports key papers and builds a `PaperCollection`.
-- `suggest_analysis(datasetId)` — suggests appropriate statistical or computational analyses given dataset metadata.
-- `find_relevant_data(hypothesisId)` — surfaces datasets linked to that hypothesis.
+**Components:** `NotebookTimeline`, `NotebookEntryCard`,
+`NotebookEntryEditor` (markdown textarea + URL list editor +
+entry_kind picker + tag input), `NotebookEntryArchivedRow`.
 
 ***
 
-## EPIC-14: Automation (n8n) — Research Workflows
+### Phase 3 — Hypothesis Ledger Integration
 
-**Goal:** Automate repetitive glue work: new paper imports, data publishing, notifications, recurring analyses.
+**Migration:** `0043_research_phase3`, down_revision `0042_research_phase2`.
 
-Example flows in `AUTOMATION_EXAMPLES.md`:
+**Scope:** Promote the existing stub from a flat list to a real
+hypothesis-management surface. Per-hypothesis detail page with
+predictions, falsifiers, and evidence links. A join table connects
+hypotheses to experiments N:M (one experiment can test multiple
+hypotheses; one hypothesis can be tested across multiple experiments).
 
-- ArXiv RSS feed → `api/papers/import` → notify PI of new relevant papers.
-- Completed experiment in eLabFTW → create Dataset stub and Jupyter notebook task.[^26][^4]
-- Completed AnalysisRun with success → create `DatasetVersion` and prompt Dataverse publication.
+**Tables (3 new + 1 ALTER, all under `agos_research_*`):**
+
+1. `agos_research_hypotheses` (ALTER) — additive only. Adds:
+   * `experiment_id UUID` (nullable; soft "primary experiment" pointer —
+     legacy field for the old hypothesis-as-parent shape; new N:M join is
+     authoritative).
+   * `description_md TEXT NOT NULL DEFAULT ''` (longer-form rationale
+     beyond the three clauses; markdown-safe).
+   * `archived_at TIMESTAMPTZ` (nullable).
+   No CHECK changes.
+
+2. `agos_research_hypothesis_predictions` — per-hypothesis predictions.
+   `hypothesis_id UUID NOT NULL` FK CASCADE → hypotheses, `user_id`,
+   `text TEXT NOT NULL`, `kind TEXT NOT NULL DEFAULT 'positive'` CHECK
+   in `(positive, negative, magnitude, direction)`, `confidence TEXT NOT
+   NULL DEFAULT 'medium'` (low / medium / high — reuses the existing
+   confidence enum), `metadata JSONB`, `created_at`, `updated_at`.
+   Index `(hypothesis_id)`.
+
+3. `agos_research_hypothesis_falsifiers` — what observation would
+   refute. `hypothesis_id` FK CASCADE, `user_id`, `text TEXT NOT NULL`,
+   `criterion_md TEXT` (the specific threshold / condition), `metadata`,
+   `created_at`, `updated_at`. Index `(hypothesis_id)`.
+
+4. `agos_research_hypothesis_evidence` — supporting/refuting evidence
+   links. `hypothesis_id` FK CASCADE, `user_id`, `polarity TEXT NOT NULL`
+   CHECK in `(supports, refutes, mixed)`, `source_kind TEXT NOT NULL`
+   CHECK in `(notebook_entry, paper, dataset, external_url, free_text)`,
+   `source_id UUID` (nullable — references the underlying row for the
+   first three kinds; null for `external_url` / `free_text`),
+   `source_url TEXT` (used when `source_kind = external_url`),
+   `notes TEXT`, `metadata`, `created_at`. Indexes `(hypothesis_id)`,
+   `(source_kind, source_id) WHERE source_id IS NOT NULL`.
+
+5. `agos_research_experiment_hypotheses` — N:M join. `experiment_id UUID
+   NOT NULL` (no FK — per platform contract), `hypothesis_id UUID NOT
+   NULL` FK CASCADE → hypotheses, `role TEXT NOT NULL DEFAULT 'tests'`
+   CHECK in `(tests, motivates, related)`, optional `notes`, `created_at`.
+   UNIQUE `(experiment_id, hypothesis_id, role)` — no duplicate edges of
+   the same role. Indexes `(experiment_id)`, `(hypothesis_id)`.
+
+**Locked decisions:**
+
+- **Hypotheses are workshop-global, not experiment-scoped.** (See Open
+  Question #2 — this is the recommendation.) Rationale: solo PhDs
+  recycle hypotheses across multiple experiments; locking each
+  hypothesis to a single experiment created the legacy
+  hypothesis-as-parent confusion the existing `0005_research_os`
+  migration codified. Workshop-global keeps a single, dedupable ledger
+  that experiments link into via the join.
+- **Evidence polymorphism via `source_kind`** instead of separate
+  tables for each source — matches Cyber's IOC pattern and keeps the
+  join table count down. The composite `(source_kind, source_id)` index
+  supports reverse-lookup ("what hypotheses cite this paper?").
+- **Status transition rules** for `agos_research_hypotheses.status`
+  (already locked in the shipped `hypotheses.ts` helper) are kept
+  as-is. Phase 3 adds no new statuses.
+- **Audit action names:** `research.hypothesis.created`,
+  `research.hypothesis.updated`, `research.hypothesis.status_changed`,
+  `research.hypothesis.archived`, `research.prediction.created`,
+  `research.prediction.updated`, `research.falsifier.created`,
+  `research.falsifier.updated`, `research.evidence.linked`,
+  `research.evidence.unlinked`, `research.experiment.hypothesis.linked`,
+  `research.experiment.hypothesis.unlinked`.
+
+**Routes:**
+
+- Existing `/hypotheses` routes accept the new optional fields on POST
+  + PATCH (`description_md`, `archived`). PATCH `archived=true` sets
+  `archived_at`; restore via `POST /hypotheses/[id]/restore`.
+- `/api/tiresias/agentic-os/research/hypotheses/[id]/predictions` (GET
+  list, POST create) + `/predictions/[predId]` (PATCH, DELETE).
+- `/api/tiresias/agentic-os/research/hypotheses/[id]/falsifiers`
+  (GET list, POST create) + `/falsifiers/[falsId]` (PATCH, DELETE).
+- `/api/tiresias/agentic-os/research/hypotheses/[id]/evidence`
+  (GET list, POST create — 400 on `source_kind=external_url` without
+  `source_url`; 400 on the three internal kinds without `source_id`) +
+  `/evidence/[evId]` (DELETE).
+- `/api/tiresias/agentic-os/research/experiments/[id]/hypotheses` (GET
+  joined, POST link — returns 409 on duplicate per the UNIQUE
+  constraint) + `/[hypothesisId]` (PATCH role/notes, DELETE unlink).
+
+**Pages:**
+
+- `/dashboard/os/research/hypotheses` — existing list page, augmented
+  with archived toggle + link to the new detail page.
+- `/dashboard/os/research/hypotheses/[id]` — per-hypothesis detail
+  (new). Sections: statement banner (If/Then/Because formatted),
+  description, predictions list + editor, falsifiers list + editor,
+  evidence panel grouped by polarity, linked experiments.
+- `/dashboard/os/research/experiments/[id]` → Hypotheses tab —
+  attached-hypotheses list with add picker (workshop-scoped) and
+  per-row role pill + remove affordance.
+
+**Components:** `HypothesisDetailHeader`, `PredictionEditor`,
+`FalsifierEditor`, `EvidenceLinkPicker` (polymorphic — switches body
+based on `source_kind`), `ExperimentHypothesisLinker`.
 
 ***
 
-## EPIC-15: MCP Client & CLI (research-cli)
+### Phase 4 — Literature Library
 
-**Goal:** CLI to manage projects, experiments, and literature.
+**Migration:** `0044_research_phase4`, down_revision `0043_research_phase3`.
 
-Example commands:
+**Scope:** Workshop-global literature library (mirrors Maker Phase 5
+references). Papers with DOI / arXiv ID / URL, optional structured
+authors, tags, reading notes per paper, and a per-experiment N:M
+join. Citation-graph between papers is reserved for a future Phase 8 —
+see Open Question #3.
 
-```bash
-research-cli project:create "Single-cell profiling of X"
-research-cli hypothesis:create proj_123 "X increases Y in condition Z"
-research-cli lit:import --doi 10.1038/s41586-020-00000
-research-cli lit:map --collection coll_abc
-research-cli exp:create proj_123 "Test X perturbation" --eln
-research-cli data:publish ds_456
-research-cli ai:ask "What experiments would you run next for hypothesis H?"
-```
+**Tables (4 new, all under `agos_research_*`):**
 
-The CLI uses MCP tools where possible, mirroring Creator/Business OS patterns.[^1]
+1. `agos_research_papers` — workshop-global. `user_id NOT NULL`,
+   `title TEXT NOT NULL`, `kind TEXT NOT NULL DEFAULT 'paper'` CHECK in
+   `(paper, preprint, thesis, book, chapter, dataset_paper, report,
+   blog, other)`, `doi TEXT`, `arxiv_id TEXT`, `url TEXT` (URL-only —
+   column comment references the MCP storage transfer contract for the
+   PDF itself), `authors_text TEXT` (free-form fallback; the structured
+   authors join below is canonical when present), `venue TEXT`,
+   `year INT`, `abstract_md TEXT`, `tags TEXT[] NOT NULL DEFAULT '{}'`,
+   `metadata JSONB`. Indexes `(user_id, updated_at DESC)`, GIN on
+   `tags`, partial UNIQUE `(user_id, doi) WHERE doi IS NOT NULL` (dedupe
+   on DOI per user), partial UNIQUE `(user_id, arxiv_id) WHERE arxiv_id
+   IS NOT NULL`. The DOI / arXiv UNIQUE constraints catch the common
+   "I clipped this paper twice" case without blocking the manual
+   no-identifier flow.
+
+2. `agos_research_authors` — workshop-global. `user_id NOT NULL`,
+   `display_name TEXT NOT NULL`, `given_name TEXT`, `family_name TEXT`,
+   `orcid TEXT`, `affiliation TEXT`, `metadata JSONB`. Partial UNIQUE
+   `(user_id, orcid) WHERE orcid IS NOT NULL`. Index
+   `(user_id, family_name)`.
+
+3. `agos_research_paper_authors` — join. `paper_id UUID NOT NULL` FK
+   CASCADE → papers, `author_id UUID NOT NULL` FK CASCADE → authors,
+   `position INT NOT NULL` (author order). UNIQUE `(paper_id, position)`
+   (one author per position) + UNIQUE `(paper_id, author_id)` (no dup).
+
+4. `agos_research_experiment_references` — join. `experiment_id UUID
+   NOT NULL` (no FK), `paper_id UUID NOT NULL` FK CASCADE → papers,
+   `relevance TEXT NOT NULL DEFAULT 'cites'` CHECK in `(cites, methods,
+   prior_art, contradicts, builds_on)`, optional `notes`, `created_at`.
+   UNIQUE `(experiment_id, paper_id, relevance)`. Indexes
+   `(experiment_id)`, `(paper_id)`.
+
+**Locked decisions:**
+
+- **Reading notes live on Phase 2 notebook entries**, not on a separate
+  `reading_notes` table. A notebook entry with `entry_kind='note'` and
+  an attached `agos_research_evidence` row of kind `paper` is the
+  canonical "this is what I learned from paper X" record. Reduces
+  schema sprawl; reuses the Phase 2 attachment pipeline.
+- **Citation graph deferred to Phase 8.** The `_references` join is
+  experiment↔paper only; paper↔paper edges (citation graph view) are
+  out of scope until we have a working library to graph.
+- **No automatic metadata fetch from DOI / arXiv** in Phase 4 — user
+  pastes the structured fields manually or uses an MCP-mediated
+  importer in a later phase. This avoids carrying a CrossRef /
+  arXiv-API dependency in this phase.
+- **Audit action names:** `research.paper.created`,
+  `research.paper.updated`, `research.author.created`,
+  `research.author.linked`, `research.author.unlinked`,
+  `research.paper.archived`, `research.experiment.reference.linked`,
+  `research.experiment.reference.unlinked`.
+
+**Routes:**
+
+- `/api/tiresias/agentic-os/research/papers` (GET list — filterable by
+  `kind`, `tag`, `year`, free-text search across title + authors_text;
+  POST create — 409 on duplicate DOI/arXiv for the user).
+- `/api/tiresias/agentic-os/research/papers/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/research/papers/[id]/authors` (GET, POST
+  link by author_id or by `{ display_name, ... }` — auto-creates author
+  if no ID), `/[authorId]` (PATCH position, DELETE).
+- `/api/tiresias/agentic-os/research/authors` (GET list — filter by
+  `family_name` prefix; POST create).
+- `/api/tiresias/agentic-os/research/authors/[id]` (GET, PATCH, DELETE
+  — 409 if any paper still links).
+- `/api/tiresias/agentic-os/research/experiments/[id]/references` (GET
+  joined, POST link — 409 on duplicate) + `/[paperId]` (PATCH
+  relevance/notes, DELETE).
+
+**Pages:**
+
+- `/dashboard/os/research/library` — workshop-global papers list with
+  filter chips + free-text search + tag heatmap (reuses
+  `_shared/components/tag-heatmap`).
+- `/dashboard/os/research/library/[id]` — paper detail (metadata,
+  authors, tags, abstract, linked experiments, related notebook
+  entries via Phase 3 evidence rows).
+- `/dashboard/os/research/authors` — workshop-global authors list.
+- `/dashboard/os/research/experiments/[id]` → Literature tab —
+  linked-papers list with add picker (filterable + create-new
+  fallback).
+
+**Components:** `PaperList`, `PaperForm`, `AuthorPicker`,
+`PaperReferenceLinker`, `PaperAbstractCollapsible`, `AuthorChipList`.
+
+**Hub registry card:** add `Literature library` pointing at
+`/dashboard/os/research/library`.
 
 ***
 
-## EPIC-16: Containerization & Co‑Process Layout
+### Phase 5 — Datasets + Protocols + PDF Export
 
-**Goal:** Single Docker image orchestrating Research OS + eLabFTW + JupyterHub + Dataverse (or remote Dataverse) + n8n, with feature-flagged co-processes.
+**Migration:** `0045_research_phase5`, down_revision `0044_research_phase4`.
 
-Process inventory mirrors Business OS but replaces CRM/Invoice stack with ELN/Jupyter/Dataverse.
+**Scope:** Per-experiment dataset registry (URL-only, MCP contract) and
+workshop-global protocols / methods documents with version pinning.
+Plus PDF export of an experiment summary, mirroring Maker Phase 5's
+project export.
 
-- eLabFTW can be self-hosted or institution-hosted; integration is via API URL.[^5][^4][^2]
-- JupyterHub runs either inside the same cluster or externally; Research OS uses its REST API + notebook URLs.[^8][^9]
-- Dataverse is typically external; integration is via its REST API and published DOIs.[^20][^21][^19]
+**Tables (3 new, all under `agos_research_*`):**
+
+1. `agos_research_datasets` — per-experiment. `user_id NOT NULL`,
+   `experiment_id UUID NOT NULL` (no FK), `name TEXT NOT NULL`,
+   `kind TEXT NOT NULL DEFAULT 'tabular'` CHECK in `(tabular, image,
+   timeseries, sequence, sim, other)`, `url TEXT NOT NULL` (URL-only;
+   MCP contract — Zenodo / Dataverse / Figshare / S3 / etc.),
+   `version TEXT`, `size_bytes BIGINT`, `checksum TEXT`,
+   `archived BOOLEAN NOT NULL DEFAULT false` (was raw data archived
+   externally — drives the reproducibility checklist in Phase 6),
+   `published_doi TEXT`, `notes_md TEXT`, `tags TEXT[]`, `metadata
+   JSONB`, `created_at`, `updated_at`. Indexes `(experiment_id)`,
+   `(user_id, archived)`, GIN on `tags`.
+
+2. `agos_research_protocols` — workshop-global. `user_id NOT NULL`,
+   `title TEXT NOT NULL`, `version TEXT NOT NULL DEFAULT '1.0'`,
+   `body_md TEXT NOT NULL DEFAULT ''`, `kind TEXT NOT NULL DEFAULT
+   'method'` CHECK in `(method, sop, analysis, code_pipeline, other)`,
+   `attached_urls TEXT[]`, `tags TEXT[]`, `parent_protocol_id UUID`
+   (nullable; self-reference for "this is v1.1 of protocol X" — no FK
+   to allow soft history), `metadata`, `created_at`, `updated_at`.
+   Indexes `(user_id, kind)`, `(parent_protocol_id) WHERE
+   parent_protocol_id IS NOT NULL`, GIN on `tags`.
+
+3. `agos_research_experiment_protocols` — join. `experiment_id UUID
+   NOT NULL` (no FK), `protocol_id UUID NOT NULL` FK CASCADE →
+   protocols, `pinned_version TEXT NOT NULL` (the version string at
+   link time — pins reproducibility), `notes`, `created_at`. UNIQUE
+   `(experiment_id, protocol_id, pinned_version)`.
+
+**Locked decisions:**
+
+- **Datasets are per-experiment, not workshop-global.** A "dataset" in
+  this OS means "the data this experiment produced (or directly
+  consumed)" — that scoping is the value. A workshop-global "data
+  catalogue" is out of scope; a future Saluca-built Data OS would own
+  that surface.
+- **Protocols pin by string, not FK.** Pinning `pinned_version =
+  '1.2.0'` makes the experiment reproducible against the methods doc
+  even after the protocol's `body_md` evolves. Loading a pinned
+  protocol returns the parent's content unless an exact version match
+  exists in the parent-protocol tree.
+- **PDF export uses `_shared/pdf` primitives.** Page 1: experiment
+  title, status, target date, description, tags, linked-hypothesis
+  count, linked-paper count, dataset count, protocol count.
+  Subsequent pages: notebook timeline (last 50 entries), hypotheses
+  with predictions + falsifiers, references (grouped by relevance),
+  datasets, protocols (with pinned version). Footer "Generated by
+  Pantheon Research OS".
+- **Audit action names:** `research.dataset.created`,
+  `research.dataset.updated`, `research.dataset.archived`,
+  `research.protocol.created`, `research.protocol.updated`,
+  `research.protocol.version_bumped`, `research.experiment.protocol.pinned`,
+  `research.experiment.protocol.unpinned`, `research.experiment.export.pdf`.
+
+**Routes:**
+
+- `/api/tiresias/agentic-os/research/experiments/[id]/datasets`
+  (GET, POST) + `/datasets/[datasetId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/research/protocols` (GET, POST) +
+  `/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/research/protocols/[id]/versions` (POST
+  bump — creates a new row with `parent_protocol_id = original.id` and
+  the supplied `version` + `body_md`).
+- `/api/tiresias/agentic-os/research/experiments/[id]/protocols` (GET
+  joined, POST pin — 409 on duplicate pin), `/[protocolId]` (PATCH
+  notes, DELETE).
+- `/api/tiresias/agentic-os/research/experiments/[id]/export.pdf` —
+  `Content-Type: application/pdf`, `Content-Disposition: attachment;
+  filename="<experiment-slug>-<YYYY-MM-DD>.pdf"`. Returns 400 when the
+  experiment has no notebook entries / hypotheses / datasets /
+  protocols.
+
+**Pages:**
+
+- `/dashboard/os/research/protocols` — workshop-global library.
+- `/dashboard/os/research/protocols/[id]` — protocol detail with
+  version history.
+- `/dashboard/os/research/experiments/[id]` → Datasets tab + Protocols
+  tab (move out of placeholders). Export-PDF button on the experiment
+  header.
+
+**PDF template:** `lib/agentic-os/research/pdf/experiment-export.tsx`
+— composes the OS-agnostic `_shared/pdf` primitives.
+
+**Hub registry cards:** add `Protocols` and `Reproducibility export`
+(the latter being a thin landing page that explains the PDF flow and
+shows recent exports — surfaced fully in Phase 6).
 
 ***
 
-## Scale-Up Path: From Solo PhD to Multi-Lab Consortium
+### Phase 6 — Reproducibility + Deadlines + Dependencies
 
-- **Solo PhD:** Only Projects, Experiments registry, Papers, Hypotheses, Jupyter notebooks; eLabFTW and Dataverse optional.
-- **Single PI Lab:** Turn on ELN and inventory; require Lab membership; start using Dataverse for open data.
-- **Department / Program:** JupyterHub and Dataverse centralised; multiple Labs defined; Research OS instance becomes the "OS" over them.
-- **Consortium:** Research OS speaks to multiple Dataverse instances; projects span labs; MCP tools include custom HPC scheduler, EHR or LIMS integrations.
+**Migration:** `0046_research_phase6`, down_revision `0045_research_phase5`.
 
-Throughout, schema and core app stay stable — only co-process topology and feature flags change, mirroring the extensible approach used in Maker OS and Business OS.[^9][^21][^4][^7][^19][^2]
+**Scope:** Three additive surfaces. Per-experiment **deadlines /
+milestones** (mirrors Maker Phase 6), **cross-experiment dependencies**
+(experiment A's results feed experiment B), and a per-experiment
+**reproducibility checklist** that tracks "raw data archived", "methods
+doc pinned", "code published", "preregistration filed", and friends.
 
----
+**Tables (3 new + 1 ALTER, all under `agos_research_*`):**
 
-## References
+1. `agos_research_experiment_milestones` — per-experiment.
+   `experiment_id UUID NOT NULL` (no FK), `user_id`,
+   `title TEXT NOT NULL`, `due_at DATE` (DATE semantics chosen on the
+   same grounds as Maker Phase 6 — calendar dates round-trip cleanly
+   through the routing layer), `status TEXT NOT NULL DEFAULT 'pending'`
+   CHECK in `(pending, at_risk, blocked, on_track, done, missed)`,
+   `priority TEXT NOT NULL DEFAULT 'medium'` CHECK in `(low, medium,
+   high, critical)`, `is_blocker BOOLEAN NOT NULL DEFAULT false`,
+   `blocked_reason TEXT`, `notes_md TEXT`, `completed_at TIMESTAMPTZ`,
+   `metadata`. Indexes mirror Maker exactly.
 
-1. [Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/399744584/abd6ec54-7f74-4389-aec4-b0a0b60ab632/Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md?AWSAccessKeyId=ASIA2F3EMEYE4Q4VOQLZ&Signature=QhkGX4SBmliI7evT5%2BA%2F%2Bm0fSF4%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEMb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIQCQoGihA8lk1ICleb%2FB%2B9MgvGdqIlSx0HhY8m5tTkXWTAIgI%2BzW6j1o0wfCwFCPrHGeADQ6ePN3vI9qjs5PgTlHDvYq%2FAQIj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FARABGgw2OTk3NTMzMDk3MDUiDEWB8YL4mzjLDewvlSrQBKyOitDtV8q0A2iP7m1eXNBeXugE%2FTQZnygFRSLCF3SDo6KoC8K%2FcBVr9BAibKqXDRAXx6c%2Bj%2B4k%2FlJXnf6QShtQyo25JnGeAxlXpYKJGVkvy7tMHU8baEBMFciU1PuCfJxZAklYj6B86u7Y4YC9i6ELxIdUg6d6r8%2FUkky4P%2FcwUeYSP54cs4dSgAdNfnGhXnGM3Zj8HtwUXaTWOj55tmrvuWyiS85oO923OAM%2Bio7jjazZMo3UCid6pE%2F28D%2BDSy0WALJy33QpioKIP1u6VFsJzeaMdiySuZTjSKCVKmh6eWkN83MK5SCd44Ncm6OdlF8PJ9vQ43%2B0YywDuwAHmVERvpLLPb7Hf7l5C53W%2FRf29cpnncJDxoqWNF6LJVUVMo8IMR33khHk9svGMd18bCe4U8maiEiann03rO5ofV3fxNOcKWg6T5OJHG9wQcYsbXPj2dWDQYyK8QAcR3uZKgteJjEkyFxos7TrshUlQhkJEDT3RHykDzSiHBsdMXOihUm94K9NpdFaatUAzOhV%2BXJ92r9kXilTx279Qeb0R2690uGows3JW4kSP2reovxgYsCaUedcJO9a5GcLymmAbDzmubhoVzL64FbDThfxf5zWB6L2CwYTlQ9T%2FRNctLdnIPqLYH153pvqLLIKkDTnAzCnbm%2F6VIMZ8Z8%2FG1zdaBzw0TkYLS5JFlpwHjAdiW4SLBp7IkYWQP%2FuPnVb7zbDGARfteC%2FaqFrILi6lKPBcXbFdmJlDddUSzPgB3hf1txBIikvoPwnqg2Rm0D1o%2FXZ2fYwnMvpzwY6mAEN%2FSVJK1IWvlhy6OiZNJiKoHeihb0QELlQZj3TPtFk0CdL6le2F3V1lxIJ1Q8X2RQwT%2FtDtlv6F%2FDzqq4em7KRWK11BKv0r8hsP%2BpCDTDDxuEF69eE71YPoQCb8DoB%2F3VPuexYNozh3Qyt6SkMehwvQ2nu8MBo6hS3gLEUEQMYBdRkIP1akMFlr587RQLuizfb6XpO0nzZgw%3D%3D&Expires=1778021231) - Every ticket follows EPIC-XX-APEV-NN where A Assess, P Plan, E Execute, V Validate. Epics are indepe...
+2. `agos_research_experiment_dependencies` — directed edges in a
+   per-user cross-experiment graph. `user_id NOT NULL`,
+   `from_experiment_id UUID NOT NULL`, `to_experiment_id UUID NOT
+   NULL`, `kind TEXT NOT NULL DEFAULT 'feeds'` CHECK in `(feeds,
+   blocks, informs, replicates)`, `status TEXT NOT NULL DEFAULT 'open'`
+   CHECK in `(open, cleared)`, `notes`, `metadata`, `created_at`,
+   `updated_at`. UNIQUE `(from_experiment_id, to_experiment_id, kind)`,
+   CHECK `from != to`. Indexes mirror Maker.
 
-2. [eLabFTW - free open source ELN](https://www.elabftw.net) - An electronic laboratory notebook. Store experiments and protocols in eLabFTW. Sign and timestamp en...
+3. `agos_research_reproducibility_checks` — per-experiment.
+   `experiment_id UUID NOT NULL` (no FK), `user_id`,
+   `item_key TEXT NOT NULL` (machine name — e.g.
+   `raw_data_archived`, `methods_pinned`, `code_published`,
+   `preregistration_filed`, `ethics_filed`, `data_dictionary_written`,
+   `analysis_reproducible`), `state TEXT NOT NULL DEFAULT 'pending'`
+   CHECK in `(pending, in_progress, done, not_applicable, waived)`,
+   `evidence_url TEXT` (URL-only; link to the artifact),
+   `notes TEXT`, `completed_at TIMESTAMPTZ`, `metadata`. UNIQUE
+   `(experiment_id, item_key)` (one row per item per experiment).
+   Index `(experiment_id, state)`.
 
-3. [eLabFTW is the most popular open source electronic lab ...](https://github.com/elabftw/elabftw) - eLabFTW is an electronic lab notebook manager for research teams. It lets you store and organize you...
+4. `agos_research_experiments` (ALTER) — adds nothing schema-wise; the
+   migration adds a comment documenting the new derived rollup view
+   exposed by the API (e.g. `reproducibility_score = done / (pending +
+   in_progress + done)` with `not_applicable` and `waived` excluded
+   from the denominator).
 
-4. [Pilot Service for the Electronic Lab Notebook "eLabFTW"](https://www.iimc.kyoto-u.ac.jp/en/info/20251223133443) - The electronic lab notebook "eLabFTW" is open-source software that originated in a laboratory in Fra...
+**Locked decisions:**
 
-5. [eLabFTW download](https://sourceforge.net/projects/elabftw.mirror/) - eLabFTW is a modern, open-source electronic laboratory notebook (ELN) that helps research teams stor...
+- **Checklist items are user-extensible.** The seven canonical
+  `item_key`s above are seeded on experiment creation as `pending`
+  rows. Users can POST additional items with arbitrary `item_key`s
+  (validated as `^[a-z0-9_]+$`, max 60 chars). No CHECK constraint on
+  `item_key`.
+- **"Top blockers" feed (cross-experiment) is workshop-wide**, exactly
+  like Maker Phase 6 — milestones in `missed`/`blocked`/overdue/
+  `at_risk-within-7-days` plus `open` `blocks` dependencies. Severity
+  ranking deterministic per Maker's recipe.
+- **Reproducibility rollup is read-only on the API** — clients can
+  fetch `/experiments/[id]/reproducibility` and get
+  `{ score, items, blocking_items }`. No mutate route writes a score —
+  the score is always derived from the item states.
+- **Audit action names:** `research.milestone.created`,
+  `research.milestone.updated`, `research.milestone.completed`,
+  `research.dependency.created`, `research.dependency.cleared`,
+  `research.dependency.deleted`, `research.reproducibility.updated`.
 
-6. [Top 10 Electronic Lab Notebooks (ELN) of 2025](https://blogs.labii.com/others/top-10-electronic-lab-notebooks-eln-of-2025-streamline-your-research-with-integrated-inventory) - 8. eLabFTW. eLabFTW is a free, open-source ELN that offers features for experiment documentation, in...
+**Routes:**
 
-7. [JupyterHub](https://docs.alliancecan.ca/wiki/JupyterHub) - JupyterHub is the best way to serve Jupyter Notebook for multiple users. It can be used in a class o...
+- Milestones: `/api/tiresias/agentic-os/research/experiments/[id]/milestones`
+  (GET, POST), `/milestones/[mid]` (PATCH, DELETE).
+- Dependencies: `/api/tiresias/agentic-os/research/experiments/[id]/dependencies`
+  (GET both directions, POST — 400 self-loop, 404 cross-ownership, 409
+  duplicate), `/[depId]` (PATCH, DELETE).
+- Top blockers: `/api/tiresias/agentic-os/research/blockers` (GET,
+  `?limit=` default 25 max 100).
+- Reproducibility: `/api/tiresias/agentic-os/research/experiments/[id]/reproducibility`
+  (GET rollup + items), `POST` (create a new item), `PATCH /items/[itemKey]`
+  (update state / evidence_url / notes / completed_at).
 
-8. [JupyterHub — JupyterHub documentation](https://jupyterhub.readthedocs.io) - It is a multi-user Hub that spawns, manages, and proxies multiple instances of the single-user Jupyt...
+**Pages:**
 
-9. [Project Jupyter | JupyterHub](https://jupyter.org/hub) - JupyterHub brings the power of notebooks to groups of users. It gives users access to computational ...
+- `/dashboard/os/research` hub → Top Blockers widget mounted alongside
+  any prior widgets.
+- `/dashboard/os/research/blockers` — full workshop blockers list.
+- `/dashboard/os/research/experiments/[id]` → Reproducibility tab
+  (move out of placeholder) with checklist UI + score badge. The
+  Overview tab gets a Reproducibility score pill in the header.
+- Per-experiment Dependencies tab — upstream / downstream lists with
+  add picker.
+- Per-experiment Milestones strip on Overview.
 
-10. [Zotero Reference Management — Complete Guide for ...](https://news.europub.co.uk/zotero-reference-management-complete-guide-for-researchers-editors-and-students/) - Zotero is a powerful, open-source reference manager that helps researchers collect, organize, cite, ...
+**Hub registry card:** add `Top blockers` pointing at
+`/dashboard/os/research/blockers`.
 
-11. [Trusted AI reference and citation management tools](https://anara.com/blog/reference-management-tools) - Zotero is a free, open-source reference manager that helps users collect, organize, cite, and share ...
+***
 
-12. [Zotero vs Mendeley: Which reference manager is better?](https://paperpile.com/r/zotero-vs-mendeley/) - Zotero an open-source reference management tool, enables users to gather, organize, and cite researc...
+### Phase 7 — AI Coach
 
-13. [Zotero Review 2025: The Best Free Research Tool for ...](https://sites.google.com/view/aitoolfree/zotero-review) - Zotero is a free, open-source reference manager developed by the Center for History and New Media at...
+**Migration:** `0047_research_phase7`, down_revision `0046_research_phase6`.
 
-14. [ResearchRabbit: AI Tool for Smarter, Faster Literature Reviews](https://www.researchrabbit.ai) - Save hours on your literature review. Use ResearchRabbit to find related papers, build citation maps...
+**Scope:** Streaming Anthropic-backed AI coach with four modes —
+`lit_reviewer`, `hypothesis_critic`, `methods_advisor`, `general`. Same
+one-table-with-inline-JSONB-messages shape as Maker Phase 7. No domain
+output filter — see Open Question #4.
 
-15. [AI for Literature Reviews: Map Research - Library Guides](https://libguides.tulane.edu/c.php?g=1368318&p=10109584) - Research Rabbit lets users discover publications related to one or more seed publications with the h...
+**Schema (1 new table, all under `agos_research_*`):**
 
-16. [Tool Demo–ResearchRabbit: An AI-Driven ...](https://thepeerreview-iwca.org/issues/issue-9-1/tool-demo-researchrabbit-an-ai-driven-tool-for-literature-mapping/) - ResearchRabbit offers a unique approach to literature mapping and citation management that can enhan...
+1. `agos_research_coach_sessions` — `id UUID PK`, `user_id UUID NOT NULL`,
+   `experiment_id UUID` nullable (per-OS UUID, no FK), `mode TEXT NOT
+   NULL` CHECK in `(lit_reviewer, hypothesis_critic, methods_advisor,
+   general)`, `title TEXT NOT NULL`, `messages JSONB NOT NULL DEFAULT
+   '[]'` (ordered array of `{ role, content, created_at }`),
+   `metadata JSONB NOT NULL DEFAULT '{}'`, `created_at`, `updated_at`.
 
-17. [Streamlining Your Literature Review Workflow with ...](https://www.choice360.org/libtech-insight/streamlining-your-literature-review-workflow-with-researchrabbit/) - ResearchRabbit is an AI tool designed to help researchers visualize connections between existing res...
+   Indexes: `(user_id, updated_at DESC)`, partial `(experiment_id,
+   updated_at DESC) WHERE experiment_id IS NOT NULL`,
+   `(user_id, mode, updated_at DESC)`.
 
-18. [USC Dataverse Launches to Support Open Research and ...](https://itservices.usc.edu/2025/11/13/usc-dataverse-launches-to-support-open-research-and-data-sharing/) - The USC Dataverse, built on the open-source Dataverse Project, is designed to increase the visibilit...
+**Locked decisions:**
 
-19. [The Dataverse Project - Dataverse.org | The Dataverse Project](https://dataverse.org) - The Dataverse Project - Dataverse.org. Open source research data repository software. psychology. Re...
+- **No domain output filter.** Matches Filmmaker / Maker, not Cyber
+  (which redacts secrets) or Health (crisis-safety wall). Academic
+  prose isn't credential-sensitive; users opt in by typing.
+- **System-prompt-only guardrail** for `methods_advisor`: refuse to
+  give regulated professional advice (clinical, human-subjects IRB,
+  animal-use IACUC, hazardous-materials handling) and refer the user
+  to their institution's review board or licensed professional. Same
+  pattern as Maker's "PPE / ventilation / training" prompt rule.
+- **Context loading (mode-shaped, hard-cap 50 KB pre-prompt):**
+  * `lit_reviewer` (experiment optional): user's most recent 30 papers
+    (title, authors_text, year, tags, abstract truncated to 400 chars)
+    + the experiment's linked-references if scoped + any open
+    `prior_art` `_references` rows across the workshop.
+  * `hypothesis_critic` (experiment optional): user's hypotheses
+    (statement + status + confidence + tags) + predictions + falsifiers
+    + recent evidence. If experiment is scoped, filter to that
+    experiment's linked hypotheses.
+  * `methods_advisor` (experiment required): the experiment's
+    description + status + linked protocols (titles + versions; first
+    1 KB of body_md) + datasets summary + reproducibility item states.
+  * `general` (experiment optional): experiment meta + counts only
+    + workshop counts.
+- **Streaming wire format:** identical to Filmmaker / Maker / Cyber /
+  Health — UTF-8 deltas, U+001E sentinel, JSON trailer with
+  `{ session_id }`. Returns 503 `coach_not_configured` if
+  `ANTHROPIC_API_KEY` is unset (the platform-wide pattern).
+- **`SYSTEM_PROMPT_VERSION = 'v1'`** — bump on material template
+  edits so historical sessions can be replayed deterministically.
+- **Audit action names:** `research.coach.session_created`,
+  `research.coach.session_renamed`, `research.coach.session_deleted`,
+  `research.coach.message_appended`.
 
-20. [IQSS/dataverse: Open source research data repository ...](https://github.com/IQSS/dataverse) - Welcome to Dataverse®, the open source software platform designed for sharing, finding, citing, and ...
+**Routes (BFF, under `app/api/tiresias/agentic-os/research/coach/`):**
 
-21. [About](https://dataverse.org/about) - The Dataverse Project is an open source web application to share, preserve, cite, explore, and analy...
+- `GET  /coach/sessions` — list. Filters `?mode=`, `?experiment_id=`,
+  `?scope=workshop`. Paginated.
+- `POST /coach/sessions` — create. Body `{ mode, experiment_id?,
+  title?, initial_message? }`. Returns 503 `coach_not_configured` if
+  the key is missing. 404 if `experiment_id` doesn't belong to caller.
+  Audited.
+- `GET  /coach/sessions/[sessionId]` — fetch session + transcript.
+- `PATCH /coach/sessions/[sessionId]` — rename. Audited.
+- `DELETE /coach/sessions/[sessionId]` — drop. Audited.
+- `POST /coach/sessions/[sessionId]/messages` — append + stream
+  assistant turn.
+- `POST /coach/quick` — one-shot quick prompt (no persistence).
 
-22. [Top Benchling Alternatives for Labs That Need More Than ...](https://genemod.net/blog/top-benchling-alternatives-for-labs-that-need-more-than-flexibility) - Benchling gives labs flexibility—but flexibility without structure can quietly become a liability. H...
+**Pages:**
 
-23. [The Top 9 Benchling Alternatives](https://qbench.com/blog/the-top-9-benchling-alternatives) - Evaluating LIMS options? This in-depth review highlights the top alternative to Benchling and why la...
+- `/dashboard/os/research/coach` — coach hub. Mode picker, recent
+  sessions, mode-scoped quick prompts. 503-aware empty state when
+  `ANTHROPIC_API_KEY` is missing.
+- `/dashboard/os/research/coach/[sessionId]` — session view with
+  rename + delete affordances and mode + scope pills.
+- Per-experiment Coach tab — CTA into
+  `/research/coach?experiment_id=<id>&mode=methods_advisor` (default
+  mode for an experiment-scoped open).
 
-24. [Best Benchling competitors alternatives - newLab®](https://newlabcloud.com/blog/best-benchling-competitors-alternatives/) - Explore top Benchling alternatives like Labguru & LabArchives, how connects your entire lab ecosyste...
+**Hub registry card:** add `AI coach`.
 
-25. [Step-by-Step Guide to Using ResearchRabbit](https://www.researchrabbit.ai/articles/guide-to-using-researchrabbit) - Unlike traditional academic search tools, ResearchRabbit doesn't just return a list of results. It h...
+***
 
-26. [eLabFTW integration](https://galaxyproject.org/news/2025-04-02-elabftw-integration/) - eLabFTW is a free and open source electronic lab notebook from Deltablot. It can keep track of exper...
+## 4. Open questions for Cristian
 
-27. [Litmaps vs ResearchRabbit vs Connected Papers: Best Lit ...](https://effortlessacademic.com/litmaps-vs-researchrabbit-vs-connected-papers-the-best-literature-review-tool-in-2025/) - Here, we compare the three most popular tools for visualising papers and doing literature review: Li...
+1. **Should Phase 1 break `agos_research_experiments.hypothesis_id`?** The
+   shipped `0005_research_os` migration models experiments as children of
+   hypotheses (`hypothesis_id NOT NULL FK CASCADE`). The plan above relaxes
+   this to nullable + drops the FK, and moves the relationship to a
+   dedicated N:M join in Phase 3. Alternative: keep the child semantics
+   ("an experiment is born from one primary hypothesis") and just add the
+   join table on top. Recommendation: relax it. The rest of the platform
+   treats per-OS parent UUIDs as cross-cutting without FK (v0.1.30
+   contract), and one experiment regularly tests multiple hypotheses in
+   practice.
 
+2. **Hypotheses workshop-global vs experiment-scoped?** Plan above goes
+   workshop-global. Alternative: scope each hypothesis to a single
+   experiment (simpler ownership story; matches the legacy shape).
+   Recommendation: workshop-global — solo PhDs recycle hypotheses across
+   experiments, and the join table accommodates the simpler case.
+
+3. **Citation graph in Phase 4 or Phase 8?** Plan above defers paper↔paper
+   citation edges until a future Phase 8. Alternative: bake the
+   `agos_research_paper_citations` table into Phase 4 from day one (cheap
+   to add). Recommendation: defer — the value depends on having a
+   library to graph, and the import flow (where citations come from) isn't
+   designed yet.
+
+4. **Coach safety filter?** Plan above ships no domain-output filter —
+   matches Filmmaker / Maker. Alternative: a methods-advisor regulatory
+   filter that scans output for "should this go through IRB?"-style
+   triggers and inserts a referral banner. Recommendation: skip the
+   filter; rely on the system-prompt guardrail. Academic prose isn't
+   credential-sensitive.
+
+5. **Notebook entry edit-history?** Plan above allows in-place PATCH on
+   `agos_research_notebook_entries` with no history. Alternative: a
+   `agos_research_notebook_entry_revisions` table that captures every
+   prior `body_md` on update (real-ENL legal-defensibility pattern).
+   Recommendation: skip for the solo-PhD audience; if a small lab needs
+   IRB-grade audit, that's a Phase 8+ addition. Decision changes the
+   shape of Phase 2 if Cristian wants the revisions table.
+
+6. **Protocol versioning shape?** Plan above uses a `parent_protocol_id`
+   self-reference (each version is its own row, with a soft chain back
+   to the original). Alternative: store a single row and version
+   `body_md` history in a sibling table. Recommendation: self-reference
+   — simpler reads, the pinned-version flow on experiments needs a
+   row-per-version anyway.
+
+7. **Reproducibility default item set?** Plan above seeds seven items:
+   `raw_data_archived`, `methods_pinned`, `code_published`,
+   `preregistration_filed`, `ethics_filed`, `data_dictionary_written`,
+   `analysis_reproducible`. Is this the right starter set? Cristian to
+   confirm or hand a curated list.
+
+8. **Phase 4 metadata fetch — defer or include?** Plan above ships
+   without DOI / arXiv auto-fetch. Alternative: bundle a CrossRef +
+   arXiv-API fetcher in Phase 4 (cheap; adds two no-auth HTTP
+   dependencies). Recommendation: defer — keep Phase 4 schema-pure;
+   add fetchers in a Phase 4.5 patch once we know the import volume.
+
+***
+
+## 5. Non-goals (explicit)
+
+- **Wet-lab inventory tracking** (reagents, plasmids, antibodies,
+  freezer locations, sample aliquot trees). That's Maker OS's parts
+  catalogue or a future LIMS OS — not Research.
+- **HIPAA / human-subjects IRB workflow management.** Compliance with
+  human-subjects research review is a regulated workflow that belongs
+  in Health OS or a future Compliance OS, not bolted onto the
+  experiment hub. The reproducibility checklist item `ethics_filed` is
+  a pointer (URL to the user's IRB approval letter), not a workflow.
+- **Grant administration, budgets, indirect-cost tracking.** That's
+  Business OS — the contacts + invoicing layer scales to grant-line-item
+  tracking. Research OS doesn't carry budget columns.
+- **Real-time collaborative editing on notebook entries or
+  protocols.** Solo / small-lab target audience — single-user writes
+  with periodic save are fine. Multi-cursor live editing is a
+  significant infra add that pays off only with team scale; out of
+  scope until a small-lab cohort asks for it.
+- **Built-in PDF viewer.** Papers and protocols are URL-only links
+  per the MCP storage transfer contract. Users open PDFs in their
+  browser's native viewer; the OS stores the URL, not the bytes.
+- **Citation-graph visualization (paper↔paper).** Reserved for Phase
+  8; Phase 4 ships experiment↔paper edges only.
+- **Statistical analysis, R / Python notebook execution, or
+  computational-pipeline orchestration.** Out of scope. Users link to
+  their JupyterHub / Colab / nbviewer URLs from notebook entries and
+  datasets.
+- **Public publication / preprint upload integration (arXiv submit,
+  Zenodo publish).** Out of scope. Phase 5 stores published DOIs +
+  URLs; the OS doesn't broker the submission.
+
+***
+
+## Reference paths
+
+- Registry: `apps/platform-web/src/lib/agentic-os/registry.ts`
+- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/os/research/`, `apps/platform-web/src/lib/agentic-os/research/`, `apps/platform-web/src/components/agentic-os/research/`
+- Existing migration: `packages/database/alembic/versions/0005_research_os.py`
+- Shared primitives: `apps/platform-web/src/lib/agentic-os/_shared/` (audit, session, pdf, safety, types, crud-route) and `apps/platform-web/src/components/agentic-os/_shared/` (checklist, combobox, dashboard-hub, data-table, stat-card, tag-heatmap, trend-chart, wizard-form)
+- Coach pattern anchor: `apps/platform-web/src/lib/agentic-os/maker/coach/`
+- PDF pattern anchor: `apps/platform-web/src/lib/agentic-os/_shared/pdf/` + `apps/platform-web/src/lib/agentic-os/maker/pdf/`
+- Storage transfer contract: `docs/architecture/mcp-storage-transfer.md`
+- Legacy Perplexity epic-style plan: `apps/platform-web/content/agentic-os/research.md.legacy-epic.md`
