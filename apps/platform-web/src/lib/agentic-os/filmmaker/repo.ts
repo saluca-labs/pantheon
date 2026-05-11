@@ -75,6 +75,16 @@ import {
   type ShootingDayWithStrips,
   type ProjectScheduleSummary,
 } from './schedule';
+import {
+  STORYBOARD_STATUS_VALUES,
+  type Storyboard,
+  type StoryboardUpsert,
+  type StoryboardStatus,
+  type StoryboardPanel,
+  type StoryboardPanelUpsert,
+  type StoryboardWithPanels,
+  type StoryboardSummary,
+} from './storyboards';
 import { parseFountain, countWords as countFountainWords } from './fountain-parser';
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
@@ -2740,6 +2750,539 @@ export async function getProjectScheduleSummary(
     scheduledEighths: Number(row.scheduled_eighths),
     totalScheduledMinutes: Number(row.total_scheduled_minutes),
   };
+}
+
+// ─── Storyboards ────────────────────────────────────────────────────────────
+
+const STORYBOARD_COLUMNS = `id, project_id, name, description, scene_id,
+                            status, metadata, created_at, updated_at`;
+
+function rowToStoryboard(row: any): Storyboard {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    name: row.name,
+    description: row.description ?? null,
+    sceneId: row.scene_id ?? null,
+    status: row.status as StoryboardStatus,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+const PANEL_COLUMNS = `id, storyboard_id, position, image_url, camera_angle,
+                       camera_move, shot_size, description, dialogue_excerpt,
+                       duration_seconds, notes, created_at, updated_at`;
+
+function rowToPanel(row: any): StoryboardPanel {
+  return {
+    id: row.id,
+    storyboardId: row.storyboard_id,
+    position: Number(row.position),
+    imageUrl: row.image_url ?? null,
+    cameraAngle: row.camera_angle ?? null,
+    cameraMove: row.camera_move ?? null,
+    shotSize: row.shot_size ?? null,
+    description: row.description ?? null,
+    dialogueExcerpt: row.dialogue_excerpt ?? null,
+    durationSeconds: row.duration_seconds == null ? null : Number(row.duration_seconds),
+    notes: row.notes ?? null,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export async function listStoryboards(args: {
+  projectId: string;
+  userId: string;
+}): Promise<StoryboardSummary[]> {
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT sb.id, sb.name, sb.status, sb.scene_id, sb.updated_at,
+            (SELECT COUNT(*) FROM agos_filmmaker_storyboard_panels p
+              WHERE p.storyboard_id = sb.id) AS panel_count
+       FROM agos_filmmaker_storyboards sb
+       JOIN agos_filmmaker_projects p ON p.id = sb.project_id
+      WHERE sb.project_id = $1 AND p.user_id = $2
+      ORDER BY sb.updated_at DESC`,
+    [args.projectId, args.userId],
+  );
+  return r.rows.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    status: row.status as StoryboardStatus,
+    sceneId: row.scene_id ?? null,
+    panelCount: Number(row.panel_count),
+    updatedAt: row.updated_at.toISOString(),
+  }));
+}
+
+async function getStoryboardBare(
+  storyboardId: string,
+  userId: string,
+): Promise<Storyboard | null> {
+  const pool = getFilmmakerPool();
+  const columns = STORYBOARD_COLUMNS.split(',')
+    .map((c) => `sb.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_storyboards sb
+       JOIN agos_filmmaker_projects p ON p.id = sb.project_id
+      WHERE sb.id = $1 AND p.user_id = $2`,
+    [storyboardId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToStoryboard(r.rows[0]);
+}
+
+async function listPanelsForStoryboard(
+  storyboardId: string,
+): Promise<StoryboardPanel[]> {
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${PANEL_COLUMNS}
+       FROM agos_filmmaker_storyboard_panels
+      WHERE storyboard_id = $1
+      ORDER BY position ASC`,
+    [storyboardId],
+  );
+  return r.rows.map(rowToPanel);
+}
+
+export async function getStoryboard(
+  storyboardId: string,
+  userId: string,
+): Promise<StoryboardWithPanels | null> {
+  const sb = await getStoryboardBare(storyboardId, userId);
+  if (!sb) return null;
+  const panels = await listPanelsForStoryboard(storyboardId);
+  return { ...sb, panels };
+}
+
+export interface CreateStoryboardArgs {
+  projectId: string;
+  userId: string;
+  data: StoryboardUpsert;
+}
+
+export async function createStoryboard(
+  args: CreateStoryboardArgs,
+): Promise<Storyboard> {
+  const project = await getProject(args.projectId, args.userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const status: StoryboardStatus = args.data.status ?? 'draft';
+  if (!(STORYBOARD_STATUS_VALUES as readonly string[]).includes(status)) {
+    throw new Error(`Invalid storyboard status: ${status}`);
+  }
+
+  if (args.data.sceneId) {
+    const scene = await getScreenplayScene(args.data.sceneId, args.userId);
+    if (!scene) throw new Error('Scene not found or not owned by user');
+  }
+
+  const id = randomUUID();
+  const name = args.data.name?.trim() || 'Storyboard 1';
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `INSERT INTO agos_filmmaker_storyboards
+       (id, project_id, name, description, scene_id, status, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb)`,
+    [
+      id,
+      args.projectId,
+      name,
+      args.data.description ?? null,
+      args.data.sceneId ?? null,
+      status,
+      JSON.stringify(args.data.metadata ?? {}),
+    ],
+  );
+  const created = await getStoryboardBare(id, args.userId);
+  if (!created) throw new Error('Failed to create storyboard');
+  return created;
+}
+
+export interface UpdateStoryboardArgs {
+  id: string;
+  userId: string;
+  patch: StoryboardUpsert;
+}
+
+export async function updateStoryboard(
+  args: UpdateStoryboardArgs,
+): Promise<Storyboard | null> {
+  const existing = await getStoryboardBare(args.id, args.userId);
+  if (!existing) return null;
+
+  if (
+    args.patch.status !== undefined &&
+    !(STORYBOARD_STATUS_VALUES as readonly string[]).includes(args.patch.status)
+  ) {
+    throw new Error(`Invalid storyboard status: ${args.patch.status}`);
+  }
+  if (args.patch.sceneId) {
+    const scene = await getScreenplayScene(args.patch.sceneId, args.userId);
+    if (!scene) throw new Error('Scene not found or not owned by user');
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_storyboards
+        SET name        = COALESCE($2, name),
+            description = COALESCE($3, description),
+            scene_id    = $4,
+            status      = COALESCE($5, status),
+            metadata    = COALESCE($6::jsonb, metadata),
+            updated_at  = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      args.patch.name?.trim() ?? null,
+      args.patch.description ?? null,
+      // sceneId is a tri-state: undefined = leave alone (use existing),
+      // null = clear, string = set.
+      args.patch.sceneId === undefined ? existing.sceneId : args.patch.sceneId,
+      args.patch.status ?? null,
+      args.patch.metadata ? JSON.stringify(args.patch.metadata) : null,
+    ],
+  );
+  return getStoryboardBare(args.id, args.userId);
+}
+
+export async function deleteStoryboard(
+  storyboardId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getStoryboardBare(storyboardId, userId);
+  if (!existing) return false;
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `DELETE FROM agos_filmmaker_storyboards WHERE id = $1`,
+    [storyboardId],
+  );
+  return true;
+}
+
+// ─── Storyboard panels ──────────────────────────────────────────────────────
+
+export interface AddStoryboardPanelArgs {
+  storyboardId: string;
+  userId: string;
+  data: StoryboardPanelUpsert;
+}
+
+export async function addStoryboardPanel(
+  args: AddStoryboardPanelArgs,
+): Promise<StoryboardPanel> {
+  const sb = await getStoryboardBare(args.storyboardId, args.userId);
+  if (!sb) throw new Error('Storyboard not found or not owned by user');
+
+  const id = randomUUID();
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const nextRow = await client.query(
+      `SELECT COALESCE(MAX(position), 0) + 1 AS next_pos
+         FROM agos_filmmaker_storyboard_panels
+        WHERE storyboard_id = $1`,
+      [args.storyboardId],
+    );
+    const nextPos = Number(nextRow.rows[0].next_pos);
+    await client.query(
+      `INSERT INTO agos_filmmaker_storyboard_panels
+         (id, storyboard_id, position, image_url, camera_angle, camera_move,
+          shot_size, description, dialogue_excerpt, duration_seconds, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [
+        id,
+        args.storyboardId,
+        nextPos,
+        args.data.imageUrl ?? null,
+        args.data.cameraAngle ?? null,
+        args.data.cameraMove ?? null,
+        args.data.shotSize ?? null,
+        args.data.description ?? null,
+        args.data.dialogueExcerpt ?? null,
+        args.data.durationSeconds ?? null,
+        args.data.notes ?? null,
+      ],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+      [args.storyboardId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  const created = await getStoryboardPanel(id, args.userId);
+  if (!created) throw new Error('Failed to create storyboard panel');
+  return created;
+}
+
+export async function getStoryboardPanel(
+  panelId: string,
+  userId: string,
+): Promise<StoryboardPanel | null> {
+  const pool = getFilmmakerPool();
+  const columns = PANEL_COLUMNS.split(',')
+    .map((c) => `pan.${c.trim()}`)
+    .join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_storyboard_panels pan
+       JOIN agos_filmmaker_storyboards sb ON sb.id = pan.storyboard_id
+       JOIN agos_filmmaker_projects pj ON pj.id = sb.project_id
+      WHERE pan.id = $1 AND pj.user_id = $2`,
+    [panelId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToPanel(r.rows[0]);
+}
+
+export interface UpdateStoryboardPanelArgs {
+  id: string;
+  userId: string;
+  patch: StoryboardPanelUpsert;
+}
+
+export async function updateStoryboardPanel(
+  args: UpdateStoryboardPanelArgs,
+): Promise<StoryboardPanel | null> {
+  const existing = await getStoryboardPanel(args.id, args.userId);
+  if (!existing) return null;
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_storyboard_panels
+        SET image_url        = COALESCE($2, image_url),
+            camera_angle     = COALESCE($3, camera_angle),
+            camera_move      = COALESCE($4, camera_move),
+            shot_size        = COALESCE($5, shot_size),
+            description      = COALESCE($6, description),
+            dialogue_excerpt = COALESCE($7, dialogue_excerpt),
+            duration_seconds = COALESCE($8, duration_seconds),
+            notes            = COALESCE($9, notes),
+            updated_at       = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      args.patch.imageUrl ?? null,
+      args.patch.cameraAngle ?? null,
+      args.patch.cameraMove ?? null,
+      args.patch.shotSize ?? null,
+      args.patch.description ?? null,
+      args.patch.dialogueExcerpt ?? null,
+      args.patch.durationSeconds ?? null,
+      args.patch.notes ?? null,
+    ],
+  );
+  await pool.query(
+    `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+    [existing.storyboardId],
+  );
+  return getStoryboardPanel(args.id, args.userId);
+}
+
+export async function deleteStoryboardPanel(
+  panelId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getStoryboardPanel(panelId, userId);
+  if (!existing) return false;
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `DELETE FROM agos_filmmaker_storyboard_panels WHERE id = $1`,
+      [panelId],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_storyboard_panels
+          SET position = position - 1, updated_at = now()
+        WHERE storyboard_id = $1 AND position > $2`,
+      [existing.storyboardId, existing.position],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+      [existing.storyboardId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  return true;
+}
+
+export async function reorderStoryboardPanels(
+  storyboardId: string,
+  userId: string,
+  orderedPanelIds: string[],
+): Promise<void> {
+  const sb = await getStoryboardBare(storyboardId, userId);
+  if (!sb) throw new Error('Storyboard not found or not owned by user');
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const existing = await client.query(
+      `SELECT id FROM agos_filmmaker_storyboard_panels
+        WHERE storyboard_id = $1`,
+      [storyboardId],
+    );
+    const known = new Set<string>(existing.rows.map((r: any) => r.id));
+    const seen = new Set<string>();
+    const finalOrder: string[] = [];
+    for (const id of orderedPanelIds) {
+      if (known.has(id) && !seen.has(id)) {
+        finalOrder.push(id);
+        seen.add(id);
+      }
+    }
+    for (const row of existing.rows) {
+      if (!seen.has(row.id)) {
+        finalOrder.push(row.id);
+        seen.add(row.id);
+      }
+    }
+    // Park everyone at negative positions first to avoid unique-collision
+    // pressure if a unique index is ever added on (storyboard_id, position).
+    for (let i = 0; i < finalOrder.length; i++) {
+      await client.query(
+        `UPDATE agos_filmmaker_storyboard_panels
+            SET position = $2, updated_at = now()
+          WHERE id = $1`,
+        [finalOrder[i], -(i + 1)],
+      );
+    }
+    for (let i = 0; i < finalOrder.length; i++) {
+      await client.query(
+        `UPDATE agos_filmmaker_storyboard_panels
+            SET position = $2, updated_at = now()
+          WHERE id = $1`,
+        [finalOrder[i], i + 1],
+      );
+    }
+    await client.query(
+      `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+      [storyboardId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export interface MovePanelArgs {
+  panelId: string;
+  toStoryboardId?: string | null;
+  toPosition: number;
+  userId: string;
+}
+
+/**
+ * Move a panel within or across storyboards. Reindexes position on both
+ * source and destination boards so siblings stay contiguous (1..N).
+ * If `toStoryboardId` is null/omitted the panel stays in its current board.
+ */
+export async function movePanel(args: MovePanelArgs): Promise<StoryboardPanel> {
+  const existing = await getStoryboardPanel(args.panelId, args.userId);
+  if (!existing) throw new Error('Panel not found or not owned by user');
+  const targetBoardId = args.toStoryboardId ?? existing.storyboardId;
+
+  const board = await getStoryboardBare(targetBoardId, args.userId);
+  if (!board) {
+    throw new Error('Destination storyboard not found or not owned by user');
+  }
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const sourceBoardId = existing.storyboardId;
+    const sourcePos = existing.position;
+
+    // Vacate from the source by parking the moving row at -1 then
+    // sliding source-side siblings up.
+    await client.query(
+      `UPDATE agos_filmmaker_storyboard_panels
+          SET position = -1, updated_at = now()
+        WHERE id = $1`,
+      [args.panelId],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_storyboard_panels
+          SET position = position - 1, updated_at = now()
+        WHERE storyboard_id = $1 AND position > $2`,
+      [sourceBoardId, sourcePos],
+    );
+
+    // Determine final position clamped into [1, max+1] on the destination.
+    const maxRow = await client.query(
+      `SELECT COALESCE(MAX(position), 0) AS max_pos
+         FROM agos_filmmaker_storyboard_panels
+        WHERE storyboard_id = $1 AND id <> $2`,
+      [targetBoardId, args.panelId],
+    );
+    const currentMax = Number(maxRow.rows[0].max_pos);
+    let targetPos = args.toPosition;
+    if (targetPos < 1) targetPos = 1;
+    if (targetPos > currentMax + 1) targetPos = currentMax + 1;
+
+    // Make room on the destination.
+    await client.query(
+      `UPDATE agos_filmmaker_storyboard_panels
+          SET position = position + 1, updated_at = now()
+        WHERE storyboard_id = $1 AND position >= $2 AND id <> $3`,
+      [targetBoardId, targetPos, args.panelId],
+    );
+
+    await client.query(
+      `UPDATE agos_filmmaker_storyboard_panels
+          SET storyboard_id = $1,
+              position      = $2,
+              updated_at    = now()
+        WHERE id = $3`,
+      [targetBoardId, targetPos, args.panelId],
+    );
+
+    await client.query(
+      `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+      [sourceBoardId],
+    );
+    if (sourceBoardId !== targetBoardId) {
+      await client.query(
+        `UPDATE agos_filmmaker_storyboards SET updated_at = now() WHERE id = $1`,
+        [targetBoardId],
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  const updated = await getStoryboardPanel(args.panelId, args.userId);
+  if (!updated) throw new Error('Panel vanished after move');
+  return updated;
 }
 
 // ─── Audit ──────────────────────────────────────────────────────────────────

@@ -266,6 +266,11 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Schedule',
         description: 'Stripboard scheduling — drop scenes onto shooting days, per-unit ordering.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Storyboards',
+        description: 'Panel-grid visual boards with shot/angle/move metadata and PDF export.',
+      },
     ],
   },
   {
