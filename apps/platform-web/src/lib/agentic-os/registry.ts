@@ -237,6 +237,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'sky',
     features: [
       {
+        href: '/dashboard/os/research/experiments',
+        label: 'Experiments hub',
+        description:
+          'Per-experiment cover, status, target date, and 5-phase progress tracker.',
+      },
+      {
         href: '/dashboard/os/research/hypotheses',
         label: 'Hypothesis ledger',
         description: 'Track research questions, predictions, and falsifiers.',
