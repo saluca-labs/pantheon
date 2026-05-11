@@ -1,7 +1,7 @@
 """Autobiographer OS Phase 1 — books-as-projects + memory captures.
 
-Revision ID: 0041_autobiographer_phase1
-Revises: 0040_maker_phase7
+Revision ID: 0042_autobiographer_phase1
+Revises: 0041_research_phase1
 Create Date: 2026-05-11
 
 Phase 1 of Autobiographer OS introduces the locked book-as-project model and
@@ -57,8 +57,8 @@ from typing import Sequence, Union
 from alembic import op
 
 
-revision: str = "0041_autobiographer_phase1"
-down_revision: Union[str, None] = "0040_maker_phase7"
+revision: str = "0042_autobiographer_phase1"
+down_revision: Union[str, None] = "0041_research_phase1"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -14,16 +14,16 @@ import path from 'node:path';
 
 const MIGRATION_PATH = path.resolve(
   __dirname,
-  '../../../../../../packages/database/alembic/versions/0041_autobiographer_phase1.py',
+  '../../../../../../packages/database/alembic/versions/0042_autobiographer_phase1.py',
 );
 
 const sql = readFileSync(MIGRATION_PATH, 'utf8');
 
-describe('migration 0041_autobiographer_phase1', () => {
+describe('migration 0042_autobiographer_phase1', () => {
   it('declares the correct revision + down_revision', () => {
-    expect(sql).toMatch(/revision: str = "0041_autobiographer_phase1"/);
+    expect(sql).toMatch(/revision: str = "0042_autobiographer_phase1"/);
     expect(sql).toMatch(
-      /down_revision: Union\[str, None\] = "0040_maker_phase7"/,
+      /down_revision: Union\[str, None\] = "0041_research_phase1"/,
     );
   });
 
