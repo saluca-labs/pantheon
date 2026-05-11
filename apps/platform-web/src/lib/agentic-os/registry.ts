@@ -246,6 +246,11 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Story documents',
         description: 'Bible, treatment, logline, outline, and pitch-deck text per project.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Characters',
+        description: 'Character sheets — identity, psychology, voice, and relationships.',
+      },
     ],
   },
   {
