@@ -98,6 +98,25 @@ import {
   type MaintenanceEventPatch,
 } from './maintenance';
 import {
+  SPEC_SHEET_KIND_VALUES,
+  validateAttachmentExclusivity,
+  type SpecSheet,
+  type SpecSheetKind,
+  type SpecSheetUpsert,
+  type SpecSheetPatch,
+} from './spec-sheets';
+import {
+  REFERENCE_KIND_VALUES,
+  type Reference,
+  type ReferenceKind,
+  type ReferenceUpsert,
+  type ReferencePatch,
+  type ProjectReferenceLink,
+  type ProjectReferenceLinkUpsert,
+  type ProjectReferenceLinkPatch,
+  type ProjectReferenceJoined,
+} from './references';
+import {
   recordAudit as sharedRecordAudit,
   type RecordAuditArgs,
 } from '../_shared/audit';
@@ -2337,6 +2356,558 @@ export async function listProjectsUsingTool(
     projectStatus: row.project_status,
     required: row.required === true,
   }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Spec sheets (Phase 5)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SPEC_SHEET_COLUMNS = `id, user_id, title, kind, url, notes, revision,
+                            issued_at, part_id, tool_id, project_id, tags,
+                            metadata, created_at, updated_at`;
+
+function rowToSpecSheet(row: any): SpecSheet {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    kind: (row.kind as SpecSheetKind) ?? 'datasheet',
+    url: row.url,
+    notes: row.notes ?? null,
+    revision: row.revision ?? null,
+    issuedAt: row.issued_at
+      ? row.issued_at instanceof Date
+        ? row.issued_at.toISOString().slice(0, 10)
+        : String(row.issued_at).slice(0, 10)
+      : null,
+    partId: row.part_id ?? null,
+    toolId: row.tool_id ?? null,
+    projectId: row.project_id ?? null,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export interface ListSpecSheetsArgs {
+  userId: string;
+  /** Filter by attachment kind. */
+  attachment?: 'part' | 'tool' | 'project';
+  partId?: string;
+  toolId?: string;
+  projectId?: string;
+  kind?: SpecSheetKind;
+  tag?: string;
+}
+
+export async function listSpecSheets(args: ListSpecSheetsArgs): Promise<SpecSheet[]> {
+  const pool = getMakerPool();
+  const params: any[] = [args.userId];
+  const where: string[] = ['user_id = $1'];
+
+  if (args.attachment === 'part') where.push(`part_id IS NOT NULL`);
+  else if (args.attachment === 'tool') where.push(`tool_id IS NOT NULL`);
+  else if (args.attachment === 'project') where.push(`project_id IS NOT NULL`);
+
+  if (args.partId) {
+    params.push(args.partId);
+    where.push(`part_id = $${params.length}`);
+  }
+  if (args.toolId) {
+    params.push(args.toolId);
+    where.push(`tool_id = $${params.length}`);
+  }
+  if (args.projectId) {
+    params.push(args.projectId);
+    where.push(`project_id = $${params.length}`);
+  }
+  if (args.kind) {
+    if (!(SPEC_SHEET_KIND_VALUES as readonly string[]).includes(args.kind)) {
+      throw new Error(`Invalid kind: ${args.kind}`);
+    }
+    params.push(args.kind);
+    where.push(`kind = $${params.length}`);
+  }
+  if (args.tag && args.tag.trim()) {
+    params.push(args.tag.trim().toLowerCase());
+    where.push(`$${params.length} = ANY(tags)`);
+  }
+
+  const r = await pool.query(
+    `SELECT ${SPEC_SHEET_COLUMNS}
+       FROM agos_maker_spec_sheets
+      WHERE ${where.join(' AND ')}
+      ORDER BY updated_at DESC`,
+    params,
+  );
+  return r.rows.map(rowToSpecSheet);
+}
+
+export async function getSpecSheet(
+  id: string,
+  userId: string,
+): Promise<SpecSheet | null> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${SPEC_SHEET_COLUMNS}
+       FROM agos_maker_spec_sheets
+      WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToSpecSheet(r.rows[0]);
+}
+
+export async function createSpecSheet(
+  userId: string,
+  data: SpecSheetUpsert,
+): Promise<SpecSheet> {
+  const kind: SpecSheetKind = data.kind ?? 'datasheet';
+  if (!(SPEC_SHEET_KIND_VALUES as readonly string[]).includes(kind)) {
+    throw new Error(`Invalid kind: ${kind}`);
+  }
+  const attachErr = validateAttachmentExclusivity({
+    partId: data.partId ?? null,
+    toolId: data.toolId ?? null,
+    projectId: data.projectId ?? null,
+  });
+  if (attachErr) throw new Error(attachErr);
+
+  // Cross-ownership: if attaching to a part or a tool, the part/tool must
+  // belong to this user. project_id is per-OS UUID and not FK-checked.
+  if (data.partId) {
+    const part = await getCatalogRow(data.partId, userId);
+    if (!part) throw new Error('Part not found or not owned by user');
+  }
+  if (data.toolId) {
+    const tool = await getTool(data.toolId, userId);
+    if (!tool) throw new Error('Tool not found or not owned by user');
+  }
+
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_spec_sheets
+       (id, user_id, title, kind, url, notes, revision, issued_at,
+        part_id, tool_id, project_id, tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::text[],$13::jsonb)`,
+    [
+      id,
+      userId,
+      data.title,
+      kind,
+      data.url,
+      data.notes ?? null,
+      data.revision ?? null,
+      data.issuedAt ?? null,
+      data.partId ?? null,
+      data.toolId ?? null,
+      data.projectId ?? null,
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const sheet = await getSpecSheet(id, userId);
+  if (!sheet) throw new Error('Failed to create spec sheet');
+  return sheet;
+}
+
+export async function updateSpecSheet(
+  id: string,
+  userId: string,
+  patch: SpecSheetPatch,
+): Promise<SpecSheet | null> {
+  if (
+    patch.kind !== undefined &&
+    !(SPEC_SHEET_KIND_VALUES as readonly string[]).includes(patch.kind)
+  ) {
+    throw new Error(`Invalid kind: ${patch.kind}`);
+  }
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_spec_sheets
+        SET title     = COALESCE($3, title),
+            kind      = COALESCE($4, kind),
+            url       = COALESCE($5, url),
+            notes     = COALESCE($6, notes),
+            revision  = COALESCE($7, revision),
+            issued_at = COALESCE($8, issued_at),
+            tags      = COALESCE($9::text[], tags),
+            metadata  = COALESCE($10::jsonb, metadata),
+            updated_at = now()
+      WHERE id = $1 AND user_id = $2`,
+    [
+      id,
+      userId,
+      patch.title ?? null,
+      patch.kind ?? null,
+      patch.url ?? null,
+      patch.notes ?? null,
+      patch.revision ?? null,
+      patch.issuedAt ?? null,
+      patch.tags ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getSpecSheet(id, userId);
+}
+
+export async function deleteSpecSheet(id: string, userId: string): Promise<boolean> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_spec_sheets WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Spec sheets gathered for a project's Specs tab. The union covers:
+ *   - sheets attached directly to the project,
+ *   - sheets attached to any catalog part referenced from the project's BOM,
+ *   - sheets attached to any tool linked via project_tools.
+ *
+ * All three queries are scoped to the user, so cross-tenant leakage is not
+ * possible. Returned in a single flat list ordered by attachment kind then
+ * title — the UI groups them client-side.
+ */
+export async function listSpecSheetsForProject(
+  projectId: string,
+  userId: string,
+): Promise<SpecSheet[]> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `WITH bom_parts AS (
+       SELECT DISTINCT part_catalog_id AS pid
+         FROM agos_maker_bom_lines
+        WHERE project_id = $1
+     ),
+     project_tool_ids AS (
+       SELECT DISTINCT tool_id AS tid
+         FROM agos_maker_project_tools
+        WHERE project_id = $1
+     )
+     SELECT ${SPEC_SHEET_COLUMNS}
+       FROM agos_maker_spec_sheets s
+      WHERE s.user_id = $2
+        AND (
+              s.project_id = $1
+           OR s.part_id IN (SELECT pid FROM bom_parts)
+           OR s.tool_id IN (SELECT tid FROM project_tool_ids)
+        )
+      ORDER BY
+        CASE WHEN s.project_id IS NOT NULL THEN 0
+             WHEN s.part_id    IS NOT NULL THEN 1
+             ELSE 2
+        END ASC,
+        s.title ASC`,
+    [projectId, userId],
+  );
+  return r.rows.map(rowToSpecSheet);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// References library (Phase 5)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const REFERENCE_COLUMNS = `id, user_id, title, kind, url, authors, publisher,
+                           published_at, notes, tags, metadata,
+                           created_at, updated_at`;
+
+function rowToReference(row: any): Reference {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    kind: (row.kind as ReferenceKind) ?? 'link',
+    url: row.url,
+    authors: row.authors ?? null,
+    publisher: row.publisher ?? null,
+    publishedAt: row.published_at
+      ? row.published_at instanceof Date
+        ? row.published_at.toISOString().slice(0, 10)
+        : String(row.published_at).slice(0, 10)
+      : null,
+    notes: row.notes ?? null,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+export interface ListReferencesArgs {
+  userId: string;
+  kind?: ReferenceKind;
+  tag?: string;
+}
+
+export async function listReferences(args: ListReferencesArgs): Promise<Reference[]> {
+  const pool = getMakerPool();
+  const params: any[] = [args.userId];
+  const where: string[] = ['user_id = $1'];
+  if (args.kind) {
+    if (!(REFERENCE_KIND_VALUES as readonly string[]).includes(args.kind)) {
+      throw new Error(`Invalid kind: ${args.kind}`);
+    }
+    params.push(args.kind);
+    where.push(`kind = $${params.length}`);
+  }
+  if (args.tag && args.tag.trim()) {
+    params.push(args.tag.trim().toLowerCase());
+    where.push(`$${params.length} = ANY(tags)`);
+  }
+  const r = await pool.query(
+    `SELECT ${REFERENCE_COLUMNS}
+       FROM agos_maker_references
+      WHERE ${where.join(' AND ')}
+      ORDER BY updated_at DESC`,
+    params,
+  );
+  return r.rows.map(rowToReference);
+}
+
+export async function getReference(
+  id: string,
+  userId: string,
+): Promise<Reference | null> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${REFERENCE_COLUMNS}
+       FROM agos_maker_references
+      WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToReference(r.rows[0]);
+}
+
+export async function createReference(
+  userId: string,
+  data: ReferenceUpsert,
+): Promise<Reference> {
+  const kind: ReferenceKind = data.kind ?? 'link';
+  if (!(REFERENCE_KIND_VALUES as readonly string[]).includes(kind)) {
+    throw new Error(`Invalid kind: ${kind}`);
+  }
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_references
+       (id, user_id, title, kind, url, authors, publisher, published_at,
+        notes, tags, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::text[],$11::jsonb)`,
+    [
+      id,
+      userId,
+      data.title,
+      kind,
+      data.url,
+      data.authors ?? null,
+      data.publisher ?? null,
+      data.publishedAt ?? null,
+      data.notes ?? null,
+      data.tags ?? [],
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const ref = await getReference(id, userId);
+  if (!ref) throw new Error('Failed to create reference');
+  return ref;
+}
+
+export async function updateReference(
+  id: string,
+  userId: string,
+  patch: ReferencePatch,
+): Promise<Reference | null> {
+  if (
+    patch.kind !== undefined &&
+    !(REFERENCE_KIND_VALUES as readonly string[]).includes(patch.kind)
+  ) {
+    throw new Error(`Invalid kind: ${patch.kind}`);
+  }
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_references
+        SET title        = COALESCE($3, title),
+            kind         = COALESCE($4, kind),
+            url          = COALESCE($5, url),
+            authors      = COALESCE($6, authors),
+            publisher    = COALESCE($7, publisher),
+            published_at = COALESCE($8, published_at),
+            notes        = COALESCE($9, notes),
+            tags         = COALESCE($10::text[], tags),
+            metadata     = COALESCE($11::jsonb, metadata),
+            updated_at   = now()
+      WHERE id = $1 AND user_id = $2`,
+    [
+      id,
+      userId,
+      patch.title ?? null,
+      patch.kind ?? null,
+      patch.url ?? null,
+      patch.authors ?? null,
+      patch.publisher ?? null,
+      patch.publishedAt ?? null,
+      patch.notes ?? null,
+      patch.tags ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getReference(id, userId);
+}
+
+export async function deleteReference(id: string, userId: string): Promise<boolean> {
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_references WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+async function assertReferenceOwnership(
+  referenceId: string,
+  userId: string,
+): Promise<void> {
+  const ref = await getReference(referenceId, userId);
+  if (!ref) throw new Error('Reference not found or not owned by user');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Project↔reference join (Phase 5)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function rowToProjectReferenceLink(row: any): ProjectReferenceLink {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    referenceId: row.reference_id,
+    notes: row.notes ?? null,
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+  };
+}
+
+/**
+ * List references linked to a project as a joined view. Cross-ownership
+ * filter: only references owned by the requesting user are returned, so
+ * stale links to references transferred to another user are filtered out.
+ */
+export async function listReferencesForProject(
+  projectId: string,
+  userId: string,
+): Promise<ProjectReferenceJoined[]> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT pr.id, pr.project_id, pr.reference_id, pr.notes, pr.created_at,
+            r.title       AS reference_title,
+            r.kind        AS reference_kind,
+            r.url         AS reference_url,
+            r.authors     AS reference_authors,
+            r.publisher   AS reference_publisher,
+            r.published_at AS reference_published_at,
+            r.tags        AS reference_tags
+       FROM agos_maker_project_references pr
+       JOIN agos_maker_references r ON r.id = pr.reference_id
+      WHERE pr.project_id = $1
+        AND r.user_id = $2
+      ORDER BY pr.created_at DESC`,
+    [projectId, userId],
+  );
+  return r.rows.map((row: any) => ({
+    ...rowToProjectReferenceLink(row),
+    referenceTitle: row.reference_title,
+    referenceKind: row.reference_kind as ReferenceKind,
+    referenceUrl: row.reference_url,
+    referenceAuthors: row.reference_authors ?? null,
+    referencePublisher: row.reference_publisher ?? null,
+    referencePublishedAt: row.reference_published_at
+      ? row.reference_published_at instanceof Date
+        ? row.reference_published_at.toISOString().slice(0, 10)
+        : String(row.reference_published_at).slice(0, 10)
+      : null,
+    referenceTags: Array.isArray(row.reference_tags) ? row.reference_tags : [],
+  }));
+}
+
+/**
+ * Attach a reference to a project. The reference must be owned by the user.
+ * Duplicate (project_id, reference_id) attaches throw a unique-constraint
+ * error which the route maps to 409.
+ */
+export async function attachReferenceToProject(
+  projectId: string,
+  referenceId: string,
+  userId: string,
+  options: { notes?: string | null } = {},
+): Promise<ProjectReferenceLink> {
+  await assertProjectOwnership(projectId, userId);
+  await assertReferenceOwnership(referenceId, userId);
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_project_references
+       (id, project_id, reference_id, notes)
+     VALUES ($1, $2, $3, $4)`,
+    [id, projectId, referenceId, options.notes ?? null],
+  );
+  return {
+    id,
+    projectId,
+    referenceId,
+    notes: options.notes ?? null,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+export async function updateProjectReferenceLink(
+  projectId: string,
+  referenceId: string,
+  userId: string,
+  patch: ProjectReferenceLinkPatch,
+): Promise<ProjectReferenceLink | null> {
+  await assertProjectOwnership(projectId, userId);
+  await assertReferenceOwnership(referenceId, userId);
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_project_references
+        SET notes = COALESCE($3, notes)
+      WHERE project_id = $1 AND reference_id = $2`,
+    [projectId, referenceId, patch.notes ?? null],
+  );
+  const r = await pool.query(
+    `SELECT id, project_id, reference_id, notes, created_at
+       FROM agos_maker_project_references
+      WHERE project_id = $1 AND reference_id = $2`,
+    [projectId, referenceId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToProjectReferenceLink(r.rows[0]);
+}
+
+export async function detachReferenceFromProject(
+  projectId: string,
+  referenceId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(projectId, userId);
+  await assertReferenceOwnership(referenceId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_project_references
+      WHERE project_id = $1 AND reference_id = $2`,
+    [projectId, referenceId],
+  );
+  return (r.rowCount ?? 0) > 0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
