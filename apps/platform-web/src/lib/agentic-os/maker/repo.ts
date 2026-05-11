@@ -68,11 +68,33 @@ import {
   type BuildLogEntryPatch,
   type RecentLogEntry,
 } from './log';
-import type {
-  BuildMilestone,
-  BuildMilestoneUpsert,
-  BuildMilestonePatch,
+import {
+  MILESTONE_STORED_STATUS_VALUES,
+  MILESTONE_PRIORITY_VALUES,
+  type BuildMilestone,
+  type BuildMilestoneUpsert,
+  type BuildMilestonePatch,
+  type MilestoneStoredStatus,
+  type MilestonePriority,
 } from './milestones';
+import {
+  DEPENDENCY_KIND_VALUES,
+  DEPENDENCY_STATUS_VALUES,
+  type ProjectDependency,
+  type ProjectDependencyUpsert,
+  type ProjectDependencyPatch,
+  type ProjectDependencyHydrated,
+  type ProjectDependenciesView,
+  type DependencyKind,
+  type DependencyStatus,
+} from './dependencies';
+import {
+  BLOCKER_SEVERITY_RANK,
+  rankBlockerItems,
+  limitBlockerItems,
+  type BlockerItem,
+  type BlockerSeverity,
+} from './blockers';
 import {
   TOOL_KIND_VALUES,
   TOOL_STATUS_VALUES,
@@ -1528,7 +1550,8 @@ export async function listRecentLogEntries(
 // ═══════════════════════════════════════════════════════════════════════════
 
 const MILESTONE_COLUMNS = `id, project_id, label, due_at, completed_at,
-                           sort_order, notes, metadata,
+                           sort_order, notes, status, priority,
+                           is_blocker, blocked_reason, metadata,
                            created_at, updated_at`;
 
 function rowToMilestone(row: any): BuildMilestone {
@@ -1547,6 +1570,10 @@ function rowToMilestone(row: any): BuildMilestone {
         : row.completed_at ?? null,
     sortOrder: Number(row.sort_order ?? 0),
     notes: row.notes ?? null,
+    status: (row.status as MilestoneStoredStatus) ?? 'pending',
+    priority: (row.priority as MilestonePriority) ?? 'medium',
+    isBlocker: Boolean(row.is_blocker),
+    blockedReason: row.blocked_reason ?? null,
     metadata: (row.metadata as Record<string, unknown>) ?? {},
     createdAt:
       row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
@@ -1594,12 +1621,27 @@ export async function createMilestone(
   data: BuildMilestoneUpsert,
 ): Promise<BuildMilestone> {
   await assertProjectOwnership(projectId, userId);
+
+  if (
+    data.status !== undefined &&
+    !(MILESTONE_STORED_STATUS_VALUES as readonly string[]).includes(data.status)
+  ) {
+    throw new Error(`Invalid status: ${data.status}`);
+  }
+  if (
+    data.priority !== undefined &&
+    !(MILESTONE_PRIORITY_VALUES as readonly string[]).includes(data.priority)
+  ) {
+    throw new Error(`Invalid priority: ${data.priority}`);
+  }
+
   const pool = getMakerPool();
   const id = randomUUID();
   await pool.query(
     `INSERT INTO agos_maker_build_milestones
-       (id, project_id, label, due_at, sort_order, notes, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+       (id, project_id, label, due_at, sort_order, notes,
+        status, priority, is_blocker, blocked_reason, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)`,
     [
       id,
       projectId,
@@ -1607,6 +1649,10 @@ export async function createMilestone(
       data.dueAt ?? null,
       data.sortOrder ?? 0,
       data.notes ?? null,
+      data.status ?? 'pending',
+      data.priority ?? 'medium',
+      data.isBlocker ?? false,
+      data.blockedReason ?? null,
       JSON.stringify(data.metadata ?? {}),
     ],
   );
@@ -1622,15 +1668,42 @@ export async function updateMilestone(
   patch: BuildMilestonePatch,
 ): Promise<BuildMilestone | null> {
   await assertProjectOwnership(projectId, userId);
+
+  if (
+    patch.status !== undefined &&
+    !(MILESTONE_STORED_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid status: ${patch.status}`);
+  }
+  if (
+    patch.priority !== undefined &&
+    !(MILESTONE_PRIORITY_VALUES as readonly string[]).includes(patch.priority)
+  ) {
+    throw new Error(`Invalid priority: ${patch.priority}`);
+  }
+
   const pool = getMakerPool();
+  // We keep completed_at in sync with status='done' so the legacy
+  // /complete toggle keeps working unchanged. Setting status='done'
+  // stamps completed_at to now() if it's null; setting status to any
+  // non-done value clears completed_at back to null.
   await pool.query(
     `UPDATE agos_maker_build_milestones
-        SET label      = COALESCE($3, label),
-            due_at     = CASE WHEN $4::boolean THEN $5::date ELSE due_at END,
-            sort_order = COALESCE($6, sort_order),
-            notes      = COALESCE($7, notes),
-            metadata   = COALESCE($8::jsonb, metadata),
-            updated_at = now()
+        SET label          = COALESCE($3, label),
+            due_at         = CASE WHEN $4::boolean THEN $5::date ELSE due_at END,
+            sort_order     = COALESCE($6, sort_order),
+            notes          = COALESCE($7, notes),
+            status         = COALESCE($8, status),
+            priority       = COALESCE($9, priority),
+            is_blocker     = COALESCE($10, is_blocker),
+            blocked_reason = CASE WHEN $11::boolean THEN $12 ELSE blocked_reason END,
+            metadata       = COALESCE($13::jsonb, metadata),
+            completed_at   = CASE
+                               WHEN $8 = 'done' AND completed_at IS NULL THEN now()
+                               WHEN $8 IS NOT NULL AND $8 <> 'done' THEN NULL
+                               ELSE completed_at
+                             END,
+            updated_at     = now()
       WHERE id = $1 AND project_id = $2`,
     [
       id,
@@ -1640,6 +1713,11 @@ export async function updateMilestone(
       patch.dueAt ?? null,
       patch.sortOrder ?? null,
       patch.notes ?? null,
+      patch.status ?? null,
+      patch.priority ?? null,
+      patch.isBlocker ?? null,
+      patch.blockedReason !== undefined,
+      patch.blockedReason ?? null,
       patch.metadata ? JSON.stringify(patch.metadata) : null,
     ],
   );
@@ -1683,6 +1761,367 @@ export async function toggleMilestoneComplete(
   );
   return getMilestone(id, projectId, userId);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Cross-project dependencies (Phase 6)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEPENDENCY_COLUMNS = `id, user_id, from_project_id, to_project_id,
+                            kind, status, notes, metadata,
+                            created_at, updated_at`;
+
+function rowToDependency(row: any): ProjectDependency {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    fromProjectId: row.from_project_id,
+    toProjectId: row.to_project_id,
+    kind: row.kind as DependencyKind,
+    status: row.status as DependencyStatus,
+    notes: row.notes ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt:
+      row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    updatedAt:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+  };
+}
+
+/**
+ * List dependencies in BOTH directions for a project — upstream is "this
+ * project depends on", downstream is "depends on this project". Each edge
+ * is hydrated with the peer project's `{ id, name, status, phase }`. The
+ * peer-project hydration is filtered by user ownership: if the peer is
+ * owned by another user (cross-ownership), the edge is dropped entirely
+ * rather than leaked as a stub.
+ */
+export async function listProjectDependencies(
+  projectId: string,
+  userId: string,
+): Promise<ProjectDependenciesView> {
+  await assertProjectOwnership(projectId, userId);
+  const pool = getMakerPool();
+
+  const upstream = await pool.query(
+    `SELECT d.id, d.user_id, d.from_project_id, d.to_project_id,
+            d.kind, d.status, d.notes, d.metadata,
+            d.created_at, d.updated_at,
+            peer.id            AS peer_id,
+            peer.name          AS peer_name,
+            peer.status        AS peer_status,
+            peer.phase_progress AS peer_phase_progress
+       FROM agos_maker_project_dependencies d
+       JOIN agos_maker_projects peer
+         ON peer.id = d.to_project_id
+        AND peer.user_id = $2
+      WHERE d.from_project_id = $1
+        AND d.user_id = $2
+      ORDER BY d.created_at DESC`,
+    [projectId, userId],
+  );
+
+  const downstream = await pool.query(
+    `SELECT d.id, d.user_id, d.from_project_id, d.to_project_id,
+            d.kind, d.status, d.notes, d.metadata,
+            d.created_at, d.updated_at,
+            peer.id            AS peer_id,
+            peer.name          AS peer_name,
+            peer.status        AS peer_status,
+            peer.phase_progress AS peer_phase_progress
+       FROM agos_maker_project_dependencies d
+       JOIN agos_maker_projects peer
+         ON peer.id = d.from_project_id
+        AND peer.user_id = $2
+      WHERE d.to_project_id = $1
+        AND d.user_id = $2
+      ORDER BY d.created_at DESC`,
+    [projectId, userId],
+  );
+
+  function hydrate(row: any): ProjectDependencyHydrated {
+    const phaseAvg = computePhaseAvg(row.peer_phase_progress);
+    return {
+      ...rowToDependency(row),
+      peer: {
+        id: row.peer_id,
+        name: row.peer_name ?? 'Untitled project',
+        status: row.peer_status ?? 'concept',
+        phase: phaseAvg,
+      },
+    };
+  }
+
+  return {
+    upstream: upstream.rows.map(hydrate),
+    downstream: downstream.rows.map(hydrate),
+  };
+}
+
+function computePhaseAvg(raw: unknown): number {
+  if (!raw || typeof raw !== 'object') return 0;
+  const phases = Object.values(raw as Record<string, unknown>)
+    .map((v) => (typeof v === 'number' && Number.isFinite(v) ? v : 0))
+    .filter((v) => Number.isFinite(v));
+  if (phases.length === 0) return 0;
+  return Math.round(phases.reduce((acc, v) => acc + v, 0) / phases.length);
+}
+
+export async function getProjectDependency(
+  id: string,
+  fromProjectId: string,
+  userId: string,
+): Promise<ProjectDependency | null> {
+  await assertProjectOwnership(fromProjectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `SELECT ${DEPENDENCY_COLUMNS}
+       FROM agos_maker_project_dependencies
+      WHERE id = $1 AND from_project_id = $2 AND user_id = $3`,
+    [id, fromProjectId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToDependency(r.rows[0]);
+}
+
+/**
+ * Create a directed dependency edge. Validates:
+ *
+ *   * `from_project_id` is owned by `userId` (caller-driven contract).
+ *   * `to_project_id` is owned by `userId` (cross-ownership gate; 404 if
+ *     the peer is not owned by the caller).
+ *   * Self-loop rejection: `from != to` (the DB CHECK enforces this too,
+ *     but we surface a clean validation error before hitting the DB).
+ *   * Duplicate edge: throws on the unique constraint; route maps to 409.
+ *
+ * Returns the freshly-created edge.
+ */
+export async function createProjectDependency(
+  fromProjectId: string,
+  userId: string,
+  data: ProjectDependencyUpsert,
+): Promise<ProjectDependency> {
+  if (fromProjectId === data.toProjectId) {
+    throw new Error('A project cannot depend on itself.');
+  }
+
+  await assertProjectOwnership(fromProjectId, userId);
+  // Cross-ownership gate — the peer project must belong to the same user.
+  const peer = await getProject(data.toProjectId, userId);
+  if (!peer) {
+    throw new Error('Peer project not found or not owned by user');
+  }
+
+  if (
+    data.kind !== undefined &&
+    !(DEPENDENCY_KIND_VALUES as readonly string[]).includes(data.kind)
+  ) {
+    throw new Error(`Invalid kind: ${data.kind}`);
+  }
+
+  const pool = getMakerPool();
+  const id = randomUUID();
+  await pool.query(
+    `INSERT INTO agos_maker_project_dependencies
+       (id, user_id, from_project_id, to_project_id, kind, status, notes, metadata)
+     VALUES ($1, $2, $3, $4, $5, 'open', $6, $7::jsonb)`,
+    [
+      id,
+      userId,
+      fromProjectId,
+      data.toProjectId,
+      data.kind ?? 'blocks',
+      data.notes ?? null,
+      JSON.stringify(data.metadata ?? {}),
+    ],
+  );
+  const created = await getProjectDependency(id, fromProjectId, userId);
+  if (!created) throw new Error('Failed to create project dependency');
+  return created;
+}
+
+export async function updateProjectDependency(
+  id: string,
+  fromProjectId: string,
+  userId: string,
+  patch: ProjectDependencyPatch,
+): Promise<ProjectDependency | null> {
+  await assertProjectOwnership(fromProjectId, userId);
+
+  if (
+    patch.kind !== undefined &&
+    !(DEPENDENCY_KIND_VALUES as readonly string[]).includes(patch.kind)
+  ) {
+    throw new Error(`Invalid kind: ${patch.kind}`);
+  }
+  if (
+    patch.status !== undefined &&
+    !(DEPENDENCY_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid status: ${patch.status}`);
+  }
+
+  const pool = getMakerPool();
+  await pool.query(
+    `UPDATE agos_maker_project_dependencies
+        SET kind       = COALESCE($4, kind),
+            status     = COALESCE($5, status),
+            notes      = COALESCE($6, notes),
+            metadata   = COALESCE($7::jsonb, metadata),
+            updated_at = now()
+      WHERE id = $1 AND from_project_id = $2 AND user_id = $3`,
+    [
+      id,
+      fromProjectId,
+      userId,
+      patch.kind ?? null,
+      patch.status ?? null,
+      patch.notes ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getProjectDependency(id, fromProjectId, userId);
+}
+
+export async function deleteProjectDependency(
+  id: string,
+  fromProjectId: string,
+  userId: string,
+): Promise<boolean> {
+  await assertProjectOwnership(fromProjectId, userId);
+  const pool = getMakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_maker_project_dependencies
+      WHERE id = $1 AND from_project_id = $2 AND user_id = $3`,
+    [id, fromProjectId, userId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Top Blockers feed (Phase 6)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Compute the Top Blockers feed across ALL of a user's Maker projects.
+ *
+ *   1. Milestones where:
+ *        status = 'missed'    OR
+ *        status = 'blocked'   OR
+ *        (status = 'at_risk' AND due_at <= today + INTERVAL '7 days') OR
+ *        (due_at < today AND status != 'done')                          (overdue)
+ *   2. Dependencies where status='open' AND kind='blocks'.
+ *
+ * Severity ranking + deterministic tie-break run in JS via `rankBlockerItems`
+ * so the policy is exercised by unit tests without spinning up Postgres.
+ *
+ * The `today` parameter is injected for testability — production callers
+ * pass `new Date()`. Default limit is 25; caller may bump to 100.
+ */
+export async function listTopBlockers(
+  userId: string,
+  options: { limit?: number; today?: Date } = {},
+): Promise<BlockerItem[]> {
+  const pool = getMakerPool();
+  const today = options.today ?? new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+  const cutoff = new Date(today.getTime() + 7 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  const milestoneRows = await pool.query(
+    `SELECT m.id, m.project_id, m.label, m.status, m.due_at,
+            m.blocked_reason, m.created_at,
+            p.name AS project_name
+       FROM agos_maker_build_milestones m
+       JOIN agos_maker_projects p ON p.id = m.project_id
+      WHERE p.user_id = $1
+        AND m.status <> 'done'
+        AND (
+              m.status IN ('missed','blocked')
+           OR (m.status = 'at_risk' AND m.due_at IS NOT NULL AND m.due_at <= $3::date)
+           OR (m.due_at IS NOT NULL AND m.due_at < $2::date)
+        )`,
+    [userId, todayIso, cutoff],
+  );
+
+  const dependencyRows = await pool.query(
+    `SELECT d.id, d.from_project_id, d.to_project_id, d.notes, d.created_at,
+            p_from.name AS from_name, p_to.name AS to_name
+       FROM agos_maker_project_dependencies d
+       JOIN agos_maker_projects p_from ON p_from.id = d.from_project_id
+       JOIN agos_maker_projects p_to   ON p_to.id   = d.to_project_id
+      WHERE d.user_id = $1
+        AND d.status = 'open'
+        AND d.kind   = 'blocks'
+        AND p_from.user_id = $1
+        AND p_to.user_id   = $1`,
+    [userId],
+  );
+
+  const items: BlockerItem[] = [];
+
+  for (const row of milestoneRows.rows as any[]) {
+    const status = row.status as MilestoneStoredStatus;
+    const dueAt =
+      row.due_at instanceof Date
+        ? row.due_at.toISOString().slice(0, 10)
+        : row.due_at
+          ? String(row.due_at).slice(0, 10)
+          : null;
+    let severity: BlockerSeverity;
+    if (status === 'missed') {
+      severity = 'missed';
+    } else if (status === 'blocked') {
+      severity = 'blocked';
+    } else if (dueAt && dueAt < todayIso && status !== 'done') {
+      severity = 'overdue';
+    } else if (status === 'at_risk') {
+      severity = 'at_risk';
+    } else {
+      // The SQL filter shouldn't yield this branch; guard for safety.
+      continue;
+    }
+    items.push({
+      kind: 'milestone',
+      id: row.id,
+      projectId: row.project_id,
+      projectName: row.project_name ?? 'Untitled project',
+      title: row.label,
+      severity,
+      dueAt,
+      status,
+      reason: row.blocked_reason ?? null,
+      createdAt:
+        row.created_at instanceof Date
+          ? row.created_at.toISOString()
+          : String(row.created_at),
+    });
+  }
+
+  for (const row of dependencyRows.rows as any[]) {
+    items.push({
+      kind: 'dependency',
+      id: row.id,
+      projectId: row.from_project_id,
+      projectName: row.from_name ?? 'Untitled project',
+      title: `Blocked by ${row.to_name ?? 'another project'}`,
+      severity: 'open_dependency',
+      dueAt: null,
+      status: 'open',
+      reason: row.notes ?? null,
+      createdAt:
+        row.created_at instanceof Date
+          ? row.created_at.toISOString()
+          : String(row.created_at),
+    });
+  }
+
+  const ranked = rankBlockerItems(items);
+  return limitBlockerItems(ranked, options.limit ?? 25);
+}
+
+// Re-export severity rank for callers that only need it (tests, etc.).
+export { BLOCKER_SEVERITY_RANK };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Tools (Phase 4)
