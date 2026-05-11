@@ -40,6 +40,17 @@ import {
   type RelationshipDirection,
   type CharacterRelationshipUpsert,
 } from './characters';
+import {
+  SCREENPLAY_FORMAT_VALUES,
+  SCREENPLAY_STATUS_VALUES,
+  type Screenplay,
+  type ScreenplayFormat,
+  type ScreenplayStatus,
+  type ScreenplayUpsert,
+  type ScreenplayVersion,
+  type ScreenplayScene,
+} from './screenplays';
+import { parseFountain, countWords as countFountainWords } from './fountain-parser';
 
 // ─── Row mappers ─────────────────────────────────────────────────────────────
 
@@ -1081,6 +1092,454 @@ export async function deleteCharacterRelationship(
   );
   return (r.rowCount ?? 0) > 0;
 }
+
+// ─── Screenplays ────────────────────────────────────────────────────────────
+
+const SCREENPLAY_COLUMNS = `id, project_id, title, format, status,
+                            head_version_id, metadata, created_at, updated_at`;
+
+const SCREENPLAY_VERSION_COLUMNS = `id, screenplay_id, version_number, label,
+                                    is_head, fountain_text, word_count,
+                                    page_count_estimate, created_at`;
+
+const SCREENPLAY_SCENE_COLUMNS = `id, screenplay_id, version_id, scene_number,
+                                  heading, interior, location, time_of_day,
+                                  page_start, eighths, dialogue_word_counts,
+                                  action_text, dialogue_text, metadata`;
+
+function rowToScreenplay(row: any): Screenplay {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    format: row.format as ScreenplayFormat,
+    status: row.status as ScreenplayStatus,
+    headVersionId: row.head_version_id ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+function rowToScreenplayVersion(row: any): ScreenplayVersion {
+  return {
+    id: row.id,
+    screenplayId: row.screenplay_id,
+    versionNumber: Number(row.version_number),
+    label: row.label ?? null,
+    isHead: Boolean(row.is_head),
+    fountainText: row.fountain_text ?? '',
+    wordCount: Number(row.word_count),
+    pageCountEstimate: Number(row.page_count_estimate),
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+function rowToScreenplayScene(row: any): ScreenplayScene {
+  return {
+    id: row.id,
+    screenplayId: row.screenplay_id,
+    versionId: row.version_id,
+    sceneNumber: Number(row.scene_number),
+    heading: row.heading,
+    interior: row.interior == null ? null : Boolean(row.interior),
+    location: row.location ?? null,
+    timeOfDay: row.time_of_day ?? null,
+    pageStart: row.page_start == null ? null : Number(row.page_start),
+    eighths: row.eighths == null ? null : Number(row.eighths),
+    dialogueWordCounts: (row.dialogue_word_counts as Record<string, number>) ?? {},
+    actionText: row.action_text ?? null,
+    dialogueText: row.dialogue_text ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
+  };
+}
+
+/**
+ * Lookup the project's screenplay (returns null when none exists).
+ * Projects rarely have more than one screenplay in practice; the
+ * routes auto-create on first GET to keep the editor stateless.
+ */
+export async function getScreenplayByProject(
+  projectId: string,
+  userId: string,
+): Promise<Screenplay | null> {
+  const pool = getFilmmakerPool();
+  const columns = SCREENPLAY_COLUMNS.split(',').map((c) => `s.${c.trim()}`).join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_screenplays s
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE s.project_id = $1 AND p.user_id = $2
+      ORDER BY s.created_at ASC
+      LIMIT 1`,
+    [projectId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToScreenplay(r.rows[0]);
+}
+
+export async function getScreenplay(
+  screenplayId: string,
+  userId: string,
+): Promise<Screenplay | null> {
+  const pool = getFilmmakerPool();
+  const columns = SCREENPLAY_COLUMNS.split(',').map((c) => `s.${c.trim()}`).join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_screenplays s
+       JOIN agos_filmmaker_projects p ON p.id = s.project_id
+      WHERE s.id = $1 AND p.user_id = $2`,
+    [screenplayId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToScreenplay(r.rows[0]);
+}
+
+export interface CreateScreenplayArgs {
+  projectId: string;
+  userId: string;
+  title?: string;
+  format?: ScreenplayFormat;
+  status?: ScreenplayStatus;
+}
+
+/**
+ * Create a screenplay together with its initial empty version (v1, head).
+ * Returns the new screenplay.
+ */
+export async function createScreenplay(args: CreateScreenplayArgs): Promise<Screenplay> {
+  const project = await getProject(args.projectId, args.userId);
+  if (!project) throw new Error('Project not found or not owned by user');
+
+  const format: ScreenplayFormat = args.format ?? 'feature';
+  if (!(SCREENPLAY_FORMAT_VALUES as readonly string[]).includes(format)) {
+    throw new Error(`Invalid screenplay format: ${format}`);
+  }
+  const status: ScreenplayStatus = args.status ?? 'draft';
+  if (!(SCREENPLAY_STATUS_VALUES as readonly string[]).includes(status)) {
+    throw new Error(`Invalid screenplay status: ${status}`);
+  }
+
+  const title =
+    args.title && args.title.trim().length > 0
+      ? args.title.trim()
+      : `${project.name} — Screenplay`;
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  const screenplayId = randomUUID();
+  const versionId = randomUUID();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO agos_filmmaker_screenplays
+         (id, project_id, title, format, status, head_version_id, metadata)
+       VALUES ($1,$2,$3,$4,$5,NULL,'{}'::jsonb)`,
+      [screenplayId, args.projectId, title, format, status],
+    );
+    await client.query(
+      `INSERT INTO agos_filmmaker_screenplay_versions
+         (id, screenplay_id, version_number, label, is_head,
+          fountain_text, word_count, page_count_estimate)
+       VALUES ($1,$2,1,NULL,true,'',0,0)`,
+      [versionId, screenplayId],
+    );
+    await client.query(
+      `UPDATE agos_filmmaker_screenplays
+          SET head_version_id = $2, updated_at = now()
+        WHERE id = $1`,
+      [screenplayId, versionId],
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  const created = await getScreenplay(screenplayId, args.userId);
+  if (!created) throw new Error('Failed to create screenplay');
+  return created;
+}
+
+export interface UpdateScreenplayMetaArgs {
+  id: string;
+  userId: string;
+  patch: ScreenplayUpsert;
+}
+
+export async function updateScreenplayMeta(
+  args: UpdateScreenplayMetaArgs,
+): Promise<Screenplay | null> {
+  const existing = await getScreenplay(args.id, args.userId);
+  if (!existing) return null;
+
+  const { patch } = args;
+  if (
+    patch.format !== undefined &&
+    !(SCREENPLAY_FORMAT_VALUES as readonly string[]).includes(patch.format)
+  ) {
+    throw new Error(`Invalid screenplay format: ${patch.format}`);
+  }
+  if (
+    patch.status !== undefined &&
+    !(SCREENPLAY_STATUS_VALUES as readonly string[]).includes(patch.status)
+  ) {
+    throw new Error(`Invalid screenplay status: ${patch.status}`);
+  }
+  if (patch.title !== undefined) {
+    if (typeof patch.title !== 'string' || patch.title.trim().length === 0) {
+      throw new Error('Screenplay title cannot be empty');
+    }
+  }
+
+  const pool = getFilmmakerPool();
+  await pool.query(
+    `UPDATE agos_filmmaker_screenplays
+        SET title      = COALESCE($2, title),
+            format     = COALESCE($3, format),
+            status     = COALESCE($4, status),
+            metadata   = COALESCE($5::jsonb, metadata),
+            updated_at = now()
+      WHERE id = $1`,
+    [
+      args.id,
+      patch.title?.trim() ?? null,
+      patch.format ?? null,
+      patch.status ?? null,
+      patch.metadata ? JSON.stringify(patch.metadata) : null,
+    ],
+  );
+  return getScreenplay(args.id, args.userId);
+}
+
+export async function listScreenplayVersions(
+  screenplayId: string,
+  userId: string,
+): Promise<ScreenplayVersion[]> {
+  const screenplay = await getScreenplay(screenplayId, userId);
+  if (!screenplay) return [];
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${SCREENPLAY_VERSION_COLUMNS}
+       FROM agos_filmmaker_screenplay_versions
+      WHERE screenplay_id = $1
+      ORDER BY version_number DESC`,
+    [screenplayId],
+  );
+  return r.rows.map(rowToScreenplayVersion);
+}
+
+export async function getScreenplayVersion(
+  versionId: string,
+  userId: string,
+): Promise<ScreenplayVersion | null> {
+  const pool = getFilmmakerPool();
+  const columns = SCREENPLAY_VERSION_COLUMNS.split(',').map((c) => `v.${c.trim()}`).join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_screenplay_versions v
+       JOIN agos_filmmaker_screenplays s ON s.id = v.screenplay_id
+       JOIN agos_filmmaker_projects   p ON p.id = s.project_id
+      WHERE v.id = $1 AND p.user_id = $2`,
+    [versionId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToScreenplayVersion(r.rows[0]);
+}
+
+export async function listScreenplayScenes(
+  versionId: string,
+  userId: string,
+): Promise<ScreenplayScene[]> {
+  const version = await getScreenplayVersion(versionId, userId);
+  if (!version) return [];
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `SELECT ${SCREENPLAY_SCENE_COLUMNS}
+       FROM agos_filmmaker_screenplay_scenes
+      WHERE version_id = $1
+      ORDER BY scene_number ASC`,
+    [versionId],
+  );
+  return r.rows.map(rowToScreenplayScene);
+}
+
+export async function getScreenplayScene(
+  sceneId: string,
+  userId: string,
+): Promise<ScreenplayScene | null> {
+  const pool = getFilmmakerPool();
+  const columns = SCREENPLAY_SCENE_COLUMNS.split(',').map((c) => `sc.${c.trim()}`).join(', ');
+  const r = await pool.query(
+    `SELECT ${columns}
+       FROM agos_filmmaker_screenplay_scenes sc
+       JOIN agos_filmmaker_screenplays s ON s.id = sc.screenplay_id
+       JOIN agos_filmmaker_projects   p ON p.id = s.project_id
+      WHERE sc.id = $1 AND p.user_id = $2`,
+    [sceneId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToScreenplayScene(r.rows[0]);
+}
+
+export interface SaveDraftVersionArgs {
+  screenplayId: string;
+  userId: string;
+  fountainText: string;
+  label?: string | null;
+}
+
+/**
+ * Save a new version of the screenplay. Parses the Fountain text,
+ * writes the new version + replaces scenes, clears the previous head
+ * flag, and flips this version to head. All in one transaction so
+ * a half-saved version can't leave stale scenes behind.
+ */
+export async function saveDraftVersion(
+  args: SaveDraftVersionArgs,
+): Promise<{ version: ScreenplayVersion; scenes: ScreenplayScene[] } | null> {
+  const screenplay = await getScreenplay(args.screenplayId, args.userId);
+  if (!screenplay) return null;
+
+  const parsed = parseFountain(args.fountainText);
+  const wordCount = parsed.totalWordCount;
+  const pageCount = parsed.pageCountEstimate;
+
+  const pool = getFilmmakerPool();
+  const client = await pool.connect();
+  const versionId = randomUUID();
+  try {
+    await client.query('BEGIN');
+
+    const numRow = await client.query(
+      `SELECT COALESCE(MAX(version_number), 0) + 1 AS next_version
+         FROM agos_filmmaker_screenplay_versions
+        WHERE screenplay_id = $1`,
+      [args.screenplayId],
+    );
+    const nextVersionNumber = Number(numRow.rows[0].next_version);
+
+    // Clear previous head.
+    await client.query(
+      `UPDATE agos_filmmaker_screenplay_versions
+          SET is_head = false
+        WHERE screenplay_id = $1 AND is_head = true`,
+      [args.screenplayId],
+    );
+
+    // Insert new version (head=true).
+    await client.query(
+      `INSERT INTO agos_filmmaker_screenplay_versions
+         (id, screenplay_id, version_number, label, is_head,
+          fountain_text, word_count, page_count_estimate)
+       VALUES ($1,$2,$3,$4,true,$5,$6,$7)`,
+      [
+        versionId,
+        args.screenplayId,
+        nextVersionNumber,
+        args.label?.trim() || null,
+        args.fountainText,
+        wordCount,
+        pageCount,
+      ],
+    );
+
+    // Insert scenes for this new version.
+    for (const scene of parsed.scenes) {
+      await client.query(
+        `INSERT INTO agos_filmmaker_screenplay_scenes
+           (id, screenplay_id, version_id, scene_number, heading,
+            interior, location, time_of_day, page_start,
+            dialogue_word_counts, action_text, dialogue_text, metadata)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,'{}'::jsonb)`,
+        [
+          randomUUID(),
+          args.screenplayId,
+          versionId,
+          scene.sceneNumber,
+          scene.heading,
+          scene.interior ?? null,
+          scene.location ?? null,
+          scene.timeOfDay ?? null,
+          scene.pageStart,
+          JSON.stringify(scene.dialogueWordCounts),
+          scene.actionText,
+          scene.dialogueText,
+        ],
+      );
+    }
+
+    // Flip the screenplay's head pointer.
+    await client.query(
+      `UPDATE agos_filmmaker_screenplays
+          SET head_version_id = $2, updated_at = now()
+        WHERE id = $1`,
+      [args.screenplayId, versionId],
+    );
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  const version = await getScreenplayVersion(versionId, args.userId);
+  const scenes = await listScreenplayScenes(versionId, args.userId);
+  if (!version) throw new Error('Failed to save draft version');
+  return { version, scenes };
+}
+
+/**
+ * Restore a historical version by copying its `fountain_text` into a
+ * brand-new version that becomes head. The original version stays put.
+ */
+export async function restoreScreenplayVersion(
+  versionId: string,
+  userId: string,
+): Promise<{ version: ScreenplayVersion; scenes: ScreenplayScene[] } | null> {
+  const target = await getScreenplayVersion(versionId, userId);
+  if (!target) return null;
+  return saveDraftVersion({
+    screenplayId: target.screenplayId,
+    userId,
+    fountainText: target.fountainText,
+    label: `Restored from v${target.versionNumber}`,
+  });
+}
+
+export async function deleteScreenplay(
+  screenplayId: string,
+  userId: string,
+): Promise<boolean> {
+  const existing = await getScreenplay(screenplayId, userId);
+  if (!existing) return false;
+  const pool = getFilmmakerPool();
+  const r = await pool.query(
+    `DELETE FROM agos_filmmaker_screenplays WHERE id = $1`,
+    [screenplayId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/**
+ * Convenience helper that mirrors the "auto-create on first GET" flow
+ * used by the project screenplay route.
+ */
+export async function getOrCreateScreenplayForProject(
+  projectId: string,
+  userId: string,
+): Promise<Screenplay> {
+  const existing = await getScreenplayByProject(projectId, userId);
+  if (existing) return existing;
+  return createScreenplay({ projectId, userId });
+}
+
+// Re-export for fountain-text word counting parity in tests / routes.
+export { countFountainWords };
 
 // ─── Audit ──────────────────────────────────────────────────────────────────
 
