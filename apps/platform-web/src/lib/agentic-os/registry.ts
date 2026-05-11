@@ -251,6 +251,11 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Characters',
         description: 'Character sheets — identity, psychology, voice, and relationships.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'Screenplay',
+        description: 'Fountain-format screenplay editor with scenes, characters, and versions.',
+      },
     ],
   },
   {
