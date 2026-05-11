@@ -1,5 +1,132 @@
 # Maker OS — Full Execution Plan (Assess → Plan → Execute → Validate)
 
+## Phase 7 — AI coach (locked decisions)
+
+**Migration:** `0040_maker_phase7`, down_revision `0039_maker_phase6`.
+
+**Scope:** Streaming Anthropic-backed AI coach with four modes —
+`procurement_advisor`, `build_planner`, `shop_safety`, and `general`.
+The coach reads a mode-shaped snapshot of the user's workshop / project
+and gives concrete recommendations grounded in that context. This is
+the seventh and final phase of Maker OS.
+
+**Schema (1 new table, all under `agos_maker_*`):**
+
+1. `agos_maker_coach_sessions` — one row per chat session, transcript
+   stored as an inline JSONB array on the row. Unlike Filmmaker /
+   Cyber (which split conversations from messages and additionally
+   keep an action-log table), Maker uses the simpler one-table shape
+   spec'd in the v0.1.36 build prompt — Maker ships no mutating coach
+   tools, so there's no action-log to keep.
+
+   Columns: `id UUID PK`, `user_id UUID NOT NULL`, `project_id UUID`
+   nullable (per-OS UUID, NO FK by design — matches the v0.1.30
+   platform contract), `mode TEXT NOT NULL` CHECK in
+   `('procurement_advisor','build_planner','shop_safety','general')`,
+   `title TEXT NOT NULL` (auto-summarized from first turn or user-set),
+   `messages JSONB NOT NULL DEFAULT '[]'` (ordered array of
+   `{ role, content, created_at }`), `metadata JSONB NOT NULL DEFAULT '{}'`,
+   `created_at`, `updated_at`.
+
+   Indexes: `(user_id, updated_at DESC)` (recent-sessions surface),
+   partial `(project_id, updated_at DESC) WHERE project_id IS NOT NULL`
+   (per-project session list), `(user_id, mode, updated_at DESC)`
+   (mode-filtered list).
+
+**Coach safety policy:** **No domain-output filter.** Matches Filmmaker,
+not Cyber. System-prompt-only shop-safety nudge — if the user describes
+a clearly unsafe operation, the coach points it out and refuses to walk
+them through it without proper PPE / ventilation / training. No content
+classifier, no PII redaction, no token sniffing. Reason: the Maker
+domain isn't credential-sensitive like Cyber and isn't compliance-bound
+like Health; users explicitly opt in by typing.
+
+**Context loading (mode-shaped, hard-capped at 50 KB pre-prompt):**
+
+- `procurement_advisor` (project required): BOM rows + supplier links
+  (filtered to relevant parts) + variant counts + totals (line count,
+  total est cost cents, deficit count, missing-supplier count).
+- `build_planner` (project required): steps + milestones (with the
+  Phase 6 deadline metadata) + tools required + cross-project
+  dependency edges (both directions).
+- `shop_safety` (project optional): active tools (`status != 'retired'`)
+  + overdue maintenance events (`next_due_at < now()`) + worn
+  consumables (`hours_remaining < 0.2 * max_hours`) + the project's
+  required tools when scoped.
+- `general` (project optional): project meta + counts only ("X has 12
+  BOM lines, 4 steps, 2 open milestones, 3 tools required") + workshop
+  counts (project count, active tool count).
+
+**Routes (BFF, under `app/api/tiresias/agentic-os/maker/coach/`):**
+
+- `GET  /coach/sessions` — list current user's sessions. Filters:
+  `?mode=`, `?project_id=`, `?scope=workshop`. Paginated.
+- `POST /coach/sessions` — create. Body
+  `{ mode, project_id?, title?, initial_message? }`. Returns 503
+  `coach_not_configured` if `ANTHROPIC_API_KEY` is missing. 404 if
+  `project_id` doesn't belong to the caller. Audited.
+- `GET  /coach/sessions/[sessionId]` — fetch session + transcript.
+- `PATCH /coach/sessions/[sessionId]` — rename title. Audited.
+- `DELETE /coach/sessions/[sessionId]` — drop session. Audited.
+- `POST /coach/sessions/[sessionId]/messages` — append a user turn and
+  stream the assistant turn back. Wire format matches Filmmaker /
+  Cyber: plain UTF-8 deltas, U+001E sentinel, JSON trailer with
+  `session_id`. Returns 503 cleanly if key missing.
+- `POST /coach/quick` — one-shot quick prompt (no persistence) used by
+  the prompt suggestions UI. Returns 503 cleanly if key missing.
+
+All mutating routes audit via `recordAudit({ actorId, action:
+'maker.coach.<verb>', payload, projectId })`.
+
+**System prompts:** per-mode TypeScript constants under
+`lib/agentic-os/maker/coach/system-prompt.ts`. Each mode carries a
+role framing on top of three shared hard rules:
+
+1. Never invent project / workshop facts (defer to "I don't have that on
+   file yet").
+2. Refuse to walk the user through a clearly unsafe operation without
+   proper PPE / ventilation / training (this rule applies in every
+   mode, not only `shop_safety`).
+3. Defer regulated professional advice (electrical code, structural,
+   pressurized vessels, medical devices) to a licensed professional.
+
+The system prompt is versioned (`SYSTEM_PROMPT_VERSION = 'v1'`); bump
+when the template materially changes so historical sessions can be
+replayed.
+
+**Pages:**
+
+- `/dashboard/os/maker/coach` — coach hub. Lists recent sessions, mode
+  picker + per-mode quick prompts + free-form start input. Shows the
+  503-aware empty state when `ANTHROPIC_API_KEY` is missing (matches
+  the Filmmaker / Cyber pattern exactly). Accepts
+  `?project_id=…&mode=…` to pre-select scope + mode.
+- `/dashboard/os/maker/coach/[sessionId]` — session view. Streaming
+  chat UI with title-edit + delete affordances. Mode pill + scope pill
+  on the header.
+- Project detail page — `AI Coach` tab now CTAs into
+  `/maker/coach?project_id=<id>&mode=build_planner` (default mode for
+  a project-scoped open).
+
+**Hub registry card:** added an `AI coach` entry on the Maker OS
+registry alongside the existing Phase 6 `Top blockers` card.
+
+**Cross-ownership safety:** every read filters by `user_id`. Session
+ownership is verified before fetch / mutation (the SQL `WHERE id = $1
+AND user_id = $2` join is the single enforcement point). Session
+creation that supplies a `project_id` belonging to another user
+returns 404. Workshop-wide sessions skip the project check entirely.
+
+**Graceful missing-key handling:** every coach route checks
+`isCoachConfigured()` and returns 503 with
+`{ error: 'coach_not_configured', message: ... }` cleanly when the
+key is unset. The hub page swaps in `CoachEmptyState` instead of the
+hub UI. The same wiring lets Maker + Health + Filmmaker + Cyber
+coaches all light up together whenever the secret is set, without a
+redeploy.
+
+***
+
 ## Phase 6 — Milestones-as-Deadlines + Cross-Project Dependencies + Top Blockers (locked decisions)
 
 **Migration:** `0039_maker_phase6`, down_revision `0038_maker_phase5`.

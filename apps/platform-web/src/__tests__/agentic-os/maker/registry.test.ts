@@ -47,4 +47,10 @@ describe('registry Maker OS Phase 2 cards', () => {
     const json = JSON.stringify(AGENTIC_OS_MODULES);
     expect(json).not.toMatch(/hephaestus/i);
   });
+
+  it('has an AI coach card pointing at /dashboard/os/maker/coach (Phase 7)', () => {
+    const card = maker!.features.find((f) => f.label === 'AI coach');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/maker/coach');
+  });
 });

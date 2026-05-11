@@ -216,6 +216,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Cross-project deadline + dependency feed — missed, blocked, overdue, and at-risk milestones plus open block edges.',
       },
+      {
+        href: '/dashboard/os/maker/coach',
+        label: 'AI coach',
+        description:
+          'Workshop copilot — procurement / build-planner / shop-safety / general. Streaming Anthropic with mode-scoped context.',
+      },
     ],
   },
   {

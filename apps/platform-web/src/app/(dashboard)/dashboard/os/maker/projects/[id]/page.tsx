@@ -14,7 +14,8 @@
  *   - Tools      — Phase 4 project↔tool picker
  *   - Specs      — Phase 5 spec sheet list (union of project / parts / tools)
  *   - References — Phase 5 project↔reference picker
- *   - AI Coach   — placeholder (Phase 7)
+ *   - AI Coach   — Phase 7: links to the workshop-wide coach hub, scoped
+ *                  to this project, mode pre-selected as build_planner.
  *
  * @license MIT — Tiresias Maker OS (internal).
  */
@@ -99,7 +100,7 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[
   { key: 'specs', label: 'Specs', icon: FileText },
   { key: 'references', label: 'References', icon: BookOpen },
   { key: 'dependencies', label: 'Dependencies', icon: Network },
-  { key: 'coach', label: 'AI Coach', icon: Sparkles, phase: 'Phase 7' },
+  { key: 'coach', label: 'AI Coach', icon: Sparkles },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -497,7 +498,26 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           />
         </div>
       )}
-      {activeTab === 'coach' && <ComingSoon phase="Phase 7" feature="AI coach" />}
+      {activeTab === 'coach' && (
+        <div>
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
+            AI coach
+          </h2>
+          <p className="text-xs text-[#94a3b8] mb-4">
+            Project-scoped AI advisor across procurement, build planning,
+            and shop safety. Pick a mode and start a session — the coach
+            reads this project&apos;s BOM, build steps, milestones, tools,
+            and dependencies as relevant to the chosen mode.
+          </p>
+          <Link
+            href={`/dashboard/os/maker/coach?project_id=${project.id}&mode=build_planner`}
+            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-sm font-medium px-4 py-2 transition"
+          >
+            <Sparkles className="w-4 h-4" />
+            Open project coach
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -522,14 +542,3 @@ function StatRow({
   );
 }
 
-function ComingSoon({ phase, feature }: { phase: string; feature: string }) {
-  return (
-    <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-8 text-center">
-      <p className="text-sm font-medium text-white mb-1">{feature}</p>
-      <p className="text-xs text-[#94a3b8]">
-        Not yet configured. Lands in <span className="text-[#cbd5e1]">{phase}</span> of the
-        Maker OS roadmap.
-      </p>
-    </div>
-  );
-}
