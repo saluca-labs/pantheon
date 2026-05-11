@@ -9,7 +9,7 @@
  */
 
 import Link from 'next/link';
-import { ArrowLeft, Clapperboard, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Clapperboard, Download, FolderOpen } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { listProjects, listShots } from '@/lib/agentic-os/filmmaker/repo';
@@ -49,9 +49,20 @@ export default async function FilmmakerShotsPage({ searchParams }: Props) {
           Back to Projects
         </Link>
 
-        <div className="flex items-center gap-3 mb-1">
-          <Clapperboard className="w-6 h-6 text-[#4361EE]" />
-          <h1 className="text-2xl font-semibold text-white">Shot List Builder</h1>
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <div className="flex items-center gap-3">
+            <Clapperboard className="w-6 h-6 text-[#4361EE]" />
+            <h1 className="text-2xl font-semibold text-white">Shot List Builder</h1>
+          </div>
+          <a
+            href={`/api/tiresias/agentic-os/filmmaker/projects/${project.id}/exports/shot-list.pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] hover:bg-[#1a1d27] text-sm text-white/90 px-3 py-2 transition"
+          >
+            <Download className="w-4 h-4" />
+            Export PDF
+          </a>
         </div>
         <p className="text-sm text-[#94a3b8] mb-6">
           Project:{' '}
