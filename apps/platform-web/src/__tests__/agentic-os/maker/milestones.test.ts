@@ -15,12 +15,19 @@ import { describe, it, expect } from 'vitest';
 import {
   MILESTONE_STATUS_VALUES,
   MILESTONE_STATUS_LABELS,
+  MILESTONE_STORED_STATUS_VALUES,
+  MILESTONE_STORED_STATUS_LABELS,
+  MILESTONE_PRIORITY_VALUES,
+  MILESTONE_PRIORITY_LABELS,
   milestoneStatus,
   sortMilestones,
+  sortMilestonesByDeadline,
   summarizeMilestones,
   validateDueAt,
   validateMilestoneLabel,
   validateSortOrder,
+  validateMilestoneStatus,
+  validateMilestonePriority,
   type BuildMilestone,
 } from '@/lib/agentic-os/maker/milestones';
 
@@ -234,5 +241,85 @@ describe('validateSortOrder', () => {
     expect(validateSortOrder(1.5)).toMatch(/integer/);
     expect(validateSortOrder('1' as any)).toMatch(/number/);
     expect(validateSortOrder(Number.NaN)).toMatch(/number/);
+  });
+});
+
+// ─── Phase 6 — stored status / priority / deadline alias ──────────────────
+
+describe('MILESTONE_STORED_STATUS_VALUES + labels', () => {
+  it('contains the 6 locked stored statuses', () => {
+    expect(MILESTONE_STORED_STATUS_VALUES).toEqual([
+      'pending',
+      'at_risk',
+      'blocked',
+      'on_track',
+      'done',
+      'missed',
+    ]);
+  });
+
+  it('every stored status has a label', () => {
+    for (const s of MILESTONE_STORED_STATUS_VALUES) {
+      expect(MILESTONE_STORED_STATUS_LABELS[s]).toBeTruthy();
+    }
+  });
+});
+
+describe('MILESTONE_PRIORITY_VALUES + labels', () => {
+  it('contains the 4 locked priority values', () => {
+    expect(MILESTONE_PRIORITY_VALUES).toEqual([
+      'low',
+      'medium',
+      'high',
+      'critical',
+    ]);
+  });
+
+  it('every priority has a label', () => {
+    for (const p of MILESTONE_PRIORITY_VALUES) {
+      expect(MILESTONE_PRIORITY_LABELS[p]).toBeTruthy();
+    }
+  });
+});
+
+describe('validateMilestoneStatus', () => {
+  it('accepts each locked stored status', () => {
+    for (const s of MILESTONE_STORED_STATUS_VALUES) {
+      expect(validateMilestoneStatus(s)).toBeNull();
+    }
+  });
+  it('rejects unknown value', () => {
+    expect(validateMilestoneStatus('bogus')).toMatch(/status must be one of/);
+  });
+  it('rejects non-string', () => {
+    expect(validateMilestoneStatus(0 as any)).toMatch(/status must be one of/);
+  });
+});
+
+describe('validateMilestonePriority', () => {
+  it('accepts each locked priority value', () => {
+    for (const p of MILESTONE_PRIORITY_VALUES) {
+      expect(validateMilestonePriority(p)).toBeNull();
+    }
+  });
+  it('rejects unknown value', () => {
+    expect(validateMilestonePriority('urgent')).toMatch(/priority must be one of/);
+  });
+  it('rejects non-string', () => {
+    expect(validateMilestonePriority(0 as any)).toMatch(/priority must be one of/);
+  });
+});
+
+describe('sortMilestonesByDeadline', () => {
+  it('is an alias for sortMilestones', () => {
+    expect(sortMilestonesByDeadline).toBe(sortMilestones);
+  });
+
+  it('sorts dated milestones ascending by due_at', () => {
+    const out = sortMilestonesByDeadline([
+      makeMilestone({ id: 'late', dueAt: '2026-12-01' }),
+      makeMilestone({ id: 'soon', dueAt: '2026-05-15' }),
+    ]);
+    expect(out.map((m) => m.id)).toEqual(['soon', 'late']);
   });
 });
