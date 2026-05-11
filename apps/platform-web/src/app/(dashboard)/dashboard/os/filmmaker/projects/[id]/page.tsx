@@ -10,7 +10,7 @@
 
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Calendar, CalendarDays, Clapperboard, Film, FileText, Images, Layers, Link2, ScrollText, Users, UserSquare2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, CalendarDays, Clapperboard, Film, FileText, Images, Layers, Link2, ScrollText, Sparkles, Users, UserSquare2 } from 'lucide-react';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { getProjectWithStats } from '@/lib/agentic-os/filmmaker/repo';
 import {
@@ -306,6 +306,24 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
                 </p>
                 <p className="text-xs text-[#94a3b8] mt-0.5">
                   Visual boards with ordered panels — angle, move, shot size.
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+          </Link>
+
+          <Link
+            href={`/dashboard/os/filmmaker/projects/${project.id}/coach`}
+            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+          >
+            <div className="flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <div>
+                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                  AI coach
+                </p>
+                <p className="text-xs text-[#94a3b8] mt-0.5">
+                  Development exec, script reader, dialogue doctor, scheduler.
                 </p>
               </div>
             </div>

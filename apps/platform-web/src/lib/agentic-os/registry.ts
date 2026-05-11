@@ -271,6 +271,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Storyboards',
         description: 'Panel-grid visual boards with shot/angle/move metadata and PDF export.',
       },
+      {
+        href: '/dashboard/os/filmmaker/projects',
+        label: 'AI coach',
+        description:
+          'Streaming dev-exec / script-reader / dialogue-doctor / scheduler conversations per project.',
+      },
     ],
   },
   {
