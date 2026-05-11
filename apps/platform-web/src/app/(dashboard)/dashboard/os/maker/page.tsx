@@ -2,10 +2,12 @@
  * Maker OS — dashboard hub.
  *
  * Mirrors the Health / Filmmaker / Cyber hubs: a `DashboardHub` shell driven
- * by the registry entry plus the markdown plan as a collapsed accordion. The
- * feature cards advertise the Phase 1 shipped surfaces (Projects, Parts) and
- * point at the same destination (parts is per-project, so both cards land on
- * the project list).
+ * by the registry entry plus the markdown plan as a collapsed accordion.
+ *
+ * Phase 3 adds a Recent activity widget that surfaces the latest build-log
+ * entries across all of the user's Maker projects. It rides the
+ * `flagBanner` slot on the shared hub so we don't have to fork the shell
+ * for a single OS-specific surface.
  *
  * @license MIT — Tiresias Maker OS (internal).
  */
@@ -15,6 +17,7 @@ import { findAgenticOsModule } from '@/lib/agentic-os/registry';
 import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
+import { RecentActivityWidget } from '@/components/agentic-os/maker/recent-activity-widget';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,5 +34,11 @@ export default async function MakerOsPage() {
 
   const plan = await loadAgenticOsPlan(MAKER_SLUG);
 
-  return <DashboardHub module={mod} roadmapMarkdown={plan ?? null} />;
+  return (
+    <DashboardHub
+      module={mod}
+      roadmapMarkdown={plan ?? null}
+      flagBanner={<RecentActivityWidget />}
+    />
+  );
 }
