@@ -192,6 +192,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Vendor directory — link suppliers to catalog rows for unit prices and lead times.',
       },
+      {
+        href: '/dashboard/os/maker/tools',
+        label: 'Tools & maintenance',
+        description:
+          'Workshop-global tools with consumable wear tracking, maintenance log, and project links.',
+      },
     ],
   },
   {
