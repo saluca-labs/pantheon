@@ -58,4 +58,31 @@ describe('registry Research OS Phase 1 cards', () => {
       expect(otherHrefs).not.toContain(href);
     }
   });
+
+  // ─── Phase 2 additions ──────────────────────────────────────────────────
+
+  it('Phase 2: has a Lab notebook card', () => {
+    const card = research!.features.find((f) => f.label === 'Lab notebook');
+    expect(card).toBeDefined();
+  });
+
+  it('Phase 2: Lab notebook card points at the experiments hub', () => {
+    // The notebook is per-experiment so the registry card is a pointer
+    // into the experiments hub — drill into a specific experiment to
+    // see the timeline.
+    const card = research!.features.find((f) => f.label === 'Lab notebook')!;
+    expect(card.href).toBe('/dashboard/os/research/experiments');
+  });
+
+  it('Phase 2: Lab notebook card description mentions the timeline + kinds', () => {
+    const card = research!.features.find((f) => f.label === 'Lab notebook')!;
+    expect(card.description.length).toBeGreaterThan(20);
+    // Description should hint at ELN-shape semantics.
+    expect(card.description.toLowerCase()).toMatch(/note|timeline|observation|result/);
+  });
+
+  it('Phase 2: Experiments hub + Hypothesis ledger cards still present (no Phase 1 regression)', () => {
+    expect(research!.features.find((f) => f.label === 'Experiments hub')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Hypothesis ledger')).toBeDefined();
+  });
 });
