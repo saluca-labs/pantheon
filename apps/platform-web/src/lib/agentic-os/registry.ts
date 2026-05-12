@@ -530,6 +530,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'teal',
     features: [
       {
+        href: '/dashboard/os/business/deals',
+        label: 'Deals',
+        description:
+          'Pipeline kanban with stages, value tracking, and a per-deal activity timeline.',
+      },
+      {
         href: '/dashboard/os/business/people',
         label: 'People',
         description:
@@ -551,12 +557,6 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Settings',
         description:
           'Business name, logo, address, tax ID, currency, prefixes, and accent color.',
-      },
-      {
-        href: '/dashboard/os/business/contacts',
-        label: 'Contacts CRM (deprecated)',
-        description:
-          'Legacy page — redirects to the new hub. Will be removed in Phase 2.',
       },
     ],
   },

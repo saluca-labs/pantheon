@@ -13,9 +13,14 @@
  */
 
 import Link from 'next/link';
-import { Users, Building2, Activity } from 'lucide-react';
+import { Users, Building2, Activity, DollarSign } from 'lucide-react';
 import type { Interaction, Person, Organization } from '@/lib/agentic-os/business/crm';
 import { InteractionTypePill } from './interaction-type-pill';
+
+function fmtCents(cents: number): string {
+  const usd = (cents / 100).toFixed(0);
+  return `$${Number(usd).toLocaleString()}`;
+}
 
 interface Props {
   peopleCount: number;
@@ -23,6 +28,9 @@ interface Props {
   recentInteractions: Interaction[];
   recentPeople?: Pick<Person, 'id' | 'firstName' | 'lastName'>[];
   recentOrgs?: Pick<Organization, 'id' | 'name'>[];
+  dealsCount: number;
+  pipelineValueCents: number;
+  pipelineWeightedCents: number;
 }
 
 export function BusinessHub({
@@ -31,12 +39,38 @@ export function BusinessHub({
   recentInteractions,
   recentPeople = [],
   recentOrgs = [],
+  dealsCount,
+  pipelineValueCents,
+  pipelineWeightedCents,
 }: Props) {
   const personById = new Map(recentPeople.map((p) => [p.id, p]));
   const orgById = new Map(recentOrgs.map((o) => [o.id, o]));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <Link
+        href="/dashboard/os/business/deals"
+        className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE] transition"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="w-5 h-5 text-teal-300" />
+          <h2 className="text-sm font-semibold text-white">Deals</h2>
+        </div>
+        <p className="text-3xl font-semibold text-white mb-1">{dealsCount}</p>
+        <p className="text-xs text-[#94a3b8]">
+          Open deals
+          {pipelineValueCents > 0 && (
+            <span>
+              {' '}&middot; {fmtCents(pipelineValueCents)} pipeline
+              {pipelineWeightedCents !== pipelineValueCents && (
+                <span> ({fmtCents(pipelineWeightedCents)} weighted)</span>
+              )}
+            </span>
+          )}
+          . Click to open kanban.
+        </p>
+      </Link>
+
       <Link
         href="/dashboard/os/business/people"
         className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE] transition"

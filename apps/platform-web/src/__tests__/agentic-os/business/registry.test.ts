@@ -54,13 +54,6 @@ describe('registry Business OS Phase 1 cards', () => {
     expect(card!.href).toBe('/dashboard/os/business/settings');
   });
 
-  it('keeps a deprecated Contacts CRM alias for one release', () => {
-    const card = business!.features.find((f) =>
-      /deprecated/i.test(f.label) && f.href === '/dashboard/os/business/contacts',
-    );
-    expect(card).toBeDefined();
-  });
-
   it('does not reference Twenty / Invoice-Ninja / Solidtime co-process stack', () => {
     const json = JSON.stringify(business);
     expect(json).not.toMatch(/twenty/i);
@@ -87,7 +80,13 @@ describe('registry Business OS Phase 1 cards', () => {
     }
   });
 
-  it('exposes 5 feature cards in Phase 1 (4 new + 1 deprecated alias)', () => {
+  it('has a Deals card pointing at /dashboard/os/business/deals', () => {
+    const card = business!.features.find((f) => f.label === 'Deals');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/business/deals');
+  });
+
+  it('exposes 5 feature cards in Phase 2', () => {
     expect(business!.features).toHaveLength(5);
   });
 
