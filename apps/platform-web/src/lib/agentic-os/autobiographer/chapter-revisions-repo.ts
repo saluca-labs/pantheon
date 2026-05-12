@@ -24,6 +24,10 @@ import {
   type RevisionAuthor,
   type RevisionCitation,
 } from './chapter-revisions';
+import {
+  validateSensitiveKindsStrict,
+  type SensitiveKind,
+} from './sensitive-kinds';
 
 export interface AutobiographerChapterRevision {
   id: string;
@@ -36,6 +40,8 @@ export interface AutobiographerChapterRevision {
   summary: string | null;
   citations: RevisionCitation[];
   coachSessionId: string | null;
+  /** Phase 6 — sensitive-kind tags on derived prose. */
+  sensitiveKinds: SensitiveKind[];
   metadata: Record<string, unknown>;
   createdAt: string;
 }
@@ -47,6 +53,8 @@ export interface InsertRevisionInput {
   summary?: string | null;
   citations?: readonly unknown[];
   coachSessionId?: string | null;
+  /** Phase 6 — initial sensitive-kind tags for this revision. */
+  sensitiveKinds?: readonly string[];
   metadata?: Record<string, unknown>;
 }
 
@@ -54,12 +62,14 @@ export interface UpdateRevisionInput {
   bodyText?: string;
   summary?: string | null;
   citations?: readonly unknown[];
+  /** Phase 6 — replace the revision's sensitive-kind tags. */
+  sensitiveKinds?: readonly string[];
   metadata?: Record<string, unknown>;
 }
 
 const REVISION_COLUMNS = `id, chapter_id, user_id, version, author, body_text,
                           word_count, summary, citations, coach_session_id,
-                          metadata, created_at`;
+                          sensitive_kinds, metadata, created_at`;
 
 function rowToRevision(row: any): AutobiographerChapterRevision {
   let citations: RevisionCitation[] = [];
@@ -83,6 +93,11 @@ function rowToRevision(row: any): AutobiographerChapterRevision {
     summary: row.summary ?? null,
     citations,
     coachSessionId: row.coach_session_id ?? null,
+    sensitiveKinds: Array.isArray(row.sensitive_kinds)
+      ? (row.sensitive_kinds.filter((k: unknown) =>
+          typeof k === 'string',
+        ) as SensitiveKind[])
+      : [],
     metadata: (row.metadata as Record<string, unknown>) ?? {},
     createdAt:
       row.created_at instanceof Date
@@ -180,11 +195,14 @@ export async function insertRevision(
   const body = data.bodyText;
   const wc = countRevisionWords(body);
   const citations = normalizeCitations(data.citations ?? []);
+  const sensitiveKinds = data.sensitiveKinds
+    ? validateSensitiveKindsStrict(data.sensitiveKinds)
+    : [];
 
   await pool.query(
     `INSERT INTO agos_autobiographer_chapter_revisions
        (id, chapter_id, user_id, version, author, body_text, word_count,
-        summary, citations, coach_session_id, metadata)
+        summary, citations, coach_session_id, sensitive_kinds, metadata)
      VALUES (
        $1, $2, $3,
        COALESCE(
@@ -192,7 +210,7 @@ export async function insertRevision(
            WHERE chapter_id = $2),
          1
        ),
-       $4, $5, $6, $7, $8::jsonb, $9, $10::jsonb
+       $4, $5, $6, $7, $8::jsonb, $9, $10::text[], $11::jsonb
      )`,
     [
       id,
@@ -204,6 +222,7 @@ export async function insertRevision(
       data.summary ?? null,
       JSON.stringify(citations),
       data.coachSessionId ?? null,
+      sensitiveKinds,
       JSON.stringify(data.metadata ?? {}),
     ],
   );
@@ -239,14 +258,22 @@ export async function updateRevision(
   if (patch.citations !== undefined) {
     citations = normalizeCitations(patch.citations);
   }
+  const sensitiveKindsProvided = Object.prototype.hasOwnProperty.call(
+    patch,
+    'sensitiveKinds',
+  );
+  const sensitiveKinds = patch.sensitiveKinds
+    ? validateSensitiveKindsStrict(patch.sensitiveKinds)
+    : [];
 
   await pool.query(
     `UPDATE agos_autobiographer_chapter_revisions
-        SET body_text  = COALESCE($3,        body_text),
-            word_count = COALESCE($4,        word_count),
-            summary    = COALESCE($5,        summary),
-            citations  = COALESCE($6::jsonb, citations),
-            metadata   = COALESCE($7::jsonb, metadata)
+        SET body_text       = COALESCE($3,        body_text),
+            word_count      = COALESCE($4,        word_count),
+            summary         = COALESCE($5,        summary),
+            citations       = COALESCE($6::jsonb, citations),
+            sensitive_kinds = CASE WHEN $7::boolean THEN $8::text[] ELSE sensitive_kinds END,
+            metadata        = COALESCE($9::jsonb, metadata)
       WHERE id = $1 AND user_id = $2`,
     [
       id,
@@ -255,6 +282,8 @@ export async function updateRevision(
       wc,
       patch.summary ?? null,
       citations ? JSON.stringify(citations) : null,
+      sensitiveKindsProvided,
+      sensitiveKinds,
       patch.metadata ? JSON.stringify(patch.metadata) : null,
     ],
   );
