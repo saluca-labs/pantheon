@@ -191,8 +191,11 @@ export async function linkExistingAuthor(
   } catch (err: any) {
     if (err?.code === '23505') {
       const constraint: string = err.constraint ?? '';
-      if (constraint.includes('author')) return { kind: 'duplicate_author' };
+      // Check `position` BEFORE `author` — the position-unique constraint
+      // name contains "author" (the table name is `paper_authors`), so a
+      // simple `.includes('author')` first would mis-route.
       if (constraint.includes('position')) return { kind: 'duplicate_position' };
+      if (constraint.includes('author')) return { kind: 'duplicate_author' };
       // Fallback: a 23505 without a recognised constraint name — treat
       // as duplicate_author (most likely culprit).
       return { kind: 'duplicate_author' };
