@@ -42,6 +42,17 @@ export interface Hypothesis {
   tags: string[];
   /** IDs of experiments associated with this hypothesis. */
   experimentIds: string[];
+  /**
+   * Phase 3: longer-form rationale beyond the three-clause statement.
+   * Markdown. Defaults to empty string for pre-Phase-3 rows.
+   */
+  descriptionMd?: string;
+  /**
+   * Phase 3: soft-archive marker. ISO timestamp when archived, or null
+   * (active). Phase 1+2 callers receive `null` from the hydrator until
+   * the migration runs.
+   */
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
