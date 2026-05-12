@@ -2,14 +2,18 @@
  * Research OS — Experiment detail page.
  *
  * Per-experiment landing page. Header carries cover image, name, status,
- * target date, tags, and (Phase 5) the Export PDF button. Tab strip:
+ * target date, tags, Phase 6 reproducibility score pill, and the Export
+ * PDF button. Tab strip:
  *
- *   - Overview   — phase tracker + description + stats (Phase 1)
- *   - Notebook   — lab notebook timeline (Phase 2)
- *   - Hypotheses — workshop-wide hypothesis ledger join (Phase 3)
- *   - Literature — paper references (Phase 4)
- *   - Datasets   — per-experiment dataset pointers (Phase 5)
- *   - Protocols  — pinned protocol revisions (Phase 5)
+ *   - Overview        — phase tracker + description + stats + milestones strip
+ *   - Notebook        — lab notebook timeline (Phase 2)
+ *   - Hypotheses      — workshop-wide hypothesis ledger join (Phase 3)
+ *   - Literature      — paper references (Phase 4)
+ *   - Datasets        — per-experiment dataset pointers (Phase 5)
+ *   - Protocols       — pinned protocol revisions (Phase 5)
+ *   - Milestones      — Phase 6 deadline list (full)
+ *   - Dependencies    — Phase 6 cross-experiment dependency graph
+ *   - Reproducibility — Phase 6 reproducibility checklist
  *
  * @license MIT — Tiresias Research OS (internal).
  */
@@ -28,18 +32,35 @@ import {
   Database,
   FileText,
   BookOpenText,
+  Target,
+  Network,
+  ShieldCheck,
 } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
-import { getExperiment, listHypotheses } from '@/lib/agentic-os/research/repo';
+import {
+  getExperiment,
+  listHypotheses,
+  listExperimentsForUser,
+} from '@/lib/agentic-os/research/repo';
 import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
 import { listLinkedHypothesesForExperiment } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
 import { listReferencesForExperiment } from '@/lib/agentic-os/research/experiment-references-repo';
 import { listDatasetsForExperiment } from '@/lib/agentic-os/research/datasets-repo';
 import { listProtocolsForExperiment } from '@/lib/agentic-os/research/experiment-protocols-repo';
+import { listMilestonesForExperiment } from '@/lib/agentic-os/research/milestones-repo';
+import { listDependenciesForExperiment } from '@/lib/agentic-os/research/dependencies-repo';
+import {
+  listReproChecksForExperiment,
+  seedCanonicalReproItems,
+} from '@/lib/agentic-os/research/reproducibility-repo';
 import {
   EXPERIMENT_STATUS_LABELS,
   experimentPhaseAvg,
 } from '@/lib/agentic-os/research/experiments';
+import {
+  computeReproRollup,
+} from '@/lib/agentic-os/research/reproducibility';
+import { sortMilestonesByDeadline } from '@/lib/agentic-os/research/milestones';
 import { ExperimentPhaseProgress } from '@/components/agentic-os/research/experiment-phase-progress';
 import { STATUS_COLOR } from '@/components/agentic-os/research/experiment-card';
 import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
@@ -49,6 +70,11 @@ import { DatasetList } from '@/components/agentic-os/research/dataset-list';
 import { ExperimentProtocolLinker } from '@/components/agentic-os/research/experiment-protocol-linker';
 import { ExperimentProtocolPinnedRow } from '@/components/agentic-os/research/experiment-protocol-pinned-row';
 import { ExperimentExportPdfButton } from '@/components/agentic-os/research/experiment-export-pdf-button';
+import { MilestoneList } from '@/components/agentic-os/research/milestone-list';
+import { MilestoneCard } from '@/components/agentic-os/research/milestone-card';
+import { DependencyList } from '@/components/agentic-os/research/dependency-list';
+import { ReproducibilityChecklist } from '@/components/agentic-os/research/reproducibility-checklist';
+import { ReproducibilityScoreBadge } from '@/components/agentic-os/research/reproducibility-score-badge';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +89,10 @@ type TabKey =
   | 'hypotheses'
   | 'literature'
   | 'datasets'
-  | 'protocols';
+  | 'protocols'
+  | 'milestones'
+  | 'dependencies'
+  | 'reproducibility';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
@@ -72,6 +101,9 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers }[] = [
   { key: 'literature', label: 'Literature', icon: BookOpenText },
   { key: 'datasets', label: 'Datasets', icon: Database },
   { key: 'protocols', label: 'Protocols', icon: FileText },
+  { key: 'milestones', label: 'Milestones', icon: Target },
+  { key: 'dependencies', label: 'Dependencies', icon: Network },
+  { key: 'reproducibility', label: 'Reproducibility', icon: ShieldCheck },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -88,7 +120,10 @@ function isTabKey(value: string | undefined): value is TabKey {
     value === 'hypotheses' ||
     value === 'literature' ||
     value === 'datasets' ||
-    value === 'protocols'
+    value === 'protocols' ||
+    value === 'milestones' ||
+    value === 'dependencies' ||
+    value === 'reproducibility'
   );
 }
 
@@ -105,6 +140,20 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
 
   const countdown = daysUntil(experiment.targetCompletionDate);
   const avg = experimentPhaseAvg(experiment.phaseProgress);
+
+  // Always load the milestone strip + reproducibility score for the
+  // Overview-tab header pill — small queries.
+  const [overviewMilestones, reproItemsForBadge] = await Promise.all([
+    listMilestonesForExperiment(experiment.id, user.userId, {}),
+    (async () => {
+      // Seed lazily so the header badge reflects the canonical 7 items
+      // even on first visit.
+      await seedCanonicalReproItems(experiment.id, user.userId);
+      return listReproChecksForExperiment(experiment.id, user.userId);
+    })(),
+  ]);
+  const reproRollup = computeReproRollup(reproItemsForBadge);
+  const milestoneStrip = sortMilestonesByDeadline(overviewMilestones).slice(0, 5);
 
   const notebookEntries =
     activeTab === 'notebook'
@@ -131,6 +180,19 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
   const protocolPins =
     activeTab === 'protocols'
       ? await listProtocolsForExperiment(experiment.id, user.userId)
+      : [];
+
+  const dependenciesView =
+    activeTab === 'dependencies'
+      ? await listDependenciesForExperiment(experiment.id, user.userId)
+      : { upstream: [], downstream: [] };
+
+  // For the dependency picker, list other experiments owned by the user.
+  const peerOptions =
+    activeTab === 'dependencies'
+      ? (await listExperimentsForUser(user.userId, { archived: false, limit: 200 }))
+          .filter((e) => e.id !== experiment.id)
+          .map((e) => ({ id: e.id, name: e.name }))
       : [];
 
   return (
@@ -172,6 +234,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                   Archived
                 </span>
               )}
+              <ReproducibilityScoreBadge score={reproRollup.score} />
             </div>
             {experiment.description && (
               <p className="text-sm text-[#94a3b8]">{experiment.description}</p>
@@ -210,51 +273,86 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             >
               <Icon className="w-4 h-4" />
               {tab.label}
+              {tab.key === 'reproducibility' && reproRollup.score != null && (
+                <span className="ml-1 text-[10px] text-[#94a3b8]">
+                  ({Math.round(reproRollup.score * 100)}%)
+                </span>
+              )}
             </Link>
           );
         })}
       </div>
 
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-3">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-              Phase progress
-            </h2>
-            <ExperimentPhaseProgress phaseProgress={experiment.phaseProgress} />
-          </div>
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-3">
               <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-                Stats
+                Phase progress
               </h2>
-              <StatRow
-                icon={<TrendingUp className="w-4 h-4" />}
-                label="Overall progress"
-                value={`${avg}%`}
-              />
-              <StatRow
-                icon={<Users className="w-4 h-4" />}
-                label="Team size"
-                value={experiment.teamSize == null ? '—' : String(experiment.teamSize)}
-              />
-              <StatRow
-                icon={<Calendar className="w-4 h-4" />}
-                label="Target completion"
-                value={
-                  experiment.targetCompletionDate
-                    ? `${experiment.targetCompletionDate}${
-                        countdown == null
-                          ? ''
-                          : countdown >= 0
-                            ? ` (in ${countdown}d)`
-                            : ` (${Math.abs(countdown)}d ago)`
-                      }`
-                    : '—'
-                }
-              />
+              <ExperimentPhaseProgress phaseProgress={experiment.phaseProgress} />
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+                <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
+                  Stats
+                </h2>
+                <StatRow
+                  icon={<TrendingUp className="w-4 h-4" />}
+                  label="Overall progress"
+                  value={`${avg}%`}
+                />
+                <StatRow
+                  icon={<Users className="w-4 h-4" />}
+                  label="Team size"
+                  value={experiment.teamSize == null ? '—' : String(experiment.teamSize)}
+                />
+                <StatRow
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="Target completion"
+                  value={
+                    experiment.targetCompletionDate
+                      ? `${experiment.targetCompletionDate}${
+                          countdown == null
+                            ? ''
+                            : countdown >= 0
+                              ? ` (in ${countdown}d)`
+                              : ` (${Math.abs(countdown)}d ago)`
+                        }`
+                      : '—'
+                  }
+                />
+              </div>
             </div>
           </div>
+
+          {/* Milestones strip (Overview) */}
+          <section aria-labelledby="overview-milestones-heading" data-testid="overview-milestones-strip">
+            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+              <h2
+                id="overview-milestones-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <Target className="w-4 h-4 text-[#4361EE]" />
+                Milestones
+              </h2>
+              <Link
+                href={`/dashboard/os/research/experiments/${experiment.id}?tab=milestones`}
+                className="text-[10px] uppercase tracking-wide text-[#4361EE] hover:underline"
+              >
+                Open milestones tab
+              </Link>
+            </div>
+            {milestoneStrip.length === 0 ? (
+              <p className="text-sm text-[#94a3b8] italic">No milestones yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {milestoneStrip.map((m) => (
+                  <MilestoneCard key={m.id} milestone={m} />
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       )}
 
@@ -406,6 +504,79 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               ))
             )}
           </div>
+        </section>
+      )}
+
+      {activeTab === 'milestones' && (
+        <section aria-labelledby="milestones-heading" data-testid="milestones-tab">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="milestones-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <Target className="w-4 h-4 text-[#4361EE]" />
+                Milestones
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Deadlines, statuses, and blocker flags for this experiment.
+                The Top Blockers feed surfaces at-risk milestones workshop-wide.
+              </p>
+            </div>
+          </div>
+          <MilestoneList
+            experimentId={experiment.id}
+            initialMilestones={overviewMilestones}
+          />
+        </section>
+      )}
+
+      {activeTab === 'dependencies' && (
+        <section aria-labelledby="dependencies-heading" data-testid="dependencies-tab">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="dependencies-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <Network className="w-4 h-4 text-[#4361EE]" />
+                Dependencies
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Directed edges to other experiments. Open <code className="text-[#cbd5e1]">blocks</code>{' '}
+                edges surface on the Top Blockers feed.
+              </p>
+            </div>
+          </div>
+          <DependencyList
+            experimentId={experiment.id}
+            initialView={dependenciesView}
+            peerOptions={peerOptions}
+          />
+        </section>
+      )}
+
+      {activeTab === 'reproducibility' && (
+        <section aria-labelledby="repro-heading" data-testid="reproducibility-tab">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="repro-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#4361EE]" />
+                Reproducibility
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Checklist with score = done / (pending + in_progress + done).
+                Not applicable + waived are excluded from the denominator.
+              </p>
+            </div>
+          </div>
+          <ReproducibilityChecklist
+            experimentId={experiment.id}
+            initialItems={reproItemsForBadge}
+          />
         </section>
       )}
     </div>

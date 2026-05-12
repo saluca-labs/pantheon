@@ -1,12 +1,9 @@
 /**
  * Research OS — Hub page.
  *
- * Replaces the legacy default OS shell for /dashboard/os/research with a
- * proper hub: experiments grid (cards w/ cover image, name, status,
- * progress, target date) + a quick-link to the legacy hypothesis ledger.
- *
- * Phase 3 will redesign the hypothesis ledger surface; Phase 1 keeps the
- * existing ledger functional and adds the experiment hub above it.
+ * Phase 1 added the experiments grid. Phase 6 adds the Top Blockers
+ * widget at the top of the hub, surfacing workshop-wide blockers across
+ * all of the user's experiments.
  *
  * @license MIT — Tiresias Research OS (internal).
  */
@@ -16,7 +13,9 @@ import { FlaskConical, BookOpen } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { listExperimentsForUser } from '@/lib/agentic-os/research/repo';
+import { listTopBlockers } from '@/lib/agentic-os/research/blockers-repo';
 import { ExperimentList } from '@/components/agentic-os/research/experiment-list';
+import { TopBlockersWidget } from '@/components/agentic-os/research/top-blockers-widget';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +25,10 @@ export default async function ResearchHubPage() {
 
   // Load both active and archived in one shot so the client-side toggle
   // can switch without a round-trip. 200-row cap mirrors the API ceiling.
-  const [active, archived] = await Promise.all([
+  const [active, archived, initialBlockers] = await Promise.all([
     listExperimentsForUser(user.userId, { archived: false, limit: 200 }),
     listExperimentsForUser(user.userId, { archived: true, limit: 200 }),
+    listTopBlockers(user.userId, { limit: 5 }),
   ]);
   const experiments = [...active, ...archived];
 
@@ -44,6 +44,10 @@ export default async function ResearchHubPage() {
         for solo PhDs and small labs. Each experiment is a top-level project with its own
         lifecycle (planning → running → analysis → write-up → published).
       </p>
+
+      <div className="mb-6">
+        <TopBlockersWidget initial={initialBlockers} />
+      </div>
 
       <div className="mb-8">
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
