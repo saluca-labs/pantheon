@@ -92,12 +92,13 @@ describe('Autobiographer OS registry entry', () => {
     );
   });
 
-  it('lists exactly the seven feature surfaces after Phase 6 (… + Privacy review)', () => {
+  it('lists exactly the eight feature surfaces after Phase 7 (… + AI coach)', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    expect(mod.features).toHaveLength(7);
+    expect(mod.features).toHaveLength(8);
     const labels = mod.features.map((f) => f.label).sort();
     expect(labels).toEqual(
       [
+        'AI coach',
         'Books',
         'Chapters',
         'Memory captures',
@@ -106,6 +107,16 @@ describe('Autobiographer OS registry entry', () => {
         'Timeline',
         'Voice studio',
       ],
+    );
+  });
+
+  it('has the Phase 7 AI coach feature card pointing at /coach', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    const coach = mod.features.find((f) => f.label === 'AI coach');
+    expect(coach).toBeDefined();
+    expect(coach!.href).toBe('/dashboard/os/autobiographer/coach');
+    expect(coach!.description.toLowerCase()).toMatch(
+      /coach|drafter|critic|interviewer|memoir/,
     );
   });
 });

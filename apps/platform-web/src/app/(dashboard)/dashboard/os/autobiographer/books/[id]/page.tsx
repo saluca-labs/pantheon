@@ -22,6 +22,7 @@ import {
   Users,
   Tag as TagIcon,
   Download,
+  Sparkles,
 } from 'lucide-react';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import {
@@ -226,6 +227,14 @@ export default async function BookDetailPage({ params }: Props) {
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">Chapters</h2>
           <div className="flex items-center gap-2">
+            <Link
+              href={`/dashboard/os/autobiographer/coach?book_id=${book.id}&mode=chapter_drafter`}
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#4361EE]/40 bg-[#4361EE]/10 text-[#cbd5e1] hover:bg-[#4361EE]/20 hover:text-white"
+              title="Open the AI coach scoped to this book"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#4361EE]" />
+              AI Coach
+            </Link>
             <a
               href={`/api/tiresias/agentic-os/autobiographer/books/${book.id}/export.pdf`}
               className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"

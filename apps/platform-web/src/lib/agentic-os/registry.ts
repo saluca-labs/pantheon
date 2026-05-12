@@ -473,6 +473,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Per-book consent audit, pseudonym map, and pre-publication review checklist that gates chapter lock + final PDF export.',
       },
+      {
+        href: '/dashboard/os/autobiographer/coach',
+        label: 'AI coach',
+        description:
+          'Memoir-aware AI coach across interviewer, chapter drafter (citation-emitting ghostwriter), narrative critic, and general modes. Never invents content.',
+      },
     ],
   },
   {
