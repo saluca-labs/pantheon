@@ -29,12 +29,14 @@ import {
 } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { getExperiment } from '@/lib/agentic-os/research/repo';
+import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
 import {
   EXPERIMENT_STATUS_LABELS,
   experimentPhaseAvg,
 } from '@/lib/agentic-os/research/experiments';
 import { ExperimentPhaseProgress } from '@/components/agentic-os/research/experiment-phase-progress';
 import { STATUS_COLOR } from '@/components/agentic-os/research/experiment-card';
+import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +49,7 @@ type TabKey = 'overview' | 'notebook' | 'hypotheses';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
-  { key: 'notebook', label: 'Notebook', icon: BookOpen, phase: 'Phase 2' },
+  { key: 'notebook', label: 'Notebook', icon: BookOpen },
   { key: 'hypotheses', label: 'Hypotheses', icon: Lightbulb, phase: 'Phase 3' },
 ];
 
@@ -75,6 +77,11 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
 
   const countdown = daysUntil(experiment.targetCompletionDate);
   const avg = experimentPhaseAvg(experiment.phaseProgress);
+
+  const notebookEntries =
+    activeTab === 'notebook'
+      ? await listNotebookEntriesForExperiment(experiment.id, user.userId, {})
+      : [];
 
   return (
     <div className="max-w-5xl">
@@ -209,15 +216,25 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
       )}
 
       {activeTab === 'notebook' && (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#0f1117] p-8 text-center">
-          <BookOpen className="w-10 h-10 text-[#4361EE]/40 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-white mb-1">Lab notebook</h3>
-          <p className="text-sm text-[#94a3b8]">
-            Per-experiment timestamped notebook entries ship in{' '}
-            <span className="text-white font-medium">Phase 2</span>. Mark observations,
-            results, decisions, questions, and to-dos as they happen.
-          </p>
-        </div>
+        <section aria-labelledby="notebook-heading">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="notebook-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide"
+              >
+                Lab notebook
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Timestamped observations, results, decisions, questions, and to-dos.
+              </p>
+            </div>
+          </div>
+          <NotebookTimeline
+            experimentId={experiment.id}
+            initialEntries={notebookEntries}
+          />
+        </section>
       )}
 
       {activeTab === 'hypotheses' && (
