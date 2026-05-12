@@ -7,10 +7,11 @@
  *       appendix listing every cited memory with the chapters that
  *       cite it.
  *
- * Phase 5 seam: when arcs ship, this route will swap the chapter
- * ordering loader from `listChaptersForBook({order:'position'})` to an
- * arc-aware iterator. The route signature stays the same. The TODO
- * below marks the seam.
+ * Phase 5 activation: chapter ordering prefers the book's primary arc
+ * when one exists. Without a primary arc, ordering falls back to
+ * `position` — the same ordering Phase 4 used. The loader now calls
+ * `listChaptersForBook({order:'arc'})` which encapsulates both
+ * branches; the route signature is unchanged.
  *
  * @license MIT — Tiresias Autobiographer OS Phase 4 (internal).
  */
@@ -54,13 +55,16 @@ export async function GET(_request: NextRequest, { params }: Props) {
   const book = await getBook(bookId, user.userId);
   if (!book) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // TODO(Phase 5): swap this loader to an arc-aware iterator when arcs
-  // land. The chapter list shape returned here is consumed verbatim by
-  // BookExportPdf, so Phase 5 can re-implement ordering without
-  // touching the template.
+  // Phase 5 activated: arc-aware ordering. When the book has a
+  // is_primary=true arc, chapters render in arc order with any chapters
+  // not in the arc appended in their book-position order. When no
+  // primary arc exists, the function falls back to position ordering
+  // (same as Phase 4). BookExportPdf consumes the resulting chapter
+  // list verbatim; the template was not touched.
   const chapters = await listChaptersForBook({
     userId: user.userId,
     bookId,
+    order: 'arc',
   });
 
   // Resolve every latest revision in parallel.
