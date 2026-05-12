@@ -26,8 +26,11 @@ import {
   getBook,
   listBooks,
 } from '@/lib/agentic-os/autobiographer/books-repo';
+import { listPeople } from '@/lib/agentic-os/autobiographer/people-repo';
+import { listPeopleForMemory } from '@/lib/agentic-os/autobiographer/memory-people-repo';
 import { MEMORY_SOURCE_LABELS } from '@/lib/agentic-os/autobiographer/memories';
 import { MemoryEditButton } from '@/components/agentic-os/autobiographer/memory-edit-button';
+import { MemoryPeoplePicker } from '@/components/agentic-os/autobiographer/memory-people-picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,12 +46,28 @@ export default async function MemoryDetailPage({ params }: Props) {
   const memory = await getMemory(id, user.userId);
   if (!memory) notFound();
 
-  const [book, allBooks] = await Promise.all([
+  const [book, allBooks, linkedPeople, allPeople] = await Promise.all([
     memory.bookId ? getBook(memory.bookId, user.userId) : Promise.resolve(null),
     listBooks({ userId: user.userId, limit: 50 }),
+    listPeopleForMemory(memory.id, user.userId),
+    listPeople({ userId: user.userId, limit: 200 }),
   ]);
 
   const bookOptions = allBooks.map((b) => ({ id: b.id, title: b.title }));
+
+  const linkedPickerPeople = linkedPeople.map((lp) => ({
+    id: lp.person.id,
+    canonicalName: lp.person.canonicalName,
+    consentToPublish: lp.person.consentToPublish,
+    role: lp.role,
+    notes: lp.notes,
+  }));
+  const availablePickerPeople = allPeople.map((p) => ({
+    id: p.id,
+    canonicalName: p.canonicalName,
+    aliases: p.aliases,
+    consentToPublish: p.consentToPublish,
+  }));
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -154,6 +173,12 @@ export default async function MemoryDetailPage({ params }: Props) {
           {memory.bodyMarkdown}
         </pre>
       </section>
+
+      <MemoryPeoplePicker
+        memoryId={memory.id}
+        linked={linkedPickerPeople}
+        available={availablePickerPeople}
+      />
 
       {memory.audioUrl && (
         <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">

@@ -444,6 +444,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
           'Workshop-global memory atoms with era, location, emotion + content tags, and photo/audio refs.',
       },
       {
+        href: '/dashboard/os/autobiographer/people',
+        label: 'People',
+        description:
+          'Workshop-global people directory with consent state, aliases, and Phase 6 redaction inputs.',
+      },
+      {
         href: '/dashboard/os/autobiographer/chapters',
         label: 'Chapter capture',
         description:

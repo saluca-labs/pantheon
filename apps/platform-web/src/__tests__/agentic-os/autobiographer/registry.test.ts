@@ -42,8 +42,17 @@ describe('Autobiographer OS registry entry', () => {
     );
   });
 
-  it('lists exactly the three Phase-1 features', () => {
+  // ─── Phase 2 additions ───────────────────────────────────────────────────
+
+  it('has the Phase 2 People feature card pointing at /people', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    expect(mod.features).toHaveLength(3);
+    const people = mod.features.find((f) => f.label === 'People');
+    expect(people).toBeDefined();
+    expect(people!.href).toBe('/dashboard/os/autobiographer/people');
+  });
+
+  it('lists exactly the four Phase-2 features', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    expect(mod.features).toHaveLength(4);
   });
 });
