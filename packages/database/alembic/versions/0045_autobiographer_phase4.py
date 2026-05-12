@@ -262,7 +262,7 @@ COMMENT ON COLUMN agos_autobiographer_chapter_revisions.citations IS
 COMMENT ON COLUMN agos_autobiographer_chapter_revisions.coach_session_id IS
   'Phase 7 coach session id when author = ''coach''. No FK because the session table is added later; Phase 7 may add the FK without rewriting Phase 4 routes.';
 
--- 4. Chapter sources (N:M provenance join) -------------------------------
+-- 4. Chapter sources (many-to-many provenance join) ----------------------
 
 CREATE TABLE IF NOT EXISTS agos_autobiographer_chapter_sources (
     id          UUID    PRIMARY KEY,
