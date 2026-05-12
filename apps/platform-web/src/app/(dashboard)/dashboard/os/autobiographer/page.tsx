@@ -12,11 +12,12 @@
 
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, BookOpenText, NotebookPen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpenText, NotebookPen, Users } from 'lucide-react';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import { listBooks } from '@/lib/agentic-os/autobiographer/books-repo';
 import { listMemories } from '@/lib/agentic-os/autobiographer/memories-repo';
+import { listPeople } from '@/lib/agentic-os/autobiographer/people-repo';
 import { BookList } from '@/components/agentic-os/autobiographer/book-list';
 import { BookActions } from '@/components/agentic-os/autobiographer/book-actions';
 
@@ -33,9 +34,10 @@ export default async function AutobiographerHubPage() {
     throw new Error('Autobiographer OS module missing from registry');
   }
 
-  const [books, recentMemories] = await Promise.all([
+  const [books, recentMemories, people] = await Promise.all([
     listBooks({ userId: user.userId, limit: 50 }),
     listMemories({ userId: user.userId, limit: 5 }),
+    listPeople({ userId: user.userId, limit: 5 }),
   ]);
 
   const cards = books.map((b) => ({
@@ -96,34 +98,66 @@ export default async function AutobiographerHubPage() {
             book.
           </span>
         </div>
-        <Link
-          href="/dashboard/os/autobiographer/memories"
-          className="group block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e]">
-                <NotebookPen className="w-5 h-5 text-[#4361EE]" />
-              </div>
-              <div>
-                <div className="text-base font-semibold text-white mb-1">
-                  Memory captures
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Link
+            href="/dashboard/os/autobiographer/memories"
+            className="group block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e]">
+                  <NotebookPen className="w-5 h-5 text-[#4361EE]" />
                 </div>
-                <p className="text-sm text-[#94a3b8] leading-relaxed">
-                  Raw memory atoms with markdown body, era labels, location,
-                  emotion + content tags, and optional audio/photo references.
-                  Filterable by book, sensitivity, and tag.
-                </p>
-                {recentMemories.length > 0 && (
-                  <p className="text-xs text-[#64748b] mt-2">
-                    Most recent: {recentMemories[0]!.title}
+                <div>
+                  <div className="text-base font-semibold text-white mb-1">
+                    Memory captures
+                  </div>
+                  <p className="text-sm text-[#94a3b8] leading-relaxed">
+                    Raw memory atoms with markdown body, era labels, location,
+                    emotion + content tags, and optional audio/photo references.
+                    Filterable by book, sensitivity, and tag.
                   </p>
-                )}
+                  {recentMemories.length > 0 && (
+                    <p className="text-xs text-[#64748b] mt-2">
+                      Most recent: {recentMemories[0]!.title}
+                    </p>
+                  )}
+                </div>
               </div>
+              <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] mt-1 shrink-0 transition" />
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] mt-1 shrink-0 transition" />
-          </div>
-        </Link>
+          </Link>
+
+          <Link
+            href="/dashboard/os/autobiographer/people"
+            className="group block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e]">
+                  <Users className="w-5 h-5 text-[#4361EE]" />
+                </div>
+                <div>
+                  <div className="text-base font-semibold text-white mb-1">
+                    People
+                  </div>
+                  <p className="text-sm text-[#94a3b8] leading-relaxed">
+                    Workshop-global directory of who appears in your memories
+                    — family, friends, mentors, public figures — with the
+                    consent state Phase 6 will gate publication on.
+                  </p>
+                  {people.length > 0 && (
+                    <p className="text-xs text-[#64748b] mt-2">
+                      {people.length}{' '}
+                      {people.length === 1 ? 'person' : 'people'} on file
+                    </p>
+                  )}
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] mt-1 shrink-0 transition" />
+            </div>
+          </Link>
+        </div>
       </section>
 
       <section>
@@ -133,7 +167,8 @@ export default async function AutobiographerHubPage() {
             .filter(
               (f) =>
                 f.href !== '/dashboard/os/autobiographer' &&
-                f.href !== '/dashboard/os/autobiographer/memories',
+                f.href !== '/dashboard/os/autobiographer/memories' &&
+                f.href !== '/dashboard/os/autobiographer/people',
             )
             .map((feature) => (
               <Link
