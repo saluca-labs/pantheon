@@ -250,8 +250,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Probe public endpoints
+        shell: bash
         run: |
-          set -euo pipefail
+          # NOTE: intentionally NOT using -e; we manage exit codes manually so
+          # a transient curl I/O failure (e.g. exit 23, "failed writing data
+          # to stdout") can be retried instead of aborting the whole job.
+          set -uo pipefail
           BASE="https://pantheon.saluca.com"
           # /health is routed to soulauth via the ingress.
           # / is routed to portal (Next.js) via the catch-all.
@@ -259,16 +263,25 @@ jobs:
           probe() {
             local path="$1"
             local url="${BASE}${path}"
-            local code
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 --retry 3 --retry-delay 5 "$url")
-            echo "GET $url -> $code"
-            case "$code" in
-              2*|3*) return 0 ;;
-              *) echo "::error ::$url returned $code"; return 1 ;;
-            esac
+            local attempt
+            local code=""
+            local curl_exit=0
+            for attempt in 1 2 3; do
+              code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$url" 2>/dev/null)
+              curl_exit=$?
+              echo "GET $url -> code=${code:-<none>} curl_exit=$curl_exit (attempt $attempt/3)"
+              if [[ $curl_exit -eq 0 ]] && [[ "$code" =~ ^[23][0-9][0-9]$ ]]; then
+                return 0
+              fi
+              if [[ $attempt -lt 3 ]]; then
+                sleep 5
+              fi
+            done
+            echo "::error ::$url failed after 3 attempts (last code=${code:-<none>} curl_exit=$curl_exit)"
+            return 1
           }
-          probe "/health"
-          probe "/"
+          probe "/health" || exit 1
+          probe "/" || exit 1
 
       - name: Summary
         run: |

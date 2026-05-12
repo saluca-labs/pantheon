@@ -118,8 +118,8 @@ in, facts in, prose out, citations preserved.
 
 ## Phase 7 — AI Coach (interviewer / chapter-drafter / narrative-critic / general) (locked decisions)
 
-**Migration:** `0047_autobiographer_phase7`, down_revision
-`0046_autobiographer_phase6`. (Offsets relative to the Autobiographer
+**Migration:** `0048_autobiographer_phase7`, down_revision
+`0047_autobiographer_phase6`. (Offsets relative to the Autobiographer
 chain; the parallel Research OS planning sub is also drafting against
 the same `0041+` band — orchestrator will rebase one chain after the
 other lands. The intra-OS sequence is what's locked.)
@@ -259,8 +259,8 @@ another user returns 404.
 
 ## Phase 6 — Privacy, Consent Audit, and Redaction (locked decisions)
 
-**Migration:** `0046_autobiographer_phase6`, down_revision
-`0045_autobiographer_phase5`.
+**Migration:** `0047_autobiographer_phase6`, down_revision
+`0046_autobiographer_phase5`.
 
 **Scope:** Three additions that make the manuscript safe to hand to
 an outside reader. (1) `sensitive_kind` tagging on memory entries
@@ -353,8 +353,8 @@ ownership joined on `book_id`.
 
 ## Phase 5 — Themes, Arcs, and Timeline (locked decisions)
 
-**Migration:** `0045_autobiographer_phase5`, down_revision
-`0044_autobiographer_phase4`.
+**Migration:** `0046_autobiographer_phase5`, down_revision
+`0045_autobiographer_phase4`.
 
 **Scope:** A book-level **arc** primitive (chronological / thematic /
 character-led) with an ordered chapter set, plus a workshop-global
@@ -437,8 +437,8 @@ the same book as the arc (404 if not).
 
 ## Phase 4 — Chapters, Revisions, and Provenance (locked decisions)
 
-**Migration:** `0044_autobiographer_phase4`, down_revision
-`0043_autobiographer_phase3`.
+**Migration:** `0045_autobiographer_phase4`, down_revision
+`0044_autobiographer_phase3`.
 
 **Scope:** A first-class **chapter** entity scoped to a book, with
 versioned **revisions** (so a ghostwritten draft and the user's
@@ -546,8 +546,8 @@ creation requires `book_id` belongs to caller. Source linking requires
 
 ## Phase 3 — Voice Samples and Voice Profile (locked decisions)
 
-**Migration:** `0043_autobiographer_phase3`, down_revision
-`0042_autobiographer_phase2`.
+**Migration:** `0044_autobiographer_phase3`, down_revision
+`0043_autobiographer_phase2`.
 
 **Scope:** Two tables. (1) Per-user **voice samples** — paragraphs
 of the user's own writing labeled "this sounds like me", optionally
@@ -635,8 +635,8 @@ backed by `memory_id` validates ownership.
 
 ## Phase 2 — People, Relationships, and Consent (locked decisions)
 
-**Migration:** `0042_autobiographer_phase2`, down_revision
-`0041_autobiographer_phase1`.
+**Migration:** `0043_autobiographer_phase2`, down_revision
+`0042_autobiographer_phase1`.
 
 **Scope:** Workshop-global **people** table (mom, dad, siblings,
 friends, mentors, public figures). Each person carries a
@@ -763,7 +763,7 @@ a new table and migrate forward.
 doc — the parallel Research OS planner is also drafting against the
 `0041+` band; orchestrator will rebase one chain after the other
 merges. Intra-OS sequencing is locked: Autobiographer Phase 1 → Phase
-7 is `0041 → 0047`.)
+7 is `0041 → 0048`.)
 
 **Scope:** Promote a **book** to a first-class container (mirrors
 Maker's project hub from Phase 1 there). Introduce a distinct
@@ -943,7 +943,7 @@ the established URL-only convention with column comments referencing
 
 7. **Migration ordering with Research OS.** Both plans claim
    `0041+`. Confirm orchestrator will rebase one chain after the
-   other (this doc is internally consistent at `0041–0047` and trivial
+   other (this doc is internally consistent at `0041–0048` and trivial
    to bump).
 
 ***
