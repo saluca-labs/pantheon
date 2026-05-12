@@ -36,13 +36,13 @@ const PostBody = z
   .strict();
 
 interface Props {
-  params: Promise<{ bookId: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(_request: NextRequest, { params }: Props) {
   const user = await getCurrentAutobiographerUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { bookId } = await params;
+  const { id: bookId } = await params;
   const book = await getBook(bookId, user.userId);
   if (!book) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const arcs = await listArcsForBook(bookId, user.userId);
@@ -52,7 +52,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
 export async function POST(request: NextRequest, { params }: Props) {
   const user = await getCurrentAutobiographerUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { bookId } = await params;
+  const { id: bookId } = await params;
   const book = await getBook(bookId, user.userId);
   if (!book) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const parsed = PostBody.safeParse(await request.json().catch(() => null));

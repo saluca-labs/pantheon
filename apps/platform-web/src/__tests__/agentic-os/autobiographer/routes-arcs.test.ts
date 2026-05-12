@@ -69,10 +69,10 @@ describe('GET /books/[bookId]/arcs', () => {
   it('401 when unauthed', async () => {
     getCurrentAutobiographerUser.mockResolvedValue(null);
     const { GET } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await GET(jsonReq('http://t/x', 'GET') as any, {
-      params: Promise.resolve({ bookId: 'b-1' }),
+      params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(401);
   });
@@ -81,10 +81,10 @@ describe('GET /books/[bookId]/arcs', () => {
     authedUser();
     bookRepoMocks.getBook.mockResolvedValue(null);
     const { GET } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await GET(jsonReq('http://t/x', 'GET') as any, {
-      params: Promise.resolve({ bookId: 'b-x' }),
+      params: Promise.resolve({ id: 'b-x' }),
     });
     expect(res.status).toBe(404);
   });
@@ -94,10 +94,10 @@ describe('GET /books/[bookId]/arcs', () => {
     bookRepoMocks.getBook.mockResolvedValue({ id: 'b-1' });
     arcsRepoMocks.listArcsForBook.mockResolvedValue([{ id: 'a-1' }]);
     const { GET } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await GET(jsonReq('http://t/x', 'GET') as any, {
-      params: Promise.resolve({ bookId: 'b-1' }),
+      params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -110,10 +110,10 @@ describe('POST /books/[bookId]/arcs', () => {
     authedUser();
     bookRepoMocks.getBook.mockResolvedValue({ id: 'b-1' });
     const { POST } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
-      params: Promise.resolve({ bookId: 'b-1' }),
+      params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(400);
   });
@@ -122,14 +122,14 @@ describe('POST /books/[bookId]/arcs', () => {
     authedUser();
     bookRepoMocks.getBook.mockResolvedValue({ id: 'b-1' });
     const { POST } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await POST(
       jsonReq('http://t/x', 'POST', {
         title: 't',
         bogus: 1,
       }) as any,
-      { params: Promise.resolve({ bookId: 'b-1' }) },
+      { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(400);
   });
@@ -143,11 +143,11 @@ describe('POST /books/[bookId]/arcs', () => {
       isPrimary: false,
     });
     const { POST } = await import(
-      '@/app/api/tiresias/agentic-os/autobiographer/books/[bookId]/arcs/route'
+      '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/arcs/route'
     );
     const res = await POST(
       jsonReq('http://t/x', 'POST', { title: 'Chronological' }) as any,
-      { params: Promise.resolve({ bookId: 'b-1' }) },
+      { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(

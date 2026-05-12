@@ -25,13 +25,13 @@ import { getBook } from '@/lib/agentic-os/autobiographer/books-repo';
 import { listTimeline } from '@/lib/agentic-os/autobiographer/timeline';
 
 interface Props {
-  params: Promise<{ bookId: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(request: NextRequest, { params }: Props) {
   const user = await getCurrentAutobiographerUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { bookId } = await params;
+  const { id: bookId } = await params;
   const url = request.nextUrl;
   const scope =
     (url.searchParams.get('scope') as 'workshop' | 'book' | null) ?? 'book';
