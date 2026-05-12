@@ -530,9 +530,33 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'teal',
     features: [
       {
+        href: '/dashboard/os/business/people',
+        label: 'People',
+        description:
+          'Contacts directory with tags, organizations, and a per-person interaction timeline.',
+      },
+      {
+        href: '/dashboard/os/business/organizations',
+        label: 'Organizations',
+        description:
+          'Companies, non-profits, and partners — tagged, searchable, with a people roster.',
+      },
+      {
+        href: '/dashboard/os/business',
+        label: 'Recent activity',
+        description: 'Last touchpoints across every contact and organization.',
+      },
+      {
+        href: '/dashboard/os/business/settings',
+        label: 'Settings',
+        description:
+          'Business name, logo, address, tax ID, currency, prefixes, and accent color.',
+      },
+      {
         href: '/dashboard/os/business/contacts',
-        label: 'Contacts CRM',
-        description: 'Organize customers, partners, and the deals between them.',
+        label: 'Contacts CRM (deprecated)',
+        description:
+          'Legacy page — redirects to the new hub. Will be removed in Phase 2.',
       },
     ],
   },

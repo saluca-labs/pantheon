@@ -1,1610 +1,498 @@
-# Business OS — Full Execution Plan (Assess → Plan → Execute → Validate)
+# Business OS — Execution Plan (locked decisions)
 
-## How to Use This Document
+> Drafted by Plan sub on 2026-05-12.
+> Supersedes the legacy Perplexity EPIC plan at `business.md` once Cristian
+> resolves the open decisions in §"Open questions" below and the legacy doc
+> is moved to `business.md.legacy-epic.md`.
 
-Every ticket follows **EPIC-XX-[A|P|E|V]-NN** where A = Assess, P = Plan, E = Execute, V = Validate, identical in structure to Creator OS and Maker OS.[^1]
-Epics are independent enough to be parallelized after EPIC-01 and EPIC-02 complete.
-Every Execute ticket includes exact file paths, package names, and commands. Every Validate ticket includes concrete pass/fail criteria an automated agent can evaluate without ambiguity.
+## How to Read This Doc
 
-### Design Philosophy
+Business OS is the eighth vertical to be planned in the Pantheon agentic-os family, following the shape established by Maker OS and refined through Autobiographer / Research: the **most recent phase sits at the top**, earlier phases appended chronologically below. Every section is a self-contained set of locked decisions that an executor can take straight into a build prompt.
 
-Business OS is built around a single principle: **start solo, scale to enterprise without re-architecting**.
-At launch, every module functions for a one-person shop — zero employees, one person, one bank account, one client list.
-As the user adds information about their organization (team size, industry, billing model, geographic scope) through the **Organization Profile**, the system unlocks and adapts relevant module behaviors.
-Plugins and MCP tools are the scale mechanism: the core schema is fixed, but behavior extends through MCP tool registration and module feature flags stored in `OrgSetting`.
+This document is **plan-only**. The contacts CRM stub from migration `0010_business_os` is shipped and will be carried forward as the seed of Phase 1 (see Inventory below). All other tables, routes, pages, and the coach are net-new. The prior epic-style draft (the original Perplexity plan with EPIC-XX-A/P/E/V tickets and the standalone-monorepo container co-process stack) is preserved at `business.md.legacy-epic.md` for reference — its domain inventory (CRM + invoicing + time + docs + marketing + expenses + HR + coach) feeds directly into the phase decomposition below. Its implementation specifics (Turborepo monorepo at `~/business-os/`, next-auth, Prisma, SQLite, supervisord-managed Twenty + Invoice Ninja + Solidtime + DocuSeal + Plane + Listmonk + Mautic + Baserow + Frappe HR + OrangeHRM + n8n co-processes) are discarded in favor of the native pantheon shape every other Oscar Suite OS uses.
 
 ***
 
-## Frozen Tech Stack (All Tickets Assume This)
+## Inventory — What Already Exists
 
-Identical to Creator OS and Maker OS — all three OSes share the same monorepo root conventions.[^1]
+**Registry entry** (`apps/platform-web/src/lib/agentic-os/registry.ts`):
 
-| Layer | Package | License | Pin |
-|---|---|---|---|
-| Monorepo | `turborepo` | MIT | latest |
-| Framework | `next` (App Router) | MIT | 14.x |
-| Language | TypeScript | Apache-2.0 | 5.x |
-| Package mgr | `pnpm` | MIT | 9.x |
-| Styling | `tailwindcss` + `shadcn/ui` | MIT | 3.x |
-| ORM | `prisma` + `@prisma/client` | Apache-2.0 | 5.x |
-| Database | SQLite (dev) / Postgres (prod) | — | — |
-| Auth | `next-auth` v5 | MIT | 5.x |
-| State | `zustand` | MIT | 4.x |
-| MCP | `@modelcontextprotocol/sdk` | MIT | latest |
-| AI SDK | `ai` (Vercel AI SDK) | Apache-2.0 | 3.x |
-| Process mgr | `supervisord` | MIT | 4.x |
-| Proxy | `nginx` | BSD | 1.25.x |
-| Container | Docker multi-stage | Apache-2.0 | 25.x |
+- `slug: 'business'`, `status: 'live'`, accent `teal`, icon `Briefcase`. Tagline "Solo to enterprise without re-architecting." Description "Org profile, contacts, invoicing, finances, and ops modules that unlock as your team grows." One feature card listed today, pointing at `/dashboard/os/business/contacts` ("Contacts CRM").
 
-### Co-Process Services
+**Shipped surface (stub features only — pre-Phase-1 sketch):**
 
-Each co-process is a separate container or subprocess wired via nginx and supervisord, not a library dependency — identical integration pattern to Flowise, Activepieces, and Owncast in Creator OS.[^1]
+- `apps/platform-web/src/app/(dashboard)/dashboard/os/business/contacts/page.tsx` — loads the user's people / organizations / interactions and mounts the `ContactsCrm` component. No deal / pipeline concept yet.
+- `apps/platform-web/src/components/agentic-os/business/contacts-crm.tsx` — client UI for the three-entity contact ledger (people, orgs, recent interactions).
+- `apps/platform-web/src/lib/agentic-os/business/crm.ts` — domain types (`Person`, `Organization`, `Interaction`, `ORG_TYPES`, `INTERACTION_TYPES`, `CONTACT_STAGES`), validators, `fullName` helper. Stage taxonomy `lead | qualified | proposal | negotiation | won | lost | inactive` and interaction taxonomy `call | email | meeting | demo | proposal | follow_up | note | linkedin | other` are already in code.
+- `apps/platform-web/src/lib/agentic-os/business/repo.ts` — CRUD against the three `agos_business_*` tables. Currently uses a thin local `recordAudit` rather than the shared `_shared/audit.ts` writer.
+- `apps/platform-web/src/lib/agentic-os/business/session.ts` — thin re-export of Health OS's session helpers (`getCurrentBusinessUser` / `getBusinessPool`) so the vertical shares the same cookie + pool layer.
+- `apps/platform-web/src/app/api/tiresias/agentic-os/business/contacts/route.ts` — list / create endpoints for the three entities.
 
-| Function | Default Tool | License | Notes |
-|---|---|---|---|
-| CRM | Twenty v2.0 | AGPL 3.0 | Modern, Notion-like UI; API + webhooks; extensible via SDK[^2][^3] |
-| Invoicing & billing | Invoice Ninja v5 | AAL | Fully self-hosted; invoices, quotes, expenses, recurring billing, payment gateways[^4][^5] |
-| Time tracking | Solidtime | AGPL 3.0 | Modern open-source tracker for freelancers and agencies; project/client/task hierarchy[^6] |
-| E-signature | DocuSeal | AGPL 3.0 | Open-source DocuSign alternative; template builder, multi-signer, REST API[^7][^8] |
-| Project management | Plane | AGPL 3.0 | 48k GitHub stars; issues, cycles, modules, Kanban, Gantt[^9][^10] |
-| Email marketing | Listmonk | AGPL 3.0 | Solopreneur-friendly newsletter/list manager; simple, fast[^11][^12] |
-| Marketing automation | Mautic | GPL 3.0 | Full marketing automation suite for when Listmonk is not enough[^12] |
-| No-code database | Baserow | MIT | Open-source Airtable alternative; drag-and-drop, APIs, automation, self-hosted[^13][^14] |
-| HR & Payroll | Frappe HR / OrangeHRM Starter | GPL 3.0 / GPL | Scales from solo (no-op) to full team HR and payroll[^15][^16] |
-| Automation | n8n | Fair-code | Workflow automation: triggers, webhooks, API connectors[^12] |
+**Existing migrations touching `agos_business_*`:**
+
+- `0010_business_os` (`packages/database/alembic/versions/0010_business_os.py`), down_revision `0009_autobiographer_os`. Creates three tables:
+  - `agos_business_orgs` — `id`, `user_id`, `name`, `org_type` default `'company'` (free-form, no CHECK), `website`, `industry`, `notes`, timestamps. Index on `(user_id, name ASC)`.
+  - `agos_business_people` — `id`, `user_id`, `first_name`, `last_name`, `email`, `phone`, `role`, `organization_id` FK SET NULL → orgs, `stage` default `'lead'` (free-form, no CHECK), `tags JSONB DEFAULT '[]'`, `notes`, timestamps. Indexes on `(user_id, last_name, first_name)` and `(organization_id)`.
+  - `agos_business_interactions` — `id`, `user_id`, `person_id` FK SET NULL → people, `organization_id` FK SET NULL → orgs, `interaction_type` default `'note'` (free-form, no CHECK), `summary`, `occurred_at`, `created_at`. Indexes on `(user_id, occurred_at DESC)` and `(person_id, occurred_at DESC)`.
+
+**What is NOT yet built (everything else):**
+
+- No concept of a **deal** or **pipeline**. The contact `stage` column on `people` overloads the stage taxonomy onto the contact itself, which conflates "this person is qualified" with "we have an open opportunity in negotiation"; Phase 2 introduces a proper `deals` entity and re-uses `stage` only as a deal-pipeline attribute.
+- No **project / time-tracking** layer. Time entries for billable hours do not exist.
+- No **invoicing**, no quotes, no payments, no line items.
+- No **expenses**, no receipts, no P&L rollup.
+- No **documents** / **e-sign**. No template / signer flow.
+- No **email marketing** / lists / broadcasts (deferred — see Open questions §7).
+- No **HR / payroll** surface (deferred — see Non-goals).
+- No **AI coach** for Business (`_shared/coach/` already lives under Filmmaker / Health / Cyber / Maker / Autobiographer / Research; reuse is in Phase 7).
+- No **PDF export** of any business artifact (`_shared/pdf/` ready to reuse).
+- No registered `agos_business_*` mutations call the shared `_shared/audit.ts` writer (legacy local `recordAudit` is still used in the contacts repo); Phase 1 migrates this so every business mutation audits through the standard channel and carries `os_slug = 'business'`.
 
 ***
 
-## EPIC-01: Project Scaffold & Monorepo
+## Vision
 
-**Goal:** Produce a Turborepo monorepo at `~/business-os/` with a working Next.js app shell, shared packages, and CI-ready config, following Creator OS conventions exactly.[^1]
+Business OS is the business-operations vertical for solo founders, freelancers, consultants, and small shops (≤5 people). It maps the records and workflows that turn a person into a sole-proprietor or small-team business: contacts and the deals between them, billable time against client projects, the invoices that close those deals, the expenses that erode the margin, the documents that bind the engagement, and an advisory coach that helps the user make pricing / sales / strategy decisions instead of guessing.
 
-***
+The OS deliberately stops well short of full ERP. It does not host the user's own multi-tenant SaaS billing for their own customers (Stripe owns that surface), it does not file taxes (point users to a CPA), it does not do HRIS-grade payroll (out of scope until a small-team cohort asks), and it does not host email marketing automation at Mautic scale (a minimal Listmonk-style broadcast lives at Phase 6 if Cristian wants it in v1 — otherwise it slides to Phase 8). What it does do is keep every record a solo operator actually creates — contacts, deals, projects, time, invoices, expenses, contracts — in one place, audited the same way every other Oscar Suite OS is audited, exportable as PDF, and within arm's reach of an AI advisor that knows the user's pricing history and client list.
 
-### EPIC-01-A-01 — Assess Existing Environment
+Workflow shape is **capture → track → invoice → reflect**. Phase 1 lays the org-profile + CRM contacts/companies foundation (carrying the existing stub forward with proper CHECKs and a clean per-OS UUID contract). Phase 2 promotes deals + pipeline + activities into first-class records. Phase 3 introduces business projects + tasks + time entries (separate from Maker projects per locked decision §5). Phase 4 ships quotes, invoices, line items, and payment tracking. Phase 5 adds expenses + P&L rollup + PDF export. Phase 6 introduces documents + in-app e-signature (no DocuSign integration per locked decision §6). Phase 7 is the AI coach with five modes: `pricing_advisor`, `sales_coach`, `marketing_advisor`, `business_strategist`, `general`.
 
-**Type:** Assess
-
-**Commands to run:**
-```bash
-node --version      # must be >= 20.0.0
-pnpm --version      # must be >= 9.0.0
-docker --version    # must be >= 25.0.0
-git --version       # any recent version
-```
-
-**Outputs / Acceptance Criteria:**
-- All four commands return version strings without error.
-- If `pnpm` is missing: `npm install -g pnpm`.
-- If Node < 20: `nvm install 20 && nvm use 20`.
-- Document result in `SETUP_LOG.md` at repo root.
+**Why this decomposition over the legacy 30-EPIC layout.** The legacy plan front-loaded "Organization Profile + adaptive sidebar + multi-user-mode + co-process container stack" as the foundational trifecta. That trifecta solves problems v1 doesn't have: solo users don't need role-aware permission tables, the adaptive sidebar can be deferred until we know which modules users actually toggle off, and the co-process stack (Twenty + Invoice Ninja + Solidtime + DocuSeal + ...) duplicates pantheon's own schema-and-routes pattern. By dropping those three foundational systems and reusing the established Oscar Suite shape, Phase 1 collapses from EPIC-01 through EPIC-06 (six EPICs across scaffold / DB / auth / org profile / shell / dashboard) into a single migration + CRM polish.
 
 ***
 
-### EPIC-01-A-02 — Assess Monorepo Structure Requirements
+## Locked Decisions (resolved 2026-05-12)
 
-**Type:** Assess
+These eight architectural decisions were resolved by Cristian on 2026-05-12 and the plan below reflects them.
 
-**Outputs:** `ARCHITECTURE.md`:
+1. **Co-process services vs native: NATIVE.** No Twenty / Invoice Ninja / Solidtime / DocuSeal / Plane / Listmonk / Mautic / Baserow / Frappe HR / OrangeHRM / n8n containers. All data in `agos_business_*` tables, all routes under `app/api/tiresias/agentic-os/business/`. The legacy doc's container fleet is discarded.
 
-```text
-business-os/
-├── apps/
-│   └── web/                     # Next.js 14 main app
-├── packages/
-│   ├── ui/                      # shared shadcn components
-│   ├── db/                      # Prisma schema + client
-│   ├── mcp-server/              # MCP server package
-│   ├── mcp-client/              # MCP client + CLI
-│   └── integrations/            # typed API clients for co-processes
-├── infra/
-│   ├── nginx/                   # nginx.conf
-│   ├── supervisord/             # supervisord.conf
-│   └── docker/                  # Dockerfile + compose
-├── turbo.json
-├── pnpm-workspace.yaml
-└── package.json
-```
+2. **Auth: SOULAUTH.** Reuses pantheon's existing `getCurrentBusinessUser` / `getBusinessPool` helpers in `lib/agentic-os/business/session.ts`. No next-auth.
+
+3. **Database: REUSE PANTHEON POSTGRES.** All `agos_business_*` tables live alongside every other Oscar Suite OS on the pantheon alembic chain. Migration `0010_business_os` already established this.
+
+4. **Scope at v1: SOLO-FIRST.** Single `user_id` ownership on every row, no roles / permissions / tenant layer, no Organization Profile wizard, no adaptive sidebar. RBAC + team invites reserved for a future Phase 8+.
+
+5. **Project taxonomy overlap with Maker: SEPARATE.** New `agos_business_projects` with client-engagement-focused taxonomy (status: `proposed / active / on_hold / completed / cancelled / archived`; billing_model: `hourly / fixed / retainer / milestone / free`). Optional `metadata.maker_project_id` pointer for users on both OSes (per the v0.1.30 platform contract — no FK).
+
+6. **E-signature: IN-APP CANVAS.** Signature image stored at URL (URL-only per MCP storage transfer contract); audit trail on the `agos_audit` row chain. No DocuSeal / DocuSign integration.
+
+7. **Email / marketing: OMIT FROM V1, SHIP AS PHASE 8.** The seven phases below run capture → invoice → reflect → coach without it. A future Phase 8 adds Listmonk-style broadcast (subscriber list + manual broadcast + template). Hub registry placeholder card "Newsletter — coming soon" preserves visibility.
+
+8. **AI Coach modes: FIVE MODES.** `pricing_advisor`, `sales_coach`, `marketing_advisor`, `business_strategist`, `general`. The `marketing_advisor` mode is added beyond the original four-mode recommendation. Since email broadcast is deferred to Phase 8 (per D7), `marketing_advisor` focuses on customer-acquisition signals already in Business OS: deal sources, contact patterns, service tags from invoices, interaction velocity per contact. Each mode's context loader is mode-shaped and capped at 50 KB (Maker convention).
 
 ***
 
-### EPIC-01-P-01 — Plan Turborepo Pipeline Config
+## Non-Goals (Explicit)
 
-**Type:** Plan
-
-**Outputs:** Draft `turbo.json`:
-```json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "dist/**"] },
-    "dev":   { "cache": false, "persistent": true },
-    "lint":  { "outputs": [] },
-    "test":  { "outputs": [] },
-    "db:generate": { "cache": false }
-  }
-}
-```
+- **Container co-processes.** No Twenty CRM, Invoice Ninja, Solidtime, DocuSeal, Plane, Listmonk, Mautic, Baserow, Frappe HR, OrangeHRM, or n8n. Everything is native pantheon. The shipped Oscar Suite stack runs inside the pantheon app — one Postgres, one SoulAuth, one deploy pipeline. Future integrations can be MCP-mediated if Cristian wants data import from any of those, but they are not the runtime.
+- **Multi-tenant SaaS billing of end-customers.** Business OS records the user's own clients (who they invoice, who paid). It does not host the user's customers' multi-tenant subscriptions — Stripe owns that surface, and the user wires their Stripe payouts into a Business OS payment row as a manual record.
+- **Tax filing, withholding, sales-tax compliance.** Out of scope. The invoicing layer records sales-tax line items numerically when the user enters them; it does not file, calculate jurisdiction-aware rates, or generate tax forms. Direct users to a licensed CPA.
+- **HRIS-grade payroll.** No `agos_business_employees` table in v1, no pay-run engine, no W-2 / 1099 issuance, no benefits / PTO accrual. Contractor payments are recorded as expenses; a full HR surface is a Phase 8+ addition.
+- **Full ERP.** No purchasing / vendor management, no inventory tracking, no fixed-asset depreciation, no general ledger / journal entries. The legacy doc spec'd a vendor + PO module in EPIC-14; this is dropped from v1.
+- **Email marketing automation in v1.** Per Open question §7 default.
+- **Adaptive sidebar / feature-flag toggling per industry / team size.** Out of scope until there's evidence users actually disable modules. Every module ships visible to every user.
+- **Real-time collaborative editing on invoices / contracts / notes.** Solo-target. Single-user writes with periodic save are fine.
+- **Built-in receipt OCR.** Phase 5 expenses are URL-only attachments; parsing receipt images into structured line items is reserved for a later MCP-mediated importer.
+- **CRM / accounting data import (QuickBooks, Xero, HubSpot, Salesforce, Pipedrive).** Out of scope. A future MCP-mediated importer would handle this; v1 is manual entry plus the existing stub.
 
 ***
 
-### EPIC-01-E-01 — Scaffold Turborepo Root
+## Phase 7 — AI Coach (pricing_advisor / sales_coach / marketing_advisor / business_strategist / general) (locked decisions)
 
-**Type:** Execute
+**Migration:** `0061_business_phase7`, down_revision `0060_business_phase6`.
 
-**Commands:**
-```bash
-mkdir business-os && cd business-os
-git init
-pnpm init
-pnpm add -D turbo typescript @types/node
-```
+**Scope:** Streaming Anthropic-backed AI coach with five modes — `pricing_advisor`, `sales_coach`, `marketing_advisor`, `business_strategist`, and `general`. Mirrors Maker / Research / Autobiographer Phase 7 (single-table transcript with inline JSONB messages, no mutating coach tools, streaming wire format). No domain-output filter (academic / business prose isn't credential-sensitive the way Cyber output is, nor crisis-adjacent the way Health is). System-prompt guardrails for regulated advice (legal, tax, securities) refer the user to a licensed professional. The `marketing_advisor` mode focuses on customer-acquisition signals (deal sources, contact patterns, service tags from invoices) rather than email-broadcast workflows, because email/marketing surfaces are deferred to a future Phase 8 (per locked decision §7).
 
-**Files to create:**
-- `pnpm-workspace.yaml`:
-  ```yaml
-  packages:
-    - 'apps/*'
-    - 'packages/*'
-  ```
-- `turbo.json`: use content from EPIC-01-P-01.
-- `.gitignore`: include `node_modules`, `.next`, `.turbo`, `dist`, `*.db`.
-- `tsconfig.base.json` (identical to Creator OS).[^1]
+**Schema (1 new table, all under `agos_business_*`):**
 
-***
+1. `agos_business_coach_sessions` — one row per chat session, transcript stored as an inline JSONB array on the row (Maker / Autobiographer / Research shape, not the Filmmaker / Cyber split).
 
-### EPIC-01-E-02 — Scaffold Next.js App
+   Columns: `id UUID PK`, `user_id UUID NOT NULL`, `project_id UUID` nullable (per-OS UUID, NO FK — matches the v0.1.30 platform contract), `mode TEXT NOT NULL` CHECK in `('pricing_advisor','sales_coach','marketing_advisor','business_strategist','general')`, `title TEXT NOT NULL` (auto-summarized from first turn or user-set), `messages JSONB NOT NULL DEFAULT '[]'` (ordered array of `{ role, content, created_at }`), `metadata JSONB NOT NULL DEFAULT '{}'` (carries the system-prompt version + the deal-id / invoice-id / project-id slice the mode consumed), `created_at`, `updated_at`.
 
-**Type:** Execute
+   Indexes: `(user_id, updated_at DESC)` (recent-sessions surface), partial `(project_id, updated_at DESC) WHERE project_id IS NOT NULL` (per-project session list), `(user_id, mode, updated_at DESC)` (mode-filtered list).
 
-```bash
-cd apps
-pnpm create next-app@14 web \
-  --typescript \
-  --tailwind \
-  --eslint \
-  --app \
-  --src-dir \
-  --import-alias "@/*"
-```
+**Locked decisions:**
 
-Post-scaffold: set `"name": "@business-os/web"` in `apps/web/package.json`.
+- **No domain output filter.** Matches Filmmaker / Maker / Research, not Cyber (which redacts secrets) or Health (crisis-safety wall).
+- **System-prompt regulatory guardrail:** every mode is system-prompted to refuse legal, tax, securities, or licensed-professional advice and refer the user to a CPA / attorney / fiduciary as appropriate. Same pattern as Maker's "PPE / ventilation / training" rule and Research's "IRB / IACUC" rule.
+- **`SYSTEM_PROMPT_VERSION = 'v1'`** — bump on material template edits.
+- **Audit action names:** `business.coach.session_created`, `business.coach.session_renamed`, `business.coach.session_deleted`, `business.coach.message_appended`.
 
-***
+**Context loading (mode-shaped, hard-capped at 50 KB pre-prompt):**
 
-### EPIC-01-E-03 — Install and Init shadcn/ui
+- `pricing_advisor` (project optional, deal optional): the user's recent invoices (last 30; total cents, line-count, status, paid_at), active deals (title, stage, value_cents, expected_close_date), workshop-wide pricing history rollup (median invoice total cents per service-tag, p25/p75). If a deal is scoped, that deal's history + contact + linked project.
+- `sales_coach` (deal optional): the user's open deals (Phase 2), recent interactions per deal (last 5; type + summary), pipeline stage distribution counts. If a deal is scoped, the full deal record + contact + linked project + interactions timeline.
+- `marketing_advisor` (deal optional): deal-source distribution (`agos_business_deals.source` rollup — referral / cold_outreach / inbound / linkedin / etc.; counts + won-rate per source over last 12 months), recent won deals with their sources, service-tag distribution from invoices (Phase 4 — what offerings actually convert), contact tier distribution (Phase 1's `agos_business_people.stage` as free-form tier), interaction velocity (`agos_business_interactions` count per contact over last 90 days). If a deal is scoped, that deal's source + contact + linked invoices.
+- `business_strategist` (project optional): workshop-wide rollups — monthly revenue last 6 months (Phase 4), monthly expense total last 6 months (Phase 5), gross margin (revenue - expenses) per month, active client count, top-3-clients-by-revenue, top-3-clients-by-time (Phase 3). If a project is scoped, that project's billable vs non-billable hours, budget vs spent.
+- `general` (project optional): contact count, deal count by stage, active project count, open invoice count + outstanding cents, monthly expense total. Used for stuck-founder conversations.
 
-**Type:** Execute
+**Routes (BFF, under `app/api/tiresias/agentic-os/business/coach/`):**
 
-```bash
-pnpm dlx shadcn@latest init
-pnpm dlx shadcn@latest add button card input label textarea
-pnpm dlx shadcn@latest add dropdown-menu navigation-menu sheet tabs
-pnpm dlx shadcn@latest add toast sonner badge avatar separator
-pnpm dlx shadcn@latest add table progress command popover
-```
+- `GET  /coach/sessions` — list. Filters: `?mode=`, `?project_id=`, `?scope=workshop`. Paginated.
+- `POST /coach/sessions` — create. Body `{ mode, project_id?, title?, initial_message? }`. Returns 503 `coach_not_configured` if `ANTHROPIC_API_KEY` is missing. 404 if `project_id` doesn't belong to caller. Audited.
+- `GET  /coach/sessions/[sessionId]` — fetch session + transcript.
+- `PATCH /coach/sessions/[sessionId]` — rename. Audited.
+- `DELETE /coach/sessions/[sessionId]` — drop. Audited.
+- `POST /coach/sessions/[sessionId]/messages` — append user turn, stream assistant turn. Wire format matches Maker / Filmmaker / Cyber / Autobiographer / Research: plain UTF-8 deltas, U+001E sentinel, JSON trailer with `{ session_id }`.
+- `POST /coach/quick` — one-shot quick prompt (no persistence).
 
-***
+All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, action: 'business.coach.<verb>', payload, projectId })` against the shared `_shared/audit.ts` writer.
 
-### EPIC-01-E-04 — Scaffold Shared Packages
+**System prompts:** per-mode TypeScript constants under `lib/agentic-os/business/coach/system-prompt.ts`. Each mode carries a role framing on top of three shared hard rules:
 
-**Type:** Execute
+1. Never invent client / deal / invoice facts (defer to "I don't have that on file yet").
+2. Refuse to give regulated professional advice (legal / tax / securities / licensed-professional advice generally) and refer the user to a CPA / attorney / fiduciary.
+3. Defer accounting-method opinions (cash vs accrual, depreciation schedules, sales-tax jurisdiction) to a licensed professional.
 
-```bash
-mkdir -p packages/ui packages/db packages/mcp-server packages/mcp-client packages/integrations
-```
+**Pages:**
 
-```json
-// packages/integrations/package.json
-{ "name": "@business-os/integrations", "version": "0.0.1", "main": "./src/index.ts" }
-```
+- `/dashboard/os/business/coach` — coach hub. Lists recent sessions, mode picker + per-mode quick prompts + free-form start input. 503-aware empty state when `ANTHROPIC_API_KEY` unset.
+- `/dashboard/os/business/coach/[sessionId]` — session view. Mode pill + scope pill on header.
+- Deal detail (Phase 2), project detail (Phase 3), and invoice detail (Phase 4) pages all CTA into `/business/coach?<scope>_id=<id>&mode=<default>`.
 
-All other `package.json` files follow the Creator OS pattern with `@business-os/` prefix.[^1]
+**Cross-ownership safety:** every read filters by `user_id`. Session ownership checked before fetch / mutation. `project_id` belonging to another user returns 404.
+
+**Phase N seam:** none — this is the terminal phase.
+
+**Hub registry card:** add `AI coach` pointing at `/dashboard/os/business/coach`.
 
 ***
 
-### EPIC-01-V-01 — Validate Monorepo Boots
+## Phase 6 — Documents and E-Signature (Lite) (locked decisions)
 
-**Type:** Validate
+**Migration:** `0060_business_phase6`, down_revision `0059_business_phase5`.
 
-```bash
-cd business-os
-pnpm install
-pnpm turbo run build
-pnpm turbo run dev   # http://localhost:3000 starts without errors
-```
+**Scope:** Three new tables that turn a Business OS engagement into a signable document packet — templates (NDA / SOW / 1099 / proposal), documents (per-engagement instances), and signatures (in-app canvas capture, stored as image URL). No DocuSign / DocuSeal dependency. Phase 4 invoices and Phase 3 projects can optionally link to a document (e.g. a SOW pinned to a project).
 
-***
+**Schema (3 new tables, all under `agos_business_*`):**
 
-## EPIC-02: Database Schema (Prisma + SQLite)
+1. `agos_business_doc_templates` — workshop-global library. `id UUID PK`, `user_id UUID NOT NULL`, `title TEXT NOT NULL`, `kind TEXT NOT NULL DEFAULT 'sow'` CHECK in `('nda','sow','msa','proposal','1099','invoice_terms','other')`, `body_md TEXT NOT NULL DEFAULT ''` (markdown with `{{client_name}}`, `{{project_title}}`, `{{rate}}`, `{{total}}` template variables), `version TEXT NOT NULL DEFAULT '1.0'`, `parent_template_id UUID` nullable (self-reference for "this is v1.1 of template X"; no FK to allow soft history), `tags TEXT[] NOT NULL DEFAULT '{}'`, `metadata JSONB`. Indexes `(user_id, kind)`, `(parent_template_id) WHERE parent_template_id IS NOT NULL`, GIN on `tags`.
 
-**Goal:** A fully migrated Prisma schema covering all business entities, designed so that all modules work for a solo operator and extend naturally as the organization grows.
+2. `agos_business_documents` — per-engagement instances. `id UUID PK`, `user_id UUID NOT NULL`, `template_id UUID` nullable FK CASCADE → templates (null = ad-hoc document, no template), `project_id UUID` nullable (per-OS UUID, no FK), `deal_id UUID` nullable (per-OS UUID, no FK), `contact_id UUID` nullable FK SET NULL → `agos_business_people` (counterparty), `title TEXT NOT NULL`, `body_md TEXT NOT NULL DEFAULT ''` (rendered template with variables substituted; user can edit before send), `status TEXT NOT NULL DEFAULT 'draft'` CHECK in `('draft','sent','signed','declined','expired')`, `sent_at TIMESTAMPTZ`, `signed_at TIMESTAMPTZ`, `pdf_url TEXT` (URL-only per the MCP storage transfer contract; populated on `signed` by the Phase 6 PDF render route), `metadata JSONB`, `created_at`, `updated_at`. Indexes `(user_id, status, updated_at DESC)`, partial `(project_id) WHERE project_id IS NOT NULL`, partial `(deal_id) WHERE deal_id IS NOT NULL`.
 
-***
+3. `agos_business_signatures` — signature events. `id UUID PK`, `document_id UUID NOT NULL` FK CASCADE → documents, `user_id UUID NOT NULL` (owner of the document — for audit), `signer_role TEXT NOT NULL DEFAULT 'counterparty'` CHECK in `('self','counterparty','witness')`, `signer_name TEXT NOT NULL`, `signer_email TEXT`, `signature_image_url TEXT NOT NULL` (URL-only; data URL captured from the canvas widget and uploaded via MCP storage transfer), `signed_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `ip_address TEXT` (best-effort capture for audit), `user_agent TEXT` (same), `metadata JSONB`, `created_at`. Index `(document_id, signed_at DESC)`, partial UNIQUE `(document_id, signer_role) WHERE signer_role = 'self'` (only one self-signature per document).
 
-### EPIC-02-A-01 — Audit All Data Entities
+**Locked decisions:**
 
-**Type:** Assess
+- **In-app signature, not DocuSign / DocuSeal.** Per Open question §6. A canvas widget on the document detail page captures a signature image; the image is uploaded via the existing MCP storage transfer contract and the resulting URL is stored on the signature row.
+- **Template variables are markdown-friendly.** Substitution is whole-token `{{name}}` regex replacement; no scripting / no conditionals / no loops. If a user needs richer templating they can edit `body_md` directly on the document before send.
+- **Document lifecycle gates by status.** A `draft` document is fully editable; `sent` locks `body_md` (only `status` can change); `signed` is terminal and immutable; `declined` and `expired` are terminal except for re-creating a new document from the same template.
+- **No native email send.** Documents are "sent" by status flip + a copy-link affordance; the user emails the link manually (or pastes the rendered markdown into their own email tool). A future MCP-mediated email send is reserved.
+- **Signed PDF rendering** uses the `_shared/pdf/` primitives. On `signed`, the document body + signature images are rendered to PDF and stored at `pdf_url` for retrieval. Layout: title + counterparty + signed-at + body + signature image footer.
+- **Audit action names:** `business.template.created`, `business.template.updated`, `business.template.version_bumped`, `business.document.created`, `business.document.sent`, `business.document.signed`, `business.document.declined`, `business.document.archived`, `business.signature.captured`.
 
-**Outputs:** `packages/db/ENTITIES.md`:
+**Routes:**
 
-```text
-User, Session, Account (NextAuth)
-OrgProfile (organization identity, business model, industry flags)
-OrgSetting (key-value feature flags and app config — drives module behavior)
-Contact (person in a company or individual client)
-Company (organization a Contact belongs to; optional)
-Deal (sales opportunity linked to Contact/Company)
-DealStage (configurable pipeline stages per organization)
-Invoice (billing document)
-InvoiceLineItem
-Quote (pre-invoice estimate / proposal)
-QuoteLineItem
-Expense (cost tracked against a project or period)
-RecurringBilling (schedule for automatic invoice generation)
-PaymentRecord (payment received against an Invoice)
-Project (work unit that can be billable or internal)
-Task (item inside a Project)
-TaskLabel
-TimeEntry (time logged against a Task or Project)
-Contract (document requiring signature, links to DocuSeal)
-ContractTemplate
-Document (generic file — PDF, DOCX, etc.)
-EmailList (for Listmonk integration)
-EmailCampaign
-Lead (early-stage contact before becoming a full Contact)
-LeadSource
-TeamMember (employee or contractor — optional for solo mode)
-Role (permission role for a TeamMember)
-Department
-Payroll (payroll run — only relevant when team exists)
-PayrollEntry (per-member line within a payroll run)
-Vendor (supplier or service provider)
-PurchaseOrder
-POLineItem
-Note (internal notes — like Creator OS; linked to Contact/Deal/Project)
-AIConversation
-AIMessage
-MCPServerConfig
-AutomationTrigger
-AutomationLog
-ActivityLog (audit trail: who did what, when, on what entity)
-```
+- `/api/tiresias/agentic-os/business/templates` (GET, POST). `/templates/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/templates/[id]/versions` (POST bump — creates a new row with `parent_template_id = original.id`).
+- `/api/tiresias/agentic-os/business/documents` (GET list — filterable by `?status=`, `?kind=`, `?project_id=`, `?deal_id=`, `?contact_id=`; POST create — accepts `template_id?` to pre-fill `body_md` with substituted variables).
+- `/api/tiresias/agentic-os/business/documents/[id]` (GET, PATCH — 400 if `status != 'draft'`, DELETE).
+- `/api/tiresias/agentic-os/business/documents/[id]/send` (POST) — flips `status` to `sent`, sets `sent_at`. Returns 409 if not in `draft`.
+- `/api/tiresias/agentic-os/business/documents/[id]/signatures` (GET list, POST capture — body includes the data-URL canvas image, route uploads via MCP and stores returned URL). Returns 409 if document is not in `sent`. On the counterparty signature, flips document `status` to `signed`, sets `signed_at`, renders PDF, stores at `pdf_url`.
+- `/api/tiresias/agentic-os/business/documents/[id]/decline` (POST) — flips to `declined`. Reason text in body.
+- `/api/tiresias/agentic-os/business/documents/[id]/export.pdf` — fresh render of the current state (works at any status). Filename `<document-slug>-<YYYY-MM-DD>.pdf`.
+
+**Pages:**
+
+- `/dashboard/os/business/templates` — template library.
+- `/dashboard/os/business/templates/[id]` — template editor with version history rail.
+- `/dashboard/os/business/documents` — workshop document list with filter chips (status / kind / project / deal).
+- `/dashboard/os/business/documents/[id]` — document detail. Three sections: meta (counterparty + template + status + dates), body editor (markdown when `draft`, read-only otherwise), signature panel (canvas widget when `sent` and the user is the counterparty; signature history otherwise).
+- Deal detail (Phase 2) and project detail (Phase 3) pages — new `Documents` tab listing attached documents with add picker.
+
+**Cross-ownership safety:** every read filters by `user_id`. Document mutation validates `project_id` / `deal_id` / `contact_id` / `template_id` ownership where supplied.
+
+**Phase 7 seam:** Coach `business_strategist` mode can reference document counts and signed-at deltas as a deal-velocity signal in the context loader.
+
+**Hub registry card:** add `Documents` pointing at `/dashboard/os/business/documents`.
 
 ***
 
-### EPIC-02-P-01 — Design Schema Relationships
+## Phase 5 — Expenses, P&L Rollup, and PDF Export (locked decisions)
 
-**Type:** Plan
+**Migration:** `0059_business_phase5`, down_revision `0058_business_phase4`.
 
-**Outputs:** `packages/db/SCHEMA_PLAN.md`:
+**Scope:** Per-user expense ledger with receipt URL attachment, a small category taxonomy for P&L, a per-project / per-month rollup view, and PDF export of a financial summary (P&L for a date range, project profitability, or workshop summary). Mirrors Research Phase 5's PDF-plus-derived-rollup pattern.
 
-- `OrgProfile` is a singleton (one row per deployment); all behavior adapts based on fields like `businessModel`, `industry`, `hasTeam`, `billingCurrency`.
-- `User` 1→N `Project`, `Invoice`, `Quote`, `Deal`, `TimeEntry`, `AIConversation`, `Note`.
-- `Contact` N→1 `Company` (optional); 1→N `Deal`, `Invoice`, `Quote`, `Contract`, `Note`.
-- `Deal` N→1 `DealStage`; 1→N `TimeEntry`, `Task` (via `Project`).
-- `Invoice` 1→N `InvoiceLineItem`, 1→N `PaymentRecord`.
-- `Quote` 1→N `QuoteLineItem`; `Quote` converts to `Invoice` (tracked via `quoteId` FK on `Invoice`).
-- `Project` 1→N `Task`, 1→N `TimeEntry`, 1→N `Document`; optionally linked to `Deal` or `Contract`.
-- `Task` N→N `TaskLabel`; N→1 `TeamMember` (assignee, nullable for solo).
-- `Contract` links to `DocuSeal` external signing via `externalSigningId` string.
-- `TeamMember` N→1 `Role`, N→1 `Department`; 1→N `TimeEntry`, `Task`, `PayrollEntry`.
-- `Payroll` 1→N `PayrollEntry` (one per `TeamMember`).
-- `ActivityLog` is append-only: `entityType`, `entityId`, `action`, `actorId`, `before` (JSON), `after` (JSON).
-- All models have `id String @id @default(cuid())`, `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`.
+**Schema (2 new tables + 1 derived view, all under `agos_business_*`):**
 
-***
+1. `agos_business_expenses` — per-user expense ledger. `id UUID PK`, `user_id UUID NOT NULL`, `project_id UUID` nullable (per-OS UUID, no FK — null = workshop-overhead expense), `category TEXT NOT NULL DEFAULT 'general'` CHECK in `('general','software','hardware','travel','meals','marketing','contractor','office','utilities','insurance','professional_services','education','taxes','other')`, `vendor TEXT`, `description TEXT NOT NULL DEFAULT ''`, `amount_cents BIGINT NOT NULL` (positive = expense, negative = refund / credit), `currency TEXT NOT NULL DEFAULT 'USD'`, `incurred_on DATE NOT NULL` (calendar-date semantics; user-facing reporting axis), `paid_on DATE` nullable (when payment cleared; used for cash-basis vs accrual rollup), `receipt_url TEXT` nullable (URL-only per the MCP storage transfer contract), `is_reimbursable BOOLEAN NOT NULL DEFAULT false`, `reimbursed_at TIMESTAMPTZ` nullable (when reimbursement was processed), `tags TEXT[] NOT NULL DEFAULT '{}'`, `metadata JSONB`, `created_at`, `updated_at`. Indexes `(user_id, incurred_on DESC)`, partial `(project_id, incurred_on DESC) WHERE project_id IS NOT NULL`, `(user_id, category, incurred_on DESC)`, GIN on `tags`, partial `(user_id) WHERE is_reimbursable = true AND reimbursed_at IS NULL` (open reimbursements feed).
 
-### EPIC-02-E-01 — Install Prisma and Write Schema
+2. `agos_business_pnl_snapshots` — append-only monthly snapshots for trend reporting. `id UUID PK`, `user_id UUID NOT NULL`, `period_kind TEXT NOT NULL DEFAULT 'month'` CHECK in `('month','quarter','year','custom')`, `period_start DATE NOT NULL`, `period_end DATE NOT NULL`, `revenue_cents BIGINT NOT NULL` (paid invoices in period — Phase 4), `expense_cents BIGINT NOT NULL` (expenses in period), `margin_cents BIGINT NOT NULL` (revenue - expense), `currency TEXT NOT NULL`, `is_locked BOOLEAN NOT NULL DEFAULT false` (lock prevents recomputation when subsequent invoice / expense edits happen in a closed period — Cristian can override by toggling), `notes TEXT`, `created_at`. UNIQUE `(user_id, period_kind, period_start)` — one snapshot per period per user. Index `(user_id, period_start DESC)`.
 
-**Type:** Execute
+3. **Derived rollup endpoint** (no new table) — `GET /pnl/summary?period_start=&period_end=&group_by=month|project|category` returns a JSON aggregation computed live from invoices + expenses. Snapshots above are only persisted on explicit user-triggered "lock period" action.
 
-```bash
-# From packages/db:
-pnpm add prisma @prisma/client
-pnpm prisma init --datasource-provider sqlite
-```
+**Locked decisions:**
 
-**File: `packages/db/prisma/schema.prisma`** — core models:
+- **Cash-basis is the default rollup.** Revenue counts on the date a payment record landed (Phase 4 `agos_business_payments.received_on`); expense counts on `paid_on` if set, else `incurred_on`. An accrual toggle is reserved for a future Phase 8 — solo founders almost universally file on cash basis.
+- **Currency is per-row, not per-user.** Multi-currency support is baked in (Phase 4 invoices carry per-row currency too); rollups group by `(user_id, currency)` and the rollup endpoint returns a per-currency array, not a converted sum. FX conversion is out-of-scope for v1.
+- **No automatic period close.** P&L snapshots are created when the user explicitly POSTs a period — a "Close September 2026" button on the rollup page. Once locked, edits to underlying invoices / expenses are still allowed but the snapshot's stored numbers don't shift until the user unlocks + re-snapshots.
+- **Receipt OCR deferred.** Phase 5 expenses are URL-only attachments; parsing receipt images into structured line items is reserved for a later MCP-mediated importer.
+- **PDF export** uses the `_shared/pdf/` primitives. Three templates: (a) **P&L summary** (period + revenue + expense + margin table + category breakdown + per-month bar chart), (b) **project profitability** (project meta + budget + billed hours + invoice total + expense total + net), (c) **expense report** (filterable list + totals by category). Footer "Generated by Pantheon Business OS".
+- **Audit action names:** `business.expense.created`, `business.expense.updated`, `business.expense.deleted`, `business.expense.reimbursed`, `business.pnl.snapshot_created`, `business.pnl.snapshot_locked`, `business.pnl.snapshot_unlocked`, `business.pnl.export.pdf`.
 
-```prisma
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
+**Routes:**
 
-generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/client"
-}
+- `/api/tiresias/agentic-os/business/expenses` (GET list — filters `?category=`, `?project_id=`, `?from=`, `?to=`, `?tag=`, `?reimbursable=true`; POST create).
+- `/api/tiresias/agentic-os/business/expenses/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/expenses/[id]/reimburse` (POST) — flips `reimbursed_at = now()`. Audited.
+- `/api/tiresias/agentic-os/business/pnl/summary` (GET — query params `period_start`, `period_end`, `group_by=month|project|category`).
+- `/api/tiresias/agentic-os/business/pnl/snapshots` (GET list, POST create from a period). `/pnl/snapshots/[id]` (GET, PATCH `is_locked`, DELETE).
+- `/api/tiresias/agentic-os/business/pnl/export.pdf` — Content-Type application/pdf, filename `pnl-<period_start>-<period_end>.pdf`. Query params select the template (a / b / c above).
+- `/api/tiresias/agentic-os/business/projects/[id]/profitability.pdf` — convenience route for template (b).
 
-// ─── Organization Identity ──────────────────────────────────
-model OrgProfile {
-  id              String   @id @default(cuid())
-  name            String   @default("My Business")
-  legalName       String?
-  industry        String?  // freelance | agency | saas | product | retail | consulting | other
-  businessModel   String?  // b2b | b2c | b2b2c | marketplace
-  country         String   @default("US")
-  billingCurrency String   @default("USD")
-  hasTeam         Boolean  @default(false)
-  logoUrl         String?
-  website         String?
-  taxId           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
+**Pages:**
 
-model OrgSetting {
-  id    String @id @default(cuid())
-  key   String @unique   // e.g. "crm_enabled", "invoice_prefix", "default_tax_rate"
-  value String
-}
+- `/dashboard/os/business/expenses` — workshop expense ledger with filter chips (category / project / date range / reimbursable toggle), running totals strip, "Add expense" CTA.
+- `/dashboard/os/business/pnl` — P&L hub. Three panels: live summary (date-range picker + bar chart + category breakdown), snapshot history (locked-period list), export CTAs.
+- Project detail (Phase 3) — Expenses tab + Profitability badge on header (live computed).
 
-// ─── CRM ────────────────────────────────────────────────────
-model Company {
-  id       String    @id @default(cuid())
-  name     String
-  domain   String?
-  industry String?
-  size     String?
-  contacts Contact[]
-  deals    Deal[]
-  notes    Note[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+**Cross-ownership safety:** every read filters by `user_id`. Expense mutation validates `project_id` ownership when supplied.
 
-model Contact {
-  id         String    @id @default(cuid())
-  firstName  String
-  lastName   String?
-  email      String?   @unique
-  phone      String?
-  title      String?
-  companyId  String?
-  company    Company?  @relation(fields: [companyId], references: [id])
-  deals      Deal[]
-  invoices   Invoice[]
-  quotes     Quote[]
-  contracts  Contract[]
-  notes      Note[]
-  leads      Lead[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
+**Phase 7 seam:** Coach `business_strategist` context loader reads the live P&L summary endpoint for the last 6 months when the mode opens.
 
-model DealStage {
-  id       String @id @default(cuid())
-  name     String
-  order    Int    @default(0)
-  color    String @default("#6366f1")
-  deals    Deal[]
-}
-
-model Deal {
-  id          String     @id @default(cuid())
-  title       String
-  value       Float?
-  currency    String     @default("USD")
-  status      String     @default("open") // open | won | lost
-  closeDate   DateTime?
-  stageId     String
-  stage       DealStage  @relation(fields: [stageId], references: [id])
-  contactId   String?
-  contact     Contact?   @relation(fields: [contactId], references: [id])
-  companyId   String?
-  company     Company?   @relation(fields: [companyId], references: [id])
-  projectId   String?
-  project     Project?   @relation(fields: [projectId], references: [id])
-  notes       Note[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-}
-
-model Lead {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  source    String?
-  status    String   @default("new") // new | contacted | qualified | disqualified
-  contactId String?
-  contact   Contact? @relation(fields: [contactId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// ─── Finance ─────────────────────────────────────────────────
-model Invoice {
-  id            String          @id @default(cuid())
-  number        String          @unique
-  status        String          @default("draft") // draft | sent | paid | overdue | void
-  issueDate     DateTime        @default(now())
-  dueDate       DateTime?
-  currency      String          @default("USD")
-  taxRate       Float           @default(0)
-  notes         String?
-  externalId    String?         // id from Invoice Ninja
-  contactId     String?
-  contact       Contact?        @relation(fields: [contactId], references: [id])
-  quoteId       String?         // if converted from quote
-  projectId     String?
-  project       Project?        @relation(fields: [projectId], references: [id])
-  lineItems     InvoiceLineItem[]
-  payments      PaymentRecord[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-}
-
-model InvoiceLineItem {
-  id          String  @id @default(cuid())
-  description String
-  quantity    Float   @default(1)
-  unitPrice   Float
-  taxable     Boolean @default(true)
-  invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-model Quote {
-  id          String          @id @default(cuid())
-  number      String          @unique
-  status      String          @default("draft") // draft | sent | accepted | declined | expired
-  issueDate   DateTime        @default(now())
-  expiryDate  DateTime?
-  currency    String          @default("USD")
-  notes       String?
-  externalId  String?
-  contactId   String?
-  contact     Contact?        @relation(fields: [contactId], references: [id])
-  projectId   String?
-  project     Project?        @relation(fields: [projectId], references: [id])
-  lineItems   QuoteLineItem[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-}
-
-model QuoteLineItem {
-  id          String @id @default(cuid())
-  description String
-  quantity    Float  @default(1)
-  unitPrice   Float
-  quoteId     String
-  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-}
-
-model Expense {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  currency    String   @default("USD")
-  date        DateTime @default(now())
-  category    String?
-  vendor      String?
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id])
-  receiptUrl  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model RecurringBilling {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  currency    String   @default("USD")
-  frequency   String   // monthly | quarterly | yearly | custom
-  nextDate    DateTime
-  contactId   String?
-  projectId   String?
-  enabled     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model PaymentRecord {
-  id        String  @id @default(cuid())
-  amount    Float
-  currency  String  @default("USD")
-  paidAt    DateTime
-  method    String? // stripe | paypal | bank | cash | other
-  reference String?
-  invoiceId String
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-}
-
-// ─── Projects & Tasks ────────────────────────────────────────
-model Project {
-  id            String       @id @default(cuid())
-  name          String
-  description   String?
-  status        String       @default("active") // active | paused | completed | archived
-  billable      Boolean      @default(true)
-  budgetHours   Float?
-  budgetAmount  Float?
-  currency      String       @default("USD")
-  startDate     DateTime?
-  dueDate       DateTime?
-  externalId    String?      // Plane project ID
-  contactId     String?
-  deals         Deal[]
-  tasks         Task[]
-  timeEntries   TimeEntry[]
-  invoices      Invoice[]
-  quotes        Quote[]
-  expenses      Expense[]
-  documents     Document[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-}
-
-model Task {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  status      String       @default("todo") // todo | in_progress | done | cancelled
-  priority    String       @default("medium") // low | medium | high | urgent
-  dueDate     DateTime?
-  externalId  String?      // Plane issue ID
-  projectId   String
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assigneeId  String?
-  assignee    TeamMember?  @relation(fields: [assigneeId], references: [id])
-  labels      TaskLabel[]
-  timeEntries TimeEntry[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
-model TaskLabel {
-  id    String @id @default(cuid())
-  name  String @unique
-  color String @default("#6366f1")
-  tasks Task[]
-}
-
-model TimeEntry {
-  id          String    @id @default(cuid())
-  startTime   DateTime
-  endTime     DateTime?
-  duration    Int?      // seconds; computed when endTime is set
-  description String?
-  billable    Boolean   @default(true)
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id])
-  taskId      String?
-  task        Task?     @relation(fields: [taskId], references: [id])
-  memberId    String?
-  member      TeamMember? @relation(fields: [memberId], references: [id])
-  externalId  String?   // Solidtime entry ID
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-// ─── Documents & Contracts ───────────────────────────────────
-model Contract {
-  id               String    @id @default(cuid())
-  title            String
-  status           String    @default("draft") // draft | sent | signed | expired | voided
-  externalSigningId String?  // DocuSeal submission ID
-  signingUrl       String?
-  signedUrl        String?
-  templateId       String?
-  contactId        String?
-  contact          Contact?  @relation(fields: [contactId], references: [id])
-  projectId        String?
-  project          Project?  @relation(fields: [projectId], references: [id])
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-}
-
-model ContractTemplate {
-  id        String   @id @default(cuid())
-  name      String
-  externalId String? // DocuSeal template ID
-  category  String?  // nda | sow | employment | msa | freelance
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Document {
-  id        String   @id @default(cuid())
-  name      String
-  kind      String   // pdf | docx | image | other
-  url       String
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id])
-  createdAt DateTime @default(now())
-}
-
-// ─── Email & Marketing ───────────────────────────────────────
-model EmailList {
-  id         String          @id @default(cuid())
-  name       String
-  externalId String?         // Listmonk list ID
-  campaigns  EmailCampaign[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-}
-
-model EmailCampaign {
-  id         String    @id @default(cuid())
-  subject    String
-  status     String    @default("draft") // draft | scheduled | sent
-  sentAt     DateTime?
-  externalId String?   // Listmonk campaign ID
-  listId     String
-  list       EmailList @relation(fields: [listId], references: [id], onDelete: Cascade)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-// ─── Team & HR (solo-safe: nullable everywhere) ──────────────
-model Department {
-  id      String       @id @default(cuid())
-  name    String       @unique
-  members TeamMember[]
-}
-
-model Role {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  permissions String       @default("[]") // JSON array
-  members     TeamMember[]
-}
-
-model TeamMember {
-  id           String      @id @default(cuid())
-  name         String
-  email        String      @unique
-  employeeType String      @default("employee") // employee | contractor | owner
-  status       String      @default("active")
-  startDate    DateTime?
-  endDate      DateTime?
-  roleId       String?
-  role         Role?       @relation(fields: [roleId], references: [id])
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  tasks        Task[]
-  timeEntries  TimeEntry[]
-  payrollEntries PayrollEntry[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-}
-
-model Payroll {
-  id          String         @id @default(cuid())
-  periodStart DateTime
-  periodEnd   DateTime
-  status      String         @default("draft") // draft | approved | paid
-  entries     PayrollEntry[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model PayrollEntry {
-  id           String     @id @default(cuid())
-  payrollId    String
-  payroll      Payroll    @relation(fields: [payrollId], references: [id], onDelete: Cascade)
-  memberId     String
-  member       TeamMember @relation(fields: [memberId], references: [id])
-  grossAmount  Float
-  deductions   Float      @default(0)
-  netAmount    Float
-  currency     String     @default("USD")
-}
-
-// ─── Vendors & Purchasing ────────────────────────────────────
-model Vendor {
-  id             String          @id @default(cuid())
-  name           String
-  email          String?
-  website        String?
-  purchaseOrders PurchaseOrder[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-}
-
-model PurchaseOrder {
-  id        String       @id @default(cuid())
-  number    String       @unique
-  status    String       @default("draft") // draft | sent | received | cancelled
-  total     Float?
-  currency  String       @default("USD")
-  vendorId  String
-  vendor    Vendor       @relation(fields: [vendorId], references: [id])
-  lineItems POLineItem[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-}
-
-model POLineItem {
-  id          String        @id @default(cuid())
-  description String
-  quantity    Float         @default(1)
-  unitPrice   Float
-  poId        String
-  po          PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
-}
-
-// ─── Notes & AI ──────────────────────────────────────────────
-model Note {
-  id        String    @id @default(cuid())
-  content   String    @default("")
-  entityType String?  // contact | company | deal | project
-  entityId  String?
-  contactId  String?
-  contact   Contact?  @relation(fields: [contactId], references: [id])
-  companyId  String?
-  company   Company?  @relation(fields: [companyId], references: [id])
-  dealId    String?
-  deal      Deal?     @relation(fields: [dealId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model AIConversation {
-  id        String      @id @default(cuid())
-  title     String      @default("New Conversation")
-  model     String      @default("gpt-4o")
-  messages  AIMessage[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-}
-
-model AIMessage {
-  id             String         @id @default(cuid())
-  role           String
-  content        String
-  toolCallId     String?
-  conversationId String
-  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  createdAt      DateTime       @default(now())
-}
-
-// ─── Activity Log ─────────────────────────────────────────────
-model ActivityLog {
-  id         String   @id @default(cuid())
-  entityType String
-  entityId   String
-  action     String   // created | updated | deleted | status_changed
-  actorId    String?
-  before     String?  // JSON snapshot
-  after      String?  // JSON snapshot
-  createdAt  DateTime @default(now())
-}
-
-// ─── Automation & MCP ────────────────────────────────────────
-model MCPServerConfig {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  url       String
-  transport String   @default("stdio")
-  command   String?
-  args      String?
-  env       String?
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model AutomationTrigger {
-  id        String           @id @default(cuid())
-  name      String
-  type      String           // webhook | schedule | event
-  config    String
-  enabled   Boolean          @default(true)
-  logs      AutomationLog[]
-  createdAt DateTime         @default(now())
-}
-
-model AutomationLog {
-  id        String            @id @default(cuid())
-  status    String
-  input     String?
-  output    String?
-  error     String?
-  triggerId String
-  trigger   AutomationTrigger @relation(fields: [triggerId], references: [id])
-  createdAt DateTime          @default(now())
-}
-```
+**Hub registry cards:** add `Expenses` pointing at `/dashboard/os/business/expenses` and `P&L` pointing at `/dashboard/os/business/pnl`.
 
 ***
 
-### EPIC-02-E-02 — Prisma Client Export
+## Phase 4 — Quotes, Invoices, Line Items, and Payments (locked decisions)
 
-**Type:** Execute
+**Migration:** `0058_business_phase4`, down_revision `0057_business_phase3`.
 
-`packages/db/index.ts` — identical pattern to Creator OS.[^1]
+**Scope:** A first-class billing surface. **Quotes** are pre-sale estimates; **invoices** are post-engagement bills; **line items** are the row-level breakdown of either; **payments** record when an invoice was paid (manually entered — Stripe / bank-feed sync is reserved for Phase 8). Time entries from Phase 3 can be "rolled up" into invoice line items via a conversion route.
 
-Set `DATABASE_URL="file:../../data/business-os.db"` in `apps/web/.env.local`.
+**Schema (4 new tables, all under `agos_business_*`):**
 
-***
+1. `agos_business_quotes` — pre-sale estimates. `id UUID PK`, `user_id UUID NOT NULL`, `deal_id UUID` nullable (per-OS UUID, no FK — links to Phase 2 deal), `contact_id UUID` nullable FK SET NULL → people (counterparty), `project_id UUID` nullable (no FK — Phase 3 project), `quote_number TEXT NOT NULL`, `title TEXT NOT NULL`, `description_md TEXT NOT NULL DEFAULT ''`, `status TEXT NOT NULL DEFAULT 'draft'` CHECK in `('draft','sent','accepted','rejected','expired','converted')` ("converted" = an invoice was created from this quote), `quote_date DATE NOT NULL DEFAULT current_date`, `expires_on DATE` nullable, `subtotal_cents BIGINT NOT NULL DEFAULT 0` (sum of line item amounts; denormalized for fast list rendering), `tax_cents BIGINT NOT NULL DEFAULT 0`, `total_cents BIGINT NOT NULL DEFAULT 0`, `currency TEXT NOT NULL DEFAULT 'USD'`, `converted_invoice_id UUID` nullable (set on conversion; no FK), `metadata JSONB`, `created_at`, `updated_at`. UNIQUE `(user_id, quote_number)`. Indexes `(user_id, status, quote_date DESC)`, partial `(deal_id) WHERE deal_id IS NOT NULL`, partial `(contact_id) WHERE contact_id IS NOT NULL`.
 
-### EPIC-02-E-03 — Run Initial Migration
+2. `agos_business_invoices` — post-engagement bills. `id UUID PK`, `user_id UUID NOT NULL`, `deal_id UUID` nullable, `contact_id UUID` nullable FK SET NULL, `project_id UUID` nullable, `quote_id UUID` nullable (if originating from a quote; no FK), `invoice_number TEXT NOT NULL`, `title TEXT NOT NULL`, `description_md TEXT NOT NULL DEFAULT ''`, `status TEXT NOT NULL DEFAULT 'draft'` CHECK in `('draft','sent','partial','paid','overdue','voided')`, `invoice_date DATE NOT NULL DEFAULT current_date`, `due_on DATE NOT NULL`, `terms TEXT NOT NULL DEFAULT 'net_30'` (free-form; the legacy doc's net_15 / net_30 / net_60 strings work), `subtotal_cents BIGINT NOT NULL DEFAULT 0`, `tax_cents BIGINT NOT NULL DEFAULT 0`, `total_cents BIGINT NOT NULL DEFAULT 0`, `paid_cents BIGINT NOT NULL DEFAULT 0` (denormalized sum of payments; reconciled on every payment write), `currency TEXT NOT NULL DEFAULT 'USD'`, `pdf_url TEXT` nullable (populated on PDF export, URL-only per the MCP storage transfer contract), `metadata JSONB`, `created_at`, `updated_at`. UNIQUE `(user_id, invoice_number)`. Indexes `(user_id, status, due_on ASC)`, partial `(deal_id) WHERE deal_id IS NOT NULL`, partial `(contact_id) WHERE contact_id IS NOT NULL`, partial `(user_id) WHERE status IN ('sent','partial','overdue')` (outstanding feed).
 
-**Type:** Execute
+3. `agos_business_line_items` — per-quote OR per-invoice row breakdown (one of the parent IDs is set, never both). `id UUID PK`, `quote_id UUID` nullable FK CASCADE → quotes, `invoice_id UUID` nullable FK CASCADE → invoices, `user_id UUID NOT NULL`, `position INT NOT NULL` (display order within parent), `description TEXT NOT NULL`, `quantity NUMERIC(12,3) NOT NULL DEFAULT 1.0`, `unit_label TEXT NOT NULL DEFAULT 'hour'` (free-form; "hour", "unit", "month", "flat"), `unit_price_cents BIGINT NOT NULL`, `line_total_cents BIGINT NOT NULL` (denormalized = quantity * unit_price_cents, rounded), `tax_rate_bp INT NOT NULL DEFAULT 0` (basis points — 10000 = 100%; 875 = 8.75%), `line_tax_cents BIGINT NOT NULL DEFAULT 0`, `time_entry_ids UUID[] NOT NULL DEFAULT '{}'` (provenance — which Phase 3 time entries rolled into this line; no FK array — array-of-UUIDs is the established cross-table reference pattern), `metadata JSONB`, `created_at`. CHECK `(quote_id IS NULL) <> (invoice_id IS NULL)` (XOR). Indexes `(quote_id, position) WHERE quote_id IS NOT NULL`, `(invoice_id, position) WHERE invoice_id IS NOT NULL`, GIN on `time_entry_ids`.
 
-```bash
-pnpm prisma generate
-pnpm prisma migrate dev --name init
-```
+4. `agos_business_payments` — payment records (manual entry). `id UUID PK`, `invoice_id UUID NOT NULL` FK CASCADE → invoices, `user_id UUID NOT NULL`, `amount_cents BIGINT NOT NULL`, `currency TEXT NOT NULL`, `method TEXT NOT NULL DEFAULT 'bank_transfer'` CHECK in `('bank_transfer','check','cash','card','stripe','paypal','wire','other')`, `received_on DATE NOT NULL`, `reference TEXT` (check number / transaction id / etc.), `notes TEXT`, `metadata JSONB`, `created_at`. Index `(invoice_id, received_on DESC)`, `(user_id, received_on DESC)` (cash-basis revenue feed for Phase 5).
 
-***
+**Locked decisions:**
 
-### EPIC-02-E-04 — Seed Organization Profile
+- **Quote → invoice conversion** is a POST route on the quote that copies the quote fields + line items to a new invoice row, flips quote `status` to `converted`, and writes `converted_invoice_id`. The original quote remains readable for audit; line items on the new invoice are fresh rows (no FK shared) so the quote can be amended without affecting the invoice.
+- **Invoice numbering is per-user, user-specified.** No auto-increment in v1 — the user types `INV-2026-001` themselves. UNIQUE `(user_id, invoice_number)` enforces no duplicates. A future `business_settings.invoice_number_template` for auto-format is reserved for Phase 8.
+- **Time-entry rollup** is one-shot. The "Convert unbilled time entries to invoice line items" route reads the project's unbilled hours, groups by `task_id` (Phase 3), creates one line item per group with `quantity = sum(hours)`, `unit_label = 'hour'`, `unit_price_cents = task.billing_rate_cents` (Phase 3 records this), `time_entry_ids = [...]`, and flips each consumed time entry's `billed_at = now()`. Round-trip is recorded.
+- **Status transitions are deterministic.** Invoice `draft → sent` on POST `/send`. `sent → partial` on first payment that doesn't cover total. `sent | partial → paid` when `paid_cents >= total_cents`. `sent | partial → overdue` is a derived display state (not stored) when `due_on < today AND status IN ('sent','partial')`. The derived-overdue convention matches Maker Phase 6's milestone "at_risk in 7 days" treatment.
+- **Tax is per-line-item.** No global invoice-wide tax row. Sales-tax jurisdiction calculation, multi-locality rates, and tax-exemption flags are out-of-scope; the user types in the basis points per line. This avoids a CompliantTax-as-a-Service dependency.
+- **PDF export** uses the `_shared/pdf/` primitives. Invoice template: page 1 = from/to header + invoice meta (number, dates, terms) + line item table with subtotal/tax/total + payment record table + outstanding amount footer. Quote template: same shape, no payments, "Valid through" instead of "Due on". Both templates accept a `business_settings.brand_block` field (logo URL + business name + address) that's set from a workshop-global settings row.
+- **Audit action names:** `business.quote.created`, `business.quote.updated`, `business.quote.sent`, `business.quote.accepted`, `business.quote.rejected`, `business.quote.converted`, `business.invoice.created`, `business.invoice.updated`, `business.invoice.sent`, `business.invoice.voided`, `business.line_item.created`, `business.line_item.updated`, `business.line_item.deleted`, `business.payment.recorded`, `business.payment.voided`, `business.time_entries.billed`, `business.invoice.export.pdf`, `business.quote.export.pdf`.
 
-**Type:** Execute
+**Routes:**
 
-**File: `packages/db/seed.ts`:**
+- `/api/tiresias/agentic-os/business/quotes` (GET, POST). `/quotes/[id]` (GET, PATCH, DELETE — 400 if `status != 'draft'`).
+- `/api/tiresias/agentic-os/business/quotes/[id]/send` (POST).
+- `/api/tiresias/agentic-os/business/quotes/[id]/convert` (POST) — creates the invoice.
+- `/api/tiresias/agentic-os/business/quotes/[id]/line-items` (GET, POST). `/line-items/[itemId]` (PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/invoices` (GET — filter `?status=`, `?contact_id=`, `?project_id=`, `?from=`, `?to=`, `?outstanding=true`; POST).
+- `/api/tiresias/agentic-os/business/invoices/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/invoices/[id]/send` (POST).
+- `/api/tiresias/agentic-os/business/invoices/[id]/void` (POST).
+- `/api/tiresias/agentic-os/business/invoices/[id]/line-items` (GET, POST). `/line-items/[itemId]` (PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/invoices/[id]/payments` (GET, POST). `/payments/[paymentId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/invoices/[id]/from-time-entries` (POST) — rolls up unbilled time entries for the linked project.
+- `/api/tiresias/agentic-os/business/invoices/[id]/export.pdf`.
+- `/api/tiresias/agentic-os/business/quotes/[id]/export.pdf`.
 
-```ts
-import { prisma } from './index'
-import bcrypt from 'bcryptjs'
+**Pages:**
 
-async function main() {
-  // Seed admin user
-  const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'changeme', 12)
-  await prisma.user.upsert({
-    where: { email: process.env.ADMIN_EMAIL || 'admin@business-os.local' },
-    update: {},
-    create: { email: process.env.ADMIN_EMAIL || 'admin@business-os.local', name: 'Admin', hashedPassword: hash }
-  })
+- `/dashboard/os/business/quotes` — quote list with status filter chips. `/quotes/[id]` — quote detail with line-item editor.
+- `/dashboard/os/business/invoices` — invoice list, default filter outstanding (sent + partial + derived-overdue). `/invoices/[id]` — invoice detail with line-item editor, payment ledger, export-PDF button, "Bill unbilled time" CTA when the linked project has unbilled entries.
+- Deal detail (Phase 2), project detail (Phase 3), contact detail — new `Quotes` and `Invoices` tabs.
 
-  // Seed default org profile (singleton)
-  const existing = await prisma.orgProfile.findFirst()
-  if (!existing) {
-    await prisma.orgProfile.create({
-      data: { name: 'My Business', businessModel: 'b2b', industry: 'consulting' }
-    })
-  }
+**Cross-ownership safety:** every read filters by `user_id`. Quote / invoice / line-item / payment mutation validates parent ownership (deal / project / contact / quote / invoice) before write.
 
-  // Seed default deal stages
-  const stages = ['Lead', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost']
-  for (let i = 0; i < stages.length; i++) {
-    await prisma.dealStage.upsert({
-      where: { id: `stage-${i}` },
-      update: {},
-      create: { id: `stage-${i}`, name: stages[i], order: i }
-    })
-  }
+**Phase 5 seam:** payments are the revenue source for Phase 5 P&L rollup. Invoice `status` and `paid_cents` are the materialized accrual side; Phase 5 uses `payments.received_on` for cash-basis revenue.
 
-  // Seed default OrgSettings (feature flags all on)
-  const defaults = [
-    ['crm_enabled', 'true'],
-    ['invoicing_enabled', 'true'],
-    ['projects_enabled', 'true'],
-    ['time_tracking_enabled', 'true'],
-    ['contracts_enabled', 'true'],
-    ['email_marketing_enabled', 'false'],
-    ['hr_enabled', 'false'],
-    ['purchasing_enabled', 'false'],
-    ['invoice_prefix', 'INV-'],
-    ['default_tax_rate', '0'],
-  ]
-  for (const [key, value] of defaults) {
-    await prisma.orgSetting.upsert({ where: { key }, update: {}, create: { key, value } })
-  }
+**Phase 7 seam:** Coach `pricing_advisor` reads recent invoices + their `total_cents` and `line_items.unit_price_cents` per service tag to ground pricing recommendations.
 
-  console.log('Seed complete')
-}
-
-main().catch(console.error).finally(() => prisma.$disconnect())
-```
+**Hub registry cards:** add `Quotes` and `Invoices`.
 
 ***
 
-### EPIC-02-V-01 — Validate Schema
+## Phase 3 — Projects, Tasks, and Time Tracking (locked decisions)
 
-**Type:** Validate
+**Migration:** `0057_business_phase3`, down_revision `0056_business_phase2`.
 
-```bash
-pnpm prisma validate
-pnpm prisma studio
-```
+**Scope:** Business-side **projects** (client engagements — separate from Maker projects per Open question §5), **tasks** within each project, and **time entries** logged against a task. Each time entry has a billable flag and a rate that feeds the Phase 4 invoice rollup.
 
-**Pass criteria:**
-- All models visible in Prisma Studio.
-- Seed completes; `OrgProfile`, `DealStage`, and `OrgSetting` rows present.
-- Confirm feature flag `crm_enabled = true` appears in `OrgSetting`.
+**Schema (3 new tables, all under `agos_business_*`):**
 
-***
+1. `agos_business_projects` — client-engagement project. `id UUID PK`, `user_id UUID NOT NULL`, `contact_id UUID` nullable FK SET NULL → `agos_business_people` (primary point of contact; the `agos_business_orgs` link traverses through person.organization_id), `deal_id UUID` nullable (per-OS UUID, no FK — Phase 2 source deal), `title TEXT NOT NULL`, `slug TEXT NOT NULL`, `description_md TEXT NOT NULL DEFAULT ''`, `status TEXT NOT NULL DEFAULT 'active'` CHECK in `('proposed','active','on_hold','completed','cancelled','archived')`, `billing_model TEXT NOT NULL DEFAULT 'hourly'` CHECK in `('hourly','fixed','retainer','milestone','free')`, `default_rate_cents BIGINT` nullable (billing rate when billing_model = 'hourly' / 'retainer'; per-task override possible), `budget_cents BIGINT` nullable (fixed-price total or retainer-period total), `currency TEXT NOT NULL DEFAULT 'USD'`, `start_date DATE`, `target_completion_date DATE`, `cover_image_url TEXT` nullable (URL-only per the MCP storage transfer contract), `tags TEXT[] NOT NULL DEFAULT '{}'`, `metadata JSONB NOT NULL DEFAULT '{}'` (carries optional `maker_project_id` cross-reference per Open question §5), `archived_at TIMESTAMPTZ` nullable, `created_at`, `updated_at`. UNIQUE `(user_id, slug)`. Indexes `(user_id, status, updated_at DESC)`, partial `(user_id) WHERE archived_at IS NULL`, partial `(contact_id) WHERE contact_id IS NOT NULL`, GIN on `tags`.
 
-## EPIC-03: Authentication & Multi-User Support
+2. `agos_business_tasks` — per-project task. `id UUID PK`, `user_id UUID NOT NULL`, `project_id UUID NOT NULL` FK CASCADE → `agos_business_projects` (this is the only intra-OS hard FK — the project-task boundary is owned entirely by this OS), `title TEXT NOT NULL`, `description_md TEXT NOT NULL DEFAULT ''`, `status TEXT NOT NULL DEFAULT 'todo'` CHECK in `('todo','in_progress','blocked','done','cancelled')`, `priority TEXT NOT NULL DEFAULT 'medium'` CHECK in `('low','medium','high','urgent')`, `assignee_text TEXT` nullable (free-form; this is solo-first so the assignee is usually the user — Phase 8+ multi-user surfaces a proper FK), `due_on DATE`, `completed_at TIMESTAMPTZ`, `billing_rate_cents BIGINT` nullable (override; null = use project.default_rate_cents), `is_billable BOOLEAN NOT NULL DEFAULT true`, `position INT NOT NULL DEFAULT 0` (display order), `tags TEXT[] NOT NULL DEFAULT '{}'`, `metadata JSONB`, `created_at`, `updated_at`. Indexes `(project_id, position)`, `(project_id, status)`, partial `(due_on) WHERE due_on IS NOT NULL AND status NOT IN ('done','cancelled')`, GIN on `tags`.
 
-**Goal:** NextAuth v5 with credentials provider (solo mode) plus optional multi-user mode controlled by `OrgSetting` `multi_user_enabled`.[^1]
+3. `agos_business_time_entries` — time logged against task. `id UUID PK`, `user_id UUID NOT NULL`, `task_id UUID NOT NULL` FK CASCADE → tasks, `project_id UUID NOT NULL` (denormalized for filter performance; matches task.project_id at insert), `description TEXT NOT NULL DEFAULT ''`, `started_at TIMESTAMPTZ NOT NULL`, `ended_at TIMESTAMPTZ` nullable (null = timer still running), `duration_minutes INT` nullable (denormalized; computed from started_at / ended_at on `ended_at` write; null while running), `is_billable BOOLEAN NOT NULL DEFAULT true`, `billing_rate_cents BIGINT` nullable (snapshot of the rate at log time — Phase 4 reads this rather than the live task / project rate so historical entries don't drift), `billed_at TIMESTAMPTZ` nullable (set when Phase 4 rolls up into a line item — `agos_business_line_items.time_entry_ids` is the reverse index), `invoice_id UUID` nullable (set on bill rollup; per-OS UUID, no FK), `metadata JSONB`, `created_at`, `updated_at`. CHECK `(ended_at IS NULL) OR (ended_at >= started_at)`. Indexes `(user_id, started_at DESC)`, `(task_id, started_at DESC)`, `(project_id, started_at DESC)`, partial `(user_id) WHERE ended_at IS NULL` (running-timer feed; expected cardinality 0–1 per user), partial `(project_id) WHERE is_billable = true AND billed_at IS NULL` (unbilled-time rollup query).
 
-Steps are identical to Creator OS EPIC-03 (install, auth config, middleware, seed) with names changed to `@business-os/db` and the login page branded for Business OS.[^1]
+**Locked decisions:**
 
-***
+- **Project per engagement, not per Maker build.** Per Open question §5 default — Business projects are client engagements; Maker projects are workshop builds. The `metadata.maker_project_id` field is an optional pointer for users who want a cross-OS link, but there's no FK and no Business code reads from Maker tables.
+- **Time entry billing rate is snapshot, not lookup.** Logging an entry copies the current task / project rate onto the entry. This insulates historical invoicing from later rate changes — important for any audit of "what did we agree to charge in March?".
+- **Single running timer per user, soft-enforced.** The API rejects a new timer-start POST if any time entry for the user has `ended_at IS NULL`. A "stop timer" affordance is always visible in the header when a running entry exists.
+- **Tasks are project-scoped only.** No workshop-global task list and no cross-project task dependencies in this phase (cross-project dependencies could come in a future Phase 8 mirroring Maker Phase 6, but solo-shop engagements rarely need it).
+- **Audit action names:** `business.project.created`, `business.project.updated`, `business.project.status_changed`, `business.project.archived`, `business.project.restored`, `business.task.created`, `business.task.updated`, `business.task.completed`, `business.task.deleted`, `business.time.started`, `business.time.stopped`, `business.time.updated`, `business.time.deleted`.
 
-## EPIC-04: Organization Profile & Feature Flags
+**Routes:**
 
-**Goal:** The central configuration layer — a settings page where the user describes their business, and the app adapts sidebar, modules, and AI context accordingly.
+- `/api/tiresias/agentic-os/business/projects` (GET, POST). `/projects/[id]` (GET, PATCH, DELETE soft-archive, `?hard=true` reserved but not in UI).
+- `/api/tiresias/agentic-os/business/projects/[id]/restore` (POST).
+- `/api/tiresias/agentic-os/business/projects/[id]/tasks` (GET, POST). `/tasks/[taskId]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/projects/[id]/time-entries` (GET).
+- `/api/tiresias/agentic-os/business/tasks/[id]/time-entries` (GET).
+- `/api/tiresias/agentic-os/business/time-entries` (GET workshop feed, POST start — accepts `{ task_id, started_at?, description? }`; rejects with 409 if a running timer exists).
+- `/api/tiresias/agentic-os/business/time-entries/[id]` (GET, PATCH — accepts `ended_at` to stop a running timer + recompute duration, DELETE).
+- `/api/tiresias/agentic-os/business/time-entries/[id]/stop` (POST convenience — sets `ended_at = now()`).
 
-### EPIC-04-A-01 — Define Adaptive Behavior Rules
+**Pages:**
 
-**Type:** Assess
+- `/dashboard/os/business/projects` — project grid with status filter chips, billing-model badges, archived toggle.
+- `/dashboard/os/business/projects/[id]` — project detail. Tab strip: `Overview | Tasks | Time | Documents (P6) | Quotes (P4) | Invoices (P4) | Expenses (P5) | Coach (P7)`. Overview shows budget vs spent (billable hours × rate) when budget is set.
+- `/dashboard/os/business/time` — workshop time-entry timeline with filters (project / task / billable toggle / date range).
+- Header `RunningTimerPill` mounted on the dashboard shell — visible across all Business OS pages when a timer is running, CTAs to stop.
 
-Write to `apps/web/src/app/(app)/settings/ORG_ADAPTATION_SPEC.md`:
+**Components:** `ProjectList`, `ProjectForm`, `ProjectDetailShell`, `ProjectStatusPill`, `ProjectBudgetGauge`, `TaskBoard` (kanban-style), `TaskRowEditor`, `TimeEntryRow`, `TimeEntryEditor`, `RunningTimerPill`, `TimerStartButton`.
 
-| OrgProfile field | Effect when set |
-|---|---|
-| `hasTeam = true` | Enables HR module, team member assignment in Tasks, Payroll |
-| `businessModel = b2b` | Shows Company CRM view, deal pipeline, B2B-tuned AI prompts |
-| `businessModel = b2c` | Hides Company view, shows Lead and Email Campaign modules |
-| `industry = saas` | Enables recurring billing, subscription pipeline, MRR dashboard |
-| `industry = agency` | Shows project + time tracking as primary, retainer billing |
-| `industry = retail` | Enables Purchasing/PO module, vendor management |
+**Cross-ownership safety:** every read filters by `user_id`. Task mutation validates `project_id` ownership; time entry mutation validates task ownership.
 
-Feature flags in `OrgSetting` are the runtime switches; `OrgProfile` fields trigger suggestions for which flags to enable.
+**Phase 4 seam:** Phase 4 invoice line-item rollup queries `agos_business_time_entries WHERE project_id = ? AND is_billable = true AND billed_at IS NULL`. The `billed_at` + `invoice_id` columns on time entries are written by the Phase 4 rollup route.
 
-### EPIC-04-E-01 — Org Profile API
+**Phase 5 seam:** Phase 5 project profitability rollup reads time entries' billable × rate as revenue accrual signal.
 
-`apps/web/src/app/api/org/route.ts`:
-- `GET` returns single `OrgProfile` row.
-- `PATCH` updates any field; after update, re-evaluates and suggests `OrgSetting` changes.
+**Phase 7 seam:** Coach `business_strategist` mode loads top-3-projects-by-time + total billable hours when scope is workshop-wide.
 
-`apps/web/src/app/api/org/settings/route.ts`:
-- `GET` returns all `OrgSetting` rows as `Record<string, string>`.
-- `PATCH` bulk-updates settings.
-
-### EPIC-04-E-02 — Feature Flag Hook
-
-`apps/web/src/hooks/useFeatureFlags.ts`:
-
-```ts
-'use client'
-import { useQuery } from '@tanstack/react-query'
-
-export function useFeatureFlags() {
-  const { data } = useQuery({
-    queryKey: ['org-settings'],
-    queryFn: () => fetch('/api/org/settings').then(r => r.json())
-  })
-  return {
-    crm: data?.crm_enabled === 'true',
-    invoicing: data?.invoicing_enabled === 'true',
-    projects: data?.projects_enabled === 'true',
-    timeTracking: data?.time_tracking_enabled === 'true',
-    contracts: data?.contracts_enabled === 'true',
-    emailMarketing: data?.email_marketing_enabled === 'true',
-    hr: data?.hr_enabled === 'true',
-    purchasing: data?.purchasing_enabled === 'true',
-  }
-}
-```
-
-### EPIC-04-V-01 — Validate Org Profile
-
-- Update `OrgProfile` to `{ hasTeam: true, industry: "agency" }`.
-- Confirm sidebar dynamically shows HR and Projects modules.
-- Toggle `hr_enabled = false` → HR disappears from sidebar without page reload.
+**Hub registry cards:** add `Projects`, `Time tracking`.
 
 ***
 
-## EPIC-05: Shell UI & Adaptive Sidebar
+## Phase 2 — Deals, Pipeline, and Activities (locked decisions)
 
-**Goal:** A persistent sidebar that hides/shows modules based on feature flags, with a fast-access command palette.
+**Migration:** `0056_business_phase2`, down_revision `0055_business_phase1`.
 
-### Navigation Structure
+**Scope:** Promote the `stage` column on `agos_business_people` from an overloaded contact-state into a proper **deal** entity. A deal is an open opportunity tied to a contact (and optionally an organization), with its own pipeline stage, expected value, expected close date, and an activity log. The existing `agos_business_interactions` table becomes the activity log per-deal (it's already shaped for type + summary + occurred_at; Phase 2 adds an optional `deal_id` column).
 
-```ts
-const allNavItems = [
-  { label: 'Dashboard',   href: '/dashboard',   icon: 'LayoutDashboard', alwaysOn: true },
-  { label: 'CRM',         href: '/crm',          icon: 'Users',          flag: 'crm' },
-  { label: 'Pipeline',    href: '/pipeline',     icon: 'TrendingUp',     flag: 'crm' },
-  { label: 'Invoices',    href: '/invoices',     icon: 'FileText',       flag: 'invoicing' },
-  { label: 'Quotes',      href: '/quotes',       icon: 'ClipboardList',  flag: 'invoicing' },
-  { label: 'Expenses',    href: '/expenses',     icon: 'Receipt',        flag: 'invoicing' },
-  { label: 'Projects',    href: '/projects',     icon: 'Briefcase',      flag: 'projects' },
-  { label: 'Tasks',       href: '/tasks',        icon: 'CheckSquare',    flag: 'projects' },
-  { label: 'Time',        href: '/time',         icon: 'Clock',          flag: 'timeTracking' },
-  { label: 'Contracts',   href: '/contracts',    icon: 'PenTool',        flag: 'contracts' },
-  { label: 'Documents',   href: '/documents',    icon: 'FolderOpen',     flag: 'contracts' },
-  { label: 'Marketing',   href: '/marketing',    icon: 'Send',           flag: 'emailMarketing' },
-  { label: 'Team',        href: '/team',         icon: 'UserPlus',       flag: 'hr' },
-  { label: 'Payroll',     href: '/payroll',      icon: 'DollarSign',     flag: 'hr' },
-  { label: 'Purchasing',  href: '/purchasing',   icon: 'ShoppingCart',   flag: 'purchasing' },
-  { label: 'AI Assist',   href: '/ai',           icon: 'Bot',            alwaysOn: true },
-  { label: 'Automation',  href: '/automate',     icon: 'Zap',            alwaysOn: true },
-  { label: 'MCP',         href: '/mcp',          icon: 'Server',         alwaysOn: true },
-  { label: 'Settings',    href: '/settings',     icon: 'Settings',       alwaysOn: true },
-]
-```
+**Schema (1 new table + 1 ALTER + 1 column-deprecation, all under `agos_business_*`):**
 
-Filter at render time using `useFeatureFlags()` — items with `alwaysOn: true` always render; others render only when their flag is `true`.
+1. `agos_business_deals` — opportunity records. `id UUID PK`, `user_id UUID NOT NULL`, `contact_id UUID` nullable FK SET NULL → `agos_business_people` (the primary buyer-side contact), `organization_id UUID` nullable FK SET NULL → `agos_business_orgs` (denormalized for filter performance; usually = `person.organization_id` at deal creation but the user can override), `title TEXT NOT NULL`, `description_md TEXT NOT NULL DEFAULT ''`, `stage TEXT NOT NULL DEFAULT 'lead'` CHECK in `('lead','qualified','proposal','negotiation','won','lost','on_hold')`, `value_cents BIGINT` nullable (expected deal size in minor units), `currency TEXT NOT NULL DEFAULT 'USD'`, `probability_pct INT NOT NULL DEFAULT 50` CHECK in `(0..100)` (forecast weight), `expected_close_date DATE` nullable, `closed_at TIMESTAMPTZ` nullable (set when stage moves to won / lost), `lost_reason TEXT` nullable, `source TEXT` nullable (free-form: referral / cold_outreach / inbound / linkedin / etc.), `tags TEXT[] NOT NULL DEFAULT '{}'`, `metadata JSONB`, `created_at`, `updated_at`. Indexes `(user_id, stage, updated_at DESC)`, partial `(contact_id) WHERE contact_id IS NOT NULL`, partial `(user_id) WHERE stage NOT IN ('won','lost','on_hold')` (open-pipeline feed), partial `(user_id, expected_close_date ASC) WHERE stage NOT IN ('won','lost','on_hold')` (closing-soon feed), GIN on `tags`.
 
-### EPIC-05-V-01 — Validate Adaptive Sidebar
+2. `agos_business_interactions` (ALTER) — additive only. Adds:
+   * `deal_id UUID` nullable (per-OS UUID, no FK — links activity to a deal). Index partial `(deal_id, occurred_at DESC) WHERE deal_id IS NOT NULL`.
 
-- Default flags show CRM, Invoicing, Projects, Time, Contracts.
-- Enable `hr_enabled = true` → Team and Payroll appear instantly.
-- Command palette (⌘K) searches modules, contacts, invoices, and projects.
+3. `agos_business_people.stage` column — **deprecated, kept in place**. The existing stage column has free-form values from migration 0010 (no CHECK constraint). Phase 2 does NOT migrate or drop the column, to avoid breaking the shipped `/contacts` page. The contacts CRM stops treating `stage` as semantically meaningful (the column becomes a free-form contact tier label like "active / inactive / VIP"; the actual sales pipeline lives on `agos_business_deals.stage`). Phase 1 of the migration adds a CHECK to the deals stage column; the people stage column stays unchecked. A future Phase 8 cleanup can rename the people column to `contact_tier` if needed.
 
-***
+**Locked decisions:**
 
-## EPIC-06: Dashboard
+- **Deal stages are CHECK-constrained.** The legacy people stage column was unchecked free-form (causing data drift); deals are rigorous from day one. CHECK list: `lead | qualified | proposal | negotiation | won | lost | on_hold`.
+- **Probability is user-entered, not stage-derived.** No automatic "qualified = 25%, proposal = 50%, negotiation = 75%" mapping. Solo founders adjust per-deal.
+- **Forecast revenue is derived, not stored.** A `?include=forecast` query parameter on the deals list endpoint returns each deal's `weighted_value_cents = value_cents * probability_pct / 100` and a pipeline-total rollup. No materialized snapshot — recompute on demand.
+- **Activity log writes against the existing `agos_business_interactions` table.** Phase 2 adds the optional `deal_id` column; existing contact / org interactions remain visible on their parents. New interactions can target a deal directly.
+- **Audit action names:** `business.deal.created`, `business.deal.updated`, `business.deal.stage_changed`, `business.deal.won`, `business.deal.lost`, `business.deal.reopened`, `business.deal.archived`, `business.interaction.created`, `business.interaction.updated`, `business.interaction.deleted`. (The interaction names already exist informally; Phase 2 standardizes them on the shared audit writer.)
 
-**Goal:** A role-adaptive home screen summarizing revenue, pipeline, active projects, outstanding invoices, and time this period — calculated from local DB, no external service required.
+**Routes:**
 
-### EPIC-06-E-01 — Dashboard API Route
+- `/api/tiresias/agentic-os/business/deals` (GET — filters `?stage=`, `?contact_id=`, `?organization_id=`, `?source=`, `?tag=`, `?open=true`, `?include=forecast`; POST create).
+- `/api/tiresias/agentic-os/business/deals/[id]` (GET, PATCH, DELETE).
+- `/api/tiresias/agentic-os/business/deals/[id]/stage` (POST) — convenience that flips stage, sets `closed_at = now()` when moving to won / lost, audits with `business.deal.stage_changed` plus `business.deal.won` / `business.deal.lost` as appropriate.
+- `/api/tiresias/agentic-os/business/deals/[id]/interactions` (GET, POST).
+- Existing `/api/tiresias/agentic-os/business/contacts/` routes extended to accept `?deal_id=` filter on the interactions endpoint.
 
-`apps/web/src/app/api/dashboard/route.ts` returns a JSON summary object:
+**Pages:**
 
-```ts
-{
-  invoices: { totalOutstanding, overdueCount, paidThisMonth },
-  pipeline:  { openDeals, totalValue, wonThisMonth },
-  projects:  { activeCount, overdueTaskCount },
-  time:      { billedHoursThisWeek, unbilledHoursThisWeek },
-  recentActivity: ActivityLog[] // last 20 entries
-}
-```
+- `/dashboard/os/business/deals` — pipeline kanban view (one column per stage), filter chips (contact / org / source / tag / open toggle), forecast total strip on top. Drag-to-reorder column ordering moves stage (audited).
+- `/dashboard/os/business/deals/[id]` — deal detail. Sections: meta (contact + org + value + probability + expected close + source), description, activity timeline (interactions filtered to `deal_id`), linked projects (Phase 3) + quotes / invoices (Phase 4) populated when later phases ship.
+- `/dashboard/os/business/contacts/[id]` — contact detail page now added (previously only the contacts list existed). Sections: meta + interaction timeline + linked deals + linked projects (P3).
+- `/dashboard/os/business/organizations/[id]` — org detail page added.
 
-All values come from Prisma aggregate queries against local DB — no co-process needed for solo mode.
+**Components:** `DealKanban`, `DealCard`, `DealForm`, `DealDetailShell`, `DealStagePicker`, `ForecastStrip`, `InteractionTimeline`, `InteractionEditor`, `ContactDetailShell`, `OrgDetailShell`.
 
-### EPIC-06-E-02 — Dashboard UI
+**Cross-ownership safety:** every read filters by `user_id`. Deal mutation validates `contact_id` / `organization_id` ownership. Interaction with `deal_id` validates deal ownership.
 
-`apps/web/src/app/(app)/dashboard/page.tsx`:
+**Phase 3 seam:** projects link to deals via `agos_business_projects.deal_id`. The Phase 3 "new project" flow offers a "create from deal" affordance that pre-fills project title / contact_id / organization_id / value (becomes budget_cents).
 
-- KPI cards: Outstanding Revenue, Open Deals Value, Active Projects, Hours This Week.
-- Mini pipeline chart (shadcn `Progress` bars per stage).
-- Recent Activity feed.
-- "Quick Actions" section: New Invoice, New Contact, Log Time, New Task.
+**Phase 4 seam:** invoices / quotes link to deals via `deal_id`. A deal page shows linked quotes + invoices once Phase 4 ships.
 
-### EPIC-06-V-01 — Validate Dashboard
+**Phase 7 seam:** Coach `sales_coach` mode reads open deals + recent interactions for context.
 
-- Create one invoice, one deal, two tasks → dashboard KPIs reflect correct values.
-- Recent Activity feed shows creation events.
+**Hub registry card:** add `Deals` pointing at `/dashboard/os/business/deals`.
 
 ***
 
-## EPIC-07: CRM Module
+## Phase 1 — Foundation + CRM Polish (locked decisions)
 
-**Goal:** A lightweight CRM for contacts, companies, deals, and pipeline — with optional sync to Twenty CRM co-process for power users.[^2][^3]
+**Migration:** `0055_business_phase1`, down_revision `0054_research_phase7`.
 
-### EPIC-07-E-01 — Contacts & Companies API
+**Scope:** Promote the shipped `agos_business_*` CRM stub from migration 0010 to the locked Oscar Suite contract. Specifically: (a) add proper CHECK constraints on the stage / org_type / interaction_type columns; (b) migrate the local `recordAudit` helper in `lib/agentic-os/business/repo.ts` to call the shared `_shared/audit.ts` writer with `os_slug = 'business'`; (c) add a small workshop-global **business settings** row (the user's own brand + default currency + invoice prefix + default payment terms — used by Phase 4 PDF render and Phase 6 document templates); (d) extend the contacts surface with `contact_id` detail page hooks, a tags column, and an `archived_at` soft-archive column for both people and orgs. No deal / pipeline / time / invoicing concepts — those land in Phases 2-4.
 
-Routes in `apps/web/src/app/api/crm/`:
-- `contacts/route.ts` — `GET` (list, filterable), `POST`.
-- `contacts/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `companies/route.ts` — `GET`, `POST`.
-- `companies/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `contacts/[id]/notes/route.ts` — `GET`, `POST` for notes linked to a contact.
+**Schema changes (2 ALTER + 1 new table, all under `agos_business_*`):**
 
-### EPIC-07-E-02 — Deal Pipeline API
+1. `agos_business_orgs` (ALTER) — additive only. Adds:
+   * `description_md TEXT NOT NULL DEFAULT ''` (longer-form notes; migration backfills from existing `notes` column where present by `description_md = COALESCE(notes, '')`).
+   * `address TEXT` (free-form mailing block).
+   * `tags TEXT[] NOT NULL DEFAULT '{}'`.
+   * `archived_at TIMESTAMPTZ` nullable (soft-archive marker).
+   * `metadata JSONB NOT NULL DEFAULT '{}'`.
+   * CHECK on `org_type` IN `('company','non_profit','government','sole_trader','partnership','other')`. Pre-migration data is all defaulted to `'company'` so the CHECK is non-destructive; the migration also remaps any non-matching free-form values to `'other'` defensively before applying the CHECK.
+   * Indexes: GIN on `tags`, partial `(user_id) WHERE archived_at IS NULL` (active-orgs default list).
 
-- `deals/route.ts` — `GET` returns deals grouped by stage; `POST` creates deal.
-- `deals/[id]/route.ts` — `GET`, `PATCH` (move stage, update value), `DELETE`.
-- `deals/[id]/convert/route.ts` — `POST` converts deal to a Project or Invoice.
-- `deal-stages/route.ts` — `GET`, `POST`, `PATCH` for custom pipeline stages.
+2. `agos_business_people` (ALTER) — additive only. Adds:
+   * `description_md TEXT NOT NULL DEFAULT ''`.
+   * `address TEXT`.
+   * `archived_at TIMESTAMPTZ` nullable.
+   * `metadata JSONB NOT NULL DEFAULT '{}'`.
+   * **`stage` column kept free-form**, NOT CHECKed. (Per Phase 2's deprecation plan: stage on `people` becomes a free-form contact-tier label; the sales-pipeline stage lives on `agos_business_deals` in Phase 2.) The `tags JSONB` column from migration 0010 is migrated to `tags TEXT[] NOT NULL DEFAULT '{}'` in a separate small migration step — the JSONB-array shape was a short-cut in the stub.
+   * CHECK on `agos_business_interactions.interaction_type` IN the nine values from `INTERACTION_TYPES` in `crm.ts` (the constraint was missing in 0010). Pre-migration data is all defaulted to `'note'`; defensive remap before CHECK.
+   * Indexes: GIN on `tags`, partial `(user_id) WHERE archived_at IS NULL`.
 
-### EPIC-07-E-03 — CRM UI
+3. `agos_business_settings` — workshop-global settings (one row per user). `id UUID PK`, `user_id UUID NOT NULL UNIQUE`, `business_name TEXT NOT NULL DEFAULT ''`, `logo_url TEXT` nullable (URL-only per the MCP storage transfer contract), `address TEXT NOT NULL DEFAULT ''`, `tax_id TEXT` nullable (free-form: EIN, ABN, VAT, etc.), `default_currency TEXT NOT NULL DEFAULT 'USD'`, `invoice_number_prefix TEXT NOT NULL DEFAULT 'INV'`, `quote_number_prefix TEXT NOT NULL DEFAULT 'Q'`, `default_payment_terms TEXT NOT NULL DEFAULT 'net_30'`, `default_hourly_rate_cents BIGINT` nullable, `accent_color TEXT NOT NULL DEFAULT 'teal'` (drives PDF render chrome — Phase 4 / Phase 5 / Phase 6 read this), `metadata JSONB`, `created_at`, `updated_at`. Index `(user_id)`. The settings row is created lazily on first read — no explicit onboarding wizard in Phase 1.
 
-`apps/web/src/app/(app)/crm/page.tsx` — Contacts table with search, filter by company, and quick-add drawer.
+**Locked decisions:**
 
-`apps/web/src/app/(app)/pipeline/page.tsx` — Kanban board built with `@dnd-kit/core`, one column per `DealStage`, cards showing deal title, value, company name. Drag to reorder within stage or move between stages.
+- **No Organization Profile wizard.** The legacy plan front-loaded a multi-step wizard collecting team-size / industry / billing-model / geographic-scope to drive an adaptive sidebar. Phase 1 instead creates a settings row lazily, with sensible defaults, and surfaces a single `/dashboard/os/business/settings` page where the user can edit values when they care. No feature flags, no industry-conditional modules — every Business OS module ships visible to every user.
+- **Audit migration to shared writer.** Every existing `lib/agentic-os/business/repo.ts` mutation flips from the local `recordAudit` to `import { recordAudit } from '../_shared/audit.ts'` with `osSlug: 'business'`. Audit action names get the `business.*` prefix in this phase.
+- **Contacts page extensions.** The shipped `/contacts` page is expanded to a hub with three tabs: People, Organizations, Recent Interactions. The existing `ContactsCrm` component is split into three sub-components but retains the same data fetch.
+- **Soft-archive everywhere.** Both people and orgs get `archived_at` columns; the existing list endpoint accepts `?archived=true|false` (default false). Existing data has `archived_at = NULL` and shows by default.
+- **Audit action names:** `business.org.created`, `business.org.updated`, `business.org.archived`, `business.org.restored`, `business.person.created`, `business.person.updated`, `business.person.archived`, `business.person.restored`, `business.interaction.created`, `business.interaction.updated`, `business.interaction.deleted`, `business.settings.updated`.
 
-`apps/web/src/app/(app)/crm/[id]/page.tsx` — Contact detail: header (name, email, company), tabs for Deals, Invoices, Projects, Contracts, Notes.
+**Routes:**
 
-### EPIC-07-E-04 — Twenty CRM Integration Bridge (Optional Co-Process)
+- Existing `/api/tiresias/agentic-os/business/contacts` route is split into three top-level resources:
+  * `/api/tiresias/agentic-os/business/people` (GET list — filter `?archived=`, `?tag=`, `?organization_id=`, `?q=`; POST). `/people/[id]` (GET, PATCH, DELETE soft-archive). `/people/[id]/restore` (POST).
+  * `/api/tiresias/agentic-os/business/organizations` (GET, POST). `/organizations/[id]` (GET, PATCH, DELETE soft-archive). `/organizations/[id]/restore` (POST).
+  * `/api/tiresias/agentic-os/business/interactions` (GET workshop feed, POST). `/interactions/[id]` (GET, PATCH, DELETE).
+- The legacy `/contacts` route is preserved as a deprecated GET passthrough that joins all three (no new POST) so the existing UI keeps working during the transition.
+- `/api/tiresias/agentic-os/business/settings` (GET — lazy-creates if missing, PATCH).
 
-`packages/integrations/src/twenty.ts` — typed client wrapping Twenty's REST API:
+**Pages:**
 
-- `syncContact(contact: Contact)` — upsert contact to Twenty.
-- `syncDeal(deal: Deal)` — upsert deal/opportunity to Twenty.
-- `webhookHandler(payload)` — receive Twenty webhooks and update local DB.
+- `/dashboard/os/business` — hub page. Cards: `People`, `Organizations`, `Recent activity` (the interactions feed). Phase 2-7 cards land as those phases ship.
+- `/dashboard/os/business/people` — people list with filter chips (tag / archived toggle / search). `/people/[id]` — person detail (Phase 2 adds the deal & activity sections; Phase 3 adds projects; Phase 4 adds invoices).
+- `/dashboard/os/business/organizations` — orgs list. `/organizations/[id]` — org detail.
+- `/dashboard/os/business/settings` — settings editor.
+- Existing `/dashboard/os/business/contacts` page kept as a deprecated alias that redirects to `/dashboard/os/business` after a 100ms client-side redirect; the rendered loading state explains the new structure.
 
-Twenty is the recommended co-process for teams that need multi-user CRM with shared views, automation, and SDK extensions.[^17][^2]
+**Components:** existing `ContactsCrm` is split into `PeopleList`, `OrganizationsList`, `RecentInteractions`. New: `PersonForm`, `PersonDetailShell`, `OrganizationForm`, `OrganizationDetailShell`, `InteractionEditor`, `BusinessSettingsForm`, `BusinessHub` (the new landing page).
 
-When `OrgSetting` `twenty_enabled = true`, sync is activated via background job.
+**Cross-ownership safety:** every read filters by `user_id`. Settings read returns 404 only on lookup failure — never returns another user's row.
 
-### EPIC-07-V-01 — Validate CRM Module
+**Phase 2 seam:** the existing `agos_business_interactions` table gets the optional `deal_id` column in Phase 2; Phase 1 leaves the existing interactions untouched and routes interactions through the shared audit writer so the deal-linking patch lands cleanly.
 
-- Create 3 contacts, 2 companies, link contacts to companies.
-- Create 4 deals across 3 pipeline stages.
-- Drag a deal from "Lead" to "Proposal Sent" → stage persists after refresh.
-- Open contact detail → associated deals and invoices list correctly.
+**Phase 4 seam:** the new `agos_business_settings` row is the brand / prefix / terms / rate source for Phase 4 quote + invoice generation.
 
-***
-
-## EPIC-08: Finance Module — Invoicing & Billing
-
-**Goal:** Create, send, and track invoices and quotes, log expenses, and manage recurring billing — backed by local DB and optionally synced to Invoice Ninja for advanced payment processing.[^4][^5]
-
-### EPIC-08-E-01 — Invoice API
-
-Routes in `apps/web/src/app/api/finance/`:
-- `invoices/route.ts` — `GET` (paginated, filter by status), `POST`.
-- `invoices/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `invoices/[id]/send/route.ts` — `POST`: sets `status = sent`, sends email via SMTP.
-- `invoices/[id]/mark-paid/route.ts` — `POST`: creates `PaymentRecord`, sets `status = paid`.
-- `invoices/[id]/pdf/route.ts` — `GET`: streams invoice as PDF using Puppeteer or WeasyPrint subprocess.
-
-Auto-increment `number` with prefix from `OrgSetting` `invoice_prefix` (default `INV-`).
-
-### EPIC-08-E-02 — Quote API
-
-- `quotes/route.ts` — `GET`, `POST`.
-- `quotes/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `quotes/[id]/convert/route.ts` — `POST`: creates `Invoice` from Quote line items, links via `quoteId`.
-
-### EPIC-08-E-03 — Expenses & Recurring API
-
-- `expenses/route.ts` — `GET`, `POST`.
-- `recurring/route.ts` — `GET`, `POST`.
-- Cron job via `node-cron`: daily check of `RecurringBilling.nextDate`; auto-create invoice when due.
-
-### EPIC-08-E-04 — Invoice Ninja Integration Bridge (Optional Co-Process)
-
-`packages/integrations/src/invoiceninja.ts`:
-- `createInvoice(invoice)` — push invoice to Invoice Ninja and store `externalId`.
-- `syncPayments()` — pull payment records from Invoice Ninja into local `PaymentRecord`.
-- Webhook handler for payment events.
-
-Activated when `OrgSetting` `invoiceninja_enabled = true`.[^18][^4]
-
-### EPIC-08-E-05 — Finance UI
-
-`apps/web/src/app/(app)/invoices/page.tsx` — table with status filter, quick totals row (outstanding, overdue, paid this month).
-
-`apps/web/src/app/(app)/invoices/[id]/page.tsx` — invoice editor with: client selector, line item table (add/remove rows, quantity, price, tax), notes, send/mark-paid actions, PDF preview.
-
-`apps/web/src/app/(app)/quotes/page.tsx` and `[id]/page.tsx` — same pattern as invoices.
-
-`apps/web/src/app/(app)/expenses/page.tsx` — table with category filter; "Attach Receipt" uploads to Document store.
-
-### EPIC-08-V-01 — Validate Finance Module
-
-- Create quote → convert to invoice → mark as paid → total Outstanding decreases.
-- PDF download renders with correct line items.
-- Recurring billing triggers on due date → invoice auto-created.
-- Invoice Ninja bridge (if enabled) syncs invoice and returns `externalId`.
+**Phase 7 seam:** Coach `general` mode reads contact / org / interaction counts from this phase's tables.
 
 ***
 
-## EPIC-09: Projects & Tasks Module
-
-**Goal:** Manage client and internal projects with tasks, deadlines, and progress — with optional sync to Plane for power users who need full agile tooling.[^9][^10]
-
-### EPIC-09-E-01 — Projects API
-
-- `projects/route.ts` — `GET`, `POST`.
-- `projects/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `projects/[id]/tasks/route.ts` — `GET`, `POST`.
-- `projects/[id]/budget/route.ts` — `GET` returns `{ budgetHours, loggedHours, budgetAmount, billedAmount }`.
-
-### EPIC-09-E-02 — Tasks API
-
-- `tasks/route.ts` — `GET` (all tasks, filter by assignee/status/project), `POST`.
-- `tasks/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-
-### EPIC-09-E-03 — Plane Integration Bridge (Optional Co-Process)
-
-`packages/integrations/src/plane.ts`:
-- `createProject(project)` → creates Plane workspace project; store `externalId`.
-- `syncIssue(task)` → push/pull task to Plane issue.
-- Webhook handler for Plane issue status changes.
-
-When `OrgSetting` `plane_enabled = true`, full bidirectional sync is active.[^10][^19]
-
-### EPIC-09-E-04 — Projects UI
-
-`apps/web/src/app/(app)/projects/page.tsx` — project cards with status, budget progress bar, link to tasks.
-
-`apps/web/src/app/(app)/projects/[id]/page.tsx` — detail with tabs: Tasks (Kanban), Time Entries, Financials (budget vs. actual), Documents, Notes.
-
-`apps/web/src/app/(app)/tasks/page.tsx` — cross-project task list with filters.
-
-### EPIC-09-V-01 — Validate Projects Module
-
-- Create project, add 4 tasks, move tasks through statuses → completion percentage updates.
-- Budget hours = 10; log 6 hours → budget shows 60% used.
-
-***
-
-## EPIC-10: Time Tracking Module
-
-**Goal:** Log time against projects and tasks, view billable vs. non-billable summaries, and convert time to invoice line items — with optional Solidtime co-process for detailed tracking.[^6]
-
-### EPIC-10-E-01 — Time Entry API
-
-- `time/route.ts` — `GET` (filter by project, date range), `POST`.
-- `time/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `time/timer/route.ts` — `POST` to start a timer (create entry with `endTime = null`); `PATCH` to stop.
-- `time/billable-summary/route.ts` — `GET` returns `{ billableHours, billableValue, unbillableHours }` for period.
-- `time/to-invoice/route.ts` — `POST` with `{ projectId, timeEntryIds }` → creates invoice with line items from time entries.
-
-### EPIC-10-E-02 — Solidtime Integration Bridge (Optional Co-Process)
-
-`packages/integrations/src/solidtime.ts`:
-- `syncProject(project)` → create project and client in Solidtime.
-- `importEntries(projectId, since)` → pull time entries and upsert into local `TimeEntry`.
-
-When `OrgSetting` `solidtime_enabled = true`, a poller runs every 5 minutes to sync entries.[^6]
-
-### EPIC-10-E-03 — Time Tracking UI
-
-`apps/web/src/app/(app)/time/page.tsx`:
-- Running timer widget at top: project/task selector, start/stop button, elapsed time display.
-- Time entries table grouped by day.
-- Weekly summary bar chart (billable vs. non-billable).
-- "Convert to Invoice" button for a date range.
-
-### EPIC-10-V-01 — Validate Time Tracking
-
-- Start timer, wait, stop → duration computed correctly.
-- Convert 3 entries to invoice → line items match descriptions and computed hours.
-- Solidtime sync (if enabled) imports entries bidirectionally.
-
-***
-
-## EPIC-11: Contracts & Documents Module
-
-**Goal:** Create, send for signature, and track contracts using DocuSeal as the signing co-process.[^7][^8]
-
-### EPIC-11-E-01 — DocuSeal Integration
-
-`packages/integrations/src/docuseal.ts`:
-- `createSubmission(templateId, signers)` → POST to DocuSeal API; return `externalSigningId` and `signingUrl`.
-- `getStatus(submissionId)` → check signing status.
-- `webhookHandler(payload)` → on `completed` event, update `Contract.status = signed` and store signed PDF URL.
-
-### EPIC-11-E-02 — Contracts API
-
-- `contracts/route.ts` — `GET`, `POST`.
-- `contracts/[id]/route.ts` — `GET`, `PATCH`.
-- `contracts/[id]/send/route.ts` — `POST`: calls DocuSeal `createSubmission`, stores `externalSigningId` and `signingUrl`.
-
-### EPIC-11-E-03 — Contracts UI
-
-`apps/web/src/app/(app)/contracts/page.tsx` — table with status badges (draft, sent, signed, expired).
-
-`apps/web/src/app/(app)/contracts/[id]/page.tsx` — detail showing template used, signers, status, link to signing portal, PDF download when signed.
-
-`apps/web/src/app/(app)/contracts/templates/page.tsx` — list of `ContractTemplate` rows; "Open in DocuSeal" button.
-
-### EPIC-11-V-01 — Validate Contracts Module
-
-- Create a contract from template, send for signing → `signingUrl` generated.
-- DocuSeal webhook fires on completion → `Contract.status` updates to `signed`.
-
-***
-
-## EPIC-12: Email & Marketing Module
-
-**Goal:** Newsletter sending and list management via Listmonk (solo/small business), with Mautic as the upgrade path for full marketing automation.[^11][^12]
-
-### EPIC-12-E-01 — Listmonk Integration
-
-`packages/integrations/src/listmonk.ts`:
-- `syncList(emailList)` → create/update list in Listmonk.
-- `addSubscriber(email, name, listIds)`.
-- `createCampaign(campaign)` → create draft campaign.
-- `sendCampaign(externalId)`.
-
-### EPIC-12-E-02 — Marketing API
-
-- `marketing/lists/route.ts` — `GET`, `POST`.
-- `marketing/campaigns/route.ts` — `GET`, `POST`.
-- `marketing/campaigns/[id]/send/route.ts` — `POST`.
-- `marketing/subscribers/import/route.ts` — `POST` CSV import → bulk subscribe contacts.
-
-### EPIC-12-E-03 — Marketing UI
-
-`apps/web/src/app/(app)/marketing/page.tsx` — lists table and campaigns table. New campaign drawer with: list selector, subject, and basic rich text editor (TipTap minimal, no full notes extension needed).
-
-### EPIC-12-V-01 — Validate Marketing Module
-
-- Create list, import 5 contacts, create campaign, send → Listmonk processes it.
-
-***
-
-## EPIC-13: Team & HR Module
-
-**Goal:** Team member management, time and PTO tracking, and payroll calculation — only active when `hr_enabled = true`.[^15][^16]
-
-### EPIC-13-E-01 — Team Member API
-
-- `team/members/route.ts` — `GET`, `POST`.
-- `team/members/[id]/route.ts` — `GET`, `PATCH`, `DELETE`.
-- `team/roles/route.ts` and `team/departments/route.ts` — CRUD.
-
-### EPIC-13-E-02 — Payroll API
-
-- `payroll/route.ts` — `GET`, `POST` (create new payroll run).
-- `payroll/[id]/route.ts` — `GET`, `PATCH`.
-- `payroll/[id]/approve/route.ts` — `POST` sets `status = approved`.
-- `payroll/[id]/export/route.ts` — `GET` exports CSV for bank transfer or payroll service.
-
-### EPIC-13-E-03 — HR UI
-
-`apps/web/src/app/(app)/team/page.tsx` — member cards with role, department, employment type, and status.
-
-`apps/web/src/app/(app)/payroll/page.tsx` — payroll runs table; "New Payroll Run" flow: select period → auto-calculate from `TimeEntry.duration * hourly_rate` per member → review and approve.
-
-### EPIC-13-V-01 — Validate HR Module
-
-- HR is hidden when `hr_enabled = false`, visible when true.
-- Create 2 team members, log time, run payroll → net amounts calculated correctly.
-
-***
-
-## EPIC-14: Purchasing & Vendor Module
-
-**Goal:** Track vendors, create purchase orders, and manage procurement — only active when `purchasing_enabled = true`.
-
-### EPIC-14-E-01 — Vendor & PO API
-
-- `purchasing/vendors/route.ts` — `GET`, `POST`.
-- `purchasing/vendors/[id]/route.ts` — `GET`, `PATCH`.
-- `purchasing/orders/route.ts` — `GET`, `POST`.
-- `purchasing/orders/[id]/route.ts` — `GET`, `PATCH`.
-- `purchasing/orders/[id]/receive/route.ts` — `POST`: sets `status = received`, optionally creates `Expense`.
-
-### EPIC-14-E-02 — Purchasing UI
-
-`apps/web/src/app/(app)/purchasing/page.tsx` — vendors tab and purchase orders tab.
-
-***
-
-## EPIC-15: Business AI Assist
-
-**Goal:** A business-context AI assistant tuned to the user's OrgProfile, with quick-action prompts and MCP tools for business tasks.
-
-### EPIC-15-E-01 — Org-Aware System Prompt
-
-`apps/web/src/lib/business-ai-context.ts`:
-
-```ts
-export async function buildSystemPrompt(): Promise<string> {
-  const org = await prisma.orgProfile.findFirst()
-  const flags = await prisma.orgSetting.findMany()
-  const flagMap = Object.fromEntries(flags.map(f => [f.key, f.value]))
-
-  return `
-You are a business assistant for ${org?.name}.
-Industry: ${org?.industry}. Business model: ${org?.businessModel}.
-Currency: ${org?.billingCurrency}. Country: ${org?.country}.
-Active modules: ${Object.entries(flagMap).filter(([k, v]) => k.endsWith('_enabled') && v === 'true').map(([k]) => k.replace('_enabled', '')).join(', ')}.
-Current date: ${new Date().toISOString().split('T')}.
-Help the user with business tasks, summarize data, draft emails and proposals, and suggest next actions.`
-}
-```
-
-### EPIC-15-E-02 — Business MCP Tools
-
-`packages/mcp-server/src/tools/business-tools.ts` defines tools:
-
-- `get_revenue_summary(period)` — queries Invoice/PaymentRecord and returns totals.
-- `list_overdue_invoices()` — returns invoices past due date with contact names.
-- `draft_invoice(contactEmail, lineItems)` — creates an Invoice draft and returns its ID.
-- `create_contact(name, email, company)` — creates Contact (and Company if new).
-- `get_pipeline_summary()` — returns deals grouped by stage with total values.
-- `log_time(projectId, minutes, description)` — creates TimeEntry for now.
-- `convert_time_to_invoice(projectId, since)` — calls existing time-to-invoice API.
-- `send_for_signature(contractId)` — triggers DocuSeal signing flow.
-- `schedule_email_campaign(listId, subject, body, sendAt)` — creates and schedules Listmonk campaign.
-
-### EPIC-15-V-01 — Validate AI Module
-
-- Ask AI "Summarize my open invoices" → correct totals from DB.
-- Ask AI "Draft an invoice for Acme Corp, $2,500 consulting fee" → `Invoice` created in `draft` status with correct line item.
-- `tools:list` via CLI returns all business tools.
-
-***
-
-## EPIC-16: Automation (n8n)
-
-**Goal:** Event-driven automation for business workflows — triggered by invoicing, CRM, and job events.
-
-### Example Automation Flows
-
-Document in `apps/web/src/app/(app)/automate/AUTOMATION_EXAMPLES.md`:
-
-- **New deal won → auto-create project** — webhook on `deal.status = won` → `POST /api/projects`.
-- **Invoice overdue → send reminder** — daily schedule → query overdue invoices → send email.
-- **New contact → add to CRM and Listmonk list** — contact webhook → Listmonk API.
-- **Signed contract → activate recurring billing** — DocuSeal webhook → create `RecurringBilling`.
-- **Time entries exceed budget → notify** — daily check → Slack/email if `loggedHours > budgetHours * 0.9`.
-
-n8n is the recommended co-process, consistent with Creator OS automation pattern; webhook URLs are registered in `AutomationTrigger`.[^1]
-
-***
-
-## EPIC-17: MCP Client & CLI (business-cli)
-
-**Goal:** A CLI for managing the business from the terminal, following Creator OS MCP CLI conventions.[^1]
-
-**Commands to implement:**
-```bash
-business-cli contact:create "Acme Corp" --email hello@acme.com
-business-cli invoice:create --contact hello@acme.com --amount 2500 --desc "Consulting"
-business-cli invoice:list --status outstanding
-business-cli deal:create "Website Redesign" --value 5000 --stage "Qualified"
-business-cli time:start --project proj_123 --desc "Deep work"
-business-cli time:stop
-business-cli ai:ask "What is my revenue this month?"
-business-cli tools:list
-```
-
-Validation mirrors Creator OS EPIC-14: all commands must return 0 and produce machine-readable JSON with `--json` flag.[^1]
-
-***
-
-## EPIC-18: Container Build & Packaging
-
-**Goal:** A single Docker image running Business OS web app + all active co-processes, managed by supervisord behind nginx.
-
-### EPIC-18-A-01 — Process Inventory
-
-**File: `infra/docker/PROCESS_INVENTORY.md`:**
-
-```text
-PID 1:    supervisord
-  ├─ nginx          (port 80 → internal router)
-  ├─ next.js        (port 3000)
-  ├─ mcp-sse        (port 3200)
-  ├─ n8n            (port 5678 — automation)
-  ├─ twenty         (port 3100 — CRM co-process, optional)
-  ├─ invoiceninja   (port 9000 — invoicing co-process, optional)
-  ├─ solidtime      (port 8000 — time tracking co-process, optional)
-  ├─ docuseal       (port 3003 — e-signature co-process, optional)
-  ├─ plane          (port 8090 — project management co-process, optional)
-  └─ listmonk       (port 9001 — email, optional)
-
-Optional (disabled by default, enabled via env var):
-  ├─ ollama         (port 11434 — local LLM)
-  └─ mautic         (port 8080 — full marketing automation)
-
-Volumes (persistent):
-  /data/db          → SQLite database
-  /data/files       → uploaded documents, receipts, signed PDFs
-  /data/twenty      → Twenty CRM data
-  /data/invoiceninja→ Invoice Ninja data
-  /data/docuseal    → DocuSeal templates and signed PDFs
-  /data/plane       → Plane data
-  /data/listmonk    → Listmonk subscriber and campaign data
-  /data/n8n         → n8n workflow data
-```
-
-### Co-Process Enable/Disable Pattern
-
-Each co-process is gated by an environment variable (`ENABLE_TWENTY=true`, `ENABLE_INVOICENINJA=true`, etc.).
-supervisord reads these and skips disabled programs at startup.
-This keeps the solo-operator image lean — start with only `next.js`, `mcp-sse`, and `n8n`, and add co-processes by setting env vars and restarting.
-
-### EPIC-18-E-01 — supervisord Config
-
-`infra/supervisord/supervisord.conf` uses the Creator OS pattern with `autostart=%(ENV_ENABLE_TWENTY)s` per optional service.[^1]
-
-### EPIC-18-E-02 — Nginx Config
-
-`infra/nginx/nginx.conf` — routes:
-
-| Path prefix | Upstream |
-|---|---|
-| `/` | Next.js :3000 |
-| `/mcp-sse/` | MCP SSE :3200 |
-| `/crm/` | Twenty :3100 |
-| `/invoiceninja/` | Invoice Ninja :9000 |
-| `/docuseal/` | DocuSeal :3003 |
-| `/plane/` | Plane :8090 |
-| `/listmonk/` | Listmonk :9001 |
-| `/n8n/` | n8n :5678 |
-| `/files/` | `/data/files/` static |
-
-### EPIC-18-E-03 — Docker Compose
-
-`docker-compose.yml`:
-```yaml
-version: "3.8"
-services:
-  business-os:
-    build:
-      context: .
-      dockerfile: infra/docker/Dockerfile
-    ports:
-      - "8080:80"
-    volumes:
-      - business-data:/data
-    environment:
-      - ADMIN_EMAIL=admin@business-os.local
-      - ADMIN_PASSWORD=changeme
-      - NEXTAUTH_SECRET=replace-with-64-char-secret
-      - NEXTAUTH_URL=http://localhost:8080
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ENABLE_TWENTY=${ENABLE_TWENTY:-false}
-      - ENABLE_INVOICENINJA=${ENABLE_INVOICENINJA:-false}
-      - ENABLE_SOLIDTIME=${ENABLE_SOLIDTIME:-false}
-      - ENABLE_DOCUSEAL=${ENABLE_DOCUSEAL:-false}
-      - ENABLE_PLANE=${ENABLE_PLANE:-false}
-      - ENABLE_LISTMONK=${ENABLE_LISTMONK:-false}
-      - ENABLE_N8N=${ENABLE_N8N:-true}
-      - ENABLE_OLLAMA=${ENABLE_OLLAMA:-false}
-    restart: unless-stopped
-volumes:
-  business-data:
-    driver: local
-```
-
-### EPIC-18-V-01 — Validate Container
-
-```bash
-docker compose up --build
-```
-
-**Pass criteria:**
-- `http://localhost:8080` serves Next.js login page.
-- `docker exec business-os supervisorctl status` shows all enabled processes `RUNNING`.
-- AI ask via CLI returns correct invoice summary.
-- Enable `ENABLE_DOCUSEAL=true` and restart → DocuSeal available at `/docuseal/`.
-
-***
-
-## Scale-Up Path: From Solo to Enterprise
-
-The design principle is that Business OS scales by registering more MCP tools and enabling more co-processes — no core code changes required.
-
-| Stage | Org Size | Action |
-|---|---|---|
-| Solo operator | 1 person | Default flags; only Next.js + n8n run. |
-| Small team | 2–5 | Enable `hr_enabled = true`, set `ENABLE_TWENTY=true`, `ENABLE_PLANE=true`. |
-| Agency / Studio | 5–25 | Enable `ENABLE_INVOICENINJA=true`, `ENABLE_SOLIDTIME=true`, `ENABLE_DOCUSEAL=true`. |
-| Mid-market | 25–100 | Migrate DB to Postgres; enable `ENABLE_MAUTIC=true`; add Frappe HR via MCP; register ERP MCP tool. |
-| Enterprise | 100+ | Decompose co-processes to dedicated servers; register Odoo or ERPNext as MCP tool; SAML SSO via `next-auth` provider.[^20][^21] |
-
-At every stage, the core Business OS web app and its schema stay constant — only service topology changes.[^20][^22]
-
----
-
-## References
-
-1. [Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/399744584/abd6ec54-7f74-4389-aec4-b0a0b60ab632/Creator-OS-Full-Execution-Plan-Assess-Plan-Execute-Validate.md?AWSAccessKeyId=ASIA2F3EMEYE7TOCCQ4U&Signature=TbSlBKlyI2aYh9dzwq9Zhai7vZM%3D&x-amz-security-token=IQoJb3JpZ2luX2VjEMb%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQD1rWCCxM7%2BMvokgZnKTRu4QtIIHt91cGKpFBmvhSSJcAIhAINp7%2Fg4PyzzGxPkE2IpFmQAShKBJr6IOsv0IHXKw4QoKvwECI%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQARoMNjk5NzUzMzA5NzA1Igzry1%2B7ieUJ9Aev780q0ASJ9bh2FLZEwDXBJ%2FvHrxeAs09mm%2BlNeH4WpOS48OgwUApuiGyMSkB2cMRDER%2B%2FJaCsmDTql98H6tTZtoJGCBIvgg6IN3Hpd1jguGYOMywzh8%2BGN1s0%2F3Ft%2Btkrig0v6Kt8z8jmTXtZieoy2hCBwG3L6s6%2BNZj9uw8pDZG9W0QpAs%2BEYX1%2Bk%2B1whApcfjg6XTmlIaGDqU5DEelWOP%2B3RCRtlWz%2BY7Yz5n21PjDy20wssxyBF%2BT3EZqzlcFmWP6BPEPYCGIw6t%2F5s%2B0tI0sL3DGY8UeI3VaLLI8t0SX%2BvSuDMyJuK1PRhKa85HF9xiJfZdXNY6vP9vyQbGfGV9smOKudxmHMIjeUXsQOn4qLsBE44%2F%2Fuh7ou7BJB4lpObcjk2KWXm70Su5Em0bRPL4MYt2SzXZw3nNNYKVjw3hrJvxliw2wRP2OkjUcgGsliZzggJ%2FEnAyXFRK7cAh1sJK%2BAmUuJfvoQIC7OZaelXdzsZWzUdE8k4mPrIOQhxMDIjD3TuubqIsLLshpdV6Ywsbs3WvDb0anyxSFuudiVmIgoSj6UIoS4xsclbFfpdQjha6SuFRsQXuQ%2F78%2BnqWn%2Fl01z5JVOrFr3j26ZLdwgyvXs5mzLF65R%2FmyXdrb%2FkJdPcyJ2lGCKtl1mjKtBBz%2BT%2FG6AEKpRNTtKZP82ktQeQQ%2F1R05c8doUoR7p7qezenbMtr64YEbdVkIMXsz02P2yjU2JsHU62OdOPiUX4pI%2FXA3%2B3cNqyzr%2FoqlW%2BKlYUASa8A570En6lLdGmgzXJ5fTyp8BICSjMMTK6c8GOpcB8wpwbXebR6%2Fa3vPqw0y91swYVT1P1MKJbBvhi6XPCpSFh46aSy8yARGME0Ga76nXANGo04dSK7P4pymgpsDICjDb0ae%2B99vQ7Lo3O8iQmIfCouBKpxCSTobEB1b%2B27fjhTI9ImF7laqIMYKhpmZIAiIfU2htLQWgADh0VPXJXWYLQ1bpFdgEPe6BpWkUf%2FuXDQTtN8arxg%3D%3D&Expires=1778021143) - # Creator OS — Full Execution Plan (Assess → Plan → Execute → Validate)
-
-## How to Use This Document...
-
-2. [Twenty v2.0: Self-hosted CRM : r/selfhosted](https://www.reddit.com/r/selfhosted/comments/1srmjht/twenty_v20_selfhosted_crm/) - We're an open-source CRM (https://github.com/twentyhq/twenty). It's been a while since I last posted...
-
-3. [Twenty | #1 open source CRM](https://twenty.com) - Twenty is the #1 open source CRM on GitHub. You can self-host to fully own your infrastructure, or r...
-
-4. [Invoice Ninja | Free Self-Hosted Invoicing, Quotes, Expenses ...](https://www.invoiceninja.org) - Self-Hosting Invoice Ninja. Invoices, Expenses and Tasks built with Laravel, Flutter and React. Down...
-
-5. [Deploy Invoice Ninja [Updated May '26]](https://railway.com/deploy/invoiceninja) - You can self-host Invoice Ninja to maintain full control over your client data, invoices, and paymen...
-
-6. [Solidtime - Modern open-source time-tracking app](https://github.com/solidtime-io/solidtime) - solidtime is a modern open-source time tracking application for Freelancers and Agencies. Features. ...
-
-7. [DocuSeal | Open Source Document Signing](https://www.docuseal.com) - Free and Open source tool to streamline document filling and signing. Create custom PDF forms to com...
-
-8. [docusealco/docuseal: Open source DocuSign alternative. ...](https://github.com/docusealco/docuseal) - DocuSeal is an open source platform that provides secure and efficient digital document signing and ...
-
-9. [Plane vs Taiga: A Detailed Comparison of Project ...](https://openalternative.co/compare/plane/vs/taiga) - Plane significantly outpaces Taiga in community adoption with 48,307 stars compared to 821 stars on ...
-
-10. [Top 6 open source project management software in 2026](https://plane.so/blog/top-6-open-source-project-management-software-in-2026) - Explore the top 6 open-source project management tools for 2026, comparing Plane, OpenProject, Leant...
-
-11. [Listmonk vs Mautic: Which Is Better in 2026? (Pros & Cons)](https://www.sequenzy.com/versus/listmonk-vs-mautic) - Listmonk is lean and easy. Mautic is powerful but complex. Both are self-hosted and open-source. Pla...
-
-12. [Best Open Source Email Marketing Platforms for ...](https://www.awwtomation.com/blog/best-open-source-email-marketing-platforms) - Overview: Listmonk is a modern, high-performance, self-hosted newsletter and mailing list manager. W...
-
-13. [Top Airtable Competitors (2025)](https://baserow.io/blog/top-airtable-competitors) - Baserow is a powerful, open-source alternative to Airtable with an emphasis on flexibility, data sov...
-
-14. [8 Best Airtable Alternatives for Custom Apps in 2026](https://lovable.dev/guides/airtable-alternatives-custom-apps) - 1. Notion: Best for Knowledge-First Teams · 2. Baserow: Best for Open-Source Flexibility · 3. NocoDB...
-
-15. [Cloud Based HR Software | Frappe HR](https://frappe.io/hr) - Frappe HR is a 100% open source, modern, user-friendly solution to drive excellence within your team...
-
-16. [HR Software that Grows With You, For Free](https://orangehrm.com/orangehrm-starter-open-source-software) - OrangeHRM Starter is a free and open-source HR software designed to help HR teams streamline adminis...
-
-17. [Open Source CRM for Businesses | Twenty CRM - Factorial](https://www.factorial.io/en/blog/crm-software-open-source-twenty-crm) - Discover how Twenty CRM redefines customer management with open source CRM software. Gain full data ...
-
-18. [Small Business Invoicing Features](https://invoiceninja.com/features/) - Invoice Ninja is a leading free invoicing software for small business invoicing, online payments, tr...
-
-19. [The definitive guide to self-hosting project management ...](https://plane.so/blog/self-hosted-project-management-jira-server-alternative) - Around since 2012, OpenProject is one of the oldest open-source project management products still ar...
-
-20. [Top 5 Open Source ERP Hosting Options](https://www.aorborc.com/top-5-open-source-erp-hosting-options/) - ERPNext: Budget-friendly with integrated features. Ideal for small to medium businesses, offering se...
-
-21. [Leading Open-Source Enterprise Resource Systems in 2025](https://www.planetcrust.com/leading-open-source-enterprise-resource-systems-2025/) - ERPNext has emerged as a leading open-source ERP with 24.2k GitHub stars. Originally known for its s...
-
-22. [8 Best ERP software solutions for 2025](https://www.onlyoffice.com/blog/2025/05/best-erp-software) - Odoo stands out as one of the most versatile and cost-effective ERP software for small businesses an...
-
+## Reference paths
+
+- Registry: `apps/platform-web/src/lib/agentic-os/registry.ts`
+- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/os/business/`, `apps/platform-web/src/lib/agentic-os/business/`, `apps/platform-web/src/components/agentic-os/business/`, `apps/platform-web/src/app/api/tiresias/agentic-os/business/`
+- Existing migration: `packages/database/alembic/versions/0010_business_os.py`
+- Shared primitives: `apps/platform-web/src/lib/agentic-os/_shared/` (`audit.ts`, `crud-route.ts`, `session.ts`, `types.ts`, `pdf/`, `safety/`) and `apps/platform-web/src/components/agentic-os/_shared/`
+- Coach pattern anchor: `apps/platform-web/src/lib/agentic-os/maker/coach/`
+- PDF pattern anchor: `apps/platform-web/src/lib/agentic-os/_shared/pdf/` + `apps/platform-web/src/lib/agentic-os/maker/pdf/`
+- Storage transfer contract: `docs/architecture/mcp-storage-transfer.md`
+- Legacy Perplexity epic-style plan: `apps/platform-web/content/agentic-os/business.md.legacy-epic.md` (after rename — currently still at `business.md` pending Cristian's decision on the eight open questions).
