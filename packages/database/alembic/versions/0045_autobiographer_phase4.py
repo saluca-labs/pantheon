@@ -344,8 +344,13 @@ BEGIN
                 legacy_row.user_id,
                 'Untitled',
                 'drafting',
-                '{"drafting":0,"revising":0,"done":0,"paused":0}'::jsonb,
-                '{"phase4_carryover":true}'::jsonb
+                jsonb_build_object(
+                    'drafting', 0,
+                    'revising', 0,
+                    'done',     0,
+                    'paused',   0
+                ),
+                jsonb_build_object('phase4_carryover', true)
             );
         END IF;
 
