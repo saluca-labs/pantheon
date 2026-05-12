@@ -1,9 +1,9 @@
 /**
- * Business OS Phase 1 — interaction domain types + pure helpers.
+ * Business OS Phase 2 — interaction domain types + pure helpers.
  *
  * DB calls live in `interactions-repo.ts`.
  *
- * @license MIT — Tiresias Business OS Phase 1 (internal).
+ * @license MIT — Tiresias Business OS Phase 2 (internal).
  */
 
 import { INTERACTION_TYPES, type Interaction, type InteractionType } from './crm';
@@ -13,6 +13,7 @@ import { INTERACTION_TYPES, type Interaction, type InteractionType } from './crm
 export interface CreateInteractionInput {
   personId?: string | null;
   organizationId?: string | null;
+  dealId?: string | null;
   interactionType: InteractionType;
   summary: string;
   occurredAt?: string;
@@ -21,6 +22,7 @@ export interface CreateInteractionInput {
 export type UpdateInteractionInput = Partial<{
   personId: string | null;
   organizationId: string | null;
+  dealId: string | null;
   interactionType: InteractionType;
   summary: string;
   occurredAt: string;
@@ -31,9 +33,8 @@ export type UpdateInteractionInput = Partial<{
 export interface InteractionsListOpts {
   personId?: string;
   organizationId?: string;
-  /** ISO date string — inclusive. */
+  dealId?: string;
   from?: string;
-  /** ISO date string — inclusive. */
   to?: string;
   interactionType?: InteractionType;
   limit?: number;

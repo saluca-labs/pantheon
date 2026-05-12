@@ -18,6 +18,8 @@ import {
 import { listInteractions } from '@/lib/agentic-os/business/interactions-repo';
 import { listPeople } from '@/lib/agentic-os/business/people-repo';
 import { listOrganizations } from '@/lib/agentic-os/business/orgs-repo';
+import { listDeals } from '@/lib/agentic-os/business/deals-repo';
+import { computePipelineForecast } from '@/lib/agentic-os/business/deals';
 import { BusinessHub } from '@/components/agentic-os/business/business-hub';
 
 export const dynamic = 'force-dynamic';
@@ -26,13 +28,23 @@ export default async function BusinessHubPage() {
   const user = await getCurrentBusinessUser();
   if (!user) redirect('/login');
 
-  const [peopleCount, orgsCount, recentInteractions, people, organizations] = await Promise.all([
+  const [
+    peopleCount,
+    orgsCount,
+    recentInteractions,
+    people,
+    organizations,
+    openDeals,
+  ] = await Promise.all([
     countActivePeople(user.userId),
     countActiveOrganizations(user.userId),
     listInteractions(user.userId, { limit: 10 }),
     listPeople(user.userId, { archived: false, limit: 500 }),
     listOrganizations(user.userId, { archived: false, limit: 500 }),
+    listDeals(user.userId, { open: true }),
   ]);
+
+  const pipeline = computePipelineForecast(openDeals);
 
   return (
     <div className="max-w-5xl">
@@ -50,10 +62,8 @@ export default async function BusinessHubPage() {
         </Link>
       </div>
       <p className="text-sm text-[#94a3b8] mb-6">
-        Solo to enterprise without re-architecting. Phase 1 ships the
-        contacts + organization + interaction foundation; Phase 2-7 will
-        layer deals, projects, invoices, expenses, documents, and the
-        coach.
+        Solo to enterprise without re-architecting. Phase 2 adds the sales
+        pipeline with deal tracking, kanban board, and pipeline forecasting.
       </p>
 
       <BusinessHub
@@ -66,6 +76,9 @@ export default async function BusinessHubPage() {
           lastName: p.lastName,
         }))}
         recentOrgs={organizations.map((o) => ({ id: o.id, name: o.name }))}
+        dealsCount={pipeline.dealCount}
+        pipelineValueCents={pipeline.totalValueCents}
+        pipelineWeightedCents={pipeline.totalWeightedValueCents}
       />
     </div>
   );

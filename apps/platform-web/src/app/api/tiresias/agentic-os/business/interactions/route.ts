@@ -6,6 +6,7 @@
  *   Query:
  *     ?person_id=<uuid>          scope to one person
  *     ?organization_id=<uuid>    scope to one org
+ *     ?deal_id=<uuid>            scope to one deal
  *     ?interaction_type=<one of 9>
  *     ?from=<iso>  ?to=<iso>     inclusive window
  *     ?limit=<n>&offset=<n>      pagination (limit 1..500)
@@ -30,6 +31,7 @@ import { INTERACTION_TYPES } from '@/lib/agentic-os/business/crm';
 const CreateBody = z.object({
   person_id: z.string().uuid().nullable().optional(),
   organization_id: z.string().uuid().nullable().optional(),
+  deal_id: z.string().uuid().nullable().optional(),
   interaction_type: z.enum(INTERACTION_TYPES as unknown as [string, ...string[]]),
   summary: z.string().min(1).max(2000),
   occurred_at: z.string().datetime().optional(),
@@ -47,6 +49,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const personIdParam = url.searchParams.get('person_id');
   const orgIdParam = url.searchParams.get('organization_id');
+  const dealIdParam = url.searchParams.get('deal_id');
   const typeParam = url.searchParams.get('interaction_type');
   const fromParam = url.searchParams.get('from');
   const toParam = url.searchParams.get('to');
@@ -58,6 +61,9 @@ export async function GET(request: NextRequest) {
   }
   if (orgIdParam && !/^[0-9a-f-]{36}$/i.test(orgIdParam)) {
     return NextResponse.json({ error: 'organization_id must be a UUID' }, { status: 400 });
+  }
+  if (dealIdParam && !/^[0-9a-f-]{36}$/i.test(dealIdParam)) {
+    return NextResponse.json({ error: 'deal_id must be a UUID' }, { status: 400 });
   }
   if (typeParam && !(INTERACTION_TYPES as readonly string[]).includes(typeParam)) {
     return NextResponse.json(
@@ -84,6 +90,7 @@ export async function GET(request: NextRequest) {
   const interactions = await listInteractions(user.userId, {
     personId: personIdParam ?? undefined,
     organizationId: orgIdParam ?? undefined,
+    dealId: dealIdParam ?? undefined,
     interactionType: (typeParam ?? undefined) as any,
     from: fromParam ?? undefined,
     to: toParam ?? undefined,
@@ -107,6 +114,7 @@ export async function POST(request: NextRequest) {
   const interaction = await createInteraction(user.userId, {
     personId: d.person_id,
     organizationId: d.organization_id,
+    dealId: d.deal_id,
     interactionType: d.interaction_type as any,
     summary: d.summary,
     occurredAt: d.occurred_at,

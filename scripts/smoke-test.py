@@ -179,6 +179,19 @@ AGENTIC_OS_PROBES: dict[str, dict[str, Any]] = {
             "verify": "list_grew",
         },
     },
+    "business_deals": {
+        # Phase 2 deals pipeline. Read probe hits the deals list
+        # endpoint; write probe creates a minimal deal.
+        "path": "/api/tiresias/agentic-os/business/deals",
+        "key": "deals",
+        "write": {
+            "method": "POST",
+            "path": "/api/tiresias/agentic-os/business/deals",
+            "body": {"title": "smoke-deal"},
+            "response_key": "deal",
+            "verify": "list_grew",
+        },
+    },
     "creator": {
         "path": "/api/tiresias/agentic-os/creator/posts",
         "key": "posts",

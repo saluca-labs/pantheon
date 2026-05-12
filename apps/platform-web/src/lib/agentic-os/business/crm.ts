@@ -105,6 +105,7 @@ export interface Interaction {
   userId: string;
   personId: string | null;
   organizationId: string | null;
+  dealId: string | null;
   interactionType: InteractionType;
   summary: string;
   occurredAt: string;

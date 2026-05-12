@@ -24,6 +24,7 @@ const PatchBody = z
   .object({
     person_id: z.string().uuid().nullable().optional(),
     organization_id: z.string().uuid().nullable().optional(),
+    deal_id: z.string().uuid().nullable().optional(),
     interaction_type: z.enum(INTERACTION_TYPES as unknown as [string, ...string[]]).optional(),
     summary: z.string().min(1).max(2000).optional(),
     occurred_at: z.string().datetime().optional(),
@@ -60,6 +61,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const outcome = await updateInteraction(id, user.userId, {
     personId: d.person_id as any,
     organizationId: d.organization_id as any,
+    dealId: d.deal_id as any,
     interactionType: d.interaction_type as any,
     summary: d.summary,
     occurredAt: d.occurred_at,
