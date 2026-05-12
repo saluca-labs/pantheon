@@ -243,6 +243,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
           'Per-experiment cover, status, target date, and 5-phase progress tracker.',
       },
       {
+        href: '/dashboard/os/research/experiments',
+        label: 'Lab notebook',
+        description:
+          'Per-experiment timeline of notes, observations, results, decisions, questions, and to-dos.',
+      },
+      {
         href: '/dashboard/os/research/hypotheses',
         label: 'Hypothesis ledger',
         description: 'Track research questions, predictions, and falsifiers.',
