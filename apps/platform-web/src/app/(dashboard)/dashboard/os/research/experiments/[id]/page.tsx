@@ -35,6 +35,7 @@ import {
   Target,
   Network,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import {
@@ -92,7 +93,8 @@ type TabKey =
   | 'protocols'
   | 'milestones'
   | 'dependencies'
-  | 'reproducibility';
+  | 'reproducibility'
+  | 'coach';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
@@ -104,6 +106,7 @@ const TABS: { key: TabKey; label: string; icon: typeof Layers }[] = [
   { key: 'milestones', label: 'Milestones', icon: Target },
   { key: 'dependencies', label: 'Dependencies', icon: Network },
   { key: 'reproducibility', label: 'Reproducibility', icon: ShieldCheck },
+  { key: 'coach', label: 'Coach', icon: Sparkles },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -123,7 +126,8 @@ function isTabKey(value: string | undefined): value is TabKey {
     value === 'protocols' ||
     value === 'milestones' ||
     value === 'dependencies' ||
-    value === 'reproducibility'
+    value === 'reproducibility' ||
+    value === 'coach'
   );
 }
 
@@ -577,6 +581,41 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             experimentId={experiment.id}
             initialItems={reproItemsForBadge}
           />
+        </section>
+      )}
+
+      {activeTab === 'coach' && (
+        <section
+          aria-labelledby="coach-heading"
+          data-testid="coach-tab"
+          className="space-y-4"
+        >
+          <div>
+            <h2
+              id="coach-heading"
+              className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 text-[#4361EE]" />
+              AI coach
+            </h2>
+            <p className="text-xs text-[#94a3b8] mt-1">
+              Experiment-scoped AI advisor across lit reviewer, hypothesis
+              critic, methods advisor, and general. Methods advisor refuses
+              regulated advice (IRB / IACUC / EHS / clinical) and refers
+              you to the appropriate institutional body. Pick a mode and
+              start a session — the coach reads this experiment&apos;s
+              papers, hypotheses, protocols, datasets, and reproducibility
+              checklist as relevant to the chosen mode.
+            </p>
+          </div>
+          <Link
+            href={`/dashboard/os/research/coach?experiment_id=${experiment.id}&mode=methods_advisor`}
+            data-testid="coach-tab-cta"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3651DE] text-white text-sm font-medium px-4 py-2 transition"
+          >
+            <Sparkles className="w-4 h-4" />
+            Open experiment coach
+          </Link>
         </section>
       )}
     </div>
