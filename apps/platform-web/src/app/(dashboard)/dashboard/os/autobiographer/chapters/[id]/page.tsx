@@ -24,6 +24,9 @@ import { ChapterStatusPill } from '@/components/agentic-os/autobiographer/chapte
 import { ChapterEditButton } from '@/components/agentic-os/autobiographer/chapter-edit-button';
 import { ChapterDetailView } from '@/components/agentic-os/autobiographer/chapter-detail-view';
 import { ChapterThemesSection } from '@/components/agentic-os/autobiographer/chapter-themes-section';
+import { LockChapterButton } from '@/components/agentic-os/autobiographer/lock-chapter-button';
+import { SensitiveKindsBadges } from '@/components/agentic-os/autobiographer/sensitive-kinds-badges';
+import { SensitiveKindsPicker } from '@/components/agentic-os/autobiographer/sensitive-kinds-picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +50,8 @@ export default async function ChapterDetailPage({ params }: Props) {
   ]);
 
   const positionLabel = `Ch ${String(chapter.position + 1).padStart(2, '0')}`;
+  const latestRevision = revisions[0];
+  const latestSensitiveKinds = latestRevision?.sensitiveKinds ?? [];
 
   return (
     <div className="max-w-7xl space-y-4">
@@ -58,7 +63,12 @@ export default async function ChapterDetailPage({ params }: Props) {
           <ArrowLeft className="w-4 h-4" />
           Back to {book.title}
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <LockChapterButton
+            chapterId={chapter.id}
+            bookId={book.id}
+            locked={chapter.status === 'locked'}
+          />
           <a
             href={`/api/tiresias/agentic-os/autobiographer/chapters/${chapter.id}/export.pdf`}
             className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
@@ -117,6 +127,18 @@ export default async function ChapterDetailPage({ params }: Props) {
           ) : null}
         </div>
       </header>
+
+      {latestSensitiveKinds.length > 0 && (
+        <SensitiveKindsBadges kinds={latestSensitiveKinds} variant="expanded" />
+      )}
+
+      {latestRevision && (
+        <SensitiveKindsPicker
+          endpoint={`/api/tiresias/agentic-os/autobiographer/chapters/${chapter.id}/revisions/${latestRevision.id}`}
+          initial={latestSensitiveKinds}
+          label="Sensitive content on the latest revision"
+        />
+      )}
 
       <ChapterDetailView
         chapterId={chapter.id}

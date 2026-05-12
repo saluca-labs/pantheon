@@ -491,6 +491,68 @@ export async function deleteChapter(
 }
 
 /**
+ * Phase 6 — chapter sensitivity probe. Returns true when EITHER the
+ * chapter has at least one revision with a non-empty ``sensitive_kinds``
+ * array, OR at least one source memory (via ``chapter_sources``) has a
+ * non-empty ``sensitive_kinds`` array. Used by the lock route to
+ * compute whether ``sensitive_flagged`` joins the required-check set.
+ *
+ * The query is a single round trip with two EXISTS predicates so the
+ * planner can short-circuit on the first match.
+ */
+export async function chapterHasSensitiveContent(
+  chapterId: string,
+  userId: string,
+): Promise<boolean> {
+  const pool = getAutobiographerPool();
+  const r = await pool.query(
+    `SELECT
+       EXISTS (
+         SELECT 1 FROM agos_autobiographer_chapter_revisions r
+          WHERE r.chapter_id = $1 AND r.user_id = $2
+            AND array_length(r.sensitive_kinds, 1) >= 1
+       ) AS revision_sensitive,
+       EXISTS (
+         SELECT 1
+           FROM agos_autobiographer_chapter_sources s
+           JOIN agos_autobiographer_memories m ON m.id = s.memory_id
+          WHERE s.chapter_id = $1
+            AND m.user_id    = $2
+            AND array_length(m.sensitive_kinds, 1) >= 1
+       ) AS source_sensitive`,
+    [chapterId, userId],
+  );
+  if ((r.rowCount ?? 0) === 0) return false;
+  const row = r.rows[0];
+  return Boolean(row.revision_sensitive) || Boolean(row.source_sensitive);
+}
+
+/**
+ * Phase 6 — flip a chapter's status. Used by the lock and unlock
+ * routes after the required-check gate passes. Returns the updated
+ * chapter or null when the row does not exist for the user.
+ */
+export async function setChapterStatus(
+  chapterId: string,
+  userId: string,
+  status: ChapterStatus,
+): Promise<AutobiographerChapter | null> {
+  if (!(CHAPTER_STATUSES as readonly string[]).includes(status)) {
+    throw new Error(`Invalid status: ${status}`);
+  }
+  const pool = getAutobiographerPool();
+  const r = await pool.query(
+    `UPDATE agos_autobiographer_chapters
+        SET status = $3, updated_at = now()
+      WHERE id = $1 AND user_id = $2
+      RETURNING ${CHAPTER_COLUMNS}`,
+    [chapterId, userId, status],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  return rowToChapter(r.rows[0]);
+}
+
+/**
  * Word count across the latest revision of every chapter in the book.
  * Used by the book-export PDF and the book detail page header.
  */

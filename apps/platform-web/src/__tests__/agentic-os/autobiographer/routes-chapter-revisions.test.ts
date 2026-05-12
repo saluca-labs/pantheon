@@ -253,7 +253,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
     expect(res.status).toBe(404);
   });
 
-  it('rejects Phase 6 reserved field sensitive_kinds', async () => {
+  it('Phase 6 — accepts sensitiveKinds (camelCase), rejects unknown enum values', async () => {
     authedUser();
     chaptersRepoMocks.getChapter.mockResolvedValue({ id: 'c-1', bookId: 'b-1' });
     revRepoMocks.getRevision.mockResolvedValue({
@@ -261,14 +261,61 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
       chapterId: 'c-1',
       version: 1,
     });
+    revRepoMocks.updateRevision.mockResolvedValue({
+      id: 'r-1',
+      chapterId: 'c-1',
+      version: 1,
+      sensitiveKinds: ['death'],
+    });
+    const { PATCH } = await import(
+      '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
+    );
+    // valid kind passes
+    const res = await PATCH(
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['death'] }) as any,
+      { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
+    );
+    expect(res.status).toBe(200);
+    expect(revRepoMocks.updateRevision).toHaveBeenCalledWith(
+      'r-1',
+      'u-1',
+      expect.objectContaining({ sensitiveKinds: ['death'] }),
+    );
+    // invalid enum fails
+    const res2 = await PATCH(
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as any,
+      { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
+    );
+    expect(res2.status).toBe(400);
+  });
+
+  it('Phase 6 — sensitiveKinds-only patch audits with dedicated action', async () => {
+    authedUser();
+    chaptersRepoMocks.getChapter.mockResolvedValue({ id: 'c-1', bookId: 'b-1' });
+    revRepoMocks.getRevision.mockResolvedValue({
+      id: 'r-1',
+      chapterId: 'c-1',
+      version: 1,
+    });
+    revRepoMocks.updateRevision.mockResolvedValue({
+      id: 'r-1',
+      chapterId: 'c-1',
+      version: 1,
+      sensitiveKinds: ['legal'],
+    });
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitive_kinds: ['x'] }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['legal'] }) as any,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    expect(recordAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'autobiographer.chapter_revision.sensitive_kinds_updated',
+      }),
+    );
   });
 
   it('updates and audits on happy path', async () => {

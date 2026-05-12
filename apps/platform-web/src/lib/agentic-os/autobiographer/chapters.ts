@@ -173,6 +173,33 @@ export function countWords(text: string): number {
   return countChapterWords(text);
 }
 
+// ─── Phase 6 — chapter lock required-check computation ───────────────────────
+//
+// Pure helper consumed by the lock route. The route fetches the
+// chapter's sensitive-content flag (see `chapters-repo.chapterHasSensitiveContent`)
+// and passes the boolean here; the helper returns the canonical
+// required-check set. Kept in this file (the chapter-domain module)
+// so the lock-route logic stays declarative.
+//
+// Sensitive-content rule: if the chapter has any revision carrying a
+// non-empty `sensitive_kinds`, OR if any source memory (via
+// chapter_sources) has a non-empty `sensitive_kinds`, the
+// `sensitive_flagged` review check is required.
+
+/**
+ * Required review-check kinds for a chapter lock. Always includes
+ * `consent_collected` + `attribution_verified`; adds `sensitive_flagged`
+ * when the chapter has sensitive content (either on a revision or via
+ * any source memory).
+ */
+export function computeRequiredCheckKinds(opts: {
+  hasSensitiveContent: boolean;
+}): string[] {
+  const base = ['consent_collected', 'attribution_verified'];
+  if (opts.hasSensitiveContent) base.push('sensitive_flagged');
+  return base;
+}
+
 /**
  * Estimate reading time in minutes (Brysbaert 2019, 238 wpm).
  * https://doi.org/10.1016/j.jml.2019.104047

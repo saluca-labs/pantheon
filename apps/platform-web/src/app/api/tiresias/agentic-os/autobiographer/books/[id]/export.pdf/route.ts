@@ -30,6 +30,16 @@ import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
 import { BookExportPdf } from '@/lib/agentic-os/autobiographer/pdf/book-export';
 import { BOOK_STATUS_LABELS } from '@/lib/agentic-os/autobiographer/books';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
+import {
+  listPseudonymsForBook,
+  markPseudonymsApplied,
+} from '@/lib/agentic-os/autobiographer/pseudonyms-repo';
+import {
+  applyPseudonymRedaction,
+  mergeAppliedIds,
+  redactTitle,
+  type PseudonymInput,
+} from '@/lib/agentic-os/autobiographer/redaction';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,21 +91,43 @@ export async function GET(_request: NextRequest, { params }: Props) {
   const memories = await getMemoriesByIds(Array.from(allCitedIds), user.userId);
   const provenance = await listProvenanceForBook(bookId, user.userId);
 
-  // Build PDF input shape.
+  // Phase 6 — load pseudonyms and run redaction across every chapter
+  // body, every chapter title, every memory title (footnotes), every
+  // provenance row. Applied ids accumulate across the whole book so a
+  // single UPDATE flips `applied = true` post-render.
+  const pseudonymRows = await listPseudonymsForBook(bookId, user.userId);
+  const pseudonymInputs: PseudonymInput[] = pseudonymRows.map((p) => ({
+    id: p.id,
+    canonicalName: p.personCanonicalName,
+    aliases: p.personAliases,
+    pseudonym: p.pseudonym,
+  }));
+
+  const perChapterAppliedSets: Set<string>[] = [];
+
+  // Build PDF input shape — redact chapter title + body before render.
   const chapterRows = chapters.map((c, i) => {
     const latest = latestRevs[i];
+    let bodyText = latest?.bodyText ?? '';
+    if (latest) {
+      const result = applyPseudonymRedaction(bodyText, pseudonymInputs);
+      bodyText = result.text;
+      perChapterAppliedSets.push(result.appliedPseudonymIds);
+    }
     return {
       id: c.id,
-      title: c.title,
+      title: c.title ? redactTitle(c.title, pseudonymInputs) : c.title,
       slug: c.slug,
       position: c.position,
       status: c.status,
-      summary: c.summary,
+      summary: c.summary
+        ? redactTitle(c.summary, pseudonymInputs)
+        : c.summary,
       latest: latest
         ? {
             version: latest.version,
             author: latest.author,
-            bodyText: latest.bodyText,
+            bodyText,
             wordCount: latest.wordCount,
             citations: latest.citations,
           }
@@ -103,26 +135,57 @@ export async function GET(_request: NextRequest, { params }: Props) {
     };
   });
 
+  // Redact memory titles (footnotes) and provenance rows.
+  const redactedMemories = memories.map((m) => {
+    const result = applyPseudonymRedaction(m.title ?? '', pseudonymInputs);
+    perChapterAppliedSets.push(result.appliedPseudonymIds);
+    return { ...m, title: result.text };
+  });
+  const redactedProvenance = provenance.map((p) => {
+    const titleResult = applyPseudonymRedaction(p.memoryTitle, pseudonymInputs);
+    perChapterAppliedSets.push(titleResult.appliedPseudonymIds);
+    return {
+      ...p,
+      memoryTitle: titleResult.text,
+      chapterReferences: p.chapterReferences.map((c) => ({
+        ...c,
+        chapterTitle: c.chapterTitle
+          ? redactTitle(c.chapterTitle, pseudonymInputs)
+          : c.chapterTitle,
+      })),
+    };
+  });
+
+  const appliedIds = mergeAppliedIds(...perChapterAppliedSets);
+
   const buffer = await renderPdfToBuffer(
     React.createElement(BookExportPdf, {
       book: {
-        title: book.title,
-        subtitle: book.subtitle,
-        description: book.description,
+        title: redactTitle(book.title, pseudonymInputs),
+        subtitle: book.subtitle
+          ? redactTitle(book.subtitle, pseudonymInputs)
+          : book.subtitle,
+        description: book.description
+          ? redactTitle(book.description, pseudonymInputs)
+          : book.description,
         status: BOOK_STATUS_LABELS[book.status] ?? book.status,
         targetCompletionDate: book.targetCompletionDate,
         targetAudience: book.targetAudience,
       },
       authorName: null,
       chapters: chapterRows,
-      memories: memories.map((m) => ({
+      memories: redactedMemories.map((m) => ({
         id: m.id,
         title: m.title,
         whenInLife: m.whenInLife,
       })),
-      provenance,
+      provenance: redactedProvenance,
     }),
   );
+
+  if (appliedIds.size > 0) {
+    await markPseudonymsApplied(Array.from(appliedIds), user.userId);
+  }
 
   const stamp = new Date().toISOString().slice(0, 10);
   const filename = `${bookSlug(book.title)}-${stamp}.pdf`;
@@ -141,6 +204,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
       revisionsRendered: latestRevs.filter(Boolean).length,
       citedMemories: allCitedIds.size,
       wordCount: totalWords,
+      pseudonymsApplied: appliedIds.size,
     },
     projectId: bookId,
   });

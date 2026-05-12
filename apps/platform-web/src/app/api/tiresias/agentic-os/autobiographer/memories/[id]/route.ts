@@ -20,6 +20,7 @@ import {
 } from '@/lib/agentic-os/autobiographer/memories-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import { MEMORY_SOURCES } from '@/lib/agentic-os/autobiographer/memories';
+import { SENSITIVE_KINDS } from '@/lib/agentic-os/autobiographer/sensitive-kinds';
 
 const PatchBody = z.object({
   bookId: z.string().uuid().nullable().optional(),
@@ -39,6 +40,14 @@ const PatchBody = z.object({
   contentTags: z.array(z.string().min(1).max(60)).max(30).optional(),
   isSensitive: z.boolean().optional(),
   source: z.enum(MEMORY_SOURCES as unknown as [string, ...string[]]).optional(),
+  // Phase 6 — whitelisted sensitive-kind tags. The Zod enum rejects
+  // unknown values at the route boundary before the repo's strict
+  // validator sees them. The Phase 1 schema was NOT .strict() so we
+  // simply whitelist the new field here.
+  sensitiveKinds: z
+    .array(z.enum(SENSITIVE_KINDS as unknown as [string, ...string[]]))
+    .max(SENSITIVE_KINDS.length)
+    .optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -76,10 +85,25 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
+    const fields = Object.keys(parsed.data);
+    // Phase 6 — surface a dedicated audit action when the patch only
+    // touches sensitive_kinds. When the patch touches multiple fields
+    // (including sensitive_kinds), the generic .updated action wins
+    // but the field list still carries the signal.
+    const isSensitiveKindsOnly =
+      fields.length === 1 && fields[0] === 'sensitiveKinds';
     await recordAudit({
       actorId: user.userId,
-      action: 'autobiographer.memory.updated',
-      payload: { memoryId: id, fields: Object.keys(parsed.data) },
+      action: isSensitiveKindsOnly
+        ? 'autobiographer.memory.sensitive_kinds_updated'
+        : 'autobiographer.memory.updated',
+      payload: {
+        memoryId: id,
+        fields,
+        ...(parsed.data.sensitiveKinds !== undefined
+          ? { sensitiveKinds: parsed.data.sensitiveKinds }
+          : {}),
+      },
       projectId: memory.bookId ?? null,
     });
 

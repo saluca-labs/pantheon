@@ -317,6 +317,67 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
       }),
     );
   });
+
+  // ─── Phase 6 — sensitive_kinds patch ───────────────────────────────────
+
+  it('Phase 6 — accepts sensitiveKinds and passes through to repo', async () => {
+    authedUser();
+    memRepoMocks.updateMemory.mockResolvedValue({
+      id: 'm-1',
+      bookId: 'b-1',
+      sensitiveKinds: ['death', 'legal'],
+    });
+    const { PATCH } = await import(
+      '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
+    );
+    const res = await PATCH(
+      jsonReq('http://t/x', 'PATCH', {
+        sensitiveKinds: ['death', 'legal'],
+      }) as any,
+      { params: Promise.resolve({ id: 'm-1' }) },
+    );
+    expect(res.status).toBe(200);
+    expect(memRepoMocks.updateMemory).toHaveBeenCalledWith(
+      'm-1',
+      'u-1',
+      expect.objectContaining({ sensitiveKinds: ['death', 'legal'] }),
+    );
+  });
+
+  it('Phase 6 — rejects unknown sensitiveKinds enum values', async () => {
+    authedUser();
+    const { PATCH } = await import(
+      '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
+    );
+    const res = await PATCH(
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as any,
+      { params: Promise.resolve({ id: 'm-1' }) },
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it('Phase 6 — sensitiveKinds-only patch fires the dedicated audit action', async () => {
+    authedUser();
+    memRepoMocks.updateMemory.mockResolvedValue({
+      id: 'm-1',
+      bookId: 'b-1',
+      sensitiveKinds: ['mental_health'],
+    });
+    const { PATCH } = await import(
+      '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
+    );
+    await PATCH(
+      jsonReq('http://t/x', 'PATCH', {
+        sensitiveKinds: ['mental_health'],
+      }) as any,
+      { params: Promise.resolve({ id: 'm-1' }) },
+    );
+    expect(recordAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'autobiographer.memory.sensitive_kinds_updated',
+      }),
+    );
+  });
 });
 
 // ─── DELETE /memories/[id] ───────────────────────────────────────────────────
