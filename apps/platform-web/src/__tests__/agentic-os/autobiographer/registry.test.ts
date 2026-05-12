@@ -51,8 +51,17 @@ describe('Autobiographer OS registry entry', () => {
     expect(people!.href).toBe('/dashboard/os/autobiographer/people');
   });
 
-  it('lists exactly the four Phase-2 features', () => {
+  // ─── Phase 3 additions ───────────────────────────────────────────────────
+
+  it('has the Phase 3 Voice studio card pointing at /voice', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    expect(mod.features).toHaveLength(4);
+    const voice = mod.features.find((f) => f.label === 'Voice studio');
+    expect(voice).toBeDefined();
+    expect(voice!.href).toBe('/dashboard/os/autobiographer/voice');
+  });
+
+  it('lists exactly the five Phase-3 features', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    expect(mod.features).toHaveLength(5);
   });
 });
