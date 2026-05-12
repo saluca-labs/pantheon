@@ -34,6 +34,8 @@ import { MemoryEditButton } from '@/components/agentic-os/autobiographer/memory-
 import { MemoryPeoplePicker } from '@/components/agentic-os/autobiographer/memory-people-picker';
 import { MemoryThemesSection } from '@/components/agentic-os/autobiographer/memory-themes-section';
 import { VoiceSampleToggle } from '@/components/agentic-os/autobiographer/voice-sample-toggle';
+import { SensitiveKindsBadges } from '@/components/agentic-os/autobiographer/sensitive-kinds-badges';
+import { SensitiveKindsPicker } from '@/components/agentic-os/autobiographer/sensitive-kinds-picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -172,6 +174,10 @@ export default async function MemoryDetailPage({ params }: Props) {
         )}
       </header>
 
+      {memory.sensitiveKinds.length > 0 && (
+        <SensitiveKindsBadges kinds={memory.sensitiveKinds} variant="expanded" />
+      )}
+
       <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
         <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3">
           Memory
@@ -180,6 +186,11 @@ export default async function MemoryDetailPage({ params }: Props) {
           {memory.bodyMarkdown}
         </pre>
       </section>
+
+      <SensitiveKindsPicker
+        endpoint={`/api/tiresias/agentic-os/autobiographer/memories/${memory.id}`}
+        initial={memory.sensitiveKinds}
+      />
 
       <MemoryPeoplePicker
         memoryId={memory.id}

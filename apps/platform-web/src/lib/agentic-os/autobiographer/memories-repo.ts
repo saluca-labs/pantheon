@@ -20,6 +20,10 @@ import {
   normalizePhotoUrls,
   type MemorySource,
 } from './memories';
+import {
+  validateSensitiveKindsStrict,
+  type SensitiveKind,
+} from './sensitive-kinds';
 
 export interface AutobiographerMemory {
   id: string;
@@ -37,6 +41,8 @@ export interface AutobiographerMemory {
   contentTags: string[];
   isSensitive: boolean;
   source: MemorySource;
+  /** Phase 6 — sensitive-kind tags. Empty array when untagged. */
+  sensitiveKinds: SensitiveKind[];
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -56,6 +62,8 @@ export interface CreateMemoryInput {
   contentTags?: string[];
   isSensitive?: boolean;
   source?: MemorySource;
+  /** Phase 6 — sensitive-kind tags (whitelisted enum, validated app-side). */
+  sensitiveKinds?: readonly string[];
   metadata?: Record<string, unknown>;
 }
 
@@ -65,6 +73,7 @@ const MEMORY_COLUMNS = `id, user_id, book_id, title, body_markdown, transcript,
                         audio_url, photo_urls,
                         when_in_life, era_date_estimate, location,
                         emotion_tags, content_tags, is_sensitive, source,
+                        sensitive_kinds,
                         metadata, created_at, updated_at`;
 
 function rowToMemory(row: any): AutobiographerMemory {
@@ -86,6 +95,11 @@ function rowToMemory(row: any): AutobiographerMemory {
     contentTags: Array.isArray(row.content_tags) ? row.content_tags : [],
     isSensitive: Boolean(row.is_sensitive),
     source: (row.source as MemorySource) ?? 'text',
+    sensitiveKinds: Array.isArray(row.sensitive_kinds)
+      ? (row.sensitive_kinds.filter((k: unknown) =>
+          typeof k === 'string',
+        ) as SensitiveKind[])
+      : [],
     metadata: (row.metadata as Record<string, unknown>) ?? {},
     createdAt:
       row.created_at instanceof Date
@@ -226,14 +240,18 @@ export async function createMemory(
   const contentTags = normalizeMemoryTags(data.contentTags ?? []);
   const emotionTags = normalizeMemoryTags(data.emotionTags ?? []);
   const photoUrls = normalizePhotoUrls(data.photoUrls ?? []);
+  const sensitiveKinds = data.sensitiveKinds
+    ? validateSensitiveKindsStrict(data.sensitiveKinds)
+    : [];
 
   await pool.query(
     `INSERT INTO agos_autobiographer_memories
        (id, user_id, book_id, title, body_markdown, transcript,
         audio_url, photo_urls,
         when_in_life, era_date_estimate, location,
-        emotion_tags, content_tags, is_sensitive, source, metadata)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::text[],$9,$10,$11,$12::text[],$13::text[],$14,$15,$16::jsonb)`,
+        emotion_tags, content_tags, is_sensitive, source,
+        sensitive_kinds, metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8::text[],$9,$10,$11,$12::text[],$13::text[],$14,$15,$16::text[],$17::jsonb)`,
     [
       id,
       userId,
@@ -250,6 +268,7 @@ export async function createMemory(
       contentTags,
       data.isSensitive ?? false,
       source,
+      sensitiveKinds,
       JSON.stringify(data.metadata ?? {}),
     ],
   );
@@ -295,6 +314,13 @@ export async function updateMemory(
     ? normalizeMemoryTags(patch.emotionTags)
     : null;
   const photoUrls = patch.photoUrls ? normalizePhotoUrls(patch.photoUrls) : null;
+  const sensitiveKindsProvided = Object.prototype.hasOwnProperty.call(
+    patch,
+    'sensitiveKinds',
+  );
+  const sensitiveKinds = patch.sensitiveKinds
+    ? validateSensitiveKindsStrict(patch.sensitiveKinds)
+    : [];
 
   await pool.query(
     `UPDATE agos_autobiographer_memories
@@ -311,7 +337,8 @@ export async function updateMemory(
             content_tags       = COALESCE($14::text[], content_tags),
             is_sensitive       = COALESCE($15, is_sensitive),
             source             = COALESCE($16, source),
-            metadata           = COALESCE($17::jsonb, metadata),
+            sensitive_kinds    = CASE WHEN $17::boolean THEN $18::text[] ELSE sensitive_kinds END,
+            metadata           = COALESCE($19::jsonb, metadata),
             updated_at         = now()
       WHERE id = $1 AND user_id = $2`,
     [
@@ -331,6 +358,8 @@ export async function updateMemory(
       contentTags,
       patch.isSensitive ?? null,
       patch.source ?? null,
+      sensitiveKindsProvided,
+      sensitiveKinds,
       patch.metadata ? JSON.stringify(patch.metadata) : null,
     ],
   );

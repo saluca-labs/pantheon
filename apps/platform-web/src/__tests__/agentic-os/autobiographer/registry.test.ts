@@ -80,12 +80,32 @@ describe('Autobiographer OS registry entry', () => {
     );
   });
 
-  it('lists exactly the six feature surfaces after Phase 5 (Books, Memory captures, People, Voice studio, Chapters, Timeline)', () => {
+  // ─── Phase 6 additions ───────────────────────────────────────────────────
+
+  it('has the Phase 6 Privacy review feature card pointing at /privacy', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    expect(mod.features).toHaveLength(6);
+    const priv = mod.features.find((f) => f.label === 'Privacy review');
+    expect(priv).toBeDefined();
+    expect(priv!.href).toBe('/dashboard/os/autobiographer/privacy');
+    expect(priv!.description.toLowerCase()).toMatch(
+      /pseudonym|consent|review|privacy/,
+    );
+  });
+
+  it('lists exactly the seven feature surfaces after Phase 6 (… + Privacy review)', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    expect(mod.features).toHaveLength(7);
     const labels = mod.features.map((f) => f.label).sort();
     expect(labels).toEqual(
-      ['Books', 'Chapters', 'Memory captures', 'People', 'Timeline', 'Voice studio'],
+      [
+        'Books',
+        'Chapters',
+        'Memory captures',
+        'People',
+        'Privacy review',
+        'Timeline',
+        'Voice studio',
+      ],
     );
   });
 });

@@ -467,6 +467,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Cross-book timeline of every memory, ordered by year-of-life. Filter by theme, kind, decade, person, or scope to a single book.',
       },
+      {
+        href: '/dashboard/os/autobiographer/privacy',
+        label: 'Privacy review',
+        description:
+          'Per-book consent audit, pseudonym map, and pre-publication review checklist that gates chapter lock + final PDF export.',
+      },
     ],
   },
   {

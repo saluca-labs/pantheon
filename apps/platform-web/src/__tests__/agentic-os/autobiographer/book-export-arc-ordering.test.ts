@@ -59,6 +59,17 @@ vi.mock(
   () => sourcesRepoMocks,
 );
 
+// Phase 6 — PDF export route loads pseudonyms before render. Default
+// the mock to an empty map so Phase 5 assertions keep passing.
+const pseudonymsRepoMocks = {
+  listPseudonymsForBook: vi.fn(),
+  markPseudonymsApplied: vi.fn(),
+};
+vi.mock(
+  '@/lib/agentic-os/autobiographer/pseudonyms-repo',
+  () => pseudonymsRepoMocks,
+);
+
 const renderPdfToBuffer = vi.fn();
 vi.mock('@/lib/agentic-os/_shared/pdf/render', () => ({
   renderPdfToBuffer: (...args: any[]) => renderPdfToBuffer(...args),
@@ -84,6 +95,9 @@ beforeEach(() => {
   for (const m of Object.values(revRepoMocks)) (m as any).mockReset();
   for (const m of Object.values(memoriesRepoMocks)) (m as any).mockReset();
   for (const m of Object.values(sourcesRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(pseudonymsRepoMocks)) (m as any).mockReset();
+  pseudonymsRepoMocks.listPseudonymsForBook.mockResolvedValue([]);
+  pseudonymsRepoMocks.markPseudonymsApplied.mockResolvedValue(0);
 });
 
 function authedUser() {
