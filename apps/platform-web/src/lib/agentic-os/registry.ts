@@ -259,6 +259,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Workshop-global papers + structured authors + per-experiment references.',
       },
+      {
+        href: '/dashboard/os/research/protocols',
+        label: 'Protocols',
+        description:
+          'Workshop-global methods, SOPs, analysis plans, and code pipelines with version-history pinning.',
+      },
+      {
+        href: '/dashboard/os/research/exports',
+        label: 'Reproducibility export',
+        description:
+          'Recent experiment PDF exports — open an experiment and click Export PDF to add a new one.',
+      },
     ],
   },
   {

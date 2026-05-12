@@ -203,6 +203,34 @@ export function experimentSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+// ─── Phase 5 — export eligibility ────────────────────────────────────────────
+
+/**
+ * Pure predicate: does the supplied content count vector indicate the
+ * experiment has ANY content worth exporting? Used by the PDF route to
+ * refuse export on a truly-empty experiment.
+ *
+ * An experiment is empty when EVERY one of its content surfaces
+ * (notebook entries, hypotheses, papers, datasets, protocols) is zero.
+ */
+export interface ExperimentContentCounts {
+  notebookEntries: number;
+  hypotheses: number;
+  papers: number;
+  datasets: number;
+  protocols: number;
+}
+
+export function hasAnyExportContent(counts: ExperimentContentCounts): boolean {
+  return (
+    counts.notebookEntries > 0 ||
+    counts.hypotheses > 0 ||
+    counts.papers > 0 ||
+    counts.datasets > 0 ||
+    counts.protocols > 0
+  );
+}
+
 // ─── Hub-side filter helpers (pure; exported for tests) ──────────────────────
 
 export type StatusFilter = ExperimentStatus | 'all';
