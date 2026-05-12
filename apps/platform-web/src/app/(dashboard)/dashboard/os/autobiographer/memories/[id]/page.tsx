@@ -32,6 +32,7 @@ import { getVoiceSampleByMemory } from '@/lib/agentic-os/autobiographer/voice-sa
 import { MEMORY_SOURCE_LABELS } from '@/lib/agentic-os/autobiographer/memories';
 import { MemoryEditButton } from '@/components/agentic-os/autobiographer/memory-edit-button';
 import { MemoryPeoplePicker } from '@/components/agentic-os/autobiographer/memory-people-picker';
+import { MemoryThemesSection } from '@/components/agentic-os/autobiographer/memory-themes-section';
 import { VoiceSampleToggle } from '@/components/agentic-os/autobiographer/voice-sample-toggle';
 
 export const dynamic = 'force-dynamic';
@@ -185,6 +186,8 @@ export default async function MemoryDetailPage({ params }: Props) {
         linked={linkedPickerPeople}
         available={availablePickerPeople}
       />
+
+      <MemoryThemesSection memoryId={memory.id} />
 
       <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
         <div className="flex items-start justify-between gap-3">

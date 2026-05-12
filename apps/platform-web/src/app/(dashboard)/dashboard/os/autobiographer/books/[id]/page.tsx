@@ -2,10 +2,12 @@
  * Autobiographer OS — per-book detail page.
  *
  * Phase 4 redesign: chapters become a first-class section with status
- * pills, word counts, last-updated stamps, and drag-to-reorder. The
- * "primary arc is default" flag is hardcoded `false` in Phase 4
- * (drag-to-reorder enabled). Phase 5 will flip this gate via a real
- * server-resolved feature flag once arcs ship.
+ * pills, word counts, last-updated stamps, and drag-to-reorder.
+ *
+ * Phase 5 activation: when the book has a primary arc, the chapter
+ * list orders by that arc and the position-reorder handles render in
+ * disabled state. The Arcs section below the chapter list lets the
+ * author create, edit, and re-order arcs (and pick the primary).
  *
  * @license MIT — Tiresias Autobiographer OS Phase 4 (internal).
  */
@@ -33,6 +35,11 @@ import {
 } from '@/lib/agentic-os/autobiographer/chapters-repo';
 import { listRevisionsForChapter } from '@/lib/agentic-os/autobiographer/chapter-revisions-repo';
 import {
+  getPrimaryArcForBook,
+  listArcsForBook,
+} from '@/lib/agentic-os/autobiographer/arcs-repo';
+import { ArcList } from '@/components/agentic-os/autobiographer/arc-list';
+import {
   BOOK_STATUS_LABELS,
   bookPhaseAvg,
 } from '@/lib/agentic-os/autobiographer/books';
@@ -56,11 +63,19 @@ export default async function BookDetailPage({ params }: Props) {
   const book = await getBookWithCounts(id, user.userId);
   if (!book) notFound();
 
-  const [memories, allBooks, chapters, totalWords] = await Promise.all([
+  // Phase 5 activation: when a primary arc exists, chapter list defers
+  // to it for ordering; otherwise we keep the Phase 4 position default.
+  const primaryArc = await getPrimaryArcForBook(book.id, user.userId);
+  const [memories, allBooks, chapters, totalWords, arcs] = await Promise.all([
     listMemoriesForBook(book.id, user.userId, { limit: 100 }),
     listBooks({ userId: user.userId, limit: 50 }),
-    listChaptersForBook({ userId: user.userId, bookId: book.id }),
+    listChaptersForBook({
+      userId: user.userId,
+      bookId: book.id,
+      order: primaryArc ? 'arc' : 'position',
+    }),
     getBookWordCount(book.id, user.userId),
+    listArcsForBook(book.id, user.userId),
   ]);
 
   // Per-chapter revision summary (count + latest word_count). Phase 4
@@ -227,8 +242,22 @@ export default async function BookDetailPage({ params }: Props) {
         </div>
         <BookChapterList
           chapters={chapterCards}
-          primaryArcIsDefault={false}
+          primaryArcIsDefault={Boolean(primaryArc)}
         />
+      </section>
+
+      {/* Arcs */}
+      <section id="arcs">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-base font-semibold text-white">Arcs</h2>
+          <span className="text-xs text-[#94a3b8]">
+            {arcs.length} {arcs.length === 1 ? 'arc' : 'arcs'} ·{' '}
+            {primaryArc
+              ? `Primary: ${primaryArc.title}`
+              : 'No primary arc — chapters order by position'}
+          </span>
+        </div>
+        <ArcList bookId={book.id} arcs={arcs} />
       </section>
 
       {/* Memories */}
