@@ -1,81 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+/**
+ * Business OS — legacy `/contacts` route (DEPRECATED in Phase 1).
+ *
+ * GET passthrough that joins all three Phase-1 resources (people +
+ * organizations + interactions) into the legacy `{people, interactions}`
+ * data shape so the existing `ContactsCrm` client keeps loading until
+ * the page-level redirect to `/dashboard/os/business` is the only path
+ * users take.
+ *
+ * NO POST.  Mutations on this surface were never authoritative — the
+ * client now uses the focused `/people`, `/organizations`, and
+ * `/interactions` routes.  Returns 410 Gone on POST to surface the
+ * deprecation clearly to integrators.
+ *
+ * Future removal: this file will be deleted once the redirect page has
+ * been live for one release and no external integrations still hit it.
+ *
+ * @license MIT — Tiresias Business OS Phase 1 (internal).
+ */
+
+import 'server-only';
+import { NextResponse } from 'next/server';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
-import {
-  listPeople,
-  createPerson,
-  createInteraction,
-  recordAudit,
-} from '@/lib/agentic-os/business/repo';
-import { CONTACT_STAGES, INTERACTION_TYPES } from '@/lib/agentic-os/business/crm';
-
-const PersonBody = z.object({
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().min(1).max(100),
-  email: z.string().email().nullable().optional(),
-  phone: z.string().max(30).nullable().optional(),
-  role: z.string().max(200).nullable().optional(),
-  organizationId: z.string().uuid().nullable().optional(),
-  stage: z.enum(CONTACT_STAGES as unknown as [string, ...string[]]).optional(),
-  tags: z.array(z.string().max(60)).max(20).optional(),
-  notes: z.string().max(5000).nullable().optional(),
-});
-
-const InteractionBody = z.object({
-  personId: z.string().uuid().nullable().optional(),
-  organizationId: z.string().uuid().nullable().optional(),
-  interactionType: z.enum(INTERACTION_TYPES as unknown as [string, ...string[]]),
-  summary: z.string().min(1).max(2000),
-  occurredAt: z.string().datetime().optional(),
-});
+import { listPeople, listOrganizations, listInteractions } from '@/lib/agentic-os/business/repo';
 
 export async function GET() {
   const user = await getCurrentBusinessUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const people = await listPeople(user.userId);
-  return NextResponse.json({ people });
+  const [people, organizations, interactions] = await Promise.all([
+    listPeople(user.userId, { archived: false }),
+    listOrganizations(user.userId, { archived: false }),
+    listInteractions(user.userId, { limit: 50 }),
+  ]);
+  return NextResponse.json({ people, organizations, interactions });
 }
 
-export async function POST(request: NextRequest) {
-  const user = await getCurrentBusinessUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const resource = request.nextUrl.searchParams.get('resource');
-
-  if (resource === 'interactions') {
-    const parsed = InteractionBody.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid body', detail: parsed.error.flatten() }, { status: 400 });
-    }
-    const interaction = await createInteraction({
-      userId: user.userId,
-      personId: parsed.data.personId,
-      organizationId: parsed.data.organizationId,
-      interactionType: parsed.data.interactionType as any,
-      summary: parsed.data.summary,
-      occurredAt: parsed.data.occurredAt,
-    });
-    await recordAudit({ actorId: user.userId, action: 'business.interaction.created', payload: { id: interaction.id } });
-    return NextResponse.json({ interaction }, { status: 201 });
-  }
-
-  // Default: create person
-  const parsed = PersonBody.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid body', detail: parsed.error.flatten() }, { status: 400 });
-  }
-  const person = await createPerson(user.userId, {
-    firstName: parsed.data.firstName,
-    lastName: parsed.data.lastName,
-    email: parsed.data.email,
-    phone: parsed.data.phone,
-    role: parsed.data.role,
-    organizationId: parsed.data.organizationId,
-    stage: parsed.data.stage as any,
-    tags: parsed.data.tags,
-    notes: parsed.data.notes,
-  });
-  await recordAudit({ actorId: user.userId, action: 'business.person.created', payload: { personId: person.id } });
-  return NextResponse.json({ person }, { status: 201 });
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: 'Endpoint removed in Phase 1',
+      detail:
+        'Use /api/tiresias/agentic-os/business/people, /organizations, or /interactions instead.',
+    },
+    { status: 410 },
+  );
 }
