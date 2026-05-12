@@ -366,3 +366,24 @@ export async function listMemoriesForBook(
     offset: args.offset,
   });
 }
+
+/**
+ * Bulk fetch memories by id, filtered by user. Used by the Phase 4 PDF
+ * export route to resolve citation memory ids to display titles in a
+ * single round trip. Returns memories that exist and belong to the
+ * user; silently drops unknown / foreign ids.
+ */
+export async function getMemoriesByIds(
+  ids: readonly string[],
+  userId: string,
+): Promise<AutobiographerMemory[]> {
+  if (ids.length === 0) return [];
+  const pool = getAutobiographerPool();
+  const r = await pool.query(
+    `SELECT ${MEMORY_COLUMNS}
+       FROM agos_autobiographer_memories
+      WHERE id = ANY($1::uuid[]) AND user_id = $2`,
+    [Array.from(new Set(ids)), userId],
+  );
+  return r.rows.map(rowToMemory);
+}

@@ -1,12 +1,13 @@
 /**
  * Autobiographer OS — per-book detail page.
  *
- * Tabs:
- *   - Overview: book meta (cover, status, target date, description)
- *   - Memories: per-book memory list (filtered to this book)
- *   - Chapters: placeholder pointing at the Phase 4 work
+ * Phase 4 redesign: chapters become a first-class section with status
+ * pills, word counts, last-updated stamps, and drag-to-reorder. The
+ * "primary arc is default" flag is hardcoded `false` in Phase 4
+ * (drag-to-reorder enabled). Phase 5 will flip this gate via a real
+ * server-resolved feature flag once arcs ship.
  *
- * @license MIT — Tiresias Autobiographer OS (internal).
+ * @license MIT — Tiresias Autobiographer OS Phase 4 (internal).
  */
 
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import {
   FileText,
   Users,
   Tag as TagIcon,
+  Download,
 } from 'lucide-react';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import {
@@ -26,12 +28,19 @@ import {
 } from '@/lib/agentic-os/autobiographer/books-repo';
 import { listMemoriesForBook } from '@/lib/agentic-os/autobiographer/memories-repo';
 import {
+  listChaptersForBook,
+  getBookWordCount,
+} from '@/lib/agentic-os/autobiographer/chapters-repo';
+import { listRevisionsForChapter } from '@/lib/agentic-os/autobiographer/chapter-revisions-repo';
+import {
   BOOK_STATUS_LABELS,
   bookPhaseAvg,
 } from '@/lib/agentic-os/autobiographer/books';
 import { BOOK_STATUS_COLOR } from '@/components/agentic-os/autobiographer/book-card';
 import { MemoryList } from '@/components/agentic-os/autobiographer/memory-list';
 import { MemoryActions } from '@/components/agentic-os/autobiographer/memory-actions';
+import { BookChapterList } from '@/components/agentic-os/autobiographer/book-chapter-list';
+import { ChapterEditButton } from '@/components/agentic-os/autobiographer/chapter-edit-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,10 +56,36 @@ export default async function BookDetailPage({ params }: Props) {
   const book = await getBookWithCounts(id, user.userId);
   if (!book) notFound();
 
-  const [memories, allBooks] = await Promise.all([
+  const [memories, allBooks, chapters, totalWords] = await Promise.all([
     listMemoriesForBook(book.id, user.userId, { limit: 100 }),
     listBooks({ userId: user.userId, limit: 50 }),
+    listChaptersForBook({ userId: user.userId, bookId: book.id }),
+    getBookWordCount(book.id, user.userId),
   ]);
+
+  // Per-chapter revision summary (count + latest word_count). Phase 4
+  // pulls these in parallel; small N (typically < 30 chapters per book)
+  // keeps this cheap. Phase 5 may consolidate into a single SQL.
+  const chapterRevisions = await Promise.all(
+    chapters.map((c) => listRevisionsForChapter(c.id, user.userId)),
+  );
+
+  const chapterCards = chapters.map((c, i) => {
+    const revs = chapterRevisions[i] ?? [];
+    const latestWordCount = revs[0]?.wordCount ?? 0;
+    return {
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      position: c.position,
+      status: c.status,
+      summary: c.summary,
+      targetWordCount: c.targetWordCount,
+      latestWordCount,
+      revisionCount: revs.length,
+      updatedAt: c.updatedAt,
+    };
+  });
 
   const memoryCards = memories.map((m) => ({
     id: m.id,
@@ -130,6 +165,12 @@ export default async function BookDetailPage({ params }: Props) {
               )}
               <span className="inline-flex items-center gap-1">
                 <FileText className="w-3.5 h-3.5" />
+                {chapters.length}{' '}
+                {chapters.length === 1 ? 'chapter' : 'chapters'} ·{' '}
+                {totalWords.toLocaleString()} words
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5" />
                 {book.memoryCount}{' '}
                 {book.memoryCount === 1 ? 'memory' : 'memories'}
               </span>
@@ -165,7 +206,32 @@ export default async function BookDetailPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Tabs — server-rendered hash-anchored sections (no client tab state) */}
+      {/* Chapters */}
+      <section id="chapters">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-base font-semibold text-white">Chapters</h2>
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/tiresias/agentic-os/autobiographer/books/${book.id}/export.pdf`}
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
+              title="Export the entire book as a PDF"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export book PDF
+            </a>
+            <ChapterEditButton
+              initial={{ bookId: book.id }}
+              variant="primary"
+            />
+          </div>
+        </div>
+        <BookChapterList
+          chapters={chapterCards}
+          primaryArcIsDefault={false}
+        />
+      </section>
+
+      {/* Memories */}
       <section id="memories">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">
@@ -182,28 +248,6 @@ export default async function BookDetailPage({ params }: Props) {
           books={bookOptions}
           scopedBookId={book.id}
         />
-      </section>
-
-      <section id="chapters">
-        <h2 className="text-base font-semibold text-white mb-3">Chapters</h2>
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6">
-          <p className="text-sm font-medium text-white mb-1">
-            Chapters arrive in Phase 4
-          </p>
-          <p className="text-xs text-[#94a3b8] leading-relaxed">
-            Phase 4 introduces the chapter entity scoped to this book, versioned
-            revisions, and the provenance join back to source memories. For
-            now, the legacy{' '}
-            <Link
-              href="/dashboard/os/autobiographer/chapters"
-              className="text-[#4361EE] hover:underline"
-            >
-              chapter editor
-            </Link>{' '}
-            stays available as a single-chapter workspace until that surface
-            ships.
-          </p>
-        </div>
       </section>
     </div>
   );
