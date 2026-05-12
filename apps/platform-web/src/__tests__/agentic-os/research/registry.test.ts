@@ -111,4 +111,28 @@ describe('registry Research OS Phase 1 cards', () => {
     expect(research!.features.find((f) => f.label === 'Hypothesis ledger')).toBeDefined();
     expect(research!.features.find((f) => f.label === 'Experiments hub')).toBeDefined();
   });
+
+  // ─── Phase 6 additions ──────────────────────────────────────────────────
+
+  it('Phase 6: has a Top blockers card pointing at /dashboard/os/research/blockers', () => {
+    const card = research!.features.find((f) => f.label === 'Top blockers');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/research/blockers');
+  });
+
+  it('Phase 6: Top blockers card description mentions milestones + dependencies', () => {
+    const card = research!.features.find((f) => f.label === 'Top blockers')!;
+    expect(card.description.length).toBeGreaterThan(0);
+    expect(card.description.toLowerCase()).toMatch(/milestone|deadline|risk/);
+    expect(card.description.toLowerCase()).toMatch(/dependency|edge|blocks/);
+  });
+
+  it('Phase 6: previous phase cards still present (no regression)', () => {
+    expect(research!.features.find((f) => f.label === 'Protocols')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Reproducibility export')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Literature library')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Lab notebook')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Hypothesis ledger')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Experiments hub')).toBeDefined();
+  });
 });
