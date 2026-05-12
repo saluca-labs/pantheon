@@ -257,7 +257,7 @@ COMMENT ON COLUMN agos_autobiographer_chapter_revisions.author IS
   'Author of this revision: user (hand-typed edit) or coach (ghostwriter-produced draft). CHECK enforces the two-value taxonomy.';
 
 COMMENT ON COLUMN agos_autobiographer_chapter_revisions.citations IS
-  'JSONB array of {paragraph_index:int, memory_ids:[uuid,...]} entries. Phase 4 PDF templates render paragraph-level footnotes from this column.';
+  'JSONB array of paragraph_index + memory_ids entries. Phase 4 PDF templates render paragraph-level footnotes from this column.';
 
 COMMENT ON COLUMN agos_autobiographer_chapter_revisions.coach_session_id IS
   'Phase 7 coach session id when author = ''coach''. No FK because the session table is added later; Phase 7 may add the FK without rewriting Phase 4 routes.';
