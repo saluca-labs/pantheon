@@ -135,4 +135,39 @@ describe('registry Research OS Phase 1 cards', () => {
     expect(research!.features.find((f) => f.label === 'Hypothesis ledger')).toBeDefined();
     expect(research!.features.find((f) => f.label === 'Experiments hub')).toBeDefined();
   });
+
+  // ─── Phase 7 additions ──────────────────────────────────────────────────
+
+  it('Phase 7: has an AI coach card pointing at /dashboard/os/research/coach', () => {
+    const card = research!.features.find((f) => f.label === 'AI coach');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/research/coach');
+  });
+
+  it('Phase 7: AI coach card description mentions the 4 mode names or referral bodies', () => {
+    const card = research!.features.find((f) => f.label === 'AI coach')!;
+    expect(card.description.length).toBeGreaterThan(40);
+    const lower = card.description.toLowerCase();
+    expect(lower).toMatch(
+      /lit reviewer|hypothesis critic|methods advisor|irb|iacuc|ehs/,
+    );
+  });
+
+  it('Phase 7: previous phase cards still present (no regression)', () => {
+    expect(research!.features.find((f) => f.label === 'Top blockers')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Protocols')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Reproducibility export')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Literature library')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Lab notebook')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Hypothesis ledger')).toBeDefined();
+    expect(research!.features.find((f) => f.label === 'Experiments hub')).toBeDefined();
+  });
+
+  it('Phase 7: AI coach href does not collide with any other module', () => {
+    const otherHrefs = AGENTIC_OS_MODULES.filter((m) => m.slug !== 'research')
+      .flatMap((m) => m.features.map((f) => f.href));
+    const coachHref = research!.features.find((f) => f.label === 'AI coach')!
+      .href;
+    expect(otherHrefs).not.toContain(coachHref);
+  });
 });
