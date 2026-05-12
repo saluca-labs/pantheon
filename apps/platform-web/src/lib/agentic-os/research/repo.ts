@@ -30,6 +30,18 @@ export interface HypothesisUpsert {
   status?: HypothesisStatus;
   confidence?: ConfidenceLevel;
   tags?: string[];
+  /** Phase 3: longer-form rationale, markdown. */
+  descriptionMd?: string;
+}
+
+export interface ListHypothesesOpts {
+  /**
+   * Phase 3 archived-filter:
+   *   - true       => include archived rows ONLY
+   *   - false      => exclude archived rows (default)
+   *   - 'all'      => include both active + archived
+   */
+  archived?: boolean | 'all';
 }
 
 function rowToHypothesis(row: any): Hypothesis {
@@ -44,22 +56,47 @@ function rowToHypothesis(row: any): Hypothesis {
     confidence: row.confidence as ConfidenceLevel,
     tags: row.tags ?? [],
     experimentIds: row.experiment_ids ?? [],
+    // Phase 3 additive fields. The columns are ALTER-added in 0050; we
+    // expose them defensively so a missing column (pre-migration) still
+    // hydrates a usable row.
+    descriptionMd: row.description_md ?? '',
+    archivedAt:
+      row.archived_at == null
+        ? null
+        : row.archived_at instanceof Date
+          ? row.archived_at.toISOString()
+          : String(row.archived_at),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };
 }
 
-export async function listHypotheses(userId: string): Promise<Hypothesis[]> {
+const HYPOTHESIS_COLUMNS = `h.id, h.user_id, h.title, h.if_clause, h.then_clause,
+                            h.because_clause, h.status, h.confidence, h.tags,
+                            h.description_md, h.archived_at,
+                            h.created_at, h.updated_at`;
+
+export async function listHypotheses(
+  userId: string,
+  opts: ListHypothesesOpts = {},
+): Promise<Hypothesis[]> {
   const pool = getResearchPool();
+  const where: string[] = ['h.user_id = $1'];
+  if (opts.archived === true) {
+    where.push('h.archived_at IS NOT NULL');
+  } else if (opts.archived === 'all') {
+    // no filter
+  } else {
+    where.push('h.archived_at IS NULL');
+  }
   const r = await pool.query(
-    `SELECT h.id, h.user_id, h.title, h.if_clause, h.then_clause, h.because_clause,
-            h.status, h.confidence, h.tags, h.created_at, h.updated_at,
+    `SELECT ${HYPOTHESIS_COLUMNS},
             COALESCE(
               (SELECT jsonb_agg(e.id) FROM agos_research_experiments e WHERE e.hypothesis_id = h.id),
               '[]'::jsonb
             ) AS experiment_ids
        FROM agos_research_hypotheses h
-      WHERE h.user_id = $1
+      WHERE ${where.join(' AND ')}
       ORDER BY h.updated_at DESC`,
     [userId],
   );
@@ -69,8 +106,7 @@ export async function listHypotheses(userId: string): Promise<Hypothesis[]> {
 export async function getHypothesis(id: string, userId: string): Promise<Hypothesis | null> {
   const pool = getResearchPool();
   const r = await pool.query(
-    `SELECT h.id, h.user_id, h.title, h.if_clause, h.then_clause, h.because_clause,
-            h.status, h.confidence, h.tags, h.created_at, h.updated_at,
+    `SELECT ${HYPOTHESIS_COLUMNS},
             COALESCE(
               (SELECT jsonb_agg(e.id) FROM agos_research_experiments e WHERE e.hypothesis_id = h.id),
               '[]'::jsonb
@@ -88,11 +124,14 @@ export async function createHypothesis(userId: string, data: HypothesisUpsert): 
   const id = randomUUID();
   await pool.query(
     `INSERT INTO agos_research_hypotheses
-       (id, user_id, title, if_clause, then_clause, because_clause, status, confidence, tags)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
+       (id, user_id, title, if_clause, then_clause, because_clause,
+        status, confidence, tags, description_md)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10)`,
     [
       id, userId, data.title, data.ifClause, data.thenClause, data.becauseClause,
-      data.status ?? 'draft', data.confidence ?? 'medium', JSON.stringify(data.tags ?? []),
+      data.status ?? 'draft', data.confidence ?? 'medium',
+      JSON.stringify(data.tags ?? []),
+      data.descriptionMd ?? '',
     ],
   );
   const h = await getHypothesis(id, userId);
@@ -115,6 +154,7 @@ export async function updateHypothesis(
             status        = COALESCE($7, status),
             confidence    = COALESCE($8, confidence),
             tags          = COALESCE($9::jsonb, tags),
+            description_md = COALESCE($10, description_md),
             updated_at    = now()
       WHERE id = $1 AND user_id = $2`,
     [
@@ -122,9 +162,67 @@ export async function updateHypothesis(
       patch.title ?? null, patch.ifClause ?? null, patch.thenClause ?? null,
       patch.becauseClause ?? null, patch.status ?? null, patch.confidence ?? null,
       patch.tags ? JSON.stringify(patch.tags) : null,
+      patch.descriptionMd ?? null,
     ],
   );
   return getHypothesis(id, userId);
+}
+
+// ─── Phase 3: hypothesis archive / restore ─────────────────────────────────
+
+/**
+ * Soft-archive a hypothesis. Sets `archived_at = now()`. Returns the
+ * updated row, or null if the hypothesis doesn't exist for this user.
+ * If the hypothesis is already archived, the row is returned unchanged
+ * (idempotent — the route layer can short-circuit if it wants).
+ */
+export async function archiveHypothesis(
+  id: string,
+  userId: string,
+): Promise<Hypothesis | null> {
+  const pool = getResearchPool();
+  await pool.query(
+    `UPDATE agos_research_hypotheses
+        SET archived_at = now(),
+            updated_at  = now()
+      WHERE id = $1 AND user_id = $2
+        AND archived_at IS NULL`,
+    [id, userId],
+  );
+  return getHypothesis(id, userId);
+}
+
+/**
+ * Restore a soft-archived hypothesis. Clears `archived_at`. Returns:
+ *   - null  when the hypothesis doesn't exist for this user.
+ *   - { hypothesis, alreadyActive: true }  when the row was already
+ *     active (the route translates this to 400).
+ *   - { hypothesis, alreadyActive: false } on a successful restore.
+ */
+export async function restoreHypothesis(
+  id: string,
+  userId: string,
+): Promise<
+  | { hypothesis: Hypothesis; alreadyActive: false }
+  | { hypothesis: Hypothesis; alreadyActive: true }
+  | null
+> {
+  const before = await getHypothesis(id, userId);
+  if (!before) return null;
+  if (before.archivedAt == null) {
+    return { hypothesis: before, alreadyActive: true };
+  }
+  const pool = getResearchPool();
+  await pool.query(
+    `UPDATE agos_research_hypotheses
+        SET archived_at = NULL,
+            updated_at  = now()
+      WHERE id = $1 AND user_id = $2`,
+    [id, userId],
+  );
+  const after = await getHypothesis(id, userId);
+  if (!after) return null;
+  return { hypothesis: after, alreadyActive: false };
 }
 
 // ─── Experiments — legacy hypothesis-keyed view (kept for back-compat) ────

@@ -1,8 +1,12 @@
 /**
  * Research OS — /api/tiresias/agentic-os/research/hypotheses
  *
- * GET  — list all hypotheses for the authenticated user.
- * POST — create a new hypothesis.
+ * GET  — list hypotheses for the authenticated user.
+ *        Query string:
+ *          ?archived=true  include archived rows ONLY
+ *          ?archived=all   include both active + archived
+ *          (default)       active rows only
+ * POST — create a new hypothesis. Phase 3 adds optional `descriptionMd`.
  *
  * @license MIT — Tiresias Research OS (internal).
  */
@@ -20,13 +24,21 @@ const HypothesisBody = z.object({
   status: z.enum(['draft', 'active', 'testing', 'supported', 'refuted', 'inconclusive', 'archived']).optional(),
   confidence: z.enum(['low', 'medium', 'high']).optional(),
   tags: z.array(z.string().min(1).max(60)).max(20).optional(),
+  descriptionMd: z.string().max(20_000).optional(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getCurrentResearchUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const hypotheses = await listHypotheses(user.userId);
+  const url = new URL(request.url);
+  const archivedParam = url.searchParams.get('archived');
+  let archived: boolean | 'all' | undefined;
+  if (archivedParam === 'true') archived = true;
+  else if (archivedParam === 'all') archived = 'all';
+  else archived = false;
+
+  const hypotheses = await listHypotheses(user.userId, { archived });
   return NextResponse.json({ hypotheses });
 }
 
