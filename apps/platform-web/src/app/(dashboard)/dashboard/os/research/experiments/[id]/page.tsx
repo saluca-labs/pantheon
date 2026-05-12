@@ -28,8 +28,9 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
-import { getExperiment } from '@/lib/agentic-os/research/repo';
+import { getExperiment, listHypotheses } from '@/lib/agentic-os/research/repo';
 import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
+import { listLinkedHypothesesForExperiment } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
 import {
   EXPERIMENT_STATUS_LABELS,
   experimentPhaseAvg,
@@ -37,6 +38,7 @@ import {
 import { ExperimentPhaseProgress } from '@/components/agentic-os/research/experiment-phase-progress';
 import { STATUS_COLOR } from '@/components/agentic-os/research/experiment-card';
 import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
+import { ExperimentHypothesesTab } from '@/components/agentic-os/research/experiment-hypotheses-tab';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +52,7 @@ type TabKey = 'overview' | 'notebook' | 'hypotheses';
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
   { key: 'notebook', label: 'Notebook', icon: BookOpen },
-  { key: 'hypotheses', label: 'Hypotheses', icon: Lightbulb, phase: 'Phase 3' },
+  { key: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -82,6 +84,15 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
     activeTab === 'notebook'
       ? await listNotebookEntriesForExperiment(experiment.id, user.userId, {})
       : [];
+
+  // Phase 3 — hydrate the linked hypotheses + the workshop-global
+  // candidate ledger for the picker when the Hypotheses tab is active.
+  const [linkedHypotheses, hypothesisCandidates] = activeTab === 'hypotheses'
+    ? await Promise.all([
+        listLinkedHypothesesForExperiment(experiment.id, user.userId),
+        listHypotheses(user.userId, { archived: false }),
+      ])
+    : [[], []];
 
   return (
     <div className="max-w-5xl">
@@ -238,22 +249,34 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
       )}
 
       {activeTab === 'hypotheses' && (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#0f1117] p-8 text-center">
-          <Lightbulb className="w-10 h-10 text-[#4361EE]/40 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-white mb-1">Linked hypotheses</h3>
-          <p className="text-sm text-[#94a3b8] mb-4">
-            The experiment ↔ hypothesis many-to-many surface ships in{' '}
-            <span className="text-white font-medium">Phase 3</span>. Until then, browse the
-            workshop-wide ledger.
-          </p>
-          <Link
-            href="/dashboard/os/research/hypotheses"
-            className="inline-flex items-center gap-1.5 text-sm text-[#4361EE] hover:underline"
-          >
-            <BookOpen className="w-4 h-4" />
-            Open hypothesis ledger
-          </Link>
-        </div>
+        <section aria-labelledby="hypotheses-heading">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="hypotheses-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <Lightbulb className="w-4 h-4 text-[#4361EE]" />
+                Linked hypotheses
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Link workshop-wide hypotheses this experiment tests, motivates, or relates to.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/os/research/hypotheses"
+              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Open hypothesis ledger
+            </Link>
+          </div>
+          <ExperimentHypothesesTab
+            experimentId={experiment.id}
+            initialLinked={linkedHypotheses}
+            candidates={hypothesisCandidates}
+          />
+        </section>
       )}
     </div>
   );
