@@ -102,7 +102,7 @@ ALTER TABLE agos_research_hypotheses
     ADD COLUMN IF NOT EXISTS archived_at    TIMESTAMPTZ;
 
 COMMENT ON COLUMN agos_research_hypotheses.experiment_id IS
-  'Legacy soft pointer to a "primary" experiment. The N:M join table agos_research_experiment_hypotheses is the authoritative linkage. No FK per platform v0.1.30 contract.';
+  'Legacy soft pointer to a "primary" experiment. The many-to-many join table agos_research_experiment_hypotheses is the authoritative linkage. No FK per platform v0.1.30 contract.';
 
 COMMENT ON COLUMN agos_research_hypotheses.description_md IS
   'Longer-form rationale beyond the if/then/because clauses. Markdown. Rendered server-side via react-markdown WITHOUT rehype-raw (XSS guard).';
@@ -189,7 +189,7 @@ CREATE INDEX IF NOT EXISTS agos_research_hypothesis_evidence_source_idx
     ON agos_research_hypothesis_evidence (source_kind, source_id)
     WHERE source_id IS NOT NULL;
 
--- 5. agos_research_experiment_hypotheses (N:M join) --------------------------
+-- 5. agos_research_experiment_hypotheses (many-to-many join) ----------------
 CREATE TABLE IF NOT EXISTS agos_research_experiment_hypotheses (
     id            UUID PRIMARY KEY,
     experiment_id UUID NOT NULL,
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS agos_research_experiment_hypotheses (
 );
 
 COMMENT ON TABLE agos_research_experiment_hypotheses IS
-  'N:M join between experiments and hypotheses. One experiment can test multiple hypotheses; one hypothesis can be tested across multiple experiments. Different roles between the same pair are allowed (e.g. tests + motivates).';
+  'Many-to-many join between experiments and hypotheses. One experiment can test multiple hypotheses; one hypothesis can be tested across multiple experiments. Different roles between the same pair are allowed (e.g. tests + motivates).';
 
 COMMENT ON COLUMN agos_research_experiment_hypotheses.experiment_id IS
   'Soft pointer to agos_research_experiments(id). No FK per platform v0.1.30 contract; the BFF route layer enforces ownership via JOIN.';
