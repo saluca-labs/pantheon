@@ -2,15 +2,14 @@
  * Research OS — Experiment detail page.
  *
  * Per-experiment landing page. Header carries cover image, name, status,
- * target date, tags. Tab strip mirrors what the plan locks in for later
- * phases:
+ * target date, tags, and (Phase 5) the Export PDF button. Tab strip:
  *
  *   - Overview   — phase tracker + description + stats (Phase 1)
- *   - Notebook   — placeholder, ships Phase 2
- *   - Hypotheses — placeholder, ships Phase 3
- *
- * Tabs render placeholders pointing at the relevant plan phase until
- * the underlying work lands.
+ *   - Notebook   — lab notebook timeline (Phase 2)
+ *   - Hypotheses — workshop-wide hypothesis ledger join (Phase 3)
+ *   - Literature — paper references (Phase 4)
+ *   - Datasets   — per-experiment dataset pointers (Phase 5)
+ *   - Protocols  — pinned protocol revisions (Phase 5)
  *
  * @license MIT — Tiresias Research OS (internal).
  */
@@ -26,12 +25,17 @@ import {
   Layers,
   BookOpen,
   Lightbulb,
+  Database,
+  FileText,
+  BookOpenText,
 } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { getExperiment, listHypotheses } from '@/lib/agentic-os/research/repo';
 import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
 import { listLinkedHypothesesForExperiment } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
 import { listReferencesForExperiment } from '@/lib/agentic-os/research/experiment-references-repo';
+import { listDatasetsForExperiment } from '@/lib/agentic-os/research/datasets-repo';
+import { listProtocolsForExperiment } from '@/lib/agentic-os/research/experiment-protocols-repo';
 import {
   EXPERIMENT_STATUS_LABELS,
   experimentPhaseAvg,
@@ -41,7 +45,10 @@ import { STATUS_COLOR } from '@/components/agentic-os/research/experiment-card';
 import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
 import { ExperimentHypothesesTab } from '@/components/agentic-os/research/experiment-hypotheses-tab';
 import { PaperReferenceLinker } from '@/components/agentic-os/research/paper-reference-linker';
-import { BookOpenText } from 'lucide-react';
+import { DatasetList } from '@/components/agentic-os/research/dataset-list';
+import { ExperimentProtocolLinker } from '@/components/agentic-os/research/experiment-protocol-linker';
+import { ExperimentProtocolPinnedRow } from '@/components/agentic-os/research/experiment-protocol-pinned-row';
+import { ExperimentExportPdfButton } from '@/components/agentic-os/research/experiment-export-pdf-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,13 +57,21 @@ interface Props {
   searchParams: Promise<{ tab?: string }>;
 }
 
-type TabKey = 'overview' | 'notebook' | 'hypotheses' | 'literature';
+type TabKey =
+  | 'overview'
+  | 'notebook'
+  | 'hypotheses'
+  | 'literature'
+  | 'datasets'
+  | 'protocols';
 
-const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
+const TABS: { key: TabKey; label: string; icon: typeof Layers }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
   { key: 'notebook', label: 'Notebook', icon: BookOpen },
   { key: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
   { key: 'literature', label: 'Literature', icon: BookOpenText },
+  { key: 'datasets', label: 'Datasets', icon: Database },
+  { key: 'protocols', label: 'Protocols', icon: FileText },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -71,7 +86,9 @@ function isTabKey(value: string | undefined): value is TabKey {
     value === 'overview' ||
     value === 'notebook' ||
     value === 'hypotheses' ||
-    value === 'literature'
+    value === 'literature' ||
+    value === 'datasets' ||
+    value === 'protocols'
   );
 }
 
@@ -94,8 +111,6 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
       ? await listNotebookEntriesForExperiment(experiment.id, user.userId, {})
       : [];
 
-  // Phase 3 — hydrate the linked hypotheses + the workshop-global
-  // candidate ledger for the picker when the Hypotheses tab is active.
   const [linkedHypotheses, hypothesisCandidates] = activeTab === 'hypotheses'
     ? await Promise.all([
         listLinkedHypothesesForExperiment(experiment.id, user.userId),
@@ -103,10 +118,19 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
       ])
     : [[], []];
 
-  // Phase 4 — hydrate paper references when the Literature tab is active.
   const literatureReferences =
     activeTab === 'literature'
       ? await listReferencesForExperiment(experiment.id, user.userId)
+      : [];
+
+  const datasets =
+    activeTab === 'datasets'
+      ? await listDatasetsForExperiment(experiment.id, user.userId, { limit: 200 })
+      : [];
+
+  const protocolPins =
+    activeTab === 'protocols'
+      ? await listProtocolsForExperiment(experiment.id, user.userId)
       : [];
 
   return (
@@ -165,6 +189,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               </div>
             )}
           </div>
+          <ExperimentExportPdfButton experimentId={experiment.id} />
         </div>
       </div>
 
@@ -185,11 +210,6 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             >
               <Icon className="w-4 h-4" />
               {tab.label}
-              {tab.phase && (
-                <span className="text-[9px] uppercase tracking-wide text-[#94a3b8] ml-1">
-                  ({tab.phase})
-                </span>
-              )}
             </Link>
           );
         })}
@@ -197,15 +217,12 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
 
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Phase tracker */}
           <div className="lg:col-span-2 space-y-3">
             <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
               Phase progress
             </h2>
             <ExperimentPhaseProgress phaseProgress={experiment.phaseProgress} />
           </div>
-
-          {/* Stats */}
           <div className="space-y-4">
             <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
               <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
@@ -322,6 +339,73 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             experimentId={experiment.id}
             initialReferences={literatureReferences}
           />
+        </section>
+      )}
+
+      {activeTab === 'datasets' && (
+        <section aria-labelledby="datasets-heading">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="datasets-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <Database className="w-4 h-4 text-[#4361EE]" />
+                Datasets
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Per-experiment dataset pointers. URL-only — the binary content
+                is governed by the MCP storage-transfer contract.
+              </p>
+            </div>
+          </div>
+          <DatasetList experimentId={experiment.id} initialDatasets={datasets} />
+        </section>
+      )}
+
+      {activeTab === 'protocols' && (
+        <section aria-labelledby="protocols-heading">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="protocols-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4 text-[#4361EE]" />
+                Pinned protocols
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Pin a workshop-global protocol at a frozen version string —
+                reproducibility anchor for this experiment.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/os/research/protocols"
+              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Open protocols library
+            </Link>
+          </div>
+          <div className="space-y-3">
+            <ExperimentProtocolLinker experimentId={experiment.id} />
+            {protocolPins.length === 0 ? (
+              <p
+                className="text-sm text-[#94a3b8] italic py-6 text-center"
+                data-testid="protocols-tab-empty"
+              >
+                No protocols pinned yet.
+              </p>
+            ) : (
+              protocolPins.map((pin) => (
+                <ExperimentProtocolPinnedRow
+                  key={pin.link.id}
+                  experimentId={experiment.id}
+                  pin={pin}
+                />
+              ))
+            )}
+          </div>
         </section>
       )}
     </div>
