@@ -31,6 +31,7 @@ import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { getExperiment, listHypotheses } from '@/lib/agentic-os/research/repo';
 import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
 import { listLinkedHypothesesForExperiment } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
+import { listReferencesForExperiment } from '@/lib/agentic-os/research/experiment-references-repo';
 import {
   EXPERIMENT_STATUS_LABELS,
   experimentPhaseAvg,
@@ -39,6 +40,8 @@ import { ExperimentPhaseProgress } from '@/components/agentic-os/research/experi
 import { STATUS_COLOR } from '@/components/agentic-os/research/experiment-card';
 import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
 import { ExperimentHypothesesTab } from '@/components/agentic-os/research/experiment-hypotheses-tab';
+import { PaperReferenceLinker } from '@/components/agentic-os/research/paper-reference-linker';
+import { BookOpenText } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,12 +50,13 @@ interface Props {
   searchParams: Promise<{ tab?: string }>;
 }
 
-type TabKey = 'overview' | 'notebook' | 'hypotheses';
+type TabKey = 'overview' | 'notebook' | 'hypotheses' | 'literature';
 
 const TABS: { key: TabKey; label: string; icon: typeof Layers; phase?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Layers },
   { key: 'notebook', label: 'Notebook', icon: BookOpen },
   { key: 'hypotheses', label: 'Hypotheses', icon: Lightbulb },
+  { key: 'literature', label: 'Literature', icon: BookOpenText },
 ];
 
 function daysUntil(target: string | null): number | null {
@@ -63,7 +67,12 @@ function daysUntil(target: string | null): number | null {
 }
 
 function isTabKey(value: string | undefined): value is TabKey {
-  return value === 'overview' || value === 'notebook' || value === 'hypotheses';
+  return (
+    value === 'overview' ||
+    value === 'notebook' ||
+    value === 'hypotheses' ||
+    value === 'literature'
+  );
 }
 
 export default async function ResearchExperimentDetailPage({ params, searchParams }: Props) {
@@ -93,6 +102,12 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
         listHypotheses(user.userId, { archived: false }),
       ])
     : [[], []];
+
+  // Phase 4 — hydrate paper references when the Literature tab is active.
+  const literatureReferences =
+    activeTab === 'literature'
+      ? await listReferencesForExperiment(experiment.id, user.userId)
+      : [];
 
   return (
     <div className="max-w-5xl">
@@ -275,6 +290,37 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             experimentId={experiment.id}
             initialLinked={linkedHypotheses}
             candidates={hypothesisCandidates}
+          />
+        </section>
+      )}
+
+      {activeTab === 'literature' && (
+        <section aria-labelledby="literature-heading">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div>
+              <h2
+                id="literature-heading"
+                className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
+              >
+                <BookOpenText className="w-4 h-4 text-[#4361EE]" />
+                Literature references
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Link papers from the workshop-global library to this experiment.
+                Different relevance values for the same paper are allowed.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/os/research/library"
+              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+            >
+              <BookOpenText className="w-3.5 h-3.5" />
+              Open library
+            </Link>
+          </div>
+          <PaperReferenceLinker
+            experimentId={experiment.id}
+            initialReferences={literatureReferences}
           />
         </section>
       )}
