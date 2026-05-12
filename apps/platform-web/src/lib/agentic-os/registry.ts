@@ -271,6 +271,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Recent experiment PDF exports — open an experiment and click Export PDF to add a new one.',
       },
+      {
+        href: '/dashboard/os/research/blockers',
+        label: 'Top blockers',
+        description:
+          'Workshop-wide milestones at risk + open blocks dependency edges across all experiments.',
+      },
     ],
   },
   {
