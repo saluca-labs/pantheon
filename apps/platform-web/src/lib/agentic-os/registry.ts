@@ -277,6 +277,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Workshop-wide milestones at risk + open blocks dependency edges across all experiments.',
       },
+      {
+        href: '/dashboard/os/research/coach',
+        label: 'AI coach',
+        description:
+          'Research-aware AI coach across lit reviewer, hypothesis critic, methods advisor (with IRB / IACUC / EHS referral), and general modes. Streaming Anthropic with mode-scoped context.',
+      },
     ],
   },
   {
