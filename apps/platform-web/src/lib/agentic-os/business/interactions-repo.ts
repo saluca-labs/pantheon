@@ -16,7 +16,7 @@ import {
   type InteractionsListOpts,
 } from './interactions';
 
-const INTERACTION_COLUMNS = `id, user_id, person_id, organization_id,
+const INTERACTION_COLUMNS = `id, user_id, person_id, organization_id, deal_id,
                              interaction_type, summary, occurred_at, created_at`;
 
 function toIso(v: unknown): string {
@@ -31,6 +31,7 @@ function rowToInteraction(row: any): Interaction {
     userId: row.user_id,
     personId: row.person_id ?? null,
     organizationId: row.organization_id ?? null,
+    dealId: row.deal_id ?? null,
     interactionType: row.interaction_type as InteractionType,
     summary: row.summary,
     occurredAt: toIso(row.occurred_at),
@@ -55,6 +56,10 @@ export async function listInteractions(
   if (opts.organizationId) {
     params.push(opts.organizationId);
     where.push(`organization_id = $${params.length}`);
+  }
+  if (opts.dealId) {
+    params.push(opts.dealId);
+    where.push(`deal_id = $${params.length}`);
   }
   if (opts.interactionType) {
     if (!(INTERACTION_TYPES as readonly string[]).includes(opts.interactionType)) {
@@ -121,13 +126,14 @@ export async function createInteraction(
   const occurredAt = data.occurredAt ?? new Date().toISOString();
   await pool.query(
     `INSERT INTO agos_business_interactions
-       (id, user_id, person_id, organization_id, interaction_type, summary, occurred_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+       (id, user_id, person_id, organization_id, deal_id, interaction_type, summary, occurred_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
     [
       id,
       userId,
       data.personId ?? null,
       data.organizationId ?? null,
+      data.dealId ?? null,
       data.interactionType,
       data.summary,
       occurredAt,
@@ -169,6 +175,11 @@ export async function updateInteraction(
     params.push(patch.organizationId);
     n += 1;
     set.push(`organization_id = $${n}`);
+  }
+  if (patch.dealId !== undefined) {
+    params.push(patch.dealId);
+    n += 1;
+    set.push(`deal_id = $${n}`);
   }
   if (patch.interactionType !== undefined) {
     params.push(patch.interactionType);

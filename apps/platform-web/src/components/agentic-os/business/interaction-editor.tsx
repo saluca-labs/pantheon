@@ -16,6 +16,7 @@ import {
 interface Props {
   defaultPersonId?: string | null;
   defaultOrganizationId?: string | null;
+  defaultDealId?: string | null;
   onCreated?: (interaction: Interaction) => void;
 }
 
@@ -25,6 +26,7 @@ const inputCls =
 export function InteractionEditor({
   defaultPersonId = null,
   defaultOrganizationId = null,
+  defaultDealId = null,
   onCreated,
 }: Props) {
   const [type, setType] = useState<InteractionType>('note');
@@ -44,6 +46,7 @@ export function InteractionEditor({
       const body = {
         person_id: defaultPersonId || null,
         organization_id: defaultOrganizationId || null,
+        deal_id: defaultDealId || null,
         interaction_type: type,
         summary: summary.trim(),
       };

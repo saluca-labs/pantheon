@@ -64,6 +64,19 @@ export {
   updateSettings,
 } from './settings-repo';
 
+export {
+  listDeals,
+  getDeal,
+  createDeal,
+  updateDeal,
+  archiveDeal,
+  restoreDeal,
+  transitionDealStage,
+  validateDealOwnership,
+  validateContactOwnership,
+  validateOrganizationOwnership,
+} from './deals-repo';
+
 interface LegacyRecordAuditArgs {
   actorId: string;
   action: string;
