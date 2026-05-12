@@ -450,6 +450,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
           'Workshop-global people directory with consent state, aliases, and Phase 6 redaction inputs.',
       },
       {
+        href: '/dashboard/os/autobiographer/voice',
+        label: 'Voice studio',
+        description:
+          'Curate voice samples and build a versioned voice profile the Phase 7 chapter drafter consumes.',
+      },
+      {
         href: '/dashboard/os/autobiographer/chapters',
         label: 'Chapter capture',
         description:
