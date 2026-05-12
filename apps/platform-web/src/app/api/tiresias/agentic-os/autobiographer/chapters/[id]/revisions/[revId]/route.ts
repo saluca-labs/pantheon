@@ -30,6 +30,7 @@ import {
   updateRevision,
 } from '@/lib/agentic-os/autobiographer/chapter-revisions-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
+import { SENSITIVE_KINDS } from '@/lib/agentic-os/autobiographer/sensitive-kinds';
 
 const CitationSchema = z.object({
   paragraph_index: z.number().int().min(0).max(100_000).optional(),
@@ -38,16 +39,20 @@ const CitationSchema = z.object({
   memoryIds: z.array(z.string().uuid()).max(50).optional(),
 });
 
-const PatchBody = z
-  .object({
-    bodyText: z.string().max(REVISION_BODY_MAX).optional(),
-    summary: z.string().max(REVISION_SUMMARY_MAX).nullable().optional(),
-    citations: z.array(CitationSchema).max(REVISION_CITATIONS_MAX).optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
-  })
-  // Phase 6 reserves `sensitive_kinds`. Reject unknown fields so a
-  // misconfigured client doesn't silently dead-letter.
-  .strict();
+// Phase 6: the Phase 4 .strict() seam is removed. `sensitive_kinds`
+// is now the canonical new field; future-phase fields will be added
+// here when they ship. No .strict() so a forward-rolled client (e.g.
+// Phase 7 coach metadata) doesn't get rejected at this gate.
+const PatchBody = z.object({
+  bodyText: z.string().max(REVISION_BODY_MAX).optional(),
+  summary: z.string().max(REVISION_SUMMARY_MAX).nullable().optional(),
+  citations: z.array(CitationSchema).max(REVISION_CITATIONS_MAX).optional(),
+  sensitiveKinds: z
+    .array(z.enum(SENSITIVE_KINDS as unknown as [string, ...string[]]))
+    .max(SENSITIVE_KINDS.length)
+    .optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
 
 interface Props {
   params: Promise<{ id: string; revId: string }>;
@@ -94,15 +99,23 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  const fields = Object.keys(d);
+  const isSensitiveKindsOnly =
+    fields.length === 1 && fields[0] === 'sensitiveKinds';
   await recordAudit({
     actorId: user.userId,
-    action: 'autobiographer.chapter_revision.updated',
+    action: isSensitiveKindsOnly
+      ? 'autobiographer.chapter_revision.sensitive_kinds_updated'
+      : 'autobiographer.chapter_revision.updated',
     payload: {
       chapterId,
       bookId: chapter.bookId,
       revisionId: revId,
       version: revision.version,
-      fields: Object.keys(d),
+      fields,
+      ...(d.sensitiveKinds !== undefined
+        ? { sensitiveKinds: d.sensitiveKinds }
+        : {}),
     },
     projectId: chapter.bookId,
   });
