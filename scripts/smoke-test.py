@@ -165,12 +165,16 @@ AGENTIC_OS_PROBES: dict[str, dict[str, Any]] = {
         },
     },
     "business": {
-        "path": "/api/tiresias/agentic-os/business/contacts",
+        # Phase 1 split the legacy /contacts ledger into three top-level
+        # resources (people/orgs/interactions). Smoke probe targets the
+        # new /people endpoint; body shape switched to the snake_case
+        # contract the Phase 1 zod validator expects.
+        "path": "/api/tiresias/agentic-os/business/people",
         "key": "people",
         "write": {
             "method": "POST",
-            "path": "/api/tiresias/agentic-os/business/contacts",
-            "body": {"firstName": "Smoke", "lastName": "Tester"},
+            "path": "/api/tiresias/agentic-os/business/people",
+            "body": {"first_name": "Smoke", "last_name": "Tester"},
             "response_key": "person",
             "verify": "list_grew",
         },

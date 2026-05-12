@@ -1,38 +1,33 @@
-import Link from 'next/link';
-import { ArrowLeft, Briefcase } from 'lucide-react';
-import { redirect } from 'next/navigation';
-import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
-import { listPeople, listInteractions } from '@/lib/agentic-os/business/repo';
-import { ContactsCrm } from '@/components/agentic-os/business/contacts-crm';
+/**
+ * Business OS — DEPRECATED contacts page.
+ *
+ * Phase 1 split the single contacts page into People / Organizations /
+ * Recent activity at the new hub.  This page renders a brief loading
+ * state and immediately redirects to `/dashboard/os/business`.
+ *
+ * Future removal: this file will be deleted once the redirect has been
+ * live for one release.  Kept here to preserve any old external links.
+ *
+ * @license MIT — Tiresias Business OS Phase 1 (internal).
+ */
+
+import { ContactsRedirect } from './contacts-redirect';
 
 export const dynamic = 'force-dynamic';
 
-export default async function BusinessContactsPage() {
-  const user = await getCurrentBusinessUser();
-  if (!user) redirect('/login');
-
-  const people = await listPeople(user.userId);
-  const interactions = await listInteractions(user.userId);
-
+export default function DeprecatedContactsPage() {
   return (
-    <div className="max-w-4xl">
-      <Link
-        href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Business OS
-      </Link>
-
-      <div className="flex items-center gap-3 mb-1">
-        <Briefcase className="w-6 h-6 text-[#4361EE]" />
-        <h1 className="text-2xl font-semibold text-white">Contacts CRM</h1>
+    <div className="max-w-2xl">
+      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 text-center">
+        <h1 className="text-lg font-semibold text-white mb-2">
+          Contacts CRM has moved
+        </h1>
+        <p className="text-sm text-[#94a3b8] mb-4">
+          People, organizations, and interactions now live at the new
+          Business OS hub.  Taking you there now…
+        </p>
+        <ContactsRedirect />
       </div>
-      <p className="text-sm text-[#94a3b8] mb-6">
-        Manage people, organizations, and log interactions across your sales pipeline.
-      </p>
-
-      <ContactsCrm initial={people} interactions={interactions} />
     </div>
   );
 }
