@@ -23,6 +23,7 @@ import { listSourcesForChapter } from '@/lib/agentic-os/autobiographer/chapter-s
 import { ChapterStatusPill } from '@/components/agentic-os/autobiographer/chapter-status-pill';
 import { ChapterEditButton } from '@/components/agentic-os/autobiographer/chapter-edit-button';
 import { ChapterDetailView } from '@/components/agentic-os/autobiographer/chapter-detail-view';
+import { ChapterThemesSection } from '@/components/agentic-os/autobiographer/chapter-themes-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,6 +139,8 @@ export default async function ChapterDetailPage({ params }: Props) {
           notes: s.notes,
         }))}
       />
+
+      <ChapterThemesSection chapterId={chapter.id} />
     </div>
   );
 }

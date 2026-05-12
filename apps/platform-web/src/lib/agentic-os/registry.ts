@@ -461,6 +461,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Workshop-wide chapter index across every book — versioned revisions, provenance back to source memories, PDF export.',
       },
+      {
+        href: '/dashboard/os/autobiographer/timeline',
+        label: 'Timeline',
+        description:
+          'Cross-book timeline of every memory, ordered by year-of-life. Filter by theme, kind, decade, person, or scope to a single book.',
+      },
     ],
   },
   {

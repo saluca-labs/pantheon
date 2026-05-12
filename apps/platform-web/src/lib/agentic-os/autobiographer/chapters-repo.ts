@@ -154,19 +154,59 @@ export interface ListChaptersArgs {
   userId: string;
   bookId: string;
   /**
-   * Ordering strategy. `'position'` (default) honors the book's manual
-   * sort. Phase 5 will introduce an `'arc'` strategy that re-orders by
-   * the active arc's chapter id sequence; the function signature is
-   * intentionally extensible so Phase 5 can land without a route
-   * change.
+   * Ordering strategy.
+   *
+   *   - `'position'` (default) honors the book's manual sort.
+   *   - `'updated_desc'` returns by `updated_at DESC`.
+   *   - `'arc'` (Phase 5) returns chapters ordered by the book's primary
+   *     arc when one exists; falls back to `'position'` otherwise.
+   *
+   * The route signature is intentionally extensible so callers can
+   * request an arc-ordered list without knowing which arc is primary.
    */
-  order?: 'position' | 'updated_desc';
+  order?: 'position' | 'updated_desc' | 'arc';
 }
 
 export async function listChaptersForBook(
   args: ListChaptersArgs,
 ): Promise<AutobiographerChapter[]> {
   const pool = getAutobiographerPool();
+
+  if (args.order === 'arc') {
+    // Resolve the primary arc for the book and join chapters through
+    // arc_chapters. When no primary arc exists, fall back to position.
+    const primary = await pool.query(
+      `SELECT id FROM agos_autobiographer_arcs
+        WHERE book_id = $1 AND user_id = $2 AND is_primary = true
+        LIMIT 1`,
+      [args.bookId, args.userId],
+    );
+    if ((primary.rowCount ?? 0) > 0) {
+      const arcId = primary.rows[0].id;
+      // Chapters attached to the arc come first in arc order; any
+      // chapters that exist in the book but are NOT in the arc come
+      // after, sorted by their book position so they remain discoverable.
+      const r = await pool.query(
+        `WITH arc_membership AS (
+           SELECT chapter_id, position
+             FROM agos_autobiographer_arc_chapters
+            WHERE arc_id = $1
+         )
+         SELECT ${CHAPTER_COLUMNS}
+           FROM agos_autobiographer_chapters c
+           LEFT JOIN arc_membership am ON am.chapter_id = c.id
+          WHERE c.user_id = $2 AND c.book_id = $3
+          ORDER BY (am.position IS NULL) ASC,
+                   am.position ASC,
+                   c.position  ASC,
+                   c.created_at ASC`,
+        [arcId, args.userId, args.bookId],
+      );
+      return r.rows.map(rowToChapter);
+    }
+    // Fall through to position ordering.
+  }
+
   const order =
     args.order === 'updated_desc'
       ? 'updated_at DESC'

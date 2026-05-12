@@ -68,12 +68,24 @@ describe('Autobiographer OS registry entry', () => {
     expect(voice!.href).toBe('/dashboard/os/autobiographer/voice');
   });
 
-  it('lists exactly the five feature surfaces after Phase 4 (Books, Memory captures, People, Voice studio, Chapters)', () => {
+  // ─── Phase 5 additions ───────────────────────────────────────────────────
+
+  it('has the Phase 5 Timeline feature card pointing at /timeline', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    expect(mod.features).toHaveLength(5);
+    const timeline = mod.features.find((f) => f.label === 'Timeline');
+    expect(timeline).toBeDefined();
+    expect(timeline!.href).toBe('/dashboard/os/autobiographer/timeline');
+    expect(timeline!.description.toLowerCase()).toMatch(
+      /timeline|year|decade|theme|memory/,
+    );
+  });
+
+  it('lists exactly the six feature surfaces after Phase 5 (Books, Memory captures, People, Voice studio, Chapters, Timeline)', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    expect(mod.features).toHaveLength(6);
     const labels = mod.features.map((f) => f.label).sort();
     expect(labels).toEqual(
-      ['Books', 'Chapters', 'Memory captures', 'People', 'Voice studio'],
+      ['Books', 'Chapters', 'Memory captures', 'People', 'Timeline', 'Voice studio'],
     );
   });
 });
