@@ -289,7 +289,10 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
                     )}
                   </div>
                   <span
-                    className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${STAGE_COLORS[p.stage]}`}
+                    className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${
+                      (STAGE_COLORS as Record<string, string>)[p.stage] ??
+                      'bg-slate-500/15 text-slate-300 border-slate-500/30'
+                    }`}
                   >
                     {p.stage}
                   </span>
