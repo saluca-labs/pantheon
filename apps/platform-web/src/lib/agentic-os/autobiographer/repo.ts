@@ -1,8 +1,18 @@
 /**
- * Autobiographer OS — database CRUD for chapters and life events.
+ * Autobiographer OS — legacy chapter / life-event repo + audit helper.
  *
- * All queries target the `agos_autobiographer_*` tables added in migration
- * 0009_autobiographer_os.py.
+ * Phase 4 (migration 0045) renamed the original
+ * `agos_autobiographer_chapters` table to
+ * `agos_autobiographer_chapters_legacy` and promoted chapters to a
+ * book-scoped, revisioned entity (see `chapters-repo.ts`). This module
+ * keeps the legacy single-chapter editor working against the renamed
+ * table without leaking the rename into the editor's UI code. The
+ * book-scoped CRUD lives in `chapters-repo.ts` /
+ * `chapter-revisions-repo.ts` / `chapter-sources-repo.ts`.
+ *
+ * `recordAudit` is the shared audit-writer used by every Autobiographer
+ * route. It tolerates a null `projectId` for workshop-global mutations
+ * (memories, people, voice samples, voice profiles).
  *
  * @license MIT — original work for Tiresias platform
  */
@@ -10,7 +20,12 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { getAutobiographerPool } from './session';
 import { countWords } from './chapters';
-import type { Chapter, ChapterStatus, LifeEvent, EventKind } from './chapters';
+import type {
+  Chapter,
+  LegacyChapterStatus,
+  LifeEvent,
+  EventKind,
+} from './chapters';
 
 // ─── Chapters ────────────────────────────────────────────────────────────────
 
@@ -18,7 +33,7 @@ export async function listChapters(userId: string): Promise<Chapter[]> {
   const pool = getAutobiographerPool();
   const r = await pool.query(
     `SELECT id, user_id, title, body_text, period_label, status, word_count, created_at, updated_at
-       FROM agos_autobiographer_chapters
+       FROM agos_autobiographer_chapters_legacy
       WHERE user_id = $1
       ORDER BY updated_at DESC`,
     [userId],
@@ -29,7 +44,7 @@ export async function listChapters(userId: string): Promise<Chapter[]> {
     title: row.title,
     bodyText: row.body_text,
     periodLabel: row.period_label,
-    status: row.status as ChapterStatus,
+    status: row.status as LegacyChapterStatus,
     wordCount: Number(row.word_count),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -40,7 +55,7 @@ export async function getChapter(id: string): Promise<Chapter | null> {
   const pool = getAutobiographerPool();
   const r = await pool.query(
     `SELECT id, user_id, title, body_text, period_label, status, word_count, created_at, updated_at
-       FROM agos_autobiographer_chapters
+       FROM agos_autobiographer_chapters_legacy
       WHERE id = $1`,
     [id],
   );
@@ -52,7 +67,7 @@ export async function getChapter(id: string): Promise<Chapter | null> {
     title: row.title,
     bodyText: row.body_text,
     periodLabel: row.period_label,
-    status: row.status as ChapterStatus,
+    status: row.status as LegacyChapterStatus,
     wordCount: Number(row.word_count),
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -63,7 +78,7 @@ export interface ChapterUpsert {
   title: string;
   bodyText: string;
   periodLabel?: string | null;
-  status?: ChapterStatus;
+  status?: LegacyChapterStatus;
 }
 
 export async function createChapter(userId: string, data: ChapterUpsert): Promise<Chapter> {
@@ -71,7 +86,7 @@ export async function createChapter(userId: string, data: ChapterUpsert): Promis
   const id = randomUUID();
   const wc = countWords(data.bodyText);
   await pool.query(
-    `INSERT INTO agos_autobiographer_chapters
+    `INSERT INTO agos_autobiographer_chapters_legacy
        (id, user_id, title, body_text, period_label, status, word_count)
      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
     [id, userId, data.title, data.bodyText, data.periodLabel ?? null, data.status ?? 'draft', wc],
@@ -89,7 +104,7 @@ export async function updateChapter(id: string, data: Partial<ChapterUpsert>): P
   const newBody = data.bodyText ?? current.bodyText;
   const wc = countWords(newBody);
   await pool.query(
-    `UPDATE agos_autobiographer_chapters
+    `UPDATE agos_autobiographer_chapters_legacy
         SET title        = $2,
             body_text    = $3,
             period_label = $4,

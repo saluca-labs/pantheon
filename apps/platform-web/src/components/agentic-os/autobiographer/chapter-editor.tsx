@@ -16,13 +16,25 @@
 
 import { useState, useMemo } from 'react';
 import {
-  CHAPTER_STATUSES,
+  LEGACY_CHAPTER_STATUSES,
   EVENT_KINDS,
   countWords,
   estimateReadingMinutes,
   validateChapter,
 } from '@/lib/agentic-os/autobiographer/chapters';
-import type { Chapter, LifeEvent, EventKind, ChapterStatus } from '@/lib/agentic-os/autobiographer/chapters';
+import type {
+  Chapter,
+  LifeEvent,
+  EventKind,
+  LegacyChapterStatus,
+} from '@/lib/agentic-os/autobiographer/chapters';
+
+// Phase 4 alias: the legacy single-chapter editor used the names
+// `CHAPTER_STATUSES` / `ChapterStatus` before Phase 4 reframed those to
+// the book-scoped four-value taxonomy. The legacy names are preserved
+// locally so the editor's body stays untouched.
+const CHAPTER_STATUSES = LEGACY_CHAPTER_STATUSES;
+type ChapterStatus = LegacyChapterStatus;
 
 interface Props {
   initial: Chapter | null;

@@ -3,7 +3,7 @@ import {
   countWords,
   estimateReadingMinutes,
   validateChapter,
-  CHAPTER_STATUSES,
+  LEGACY_CHAPTER_STATUSES,
   EVENT_KINDS,
 } from '@/lib/agentic-os/autobiographer/chapters';
 
@@ -60,11 +60,11 @@ describe('validateChapter', () => {
   });
 });
 
-describe('CHAPTER_STATUSES', () => {
+describe('LEGACY_CHAPTER_STATUSES (single-chapter editor)', () => {
   it('includes draft, in_review, final', () => {
-    expect(CHAPTER_STATUSES).toContain('draft');
-    expect(CHAPTER_STATUSES).toContain('in_review');
-    expect(CHAPTER_STATUSES).toContain('final');
+    expect(LEGACY_CHAPTER_STATUSES).toContain('draft');
+    expect(LEGACY_CHAPTER_STATUSES).toContain('in_review');
+    expect(LEGACY_CHAPTER_STATUSES).toContain('final');
   });
 });
 

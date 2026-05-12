@@ -8,13 +8,18 @@ import {
   createEvent,
   recordAudit,
 } from '@/lib/agentic-os/autobiographer/repo';
-import { CHAPTER_STATUSES, EVENT_KINDS } from '@/lib/agentic-os/autobiographer/chapters';
+import { LEGACY_CHAPTER_STATUSES, EVENT_KINDS } from '@/lib/agentic-os/autobiographer/chapters';
 
+// Legacy single-chapter editor endpoint. The Phase 4 book-scoped chapter
+// CRUD lives at `/books/[bookId]/chapters` + `/chapters/[id]`; this route
+// stays alive against `agos_autobiographer_chapters_legacy` (renamed by
+// migration 0045) so the legacy editor remains functional for users with
+// pre-Phase-4 data that has not been hand-migrated yet.
 const ChapterBody = z.object({
   title: z.string().min(1).max(255),
   bodyText: z.string().max(200_000).default(''),
   periodLabel: z.string().max(100).nullable().optional(),
-  status: z.enum(CHAPTER_STATUSES as unknown as [string, ...string[]]).optional(),
+  status: z.enum(LEGACY_CHAPTER_STATUSES as unknown as [string, ...string[]]).optional(),
 });
 
 const EventBody = z.object({

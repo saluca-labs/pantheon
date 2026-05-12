@@ -457,9 +457,9 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
       },
       {
         href: '/dashboard/os/autobiographer/chapters',
-        label: 'Chapter capture',
+        label: 'Chapters',
         description:
-          'Legacy single-chapter editor — full chapter surface ships in Phase 4.',
+          'Workshop-wide chapter index across every book — versioned revisions, provenance back to source memories, PDF export.',
       },
     ],
   },

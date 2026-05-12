@@ -32,14 +32,22 @@ describe('Autobiographer OS registry entry', () => {
     expect(mem!.href).toBe('/dashboard/os/autobiographer/memories');
   });
 
-  it('retains the legacy Chapter capture card with updated copy', () => {
+  // Phase 4 renames Chapter capture -> Chapters and repurposes the
+  // surface to the workshop-wide chapter index. Same href.
+  it('has the Phase 4 Chapters card pointing at /chapters', () => {
     const mod = findAgenticOsModule('autobiographer')!;
-    const chapter = mod.features.find((f) => f.label === 'Chapter capture');
+    const chapter = mod.features.find((f) => f.label === 'Chapters');
     expect(chapter).toBeDefined();
     expect(chapter!.href).toBe('/dashboard/os/autobiographer/chapters');
     expect(chapter!.description.toLowerCase()).toMatch(
-      /legacy|phase 4|single-chapter/,
+      /chapter|revision|provenance|book/,
     );
+  });
+
+  it('no longer exposes the legacy "Chapter capture" label (renamed to Chapters)', () => {
+    const mod = findAgenticOsModule('autobiographer')!;
+    const legacy = mod.features.find((f) => f.label === 'Chapter capture');
+    expect(legacy).toBeUndefined();
   });
 
   // ─── Phase 2 additions ───────────────────────────────────────────────────
@@ -60,8 +68,12 @@ describe('Autobiographer OS registry entry', () => {
     expect(voice!.href).toBe('/dashboard/os/autobiographer/voice');
   });
 
-  it('lists exactly the five Phase-3 features', () => {
+  it('lists exactly the five feature surfaces after Phase 4 (Books, Memory captures, People, Voice studio, Chapters)', () => {
     const mod = findAgenticOsModule('autobiographer')!;
     expect(mod.features).toHaveLength(5);
+    const labels = mod.features.map((f) => f.label).sort();
+    expect(labels).toEqual(
+      ['Books', 'Chapters', 'Memory captures', 'People', 'Voice studio'],
+    );
   });
 });
