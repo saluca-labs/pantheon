@@ -253,6 +253,12 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Hypothesis ledger',
         description: 'Track research questions, predictions, and falsifiers.',
       },
+      {
+        href: '/dashboard/os/research/library',
+        label: 'Literature library',
+        description:
+          'Workshop-global papers + structured authors + per-experiment references.',
+      },
     ],
   },
   {
