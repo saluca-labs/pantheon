@@ -28,9 +28,11 @@ import {
 } from '@/lib/agentic-os/autobiographer/books-repo';
 import { listPeople } from '@/lib/agentic-os/autobiographer/people-repo';
 import { listPeopleForMemory } from '@/lib/agentic-os/autobiographer/memory-people-repo';
+import { getVoiceSampleByMemory } from '@/lib/agentic-os/autobiographer/voice-samples-repo';
 import { MEMORY_SOURCE_LABELS } from '@/lib/agentic-os/autobiographer/memories';
 import { MemoryEditButton } from '@/components/agentic-os/autobiographer/memory-edit-button';
 import { MemoryPeoplePicker } from '@/components/agentic-os/autobiographer/memory-people-picker';
+import { VoiceSampleToggle } from '@/components/agentic-os/autobiographer/voice-sample-toggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +48,16 @@ export default async function MemoryDetailPage({ params }: Props) {
   const memory = await getMemory(id, user.userId);
   if (!memory) notFound();
 
-  const [book, allBooks, linkedPeople, allPeople] = await Promise.all([
-    memory.bookId ? getBook(memory.bookId, user.userId) : Promise.resolve(null),
-    listBooks({ userId: user.userId, limit: 50 }),
-    listPeopleForMemory(memory.id, user.userId),
-    listPeople({ userId: user.userId, limit: 200 }),
-  ]);
+  const [book, allBooks, linkedPeople, allPeople, voiceSample] =
+    await Promise.all([
+      memory.bookId
+        ? getBook(memory.bookId, user.userId)
+        : Promise.resolve(null),
+      listBooks({ userId: user.userId, limit: 50 }),
+      listPeopleForMemory(memory.id, user.userId),
+      listPeople({ userId: user.userId, limit: 200 }),
+      getVoiceSampleByMemory(memory.id, user.userId),
+    ]);
 
   const bookOptions = allBooks.map((b) => ({ id: b.id, title: b.title }));
 
@@ -179,6 +185,27 @@ export default async function MemoryDetailPage({ params }: Props) {
         linked={linkedPickerPeople}
         available={availablePickerPeople}
       />
+
+      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-1">
+              Voice sample
+            </h2>
+            <p className="text-xs text-[#64748b]">
+              Mark this memory as a sample of your voice so the Phase 3
+              voice builder picks it up. Sourced samples are CASCADE-deleted
+              if you delete the memory.
+            </p>
+          </div>
+          <VoiceSampleToggle
+            memoryId={memory.id}
+            memoryTitle={memory.title}
+            memoryBody={memory.bodyMarkdown}
+            existingSampleId={voiceSample?.id ?? null}
+          />
+        </div>
+      </section>
 
       {memory.audioUrl && (
         <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
