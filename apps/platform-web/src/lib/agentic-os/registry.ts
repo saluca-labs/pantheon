@@ -553,6 +553,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description: 'Last touchpoints across every contact and organization.',
       },
       {
+        href: '/dashboard/os/business/projects',
+        label: 'Projects',
+        description:
+          'Client engagements with task boards, time tracking, and budget gauges.',
+      },
+      {
+        href: '/dashboard/os/business/time',
+        label: 'Time tracking',
+        description:
+          'Running timer, manual time entries, and unbilled-hour rollups by project.',
+      },
+      {
         href: '/dashboard/os/business/settings',
         label: 'Settings',
         description:
