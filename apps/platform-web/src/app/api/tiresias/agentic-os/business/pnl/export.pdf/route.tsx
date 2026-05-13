@@ -16,6 +16,7 @@ import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { computePnlSummary } from '@/lib/agentic-os/business/pnl-snapshots-repo';
 import { PnlSummaryDocument } from '@/lib/agentic-os/business/pdf/pnl-summary';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentBusinessUser();
@@ -59,11 +60,12 @@ export async function GET(request: NextRequest) {
   });
 
   const filename = `pnl-${periodStart}_to_${periodEnd}.pdf`;
-  return new NextResponse(new Uint8Array(buf), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${filename}"`,
-    },
+  return respondWithPdf({
+    buffer: buf,
+    slug: 'business',
+    tenantId: user.userId,
+    key: `pnl/${filename}`,
+    filename,
+    disposition: 'inline',
   });
 }
