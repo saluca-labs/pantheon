@@ -1,16 +1,16 @@
 /**
  * Creator OS — session helpers.
  *
- * Re-exports the shared session utility from Health OS so every vertical OS
- * uses a single, tested session layer rather than duplicating cookie logic.
+ * Re-exports the shared OS session utility under Creator-flavoured names so
+ * existing call sites continue to compile. New code should prefer importing
+ * directly from `../_shared/session`.
  *
- * @license MIT — see /LICENSE
- * @see https://nextjs.org/docs/app/api-reference/functions/cookies (Next.js cookies API, MIT)
+ * @license MIT — Tiresias platform (internal).
  */
 
 export {
-  getCurrentHealthUser as getCurrentCreatorUser,
-  getHealthPool as getCreatorPool,
-} from '../health/session';
+  getCurrentOsUser as getCurrentCreatorUser,
+  getOsPool as getCreatorPool,
+} from '../_shared/session';
 
-export type { HealthSessionUser as CreatorSessionUser } from '../health/session';
+export type { OsSessionUser as CreatorSessionUser } from '../_shared/session';
