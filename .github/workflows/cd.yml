@@ -119,6 +119,13 @@ jobs:
             image: memory-service
             dockerfile: apps/memory-service/Dockerfile
             context: .
+          # pantheon-agos-audit-retention — Node cronjob, pnpm monorepo,
+          # context = repo root. First scheduled job under the native
+          # CronJob platform (apps/platform-api/k8s/pantheon/cronjobs/).
+          - service: pantheon-agos-audit-retention
+            image: pantheon-agos-audit-retention
+            dockerfile: apps/cronjobs/agos-audit-retention/Dockerfile
+            context: .
 
     steps:
       - uses: actions/checkout@v4
@@ -197,7 +204,11 @@ jobs:
           TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           set -euo pipefail
-          for svc in portal platform-web soulauth soulgate soulwatch memory-service; do
+          # Core services + cronjob images. Cronjob images use the
+          # `pantheon-<job>` short-name convention (see
+          # apps/platform-api/k8s/pantheon/cronjobs/README.md).
+          for svc in portal platform-web soulauth soulgate soulwatch memory-service \
+                     pantheon-agos-audit-retention; do
             kustomize edit set image \
               "${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}=${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}:${TAG}"
           done

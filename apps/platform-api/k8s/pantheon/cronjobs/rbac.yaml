@@ -1,0 +1,73 @@
+# Dedicated ServiceAccount + RBAC for pantheon-namespace CronJobs.
+#
+# All scheduled jobs run as `pantheon-cronjob` (NOT `pantheon-sa` — that one
+# is bound to the GCP IAM SA used by long-running workloads). The cronjob SA
+# has its own Workload Identity binding to a separately-provisioned GCP SA
+# (`pantheon-cronjob@salucainfrastructure.iam.gserviceaccount.com`) which
+# carries only roles/cloudsql.client + roles/cloudsql.instanceUser. No
+# bucket / log / monitoring grants — cronjobs that need those request them
+# on a per-job basis via additional RoleBindings.
+#
+# The Role intentionally grants nothing beyond what a typical retention sweep
+# needs: list/watch its own Jobs so a job can self-introspect if needed, and
+# read its own ConfigMaps/Secrets. Mutating verbs on resources outside the
+# cronjob's own scope require explicit additional Roles.
+#
+# Audit: dropping a verb from the Role is non-breaking. Adding one MUST be
+# justified in the per-job manifest header comment.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pantheon-cronjob
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: cronjob
+  annotations:
+    # Workload Identity binding: provision the GCP-side SA + IAM
+    # `policyBinding` separately. The annotation alone does NOT grant any
+    # GCP access — see apps/platform-api/k8s/pantheon/RUNBOOK.md
+    # "Cronjob WI bootstrap" (TODO: add section when first cronjob ships).
+    iam.gke.io/gcp-service-account: pantheon-cronjob@salucainfrastructure.iam.gserviceaccount.com
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pantheon-cronjob
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: cronjob
+rules:
+  # Self-introspection: a cronjob may want to look up its own Job state
+  # (e.g. to skip work if a sibling Job from the same CronJob is still
+  # running). Read-only.
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch"]
+  # Read-only access to ConfigMaps + Secrets that opt in via reference in
+  # the Pod spec. We do NOT grant `list` on Secrets — that would let a
+  # cronjob enumerate every secret in the namespace.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pantheon-cronjob
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: cronjob
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pantheon-cronjob
+subjects:
+  - kind: ServiceAccount
+    name: pantheon-cronjob
+    namespace: pantheon

@@ -35,3 +35,7 @@ resources:
   - migrate-job.yaml
   # Observability
   - prometheus-monitor.yaml
+  # CronJobs — native K8s scheduled work. RBAC is shared; each job is its
+  # own manifest under cronjobs/. See cronjobs/README.md.
+  - cronjobs/rbac.yaml
+  - cronjobs/audit-retention.yaml

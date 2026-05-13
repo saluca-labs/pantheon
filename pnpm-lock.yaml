@@ -15,6 +15,22 @@ importers:
         specifier: ^5.6.0
         version: 5.9.3
 
+  apps/cronjobs/agos-audit-retention:
+    dependencies:
+      pg:
+        specifier: ^8.13.0
+        version: 8.20.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.17
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.20.0
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
   apps/memory-service:
     dependencies:
       '@platform/memory':
@@ -5208,7 +5224,7 @@ snapshots:
 
   '@types/pg@8.20.0':
     dependencies:
-      '@types/node': 20.19.39
+      '@types/node': 22.19.17
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
