@@ -582,6 +582,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Billing with line items, payment tracking, PDF export, and time-entry rollup.',
       },
+      {
+        href: '/dashboard/os/business/expenses',
+        label: 'Expenses',
+        description: 'Expense ledger with category tracking, receipt attachments, and reimbursable flags.',
+      },
+      {
+        href: '/dashboard/os/business/pnl',
+        label: 'P&L',
+        description: 'Live profit-and-loss summary, monthly snapshots, and PDF financial export.',
+      },
     ],
   },
   {
