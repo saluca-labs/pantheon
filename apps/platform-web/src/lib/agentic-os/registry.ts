@@ -570,6 +570,43 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Business name, logo, address, tax ID, currency, prefixes, and accent color.',
       },
+      {
+        href: '/dashboard/os/business/quotes',
+        label: 'Quotes',
+        description:
+          'Pre-sale estimates with line items, send, and convert to invoice.',
+      },
+      {
+        href: '/dashboard/os/business/invoices',
+        label: 'Invoices',
+        description:
+          'Billing with line items, payment tracking, PDF export, and time-entry rollup.',
+      },
+      {
+        href: '/dashboard/os/business/expenses',
+        label: 'Expenses',
+        description: 'Expense ledger with category tracking, receipt attachments, and reimbursable flags.',
+      },
+      {
+        href: '/dashboard/os/business/pnl',
+        label: 'P&L',
+        description: 'Live profit-and-loss summary, monthly snapshots, and PDF financial export.',
+      },
+      {
+        href: '/dashboard/os/business/templates',
+        label: 'Templates',
+        description: 'Document template library with NDA, SOW, MSA, proposal, and custom templates.',
+      },
+      {
+        href: '/dashboard/os/business/documents',
+        label: 'Documents',
+        description: 'Per-engagement documents with lifecycle tracking and in-app e-signature.',
+      },
+      {
+        href: '/dashboard/os/business/coach',
+        label: 'AI Coach',
+        description: 'Five-mode advisory coach: pricing, sales, marketing, strategy, and general business guidance.',
+      },
     ],
   },
   {
@@ -585,9 +622,54 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
     accent: 'fuchsia',
     features: [
       {
+        href: '/dashboard/os/creator',
+        label: 'Hub',
+        description: 'Pinned notes, recent work, and quick-create actions.',
+      },
+      {
+        href: '/dashboard/os/creator/notes',
+        label: 'Notes',
+        description: 'Nested workspace with TipTap rich-text editor, tags, and drag-and-drop tree.',
+      },
+      {
         href: '/dashboard/os/creator/calendar',
-        label: 'Editorial calendar',
+        label: 'Calendar',
         description: 'Plan, draft, and ship content across every channel.',
+      },
+      {
+        href: '/dashboard/os/creator/posts',
+        label: 'Publishing',
+        description: 'Blog/newsletter posts with scheduling, RSS feed, and subscriber management.',
+      },
+      {
+        href: '/dashboard/os/creator/subscribers',
+        label: 'Subscribers',
+        description: 'Email subscriber list with status tracking, import, and unsubscribe management.',
+      },
+      {
+        href: '/dashboard/os/creator/books',
+        label: 'Books',
+        description: 'Long-form writing with chapters, word-count tracking, drag-to-reorder, and Pandoc export.',
+      },
+      {
+        href: '/dashboard/os/creator/videos',
+        label: 'Videos',
+        description: 'Video library with HLS streaming playback via Video.js player.',
+      },
+      {
+        href: '/dashboard/os/creator/podcast',
+        label: 'Podcast',
+        description: 'Episode management with Podcasting 2.0 RSS feed, Plyr audio player, and show configuration.',
+      },
+      {
+        href: '/dashboard/os/creator/chat',
+        label: 'AI Chat',
+        description: 'Multi-model chat with streaming, conversation history, and system prompts.',
+      },
+      {
+        href: '/dashboard/os/creator/coach',
+        label: 'AI Coach',
+        description: 'Five-mode content coach: strategy, writing, audience, monetization, and general.',
       },
     ],
   },
