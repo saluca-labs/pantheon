@@ -1,0 +1,106 @@
+# Nightly 90-day retention sweep on agos_audit.
+#
+# First scheduled job under the new native-K8s CronJob platform — see
+# README.md in this dir for the layout/contract. The job reads a batch of
+# rows older than AUDIT_RETENTION_DAYS, deletes them with a safety floor of
+# 7 days, and exits.
+#
+# Schedule: 03:17 UTC daily. The "17" minute is intentional per CLAUDE.md —
+# avoid :00 / :30 cron-storm slots. 03:xx UTC is well clear of Cloud SQL's
+# nightly backup window (typically 06-09 UTC for us-central1) and after the
+# tiresias-retention-sweep (02:00 UTC, separate namespace).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pantheon-agos-audit-retention
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: agos-audit-retention
+spec:
+  schedule: "17 3 * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: pantheon-agos-audit-retention
+            app.kubernetes.io/part-of: pantheon
+            app.kubernetes.io/component: agos-audit-retention
+        spec:
+          serviceAccountName: pantheon-cronjob
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            fsGroup: 1001
+          initContainers:
+            # cloud-sql-proxy as a native sidecar. Terminates when the main
+            # container exits because restartPolicy: Always on an init
+            # container flips it to sidecar semantics on K8s >= 1.29.
+            - name: cloud-sql-proxy
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+              restartPolicy: Always
+              args:
+                - "--structured-logs"
+                - "--auto-iam-authn"
+                - "--exit-zero-on-sigterm"
+                - "salucainfrastructure:us-central1:tiresias-db"
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                runAsNonRoot: true
+              resources:
+                requests: {cpu: "50m",  memory: "64Mi"}
+                limits:   {cpu: "200m", memory: "128Mi"}
+          containers:
+            - name: agos-audit-retention
+              # Tag is patched by CD via `kustomize edit set image`.
+              image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/pantheon-agos-audit-retention:latest
+              imagePullPolicy: Always
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  echo "waiting for cloud-sql-proxy..."
+                  for i in $(seq 1 30); do
+                    if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                      echo "cloud-sql-proxy ready after ${i}s"; break
+                    fi
+                    sleep 1
+                  done
+                  exec node /app/apps/cronjobs/agos-audit-retention/dist/index.js
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              env:
+                # 90-day retention floor enforced by the job (refuses < 7).
+                - name: AUDIT_RETENTION_DAYS
+                  value: "90"
+                # 100k rows per nightly sweep — bounds the worst-case lock
+                # window. Subsequent nights chew through any backlog.
+                - name: BATCH_LIMIT
+                  value: "100000"
+                # First deploy lands as a dry-run. Flip to "false" after
+                # observing one or two green dry-run sweeps that report a
+                # reasonable eligible-row count.
+                - name: DRY_RUN
+                  value: "true"
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: pantheon-secrets
+                      key: database-url-sync
+              resources:
+                requests: {cpu: "100m", memory: "128Mi"}
+                limits:   {cpu: "500m", memory: "512Mi"}
