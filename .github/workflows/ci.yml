@@ -101,6 +101,7 @@ jobs:
           pnpm --filter @platform/config build || true
           pnpm --filter @platform/types build || true
           pnpm --filter @platform/observability build || true
+          pnpm --filter @platform/blob-store build || true
       - name: Typecheck
         run: pnpm typecheck || true   # non-fatal until tsconfig is fully wired
 
@@ -147,6 +148,7 @@ jobs:
           pnpm --filter @platform/types build
           pnpm --filter @platform/config build
           pnpm --filter @platform/auth build
+          pnpm --filter @platform/blob-store build
 
       - name: Run TypeScript tests (unit, gating)
         # Excludes src/__tests__/contracts/ which are integration tests
