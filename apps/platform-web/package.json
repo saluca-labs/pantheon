@@ -24,6 +24,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@platform/auth": "workspace:*",
+    "@platform/blob-store": "workspace:*",
     "@platform/config": "workspace:*",
     "@platform/types": "workspace:*",
     "@react-pdf/renderer": "^4.0.0",
