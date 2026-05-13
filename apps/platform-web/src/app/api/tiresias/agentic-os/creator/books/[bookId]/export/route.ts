@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { getCurrentCreatorUser } from '@/lib/agentic-os/creator/session';
 import { getBook, listChapters } from '@/lib/agentic-os/creator/books-repo';
 import { tiptapJsonToMarkdown } from '@/lib/agentic-os/creator/tiptap-to-md';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -87,6 +88,19 @@ export async function POST(
     const buffer = await readFile(outPath);
 
     const safeTitle = book.title.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'Book';
+
+    // PDF arm goes through respondWithPdf so the blob-store offload kicks
+    // in once BLOB_STORE_DRIVER is set. docx / epub still ship inline.
+    if (format === 'pdf') {
+      return respondWithPdf({
+        buffer,
+        slug: 'creator',
+        tenantId: user.userId,
+        key: `books/${bookId}/${safeTitle}.pdf`,
+        filename: `${safeTitle}.pdf`,
+        disposition: 'attachment',
+      });
+    }
 
     const response = new NextResponse(buffer, {
       status: 200,

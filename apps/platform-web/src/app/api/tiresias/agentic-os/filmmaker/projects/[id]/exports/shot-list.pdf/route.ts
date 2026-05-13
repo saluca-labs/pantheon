@@ -12,6 +12,7 @@ import * as React from 'react';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { getProject, listShots, recordAudit } from '@/lib/agentic-os/filmmaker/repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { ShotListPdf } from '@/lib/agentic-os/filmmaker/pdf/shot-list';
 
 export const runtime = 'nodejs';
@@ -41,12 +42,12 @@ export async function GET(_request: NextRequest, { params }: Props) {
     projectId: id,
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="shot-list-${id}.pdf"`,
-      'Cache-Control': 'no-store',
-    },
+  return respondWithPdf({
+    buffer,
+    slug: 'filmmaker',
+    tenantId: user.userId,
+    key: `projects/${id}/shot-list.pdf`,
+    filename: `shot-list-${id}.pdf`,
+    disposition: 'attachment',
   });
 }

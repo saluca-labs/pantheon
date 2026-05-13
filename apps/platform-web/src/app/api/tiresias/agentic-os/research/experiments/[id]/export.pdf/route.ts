@@ -36,6 +36,7 @@ import { listOrderedAuthorsForPaper } from '@/lib/agentic-os/research/paper-auth
 import { listDatasetsForExperiment } from '@/lib/agentic-os/research/datasets-repo';
 import { listProtocolsForExperiment } from '@/lib/agentic-os/research/experiment-protocols-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import {
   ExperimentExportPdf,
   type ExperimentPdfHypothesisRow,
@@ -215,12 +216,12 @@ export async function GET(_request: NextRequest, { params }: Props) {
     projectId: experimentId,
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
+  return respondWithPdf({
+    buffer,
+    slug: 'research',
+    tenantId: user.userId,
+    key: `experiments/${experimentId}/export-${stamp}.pdf`,
+    filename,
+    disposition: 'attachment',
   });
 }

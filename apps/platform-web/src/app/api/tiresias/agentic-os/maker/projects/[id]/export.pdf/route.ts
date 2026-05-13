@@ -26,6 +26,7 @@ import {
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { ProjectExportPdf } from '@/lib/agentic-os/maker/pdf/project-export';
 import { projectSlug } from '@/lib/agentic-os/maker/projects';
 
@@ -96,12 +97,12 @@ export async function GET(_request: NextRequest, { params }: Props) {
     projectId: id,
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${slug}-${stamp}.pdf"`,
-      'Cache-Control': 'no-store',
-    },
+  return respondWithPdf({
+    buffer,
+    slug: 'maker',
+    tenantId: user.userId,
+    key: `projects/${id}/export-${stamp}.pdf`,
+    filename: `${slug}-${stamp}.pdf`,
+    disposition: 'attachment',
   });
 }

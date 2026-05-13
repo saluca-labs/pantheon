@@ -17,6 +17,7 @@ import {
   recordAudit,
 } from '@/lib/agentic-os/cyber/repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { ExposureReportPdf } from '@/lib/agentic-os/cyber/pdf/exposure-report';
 
 export const runtime = 'nodejs';
@@ -53,12 +54,13 @@ export async function GET(_request: NextRequest) {
     payload: { count: exposures.length },
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="exposure-report-${new Date().toISOString().slice(0, 10)}.pdf"`,
-      'Cache-Control': 'no-store',
-    },
+  const stamp = new Date().toISOString().slice(0, 10);
+  return respondWithPdf({
+    buffer,
+    slug: 'cyber',
+    tenantId: user.userId,
+    key: `exposure-reports/${stamp}.pdf`,
+    filename: `exposure-report-${stamp}.pdf`,
+    disposition: 'attachment',
   });
 }
