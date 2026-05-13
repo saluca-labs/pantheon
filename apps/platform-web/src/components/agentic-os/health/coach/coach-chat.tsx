@@ -6,7 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import { Send, Trash2, Wrench } from 'lucide-react';
 import { CrisisBanner } from '../crisis-banner';
 
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export interface CoachUiMessage {
   id: string;
@@ -75,43 +74,13 @@ export function CoachChat({ conversationId, initialTitle, initialMessages }: Pro
         const body = await r.json().catch(() => ({}));
         throw new Error(body.message || body.error || `HTTP ${r.status}`);
       }
-      if (!r.body) throw new Error('No response body');
-      const reader = r.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let assistantText = '';
-      let trailerSeen = false;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value: chunk } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(chunk, { stream: true });
-        const sepIdx = buffer.indexOf(RECORD_SEPARATOR);
-        if (sepIdx >= 0 && !trailerSeen) {
-          trailerSeen = true;
-          assistantText += buffer.slice(0, sepIdx);
-          buffer = buffer.slice(sepIdx + 1);
-        } else if (!trailerSeen) {
-          assistantText += buffer;
-          buffer = '';
-        }
-        if (!trailerSeen) {
-          setMessages((m) => {
-            const copy = m.slice();
-            copy[copy.length - 1] = { ...assistantPlaceholder, content: assistantText };
-            return copy;
-          });
-        }
-      }
-      // Process trailer if present.
-      if (trailerSeen) {
-        try {
-          const trailer = JSON.parse(buffer.trim());
-          if (trailer.crisis_detected) setCrisisBanner(true);
-        } catch {
-          // ignore malformed trailer
-        }
-      }
+      // Wave-0: JSON response (streaming deferred).
+      const body = (await r.json()) as {
+        text?: string;
+        crisis_detected?: boolean;
+      };
+      const assistantText = body.text ?? '';
+      if (body.crisis_detected) setCrisisBanner(true);
       setMessages((m) => {
         const copy = m.slice();
         copy[copy.length - 1] = { ...assistantPlaceholder, content: assistantText };

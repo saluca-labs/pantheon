@@ -1,10 +1,8 @@
 /**
- * Autobiographer OS Phase 3 — voice builder Anthropic provider wrapper.
+ * Autobiographer OS Phase 3 — voice builder LLM wrapper tests.
  *
- * Mirrors the per-OS coach Anthropic-wrapper test (Maker / Health /
- * Filmmaker / Cyber). Mocks `@ai-sdk/anthropic` so the wrapper's
- * configuration toggle + model-id resolution + provider construction
- * are tested in isolation.
+ * Wave 0: rewired through `@platform/llm`. The wrapper no longer
+ * exposes `getVoiceBuilderProvider`; it exports `callVoiceBuilderJson`.
  *
  * @license MIT — Tiresias Autobiographer OS Phase 3 (internal).
  */
@@ -17,31 +15,29 @@ import {
   afterEach,
   vi,
 } from 'vitest';
+import { z } from 'zod';
 
 const ORIGINAL_KEY = process.env['ANTHROPIC_API_KEY'];
 const ORIGINAL_VOICE_MODEL = process.env['VOICE_BUILDER_MODEL'];
 const ORIGINAL_COACH_MODEL = process.env['COACH_MODEL'];
 
-vi.mock('@ai-sdk/anthropic', () => ({
-  createAnthropic: vi.fn((opts: any) => ({
-    _opts: opts,
-    _stub: true,
-  })),
+vi.mock('@platform/llm', () => ({
+  callLlm: vi.fn(async () => ({ answer: 'stubbed' })),
 }));
 
 import {
   DEFAULT_VOICE_BUILDER_MODEL,
+  callVoiceBuilderJson,
   getVoiceBuilderModelId,
-  getVoiceBuilderProvider,
   isVoiceBuilderConfigured,
 } from '@/lib/agentic-os/autobiographer/voice/anthropic';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { callLlm } from '@platform/llm';
 
 beforeEach(() => {
   delete process.env['ANTHROPIC_API_KEY'];
   delete process.env['VOICE_BUILDER_MODEL'];
   delete process.env['COACH_MODEL'];
-  (createAnthropic as unknown as ReturnType<typeof vi.fn>).mockClear();
+  (callLlm as unknown as ReturnType<typeof vi.fn>).mockClear();
 });
 
 afterEach(() => {
@@ -85,17 +81,28 @@ describe('getVoiceBuilderModelId', () => {
   });
 });
 
-describe('getVoiceBuilderProvider', () => {
-  it('throws when ANTHROPIC_API_KEY is unset', () => {
-    expect(() => getVoiceBuilderProvider()).toThrow(
-      /ANTHROPIC_API_KEY is not set/,
+describe('callVoiceBuilderJson', () => {
+  it('routes through @platform/llm with jsonMode + schema + provider=anthropic', async () => {
+    const schema = z.object({ answer: z.string() });
+    const r = await callVoiceBuilderJson({
+      system: 'sys',
+      user: 'u',
+      schema,
+      tenantId: 't-1',
+    });
+    expect(callLlm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: 'sys',
+        user: 'u',
+        tenantId: 't-1',
+        osSlug: 'autobiographer',
+        provider: 'anthropic',
+        jsonMode: true,
+        schema,
+        model: DEFAULT_VOICE_BUILDER_MODEL,
+      }),
     );
-  });
-
-  it('calls createAnthropic with the key when configured', () => {
-    process.env['ANTHROPIC_API_KEY'] = 'sk-ant-test';
-    getVoiceBuilderProvider();
-    expect(createAnthropic).toHaveBeenCalledWith({ apiKey: 'sk-ant-test' });
+    expect(r).toEqual({ answer: 'stubbed' });
   });
 });
 
