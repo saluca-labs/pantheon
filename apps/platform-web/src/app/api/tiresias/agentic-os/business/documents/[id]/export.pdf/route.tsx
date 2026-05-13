@@ -17,6 +17,7 @@ import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { getDocument } from '@/lib/agentic-os/business/documents-repo';
 import { listSignatures } from '@/lib/agentic-os/business/signatures-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { SignedDocumentPdf } from '@/lib/agentic-os/business/pdf/signed-document';
 
 export async function GET(
@@ -45,11 +46,13 @@ export async function GET(
     payload: { documentId: id },
   });
 
-  return new NextResponse(new Uint8Array(pdfBuffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="document-${document.title.slice(0, 50).replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`,
-    },
+  const safeTitle = document.title.slice(0, 50).replace(/[^a-zA-Z0-9]/g, '_');
+  return respondWithPdf({
+    buffer: pdfBuffer,
+    slug: 'business',
+    tenantId: user.userId,
+    key: `documents/${id}/document.pdf`,
+    filename: `document-${safeTitle}.pdf`,
+    disposition: 'inline',
   });
 }

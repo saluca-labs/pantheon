@@ -18,6 +18,7 @@ import { listInvoices } from '@/lib/agentic-os/business/invoices-repo';
 import { listExpenses } from '@/lib/agentic-os/business/expenses-repo';
 import { ProjectProfitabilityDocument } from '@/lib/agentic-os/business/pdf/project-profitability';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -60,11 +61,12 @@ export async function GET(_req: NextRequest, { params }: Props) {
   });
 
   const slug = project.slug || 'project';
-  return new NextResponse(new Uint8Array(buf), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${slug}-profitability.pdf"`,
-    },
+  return respondWithPdf({
+    buffer: buf,
+    slug: 'business',
+    tenantId: user.userId,
+    key: `projects/${id}/profitability.pdf`,
+    filename: `${slug}-profitability.pdf`,
+    disposition: 'inline',
   });
 }
