@@ -1,21 +1,22 @@
 /**
- * Anthropic provider wrapper for the Autobiographer voice builder.
+ * Voice-builder LLM wrapper — Autobiographer OS Phase 3.
  *
- * Mirrors the per-OS coach pattern (Health / Filmmaker / Cyber / Maker).
- * `ANTHROPIC_API_KEY` is optional in this codebase — when it's absent
- * the builder gracefully degrades to a 503 with `coach_not_configured`
- * so the UI can render an admin-action banner instead of crashing.
+ * Backed by `@platform/llm` (Wave 0). Replaces the prior `@ai-sdk/anthropic`
+ * + `ai.generateObject` plumbing; the builder now calls `callLlm` with
+ * `jsonMode: true` and a zod `schema`, which routes through the
+ * Anthropic provider's HTTP API and parses the result.
  *
- * Test seam: `vi.mock('@ai-sdk/anthropic', () => ({ createAnthropic: ... }))`
- * — every per-OS coach test uses the same shape, and the builder tests
- * additionally mock the `ai` module's `generateObject` so the two-stage
- * pipeline can be exercised deterministically without hitting an LLM.
- *
- * @license MIT — Tiresias Autobiographer OS Phase 3 (internal).
+ * Public surface preserved for callers and tests:
+ *   - `DEFAULT_VOICE_BUILDER_MODEL`         constant
+ *   - `isVoiceBuilderConfigured()`          true when ANTHROPIC_API_KEY set
+ *   - `getVoiceBuilderModelId()`            honours VOICE_BUILDER_MODEL or
+ *                                           COACH_MODEL override
+ *   - `callVoiceBuilderJson({...})` NEW — single JSON-mode call
  */
 
 import 'server-only';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { callLlm, type AgenticOsSlug } from '@platform/llm';
+import type { z } from 'zod';
 
 export const DEFAULT_VOICE_BUILDER_MODEL = 'claude-sonnet-4-6';
 
@@ -31,12 +32,26 @@ export function getVoiceBuilderModelId(): string {
   );
 }
 
-export function getVoiceBuilderProvider() {
-  const apiKey = process.env['ANTHROPIC_API_KEY'];
-  if (!apiKey) {
-    throw new Error(
-      'ANTHROPIC_API_KEY is not set; voice builder is not configured.',
-    );
-  }
-  return createAnthropic({ apiKey });
+export async function callVoiceBuilderJson<S>(input: {
+  system: string;
+  user: string;
+  schema: z.ZodType<S>;
+  tenantId: string;
+  osSlug?: AgenticOsSlug;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<S> {
+  return callLlm<S>({
+    system: input.system,
+    user: input.user,
+    tenantId: input.tenantId,
+    osSlug: input.osSlug ?? 'autobiographer',
+    provider: 'anthropic',
+    model: input.model ?? getVoiceBuilderModelId(),
+    temperature: input.temperature ?? 0.2,
+    maxTokens: input.maxTokens,
+    jsonMode: true,
+    schema: input.schema,
+  });
 }

@@ -32,15 +32,8 @@ export function CoachStarter() {
         throw new Error(body.message || body.error || `HTTP ${r.status}`);
       }
       const id = r.headers.get('x-coach-conversation-id');
-      // Drain the response so the assistant turn persists before we navigate.
-      if (r.body) {
-        const reader = r.body.getReader();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-      }
+      // Wave-0: route returns JSON; drain so persistence completes.
+      await r.json().catch(() => null);
       if (id) {
         router.push(`/dashboard/os/health/coach/${id}`);
       } else {

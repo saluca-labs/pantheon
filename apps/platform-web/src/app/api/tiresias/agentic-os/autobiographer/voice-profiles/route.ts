@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
     built = await buildVoiceProfile({
       samples,
       builderAttribution: parsed.data.builder ?? 'coach',
+      tenantId: user.tenantId,
     });
   } catch (err) {
     if (err instanceof VoiceBuilderError) {

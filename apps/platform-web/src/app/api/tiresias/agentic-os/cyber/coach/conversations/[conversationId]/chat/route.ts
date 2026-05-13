@@ -16,7 +16,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, stepCountIs, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentCyberUser } from '@/lib/agentic-os/cyber/session';
 import { recordAudit } from '@/lib/agentic-os/cyber/repo';
 import {
@@ -30,14 +29,12 @@ import {
   buildSystemPrompt,
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/cyber/coach/system-prompt';
-import { buildCoachTools } from '@/lib/agentic-os/cyber/coach/tools';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/cyber/coach/anthropic';
-import { wrapStreamWithRedaction } from '@/lib/agentic-os/cyber/coach/secret-redaction-stream';
-import { redactSecrets, type RedactionMatch } from '@/lib/agentic-os/cyber/coach/secret-redaction';
+import { redactSecrets } from '@/lib/agentic-os/cyber/coach/secret-redaction';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -111,119 +108,75 @@ export async function POST(request: NextRequest, { params }: Props) {
   });
   const systemPrompt = buildSystemPrompt(context, conversation.mode);
 
-  const tools = buildCoachTools({
-    ownerId: user.userId,
-    conversationId,
-    caseId: conversation.caseId,
-  });
+  // Tools DEFERRED — `@platform/llm` Wave-0 has no function-calling.
+  let rawAssistantText = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: parsed.data.message,
+      tenantId: user.tenantId,
+      osSlug: 'cyber',
+      model: modelId,
+    });
+    rawAssistantText = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[cyber.coach.chat] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-  const provider = getAnthropicProvider();
+  // Run the secret-redaction filter on the full assistant text (the
+  // streaming-wrapper variant is no longer needed once streaming is off).
+  const { redacted: redactedAssistantText, matches: aggregateMatches } =
+    redactSecrets(rawAssistantText);
 
-  const uiMessages: UIMessage[] = [
-    {
-      id: userMessage.id,
-      role: 'user',
-      parts: [{ type: 'text', text: parsed.data.message }],
-    },
-  ];
-
-  const modelMessages = await convertToModelMessages(uiMessages);
-
-  // Track the redacted assistant text + match summary as the stream flows so
-  // we can persist them in onFinish (and surface to the UI via the trailer).
-  let redactedAssistantText = '';
-  let aggregateMatches: RedactionMatch[] = [];
-
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-    tools,
-    stopWhen: stepCountIs(5),
-    async onFinish(event) {
-      try {
-        // Defensive: re-redact the final text in case the streaming wrapper
-        // missed an end-of-stream split. This is the canonical authoritative
-        // text we persist.
-        const rawText = event.text ?? '';
-        const finalRedacted = redactSecrets(rawText);
-        const finalText = redactedAssistantText || finalRedacted.redacted;
-        const finalMatches: RedactionMatch[] = aggregateMatches.length
-          ? aggregateMatches
-          : finalRedacted.matches;
-
-        const toolCalls = (event.toolCalls ?? []).map((tc) => ({
-          id: tc.toolCallId,
-          name: tc.toolName,
-          input: tc.input,
-        }));
-        const assistantMessage = await appendMessage({
-          conversationId,
-          role: 'assistant',
-          content: finalText,
-          toolCalls: toolCalls.length ? toolCalls : null,
-          redacted: finalMatches.length > 0,
-          redactionMatches: finalMatches,
-          metadata: {
-            model: modelId,
-            system_prompt_version: SYSTEM_PROMPT_VERSION,
-            usage: event.totalUsage,
-          },
-        });
-        await touchConversation(conversationId, user.userId);
-        await recordAudit({
-          actorId: user.userId,
-          action: 'cyber.coach.turn',
-          payload: {
-            conversation_id: conversationId,
-            user_message_id: userMessage.id,
-            assistant_message_id: assistantMessage.id,
-            tool_calls: toolCalls.length,
-            mode: conversation.mode,
-            redacted: finalMatches.length > 0,
-            redaction_match_types: finalMatches.map((m) => m.type),
-          },
-        });
-      } catch (err) {
-        console.error('[cyber.coach.chat] onFinish persistence failed', err);
-      }
-    },
-  });
-
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          const filtered = wrapStreamWithRedaction(
-            result.textStream,
-            (matches) => {
-              aggregateMatches = matches;
-            },
-          );
-          for await (const chunk of filtered) {
-            redactedAssistantText += chunk;
-            controller.enqueue(encoder.encode(chunk));
-          }
-        } catch (err) {
-          console.error('[cyber.coach.chat] stream error', err);
-        } finally {
-          const sentinel =
-            String.fromCharCode(0x1e) +
-            JSON.stringify({
-              conversation_id: conversationId,
-              redacted: aggregateMatches.length > 0,
-              redaction_matches: aggregateMatches,
-            }) +
-            '\n';
-          controller.enqueue(encoder.encode(sentinel));
-          controller.close();
-        }
+  try {
+    const assistantMessage = await appendMessage({
+      conversationId,
+      role: 'assistant',
+      content: redactedAssistantText,
+      toolCalls: null,
+      redacted: aggregateMatches.length > 0,
+      redactionMatches: aggregateMatches,
+      metadata: {
+        model: modelId,
+        system_prompt_version: SYSTEM_PROMPT_VERSION,
+        latency_ms: latencyMs,
       },
-    }),
+    });
+    await touchConversation(conversationId, user.userId);
+    await recordAudit({
+      actorId: user.userId,
+      action: 'cyber.coach.turn',
+      payload: {
+        conversation_id: conversationId,
+        user_message_id: userMessage.id,
+        assistant_message_id: assistantMessage.id,
+        tool_calls: 0,
+        mode: conversation.mode,
+        redacted: aggregateMatches.length > 0,
+        redaction_match_types: aggregateMatches.map((m) => m.type),
+      },
+    });
+  } catch (err) {
+    console.error('[cyber.coach.chat] persistence failed', err);
+  }
+
+  return NextResponse.json(
+    {
+      conversation_id: conversationId,
+      text: redactedAssistantText,
+      model: modelId,
+      latency_ms: latencyMs,
+      redacted: aggregateMatches.length > 0,
+      redaction_matches: aggregateMatches,
+    },
     {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store',
         'x-coach-conversation-id': conversationId,
       },
