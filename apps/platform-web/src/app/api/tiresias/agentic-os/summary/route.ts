@@ -76,8 +76,8 @@ interface OsQueryDef {
 const OS_QUERY_DEFS: OsQueryDef[] = [
   // health: single-row upsert profile — count is 0 or 1
   { slug: 'health',         table: 'agos_health_profile',          userCol: 'user_id',  timeCol: 'updated_at' },
-  // maker: builds
-  { slug: 'maker',          table: 'agos_maker_builds',            userCol: 'user_id',  timeCol: 'updated_at' },
+  // maker: projects (renamed from agos_maker_builds in 0033_maker_phase1)
+  { slug: 'maker',          table: 'agos_maker_projects',          userCol: 'user_id',  timeCol: 'updated_at' },
   // research: hypotheses
   { slug: 'research',       table: 'agos_research_hypotheses',     userCol: 'user_id',  timeCol: 'updated_at' },
   // secure-dev: threat models — only has created_at (confirmed in repo.ts)
