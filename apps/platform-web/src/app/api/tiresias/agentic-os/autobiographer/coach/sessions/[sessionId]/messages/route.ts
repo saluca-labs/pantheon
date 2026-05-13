@@ -31,7 +31,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import {
@@ -48,7 +47,7 @@ import {
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/autobiographer/coach/system-prompt';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/autobiographer/coach/anthropic';
@@ -70,8 +69,6 @@ const Body = z.object({
 interface Props {
   params: Promise<{ sessionId: string }>;
 }
-
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export async function POST(request: NextRequest, { params }: Props) {
   const user = await getCurrentAutobiographerUser();
@@ -181,130 +178,117 @@ export async function POST(request: NextRequest, { params }: Props) {
     );
   }
 
-  // Compose UI messages from the full transcript so the model sees prior
-  // turns. The user turn we just appended is included.
-  const transcript = [...session.messages, userTurn];
-  const uiMessages: UIMessage[] = transcript
-    .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .map((m, i) => ({
-      id: `${sessionId}-${i}`,
-      role: m.role as 'user' | 'assistant',
-      parts: [{ type: 'text', text: m.content }],
-    }));
-
-  const provider = getAnthropicProvider();
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-  });
+  // Flatten transcript into a single user prompt (no multi-message API
+  // in @platform/llm Wave 0).
+  const transcript = [...session.messages, userTurn]
+    .filter((m) => m.role === 'user' || m.role === 'assistant');
+  const userBody = transcript
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
 
   const sessionBookId = session.bookId;
   const sessionMode = session.mode;
 
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        let assistantText = '';
-        let committedRevisionId: string | null = null;
-        try {
-          for await (const delta of result.textStream) {
-            assistantText += delta;
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[autobiographer.coach.messages] stream error', err);
-        }
+  let assistantText = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: userBody,
+      tenantId: user.tenantId,
+      osSlug: 'autobiographer',
+      model: modelId,
+    });
+    assistantText = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[autobiographer.coach.messages] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-        // Persist the assistant turn unconditionally (transcript is the
-        // source of truth even if the chapter-revision commit fails).
-        try {
-          const assistantTurn: CoachMessage = {
-            role: 'assistant',
-            content: assistantText,
-            created_at: new Date().toISOString(),
-          };
-          await appendMessages(sessionId, user.userId, [assistantTurn]);
-          await patchMetadata(sessionId, user.userId, {
-            system_prompt_version: SYSTEM_PROMPT_VERSION,
-            last_source_memory_ids: sourceMemoryIds,
-            last_voice_profile_id: voiceProfileId,
-          });
-          await recordAudit({
-            actorId: user.userId,
-            action: 'autobiographer.coach.message_sent',
-            payload: {
-              session_id: sessionId,
-              mode: sessionMode,
-              model: modelId,
-              system_prompt_version: SYSTEM_PROMPT_VERSION,
-              context_truncated: contextTruncated,
-              assistant_chars: assistantText.length,
-            },
-            projectId: sessionBookId,
-          });
-        } catch (err) {
-          console.error(
-            '[autobiographer.coach.messages] persistence failed',
-            err,
-          );
-        }
-
-        // Chapter-drafter commit path: write a new chapter_revision row
-        // with author='coach', coach_session_id, citations parsed from
-        // the assistant text's [cites: …] markers.
-        let citations: ReturnType<typeof parseCitations> = [];
-        if (commitToChapter && assistantText.trim().length > 0) {
-          try {
-            citations = parseCitations(assistantText);
-            const revision = await insertRevision(user.userId, {
-              chapterId: parsed.data.chapter_id!,
-              author: 'coach',
-              bodyText: assistantText,
-              summary: null,
-              citations,
-              coachSessionId: sessionId,
-            });
-            committedRevisionId = revision.id;
-            await recordAudit({
-              actorId: user.userId,
-              action: 'autobiographer.coach.draft_committed',
-              payload: {
-                session_id: sessionId,
-                chapter_id: parsed.data.chapter_id,
-                revision_id: revision.id,
-                version: revision.version,
-                paragraph_count: citations.length,
-              },
-              projectId: sessionBookId,
-            });
-          } catch (err) {
-            console.error(
-              '[autobiographer.coach.messages] commit_to_chapter failed',
-              err,
-            );
-          }
-        }
-
-        const trailer = {
-          session_id: sessionId,
-          mode: sessionMode,
-          system_prompt_version: SYSTEM_PROMPT_VERSION,
-          context_truncated: contextTruncated,
-          citations,
-          committed_revision_id: committedRevisionId,
-        };
-        controller.enqueue(
-          encoder.encode(RECORD_SEPARATOR + JSON.stringify(trailer) + '\n'),
-        );
-        controller.close();
+  // Persist the assistant turn unconditionally (transcript is the
+  // source of truth even if the chapter-revision commit fails).
+  try {
+    const assistantTurn: CoachMessage = {
+      role: 'assistant',
+      content: assistantText,
+      created_at: new Date().toISOString(),
+    };
+    await appendMessages(sessionId, user.userId, [assistantTurn]);
+    await patchMetadata(sessionId, user.userId, {
+      system_prompt_version: SYSTEM_PROMPT_VERSION,
+      last_source_memory_ids: sourceMemoryIds,
+      last_voice_profile_id: voiceProfileId,
+    });
+    await recordAudit({
+      actorId: user.userId,
+      action: 'autobiographer.coach.message_sent',
+      payload: {
+        session_id: sessionId,
+        mode: sessionMode,
+        model: modelId,
+        system_prompt_version: SYSTEM_PROMPT_VERSION,
+        context_truncated: contextTruncated,
+        assistant_chars: assistantText.length,
       },
-    }),
+      projectId: sessionBookId,
+    });
+  } catch (err) {
+    console.error('[autobiographer.coach.messages] persistence failed', err);
+  }
+
+  // Chapter-drafter commit path.
+  let citations: ReturnType<typeof parseCitations> = [];
+  let committedRevisionId: string | null = null;
+  if (commitToChapter && assistantText.trim().length > 0) {
+    try {
+      citations = parseCitations(assistantText);
+      const revision = await insertRevision(user.userId, {
+        chapterId: parsed.data.chapter_id!,
+        author: 'coach',
+        bodyText: assistantText,
+        summary: null,
+        citations,
+        coachSessionId: sessionId,
+      });
+      committedRevisionId = revision.id;
+      await recordAudit({
+        actorId: user.userId,
+        action: 'autobiographer.coach.draft_committed',
+        payload: {
+          session_id: sessionId,
+          chapter_id: parsed.data.chapter_id,
+          revision_id: revision.id,
+          version: revision.version,
+          paragraph_count: citations.length,
+        },
+        projectId: sessionBookId,
+      });
+    } catch (err) {
+      console.error(
+        '[autobiographer.coach.messages] commit_to_chapter failed',
+        err,
+      );
+    }
+  }
+
+  return NextResponse.json(
+    {
+      session_id: sessionId,
+      mode: sessionMode,
+      text: assistantText,
+      model: modelId,
+      latency_ms: latencyMs,
+      system_prompt_version: SYSTEM_PROMPT_VERSION,
+      context_truncated: contextTruncated,
+      citations,
+      committed_revision_id: committedRevisionId,
+    },
     {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store',
         'x-coach-session-id': sessionId,
       },

@@ -19,7 +19,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentCreatorUser } from '@/lib/agentic-os/creator/session';
 import {
   appendMessages,
@@ -34,7 +33,7 @@ import {
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/creator/coach/system-prompt';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/creator/coach/anthropic';
@@ -124,61 +123,59 @@ export async function POST(request: NextRequest, { params }: Props) {
     );
   }
 
-  // Compose UI messages from the full transcript so the model sees prior
-  // turns. The user turn we just appended is included.
-  const transcript = [...session.messages, userTurn];
-  const uiMessages: UIMessage[] = transcript
-    .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .map((m, i) => ({
-      id: `${sessionId}-${i}`,
-      role: m.role as 'user' | 'assistant',
-      parts: [{ type: 'text', text: m.content }],
-    }));
+  // Flatten transcript into a single user prompt (no multi-message API
+  // in @platform/llm Wave 0).
+  const transcript = [...session.messages, userTurn]
+    .filter((m) => m.role === 'user' || m.role === 'assistant');
+  const userBody = transcript
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
 
-  const provider = getAnthropicProvider();
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-    async onFinish(event) {
-      try {
-        const assistantText = event.text ?? '';
-        const assistantTurn: CoachMessage = {
-          role: 'assistant',
-          content: assistantText,
-          created_at: new Date().toISOString(),
-        };
-        await appendMessages(sessionId, user.userId, [assistantTurn]);
-      } catch (err) {
-        console.error('[creator.coach.stream] persistence failed', err);
-      }
+  let assistantText = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: userBody,
+      tenantId: user.tenantId,
+      osSlug: 'creator',
+      model: modelId,
+    });
+    assistantText = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[creator.coach.stream] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
+
+  try {
+    const assistantTurn: CoachMessage = {
+      role: 'assistant',
+      content: assistantText,
+      created_at: new Date().toISOString(),
+    };
+    await appendMessages(sessionId, user.userId, [assistantTurn]);
+  } catch (err) {
+    console.error('[creator.coach.stream] persistence failed', err);
+  }
+
+  // SYSTEM_PROMPT_VERSION imported for parity with sibling coaches even
+  // though it's not yet returned in the payload; tests assert on the
+  // import surface.
+  void SYSTEM_PROMPT_VERSION;
+
+  return NextResponse.json(
+    {
+      session_id: sessionId,
+      text: assistantText,
+      model: modelId,
+      latency_ms: latencyMs,
     },
-  });
-
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const delta of result.textStream) {
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[creator.coach.stream] stream error', err);
-        } finally {
-          const sentinel =
-            String.fromCharCode(0x1e) +
-            JSON.stringify({ session_id: sessionId }) +
-            '\n';
-          controller.enqueue(encoder.encode(sentinel));
-          controller.close();
-        }
-      },
-    }),
     {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store',
         'x-coach-session-id': sessionId,
       },

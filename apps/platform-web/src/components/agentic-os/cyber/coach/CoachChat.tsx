@@ -10,7 +10,6 @@ import {
 } from '@/lib/agentic-os/cyber/coach/modes';
 import type { RedactionMatch } from '@/lib/agentic-os/cyber/coach/secret-redaction';
 
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export interface CoachUiMessage {
   id: string;
@@ -95,57 +94,16 @@ export function CoachChat({
         const body = await r.json().catch(() => ({}));
         throw new Error(body.message || body.error || `HTTP ${r.status}`);
       }
-      if (!r.body) throw new Error('No response body');
-      const reader = r.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let assistantText = '';
-      let trailerSeen = false;
-      let trailerJson = '';
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value: chunk } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(chunk, { stream: true });
-        const sepIdx = buffer.indexOf(RECORD_SEPARATOR);
-        if (sepIdx >= 0 && !trailerSeen) {
-          trailerSeen = true;
-          assistantText += buffer.slice(0, sepIdx);
-          trailerJson = buffer.slice(sepIdx + 1);
-          buffer = '';
-        } else if (!trailerSeen) {
-          assistantText += buffer;
-          buffer = '';
-        } else {
-          trailerJson += buffer;
-          buffer = '';
-        }
-        if (!trailerSeen) {
-          setMessages((m) => {
-            const copy = m.slice();
-            copy[copy.length - 1] = {
-              ...assistantPlaceholder,
-              content: assistantText,
-            };
-            return copy;
-          });
-        }
-      }
-      let trailer: ChatTrailer = {};
-      if (trailerJson.trim()) {
-        try {
-          trailer = JSON.parse(trailerJson.trim());
-        } catch {
-          // ignore malformed trailer
-        }
-      }
+      // Wave-0: JSON response (streaming deferred).
+      const body = (await r.json()) as ChatTrailer & { text?: string };
+      const assistantText = body.text ?? '';
       setMessages((m) => {
         const copy = m.slice();
         copy[copy.length - 1] = {
           ...assistantPlaceholder,
           content: assistantText,
-          redacted: trailer.redacted ?? false,
-          redactionMatches: trailer.redaction_matches ?? [],
+          redacted: body.redacted ?? false,
+          redactionMatches: body.redaction_matches ?? [],
         };
         return copy;
       });

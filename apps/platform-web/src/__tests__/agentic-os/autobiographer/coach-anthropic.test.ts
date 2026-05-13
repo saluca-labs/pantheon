@@ -1,5 +1,8 @@
 /**
- * Autobiographer OS Phase 7 — coach Anthropic provider wrapper tests.
+ * Autobiographer OS Phase 7 — coach LLM wrapper tests.
+ *
+ * Wave 0: rewired through `@platform/llm`. The wrapper no longer
+ * exposes `getAnthropicProvider`; it exports `callCoachLlm` instead.
  *
  * @license MIT — Tiresias Autobiographer OS Phase 7 (internal).
  */
@@ -9,25 +12,22 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 const ORIGINAL_KEY = process.env['ANTHROPIC_API_KEY'];
 const ORIGINAL_MODEL = process.env['COACH_MODEL'];
 
-vi.mock('@ai-sdk/anthropic', () => ({
-  createAnthropic: vi.fn((opts: any) => ({
-    _opts: opts,
-    _stub: true,
-  })),
+vi.mock('@platform/llm', () => ({
+  callLlm: vi.fn(async () => 'stubbed-assistant-reply'),
 }));
 
 import {
   DEFAULT_COACH_MODEL,
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/autobiographer/coach/anthropic';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { callLlm } from '@platform/llm';
 
 beforeEach(() => {
   delete process.env['ANTHROPIC_API_KEY'];
   delete process.env['COACH_MODEL'];
-  (createAnthropic as unknown as ReturnType<typeof vi.fn>).mockClear();
+  (callLlm as unknown as ReturnType<typeof vi.fn>).mockClear();
 });
 
 afterEach(() => {
@@ -62,15 +62,39 @@ describe('getCoachModelId', () => {
   });
 });
 
-describe('getAnthropicProvider', () => {
-  it('throws when ANTHROPIC_API_KEY is unset', () => {
-    expect(() => getAnthropicProvider()).toThrow(/ANTHROPIC_API_KEY is not set/);
+describe('callCoachLlm', () => {
+  it('routes the call through @platform/llm with provider=anthropic', async () => {
+    const r = await callCoachLlm({
+      system: 'sys',
+      user: 'hi',
+      tenantId: 't-1',
+      osSlug: 'autobiographer',
+    });
+    expect(callLlm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: 'sys',
+        user: 'hi',
+        tenantId: 't-1',
+        osSlug: 'autobiographer',
+        provider: 'anthropic',
+        model: DEFAULT_COACH_MODEL,
+      }),
+    );
+    expect(r.text).toBe('stubbed-assistant-reply');
+    expect(r.model).toBe(DEFAULT_COACH_MODEL);
+    expect(r.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
-  it('calls createAnthropic with the key when configured', () => {
-    process.env['ANTHROPIC_API_KEY'] = 'sk-ant-test';
-    getAnthropicProvider();
-    expect(createAnthropic).toHaveBeenCalledWith({ apiKey: 'sk-ant-test' });
+  it('honors COACH_MODEL override', async () => {
+    process.env['COACH_MODEL'] = 'claude-test-model';
+    await callCoachLlm({
+      system: 's',
+      user: 'u',
+      tenantId: 't-1',
+    });
+    expect(callLlm).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'claude-test-model' }),
+    );
   });
 });
 
