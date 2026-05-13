@@ -90,6 +90,8 @@ const OS_QUERY_DEFS: OsQueryDef[] = [
   { slug: 'autobiographer', table: 'agos_autobiographer_chapters', userCol: 'user_id',  timeCol: 'updated_at' },
   // business: people contacts
   { slug: 'business',       table: 'agos_business_people',         userCol: 'user_id',  timeCol: 'updated_at' },
+  // business_deals: pipeline deals (Phase 2)
+  { slug: 'business_deals', table: 'agos_business_deals',          userCol: 'user_id',  timeCol: 'updated_at' },
   // creator: posts
   { slug: 'creator',        table: 'agos_creator_posts',           userCol: 'user_id',  timeCol: 'updated_at' },
 ];
