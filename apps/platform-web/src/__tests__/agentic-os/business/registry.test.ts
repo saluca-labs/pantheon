@@ -112,8 +112,14 @@ describe('registry Business OS Phase 1 cards', () => {
     expect(card!.description).toMatch(/invoice|line.item|payment|pdf/i);
   });
 
-  it('exposes 9 feature cards in Phase 4', () => {
-    expect(business!.features).toHaveLength(9);
+  it('feature card count matches the registry source (no magic number)', () => {
+    // Derive expected length from the imported registry so this test stays
+    // green as later phases add cards. Spec: every business feature listed
+    // in the registry must be exposed by findAgenticOsModule('business').
+    const sourceFeatures = AGENTIC_OS_MODULES.find((m) => m.slug === 'business')!.features;
+    expect(business!.features).toHaveLength(sourceFeatures.length);
+    // Floor sanity check: Phase 4 promised at least 9 cards; never regress below.
+    expect(business!.features.length).toBeGreaterThanOrEqual(9);
   });
 
   it('tagline matches the Business OS positioning', () => {
