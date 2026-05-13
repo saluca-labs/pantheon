@@ -7,7 +7,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
-import { ArrowLeft, Archive, RotateCcw, DollarSign, FileText, Receipt, ScrollText } from 'lucide-react';
+import { ArrowLeft, Archive, RotateCcw, DollarSign, FileText, Receipt, ScrollText, Sparkles } from 'lucide-react';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { getDeal, archiveDeal, restoreDeal } from '@/lib/agentic-os/business/deals-repo';
 import { getPerson } from '@/lib/agentic-os/business/people-repo';
@@ -141,6 +141,15 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
       {/* ─── OVERVIEW TAB ──────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
         <>
+          <div className="flex items-center gap-2 mb-4">
+            <Link
+              href={`/dashboard/os/business/coach?deal_id=${deal.id}&mode=sales_coach`}
+              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Ask AI Coach about this deal
+            </Link>
+          </div>
           <div className="flex items-center gap-3 mb-6">
             {isArchived ? (
               <form action={restoreDealAction.bind(null, deal.id)}>

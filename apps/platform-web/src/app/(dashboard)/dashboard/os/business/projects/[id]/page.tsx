@@ -1,4 +1,4 @@
-import { Briefcase, ListTodo, Clock, Settings, Plus, Play, FileText, Receipt, ScrollText } from 'lucide-react';
+import { Briefcase, ListTodo, Clock, Settings, Plus, Play, FileText, Receipt, ScrollText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
@@ -228,6 +228,15 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       {/* ─── OVERVIEW TAB ──────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Link
+              href={`/dashboard/os/business/coach?project_id=${project.id}&mode=pricing_advisor`}
+              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Ask AI Coach about this project
+            </Link>
+          </div>
           {/* Meta cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
