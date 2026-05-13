@@ -7,7 +7,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
-import { ArrowLeft, Send, Ban, Plus, Clock } from 'lucide-react';
+import { ArrowLeft, Send, Ban, Plus, Clock, Sparkles } from 'lucide-react';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { getInvoice } from '@/lib/agentic-os/business/invoices-repo';
 import { listLineItems } from '@/lib/agentic-os/business/line-items-repo';
@@ -143,6 +143,15 @@ export default async function InvoiceDetailPage({ params }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {invoice.projectId && (
+            <Link
+              href={`/dashboard/os/business/coach?project_id=${invoice.projectId}&mode=pricing_advisor`}
+              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              AI Coach
+            </Link>
+          )}
           {canSend && (
             <form action={sendInvoiceAction.bind(null, invoice.id)}>
               <button
