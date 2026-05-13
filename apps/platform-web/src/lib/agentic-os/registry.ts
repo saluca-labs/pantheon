@@ -602,6 +602,11 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'Documents',
         description: 'Per-engagement documents with lifecycle tracking and in-app e-signature.',
       },
+      {
+        href: '/dashboard/os/business/coach',
+        label: 'AI Coach',
+        description: 'Five-mode advisory coach: pricing, sales, marketing, strategy, and general business guidance.',
+      },
     ],
   },
   {
