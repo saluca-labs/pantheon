@@ -9,6 +9,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { getCreatorPool } from './session';
+import { recordAudit } from '../_shared/audit';
 import type { CalendarPost, PostStatus, Channel, ContentFormat } from './calendar';
 
 export async function listPosts(userId: string, limit = 50): Promise<CalendarPost[]> {
@@ -91,20 +92,5 @@ export async function updatePostStatus(id: string, status: PostStatus): Promise<
   await pool.query(
     `UPDATE agos_creator_posts SET status = $2, updated_at = now() WHERE id = $1`,
     [id, status],
-  );
-}
-
-// ─── Audit ──────────────────────────────────────────────────────────────────
-
-export async function recordAudit(args: {
-  actorId: string;
-  action: string;
-  payload?: Record<string, unknown>;
-}): Promise<void> {
-  const pool = getCreatorPool();
-  await pool.query(
-    `INSERT INTO agos_audit (id, actor_id, os_slug, action, payload)
-     VALUES ($1,$2,$3,$4,$5::jsonb)`,
-    [randomUUID(), args.actorId, 'creator', args.action, JSON.stringify(args.payload ?? {})],
   );
 }

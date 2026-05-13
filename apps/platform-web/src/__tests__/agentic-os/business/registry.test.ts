@@ -98,8 +98,28 @@ describe('registry Business OS Phase 1 cards', () => {
     expect(card!.href).toBe('/dashboard/os/business/time');
   });
 
-  it('exposes 7 feature cards in Phase 3', () => {
-    expect(business!.features).toHaveLength(7);
+  it('has a Quotes card pointing at /dashboard/os/business/quotes', () => {
+    const card = business!.features.find((f) => f.label === 'Quotes');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/business/quotes');
+    expect(card!.description).toMatch(/quote|line.item|convert/i);
+  });
+
+  it('has an Invoices card pointing at /dashboard/os/business/invoices', () => {
+    const card = business!.features.find((f) => f.label === 'Invoices');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/business/invoices');
+    expect(card!.description).toMatch(/invoice|line.item|payment|pdf/i);
+  });
+
+  it('feature card count matches the registry source (no magic number)', () => {
+    // Derive expected length from the imported registry so this test stays
+    // green as later phases add cards. Spec: every business feature listed
+    // in the registry must be exposed by findAgenticOsModule('business').
+    const sourceFeatures = AGENTIC_OS_MODULES.find((m) => m.slug === 'business')!.features;
+    expect(business!.features).toHaveLength(sourceFeatures.length);
+    // Floor sanity check: Phase 4 promised at least 9 cards; never regress below.
+    expect(business!.features.length).toBeGreaterThanOrEqual(9);
   });
 
   it('tagline matches the Business OS positioning', () => {

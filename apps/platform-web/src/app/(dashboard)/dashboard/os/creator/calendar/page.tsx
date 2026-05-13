@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentCreatorUser } from '@/lib/agentic-os/creator/session';
-import { listPosts } from '@/lib/agentic-os/creator/repo';
+import { listPosts } from '@/lib/agentic-os/creator/posts-repo';
 import { EditorialCalendar } from '@/components/agentic-os/creator/editorial-calendar';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export default async function CreatorCalendarPage() {
   const user = await getCurrentCreatorUser();
   if (!user) redirect('/login');
 
-  const posts = await listPosts(user.userId);
+  const posts = await listPosts(user.userId, { limit: 200 });
 
   return (
     <div className="max-w-4xl">
@@ -28,7 +28,7 @@ export default async function CreatorCalendarPage() {
         <h1 className="text-2xl font-semibold text-white">Editorial Calendar</h1>
       </div>
       <p className="text-sm text-[#94a3b8] mb-6">
-        Plan, schedule, and track content across channels. Posts are grouped by ISO
+        Plan, schedule, and track content. Posts are grouped by ISO
         week for an at-a-glance publishing view.
       </p>
 

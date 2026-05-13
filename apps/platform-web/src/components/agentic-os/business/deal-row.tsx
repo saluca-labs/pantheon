@@ -62,7 +62,7 @@ export default function DealRow({ deal, contactName, orgName }: DealRowProps) {
         {contactName && orgName && <span>{orgName}</span>}
       </td>
       <td className="px-4 py-2.5 text-xs text-teal-300 font-medium">
-        {formatValue(deal.valueCents, deal.currency)}
+        {deal.valueCents != null ? formatValue(deal.valueCents, deal.currency) : '--'}
       </td>
       <td className="px-4 py-2.5">
         <DealStagePicker stage={deal.stage} disabled />

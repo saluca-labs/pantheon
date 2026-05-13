@@ -37,8 +37,11 @@ interface ForecastStripProps {
 export default function ForecastStrip({ deals }: ForecastStripProps) {
   const { openDeals, totalValue, weightedValue } = useMemo(() => {
     const open = deals.filter((d) => d.stage !== 'won' && d.stage !== 'lost');
-    const total = open.reduce((sum, d) => sum + d.valueCents, 0);
-    const weighted = open.reduce((sum, d) => sum + (d.valueCents * d.probabilityPct) / 100, 0);
+    const total = open.reduce((sum, d) => sum + (d.valueCents ?? 0), 0);
+    const weighted = open.reduce(
+      (sum, d) => sum + ((d.valueCents ?? 0) * d.probabilityPct) / 100,
+      0,
+    );
     return {
       openDeals: open.length,
       totalValue: total,
