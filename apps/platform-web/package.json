@@ -26,6 +26,7 @@
     "@platform/auth": "workspace:*",
     "@platform/blob-store": "workspace:*",
     "@platform/config": "workspace:*",
+    "@platform/llm": "workspace:*",
     "@platform/types": "workspace:*",
     "@react-pdf/renderer": "^4.0.0",
     "@tanstack/react-query": "^5.95.2",
