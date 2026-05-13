@@ -85,6 +85,47 @@ spec:
               value: "pantheon.saluca.com"
             - name: NODE_ENV
               value: "production"
+            # @platform/blob-store wiring. Values intentionally NOT set in
+            # this commit — env-vars rollout is a separate Wave-N pass per
+            # Cristian's gating decision. Until DRIVER is flipped to
+            # `minio` or `s3`, every PDF route falls back to inline Buffer
+            # responses (the pre-blob-store baseline).
+            - name: BLOB_STORE_DRIVER
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-driver
+                  optional: true
+            - name: BLOB_STORE_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-bucket
+                  optional: true
+            - name: BLOB_STORE_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-endpoint
+                  optional: true
+            - name: BLOB_STORE_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-region
+                  optional: true
+            - name: BLOB_STORE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-access-key
+                  optional: true
+            - name: BLOB_STORE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: blob-store-secret-key
+                  optional: true
           resources:
             requests:
               cpu: 250m

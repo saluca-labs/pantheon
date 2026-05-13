@@ -4,6 +4,7 @@ WORKDIR /repo
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY packages/auth/package.json ./packages/auth/
+COPY packages/blob-store/package.json ./packages/blob-store/
 COPY packages/config/package.json ./packages/config/
 COPY packages/types/package.json ./packages/types/
 COPY packages/memory/package.json ./packages/memory/
@@ -29,6 +30,7 @@ ENV NODE_ENV=production
 RUN pnpm --filter "@platform/types" \
          --filter "@platform/config" \
          --filter "@platform/auth" \
+         --filter "@platform/blob-store" \
          run build
 RUN pnpm --filter platform-web build
 
