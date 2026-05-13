@@ -1,4 +1,4 @@
-import { Briefcase, ListTodo, Clock, Settings, Plus, Play } from 'lucide-react';
+import { Briefcase, ListTodo, Clock, Settings, Plus, Play, FileText, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
@@ -7,6 +7,8 @@ import { listTasks, getTask } from '@/lib/agentic-os/business/tasks-repo';
 import { listTimeEntries, getRunningTimer } from '@/lib/agentic-os/business/time-entries-repo';
 import { listDeals } from '@/lib/agentic-os/business/deals-repo';
 import { listPeople } from '@/lib/agentic-os/business/people-repo';
+import { listQuotes } from '@/lib/agentic-os/business/quotes-repo';
+import { listInvoices } from '@/lib/agentic-os/business/invoices-repo';
 import {
   computeDuration,
   computeBillableAmount,
@@ -25,8 +27,30 @@ interface Props {
   searchParams: Promise<{ tab?: string; new_task?: string; log_time?: string; edit?: string }>;
 }
 
-const TABS = ['overview', 'tasks', 'time', 'settings'] as const;
+const TABS = ['overview', 'tasks', 'time', 'quotes', 'invoices', 'settings'] as const;
 type Tab = (typeof TABS)[number];
+
+const quoteStatusColors: Record<string, string> = {
+  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
+  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  accepted: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
+  rejected: 'bg-red-900/40 text-red-300 border-red-800',
+  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
+  converted: 'bg-violet-900/40 text-violet-300 border-violet-800',
+};
+
+const invoiceStatusColors: Record<string, string> = {
+  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
+  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  partial: 'bg-amber-900/40 text-amber-300 border-amber-800',
+  paid: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
+  overdue: 'bg-red-900/40 text-red-300 border-red-800',
+  voided: 'bg-slate-900/40 text-slate-500 border-slate-800',
+};
+
+function fmtCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 const statusOrder: TaskStatus[] = ['in_progress', 'blocked', 'todo', 'done', 'cancelled'];
 
@@ -90,12 +114,14 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
   }
 
   // Fetch related data
-  const [tasks, timeEntries, running, deals, people] = await Promise.all([
+  const [tasks, timeEntries, running, deals, people, quotes, invoices] = await Promise.all([
     listTasks(user.userId, { projectId: id, limit: 500 }),
     listTimeEntries(user.userId, { projectId: id, limit: 500 }),
     getRunningTimer(user.userId),
     listDeals(user.userId, { limit: 500 }),
     listPeople(user.userId, { archived: false, limit: 500 }),
+    listQuotes(user.userId, { projectId: id, limit: 500 }),
+    listInvoices(user.userId, { projectId: id, limit: 500 }),
   ]);
 
   const contacts = people.map((p) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName }));
@@ -174,6 +200,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             overview: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
             tasks: <ListTodo className="w-3.5 h-3.5" />,
             time: <Clock className="w-3.5 h-3.5" />,
+            quotes: <FileText className="w-3.5 h-3.5" />,
+            invoices: <Receipt className="w-3.5 h-3.5" />,
             settings: <Settings className="w-3.5 h-3.5" />,
           };
           return (
@@ -533,6 +561,72 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                 No time entries yet. Start tracking time for this project.
               </p>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
+      {activeTab === 'quotes' && (
+        <div className="space-y-3">
+          <p className="text-sm text-[#94a3b8]">
+            {quotes.length} quote{quotes.length !== 1 ? 's' : ''} linked to this project
+          </p>
+          {quotes.length > 0 ? (
+            quotes.map((q) => (
+              <Link
+                key={q.id}
+                href={`/dashboard/os/business/quotes/${q.id}`}
+                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white">{q.title}</p>
+                    <p className="text-[10px] text-[#64748b] font-mono">{q.quoteNumber}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${quoteStatusColors[q.status] ?? quoteStatusColors.draft}`}>
+                      {q.status}
+                    </span>
+                    <span className="text-sm font-mono text-white">{fmtCents(q.totalCents)}</span>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-[#64748b] py-4">No quotes linked to this project yet.</p>
+          )}
+        </div>
+      )}
+
+      {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
+      {activeTab === 'invoices' && (
+        <div className="space-y-3">
+          <p className="text-sm text-[#94a3b8]">
+            {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} linked to this project
+          </p>
+          {invoices.length > 0 ? (
+            invoices.map((inv) => (
+              <Link
+                key={inv.id}
+                href={`/dashboard/os/business/invoices/${inv.id}`}
+                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-white">{inv.title}</p>
+                    <p className="text-[10px] text-[#64748b] font-mono">{inv.invoiceNumber}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${invoiceStatusColors[inv.status] ?? invoiceStatusColors.draft}`}>
+                      {inv.status}
+                    </span>
+                    <span className="text-sm font-mono text-white">{fmtCents(inv.totalCents)}</span>
+                  </div>
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p className="text-sm text-[#64748b] py-4">No invoices linked to this project yet.</p>
           )}
         </div>
       )}
