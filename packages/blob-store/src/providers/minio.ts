@@ -195,7 +195,9 @@ export class MinioBlobStore implements BlobStore {
 
     headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${this.cfg.accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-    return fetch(url, { method, headers, body: body ?? undefined });
+    const init: RequestInit = { method, headers };
+    if (body) init.body = body;
+    return fetch(url, init);
   }
 }
 

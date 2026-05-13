@@ -72,6 +72,9 @@ importers:
       '@platform/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@platform/blob-store':
+        specifier: workspace:*
+        version: link:../../packages/blob-store
       '@platform/config':
         specifier: workspace:*
         version: link:../../packages/config
