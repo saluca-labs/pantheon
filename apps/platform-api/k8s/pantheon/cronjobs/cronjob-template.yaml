@@ -1,0 +1,136 @@
+# ────────────────────────────────────────────────────────────────────────────
+# Pantheon CronJob template — copy this file to a new `<job>.yaml`, then
+# replace every `<<PLACEHOLDER>>` token. Do NOT include this file in
+# kustomization.yaml — it is a reference, not a deployed resource.
+#
+# Naming convention
+#   metadata.name : `pantheon-<job>` (kebab-case, ≤ 52 chars to leave 11 chars
+#                                     for K8s-generated Job suffix `-<unix>`)
+#   container name: `<job>` (no `pantheon-` prefix; redundant inside pod)
+#   labels        : app.kubernetes.io/component MUST be set to a stable string
+#                   used by the Prometheus monitor and log filters
+#
+# Schedule conventions
+#   - Avoid `:00` and `:30` minute slots (per CLAUDE.md). Pick a non-round
+#     minute in the 7-23 or 37-53 range so cron storms don't pile on top of
+#     external cron-emitting systems.
+#   - Always set `timeZone: "Etc/UTC"` explicitly. Default tz on Autopilot
+#     follows the node, which can drift if the cluster is rebuilt.
+#   - Always set `startingDeadlineSeconds`. A Job that was missed by more
+#     than this window will NOT be retro-fired. Default to 3600 (1 hour)
+#     unless you have a reason otherwise.
+#
+# Concurrency
+#   - `concurrencyPolicy: Forbid` is the default and the right answer for
+#     90% of cases. Only flip to `Allow` for fire-and-forget producers, and
+#     never to `Replace` without explicit review.
+#
+# History
+#   - `successfulJobsHistoryLimit: 3` keeps the last 3 green Jobs around
+#     (for `kubectl logs job/...` debugging). `failedJobsHistoryLimit: 3`
+#     ditto on red.
+#
+# Restart policy
+#   - `restartPolicy: OnFailure` retries the container in-place on non-zero
+#     exit. Combined with `backoffLimit: 2` that gives 3 total attempts
+#     before the Job is marked failed and the alert fires.
+#   - Use `Never` only when retries are unsafe (e.g. non-idempotent writes).
+#
+# Image tag pattern
+#   - Cronjob images live alongside the six core service images in
+#     `us-central1-docker.pkg.dev/salucainfrastructure/pantheon/`.
+#   - Tag is bumped to the release tag by `kustomize edit set image` in the
+#     CD pipeline. Refer to the image by its short name in the spec; the
+#     pipeline patches the full pinned ref before apply.
+#
+# Database access
+#   - Use the existing `pantheon-secrets` Secret. Keys: `database-url`
+#     (async) and `database-url-sync` (sync). Tools that don't speak the
+#     proxy go through cloud-sql-proxy as a native sidecar (init container
+#     with restartPolicy: Always).
+# ────────────────────────────────────────────────────────────────────────────
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pantheon-<<JOB_NAME>>
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: <<COMPONENT>>
+spec:
+  schedule: "<<MINUTE>> <<HOUR>> * * *"  # non-:00/:30 minute, see header
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: pantheon-<<JOB_NAME>>
+            app.kubernetes.io/part-of: pantheon
+            app.kubernetes.io/component: <<COMPONENT>>
+        spec:
+          serviceAccountName: pantheon-cronjob
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          initContainers:
+            # cloud-sql-proxy as a native sidecar (K8s >= 1.29). Exits when
+            # the main container exits because restartPolicy: Always on an
+            # initContainer flips it to sidecar semantics.
+            - name: cloud-sql-proxy
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+              restartPolicy: Always
+              args:
+                - "--structured-logs"
+                - "--auto-iam-authn"
+                - "--exit-zero-on-sigterm"
+                - "salucainfrastructure:us-central1:tiresias-db"
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                runAsNonRoot: true
+              resources:
+                requests: {cpu: "50m",  memory: "64Mi"}
+                limits:   {cpu: "200m", memory: "128Mi"}
+          containers:
+            - name: <<JOB_NAME>>
+              image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/pantheon-<<JOB_NAME>>:latest
+              imagePullPolicy: Always
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  echo "waiting for cloud-sql-proxy..."
+                  for i in $(seq 1 30); do
+                    if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                      echo "cloud-sql-proxy ready after ${i}s"; break
+                    fi
+                    sleep 1
+                  done
+                  exec <<ENTRYPOINT>>
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: pantheon-secrets
+                      key: database-url-sync
+                # Add per-job env vars here. Document each in the job's
+                # README and ensure defaults are safe (e.g. dry-run, low
+                # retention floor, small batch size).
+              resources:
+                requests: {cpu: "50m",  memory: "64Mi"}
+                limits:   {cpu: "500m", memory: "512Mi"}
