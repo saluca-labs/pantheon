@@ -98,8 +98,22 @@ describe('registry Business OS Phase 1 cards', () => {
     expect(card!.href).toBe('/dashboard/os/business/time');
   });
 
-  it('exposes 7 feature cards in Phase 3', () => {
-    expect(business!.features).toHaveLength(7);
+  it('has a Quotes card pointing at /dashboard/os/business/quotes', () => {
+    const card = business!.features.find((f) => f.label === 'Quotes');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/business/quotes');
+    expect(card!.description).toMatch(/quote|line.item|convert/i);
+  });
+
+  it('has an Invoices card pointing at /dashboard/os/business/invoices', () => {
+    const card = business!.features.find((f) => f.label === 'Invoices');
+    expect(card).toBeDefined();
+    expect(card!.href).toBe('/dashboard/os/business/invoices');
+    expect(card!.description).toMatch(/invoice|line.item|payment|pdf/i);
+  });
+
+  it('exposes 9 feature cards in Phase 4', () => {
+    expect(business!.features).toHaveLength(9);
   });
 
   it('tagline matches the Business OS positioning', () => {

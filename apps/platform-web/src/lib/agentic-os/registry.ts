@@ -570,6 +570,18 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         description:
           'Business name, logo, address, tax ID, currency, prefixes, and accent color.',
       },
+      {
+        href: '/dashboard/os/business/quotes',
+        label: 'Quotes',
+        description:
+          'Pre-sale estimates with line items, send, and convert to invoice.',
+      },
+      {
+        href: '/dashboard/os/business/invoices',
+        label: 'Invoices',
+        description:
+          'Billing with line items, payment tracking, PDF export, and time-entry rollup.',
+      },
     ],
   },
   {
