@@ -1,0 +1,96 @@
+/**
+ * Business OS Phase 6 — single template row.
+ *
+ * @license MIT — Tiresias Business OS Phase 6 (internal).
+ */
+
+'use client';
+
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Pencil, Trash2 } from 'lucide-react';
+import type { DocTemplate } from '@/lib/agentic-os/business/doc-templates';
+
+const kindColors: Record<string, string> = {
+  nda: 'bg-violet-900/40 text-violet-300 border-violet-800',
+  sow: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  msa: 'bg-teal-900/40 text-teal-300 border-teal-800',
+  proposal: 'bg-amber-900/40 text-amber-300 border-amber-800',
+  '1099': 'bg-rose-900/40 text-rose-300 border-rose-800',
+  invoice_terms: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
+  other: 'bg-slate-900/40 text-slate-300 border-slate-800',
+};
+
+interface Props {
+  template: DocTemplate;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+}
+
+export default function TemplateRow({ template, onEdit, onDelete }: Props) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = useCallback(async () => {
+    if (!confirm('Delete this template?')) return;
+    setDeleting(true);
+    try {
+      await fetch(
+        `/api/tiresias/agentic-os/business/templates/${template.id}`,
+        { method: 'DELETE' },
+      );
+      onDelete?.(template.id);
+      router.refresh();
+    } catch {
+      setDeleting(false);
+    }
+  }, [template.id, router, onDelete]);
+
+  return (
+    <tr className="border-b border-[#2a2d3e] hover:bg-[#1a1d27]/50 transition-colors">
+      <td className="py-3 px-4">
+        <span
+          className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${
+            kindColors[template.kind] ?? kindColors.other
+          }`}
+        >
+          {template.kind === '1099' ? '1099' : template.kind.replace('_', ' ').toUpperCase()}
+        </span>
+      </td>
+      <td className="py-3 px-4 text-sm text-white max-w-[200px] truncate">
+        <Link
+          href={`/dashboard/os/business/templates/${template.id}`}
+          className="hover:text-[#4361EE] transition-colors"
+        >
+          {template.title}
+        </Link>
+      </td>
+      <td className="py-3 px-4 text-xs text-[#64748b] font-mono">
+        v{template.version}
+      </td>
+      <td className="py-3 px-4 text-xs text-[#64748b]">
+        {template.updatedAt.slice(0, 10)}
+      </td>
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEdit?.(template.id)}
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#2a2d3e] text-[#64748b] hover:text-white transition-colors"
+            title="Edit template"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-red-900/30 text-[#64748b] hover:text-red-400 transition-colors"
+            title="Delete template"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
