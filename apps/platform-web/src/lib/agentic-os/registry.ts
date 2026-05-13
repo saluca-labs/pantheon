@@ -592,6 +592,16 @@ export const AGENTIC_OS_MODULES: AgenticOsModule[] = [
         label: 'P&L',
         description: 'Live profit-and-loss summary, monthly snapshots, and PDF financial export.',
       },
+      {
+        href: '/dashboard/os/business/templates',
+        label: 'Templates',
+        description: 'Document template library with NDA, SOW, MSA, proposal, and custom templates.',
+      },
+      {
+        href: '/dashboard/os/business/documents',
+        label: 'Documents',
+        description: 'Per-engagement documents with lifecycle tracking and in-app e-signature.',
+      },
     ],
   },
   {

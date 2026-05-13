@@ -7,7 +7,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
-import { ArrowLeft, Archive, RotateCcw, DollarSign, FileText, Receipt } from 'lucide-react';
+import { ArrowLeft, Archive, RotateCcw, DollarSign, FileText, Receipt, ScrollText } from 'lucide-react';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { getDeal, archiveDeal, restoreDeal } from '@/lib/agentic-os/business/deals-repo';
 import { getPerson } from '@/lib/agentic-os/business/people-repo';
@@ -15,6 +15,8 @@ import { getOrganization } from '@/lib/agentic-os/business/orgs-repo';
 import { listInteractions } from '@/lib/agentic-os/business/interactions-repo';
 import { listQuotes } from '@/lib/agentic-os/business/quotes-repo';
 import { listInvoices } from '@/lib/agentic-os/business/invoices-repo';
+import { listDocuments } from '@/lib/agentic-os/business/documents-repo';
+import DocumentList from '@/components/agentic-os/business/document-list';
 import DealDetailShell from '@/components/agentic-os/business/deal-detail-shell';
 import DealStagePicker from '@/components/agentic-os/business/deal-stage-picker';
 
@@ -40,7 +42,7 @@ async function restoreDealAction(id: string) {
   }
 }
 
-const TABS = ['overview', 'quotes', 'invoices'] as const;
+const TABS = ['overview', 'quotes', 'invoices', 'documents'] as const;
 type Tab = (typeof TABS)[number];
 
 const quoteStatusColors: Record<string, string> = {
@@ -81,12 +83,13 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
   const deal = await getDeal(id, user.userId);
   if (!deal) notFound();
 
-  const [contact, organization, interactions, quotes, invoices] = await Promise.all([
+  const [contact, organization, interactions, quotes, invoices, dealDocuments] = await Promise.all([
     deal.contactId ? getPerson(deal.contactId, user.userId) : null,
     deal.organizationId ? getOrganization(deal.organizationId, user.userId) : null,
     listInteractions(user.userId, { dealId: deal.id, limit: 100 }),
     listQuotes(user.userId, { dealId: deal.id, limit: 500 }),
     listInvoices(user.userId, { dealId: deal.id, limit: 500 }),
+    listDocuments(user.userId, { dealId: deal.id, limit: 10 }),
   ]);
 
   const isArchived = !!deal.archivedAt;
@@ -116,6 +119,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
             overview: <DollarSign className="w-3.5 h-3.5" />,
             quotes: <FileText className="w-3.5 h-3.5" />,
             invoices: <Receipt className="w-3.5 h-3.5" />,
+            documents: <ScrollText className="w-3.5 h-3.5" />,
           };
           return (
             <Link
@@ -241,6 +245,19 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
           ) : (
             <p className="text-sm text-[#64748b] py-4">No invoices linked to this deal yet.</p>
           )}
+        </div>
+      )}
+
+      {/* ─── DOCUMENTS TAB ─────────────────────────────────────────────── */}
+      {activeTab === 'documents' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-white">Documents</h3>
+            <Link href={`/dashboard/os/business/documents?deal_id=${deal.id}`} className="text-xs text-[#4361EE] hover:underline">
+              View all →
+            </Link>
+          </div>
+          <DocumentList documents={dealDocuments} />
         </div>
       )}
     </div>

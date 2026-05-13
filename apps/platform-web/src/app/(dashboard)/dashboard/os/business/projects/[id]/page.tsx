@@ -1,4 +1,4 @@
-import { Briefcase, ListTodo, Clock, Settings, Plus, Play, FileText, Receipt } from 'lucide-react';
+import { Briefcase, ListTodo, Clock, Settings, Plus, Play, FileText, Receipt, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
@@ -9,6 +9,8 @@ import { listDeals } from '@/lib/agentic-os/business/deals-repo';
 import { listPeople } from '@/lib/agentic-os/business/people-repo';
 import { listQuotes } from '@/lib/agentic-os/business/quotes-repo';
 import { listInvoices } from '@/lib/agentic-os/business/invoices-repo';
+import { listDocuments } from '@/lib/agentic-os/business/documents-repo';
+import DocumentList from '@/components/agentic-os/business/document-list';
 import {
   computeDuration,
   computeBillableAmount,
@@ -27,7 +29,7 @@ interface Props {
   searchParams: Promise<{ tab?: string; new_task?: string; log_time?: string; edit?: string }>;
 }
 
-const TABS = ['overview', 'tasks', 'time', 'quotes', 'invoices', 'settings'] as const;
+const TABS = ['overview', 'tasks', 'time', 'quotes', 'invoices', 'documents', 'settings'] as const;
 type Tab = (typeof TABS)[number];
 
 const quoteStatusColors: Record<string, string> = {
@@ -114,7 +116,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
   }
 
   // Fetch related data
-  const [tasks, timeEntries, running, deals, people, quotes, invoices] = await Promise.all([
+  const [tasks, timeEntries, running, deals, people, quotes, invoices, projectDocuments] = await Promise.all([
     listTasks(user.userId, { projectId: id, limit: 500 }),
     listTimeEntries(user.userId, { projectId: id, limit: 500 }),
     getRunningTimer(user.userId),
@@ -122,6 +124,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
     listPeople(user.userId, { archived: false, limit: 500 }),
     listQuotes(user.userId, { projectId: id, limit: 500 }),
     listInvoices(user.userId, { projectId: id, limit: 500 }),
+    listDocuments(user.userId, { projectId: id, limit: 10 }),
   ]);
 
   const contacts = people.map((p) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName }));
@@ -202,6 +205,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             time: <Clock className="w-3.5 h-3.5" />,
             quotes: <FileText className="w-3.5 h-3.5" />,
             invoices: <Receipt className="w-3.5 h-3.5" />,
+            documents: <ScrollText className="w-3.5 h-3.5" />,
             settings: <Settings className="w-3.5 h-3.5" />,
           };
           return (
@@ -628,6 +632,19 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           ) : (
             <p className="text-sm text-[#64748b] py-4">No invoices linked to this project yet.</p>
           )}
+        </div>
+      )}
+
+      {/* ─── DOCUMENTS TAB ─────────────────────────────────────────────── */}
+      {activeTab === 'documents' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-white">Documents</h3>
+            <Link href={`/dashboard/os/business/documents?project_id=${id}`} className="text-xs text-[#4361EE] hover:underline">
+              View all →
+            </Link>
+          </div>
+          <DocumentList documents={projectDocuments} />
         </div>
       )}
 
