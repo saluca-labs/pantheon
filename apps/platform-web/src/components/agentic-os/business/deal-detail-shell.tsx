@@ -23,8 +23,8 @@ import { DEAL_STAGES, type Deal, type DealStage } from '@/lib/agentic-os/busines
 import type { Interaction } from '@/lib/agentic-os/business/crm';
 import { fullName } from '@/lib/agentic-os/business/crm';
 import DealStagePicker from './deal-stage-picker';
-import InteractionEditor from '@/components/agentic-os/business/interaction-editor';
-import InteractionTimeline from '@/components/agentic-os/business/interaction-timeline';
+import { InteractionEditor } from '@/components/agentic-os/business/interaction-editor';
+import { InteractionTimeline } from '@/components/agentic-os/business/interaction-timeline';
 
 function formatValue(cents: number, currency: string = 'USD'): string {
   const dollars = cents / 100;
