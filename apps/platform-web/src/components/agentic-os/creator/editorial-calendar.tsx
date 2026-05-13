@@ -1,30 +1,26 @@
 'use client';
 
 /**
- * Creator OS — Editorial Calendar component.
+ * Creator OS — Editorial Calendar component (updated for Phase 2 schema).
  *
- * Lets creators plan posts with status, channel, content format, and an
- * optional publish date. Posts are grouped by ISO week for a calendar-style
- * view.
+ * Lets creators plan posts with status and an optional publish date.
+ * Posts are grouped by ISO week for a calendar-style view.
+ *
+ * Updated for Phase 2: channel and content_format dropped;
+ * uses the new PostStatus and CreatorPost types from posts.ts.
  *
  * @license MIT — original work for Tiresias platform
- * @see https://buffer.com/resources/content-types/ (Buffer — channel/format taxonomy)
- * @see https://developer.wordpress.org/rest-api/reference/posts/#schema-status
- *   WordPress REST API — post status taxonomy reference
  */
 
 import { useState, useMemo } from 'react';
 import {
   POST_STATUSES,
-  CHANNELS,
-  CONTENT_FORMATS,
-  validatePost,
-  groupByWeek,
-} from '@/lib/agentic-os/creator/calendar';
-import type { CalendarPost, PostStatus, Channel, ContentFormat } from '@/lib/agentic-os/creator/calendar';
+} from '@/lib/agentic-os/creator/posts';
+import type { CreatorPost, PostStatus } from '@/lib/agentic-os/creator/posts';
+import { validatePost } from '@/lib/agentic-os/creator/calendar';
 
 interface Props {
-  initial: CalendarPost[];
+  initial: CreatorPost[];
 }
 
 const inputCls =
@@ -47,17 +43,36 @@ const STATUS_COLORS: Record<PostStatus, string> = {
   archived: 'bg-neutral-500/15 text-neutral-400 border-neutral-500/30',
 };
 
+function groupByWeek(posts: CreatorPost[]): Map<string, CreatorPost[]> {
+  const map = new Map<string, CreatorPost[]>();
+  for (const post of posts) {
+    const dateStr = post.scheduledAt ?? post.publishedAt ?? post.publishAt;
+    const weekKey = dateStr ? isoWeek(new Date(dateStr)) : 'unscheduled';
+    const bucket = map.get(weekKey) ?? [];
+    bucket.push(post);
+    map.set(weekKey, bucket);
+  }
+  return map;
+}
+
+function isoWeek(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
 const BLANK_FORM = {
   title: '',
   status: 'idea' as PostStatus,
-  channel: 'blog' as Channel,
-  contentFormat: 'article' as ContentFormat,
-  publishAt: '',
+  scheduledAt: '',
   tags: '',
 };
 
 export function EditorialCalendar({ initial }: Props) {
-  const [posts, setPosts] = useState<CalendarPost[]>(initial);
+  const [posts, setPosts] = useState<CreatorPost[]>(initial);
   const [form, setForm] = useState({ ...BLANK_FORM });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +80,6 @@ export function EditorialCalendar({ initial }: Props) {
   const weekGroups = useMemo(() => groupByWeek(posts), [posts]);
   const sortedWeeks = useMemo(() => {
     const keys = Array.from(weekGroups.keys()).sort();
-    // Put 'unscheduled' at the end
     const idx = keys.indexOf('unscheduled');
     if (idx > -1) {
       keys.splice(idx, 1);
@@ -79,9 +93,9 @@ export function EditorialCalendar({ initial }: Props) {
     const errors = validatePost({
       title: form.title,
       status: form.status,
-      channel: form.channel,
-      contentFormat: form.contentFormat,
-      publishAt: form.publishAt || undefined,
+      channel: 'blog',
+      contentFormat: 'article',
+      publishAt: form.scheduledAt || undefined,
     });
     if (errors.length > 0) {
       setError(errors[0] ?? 'Validation error');
@@ -93,9 +107,7 @@ export function EditorialCalendar({ initial }: Props) {
       const body = {
         title: form.title.trim(),
         status: form.status,
-        channel: form.channel,
-        contentFormat: form.contentFormat,
-        publishAt: form.publishAt || null,
+        scheduledAt: form.scheduledAt || null,
         tags: form.tags
           .split(',')
           .map((t) => t.trim())
@@ -121,7 +133,7 @@ export function EditorialCalendar({ initial }: Props) {
   }
 
   async function handleStatusChange(postId: string, newStatus: PostStatus) {
-    const r = await fetch(`/api/tiresias/agentic-os/creator/posts?id=${postId}`, {
+    const r = await fetch(`/api/tiresias/agentic-os/creator/posts/${postId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
@@ -152,7 +164,7 @@ export function EditorialCalendar({ initial }: Props) {
           />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Status">
             <select
               value={form.status}
@@ -164,48 +176,24 @@ export function EditorialCalendar({ initial }: Props) {
               ))}
             </select>
           </Field>
-          <Field label="Channel">
-            <select
-              value={form.channel}
-              onChange={(e) => setForm((f) => ({ ...f, channel: e.target.value as Channel }))}
+          <Field label="Schedule / Publish date (optional)">
+            <input
+              type="datetime-local"
+              value={form.scheduledAt}
+              onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
               className={inputCls}
-            >
-              {CHANNELS.map((c) => (
-                <option key={c} value={c}>{c.replace('_', '/')}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Format">
-            <select
-              value={form.contentFormat}
-              onChange={(e) => setForm((f) => ({ ...f, contentFormat: e.target.value as ContentFormat }))}
-              className={inputCls}
-            >
-              {CONTENT_FORMATS.map((f) => (
-                <option key={f} value={f}>{f.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
+            />
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Publish date (optional)">
-            <input
-              type="datetime-local"
-              value={form.publishAt}
-              onChange={(e) => setForm((f) => ({ ...f, publishAt: e.target.value }))}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Tags (comma-separated)">
-            <input
-              value={form.tags}
-              onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
-              placeholder="e.g. typescript, tips"
-              className={inputCls}
-            />
-          </Field>
-        </div>
+        <Field label="Tags (comma-separated)">
+          <input
+            value={form.tags}
+            onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))}
+            placeholder="e.g. typescript, tips"
+            className={inputCls}
+          />
+        </Field>
 
         <div className="flex items-center gap-3">
           <button
@@ -241,8 +229,9 @@ export function EditorialCalendar({ initial }: Props) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{post.title}</p>
                         <p className="text-xs text-[#94a3b8]">
-                          {post.channel.replace('_', '/')} · {post.contentFormat.replace(/_/g, ' ')}
-                          {post.publishAt && ` · ${new Date(post.publishAt).toLocaleDateString()}`}
+                          {post.tags.length > 0 && `Tags: ${post.tags.slice(0, 3).join(', ')}`}
+                          {post.scheduledAt && ` · ${new Date(post.scheduledAt).toLocaleDateString()}`}
+                          {post.publishedAt && ` · Published ${new Date(post.publishedAt).toLocaleDateString()}`}
                         </p>
                       </div>
                       <div className="shrink-0 flex items-center gap-2">
