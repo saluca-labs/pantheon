@@ -127,7 +127,7 @@ export default function DealDetailShell({
           <div>
             <span className={labelClass}>Value</span>
             <span className={`${valueClass} text-teal-300`}>
-              {formatValue(deal.valueCents, deal.currency)}
+              {deal.valueCents != null ? formatValue(deal.valueCents, deal.currency) : '--'}
             </span>
           </div>
           <div>
