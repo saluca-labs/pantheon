@@ -16,6 +16,7 @@ import { getQuote } from '@/lib/agentic-os/business/quotes-repo';
 import { listLineItems } from '@/lib/agentic-os/business/line-items-repo';
 import { getOrCreateSettings } from '@/lib/agentic-os/business/settings-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontFamily: 'Helvetica', fontSize: 11, color: '#1f2937' },
@@ -170,11 +171,12 @@ export async function GET(_req: NextRequest, { params }: Props) {
     payload: { quoteId: id },
   });
 
-  return new NextResponse(new Uint8Array(buf), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="quote-${quote.quoteNumber}.pdf"`,
-    },
+  return respondWithPdf({
+    buffer: buf,
+    slug: 'business',
+    tenantId: user.userId,
+    key: `quotes/${id}/quote-${quote.quoteNumber}.pdf`,
+    filename: `quote-${quote.quoteNumber}.pdf`,
+    disposition: 'inline',
   });
 }

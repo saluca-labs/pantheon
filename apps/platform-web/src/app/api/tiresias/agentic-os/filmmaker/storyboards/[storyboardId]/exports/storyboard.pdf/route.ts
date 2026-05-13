@@ -17,6 +17,7 @@ import {
   recordAudit,
 } from '@/lib/agentic-os/filmmaker/repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { StoryboardPdf } from '@/lib/agentic-os/filmmaker/pdf/storyboard';
 
 export const runtime = 'nodejs';
@@ -61,12 +62,12 @@ export async function GET(_request: NextRequest, { params }: Props) {
     projectId: project.id,
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="storyboard-${storyboardId}.pdf"`,
-      'Cache-Control': 'no-store',
-    },
+  return respondWithPdf({
+    buffer,
+    slug: 'filmmaker',
+    tenantId: user.userId,
+    key: `storyboards/${storyboardId}/storyboard.pdf`,
+    filename: `storyboard-${storyboardId}.pdf`,
+    disposition: 'attachment',
   });
 }

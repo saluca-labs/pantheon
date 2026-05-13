@@ -17,6 +17,7 @@ import { listLineItems } from '@/lib/agentic-os/business/line-items-repo';
 import { listPayments } from '@/lib/agentic-os/business/payments-repo';
 import { getOrCreateSettings } from '@/lib/agentic-os/business/settings-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontFamily: 'Helvetica', fontSize: 11, color: '#1f2937' },
@@ -227,11 +228,12 @@ export async function GET(_req: NextRequest, { params }: Props) {
     payload: { invoiceId: id },
   });
 
-  return new NextResponse(new Uint8Array(buf), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="invoice-${invoice.invoiceNumber}.pdf"`,
-    },
+  return respondWithPdf({
+    buffer: buf,
+    slug: 'business',
+    tenantId: user.userId,
+    key: `invoices/${id}/invoice-${invoice.invoiceNumber}.pdf`,
+    filename: `invoice-${invoice.invoiceNumber}.pdf`,
+    disposition: 'inline',
   });
 }

@@ -26,6 +26,7 @@ import {
 import { citationsMemoryIds } from '@/lib/agentic-os/autobiographer/chapter-revisions';
 import { getMemoriesByIds } from '@/lib/agentic-os/autobiographer/memories-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
+import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 import { ChapterExportPdf } from '@/lib/agentic-os/autobiographer/pdf/chapter-export';
 import { chapterSlug } from '@/lib/agentic-os/autobiographer/chapters';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
@@ -181,12 +182,12 @@ export async function GET(request: NextRequest, { params }: Props) {
     projectId: book.id,
   });
 
-  return new Response(new Uint8Array(buffer), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'no-store',
-    },
+  return respondWithPdf({
+    buffer,
+    slug: 'autobiographer',
+    tenantId: user.userId,
+    key: `chapters/${chapterId}/v${revision.version}.pdf`,
+    filename,
+    disposition: 'attachment',
   });
 }
