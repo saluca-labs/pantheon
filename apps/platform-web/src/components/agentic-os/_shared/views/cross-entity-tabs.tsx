@@ -25,6 +25,7 @@
  */
 
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import type { OsSlug } from '@/lib/agentic-os/registry';
 
@@ -33,6 +34,8 @@ export interface CrossEntityTab {
   key: string;
   /** Tab label. */
   label: string;
+  /** Optional leading icon, rendered before the label in the tab button. */
+  icon?: ReactNode;
   /** Optional count badge (linked-entity count). 0 still renders the badge. */
   count?: number;
   /** Lazy content render-prop — only called once the tab is first opened. */
@@ -177,6 +180,15 @@ export function CrossEntityTabs({
                   : 'border-transparent text-text-secondary hover:text-text-primary',
               )}
             >
+              {tab.icon && (
+                <span
+                  data-testid={`cross-entity-tab-icon-${tab.key}`}
+                  className="flex items-center"
+                  aria-hidden="true"
+                >
+                  {tab.icon}
+                </span>
+              )}
               {tab.label}
               {tab.count !== undefined && (
                 <span

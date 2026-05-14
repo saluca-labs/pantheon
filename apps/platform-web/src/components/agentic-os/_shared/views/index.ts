@@ -43,6 +43,10 @@ export { EntitySearch } from './entity-search';
 export type {
   EntitySearchProps,
   EntitySearchResult,
+  FilterDef,
+  FilterOption,
+  SortOption,
+  ViewModeOption,
 } from './entity-search';
 
 export { SavedViews } from './saved-views';

@@ -204,3 +204,22 @@ describe('ActivityFeed — interactions', () => {
     expect(screen.queryByTestId('activity-feed-load-more')).toBeNull();
   });
 });
+
+describe('ActivityFeed — root data-testid passthrough', () => {
+  it('defaults the root test id to "activity-feed"', () => {
+    render(<ActivityFeed events={baseEvents} />);
+    expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
+  });
+
+  it('applies a custom data-testid to the feed root element', () => {
+    render(
+      <ActivityFeed events={baseEvents} data-testid="deal-activity-feed" />,
+    );
+    const root = screen.getByTestId('deal-activity-feed');
+    expect(root).toBeInTheDocument();
+    // the override replaces the default — no stale "activity-feed" root
+    expect(screen.queryByTestId('activity-feed')).toBeNull();
+    // event rows still render inside the renamed root
+    expect(within(root).getByTestId('activity-event-e1')).toBeInTheDocument();
+  });
+});
