@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BulkActionsBar, type BulkAction } from './BulkActionsBar';
+import { BulkActionsBar, type BulkAction } from './bulk-actions-bar';
 
 const mkActions = (
   onArchive = vi.fn(),
