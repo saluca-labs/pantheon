@@ -27,7 +27,7 @@ export function BreakdownSummaryChips({ elements, size = 'sm' }: Props) {
   }
   if (counts.size === 0) {
     return (
-      <span className="text-[11px] text-[#64748b] italic">No breakdown yet</span>
+      <span className="text-[11px] text-text-tertiary italic">No breakdown yet</span>
     );
   }
   const cls =
