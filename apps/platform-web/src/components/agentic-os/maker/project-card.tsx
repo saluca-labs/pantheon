@@ -48,16 +48,51 @@ function daysUntil(target: string | null): number | null {
   return Math.round((t - now) / 86_400_000);
 }
 
-export function ProjectCard({ project }: { project: ProjectCardData }) {
+export interface ProjectCardProps {
+  project: ProjectCardData;
+  /**
+   * Wave C-3a: optional multi-select model. When `selectable` is set the card
+   * renders a corner checkbox feeding the `BulkActionsBar`. The card stays a
+   * navigating `Link` either way — the checkbox is additive, not a mode swap.
+   */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+}
+
+export function ProjectCard({
+  project,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: ProjectCardProps) {
   const avg = projectPhaseAvg(project.phaseProgress);
   const countdown = daysUntil(project.targetCompletionDate);
 
   return (
-    <Link
-      href={`/dashboard/os/maker/projects/${project.id}`}
-      className="block rounded-xl border border-border-subtle bg-surface-2 overflow-hidden hover:border-accent/60 transition group"
-    >
-      <div className="flex">
+    <div className="relative">
+      {selectable && (
+        // Sibling of the Link (not a child) so toggling never navigates the
+        // card. Absolutely positioned over the card's top-left corner.
+        <label className="absolute left-2 top-2 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-surface-0/90">
+          <input
+            type="checkbox"
+            checked={selected}
+            aria-label={`Select ${project.name}`}
+            onChange={() => onToggleSelect?.(project.id)}
+            className="h-3.5 w-3.5 accent-accent"
+          />
+        </label>
+      )}
+      <Link
+        href={`/dashboard/os/maker/projects/${project.id}`}
+        className={`block rounded-xl border bg-surface-2 overflow-hidden transition group ${
+          selected
+            ? 'border-accent'
+            : 'border-border-subtle hover:border-accent/60'
+        }`}
+      >
+        <div className="flex">
         {project.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -128,6 +163,7 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
           </div>
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   );
 }

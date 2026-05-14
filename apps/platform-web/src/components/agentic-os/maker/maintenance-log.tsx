@@ -7,6 +7,12 @@
  * (event_kind picker, cost, vendor, next_due_at, notes) and a chronological
  * feed of past events newest-first.
  *
+ * Wave C-3a: the ad-hoc event timeline + empty panel are replaced by the
+ * shared `ActivityFeed` primitive — the rich event row (kind, vendor, cost,
+ * next-due countdown, notes, delete) is preserved verbatim through
+ * `renderItem`, and the empty state becomes the `EmptyState` primitive.
+ * The compose form + stats strip are unchanged.
+ *
  * @license MIT — Tiresias Maker OS Phase 4 (internal).
  */
 
@@ -21,6 +27,8 @@ import {
   type MaintenanceEvent,
   type MaintenanceEventKind,
 } from '@/lib/agentic-os/maker/maintenance';
+import { ActivityFeed } from '@/components/agentic-os/_shared/views';
+import type { ActivityEvent } from '@/components/agentic-os/_shared/views';
 
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
@@ -242,82 +250,96 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
         </form>
       )}
 
-      {events.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-subtle p-4 text-center">
-          <p className="text-xs text-text-secondary">
-            No maintenance events logged yet. Note when the tool is cleaned, serviced,
-            calibrated, repaired, or inspected.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {events.map((ev) => {
-            const daysOut = daysUntilNextDue(ev);
-            return (
-              <div
-                key={ev.id}
-                className="rounded-lg border border-border-subtle bg-surface-0 p-3"
-              >
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Wrench className="w-3.5 h-3.5 text-accent" />
-                      <span className="text-sm font-medium text-white">
-                        {MAINTENANCE_EVENT_KIND_LABELS[ev.eventKind]}
-                      </span>
-                      <span className="text-[10px] text-text-secondary">
-                        {new Date(ev.performedAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-text-secondary flex flex-wrap gap-x-3 gap-y-0.5">
-                      {ev.vendor && <span>Vendor: {ev.vendor}</span>}
-                      {ev.costCents != null && (
-                        <span>Cost: {formatCost(ev.costCents, ev.currency)}</span>
-                      )}
-                      {ev.nextDueAt && (
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          Next due {new Date(ev.nextDueAt).toLocaleDateString()}
-                          {daysOut != null && (
-                            <span
-                              className={`ml-1 ${
-                                daysOut < 0
-                                  ? 'text-red-300'
-                                  : daysOut <= 7
-                                    ? 'text-amber-300'
-                                    : 'text-text-primary'
-                              }`}
-                            >
-                              {daysOut < 0
-                                ? `(${Math.abs(daysOut)}d overdue)`
-                                : `(in ${daysOut}d)`}
-                              {daysOut < 0 && (
-                                <AlertCircle className="inline w-3 h-3 ml-0.5" />
-                              )}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    {ev.notes && (
-                      <p className="text-[12px] text-text-primary whitespace-pre-wrap">
-                        {ev.notes}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => remove(ev)}
-                    className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+      <ActivityFeed<MaintenanceLogEvent>
+        events={events.map((ev) => ({
+          id: ev.id,
+          occurredAt: ev.performedAt,
+          tone: 'accent',
+          event: ev,
+        }))}
+        grouping="day"
+        emptyState={{
+          icon: <Wrench className="h-6 w-6" />,
+          title: 'No maintenance events logged yet',
+          description:
+            'Note when the tool is cleaned, serviced, calibrated, repaired, or inspected.',
+        }}
+        renderItem={(e) => <MaintenanceEventBody ev={e.event} onDelete={remove} />}
+      />
+    </div>
+  );
+}
+
+/** ActivityFeed event carrying the full maintenance event for `renderItem`. */
+interface MaintenanceLogEvent extends ActivityEvent {
+  event: MaintenanceEvent;
+}
+
+function MaintenanceEventBody({
+  ev,
+  onDelete,
+}: {
+  ev: MaintenanceEvent;
+  onDelete: (ev: MaintenanceEvent) => void;
+}) {
+  const daysOut = daysUntilNextDue(ev);
+  return (
+    <div className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-surface-0 p-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Wrench className="w-3.5 h-3.5 text-accent" />
+            <span className="text-sm font-medium text-white">
+              {MAINTENANCE_EVENT_KIND_LABELS[ev.eventKind]}
+            </span>
+            <span className="text-[10px] text-text-secondary">
+              {new Date(ev.performedAt).toLocaleString()}
+            </span>
+          </div>
+          <div className="text-[11px] text-text-secondary flex flex-wrap gap-x-3 gap-y-0.5">
+            {ev.vendor && <span>Vendor: {ev.vendor}</span>}
+            {ev.costCents != null && (
+              <span>Cost: {formatCost(ev.costCents, ev.currency)}</span>
+            )}
+            {ev.nextDueAt && (
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                Next due {new Date(ev.nextDueAt).toLocaleDateString()}
+                {daysOut != null && (
+                  <span
+                    className={`ml-1 ${
+                      daysOut < 0
+                        ? 'text-red-300'
+                        : daysOut <= 7
+                          ? 'text-amber-300'
+                          : 'text-text-primary'
+                    }`}
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                    {daysOut < 0
+                      ? `(${Math.abs(daysOut)}d overdue)`
+                      : `(in ${daysOut}d)`}
+                    {daysOut < 0 && (
+                      <AlertCircle className="inline w-3 h-3 ml-0.5" />
+                    )}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+          {ev.notes && (
+            <p className="text-[12px] text-text-primary whitespace-pre-wrap">
+              {ev.notes}
+            </p>
+          )}
         </div>
-      )}
+        <button
+          type="button"
+          onClick={() => onDelete(ev)}
+          className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
     </div>
   );
 }
