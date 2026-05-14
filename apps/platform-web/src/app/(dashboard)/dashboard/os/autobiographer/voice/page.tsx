@@ -19,6 +19,7 @@ import { VoiceSampleList } from '@/components/agentic-os/autobiographer/voice-sa
 import { VoiceSampleActions } from '@/components/agentic-os/autobiographer/voice-sample-edit-button';
 import { VoiceProfileList } from '@/components/agentic-os/autobiographer/voice-profile-list';
 import { VoiceBuildProfileButton } from '@/components/agentic-os/autobiographer/voice-build-profile-button';
+import { VoiceStudioStats } from '@/components/agentic-os/autobiographer/voice-studio-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +60,8 @@ export default async function VoiceStudioPage() {
   const activeSampleWordCount = samples
     .filter((s) => !s.isArchived)
     .reduce((acc, s) => acc + s.wordCount, 0);
+  const activeProfileVersion =
+    profiles.find((p) => p.isActive)?.version ?? null;
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -98,6 +101,14 @@ export default async function VoiceStudioPage() {
           </div>
         </div>
       </header>
+
+      <VoiceStudioStats
+        totalSamples={samples.length}
+        activeSampleCount={activeSampleCount}
+        activeSampleWordCount={activeSampleWordCount}
+        profileCount={profiles.length}
+        activeProfileVersion={activeProfileVersion}
+      />
 
       <section>
         <div className="flex items-baseline justify-between mb-3">
