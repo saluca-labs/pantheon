@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
 const getCurrentResearchUser = vi.fn();
 const recordAudit = vi.fn();
@@ -137,8 +138,8 @@ function authed() {
   });
 }
 
-function jsonReq(url: string, method: string, body?: unknown): Request {
-  return new Request(url, {
+function jsonReq(url: string, method: string, body?: unknown): NextRequest {
+  return new NextRequest(url, {
     method,
     headers: { 'content-type': 'application/json' },
     body: body === undefined ? null : JSON.stringify(body),
