@@ -3,15 +3,26 @@
 /**
  * Maker OS — ToolList.
  *
- * Workshop-global tools list view. Filterable by status / kind / tag, with
- * a compose form for adding new tools. Each row links to its detail page
- * (`/dashboard/os/maker/tools/[toolId]`).
+ * Workshop-global tools list view. Filterable by status / kind / tag (these
+ * three drive a server refetch), plus — Wave C-3a — a client-side in-hub
+ * search over the loaded rows and saved filter presets. Each row links to
+ * its detail page (`/dashboard/os/maker/tools/[toolId]`).
+ *
+ * Wave C-3a primitive adoption:
+ *  - `MakerListControls` (EntitySearch + SavedViews) wraps the search input;
+ *    the native status / kind / tag selects move into its `filterControls`
+ *    slot. Search is client-side over the server-filtered rows.
+ *  - `EmptyState` replaces the ad-hoc "No tools…" dashed panel.
+ *
+ * Behavior-preserving: the status / kind / tag server-refetch loop is
+ * unchanged; the compose form and detail-page links are untouched.
  *
  * @license MIT — Tiresias Maker OS Phase 4 (internal).
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Wrench } from 'lucide-react';
 import {
   TOOL_KINDS,
   TOOL_KIND_LABELS,
@@ -22,6 +33,8 @@ import {
   type ToolKind,
   type ToolStatus,
 } from '@/lib/agentic-os/maker/tools';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
+import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
 const API_BASE = '/api/tiresias/agentic-os/maker/tools';
 
@@ -34,6 +47,21 @@ const STATUS_BADGE: Record<ToolStatus, string> = {
   retired: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
+/**
+ * Client-side free-text search over a tool's name, manufacturer, model, and
+ * tags. Pure + exported so the search behavior is unit-testable.
+ */
+export function matchesToolSearch(t: Tool, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    t.name.toLowerCase().includes(q) ||
+    (t.manufacturer ?? '').toLowerCase().includes(q) ||
+    (t.model ?? '').toLowerCase().includes(q) ||
+    t.tags.some((tag) => tag.toLowerCase().includes(q))
+  );
+}
+
 interface Props {
   initialTools: Tool[];
 }
@@ -43,6 +71,7 @@ export function ToolList({ initialTools }: Props) {
   const [status, setStatus] = useState<ToolStatus | ''>('');
   const [kind, setKind] = useState<ToolKind | ''>('');
   const [tag, setTag] = useState('');
+  const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -71,7 +100,13 @@ export function ToolList({ initialTools }: Props) {
     void load();
   }, [load]);
 
-  const stats = summarizeTools(tools);
+  // Server-filtered rows narrowed further by the client-side search input.
+  const visible = useMemo(
+    () => tools.filter((t) => matchesToolSearch(t, search)),
+    [tools, search],
+  );
+
+  const stats = summarizeTools(visible);
 
   async function addTool(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -120,6 +155,19 @@ export function ToolList({ initialTools }: Props) {
     }
   }
 
+  // Saved-view query carries the server-side filters + the client search.
+  const filters = useMemo<MakerQuery>(
+    () => ({ status: status || '', kind: kind || '', tag }),
+    [status, kind, tag],
+  );
+
+  function applyQuery(q: MakerQuery) {
+    setStatus((q.status as ToolStatus) || '');
+    setKind((q.kind as ToolKind) || '');
+    setTag(q.tag ?? '');
+    setSearch(q.search ?? '');
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats strip */}
@@ -136,47 +184,59 @@ export function ToolList({ initialTools }: Props) {
         <span className="text-text-secondary">{stats.retired} retired</span>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <select
-          value={status}
-          onChange={(e) => setStatus((e.target.value || '') as ToolStatus | '')}
-          className={inputCls}
-        >
-          <option value="">All statuses</option>
-          {TOOL_STATUS_VALUES.map((s) => (
-            <option key={s} value={s}>
-              {TOOL_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={kind}
-          onChange={(e) => setKind((e.target.value || '') as ToolKind | '')}
-          className={inputCls}
-        >
-          <option value="">All kinds</option>
-          {TOOL_KINDS.map((k) => (
-            <option key={k.value} value={k.value}>
-              {k.label}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Tag…"
-          value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          className={`${inputCls} sm:col-span-1`}
-        />
-        <button
-          type="button"
-          onClick={() => setShowAdd((v) => !v)}
-          className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
-        >
-          {showAdd ? 'Cancel' : '+ New tool'}
-        </button>
-      </div>
+      {/* Search + saved views + native filter selects */}
+      <MakerListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search tools by name, maker, model, or tag"
+        filters={filters}
+        onApplyQuery={applyQuery}
+        savedViewKey="tools"
+        filterControls={
+          <>
+            <select
+              value={status}
+              onChange={(e) => setStatus((e.target.value || '') as ToolStatus | '')}
+              className={`${inputCls} sm:w-44`}
+            >
+              <option value="">All statuses</option>
+              {TOOL_STATUS_VALUES.map((s) => (
+                <option key={s} value={s}>
+                  {TOOL_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <select
+              value={kind}
+              onChange={(e) => setKind((e.target.value || '') as ToolKind | '')}
+              className={`${inputCls} sm:w-44`}
+            >
+              <option value="">All kinds</option>
+              {TOOL_KINDS.map((k) => (
+                <option key={k.value} value={k.value}>
+                  {k.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Tag…"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+              className={`${inputCls} sm:w-36`}
+            />
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowAdd((v) => !v)}
+            className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
+          >
+            {showAdd ? 'Cancel' : '+ New tool'}
+          </button>
+        }
+      />
 
       {/* Compose */}
       {showAdd && (
@@ -247,12 +307,25 @@ export function ToolList({ initialTools }: Props) {
       )}
 
       {/* List */}
-      {tools.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
-          <p className="text-sm text-text-secondary">
-            No tools match the current filters. Add your first tool with the button above.
-          </p>
-        </div>
+      {visible.length === 0 ? (
+        tools.length === 0 ? (
+          <EmptyState
+            icon={<Wrench className="h-6 w-6" />}
+            title="No tools yet"
+            description="Track every workshop tool — kind, location, status, consumable wear, and maintenance log — and link them to the projects that depend on them."
+            primaryCta={{
+              label: 'New tool',
+              onClick: () => setShowAdd(true),
+            }}
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            icon={<Wrench className="h-6 w-6" />}
+            title="No tools match"
+            description="Try clearing the search or adjusting the status, kind, and tag filters."
+          />
+        )
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           <table className="w-full text-sm">
@@ -265,7 +338,7 @@ export function ToolList({ initialTools }: Props) {
               </tr>
             </thead>
             <tbody>
-              {tools.map((t) => (
+              {visible.map((t) => (
                 <tr
                   key={t.id}
                   className="border-b border-border-subtle last:border-b-0 hover:bg-surface-0/30 transition"

@@ -3,13 +3,24 @@
 /**
  * Maker OS — ReferenceList.
  *
- * Workshop-global reference library list view. Filterable by kind / tag,
- * with an inline compose form for adding new references.
+ * Workshop-global reference library list view. Filterable by kind / tag
+ * (server refetch) plus — Wave C-3a — a client-side in-hub search over the
+ * loaded rows and saved filter presets, with an inline compose form for
+ * adding new references.
+ *
+ * Wave C-3a primitive adoption:
+ *  - `MakerListControls` (EntitySearch + SavedViews) wraps the search input;
+ *    the native kind / tag controls move into its `filterControls` slot.
+ *  - `EmptyState` replaces the ad-hoc "No references…" dashed panel.
+ *
+ * Behavior-preserving: the kind / tag server-refetch loop, the compose form
+ * (`ReferenceForm`), and the delete flow are unchanged.
  *
  * @license MIT — Tiresias Maker OS Phase 5 (internal).
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import {
   REFERENCE_KIND_VALUES,
   REFERENCE_KIND_LABELS,
@@ -17,12 +28,28 @@ import {
   type Reference,
   type ReferenceKind,
 } from '@/lib/agentic-os/maker/references';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { ReferenceForm } from './reference-form';
+import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const API_BASE = '/api/tiresias/agentic-os/maker/references';
+
+/**
+ * Client-side free-text search over a reference's title, authors, and tags.
+ * Pure + exported so the search behavior is unit-testable.
+ */
+export function matchesReferenceSearch(r: Reference, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    r.title.toLowerCase().includes(q) ||
+    (r.authors ?? '').toLowerCase().includes(q) ||
+    r.tags.some((t) => t.toLowerCase().includes(q))
+  );
+}
 
 interface Props {
   initialReferences: Reference[];
@@ -32,6 +59,7 @@ export function ReferenceList({ initialReferences }: Props) {
   const [refs, setRefs] = useState<Reference[]>(initialReferences);
   const [kind, setKind] = useState<ReferenceKind | ''>('');
   const [tag, setTag] = useState('');
+  const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +78,12 @@ export function ReferenceList({ initialReferences }: Props) {
     void load();
   }, [load]);
 
-  const stats = summarizeReferences(refs);
+  const visible = useMemo(
+    () => refs.filter((r) => matchesReferenceSearch(r, search)),
+    [refs, search],
+  );
+
+  const stats = summarizeReferences(visible);
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this reference? Linked projects will lose the reference.'))
@@ -65,6 +98,17 @@ export function ReferenceList({ initialReferences }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed');
     }
+  }
+
+  const filters = useMemo<MakerQuery>(
+    () => ({ kind: kind || '', tag }),
+    [kind, tag],
+  );
+
+  function applyQuery(q: MakerQuery) {
+    setKind((q.kind as ReferenceKind) || '');
+    setTag(q.tag ?? '');
+    setSearch(q.search ?? '');
   }
 
   return (
@@ -82,35 +126,47 @@ export function ReferenceList({ initialReferences }: Props) {
         ))}
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <select
-          value={kind}
-          onChange={(e) => setKind((e.target.value || '') as ReferenceKind | '')}
-          className={inputCls}
-        >
-          <option value="">All kinds</option>
-          {REFERENCE_KIND_VALUES.map((k) => (
-            <option key={k} value={k}>
-              {REFERENCE_KIND_LABELS[k]}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Tag…"
-          value={tag}
-          onChange={(e) => setTag(e.target.value)}
-          className={inputCls}
-        />
-        <button
-          type="button"
-          onClick={() => setShowAdd((v) => !v)}
-          className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
-        >
-          {showAdd ? 'Cancel' : '+ New reference'}
-        </button>
-      </div>
+      {/* Search + saved views + native filter controls */}
+      <MakerListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search references by title, author, or tag"
+        filters={filters}
+        onApplyQuery={applyQuery}
+        savedViewKey="references"
+        filterControls={
+          <>
+            <select
+              value={kind}
+              onChange={(e) => setKind((e.target.value || '') as ReferenceKind | '')}
+              className={`${inputCls} sm:w-44`}
+            >
+              <option value="">All kinds</option>
+              {REFERENCE_KIND_VALUES.map((k) => (
+                <option key={k} value={k}>
+                  {REFERENCE_KIND_LABELS[k]}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Tag…"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+              className={`${inputCls} sm:w-36`}
+            />
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowAdd((v) => !v)}
+            className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
+          >
+            {showAdd ? 'Cancel' : '+ New reference'}
+          </button>
+        }
+      />
 
       {error && <p className="text-xs text-red-400">{error}</p>}
 
@@ -125,12 +181,25 @@ export function ReferenceList({ initialReferences }: Props) {
       )}
 
       {/* List */}
-      {refs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
-          <p className="text-sm text-text-secondary">
-            No references yet. Add your first one with the button above.
-          </p>
-        </div>
+      {visible.length === 0 ? (
+        refs.length === 0 ? (
+          <EmptyState
+            icon={<BookOpen className="h-6 w-6" />}
+            title="No references yet"
+            description="Build a workshop-global library of papers, tutorials, standards, articles, videos, and links — then attach them to the projects that use them."
+            primaryCta={{
+              label: 'New reference',
+              onClick: () => setShowAdd(true),
+            }}
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            icon={<BookOpen className="h-6 w-6" />}
+            title="No references match"
+            description="Try clearing the search or adjusting the kind and tag filters."
+          />
+        )
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           <table className="w-full text-sm">
@@ -145,7 +214,7 @@ export function ReferenceList({ initialReferences }: Props) {
               </tr>
             </thead>
             <tbody>
-              {refs.map((r) => (
+              {visible.map((r) => (
                 <tr
                   key={r.id}
                   className="border-b border-border-subtle last:border-b-0 hover:bg-surface-0/30 transition"
