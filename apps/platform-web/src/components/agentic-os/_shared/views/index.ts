@@ -77,7 +77,17 @@ export type {
 } from './timeline-view';
 
 export { CalendarView } from './calendar-view';
-export type { CalendarViewProps, CalendarViewMode } from './calendar-view';
+export type {
+  CalendarViewProps,
+  CalendarViewMode,
+  CalendarViewLayout,
+  CalendarViewDateGridProps,
+  CalendarViewSlotGridProps,
+  CalendarSlotDef,
+  CalendarReorderDirection,
+  CalendarReorderEvent,
+  CalendarSlotItemAction,
+} from './calendar-view';
 
 // Calendar grid-math utilities + the shared `CalendarCell` shape. The
 // canonical `OsSlug` union lives in `lib/agentic-os/registry.ts`, not here.
