@@ -130,8 +130,8 @@ export default function ProjectForm({
   }
 
   const inputClass =
-    'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none transition';
-  const labelClass = 'block text-xs font-medium text-[#94a3b8] mb-1';
+    'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none transition';
+  const labelClass = 'block text-xs font-medium text-text-secondary mb-1';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -173,7 +173,7 @@ export default function ProjectForm({
               <select className={inputClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
                 <option value="">None</option>
                 {contacts.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-[#1a1d27] text-white">
+                  <option key={c.id} value={c.id} className="bg-surface-2 text-white">
                     {c.firstName} {c.lastName}
                   </option>
                 ))}
@@ -184,7 +184,7 @@ export default function ProjectForm({
               <select className={inputClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
                 <option value="">None</option>
                 {deals.map((d) => (
-                  <option key={d.id} value={d.id} className="bg-[#1a1d27] text-white">
+                  <option key={d.id} value={d.id} className="bg-surface-2 text-white">
                     {d.title}
                   </option>
                 ))}
@@ -202,7 +202,7 @@ export default function ProjectForm({
                 onChange={(e) => setStatus(e.target.value as ProjectStatus)}
               >
                 {PROJECT_STATUSES.filter((s) => s !== 'archived').map((s) => (
-                  <option key={s} value={s} className="bg-[#1a1d27] text-white">
+                  <option key={s} value={s} className="bg-surface-2 text-white">
                     {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                   </option>
                 ))}
@@ -216,7 +216,7 @@ export default function ProjectForm({
                 onChange={(e) => setBillingModel(e.target.value as BillingModel)}
               >
                 {BILLING_MODELS.map((m) => (
-                  <option key={m} value={m} className="bg-[#1a1d27] text-white">
+                  <option key={m} value={m} className="bg-surface-2 text-white">
                     {m.charAt(0).toUpperCase() + m.slice(1)}
                   </option>
                 ))}
@@ -255,10 +255,10 @@ export default function ProjectForm({
             <div>
               <label className={labelClass}>Currency</label>
               <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                <option value="USD" className="bg-[#1a1d27] text-white">USD</option>
-                <option value="EUR" className="bg-[#1a1d27] text-white">EUR</option>
-                <option value="GBP" className="bg-[#1a1d27] text-white">GBP</option>
-                <option value="CAD" className="bg-[#1a1d27] text-white">CAD</option>
+                <option value="USD" className="bg-surface-2 text-white">USD</option>
+                <option value="EUR" className="bg-surface-2 text-white">EUR</option>
+                <option value="GBP" className="bg-surface-2 text-white">GBP</option>
+                <option value="CAD" className="bg-surface-2 text-white">CAD</option>
               </select>
             </div>
             <div>
@@ -318,7 +318,7 @@ export default function ProjectForm({
         <button
           type="button"
           onClick={() => onCreated?.()}
-          className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE] text-[#94a3b8] text-sm font-medium px-4 py-1.5 transition"
+          className="rounded-lg border border-border-subtle bg-surface-2 hover:border-accent text-text-secondary text-sm font-medium px-4 py-1.5 transition"
         >
           Cancel
         </button>

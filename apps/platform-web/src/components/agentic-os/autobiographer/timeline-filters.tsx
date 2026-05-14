@@ -90,16 +90,16 @@ export function TimelineFilters({
     scope === 'book';
 
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8]">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary">
           Filters
         </h2>
         {anyActive && (
           <button
             type="button"
             onClick={clearAll}
-            className="text-[10px] uppercase tracking-wide text-[#94a3b8] hover:text-white inline-flex items-center gap-1"
+            className="text-[10px] uppercase tracking-wide text-text-secondary hover:text-white inline-flex items-center gap-1"
           >
             <X className="w-3 h-3" />
             Clear all
@@ -111,7 +111,7 @@ export function TimelineFilters({
         <select
           value={scope}
           onChange={(e) => updateParam('scope', e.target.value)}
-          className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+          className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
         >
           <option value="workshop">Workshop (all books)</option>
           <option value="book">Single book</option>
@@ -120,7 +120,7 @@ export function TimelineFilters({
           <select
             value={bookId}
             onChange={(e) => updateParam('book_id', e.target.value || null)}
-            className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+            className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
           >
             <option value="">— Pick a book —</option>
             {books.map((b) => (
@@ -134,7 +134,7 @@ export function TimelineFilters({
           <select
             value={decade}
             onChange={(e) => updateParam('decade', e.target.value || null)}
-            className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+            className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
           >
             <option value="">All decades</option>
             {decades.map((d) => (
@@ -148,7 +148,7 @@ export function TimelineFilters({
           <select
             value={contentTag}
             onChange={(e) => updateParam('content_tag', e.target.value || null)}
-            className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+            className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
           >
             <option value="">All content tags</option>
             {contentTags.map((t) => (
@@ -162,7 +162,7 @@ export function TimelineFilters({
           <select
             value={emotionTag}
             onChange={(e) => updateParam('emotion_tag', e.target.value || null)}
-            className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+            className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
           >
             <option value="">All emotion tags</option>
             {emotionTags.map((t) => (
@@ -175,7 +175,7 @@ export function TimelineFilters({
         <select
           value={sensitive}
           onChange={(e) => updateParam('sensitive', e.target.value || null)}
-          className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white"
+          className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white"
         >
           <option value="">Sensitive: any</option>
           <option value="false">Not sensitive</option>
@@ -185,7 +185,7 @@ export function TimelineFilters({
 
       {themes.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1">
+          <p className="text-[10px] uppercase tracking-wide text-text-secondary mb-1">
             Themes (toggle to filter)
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -196,7 +196,7 @@ export function TimelineFilters({
                   key={t.id}
                   type="button"
                   onClick={() => toggleTheme(t.id)}
-                  className={`rounded-full ${active ? 'ring-2 ring-[#4361EE]/60' : ''}`}
+                  className={`rounded-full ${active ? 'ring-2 ring-accent/60' : ''}`}
                 >
                   <ThemeChip name={t.name} color={t.color} size="sm" />
                 </button>

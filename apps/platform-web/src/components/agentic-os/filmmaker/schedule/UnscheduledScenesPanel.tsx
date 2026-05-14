@@ -77,12 +77,12 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <h2 className="text-sm font-semibold text-white mb-1">
         Unscheduled scenes{' '}
-        <span className="text-[#94a3b8] font-normal">({scenes.length})</span>
+        <span className="text-text-secondary font-normal">({scenes.length})</span>
       </h2>
-      <p className="text-[11px] text-[#94a3b8] mb-3">
+      <p className="text-[11px] text-text-secondary mb-3">
         Click a scene to drop it onto a shooting day.
       </p>
       {scenes.length === 0 ? (
@@ -100,21 +100,21 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
                   : '';
             return (
               <li key={scene.id}>
-                <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2.5">
+                <div className="rounded-lg border border-border-subtle bg-surface-0 p-2.5">
                   <p className="text-[11px] text-[#64748b] font-mono">
                     {scene.sceneNumber.toString().padStart(2, '0')}
                   </p>
                   <p className="text-xs text-white truncate">
-                    {intExt && <span className="text-[#94a3b8] mr-1">{intExt}</span>}
+                    {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
                     {scene.location ?? scene.heading}
                     {scene.timeOfDay && (
-                      <span className="text-[#94a3b8]"> — {scene.timeOfDay}</span>
+                      <span className="text-text-secondary"> — {scene.timeOfDay}</span>
                     )}
                   </p>
                   {pickerFor === scene.id ? (
                     <div className="mt-2 space-y-1">
                       {days.length === 0 && (
-                        <p className="text-[10px] text-[#94a3b8]">
+                        <p className="text-[10px] text-text-secondary">
                           No days yet — create the first one below.
                         </p>
                       )}
@@ -125,30 +125,30 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
                             type="button"
                             onClick={() => scheduleOn(scene.id, d.id)}
                             disabled={busy === scene.id}
-                            className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-[#2a2d3e] text-white disabled:opacity-40"
+                            className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-border-subtle text-white disabled:opacity-40"
                           >
                             Day {d.dayNumber}
                             {d.label ? ` — ${d.label}` : ''}
                             {d.shootDate ? ` (${d.shootDate})` : ''}
                             {d.unit !== 'main' && (
-                              <span className="text-[#94a3b8] ml-1">[{SHOOTING_UNIT_LABEL[d.unit]}]</span>
+                              <span className="text-text-secondary ml-1">[{SHOOTING_UNIT_LABEL[d.unit]}]</span>
                             )}
                           </button>
                         ))}
                       </div>
-                      <div className="flex items-center gap-2 pt-1 border-t border-[#2a2d3e]">
+                      <div className="flex items-center gap-2 pt-1 border-t border-border-subtle">
                         <button
                           type="button"
                           onClick={() => newDayAndSchedule(scene.id)}
                           disabled={busy === scene.id}
-                          className="inline-flex items-center gap-1 text-[11px] text-[#4361EE] hover:underline disabled:opacity-40"
+                          className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline disabled:opacity-40"
                         >
                           <CalendarPlus className="w-3 h-3" /> New day
                         </button>
                         <button
                           type="button"
                           onClick={() => setPickerFor(null)}
-                          className="text-[11px] text-[#94a3b8] hover:text-white ml-auto"
+                          className="text-[11px] text-text-secondary hover:text-white ml-auto"
                         >
                           Cancel
                         </button>
@@ -159,7 +159,7 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
                       type="button"
                       onClick={() => setPickerFor(scene.id)}
                       disabled={busy === scene.id}
-                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-[#4361EE] hover:underline disabled:opacity-40"
+                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-accent hover:underline disabled:opacity-40"
                     >
                       <Plus className="w-3 h-3" /> Schedule on day…
                     </button>

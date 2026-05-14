@@ -109,7 +109,7 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-xl bg-[#1a1d27] rounded-xl border border-[#2a2d3e] p-5 space-y-4"
+        className="w-full max-w-xl bg-surface-2 rounded-xl border border-border-subtle p-5 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
@@ -118,7 +118,7 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -126,7 +126,7 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Title<span className="text-red-400">*</span>
           </span>
           <input
@@ -134,26 +134,26 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="Title of your book"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Subtitle
           </span>
           <input
             value={subtitle}
             onChange={(e) => setSubtitle(e.target.value)}
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="Optional subtitle"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Description
           </span>
           <textarea
@@ -161,20 +161,20 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
             onChange={(e) => setDescription(e.target.value)}
             maxLength={5000}
             rows={3}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="What is this book about?"
           />
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Status
             </span>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as BookStatus)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             >
               {BOOK_STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -185,45 +185,45 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
           </label>
 
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Target completion
             </span>
             <input
               type="date"
               value={targetCompletionDate}
               onChange={(e) => setTargetCompletionDate(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Target audience
           </span>
           <input
             value={targetAudience}
             onChange={(e) => setTargetAudience(e.target.value)}
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder='e.g. "family", "general public", "executive auto-bio for board members"'
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Tags (comma-separated)
           </span>
           <input
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="memoir, family-history, childhood"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Cover image URL
           </span>
           <input
@@ -231,7 +231,7 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
             value={coverImageUrl}
             onChange={(e) => setCoverImageUrl(e.target.value)}
             maxLength={2000}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="https://..."
           />
         </label>
@@ -246,14 +246,14 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-3 py-1.5 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white transition"
+            className="text-sm px-3 py-1.5 rounded border border-border-subtle text-text-primary hover:text-white transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting || !title.trim()}
-            className="text-sm px-4 py-1.5 rounded bg-[#4361EE] text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
+            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Create book'}
           </button>

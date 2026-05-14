@@ -27,7 +27,7 @@ import type { MakerProject } from '@/lib/agentic-os/maker/repo';
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   projectId: string;
@@ -101,27 +101,27 @@ export function DependencyPicker({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-lg space-y-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5"
+        className="w-full max-w-lg space-y-4 rounded-xl border border-border-subtle bg-surface-2 p-5"
       >
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-base font-semibold text-white">Add a dependency</h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#94a3b8] hover:text-white"
+            className="rounded p-1 text-text-secondary hover:text-white"
             aria-label="Close picker"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           Pick another project this build depends on. The blockers widget surfaces
-          open edges of kind <code className="text-[#cbd5e1]">blocks</code>.
+          open edges of kind <code className="text-text-primary">blocks</code>.
         </p>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-[10px] uppercase tracking-wide text-text-secondary">
             Search projects
           </label>
           <input
@@ -131,9 +131,9 @@ export function DependencyPicker({
             placeholder="Type to filter…"
             className={inputCls}
           />
-          <div className="max-h-48 overflow-y-auto rounded-md border border-[#2a2d3e] bg-[#0f1117]">
+          <div className="max-h-48 overflow-y-auto rounded-md border border-border-subtle bg-surface-0">
             {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-[#94a3b8]">
+              <p className="px-3 py-2 text-xs text-text-secondary">
                 No matching projects.
               </p>
             ) : (
@@ -145,8 +145,8 @@ export function DependencyPicker({
                       onClick={() => setSelectedId(p.id)}
                       className={`block w-full px-3 py-2 text-left text-xs transition ${
                         selectedId === p.id
-                          ? 'bg-[#4361EE]/20 text-white'
-                          : 'text-[#cbd5e1] hover:bg-[#1a1d27]'
+                          ? 'bg-accent/20 text-white'
+                          : 'text-text-primary hover:bg-surface-2'
                       }`}
                     >
                       {p.name}
@@ -159,7 +159,7 @@ export function DependencyPicker({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Kind</label>
+          <label className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</label>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as DependencyKind)}
@@ -174,7 +174,7 @@ export function DependencyPicker({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-[10px] uppercase tracking-wide text-text-secondary">
             Notes
           </label>
           <textarea
@@ -197,14 +197,14 @@ export function DependencyPicker({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-[#2a2d3e] px-4 py-2 text-sm text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+            className="rounded-md border border-border-subtle px-4 py-2 text-sm text-text-secondary hover:bg-surface-0 hover:text-white"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || !selectedId}
-            className="rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50"
           >
             {saving ? 'Adding…' : 'Add dependency'}
           </button>

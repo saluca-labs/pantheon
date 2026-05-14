@@ -62,21 +62,21 @@ export default async function CyberOsHubPage() {
       <DashboardHub module={mod} roadmapMarkdown={plan ?? null} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl">
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <div className="flex items-baseline justify-between mb-3">
             <h2 className="flex items-center gap-2 text-base font-semibold text-white">
-              <ShieldAlert className="w-4 h-4 text-[#4361EE]" />
+              <ShieldAlert className="w-4 h-4 text-accent" />
               Recent active alerts
             </h2>
             <Link
               href="/dashboard/os/cyber/alerts"
-              className="text-xs text-[#94a3b8] hover:text-white transition"
+              className="text-xs text-text-secondary hover:text-white transition"
             >
               View all →
             </Link>
           </div>
           {recentAlerts.length === 0 ? (
-            <p className="text-sm text-[#94a3b8]">No active alerts.</p>
+            <p className="text-sm text-text-secondary">No active alerts.</p>
           ) : (
             <ul className="space-y-2">
               {recentAlerts.map((a) => (
@@ -95,18 +95,18 @@ export default async function CyberOsHubPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <div className="flex items-baseline justify-between mb-3">
             <h2 className="text-base font-semibold text-white">Recent assets</h2>
             <Link
               href="/dashboard/os/cyber/assets"
-              className="text-xs text-[#94a3b8] hover:text-white transition"
+              className="text-xs text-text-secondary hover:text-white transition"
             >
               View all →
             </Link>
           </div>
           {recentAssets.length === 0 ? (
-            <p className="text-sm text-[#94a3b8]">No assets yet — add one to start linking alerts.</p>
+            <p className="text-sm text-text-secondary">No assets yet — add one to start linking alerts.</p>
           ) : (
             <div className="space-y-2">
               {recentAssets.map((a) => (

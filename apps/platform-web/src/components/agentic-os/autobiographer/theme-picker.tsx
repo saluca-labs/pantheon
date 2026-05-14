@@ -111,16 +111,16 @@ export function ThemePicker({
   }
 
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1.5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5">
           <Tag className="w-4 h-4" />
           Themes
         </h2>
         <button
           type="button"
           onClick={() => setShowNewForm(true)}
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white transition"
         >
           <Plus className="w-3.5 h-3.5" />
           New theme
@@ -159,17 +159,17 @@ export function ThemePicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Find a theme to attach…"
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
         />
         {filtered.length > 0 && (
-          <ul className="max-h-48 overflow-y-auto rounded border border-[#2a2d3e] bg-[#0f1117]">
+          <ul className="max-h-48 overflow-y-auto rounded border border-border-subtle bg-surface-0">
             {filtered.map((t) => (
               <li key={t.id}>
                 <button
                   type="button"
                   onClick={() => attachTheme(t.id)}
                   disabled={busy}
-                  className="w-full text-left px-3 py-1.5 text-sm flex items-center justify-between gap-2 hover:bg-[#1a1d27] text-[#cbd5e1]"
+                  className="w-full text-left px-3 py-1.5 text-sm flex items-center justify-between gap-2 hover:bg-surface-2 text-text-primary"
                 >
                   <span className="truncate">{t.name}</span>
                   <ThemeChip name={t.name} color={t.color} size="sm" />
@@ -182,7 +182,7 @@ export function ThemePicker({
           <button
             type="button"
             onClick={() => setShowNewForm(true)}
-            className="text-xs px-3 py-1.5 rounded border border-dashed border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white inline-flex items-center gap-1"
+            className="text-xs px-3 py-1.5 rounded border border-dashed border-border-subtle bg-surface-0 text-text-secondary hover:text-white inline-flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             Create "{search.trim()}"

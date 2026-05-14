@@ -48,15 +48,15 @@ export function ChapterCard({ chapter }: { chapter: ChapterCardData }) {
   return (
     <Link
       href={`/dashboard/os/autobiographer/chapters/${chapter.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
     >
       <div className="flex items-start gap-3">
-        <div className="text-xs text-[#94a3b8] font-mono mt-0.5 w-8 shrink-0">
+        <div className="text-xs text-text-secondary font-mono mt-0.5 w-8 shrink-0">
           {positionLabel}
         </div>
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-white font-medium group-hover:text-[#4361EE] transition truncate">
+            <h3 className="text-white font-medium group-hover:text-accent transition truncate">
               {title}
             </h3>
             <ChapterStatusPill status={chapter.status} />
@@ -67,11 +67,11 @@ export function ChapterCard({ chapter }: { chapter: ChapterCardData }) {
             ) : null}
           </div>
           {chapter.summary ? (
-            <p className="text-xs text-[#94a3b8] line-clamp-2 leading-relaxed">
+            <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
               {chapter.summary}
             </p>
           ) : null}
-          <div className="flex flex-wrap items-center gap-3 text-xs text-[#94a3b8] pt-0.5">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary pt-0.5">
             <span className="inline-flex items-center gap-1">
               <FileText className="w-3.5 h-3.5" />
               {chapter.latestWordCount.toLocaleString()} words

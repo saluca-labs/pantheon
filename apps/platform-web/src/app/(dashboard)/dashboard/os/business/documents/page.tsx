@@ -64,13 +64,13 @@ export default async function DocumentsPage({ searchParams }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-white">Documents</h1>
-          <p className="text-sm text-[#94a3b8] mt-1">
+          <p className="text-sm text-text-secondary mt-1">
             Per-engagement documents with lifecycle tracking and e-signature.
           </p>
         </div>
         <Link
           href="?new=1"
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           New document
@@ -78,7 +78,7 @@ export default async function DocumentsPage({ searchParams }: Props) {
       </div>
 
       {showNew && (
-        <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
           <DocumentForm
             templates={templates}
             contacts={contacts}

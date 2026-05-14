@@ -97,7 +97,7 @@ export function VoiceSampleToggle({
         className={`inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded border transition ${
           isMarked
             ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:text-white hover:bg-emerald-500/20'
-            : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white'
+            : 'border-border-subtle bg-surface-0 text-text-primary hover:text-white'
         } disabled:opacity-50`}
       >
         {isMarked ? (

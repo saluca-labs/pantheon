@@ -80,18 +80,18 @@ export default async function WorkoutDetailPage({
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/health/workouts"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Workouts
       </Link>
 
       <div className="flex flex-wrap items-center gap-3 mb-1">
-        <Dumbbell className="w-6 h-6 text-[#4361EE]" />
+        <Dumbbell className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">{template.name}</h1>
         <span
-          className={`text-[10px] uppercase tracking-wide rounded-full border border-[#2a2d3e] px-2 py-0.5 ${
-            template.source === 'system' ? 'text-[#4361EE]' : 'text-[#cbd5e1]'
+          className={`text-[10px] uppercase tracking-wide rounded-full border border-border-subtle px-2 py-0.5 ${
+            template.source === 'system' ? 'text-accent' : 'text-text-primary'
           }`}
         >
           {template.source === 'system' ? 'Built-in' : 'Custom'}
@@ -118,9 +118,9 @@ function ReadMode({
 }) {
   return (
     <div className="space-y-5 mt-4">
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="text-xs text-[#94a3b8]">
+          <div className="text-xs text-text-secondary">
             {template.category} · {template.estDurationMin} min ·{' '}
             <span
               className={
@@ -128,7 +128,7 @@ function ReadMode({
                   ? 'text-emerald-300'
                   : template.targetIntensity === 'vigorous'
                     ? 'text-amber-300'
-                    : 'text-[#4361EE]'
+                    : 'text-accent'
               }
             >
               {template.targetIntensity}
@@ -137,7 +137,7 @@ function ReadMode({
           {editable && (
             <Link
               href={`/dashboard/os/health/workouts/${template.id}?edit=1`}
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-primary hover:border-accent/50 hover:text-white"
             >
               Edit
             </Link>
@@ -148,7 +148,7 @@ function ReadMode({
             {template.tags.map((t) => (
               <span
                 key={t}
-                className="rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[11px] text-[#cbd5e1]"
+                className="rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-[11px] text-text-primary"
               >
                 {t}
               </span>
@@ -156,16 +156,16 @@ function ReadMode({
           </div>
         )}
         {template.description && (
-          <div className="prose prose-invert prose-sm max-w-none text-[#e2e8f0]">
+          <div className="prose prose-invert prose-sm max-w-none text-text-primary">
             <ReactMarkdown>{template.description}</ReactMarkdown>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <h2 className="text-sm font-semibold text-white mb-3">Blocks</h2>
         {(template.blocks ?? []).length === 0 ? (
-          <p className="text-xs text-[#94a3b8]">No blocks yet.</p>
+          <p className="text-xs text-text-secondary">No blocks yet.</p>
         ) : (
           <ol className="space-y-2">
             {(template.blocks ?? []).map((b, i) => (
@@ -192,21 +192,21 @@ function BlockView({
   if (block.restSec !== null) meta.push(`rest ${block.restSec}s`);
   if (block.weightHint) meta.push(block.weightHint);
   return (
-    <li className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3">
+    <li className="rounded-lg border border-border-subtle bg-surface-0 p-3">
       <div className="flex items-baseline gap-2">
-        <span className="text-[10px] text-[#94a3b8] font-mono w-6">
+        <span className="text-[10px] text-text-secondary font-mono w-6">
           {String(index + 1).padStart(2, '0')}
         </span>
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">
           {block.kind}
         </span>
         <span className="text-sm text-white">{block.name}</span>
       </div>
       {meta.length > 0 && (
-        <div className="mt-1 ml-8 text-xs text-[#cbd5e1]">{meta.join(' · ')}</div>
+        <div className="mt-1 ml-8 text-xs text-text-primary">{meta.join(' · ')}</div>
       )}
       {block.notes && (
-        <div className="mt-1 ml-8 text-xs text-[#94a3b8] italic">
+        <div className="mt-1 ml-8 text-xs text-text-secondary italic">
           {block.notes}
         </div>
       )}

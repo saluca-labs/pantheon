@@ -34,7 +34,7 @@ function statusBadge(status: SceneStatus) {
   const info = SCENE_STATUSES.find((s) => s.status === status);
   return (
     <span
-      className={`text-[10px] px-1.5 py-0.5 rounded border ${info?.color ?? 'border-[#2a2d3e] text-[#94a3b8]'}`}
+      className={`text-[10px] px-1.5 py-0.5 rounded border ${info?.color ?? 'border-border-subtle text-text-secondary'}`}
     >
       {info?.label ?? status}
     </span>
@@ -59,8 +59,8 @@ export function BreakdownWorkspace({
 
   if (scenes.length === 0) {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
-        <p className="text-sm text-[#94a3b8]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
+        <p className="text-sm text-text-secondary">
           No scenes yet. Write some Fountain in the screenplay editor and save
           a draft — your scenes will appear here for breakdown.
         </p>
@@ -75,7 +75,7 @@ export function BreakdownWorkspace({
           type="button"
           disabled
           title="Coming with AI coach — Phase 7"
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#1a1d27] text-[#64748b] cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-[#64748b] cursor-not-allowed"
         >
           <Sparkles className="w-3 h-3" /> Auto-extract from script
         </button>
@@ -91,17 +91,17 @@ export function BreakdownWorkspace({
           return (
             <li
               key={scene.id}
-              className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden"
+              className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden"
             >
               <button
                 type="button"
                 onClick={() => toggle(scene.id)}
-                className="w-full text-left p-3 hover:bg-[#1f2230] transition flex items-start gap-3"
+                className="w-full text-left p-3 hover:bg-surface-3 transition flex items-start gap-3"
               >
                 {isOpen ? (
-                  <ChevronDown className="w-4 h-4 text-[#94a3b8] mt-0.5 shrink-0" />
+                  <ChevronDown className="w-4 h-4 text-text-secondary mt-0.5 shrink-0" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-[#94a3b8] mt-0.5 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-text-secondary mt-0.5 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -109,15 +109,15 @@ export function BreakdownWorkspace({
                       {scene.sceneNumber.toString().padStart(2, '0')}
                     </span>
                     <p className="text-sm text-white truncate">
-                      {intExt && <span className="text-[#94a3b8] mr-1">{intExt}</span>}
+                      {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
                       {scene.location ?? scene.heading}
                       {scene.timeOfDay && (
-                        <span className="text-[#94a3b8]"> — {scene.timeOfDay}</span>
+                        <span className="text-text-secondary"> — {scene.timeOfDay}</span>
                       )}
                     </p>
                     {meta && statusBadge(meta.status)}
                     {meta && meta.eighths > 0 && (
-                      <span className="text-[10px] text-[#94a3b8] font-mono">
+                      <span className="text-[10px] text-text-secondary font-mono">
                         {pagesLabel(meta.eighths)} pp
                       </span>
                     )}

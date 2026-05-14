@@ -88,7 +88,7 @@ export default async function QuoteDetailPage({ params }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/quotes"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Quotes
@@ -112,7 +112,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             <form action={sendQuoteAction.bind(null, quote.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
               >
                 <Send className="w-4 h-4" />
                 Send
@@ -133,7 +133,7 @@ export default async function QuoteDetailPage({ params }: Props) {
           <Link
             href={`/api/tiresias/agentic-os/business/quotes/${quote.id}/export.pdf`}
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
           >
             Export PDF
           </Link>
@@ -142,21 +142,21 @@ export default async function QuoteDetailPage({ params }: Props) {
 
       {/* Meta Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Quote Number</p>
           <p className="text-sm text-white font-mono">{quote.quoteNumber}</p>
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Dates</p>
-          <p className="text-xs text-[#94a3b8]">Date: {quote.quoteDate}</p>
+          <p className="text-xs text-text-secondary">Date: {quote.quoteDate}</p>
           {quote.expiresOn && (
-            <p className="text-xs text-[#94a3b8]">Expires: {quote.expiresOn}</p>
+            <p className="text-xs text-text-secondary">Expires: {quote.expiresOn}</p>
           )}
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Totals</p>
           <p className="text-sm text-white font-bold">{fmtCents(quote.totalCents)}</p>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             Sub {fmtCents(quote.subtotalCents)} + Tax {fmtCents(quote.taxCents)}
           </p>
         </div>
@@ -164,7 +164,7 @@ export default async function QuoteDetailPage({ params }: Props) {
 
       {/* Linked entities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Contact</p>
           {contact ? (
             <Link
@@ -174,10 +174,10 @@ export default async function QuoteDetailPage({ params }: Props) {
               {contact.firstName} {contact.lastName}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Deal</p>
           {deal ? (
             <Link
@@ -187,10 +187,10 @@ export default async function QuoteDetailPage({ params }: Props) {
               {deal.title}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Project</p>
           {project ? (
             <Link
@@ -200,23 +200,23 @@ export default async function QuoteDetailPage({ params }: Props) {
               {project.title}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
       </div>
 
       {/* Description */}
       {quote.descriptionMd && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
           <p className="text-xs text-[#64748b] mb-2">Description</p>
-          <div className="text-sm text-[#94a3b8] whitespace-pre-wrap leading-relaxed">
+          <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
             {quote.descriptionMd}
           </div>
         </div>
       )}
 
       {/* Line Items */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-white">
             Line Items ({lineItems.length})
@@ -234,7 +234,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             {lineItems.map((item) => (
               <div
                 key={item.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-3 flex items-center justify-between"
+                className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-3 flex items-center justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-white">{item.description}</p>
@@ -248,7 +248,7 @@ export default async function QuoteDetailPage({ params }: Props) {
                     {fmtCents(item.lineTotalCents)}
                   </p>
                   {item.lineTaxCents > 0 && (
-                    <p className="text-[10px] text-[#94a3b8]">
+                    <p className="text-[10px] text-text-secondary">
                       +{fmtCents(item.lineTaxCents)} tax
                     </p>
                   )}
@@ -257,7 +257,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#94a3b8] text-center py-4">
+          <p className="text-sm text-text-secondary text-center py-4">
             No line items yet.
           </p>
         )}

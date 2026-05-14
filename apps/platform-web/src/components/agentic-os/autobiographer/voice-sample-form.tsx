@@ -82,7 +82,7 @@ export function VoiceSampleForm({
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-2xl bg-[#1a1d27] border border-[#2a2d3e] rounded-xl p-5 space-y-4"
+        className="w-full max-w-2xl bg-surface-2 border border-border-subtle rounded-xl p-5 space-y-4"
       >
         <header className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
@@ -91,7 +91,7 @@ export function VoiceSampleForm({
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -105,7 +105,7 @@ export function VoiceSampleForm({
         )}
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Title (optional)
           </span>
           <input
@@ -113,13 +113,13 @@ export function VoiceSampleForm({
             onChange={(e) => setTitle(e.target.value)}
             maxLength={500}
             placeholder="What does this sample capture?"
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
           />
         </label>
 
         <label className="block">
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Sample text
             </span>
             <span
@@ -140,7 +140,7 @@ export function VoiceSampleForm({
             maxLength={VOICE_SAMPLE_BODY_MAX}
             required
             placeholder="Paste a paragraph or page of your own writing — the more representative of your voice, the better the profile will be."
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white font-sans leading-relaxed focus:outline-none focus:border-[#4361EE]"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white font-sans leading-relaxed focus:outline-none focus:border-accent"
           />
         </label>
 
@@ -148,14 +148,14 @@ export function VoiceSampleForm({
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white transition"
+            className="text-sm px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting || wordCount === 0}
-            className="text-sm px-3 py-1.5 rounded bg-[#4361EE] text-white font-medium hover:bg-[#3a52d8] disabled:opacity-50 transition"
+            className="text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] disabled:opacity-50 transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Create sample'}
           </button>

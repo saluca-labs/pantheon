@@ -45,7 +45,7 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
 
   return (
     <div
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-2"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4 space-y-2"
       data-testid={`experiment-protocol-pinned-${pin.link.id}`}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -71,11 +71,11 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
             )}
           </div>
           {pin.link.notes && (
-            <p className="text-xs text-[#94a3b8] whitespace-pre-wrap">{pin.link.notes}</p>
+            <p className="text-xs text-text-secondary whitespace-pre-wrap">{pin.link.notes}</p>
           )}
           <Link
             href={`/dashboard/os/research/protocols/${pin.resolved.id}`}
-            className="inline-flex items-center gap-1 mt-1 text-xs text-[#4361EE] hover:underline"
+            className="inline-flex items-center gap-1 mt-1 text-xs text-accent hover:underline"
           >
             <ExternalLink className="w-3 h-3" />
             Open protocol

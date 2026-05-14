@@ -32,7 +32,7 @@ import { VariantEditor } from './variant-editor';
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface ProjectUsage {
   id: string;
@@ -125,25 +125,25 @@ export function CatalogDetail({
     <div className="max-w-4xl space-y-6">
       <Link
         href="/dashboard/os/maker/catalog"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-2 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-2 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to catalog
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
         <div className="flex items-start gap-4">
           {row.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={row.imageUrl}
               alt={row.name}
-              className="w-24 h-24 rounded-lg object-cover border border-[#2a2d3e]"
+              className="w-24 h-24 rounded-lg object-cover border border-border-subtle"
             />
           ) : (
-            <div className="w-24 h-24 rounded-lg border border-dashed border-[#2a2d3e] flex items-center justify-center">
-              <ShoppingBag className="w-8 h-8 text-[#4361EE]/40" />
+            <div className="w-24 h-24 rounded-lg border border-dashed border-border-subtle flex items-center justify-center">
+              <ShoppingBag className="w-8 h-8 text-accent/40" />
             </div>
           )}
           <div className="flex-1 min-w-0 space-y-2">
@@ -157,7 +157,7 @@ export function CatalogDetail({
             />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   Category
                 </span>
                 <select
@@ -177,7 +177,7 @@ export function CatalogDetail({
                 </select>
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   Manufacturer
                 </span>
                 <input
@@ -190,7 +190,7 @@ export function CatalogDetail({
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   MPN
                 </span>
                 <input
@@ -203,7 +203,7 @@ export function CatalogDetail({
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   Unit
                 </span>
                 <input
@@ -214,7 +214,7 @@ export function CatalogDetail({
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   On hand
                 </span>
                 <input
@@ -230,7 +230,7 @@ export function CatalogDetail({
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                   Datasheet URL
                 </span>
                 <input
@@ -246,12 +246,12 @@ export function CatalogDetail({
               </label>
             </div>
             {savingHeader && (
-              <p className="text-xs text-[#94a3b8]">Saving…</p>
+              <p className="text-xs text-text-secondary">Saving…</p>
             )}
             {headerError && <p className="text-xs text-red-300">{headerError}</p>}
           </div>
         </div>
-        <div className="text-xs text-[#94a3b8] flex flex-wrap items-center gap-4">
+        <div className="text-xs text-text-secondary flex flex-wrap items-center gap-4">
           <span>{PART_CATEGORY_LABELS[row.category]}</span>
           <span>·</span>
           <span>
@@ -262,7 +262,7 @@ export function CatalogDetail({
               href={row.datasheetUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[#4361EE] hover:underline"
+              className="inline-flex items-center gap-1 text-accent hover:underline"
             >
               <ExternalLink className="w-3 h-3" />
               Datasheet
@@ -272,11 +272,11 @@ export function CatalogDetail({
       </div>
 
       {/* Variants */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-3">
         <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
           Variants
         </h2>
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           Optional — ship empty if this row has no size/colour/finish variants.
         </p>
         <VariantEditor
@@ -287,17 +287,17 @@ export function CatalogDetail({
       </div>
 
       {/* Supplier links */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-3">
         <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
           Supplier links
         </h2>
         {links.length === 0 ? (
-          <p className="text-sm text-[#94a3b8]">No supplier quotes yet.</p>
+          <p className="text-sm text-text-secondary">No supplier quotes yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+                <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
                   <th className="py-2 pr-4 font-normal">Supplier</th>
                   <th className="py-2 pr-4 font-normal">Unit price</th>
                   <th className="py-2 pr-4 font-normal">Lead time</th>
@@ -309,14 +309,14 @@ export function CatalogDetail({
                 {links.map((l) => {
                   const supplier = suppliers.find((s) => s.id === l.supplierId);
                   return (
-                    <tr key={l.id} className="border-t border-[#2a2d3e]">
+                    <tr key={l.id} className="border-t border-border-subtle">
                       <td className="py-2 pr-4 text-white">
                         {supplier?.name ?? l.supplierId.slice(0, 8)}
                       </td>
-                      <td className="py-2 pr-4 text-[#cbd5e1]">
+                      <td className="py-2 pr-4 text-text-primary">
                         {formatPrice(l.unitPriceCents, l.currency)}
                       </td>
-                      <td className="py-2 pr-4 text-[#94a3b8]">
+                      <td className="py-2 pr-4 text-text-secondary">
                         {l.leadTimeDays == null ? '—' : `${l.leadTimeDays}d`}
                       </td>
                       <td className="py-2 pr-4">
@@ -325,20 +325,20 @@ export function CatalogDetail({
                             href={l.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[#4361EE] hover:underline text-xs"
+                            className="inline-flex items-center gap-1 text-accent hover:underline text-xs"
                           >
                             <ExternalLink className="w-3 h-3" />
                             Open
                           </a>
                         ) : (
-                          <span className="text-[#94a3b8]">—</span>
+                          <span className="text-text-secondary">—</span>
                         )}
                       </td>
                       <td className="py-2 pr-4">
                         <button
                           type="button"
                           onClick={() => void removeLink(l.id)}
-                          className="text-xs text-[#94a3b8] hover:text-red-300 transition"
+                          className="text-xs text-text-secondary hover:text-red-300 transition"
                           aria-label="Remove supplier link"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -355,12 +355,12 @@ export function CatalogDetail({
       </div>
 
       {/* Project usage */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-3">
         <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
           Used by projects
         </h2>
         {usage.length === 0 ? (
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             No project BOM references this row yet.
           </p>
         ) : (
@@ -368,15 +368,15 @@ export function CatalogDetail({
             {usage.map((u) => (
               <li
                 key={u.id}
-                className="flex items-center justify-between text-sm border-b border-[#2a2d3e]/40 last:border-0 py-1.5"
+                className="flex items-center justify-between text-sm border-b border-border-subtle/40 last:border-0 py-1.5"
               >
                 <Link
                   href={`/dashboard/os/maker/projects/${u.id}?tab=bom`}
-                  className="text-white hover:text-[#4361EE] transition"
+                  className="text-white hover:text-accent transition"
                 >
                   {u.name}
                 </Link>
-                <span className="text-xs text-[#94a3b8]">
+                <span className="text-xs text-text-secondary">
                   {u.status} · {formatQuantity(u.quantityNeeded)} {row.unit}
                 </span>
               </li>
@@ -401,9 +401,9 @@ function AddLinkForm({
 
   if (suppliers.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8]">
+      <p className="text-sm text-text-secondary">
         No suppliers yet.{' '}
-        <Link href="/dashboard/os/maker/suppliers" className="text-[#4361EE] hover:underline">
+        <Link href="/dashboard/os/maker/suppliers" className="text-accent hover:underline">
           Add a supplier first
         </Link>
         .
@@ -422,7 +422,7 @@ function AddLinkForm({
         setUnitPriceCents('');
         setBusy(false);
       }}
-      className="flex flex-wrap gap-3 pt-3 border-t border-[#2a2d3e]"
+      className="flex flex-wrap gap-3 pt-3 border-t border-border-subtle"
     >
       <select
         value={supplierId}
@@ -447,7 +447,7 @@ function AddLinkForm({
       <button
         type="submit"
         disabled={busy || !supplierId}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
       >
         {busy ? 'Adding…' : 'Add link'}
       </button>

@@ -77,18 +77,18 @@ export function CoachStarter({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wide mb-2">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
           Mode
         </p>
         <CoachModePicker value={mode} onChange={setMode} disabled={submitting} />
-        <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">
-          <span className="font-medium text-[#cbd5e1]">{COACH_MODE_LABELS[mode]}.</span>{' '}
+        <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+          <span className="font-medium text-text-primary">{COACH_MODE_LABELS[mode]}.</span>{' '}
           {COACH_MODE_DESCRIPTIONS[mode]}
         </p>
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wide mb-2">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
           Case scope
         </p>
         <CaseScopePicker
@@ -105,7 +105,7 @@ export function CoachStarter({
             type="button"
             disabled={submitting}
             onClick={() => start(s)}
-            className="text-left text-sm text-[#cbd5e1] rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
+            className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
           >
             {s}
           </button>
@@ -125,7 +125,7 @@ export function CoachStarter({
           disabled={submitting}
           placeholder="Or type your own…"
           rows={2}
-          className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-red-400 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-red-400 disabled:opacity-50"
         />
         <button
           type="submit"

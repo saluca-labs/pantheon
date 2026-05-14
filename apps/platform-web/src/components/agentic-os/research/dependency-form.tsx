@@ -77,7 +77,7 @@ export function DependencyForm({
 
   if (peerOptions.length === 0) {
     return (
-      <p className="text-xs text-[#94a3b8] italic">
+      <p className="text-xs text-text-secondary italic">
         No other experiments to link.
       </p>
     );
@@ -86,19 +86,19 @@ export function DependencyForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+      className="space-y-2 rounded-lg border border-border-subtle bg-surface-2 p-3"
       data-testid="dependency-form"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-xs uppercase tracking-wide text-text-secondary">
             Peer experiment
           </label>
           <select
             value={toExperimentId}
             onChange={(e) => setToExperimentId(e.target.value)}
             required
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           >
             {peerOptions.map((p) => (
               <option key={p.id} value={p.id}>
@@ -108,11 +108,11 @@ export function DependencyForm({
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">Kind</label>
+          <label className="text-xs uppercase tracking-wide text-text-secondary">Kind</label>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as DependencyKind)}
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           >
             {DEPENDENCY_KIND_VALUES.map((k) => (
               <option key={k} value={k}>
@@ -123,13 +123,13 @@ export function DependencyForm({
         </div>
       </div>
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-[#94a3b8]">Notes</label>
+        <label className="text-xs uppercase tracking-wide text-text-secondary">Notes</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           maxLength={4000}
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
         />
       </div>
       {error && <p className="text-xs text-red-300">{error}</p>}
@@ -137,7 +137,7 @@ export function DependencyForm({
         <button
           type="submit"
           disabled={submitting || !toExperimentId}
-          className="rounded bg-[#4361EE] text-white text-sm font-medium px-3 py-1 disabled:opacity-50"
+          className="rounded bg-accent text-white text-sm font-medium px-3 py-1 disabled:opacity-50"
         >
           {submitting ? 'Linking…' : 'Add dependency'}
         </button>
@@ -145,7 +145,7 @@ export function DependencyForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white text-sm px-3 py-1"
+            className="rounded border border-border-subtle text-text-secondary hover:text-white text-sm px-3 py-1"
           >
             Cancel
           </button>

@@ -25,8 +25,8 @@ export function MilestoneCard({ milestone, today }: Props) {
   const overdue = derived === 'overdue';
   return (
     <div
-      className={`rounded-lg border p-3 bg-[#1a1d27] ${
-        overdue ? 'border-red-500/40' : 'border-[#2a2d3e]'
+      className={`rounded-lg border p-3 bg-surface-2 ${
+        overdue ? 'border-red-500/40' : 'border-border-subtle'
       }`}
       data-testid={`milestone-card-${milestone.id}`}
     >
@@ -48,7 +48,7 @@ export function MilestoneCard({ milestone, today }: Props) {
           )}
         </div>
       </div>
-      <div className="mt-2 flex items-center gap-3 text-[11px] text-[#94a3b8] flex-wrap">
+      <div className="mt-2 flex items-center gap-3 text-[11px] text-text-secondary flex-wrap">
         {milestone.dueAt && (
           <span
             className={`inline-flex items-center gap-1 ${overdue ? 'text-red-300' : ''}`}
@@ -66,7 +66,7 @@ export function MilestoneCard({ milestone, today }: Props) {
         )}
       </div>
       {milestone.blockedReason && (
-        <p className="mt-2 text-xs text-[#cbd5e1] whitespace-pre-wrap">
+        <p className="mt-2 text-xs text-text-primary whitespace-pre-wrap">
           {milestone.blockedReason}
         </p>
       )}

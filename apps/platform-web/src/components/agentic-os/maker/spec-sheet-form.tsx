@@ -26,7 +26,7 @@ import type { PartCatalogRow } from '@/lib/agentic-os/maker/catalog';
 import type { Tool } from '@/lib/agentic-os/maker/tools';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   scope: SpecSheetScope;
@@ -157,7 +157,7 @@ export function SpecSheetForm({ scope, onCreated, onCancel }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input
@@ -268,7 +268,7 @@ export function SpecSheetForm({ scope, onCreated, onCancel }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/80 disabled:opacity-50 transition"
         >
           {submitting ? 'Saving…' : 'Add spec sheet'}
         </button>
@@ -276,7 +276,7 @@ export function SpecSheetForm({ scope, onCreated, onCancel }: Props) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-4 py-2 text-sm text-[#94a3b8] hover:text-white transition"
+            className="rounded-md border border-border-subtle bg-surface-0 px-4 py-2 text-sm text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>

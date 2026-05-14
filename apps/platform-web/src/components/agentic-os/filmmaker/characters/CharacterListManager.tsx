@@ -93,18 +93,18 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by name…"
-            className="w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] pl-8 pr-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+            className="w-full rounded-md border border-border-subtle bg-surface-0 pl-8 pr-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
           />
         </div>
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as CharacterRole | 'all')}
-          className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white"
+          className="rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white"
         >
           <option value="all">All roles</option>
           {CHARACTER_ROLES.map((r) => (
@@ -116,7 +116,7 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-[#2a2d3e] bg-[#4361EE]/80 hover:bg-[#4361EE] text-white transition"
+          className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-border-subtle bg-accent/80 hover:bg-accent text-white transition"
         >
           <Plus className="w-4 h-4" />
           Add character
@@ -124,15 +124,15 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
       </div>
 
       {characters.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/40 p-10 text-center">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/40 p-10 text-center">
           <p className="text-sm text-white">No characters yet.</p>
-          <p className="text-xs text-[#94a3b8] mt-1">
+          <p className="text-xs text-text-secondary mt-1">
             Add your first character to start building the cast.
           </p>
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-[#2a2d3e] bg-[#4361EE]/80 hover:bg-[#4361EE] text-white transition"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-border-subtle bg-accent/80 hover:bg-accent text-white transition"
           >
             <Plus className="w-4 h-4" />
             Add character
@@ -148,13 +148,13 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
 
       {adding && (
         <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/60">
-          <div className="h-full w-full max-w-xl overflow-y-auto border-l border-[#2a2d3e] bg-[#0f1117] p-6 space-y-4">
+          <div className="h-full w-full max-w-xl overflow-y-auto border-l border-border-subtle bg-surface-0 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">New character</h3>
               <button
                 type="button"
                 onClick={() => setAdding(false)}
-                className="text-sm text-[#94a3b8] hover:text-white transition"
+                className="text-sm text-text-secondary hover:text-white transition"
               >
                 Close
               </button>

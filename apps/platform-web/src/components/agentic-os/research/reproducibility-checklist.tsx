@@ -62,7 +62,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
 
   return (
     <div className="space-y-4" data-testid="reproducibility-checklist">
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wide">
@@ -70,7 +70,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
             </h3>
             <ReproducibilityScoreBadge score={rollup.score} size="md" />
           </div>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             {rollup.done} done · {rollup.inProgress} in progress · {rollup.pending} pending
             {(rollup.notApplicable > 0 || rollup.waived > 0) && (
               <span>
@@ -82,7 +82,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           Score = done / (pending + in_progress + done). Not applicable + waived
           are excluded from the denominator.
         </p>
@@ -90,7 +90,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-[#2a2d3e] text-sm text-white px-2 py-1 hover:bg-[#1a1d27]"
+            className="inline-flex items-center gap-1.5 rounded border border-border-subtle text-sm text-white px-2 py-1 hover:bg-surface-2"
             data-testid="repro-add-button"
           >
             <Plus className="w-4 h-4" />
@@ -115,7 +115,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
         if (group.length === 0) return null;
         return (
           <section key={s} data-testid={`repro-group-${s}`}>
-            <h4 className="text-[10px] uppercase tracking-wide text-[#94a3b8] mb-2">
+            <h4 className="text-[10px] uppercase tracking-wide text-text-secondary mb-2">
               {REPRO_STATE_LABELS[s]} ({group.length})
             </h4>
             <ul className="space-y-2">
@@ -136,7 +136,7 @@ export function ReproducibilityChecklist({ experimentId, initialItems }: Props) 
 
       {items.length === 0 && !showAdd && (
         <p
-          className="text-sm text-[#94a3b8] italic py-6 text-center"
+          className="text-sm text-text-secondary italic py-6 text-center"
           data-testid="repro-checklist-empty"
         >
           No reproducibility items yet.

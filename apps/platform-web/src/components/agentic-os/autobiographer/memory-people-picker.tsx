@@ -162,16 +162,16 @@ export function MemoryPeoplePicker({
   }
 
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1.5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5">
           <Users className="w-4 h-4" />
           People in this memory
         </h2>
         <button
           type="button"
           onClick={() => setShowNewForm(true)}
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white transition"
         >
           <UserPlus className="w-3.5 h-3.5" />
           New person
@@ -189,7 +189,7 @@ export function MemoryPeoplePicker({
           {linked.map((p) => (
             <li
               key={p.id}
-              className="flex items-center gap-2 rounded border border-[#2a2d3e] bg-[#0f1117] px-3 py-2"
+              className="flex items-center gap-2 rounded border border-border-subtle bg-surface-0 px-3 py-2"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -206,13 +206,13 @@ export function MemoryPeoplePicker({
                       onChange={(e) => setEditRole(e.target.value)}
                       placeholder="role (e.g. protagonist)"
                       maxLength={100}
-                      className="flex-1 text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1 text-white focus:outline-none focus:border-[#4361EE]"
+                      className="flex-1 text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1 text-white focus:outline-none focus:border-accent"
                     />
                     <button
                       type="button"
                       onClick={() => saveRole(p.id)}
                       disabled={busy}
-                      className="text-xs px-2 py-1 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-50"
+                      className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50"
                     >
                       Save
                     </button>
@@ -222,14 +222,14 @@ export function MemoryPeoplePicker({
                         setEditingPersonId(null);
                         setEditRole('');
                       }}
-                      className="text-xs px-2 py-1 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white"
+                      className="text-xs px-2 py-1 rounded border border-border-subtle text-text-secondary hover:text-white"
                     >
                       Cancel
                     </button>
                   </div>
                 ) : p.role ? (
-                  <span className="text-[10px] text-[#94a3b8]">
-                    Role: <span className="text-[#cbd5e1]">{p.role}</span>
+                  <span className="text-[10px] text-text-secondary">
+                    Role: <span className="text-text-primary">{p.role}</span>
                   </span>
                 ) : (
                   <span className="text-[10px] text-[#64748b] italic">
@@ -245,7 +245,7 @@ export function MemoryPeoplePicker({
                       setEditingPersonId(p.id);
                       setEditRole(p.role ?? '');
                     }}
-                    className="text-[#94a3b8] hover:text-white"
+                    className="text-text-secondary hover:text-white"
                     title="Edit role"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -277,10 +277,10 @@ export function MemoryPeoplePicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Find a person to link…"
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
         />
         {filtered.length > 0 && (
-          <ul className="max-h-48 overflow-y-auto rounded border border-[#2a2d3e] bg-[#0f1117]">
+          <ul className="max-h-48 overflow-y-auto rounded border border-border-subtle bg-surface-0">
             {filtered.map((p) => (
               <li key={p.id}>
                 <button
@@ -288,8 +288,8 @@ export function MemoryPeoplePicker({
                   onClick={() => setPendingPersonId(p.id)}
                   className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between gap-2 transition ${
                     pendingPersonId === p.id
-                      ? 'bg-[#4361EE]/20 text-white'
-                      : 'text-[#cbd5e1] hover:bg-[#1a1d27]'
+                      ? 'bg-accent/20 text-white'
+                      : 'text-text-primary hover:bg-surface-2'
                   }`}
                 >
                   <span className="truncate">{p.canonicalName}</span>
@@ -300,14 +300,14 @@ export function MemoryPeoplePicker({
           </ul>
         )}
         {pendingPersonId && (
-          <div className="flex items-center gap-2 rounded border border-[#4361EE]/40 bg-[#4361EE]/5 p-2">
+          <div className="flex items-center gap-2 rounded border border-accent/40 bg-accent/5 p-2">
             <input
               value={pendingRole}
               onChange={(e) => setPendingRole(e.target.value)}
               placeholder="role (optional)"
               maxLength={100}
               list="common-roles"
-              className="flex-1 text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1 text-white focus:outline-none focus:border-[#4361EE]"
+              className="flex-1 text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1 text-white focus:outline-none focus:border-accent"
             />
             <datalist id="common-roles">
               {COMMON_MEMORY_PERSON_ROLES.map((r) => (
@@ -318,7 +318,7 @@ export function MemoryPeoplePicker({
               type="button"
               onClick={linkPerson}
               disabled={busy}
-              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
             >
               <Plus className="w-3.5 h-3.5" />
               Link
@@ -329,7 +329,7 @@ export function MemoryPeoplePicker({
                 setPendingPersonId(null);
                 setPendingRole('');
               }}
-              className="text-[#94a3b8] hover:text-white"
+              className="text-text-secondary hover:text-white"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />

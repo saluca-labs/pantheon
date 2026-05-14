@@ -47,7 +47,7 @@ export function PdfExportButton({ projectId, hasData }: Props) {
           ? 'Generate a build-packet PDF (BOM + steps + milestones + tools + references)'
           : 'Add some BOM lines / steps / milestones / tools / references first.'
       }
-      className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#cbd5e1] hover:text-white hover:border-[#4361EE] disabled:opacity-40 disabled:cursor-not-allowed transition"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-primary hover:text-white hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed transition"
     >
       <FileDown className="w-3.5 h-3.5" />
       {loading ? 'Generating…' : 'Export PDF'}

@@ -58,7 +58,7 @@ export function PersonEditButton({ person }: PersonEditButtonProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white transition"
+          className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white transition"
         >
           <Pencil className="w-4 h-4" />
           Edit
@@ -90,7 +90,7 @@ export function PersonActions({ label }: { label?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-[#4361EE] text-white font-medium hover:bg-[#3a52d8] transition"
+        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] transition"
       >
         <Plus className="w-4 h-4" />
         {label ?? 'Add person'}

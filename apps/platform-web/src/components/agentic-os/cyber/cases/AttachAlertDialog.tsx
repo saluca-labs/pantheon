@@ -101,56 +101,56 @@ export function AttachAlertDialog({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-xl border border-[#2a2d3e] bg-[#0f1117] shadow-2xl"
+        className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-xl border border-border-subtle bg-surface-0 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between p-4 border-b border-[#2a2d3e]">
+        <header className="flex items-center justify-between p-4 border-b border-border-subtle">
           <h2 className="text-base font-semibold text-white inline-flex items-center gap-2">
-            <LinkIcon className="w-4 h-4 text-[#4361EE]" />
+            <LinkIcon className="w-4 h-4 text-accent" />
             Attach alert
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
         </header>
-        <div className="p-4 border-b border-[#2a2d3e]">
+        <div className="p-4 border-b border-border-subtle">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, source, description…"
-            className="w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+            className="w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
           />
         </div>
         <div className="flex-1 overflow-auto p-4">
           {loading ? (
-            <p className="text-sm text-[#94a3b8]">Loading alerts…</p>
+            <p className="text-sm text-text-secondary">Loading alerts…</p>
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-[#94a3b8]">No matching alerts.</p>
+            <p className="text-sm text-text-secondary">No matching alerts.</p>
           ) : (
             <ul className="space-y-2">
               {filtered.map((a) => (
                 <li
                   key={a.id}
-                  className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 flex items-start justify-between gap-3"
+                  className="rounded-lg border border-border-subtle bg-surface-2 p-3 flex items-start justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] text-[#cbd5e1]">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle text-text-primary">
                         {a.severity}
                       </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] text-[#94a3b8]">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle text-text-secondary">
                         {a.status}
                       </span>
                       <span className="text-sm text-white truncate">
                         {a.title}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#94a3b8]">
+                    <p className="text-[11px] text-text-secondary">
                       {a.source} · {new Date(a.occurredAt).toLocaleString()}
                     </p>
                   </div>
@@ -158,7 +158,7 @@ export function AttachAlertDialog({
                     type="button"
                     onClick={() => attach(a.id)}
                     disabled={busy === a.id}
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white px-2.5 py-1 text-xs transition"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white px-2.5 py-1 text-xs transition"
                   >
                     {busy === a.id ? 'Attaching…' : 'Attach'}
                   </button>

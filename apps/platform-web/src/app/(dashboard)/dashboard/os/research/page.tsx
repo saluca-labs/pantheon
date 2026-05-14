@@ -35,11 +35,11 @@ export default async function ResearchHubPage() {
   return (
     <div className="max-w-5xl">
       <div className="flex items-center gap-3 mb-2">
-        <FlaskConical className="w-6 h-6 text-[#4361EE]" />
+        <FlaskConical className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Research OS</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Electronic lab notebook, literature mapping, hypothesis ledger, and experiment design
         for solo PhDs and small labs. Each experiment is a top-level project with its own
         lifecycle (planning → running → analysis → write-up → published).
@@ -56,7 +56,7 @@ export default async function ResearchHubPage() {
           </h2>
           <Link
             href="/dashboard/os/research/hypotheses"
-            className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
           >
             <BookOpen className="w-4 h-4" />
             Hypothesis ledger

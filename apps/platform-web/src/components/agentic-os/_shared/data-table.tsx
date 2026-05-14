@@ -51,7 +51,7 @@ export function DataTable<TRow>({
 }: DataTableProps<TRow>) {
   if (rows.length === 0) {
     return (
-      <div className="text-sm text-[#94a3b8]">
+      <div className="text-sm text-text-secondary">
         {empty ?? 'No entries yet.'}
       </div>
     );
@@ -60,7 +60,7 @@ export function DataTable<TRow>({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+          <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
             {columns.map((col) => (
               <th
                 key={col.label}
@@ -78,12 +78,12 @@ export function DataTable<TRow>({
             return (
               <tr
                 key={key}
-                className="border-t border-[#2a2d3e] hover:bg-[#161922] transition"
+                className="border-t border-border-subtle hover:bg-surface-1 transition"
               >
                 {columns.map((col, ci) => (
                   <td
                     key={`${key}-${ci}`}
-                    className={`py-2 pr-4 text-[#cbd5e1] ${col.cellClassName ?? ''} ${
+                    className={`py-2 pr-4 text-text-primary ${col.cellClassName ?? ''} ${
                       col.className ?? ''
                     }`}
                   >

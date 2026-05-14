@@ -52,7 +52,7 @@ export function FlagsToggleList({ modules, initialFlags }: FlagsToggleListProps)
   return (
     <div className="space-y-4">
       {/* Persistent note */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-3 text-sm text-[#94a3b8]">
+      <div className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-3 text-sm text-text-secondary">
         Disabling an OS hides it from your dashboard. Your data is preserved.
       </div>
 
@@ -62,7 +62,7 @@ export function FlagsToggleList({ modules, initialFlags }: FlagsToggleListProps)
         </div>
       )}
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] divide-y divide-[#2a2d3e]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 divide-y divide-border-subtle">
         {modules.map((mod) => {
           const Icon = mod.icon;
           const enabled = flags[mod.slug] !== false;
@@ -73,14 +73,14 @@ export function FlagsToggleList({ modules, initialFlags }: FlagsToggleListProps)
               className="flex items-center justify-between gap-4 px-5 py-4"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className={`rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e] shrink-0 ${!enabled ? 'opacity-40' : ''}`}>
-                  <Icon className="w-4 h-4 text-[#4361EE]" />
+                <div className={`rounded-lg bg-surface-0 p-2 border border-border-subtle shrink-0 ${!enabled ? 'opacity-40' : ''}`}>
+                  <Icon className="w-4 h-4 text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-sm font-medium truncate ${enabled ? 'text-white' : 'text-[#94a3b8]'}`}>
+                  <p className={`text-sm font-medium truncate ${enabled ? 'text-white' : 'text-text-secondary'}`}>
                     {mod.label}
                   </p>
-                  <p className="text-xs text-[#94a3b8]/70 truncate">{mod.tagline}</p>
+                  <p className="text-xs text-text-secondary/70 truncate">{mod.tagline}</p>
                 </div>
               </div>
 
@@ -93,9 +93,9 @@ export function FlagsToggleList({ modules, initialFlags }: FlagsToggleListProps)
                 className={`
                   relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                   transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2
-                  focus-visible:ring-[#4361EE] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1d27]
+                  focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-2
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  ${enabled ? 'bg-[#4361EE]' : 'bg-[#2a2d3e]'}
+                  ${enabled ? 'bg-accent' : 'bg-border-subtle'}
                 `}
               >
                 <span

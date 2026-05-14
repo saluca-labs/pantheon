@@ -18,7 +18,7 @@ import { VulnerabilityCard } from './VulnerabilityCard';
 import { VulnerabilityForm } from './VulnerabilityForm';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnerability[] }) {
   const [creating, setCreating] = useState(false);
@@ -43,9 +43,9 @@ export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnera
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <label className="block min-w-[200px] flex-1">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Search</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Search</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -54,7 +54,7 @@ export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnera
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Severity</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Severity</span>
           <select value={severity} onChange={(e) => setSeverity(e.target.value as VulnerabilitySeverity | '')} className={inputCls}>
             <option value="">All</option>
             {VULNERABILITY_SEVERITIES.map((s) => (
@@ -64,7 +64,7 @@ export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnera
         </label>
         <Link
           href="/dashboard/os/cyber/vulnerabilities/import"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#1a1d27] hover:bg-[#1f2230] border border-[#2a2d3e] text-white font-medium px-3 py-2 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-border-subtle text-white font-medium px-3 py-2 text-sm transition"
         >
           <Upload className="w-4 h-4" />
           Import Trivy / OpenVAS
@@ -72,7 +72,7 @@ export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnera
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'New vulnerability'}
@@ -87,7 +87,7 @@ export function VulnerabilitiesManager({ initialVulns }: { initialVulns: Vulnera
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No vulnerabilities match the current filters.
         </p>
       ) : (

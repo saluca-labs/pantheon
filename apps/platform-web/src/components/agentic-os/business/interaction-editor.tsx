@@ -21,7 +21,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function InteractionEditor({
   defaultPersonId = null,
@@ -72,10 +72,10 @@ export function InteractionEditor({
   return (
     <form
       onSubmit={submit}
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 grid grid-cols-1 sm:grid-cols-[150px_1fr_auto] gap-3 items-end"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4 grid grid-cols-1 sm:grid-cols-[150px_1fr_auto] gap-3 items-end"
     >
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Type</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Type</span>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as InteractionType)}
@@ -87,7 +87,7 @@ export function InteractionEditor({
         </select>
       </label>
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Summary</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Summary</span>
         <input
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
@@ -98,7 +98,7 @@ export function InteractionEditor({
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
       >
         {saving ? '…' : '+ Log'}
       </button>

@@ -27,14 +27,14 @@ export default async function HealthCoachIndexPage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <Sparkles className="w-6 h-6 text-[#4361EE]" />
+        <Sparkles className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">AI coach</h1>
       </div>
 
@@ -46,12 +46,12 @@ export default async function HealthCoachIndexPage() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-4">
-          <aside className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+          <aside className="rounded-xl border border-border-subtle bg-surface-2 p-4">
             <h2 className="text-sm font-semibold text-white mb-3">
               Conversations
             </h2>
             {conversations.length === 0 ? (
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 No conversations yet. Start one to the right.
               </p>
             ) : (
@@ -60,7 +60,7 @@ export default async function HealthCoachIndexPage() {
                   <li key={c.id}>
                     <Link
                       href={`/dashboard/os/health/coach/${c.id}`}
-                      className="block rounded-lg px-3 py-2 text-sm text-[#cbd5e1] hover:bg-[#0f1117] hover:text-white transition"
+                      className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
                     >
                       <div className="flex items-center gap-2">
                         <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
@@ -78,11 +78,11 @@ export default async function HealthCoachIndexPage() {
             )}
           </aside>
 
-          <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+          <section className="rounded-xl border border-border-subtle bg-surface-2 p-6">
             <h2 className="text-base font-semibold text-white mb-1">
               Start a conversation
             </h2>
-            <p className="text-xs text-[#94a3b8] mb-4 leading-relaxed">
+            <p className="text-xs text-text-secondary mb-4 leading-relaxed">
               The coach sees a snapshot of your recent mood, screeners, journal,
               and activity to ground its replies. It never diagnoses, never
               prescribes, and always defers a crisis to 988.

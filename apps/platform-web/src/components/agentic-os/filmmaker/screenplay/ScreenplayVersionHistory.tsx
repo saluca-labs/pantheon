@@ -36,21 +36,21 @@ export function ScreenplayVersionHistory({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 transition"
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 transition"
       >
         <History className="w-3.5 h-3.5" />
         {open ? 'Hide history' : `History (${versions.length})`}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 shadow-xl z-30">
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-border-subtle bg-surface-2 p-3 shadow-xl z-30">
           {versions.length === 0 ? (
-            <p className="text-xs text-[#94a3b8] p-2">No versions yet.</p>
+            <p className="text-xs text-text-secondary p-2">No versions yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {versions.map((v) => (
                 <li
                   key={v.id}
-                  className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2.5"
+                  className="rounded-lg border border-border-subtle bg-surface-0 p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
@@ -63,9 +63,9 @@ export function ScreenplayVersionHistory({
                         ) : null}
                       </p>
                       {v.label ? (
-                        <p className="text-[11px] text-[#cbd5e1] truncate">{v.label}</p>
+                        <p className="text-[11px] text-text-primary truncate">{v.label}</p>
                       ) : null}
-                      <p className="text-[11px] text-[#94a3b8]">
+                      <p className="text-[11px] text-text-secondary">
                         {new Date(v.createdAt).toLocaleString()} ·{' '}
                         {v.wordCount.toLocaleString()} w · ~{v.pageCountEstimate.toFixed(1)} pg
                       </p>
@@ -73,7 +73,7 @@ export function ScreenplayVersionHistory({
                     <div className="flex items-center gap-1 shrink-0">
                       <Link
                         href={`/dashboard/os/filmmaker/projects/${projectId}/screenplay/versions/${v.id}`}
-                        className="text-[11px] px-2 py-0.5 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 transition"
+                        className="text-[11px] px-2 py-0.5 rounded border border-border-subtle text-text-primary hover:text-white hover:border-accent/60 transition"
                       >
                         Open
                       </Link>
@@ -82,7 +82,7 @@ export function ScreenplayVersionHistory({
                           type="button"
                           disabled={restoring}
                           onClick={() => onRestore(v.id)}
-                          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-50 transition"
+                          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border border-border-subtle text-text-primary hover:text-white hover:border-accent/60 disabled:opacity-50 transition"
                         >
                           <RotateCcw className="w-3 h-3" />
                           Restore

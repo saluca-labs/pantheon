@@ -48,8 +48,8 @@ export function NotebookEntryFilterChips({
         onClick={() => onKindChange('all')}
         className={`text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border transition ${
           kind === 'all'
-            ? 'text-white bg-[#4361EE]/20 border-[#4361EE]/60'
-            : 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e] hover:text-white'
+            ? 'text-white bg-accent/20 border-accent/60'
+            : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
         }`}
         data-testid="filter-kind-all"
       >
@@ -63,7 +63,7 @@ export function NotebookEntryFilterChips({
             type="button"
             onClick={() => onKindChange(k)}
             className={`text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border transition ${
-              active ? ENTRY_KIND_COLOR[k] : 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e] hover:text-white'
+              active ? ENTRY_KIND_COLOR[k] : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
             }`}
             data-testid={`filter-kind-${k}`}
           >
@@ -72,7 +72,7 @@ export function NotebookEntryFilterChips({
         );
       })}
 
-      <span className="mx-1 text-[#2a2d3e]" aria-hidden>
+      <span className="mx-1 text-text-tertiary" aria-hidden>
         |
       </span>
 
@@ -83,14 +83,14 @@ export function NotebookEntryFilterChips({
           value={tag}
           onChange={(e) => onTagChange(e.target.value)}
           placeholder="Filter by tag…"
-          className="text-xs px-2 py-1 pr-7 rounded-full bg-[#0f1117] border border-[#2a2d3e] text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#4361EE]/60 w-44"
+          className="text-xs px-2 py-1 pr-7 rounded-full bg-surface-0 border border-border-subtle text-white placeholder:text-text-secondary focus:outline-none focus:border-accent/60 w-44"
           data-testid="filter-tag-input"
         />
         {tag && (
           <button
             type="button"
             onClick={() => onTagChange('')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-white"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white"
             aria-label="Clear tag filter"
             data-testid="filter-tag-clear"
           >
@@ -104,7 +104,7 @@ export function NotebookEntryFilterChips({
         className={`inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border cursor-pointer transition ${
           archived
             ? 'text-amber-300 bg-amber-500/10 border-amber-500/40'
-            : 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e] hover:text-white'
+            : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
         }`}
         data-testid="filter-archived-toggle"
       >

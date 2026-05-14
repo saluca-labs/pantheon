@@ -75,25 +75,25 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
         return evidence.sourceId ? (
           <Link
             href={`/dashboard/os/research/notebook/${evidence.sourceId}`}
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             Notebook entry
           </Link>
         ) : (
-          <span className="text-[#94a3b8]">Notebook entry</span>
+          <span className="text-text-secondary">Notebook entry</span>
         );
       case 'paper':
         return (
-          <span className="text-[#94a3b8]">
+          <span className="text-text-secondary">
             Paper{' '}
-            <span className="text-[#94a3b8]/60">(Phase 4 library — placeholder linkage)</span>
+            <span className="text-text-secondary/60">(Phase 4 library — placeholder linkage)</span>
           </span>
         );
       case 'dataset':
         return (
-          <span className="text-[#94a3b8]">
+          <span className="text-text-secondary">
             Dataset{' '}
-            <span className="text-[#94a3b8]/60">(Phase 5 library — placeholder linkage)</span>
+            <span className="text-text-secondary/60">(Phase 5 library — placeholder linkage)</span>
           </span>
         );
       case 'external_url':
@@ -102,24 +102,24 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
             href={evidence.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#4361EE] hover:underline break-all"
+            className="text-accent hover:underline break-all"
           >
             {evidence.sourceUrl}
           </a>
         ) : (
-          <span className="text-[#94a3b8]">External URL</span>
+          <span className="text-text-secondary">External URL</span>
         );
       case 'free_text':
-        return <span className="text-[#94a3b8]">Free-text evidence</span>;
+        return <span className="text-text-secondary">Free-text evidence</span>;
     }
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-3 space-y-1.5">
+    <div className="rounded-lg border border-border-subtle bg-surface-0/60 p-3 space-y-1.5">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="inline-flex items-center gap-2 min-w-0">
-          <Icon className="w-3.5 h-3.5 text-[#94a3b8] shrink-0" />
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+          <Icon className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">
             {EVIDENCE_SOURCE_KIND_LABELS[evidence.sourceKind]}
           </span>
           <span className="text-xs">{renderSourceLine()}</span>
@@ -127,7 +127,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
         <div className="inline-flex items-center gap-2">
           {confirmingDelete ? (
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="text-[#94a3b8]">Unlink?</span>
+              <span className="text-text-secondary">Unlink?</span>
               <button
                 onClick={handleDelete}
                 disabled={busy}
@@ -137,7 +137,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
               </button>
               <button
                 onClick={() => setConfirmingDelete(false)}
-                className="text-[#94a3b8] hover:text-white"
+                className="text-text-secondary hover:text-white"
               >
                 No
               </button>
@@ -145,7 +145,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
           ) : (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-red-300 transition"
+              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
               aria-label="Unlink evidence"
             >
               <Trash2 className="w-3 h-3" />

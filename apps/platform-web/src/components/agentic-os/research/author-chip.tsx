@@ -21,7 +21,7 @@ interface Props {
 export function AuthorChip({ author, position, href }: Props) {
   const inner = (
     <span
-      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40 transition"
+      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40 transition"
       title={
         [
           author.orcid ? `ORCID: ${author.orcid}` : null,
@@ -32,10 +32,10 @@ export function AuthorChip({ author, position, href }: Props) {
       }
       data-testid={`author-chip-${author.id}`}
     >
-      <UserIcon className="w-3 h-3 text-[#94a3b8]" />
+      <UserIcon className="w-3 h-3 text-text-secondary" />
       <span className="truncate max-w-[18ch]">{author.displayName}</span>
       {position != null && (
-        <sup className="text-[9px] text-[#94a3b8] ml-0.5">#{position}</sup>
+        <sup className="text-[9px] text-text-secondary ml-0.5">#{position}</sup>
       )}
     </span>
   );

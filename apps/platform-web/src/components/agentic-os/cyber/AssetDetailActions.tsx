@@ -65,7 +65,7 @@ export function AssetDetailActions({ asset }: { asset: Asset }) {
         <button
           type="button"
           onClick={() => setEditing((e) => !e)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-text-primary hover:text-white hover:border-accent/60 px-3 py-1.5 text-sm transition"
         >
           <Pencil className="w-4 h-4" />
           {editing ? 'Close' : 'Edit'}
@@ -75,7 +75,7 @@ export function AssetDetailActions({ asset }: { asset: Asset }) {
             type="button"
             onClick={decommission}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-amber-300 hover:text-amber-200 hover:border-amber-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-amber-300 hover:text-amber-200 hover:border-amber-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
           >
             <ArchiveX className="w-4 h-4" />
             Decommission
@@ -85,7 +85,7 @@ export function AssetDetailActions({ asset }: { asset: Asset }) {
           type="button"
           onClick={remove}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-red-300 hover:text-red-200 hover:border-red-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-red-300 hover:text-red-200 hover:border-red-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
         >
           <Trash2 className="w-4 h-4" />
           Delete

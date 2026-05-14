@@ -36,7 +36,7 @@ export default async function DealsPage({ searchParams }: Props) {
       {/* Back link */}
       <Link
         href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -52,7 +52,7 @@ export default async function DealsPage({ searchParams }: Props) {
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add deal
@@ -61,7 +61,7 @@ export default async function DealsPage({ searchParams }: Props) {
 
       {/* New deal form */}
       {showNew && (
-        <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
           <h2 className="text-lg font-medium text-white mb-4">New Deal</h2>
           <DealForm contacts={contacts} orgs={orgs} />
         </div>
@@ -78,8 +78,8 @@ export default async function DealsPage({ searchParams }: Props) {
       {deals.length > 0 ? (
         <DealKanban deals={deals} contacts={contacts} orgs={orgs} />
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
-          <p className="text-[#94a3b8] text-sm">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
+          <p className="text-text-secondary text-sm">
             No deals yet. Create your first deal to start tracking your pipeline.
           </p>
         </div>

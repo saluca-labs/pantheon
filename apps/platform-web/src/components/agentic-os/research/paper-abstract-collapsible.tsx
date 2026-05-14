@@ -26,7 +26,7 @@ export function PaperAbstractCollapsible({ abstractMd, previewMax = 480 }: Props
   const body = abstractMd?.trim() ?? '';
   if (!body) {
     return (
-      <p className="text-sm text-[#94a3b8] italic" data-testid="paper-abstract-empty">
+      <p className="text-sm text-text-secondary italic" data-testid="paper-abstract-empty">
         No abstract recorded.
       </p>
     );
@@ -36,7 +36,7 @@ export function PaperAbstractCollapsible({ abstractMd, previewMax = 480 }: Props
   return (
     <div data-testid="paper-abstract-collapsible">
       <div
-        className="prose prose-invert prose-sm max-w-none text-[#cbd5e1] [&_a]:text-[#4361EE] [&_code]:text-[#94a3b8] [&_code]:bg-[#0f1117] [&_code]:px-1 [&_code]:rounded"
+        className="prose prose-invert prose-sm max-w-none text-text-primary [&_a]:text-accent [&_code]:text-text-secondary [&_code]:bg-surface-0 [&_code]:px-1 [&_code]:rounded"
         data-testid="paper-abstract-body"
       >
         <ReactMarkdown>{shown}</ReactMarkdown>
@@ -45,7 +45,7 @@ export function PaperAbstractCollapsible({ abstractMd, previewMax = 480 }: Props
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline"
+          className="mt-2 inline-flex items-center gap-1 text-xs text-accent hover:underline"
           data-testid="paper-abstract-toggle"
         >
           {expanded ? (

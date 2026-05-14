@@ -42,7 +42,7 @@ export default async function BusinessCoachPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">AI Coach</h1>
-        <p className="text-sm text-[#94a3b8] mt-1">
+        <p className="text-sm text-text-secondary mt-1">
           Five-mode advisory coach: pricing, sales, marketing, strategy, and
           general business guidance.
         </p>
