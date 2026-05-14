@@ -3,25 +3,36 @@
 /**
  * Maker OS — ProjectsManager client component.
  *
- * Card-style project list with filter (status) and sort (name, created,
- * target completion). Clicking a card opens the Project Hub. A "New project"
- * button opens a drawer with the full create form.
+ * Card-style project list with filter (status), sort (name, created, target
+ * completion), and — Wave C-3a — in-hub search, saved filter/sort presets,
+ * and multi-select bulk archive. Clicking a card opens the Project Hub. A
+ * "New project" button opens a drawer with the full create form.
  *
- * Lifted from the Phase 0 `BuildsManager` (deleted in Phase 2 along with the
- * legacy parts-per-project surface).
+ * Wave C-3a primitive adoption:
+ *  - `MakerListControls` (EntitySearch + SavedViews) replaces the ad-hoc
+ *    search gap; the native status / sort selects move into its
+ *    `filterControls` slot.
+ *  - `BulkActionsBar` + a new lightweight selection model on `ProjectCard`
+ *    drives bulk archive (the existing per-project PATCH route, batched).
+ *  - `EmptyState` replaces the ad-hoc "No projects…" `<p>`.
+ *
+ * Behavior-preserving: same data, routes, and the same create-drawer +
+ * filter/sort logic (`applyProjectFilters` is untouched).
  *
  * @license MIT — Tiresias Maker OS (internal).
  */
 
-import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { Plus, Wrench, Archive } from 'lucide-react';
 import {
   PROJECT_STATUSES,
   PROJECT_STATUS_LABELS,
   type ProjectStatus,
 } from '@/lib/agentic-os/maker/projects';
 import type { MakerProject } from '@/lib/agentic-os/maker/repo';
+import { BulkActionsBar, EmptyState } from '@/components/agentic-os/_shared/views';
 import { ProjectCard } from './project-card';
+import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
 const API = '/api/tiresias/agentic-os/maker/projects';
 
@@ -64,6 +75,20 @@ export function applyProjectFilters(
     sorted.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
   }
   return sorted;
+}
+
+/**
+ * Free-text search over a project's name, description, and tags. Pure +
+ * exported so the search behavior is unit-testable.
+ */
+export function matchesProjectSearch(p: MakerProject, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    p.name.toLowerCase().includes(q) ||
+    (p.description ?? '').toLowerCase().includes(q) ||
+    p.tags.some((t) => t.toLowerCase().includes(q))
+  );
 }
 
 // ─── New Project Drawer ──────────────────────────────────────────────────────
@@ -241,69 +266,143 @@ export function ProjectsManager({ initialProjects }: { initialProjects: MakerPro
   const [projects, setProjects] = useState<MakerProject[]>(initialProjects);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sort, setSort] = useState<SortKey>('created');
+  const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [archiving, setArchiving] = useState(false);
 
-  const visible = useMemo(
-    () => applyProjectFilters(projects, { status: statusFilter, sort }),
-    [projects, statusFilter, sort],
-  );
+  const visible = useMemo(() => {
+    const filtered = applyProjectFilters(projects, { status: statusFilter, sort });
+    return filtered.filter((p) => matchesProjectSearch(p, search));
+  }, [projects, statusFilter, sort, search]);
 
   function onCreated(p: MakerProject) {
     setProjects((prev) => [p, ...prev]);
     setCreating(false);
   }
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  // Bulk archive — batches the existing per-project PATCH route. Same action
+  // a user could take one card at a time; the bar just fans it out.
+  async function archiveSelected(ids: string[]) {
+    setArchiving(true);
+    try {
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`${API}/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'archived' }),
+          }).then((r) => ({ id, ok: r.ok })),
+        ),
+      );
+      const archived = new Set(results.filter((r) => r.ok).map((r) => r.id));
+      setProjects((prev) =>
+        prev.map((p) =>
+          archived.has(p.id) ? { ...p, status: 'archived' as ProjectStatus } : p,
+        ),
+      );
+      setSelectedIds((prev) => prev.filter((id) => !archived.has(id)));
+    } finally {
+      setArchiving(false);
+    }
+  }
+
+  // Saved-view query carries status / sort / search; apply restores all three.
+  const filters = useMemo<MakerQuery>(
+    () => ({ status: statusFilter, sort }),
+    [statusFilter, sort],
+  );
+
+  function applyQuery(q: MakerQuery) {
+    setStatusFilter((q.status as StatusFilter) || 'all');
+    setSort((q.sort as SortKey) || 'created');
+    setSearch(q.search ?? '');
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-          <Field label="Status">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className={inputCls}
-            >
-              <option value="all">All</option>
-              {PROJECT_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {PROJECT_STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Sort by">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className={inputCls}
-            >
-              <option value="created">Recently created</option>
-              <option value="name">Name</option>
-              <option value="target">Target completion</option>
-            </select>
-          </Field>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
-        >
-          <Plus className="w-4 h-4" />
-          New project
-        </button>
-      </div>
+      <MakerListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search projects by name, description, or tag"
+        filters={filters}
+        onApplyQuery={applyQuery}
+        savedViewKey="projects"
+        filterControls={
+          <>
+            <Field label="Status">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                className={inputCls}
+              >
+                <option value="all">All</option>
+                {PROJECT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {PROJECT_STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Sort by">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className={inputCls}
+              >
+                <option value="created">Recently created</option>
+                <option value="name">Name</option>
+                <option value="target">Target completion</option>
+              </select>
+            </Field>
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+          >
+            <Plus className="w-4 h-4" />
+            New project
+          </button>
+        }
+      />
 
       {visible.length === 0 ? (
-        <p className="text-sm text-text-secondary">
-          {projects.length === 0
-            ? 'No projects yet. Create your first project above.'
-            : 'No projects match the current filters.'}
-        </p>
+        projects.length === 0 ? (
+          <EmptyState
+            icon={<Wrench className="h-6 w-6" />}
+            title="No projects yet"
+            description="Each project tracks a 7-phase build lifecycle with its own BOM, build log, milestones, tools, and references."
+            primaryCta={{
+              label: 'New project',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: () => setCreating(true),
+            }}
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            icon={<Wrench className="h-6 w-6" />}
+            title="No projects match"
+            description="Try clearing the search or adjusting the status filter."
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {visible.map((p) => (
             <ProjectCard
               key={p.id}
+              selectable
+              selected={selectedIds.includes(p.id)}
+              onToggleSelect={toggleSelect}
               project={{
                 id: p.id,
                 name: p.name,
@@ -319,6 +418,21 @@ export function ProjectsManager({ initialProjects }: { initialProjects: MakerPro
           ))}
         </div>
       )}
+
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={() => setSelectedIds([])}
+        countLabel={(n) => `${n} project${n === 1 ? '' : 's'} selected`}
+        actions={[
+          {
+            id: 'archive',
+            label: archiving ? 'Archiving…' : 'Archive',
+            icon: <Archive className="h-3.5 w-3.5" />,
+            disabled: archiving,
+            onClick: archiveSelected,
+          },
+        ]}
+      />
 
       {creating && (
         <NewProjectDrawer onClose={() => setCreating(false)} onCreated={onCreated} />

@@ -4,8 +4,20 @@
  * Maker OS — BlockersList.
  *
  * Full workshop-wide blockers list grouped by project. Filter chips for
- * item kind (milestone / dependency) and severity. The dataset is fetched
- * with limit=100 so the user can drill the whole feed in one place.
+ * item kind (milestone / dependency) and severity, plus — Wave C-3a — a
+ * client-side in-hub search over blocker / project titles and saved filter
+ * presets. The dataset is fetched with limit=100 so the user can drill the
+ * whole feed in one place.
+ *
+ * Wave C-3a primitive adoption:
+ *  - `MakerListControls` (EntitySearch + SavedViews) adds the search input +
+ *    saved presets above the list. The kind / severity chip rows stay
+ *    ad-hoc — `EntitySearch` has no declarative filter-chip API yet (known
+ *    gap), so they move into the controls' `filterControls` slot unchanged.
+ *  - `EmptyState` replaces the ad-hoc "All clear" panel.
+ *
+ * Behavior-preserving: the limit=100 fetch, the project grouping, and every
+ * deep-link (`?tab=milestones` / `?tab=dependencies`) are unchanged.
  *
  * @license MIT — Tiresias Maker OS Phase 6 (internal).
  */
@@ -21,6 +33,8 @@ import {
   type BlockerItemKind,
   type BlockerSeverity,
 } from '@/lib/agentic-os/maker/blockers';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
+import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
@@ -32,6 +46,20 @@ const SEVERITY_STYLE: Record<BlockerSeverity, string> = {
   open_dependency: 'border-accent/50 text-text-primary bg-accent/5',
 };
 
+/**
+ * Client-side free-text search over a blocker's title, project name, and
+ * reason. Pure + exported so the search behavior is unit-testable.
+ */
+export function matchesBlockerSearch(item: BlockerItem, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    item.title.toLowerCase().includes(q) ||
+    item.projectName.toLowerCase().includes(q) ||
+    (item.reason ?? '').toLowerCase().includes(q)
+  );
+}
+
 interface Props {
   initial?: BlockerItem[];
 }
@@ -41,6 +69,7 @@ export function BlockersList({ initial = [] }: Props) {
   const [loaded, setLoaded] = useState(initial.length > 0);
   const [kindFilter, setKindFilter] = useState<BlockerItemKind | 'all'>('all');
   const [severityFilter, setSeverityFilter] = useState<BlockerSeverity | 'all'>('all');
+  const [search, setSearch] = useState('');
 
   const refresh = useCallback(async () => {
     const r = await fetch(`${API_BASE}/blockers?limit=100`);
@@ -60,9 +89,10 @@ export function BlockersList({ initial = [] }: Props) {
       items.filter(
         (i) =>
           (kindFilter === 'all' || i.kind === kindFilter) &&
-          (severityFilter === 'all' || i.severity === severityFilter),
+          (severityFilter === 'all' || i.severity === severityFilter) &&
+          matchesBlockerSearch(i, search),
       ),
-    [items, kindFilter, severityFilter],
+    [items, kindFilter, severityFilter, search],
   );
 
   // Group by project for the rendered list.
@@ -86,51 +116,76 @@ export function BlockersList({ initial = [] }: Props) {
     return Array.from(map.values());
   }, [filtered]);
 
+  const filters = useMemo<MakerQuery>(
+    () => ({ kind: kindFilter, severity: severityFilter }),
+    [kindFilter, severityFilter],
+  );
+
+  function applyQuery(q: MakerQuery) {
+    setKindFilter((q.kind as BlockerItemKind | 'all') || 'all');
+    setSeverityFilter((q.severity as BlockerSeverity | 'all') || 'all');
+    setSearch(q.search ?? '');
+  }
+
   return (
     <div className="space-y-4">
-      {/* Filter chips */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</span>
-        <Chip
-          active={kindFilter === 'all'}
-          onClick={() => setKindFilter('all')}
-          label="All"
-        />
-        {BLOCKER_ITEM_KINDS.map((k) => (
-          <Chip
-            key={k}
-            active={kindFilter === k}
-            onClick={() => setKindFilter(k)}
-            label={k === 'milestone' ? 'Milestone' : 'Dependency'}
-          />
-        ))}
-        <span className="ml-3 text-[10px] uppercase tracking-wide text-text-secondary">
-          Severity
-        </span>
-        <Chip
-          active={severityFilter === 'all'}
-          onClick={() => setSeverityFilter('all')}
-          label="All"
-        />
-        {BLOCKER_SEVERITIES.map((s) => (
-          <Chip
-            key={s}
-            active={severityFilter === s}
-            onClick={() => setSeverityFilter(s)}
-            label={BLOCKER_SEVERITY_LABELS[s]}
-          />
-        ))}
-      </div>
+      {/* Search + saved views + the kind / severity chip rows */}
+      <MakerListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search blockers by title, project, or reason"
+        filters={filters}
+        onApplyQuery={applyQuery}
+        savedViewKey="blockers"
+        filterControls={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
+              Kind
+            </span>
+            <Chip
+              active={kindFilter === 'all'}
+              onClick={() => setKindFilter('all')}
+              label="All"
+            />
+            {BLOCKER_ITEM_KINDS.map((k) => (
+              <Chip
+                key={k}
+                active={kindFilter === k}
+                onClick={() => setKindFilter(k)}
+                label={k === 'milestone' ? 'Milestone' : 'Dependency'}
+              />
+            ))}
+            <span className="ml-3 text-[10px] uppercase tracking-wide text-text-secondary">
+              Severity
+            </span>
+            <Chip
+              active={severityFilter === 'all'}
+              onClick={() => setSeverityFilter('all')}
+              label="All"
+            />
+            {BLOCKER_SEVERITIES.map((s) => (
+              <Chip
+                key={s}
+                active={severityFilter === s}
+                onClick={() => setSeverityFilter(s)}
+                label={BLOCKER_SEVERITY_LABELS[s]}
+              />
+            ))}
+          </div>
+        }
+      />
 
       {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && grouped.length === 0 && (
-        <div className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-8 text-center">
-          <ShieldAlert className="w-6 h-6 text-accent mx-auto mb-2" />
-          <p className="text-sm text-white">All clear.</p>
-          <p className="text-xs text-text-secondary mt-1">
-            No active blockers across your Maker projects.
-          </p>
-        </div>
+        <EmptyState
+          icon={<ShieldAlert className="h-6 w-6" />}
+          title={items.length === 0 ? 'All clear' : 'No blockers match'}
+          description={
+            items.length === 0
+              ? 'No active blockers across your Maker projects — no missed, blocked, overdue, or at-risk milestones and no open dependency edges.'
+              : 'Try clearing the search or adjusting the kind and severity filters.'
+          }
+        />
       )}
 
       {grouped.map((group) => (

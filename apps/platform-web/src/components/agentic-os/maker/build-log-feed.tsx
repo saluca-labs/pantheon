@@ -10,16 +10,25 @@
  * newline-separated URL entries that parse to `{url, kind, label}` via the
  * pure helper in `log.ts`.
  *
+ * Wave C-3a: the ad-hoc `<ul>` timeline + empty `<li>` are replaced by the
+ * shared `ActivityFeed` primitive. Each entry's rich body (photo grids,
+ * link/file lists, delete button) is preserved verbatim through the
+ * `renderItem` render-prop escape hatch; `ActivityFeed` supplies the
+ * day-grouping headers, ordering, and the `EmptyState`. The compose form is
+ * unchanged.
+ *
  * @license MIT — Tiresias Maker OS Phase 3 (internal).
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Link as LinkIcon, Trash2, Play, FileText } from 'lucide-react';
+import { Link as LinkIcon, Trash2, Play, FileText, Hammer } from 'lucide-react';
 import {
   parseUrlInput,
   type AttachedUrl,
   type BuildLogEntry,
 } from '@/lib/agentic-os/maker/log';
+import { ActivityFeed } from '@/components/agentic-os/_shared/views';
+import type { ActivityEvent } from '@/components/agentic-os/_shared/views';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
@@ -148,22 +157,34 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
         </div>
       </form>
 
-      {/* Feed */}
-      <ul className="space-y-3">
-        {entries.length === 0 && (
-          <li className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-6 text-center text-sm text-text-secondary">
-            No log entries yet. Capture your first build note above.
-          </li>
+      {/* Feed — ActivityFeed primitive, rich entry body via renderItem */}
+      <ActivityFeed<BuildLogEvent>
+        events={entries.map((entry) => ({
+          id: entry.id,
+          occurredAt: entry.createdAt,
+          tone: 'accent',
+          entry,
+        }))}
+        grouping="day"
+        emptyState={{
+          icon: <Hammer className="h-6 w-6" />,
+          title: 'No log entries yet',
+          description: 'Capture your first build note above — notes, photos, and links land here in a timestamped feed.',
+        }}
+        renderItem={(event) => (
+          <LogEntryBody entry={event.entry} onDelete={remove} />
         )}
-        {entries.map((entry) => (
-          <LogEntryRow key={entry.id} entry={entry} onDelete={remove} />
-        ))}
-      </ul>
+      />
     </div>
   );
 }
 
-function LogEntryRow({
+/** ActivityFeed event carrying the full build-log entry for `renderItem`. */
+interface BuildLogEvent extends ActivityEvent {
+  entry: BuildLogEntry;
+}
+
+function LogEntryBody({
   entry,
   onDelete,
 }: {
@@ -174,7 +195,7 @@ function LogEntryRow({
   const others = entry.attachedUrls.filter((u) => u.kind !== 'photo');
   const dt = new Date(entry.createdAt);
   return (
-    <li className="rounded-lg border border-border-subtle bg-surface-2 p-4">
+    <div className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="text-xs text-text-secondary">{dt.toLocaleString()}</div>
         <button
@@ -228,6 +249,6 @@ function LogEntryRow({
           })}
         </ul>
       )}
-    </li>
+    </div>
   );
 }
