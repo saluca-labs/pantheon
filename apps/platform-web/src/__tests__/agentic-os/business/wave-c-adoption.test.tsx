@@ -4,7 +4,7 @@
  * Business had no component-level render tests before Wave C; the prior
  * suite is all logic / repo / route coverage. These tests lock the
  * presentation-layer swap to the shared `_shared/views` primitives:
- *  - BusinessHub        → DashboardWidget + ActivityFeed + EmptyState
+ *  - Business hub       → DashboardWidget + ActivityFeed + EmptyState
  *  - InteractionTimeline → ActivityFeed (+ EmptyState for the empty case)
  *  - DealKanban         → KanbanBoard
  *
@@ -12,16 +12,40 @@
  * data still surfaces (counts, summaries, deal titles, stage columns),
  * so the "behavior-preserving" contract is verifiable.
  *
+ * Wave E-2 (coherence pass) retired the bespoke `BusinessHub` client
+ * component for the shared `DashboardHub` shell driven by the pure
+ * `buildBusinessDashboardSpec` adapter. The hub tests below now exercise
+ * that spec rendered through `DashboardHub` — same widgets, same counts,
+ * same routes, same empty state, just the shared shell.
+ *
  * @license MIT — Tiresias Business OS (internal).
  */
 
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BusinessHub } from '@/components/agentic-os/business/business-hub';
+import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
+import { buildBusinessDashboardSpec } from '@/lib/agentic-os/business/dashboard-spec';
+import { findAgenticOsModule } from '@/lib/agentic-os/registry';
+import type { AgenticOsModule } from '@/lib/agentic-os/registry';
 import { InteractionTimeline } from '@/components/agentic-os/business/interaction-timeline';
 import DealKanban from '@/components/agentic-os/business/deal-kanban';
 import type { Interaction } from '@/lib/agentic-os/business/crm';
 import type { Deal } from '@/lib/agentic-os/business/deals';
+
+const businessModule = findAgenticOsModule('business') as AgenticOsModule;
+
+/** Render the Business hub the way the page does — spec → DashboardHub. */
+function renderBusinessHub(
+  args: Parameters<typeof buildBusinessDashboardSpec>[0],
+) {
+  return render(
+    <DashboardHub
+      module={businessModule}
+      roadmapMarkdown={null}
+      dashboard={buildBusinessDashboardSpec(args)}
+    />,
+  );
+}
 
 function mkInteraction(overrides: Partial<Interaction> = {}): Interaction {
   return {
@@ -63,51 +87,70 @@ function mkDeal(overrides: Partial<Deal> = {}): Deal {
   };
 }
 
-describe('BusinessHub — DashboardWidget adoption', () => {
-  it('renders three DashboardWidget tiles + the activity widget', () => {
-    render(
-      <BusinessHub
-        peopleCount={12}
-        orgsCount={4}
-        recentInteractions={[]}
-        dealsCount={7}
-        pipelineValueCents={0}
-        pipelineWeightedCents={0}
-      />,
-    );
+describe('Business hub — DashboardHub convergence', () => {
+  it('renders the three stat DashboardWidget tiles through the shared hub', () => {
+    renderBusinessHub({
+      peopleCount: 12,
+      orgsCount: 4,
+      recentInteractions: [
+        mkInteraction({ id: 'int-1', summary: 'Logged a note' }),
+      ],
+      dealsCount: 7,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
     expect(screen.getByTestId('business-hub-deals')).toBeInTheDocument();
     expect(screen.getByTestId('business-hub-people')).toBeInTheDocument();
     expect(screen.getByTestId('business-hub-organizations')).toBeInTheDocument();
-    expect(screen.getByTestId('business-hub-activity')).toBeInTheDocument();
+    // Recent activity now renders as the hub's declarative activity feed
+    // (no longer wrapped in its own full-width DashboardWidget).
+    expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
+    // All four surfaces sit inside the shared hub's dashboard region.
+    expect(
+      screen.getByTestId('dashboard-hub-region'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the stat trio inside the shared dashboard region', () => {
+    renderBusinessHub({
+      peopleCount: 1,
+      orgsCount: 1,
+      recentInteractions: [],
+      dealsCount: 1,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
+    const grid = screen.getByTestId('dashboard-hub-widget-grid');
+    expect(grid).toContainElement(screen.getByTestId('business-hub-deals'));
+    expect(grid).toContainElement(screen.getByTestId('business-hub-people'));
+    expect(grid).toContainElement(
+      screen.getByTestId('business-hub-organizations'),
+    );
   });
 
   it('preserves the domain counts inside the widgets', () => {
-    render(
-      <BusinessHub
-        peopleCount={12}
-        orgsCount={4}
-        recentInteractions={[]}
-        dealsCount={7}
-        pipelineValueCents={0}
-        pipelineWeightedCents={0}
-      />,
-    );
+    renderBusinessHub({
+      peopleCount: 12,
+      orgsCount: 4,
+      recentInteractions: [],
+      dealsCount: 7,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
   });
 
   it('widget tiles link to the same routes as before', () => {
-    render(
-      <BusinessHub
-        peopleCount={1}
-        orgsCount={1}
-        recentInteractions={[]}
-        dealsCount={1}
-        pipelineValueCents={0}
-        pipelineWeightedCents={0}
-      />,
-    );
+    renderBusinessHub({
+      peopleCount: 1,
+      orgsCount: 1,
+      recentInteractions: [],
+      dealsCount: 1,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
     expect(screen.getByTestId('business-hub-deals')).toHaveAttribute(
       'href',
       '/dashboard/os/business/deals',
@@ -123,50 +166,85 @@ describe('BusinessHub — DashboardWidget adoption', () => {
   });
 
   it('renders the ActivityFeed empty state when there is no activity', () => {
-    render(
-      <BusinessHub
-        peopleCount={0}
-        orgsCount={0}
-        recentInteractions={[]}
-        dealsCount={0}
-        pipelineValueCents={0}
-        pipelineWeightedCents={0}
-      />,
-    );
+    renderBusinessHub({
+      peopleCount: 0,
+      orgsCount: 0,
+      recentInteractions: [],
+      dealsCount: 0,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
     expect(screen.getByText('No activity yet')).toBeInTheDocument();
   });
 
   it('renders recent interactions through the ActivityFeed', () => {
-    render(
-      <BusinessHub
-        peopleCount={0}
-        orgsCount={0}
-        recentInteractions={[
-          mkInteraction({ id: 'int-9', summary: 'Discovery call with Jane' }),
-        ]}
-        recentPeople={[]}
-        recentOrgs={[]}
-        dealsCount={0}
-        pipelineValueCents={0}
-        pipelineWeightedCents={0}
-      />,
-    );
+    renderBusinessHub({
+      peopleCount: 0,
+      orgsCount: 0,
+      recentInteractions: [
+        mkInteraction({ id: 'int-9', summary: 'Discovery call with Jane' }),
+      ],
+      recentPeople: [],
+      recentOrgs: [],
+      dealsCount: 0,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
     expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
     expect(screen.getByText('Discovery call with Jane')).toBeInTheDocument();
   });
 
+  it('labels an activity row with the contact it touched', () => {
+    renderBusinessHub({
+      peopleCount: 0,
+      orgsCount: 0,
+      recentInteractions: [
+        mkInteraction({ id: 'int-7', personId: 'p-1', summary: 'Kickoff' }),
+      ],
+      recentPeople: [{ id: 'p-1', firstName: 'Jane', lastName: 'Roe' }],
+      recentOrgs: [],
+      dealsCount: 0,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
+    expect(screen.getByText('Jane Roe')).toBeInTheDocument();
+  });
+
   it('still shows the weighted-pipeline summary copy', () => {
-    render(
-      <BusinessHub
-        peopleCount={0}
-        orgsCount={0}
-        recentInteractions={[]}
-        dealsCount={3}
-        pipelineValueCents={1000000}
-        pipelineWeightedCents={400000}
-      />,
+    renderBusinessHub({
+      peopleCount: 0,
+      orgsCount: 0,
+      recentInteractions: [],
+      dealsCount: 3,
+      pipelineValueCents: 1000000,
+      pipelineWeightedCents: 400000,
+    });
+    expect(screen.getByTestId('business-hub-deals').textContent).toContain(
+      'weighted',
     );
-    expect(screen.getByTestId('business-hub-deals').textContent).toContain('weighted');
+  });
+
+  it('renders the shared hub header + registry feature grid', () => {
+    renderBusinessHub({
+      peopleCount: 0,
+      orgsCount: 0,
+      recentInteractions: [],
+      dealsCount: 0,
+      pipelineValueCents: 0,
+      pipelineWeightedCents: 0,
+    });
+    // Header from the registry module — replaces the bespoke hand-rolled one.
+    expect(
+      screen.getByRole('heading', { name: 'Business OS' }),
+    ).toBeInTheDocument();
+    // The registry feature grid renders every Business feature, incl. the
+    // Settings deep-link the bespoke header used to carry standalone.
+    expect(
+      screen.getByRole('link', { name: /All Agentic OS modules/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /^Settings/ }),
+    ).toHaveAttribute('href', '/dashboard/os/business/settings');
   });
 });
 

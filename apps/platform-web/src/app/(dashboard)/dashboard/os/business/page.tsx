@@ -1,15 +1,33 @@
 /**
  * Business OS — hub page.
  *
- * Phase 1 introduces the new three-card hub (People / Organizations /
- * Recent activity).  Phase 2-7 cards will land as those phases ship.
+ * Server component. Wave E-2 (UI Depth Wave coherence pass): the bespoke
+ * `BusinessHub` client component — hand-rolled header, back-link, and stat
+ * card grid that pre-dated the primitive-aware `DashboardHub` — is retired.
+ * The hub now renders through the shared `DashboardHub` shell like the rest
+ * of the suite:
+ *   - `module`          — drives the icon / name / status badge / tagline /
+ *                         description header and the registry feature grid
+ *                         (Deals, People, Organizations, Recent activity,
+ *                         Projects, Time, Settings, Quotes, Invoices,
+ *                         Expenses, P&L, Templates, Documents, AI Coach).
+ *   - `dashboard`       — the Deals / People / Organizations stat trio plus
+ *                         the recent-interaction activity feed, built by the
+ *                         pure `buildBusinessDashboardSpec` adapter.
+ *   - `roadmapMarkdown` — the Business execution plan in the collapsed
+ *                         accordion.
  *
- * @license MIT — Tiresias Business OS Phase 1 (internal).
+ * Same data, same routes, same counts — presentation layer only. The
+ * Settings deep-link the bespoke header carried is preserved as the
+ * `Settings` entry in the registry feature grid.
+ *
+ * @license MIT — Tiresias Business OS (internal).
  */
 
-import { Briefcase, Settings as SettingsIcon } from 'lucide-react';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { findAgenticOsModule } from '@/lib/agentic-os/registry';
+import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
+import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import {
   countActiveOrganizations,
@@ -20,15 +38,24 @@ import { listPeople } from '@/lib/agentic-os/business/people-repo';
 import { listOrganizations } from '@/lib/agentic-os/business/orgs-repo';
 import { listDeals } from '@/lib/agentic-os/business/deals-repo';
 import { computePipelineForecast } from '@/lib/agentic-os/business/deals';
-import { BusinessHub } from '@/components/agentic-os/business/business-hub';
+import { buildBusinessDashboardSpec } from '@/lib/agentic-os/business/dashboard-spec';
 
 export const dynamic = 'force-dynamic';
+
+const BUSINESS_SLUG = 'business';
 
 export default async function BusinessHubPage() {
   const user = await getCurrentBusinessUser();
   if (!user) redirect('/login');
 
+  const mod = findAgenticOsModule(BUSINESS_SLUG);
+  if (!mod) {
+    // Defensive — registry must contain Business while this page is shipped.
+    throw new Error('Business OS module missing from registry');
+  }
+
   const [
+    plan,
     peopleCount,
     orgsCount,
     recentInteractions,
@@ -36,6 +63,7 @@ export default async function BusinessHubPage() {
     organizations,
     openDeals,
   ] = await Promise.all([
+    loadAgenticOsPlan(BUSINESS_SLUG),
     countActivePeople(user.userId),
     countActiveOrganizations(user.userId),
     listInteractions(user.userId, { limit: 10 }),
@@ -46,40 +74,22 @@ export default async function BusinessHubPage() {
 
   const pipeline = computePipelineForecast(openDeals);
 
-  return (
-    <div className="max-w-5xl">
-      <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-        <div className="flex items-center gap-3">
-          <Briefcase className="w-6 h-6 text-teal-300" />
-          <h1 className="text-2xl font-semibold text-white">Business OS</h1>
-        </div>
-        <Link
-          href="/dashboard/os/business/settings"
-          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
-        >
-          <SettingsIcon className="w-4 h-4" />
-          Settings
-        </Link>
-      </div>
-      <p className="text-sm text-text-secondary mb-6">
-        Solo to enterprise without re-architecting. Phase 2 adds the sales
-        pipeline with deal tracking, kanban board, and pipeline forecasting.
-      </p>
+  const dashboard = buildBusinessDashboardSpec({
+    peopleCount,
+    orgsCount,
+    recentInteractions,
+    recentPeople: people.map((p) => ({
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+    })),
+    recentOrgs: organizations.map((o) => ({ id: o.id, name: o.name })),
+    dealsCount: pipeline.dealCount,
+    pipelineValueCents: pipeline.totalValueCents,
+    pipelineWeightedCents: pipeline.totalWeightedValueCents,
+  });
 
-      <BusinessHub
-        peopleCount={peopleCount}
-        orgsCount={orgsCount}
-        recentInteractions={recentInteractions}
-        recentPeople={people.map((p) => ({
-          id: p.id,
-          firstName: p.firstName,
-          lastName: p.lastName,
-        }))}
-        recentOrgs={organizations.map((o) => ({ id: o.id, name: o.name }))}
-        dealsCount={pipeline.dealCount}
-        pipelineValueCents={pipeline.totalValueCents}
-        pipelineWeightedCents={pipeline.totalWeightedValueCents}
-      />
-    </div>
+  return (
+    <DashboardHub module={mod} roadmapMarkdown={plan ?? null} dashboard={dashboard} />
   );
 }
