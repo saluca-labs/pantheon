@@ -10,7 +10,7 @@ in CD picks up new manifests here automatically.
 
 | File                    | Purpose                                                 |
 |-------------------------|---------------------------------------------------------|
-| `rbac.yaml`             | `pantheon-cronjob` ServiceAccount + Role + RoleBinding. Every cronjob in this namespace runs as this SA. |
+| `rbac.yaml`             | `pantheon-cronjob` ServiceAccount only. Every cronjob in this namespace runs as this SA. Role + RoleBinding for diagnostic introspection were removed pending IAM provisioning (see below). |
 | `cronjob-template.yaml` | Reference manifest. Copy + replace `<<PLACEHOLDERS>>`. Not applied. |
 | `<job>.yaml`            | One file per scheduled job. Each is a `kind: CronJob`. |
 | `README.md`             | This file. |
@@ -89,6 +89,50 @@ in CD picks up new manifests here automatically.
   exits 0 or it doesn't.
 - **Logs** — write structured JSON to stdout. Fluent Bit ships them to the
   central log sink. One line per "event" (start, batch, end).
+
+## IAM permissions required to re-enable diagnostics RBAC
+
+`rbac.yaml` originally shipped with a `Role` + `RoleBinding` granting the
+`pantheon-cronjob` SA read-only diagnostic access:
+
+- `batch/jobs` — `get`, `list`, `watch` (self-introspection across sibling Jobs)
+- `configmaps` — `get`, `list`, `watch`
+- `secrets` — `get` (no `list` — would let a cronjob enumerate all secrets)
+
+These were removed in the v0.1.57 hotfix because the CD pipeline's GCP
+service account lacks the IAM permissions to create namespaced `Role` and
+`RoleBinding` objects on tiresias-prod's `pantheon` namespace. CD on
+v0.1.56 failed at the `kubectl apply -k` step with
+`container.roles.create` / `container.roleBindings.create` denied.
+
+The `agos-audit-retention` CronJob — and every cronjob currently in the
+catalog — does NOT need these perms at runtime. Database access flows
+through `DATABASE_URL` injected as an envvar at pod creation, not through
+the K8s API. The diagnostic perms are only useful when a job wants to
+introspect its sibling Jobs or read its own ConfigMaps via the K8s API.
+
+**To re-enable:**
+
+1. Grant the CD pipeline's GCP SA the following IAM permissions on the
+   `pantheon` namespace (or scope to the cluster if Saluca policy allows):
+   - `container.roles.create`
+   - `container.roles.update`
+   - `container.roles.delete`
+   - `container.roleBindings.create`
+   - `container.roleBindings.update`
+   - `container.roleBindings.delete`
+2. Verify with a dry-run apply against the cluster:
+   ```
+   kubectl auth can-i create roles --namespace pantheon \
+     --as=<cd-sa>@salucainfrastructure.iam.gserviceaccount.com
+   ```
+3. Restore the `Role` + `RoleBinding` manifests from `rbac.yaml` at commit
+   prior to the v0.1.57 hotfix (`git show <v0.1.56-or-earlier>:apps/platform-api/k8s/pantheon/cronjobs/rbac.yaml`).
+4. Re-tag and ship.
+
+Until then: cronjobs that need diagnostic K8s API access must declare
+their own scoped `Role` + `RoleBinding` (and will hit the same CD wall
+until step 1 lands).
 
 ## Workload Identity bootstrap (one-time, per cluster)
 
