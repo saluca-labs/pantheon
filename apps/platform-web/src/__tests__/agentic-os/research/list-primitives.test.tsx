@@ -62,6 +62,8 @@ function mkHypothesis(overrides: Partial<Hypothesis> = {}): Hypothesis {
     experimentIds: [],
     descriptionMd: '',
     archivedAt: null,
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: '2026-05-01T00:00:00.000Z',
   };
 }
 
