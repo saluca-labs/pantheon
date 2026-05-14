@@ -247,3 +247,162 @@ describe('EntitySearch — pure-input mode (no results surface)', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });
+
+describe('EntitySearch — declarative filters', () => {
+  const filterDefs = [
+    {
+      key: 'stage',
+      label: 'Stage',
+      options: [
+        { value: 'open', label: 'Open' },
+        { value: 'won', label: 'Won' },
+      ],
+    },
+    {
+      key: 'owner',
+      label: 'Owner',
+      options: [
+        { value: 'me', label: 'Me' },
+        { value: 'team', label: 'Team' },
+      ],
+    },
+  ];
+
+  it('renders no controls row when filterDefs/sortOptions/viewToggle omitted', () => {
+    render(<EntitySearch placeholder="Find" onQueryChange={vi.fn()} />);
+    expect(
+      screen.queryByTestId('entity-search-controls'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders a labelled select per filter definition', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        filterDefs={filterDefs}
+      />,
+    );
+    expect(screen.getByTestId('entity-search-controls')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('entity-search-filter-stage'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('entity-search-filter-owner'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Stage')).toBeInTheDocument();
+  });
+
+  it('emits the full filter-value map on change', () => {
+    const onFilterChange = vi.fn();
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        filterDefs={filterDefs}
+        onFilterChange={onFilterChange}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Stage'), {
+      target: { value: 'won' },
+    });
+    expect(onFilterChange).toHaveBeenLastCalledWith({ stage: 'won' });
+    fireEvent.change(screen.getByLabelText('Owner'), {
+      target: { value: 'me' },
+    });
+    expect(onFilterChange).toHaveBeenLastCalledWith({
+      stage: 'won',
+      owner: 'me',
+    });
+  });
+
+  it('seeds filter selects from defaultFilterValues', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        filterDefs={filterDefs}
+        defaultFilterValues={{ stage: 'open' }}
+      />,
+    );
+    expect(screen.getByLabelText('Stage')).toHaveValue('open');
+  });
+});
+
+describe('EntitySearch — declarative sort', () => {
+  const sortOptions = [
+    { value: 'recent', label: 'Most recent' },
+    { value: 'name', label: 'Name A–Z' },
+  ];
+
+  it('renders a sort select and emits the chosen value', () => {
+    const onSortChange = vi.fn();
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        sortOptions={sortOptions}
+        onSortChange={onSortChange}
+      />,
+    );
+    const sort = screen.getByLabelText('Sort');
+    expect(sort).toHaveValue('recent');
+    fireEvent.change(sort, { target: { value: 'name' } });
+    expect(onSortChange).toHaveBeenCalledWith('name');
+  });
+
+  it('honors defaultSortValue', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        sortOptions={sortOptions}
+        defaultSortValue="name"
+      />,
+    );
+    expect(screen.getByLabelText('Sort')).toHaveValue('name');
+  });
+});
+
+describe('EntitySearch — view toggle', () => {
+  const viewToggle = [
+    { value: 'list', label: 'List' },
+    { value: 'grid', label: 'Grid' },
+  ];
+
+  it('renders a view toggle button per mode and emits on click', () => {
+    const onViewModeChange = vi.fn();
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        viewToggle={viewToggle}
+        onViewModeChange={onViewModeChange}
+      />,
+    );
+    expect(
+      screen.getByTestId('entity-search-view-toggle'),
+    ).toBeInTheDocument();
+    const grid = screen.getByTestId('entity-search-view-grid');
+    expect(screen.getByTestId('entity-search-view-list')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    fireEvent.click(grid);
+    expect(onViewModeChange).toHaveBeenCalledWith('grid');
+    expect(grid).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('does not render the toggle when fewer than two modes', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        viewToggle={[{ value: 'list', label: 'List' }]}
+      />,
+    );
+    expect(
+      screen.queryByTestId('entity-search-view-toggle'),
+    ).not.toBeInTheDocument();
+  });
+});
