@@ -1,30 +1,51 @@
 'use client';
 
 /**
- * Creator OS Phase 1 — Hub landing page.
+ * Creator OS — hub dashboard region (Wave E-3, UI Depth Wave).
  *
- * Wave C-4a (UI Depth Wave): the hub is now a dashboard, not a directory.
- * Renders a `DashboardWidget` aggregate-stat strip + an `ActivityFeed` of
- * recent work above the pinned-notes grid; the zero-data state uses the
- * shared `EmptyState` primitive. Quick-create still posts to the API then
- * navigates to the new note (behavior preserved).
+ * Rendered through `_shared/DashboardHub`'s `dashboardSlot` escape hatch.
+ * Wave E-3 retired the bespoke `CreatorHub` client component — the icon /
+ * name / status badge / tagline / description header and the registry
+ * feature grid now come from the shared hub shell. Everything that hub
+ * shell can't express declaratively lives here:
+ *  - the quick-create "New Note" button (client `fetch` + navigate),
+ *  - the four aggregate-stat `DashboardWidget` tiles (built by the pure
+ *    `buildCreatorDashboardWidgets` adapter),
+ *  - the merged recent-activity `ActivityFeed` (events from the pure
+ *    `buildCreatorActivityEvents` adapter),
+ *  - the conditional pinned-notes grid,
+ *  - the recent-notes list with its quick-create `EmptyState`.
  *
- * @license MIT — Tiresias Creator OS Phase 1 (internal).
+ * The hub's declarative `dashboard` prop only models widgets / chart /
+ * activity; the quick-create interactivity and the pinned + recent-notes
+ * sections genuinely don't fit those three slots, so the whole region is
+ * composed here and handed to `dashboardSlot` as one node.
+ *
+ * Zero capability loss: same data, same routes, same counts, same status
+ * mixes, same empty states, same quick-create behavior as the bespoke hub.
+ *
+ * @license MIT — Tiresias Creator OS (internal).
  */
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Pin, Clock, Sparkles, FileText } from 'lucide-react';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import { Plus, Pin, Clock, FileText } from 'lucide-react';
+import {
+  ActivityFeed,
+  DashboardWidget,
+  EmptyState,
+} from '@/components/agentic-os/_shared/views';
 import type { CreatorNote } from '@/lib/agentic-os/creator/notes';
 import type { CreatorPost } from '@/lib/agentic-os/creator/posts';
 import type { CreatorBook } from '@/lib/agentic-os/creator/books';
 import type { CreatorSubscriber } from '@/lib/agentic-os/creator/subscribers';
-import { CreatorHubWidgets } from './creator-hub-widgets';
-import { CreatorRecentActivity } from './creator-recent-activity';
+import {
+  buildCreatorActivityEvents,
+  buildCreatorDashboardWidgets,
+} from '@/lib/agentic-os/creator/dashboard-spec';
 
-interface CreatorHubProps {
+export interface CreatorDashboardProps {
   pinnedNotes: CreatorNote[];
   recentNotes: CreatorNote[];
   posts: CreatorPost[];
@@ -32,13 +53,13 @@ interface CreatorHubProps {
   subscribers: CreatorSubscriber[];
 }
 
-export function CreatorHub({
+export function CreatorDashboard({
   pinnedNotes,
   recentNotes,
   posts,
   books,
   subscribers,
-}: CreatorHubProps) {
+}: CreatorDashboardProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
 
@@ -59,20 +80,24 @@ export function CreatorHub({
     }
   }
 
+  const widgets = buildCreatorDashboardWidgets({
+    notes: recentNotes,
+    pinnedCount: pinnedNotes.length,
+    posts,
+    books,
+    subscribers,
+  });
+
+  const activityEvents = buildCreatorActivityEvents({
+    notes: recentNotes,
+    posts,
+    books,
+  });
+
   return (
-    <div className="max-w-5xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Sparkles className="w-7 h-7 text-os-creator" />
-            <h1 className="text-2xl font-semibold text-white">Creator Hub</h1>
-          </div>
-          <p className="text-sm text-text-secondary">
-            Write, plan, and organize your content. Jump into your notes or
-            start something new.
-          </p>
-        </div>
+    <div className="flex flex-col gap-8" data-testid="creator-dashboard">
+      {/* Quick-create — the bespoke header's "New Note" action. */}
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={handleQuickCreate}
@@ -84,37 +109,46 @@ export function CreatorHub({
         </button>
       </div>
 
-      {/* Aggregate-state dashboard strip */}
-      <section className="mb-8">
-        <CreatorHubWidgets
-          notes={recentNotes}
-          pinnedCount={pinnedNotes.length}
-          posts={posts}
-          books={books}
-          subscribers={subscribers}
-        />
+      {/* Aggregate-state dashboard strip — Notes / Publishing / Books /
+          Subscribers, built by the pure spec adapter. */}
+      <section>
+        <div
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          data-testid="creator-hub-widgets"
+        >
+          {widgets.map((widget, i) => (
+            <DashboardWidget key={widget['data-testid'] ?? i} {...widget} />
+          ))}
+        </div>
       </section>
 
-      {/* Recent activity across notes / posts / books */}
-      <section className="mb-8">
+      {/* Recent activity across notes / posts / books. */}
+      <section>
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-4 h-4 text-text-secondary" />
           <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
             Recent Activity
           </h2>
         </div>
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-2">
-          <CreatorRecentActivity
-            notes={recentNotes}
-            posts={posts}
-            books={books}
+        <div
+          className="rounded-xl border border-border-subtle bg-surface-2 p-2"
+          data-testid="creator-recent-activity"
+        >
+          <ActivityFeed
+            events={activityEvents}
+            grouping="day"
+            emptyState={{
+              title: 'Nothing here yet',
+              description:
+                'Write a note, draft a post, or start a book and recent edits will show up here.',
+            }}
           />
         </div>
       </section>
 
-      {/* Pinned notes */}
+      {/* Pinned notes. */}
       {pinnedNotes.length > 0 && (
-        <section className="mb-8">
+        <section>
           <div className="flex items-center gap-2 mb-4">
             <Pin className="w-4 h-4 text-os-creator" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
@@ -130,7 +164,9 @@ export function CreatorHub({
               >
                 <div className="flex items-start gap-3">
                   <span className="text-xl flex-shrink-0">
-                    {note.icon || <FileText className="w-5 h-5 text-text-secondary/60" />}
+                    {note.icon || (
+                      <FileText className="w-5 h-5 text-text-secondary/60" />
+                    )}
                   </span>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-medium text-white truncate group-hover:text-os-creator transition">
@@ -161,8 +197,8 @@ export function CreatorHub({
         </section>
       )}
 
-      {/* Recent notes */}
-      <section>
+      {/* Recent notes. */}
+      <section data-testid="creator-recent-notes">
         <div className="flex items-center gap-2 mb-4">
           <FileText className="w-4 h-4 text-text-secondary" />
           <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
@@ -189,7 +225,9 @@ export function CreatorHub({
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface-3 transition group"
               >
                 <span className="text-lg flex-shrink-0">
-                  {note.icon || <FileText className="w-4 h-4 text-text-secondary/60" />}
+                  {note.icon || (
+                    <FileText className="w-4 h-4 text-text-secondary/60" />
+                  )}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white truncate group-hover:text-os-creator transition">
