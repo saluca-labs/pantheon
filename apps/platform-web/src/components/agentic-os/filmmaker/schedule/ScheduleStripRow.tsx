@@ -101,7 +101,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-[#64748b] font-mono">
+          <p className="text-[10px] text-text-tertiary font-mono">
             Scene {scene.sceneNumber.toString().padStart(2, '0')}
             {meta && meta.eighths > 0 && (
               <span className="ml-2 text-text-secondary">
@@ -112,7 +112,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
               <span className="ml-2 text-text-secondary">· {minutes} min</span>
             )}
           </p>
-          <p className="text-xs text-white truncate">
+          <p className="text-xs text-text-primary truncate">
             {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
             {scene.location ?? scene.heading}
             {scene.timeOfDay && (
@@ -136,7 +136,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
             onClick={deleteStrip}
             disabled={busy}
             title="Remove from day"
-            className="text-text-secondary hover:text-red-300 p-1"
+            className="text-text-secondary hover:text-danger p-1"
           >
             <Trash2 className="w-3 h-3" />
           </button>
@@ -156,7 +156,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
                   type="button"
                   onClick={() => moveTo(d.id, 9999)}
                   disabled={busy}
-                  className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-border-subtle text-white disabled:opacity-40"
+                  className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-surface-3 text-text-primary disabled:opacity-40"
                 >
                   Day {d.dayNumber}
                   {d.label ? ` — ${d.label}` : ''}
@@ -166,7 +166,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
                 </button>
               ))}
             {allDays.filter((d) => d.id !== day.id).length === 0 && (
-              <p className="text-[10px] text-[#64748b] italic px-2">
+              <p className="text-[10px] text-text-tertiary italic px-2">
                 No other days to move to.
               </p>
             )}

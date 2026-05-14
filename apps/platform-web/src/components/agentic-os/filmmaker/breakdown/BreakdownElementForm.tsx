@@ -86,7 +86,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as BreakdownCategory)}
-          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
         >
           {BREAKDOWN_CATEGORIES.map((c) => (
             <option key={c.category} value={c.category}>
@@ -99,7 +99,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (e.g. SARAH, Coffee cup, 1950s Cadillac)"
-          className="flex-1 min-w-[180px] text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white placeholder-[#64748b]"
+          className="flex-1 min-w-[180px] text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary placeholder-text-tertiary"
           required
         />
         <input
@@ -108,7 +108,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
           max={10000}
           value={quantity}
           onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-          className="w-16 text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+          className="w-16 text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           title="Quantity"
         />
         {category === 'cast' && (
@@ -127,9 +127,9 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Optional description"
         rows={2}
-        className="w-full text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white placeholder-[#64748b]"
+        className="w-full text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary placeholder-text-tertiary"
       />
-      {error && <p className="text-xs text-red-300">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex items-center gap-2 justify-end">
         {onCancel && (
           <button

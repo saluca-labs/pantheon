@@ -93,7 +93,10 @@ export function ShootingDayCard({ day, allDays }: Props) {
   const eighths = totalEighths(day);
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+    <div
+      id={`day-${day.id}`}
+      className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden scroll-mt-4 transition-slow hover:border-os-filmmaker/40"
+    >
       <div className="p-3 flex items-start justify-between gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -113,7 +116,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
               </span>
             )}
           </div>
-          <p className="text-sm text-white mt-0.5">
+          <p className="text-sm text-text-primary mt-0.5">
             {day.label ?? 'Untitled'}
             {day.shootDate && (
               <span className="text-text-secondary ml-2">{day.shootDate}</span>
@@ -155,7 +158,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
             type="button"
             onClick={deleteDay}
             disabled={busy}
-            className="text-text-secondary hover:text-red-300 p-1"
+            className="text-text-secondary hover:text-danger p-1"
             title="Delete day"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -171,34 +174,34 @@ export function ShootingDayCard({ day, allDays }: Props) {
               placeholder="Label"
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             />
             <input
               type="date"
               value={form.shootDate}
               onChange={(e) => setForm({ ...form, shootDate: e.target.value })}
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             />
             <input
               type="time"
               placeholder="Call"
               value={form.callTime}
               onChange={(e) => setForm({ ...form, callTime: e.target.value })}
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             />
             <input
               type="time"
               placeholder="Wrap"
               value={form.wrapTime}
               onChange={(e) => setForm({ ...form, wrapTime: e.target.value })}
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             />
             <select
               value={form.unit}
               onChange={(e) =>
                 setForm({ ...form, unit: e.target.value as ShootingUnit })
               }
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             >
               {SHOOTING_UNITS.map((u) => (
                 <option key={u.unit} value={u.unit}>
@@ -211,7 +214,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
               onChange={(e) =>
                 setForm({ ...form, status: e.target.value as ShootingDayStatus })
               }
-              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             >
               {SHOOTING_DAY_STATUSES.map((s) => (
                 <option key={s.status} value={s.status}>
@@ -225,7 +228,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
             placeholder="Notes"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
+            className="w-full text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           />
           <div className="flex items-center justify-end gap-2">
             <button
@@ -249,7 +252,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
 
       <div className="px-3 pb-3">
         {day.strips.length === 0 ? (
-          <p className="text-[11px] text-[#64748b] italic">
+          <p className="text-[11px] text-text-tertiary italic">
             No scenes scheduled. Drop one from the left.
           </p>
         ) : (

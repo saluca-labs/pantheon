@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, FileText } from 'lucide-react';
+import { Save, FileText, Maximize2, Minimize2 } from 'lucide-react';
 import {
   ScreenplayEditor,
   type ScreenplayEditorHandle,
@@ -114,6 +114,20 @@ export function ScreenplayWorkspace({
   const [savingMeta, setSavingMeta] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Focused mode — distraction-free writing: header chrome + scene/character
+  // rail collapse, the editor column centers and widens. Pure presentation;
+  // all save / draft / version semantics are unchanged.
+  const [focused, setFocused] = useState(false);
+
+  // Esc leaves focused mode (keyboard parity with the toggle button).
+  useEffect(() => {
+    if (!focused) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFocused(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [focused]);
 
   // On mount, restore from localStorage if present and different from head.
   useEffect(() => {
@@ -260,6 +274,56 @@ export function ScreenplayWorkspace({
     }
   }
 
+  if (focused) {
+    return (
+      <div data-testid="screenplay-focused" className="space-y-3">
+        {/* Minimal focused-mode bar — exit + save only, everything else hidden. */}
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setFocused(false)}
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-text-secondary hover:text-text-primary hover:border-accent/60 transition"
+            title="Exit focused mode (Esc)"
+          >
+            <Minimize2 className="w-3.5 h-3.5" />
+            Exit focus
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-text-tertiary tabular-nums">
+              {scenes.length} scenes
+              {dirty && <span className="ml-2 text-warning">· unsaved</span>}
+            </span>
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={saving || !dirty}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/60 bg-accent/20 text-text-primary hover:bg-accent/30 disabled:opacity-50 transition"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {saving ? 'Saving…' : 'Save draft'}
+            </button>
+          </div>
+        </div>
+
+        {/* Centered, widened editor column — no rail, no header chrome. */}
+        <div className="mx-auto max-w-3xl">
+          <ScreenplayEditor
+            ref={editorRef}
+            initialText={initialEditorText}
+            onChange={handleEditorChange}
+            height="calc(100vh - 12rem)"
+          />
+        </div>
+
+        {error && (
+          <div className="mx-auto max-w-3xl rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
+            {error}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -276,7 +340,7 @@ export function ScreenplayWorkspace({
               }
             }}
             disabled={savingMeta}
-            className="flex-1 min-w-[200px] bg-transparent text-lg font-semibold text-white border-b border-transparent hover:border-border-subtle focus:border-accent outline-none"
+            className="flex-1 min-w-[200px] bg-transparent text-lg font-semibold text-text-primary border-b border-transparent hover:border-border-subtle focus:border-accent outline-none"
           />
           <select
             value={meta.format}
@@ -319,9 +383,18 @@ export function ScreenplayWorkspace({
           />
           <button
             type="button"
+            onClick={() => setFocused(true)}
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-text-primary hover:border-accent/60 transition"
+            title="Focused mode — distraction-free writing"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            Focus
+          </button>
+          <button
+            type="button"
             onClick={saveDraft}
             disabled={saving || !dirty}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/60 bg-accent/20 text-white hover:bg-accent/30 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/60 bg-accent/20 text-text-primary hover:bg-accent/30 disabled:opacity-50 transition"
           >
             <Save className="w-3.5 h-3.5" />
             {saving ? 'Saving…' : 'Save draft'}
@@ -331,7 +404,7 @@ export function ScreenplayWorkspace({
           <span>
             v{headVersion?.versionNumber ?? 1}
             {dirty && (
-              <span className="ml-2 text-amber-300">· unsaved changes</span>
+              <span className="ml-2 text-warning">· unsaved changes</span>
             )}
           </span>
           <span>{headWordCount.toLocaleString()} words</span>
@@ -355,7 +428,7 @@ export function ScreenplayWorkspace({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-300">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
           {error}
         </div>
       )}
