@@ -9,16 +9,9 @@ import {
 } from '@/lib/agentic-os/health/repo';
 import { CaveatBlock } from '@/components/agentic-os/health/caveat-block';
 import { PromptPicker } from '@/components/agentic-os/health/prompt-picker';
+import { JournalEntryBrowser } from '@/components/agentic-os/health/journal/journal-entry-browser';
 
 export const dynamic = 'force-dynamic';
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 export default async function HealthJournalPage() {
   const user = await getCurrentHealthUser();
@@ -95,40 +88,15 @@ export default async function HealthJournalPage() {
           <h2 className="text-base font-semibold text-white mb-3">
             Recent entries
           </h2>
-          {entries.length === 0 ? (
-            <p className="text-sm text-text-secondary">
-              No entries yet. Pick a prompt or start from a blank page using
-              the “New entry” button above.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border-subtle">
-              {entries.map((e) => (
-                <li key={e.id} className="py-3">
-                  <Link
-                    href={`/dashboard/os/health/journal/${e.id}`}
-                    className="block group"
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-sm font-medium text-white group-hover:text-accent transition truncate">
-                        {e.title || 'Untitled entry'}
-                      </h3>
-                      <span className="text-xs text-text-secondary shrink-0">
-                        {formatDate(e.entryAt)}
-                      </span>
-                    </div>
-                    {e.prompt && (
-                      <div className="text-[10px] uppercase tracking-wide text-accent mt-0.5">
-                        {e.prompt.category.replace(/-/g, ' ')}
-                      </div>
-                    )}
-                    <p className="text-xs text-text-secondary mt-1 line-clamp-2 leading-relaxed">
-                      {e.body}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          <JournalEntryBrowser
+            entries={entries.map((e) => ({
+              id: e.id,
+              title: e.title,
+              body: e.body,
+              entryAt: e.entryAt,
+              prompt: e.prompt ? { category: e.prompt.category } : null,
+            }))}
+          />
         </div>
 
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
