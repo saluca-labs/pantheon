@@ -10,9 +10,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
 import type { Evidence } from '@/lib/agentic-os/cyber/cases';
 import { EVIDENCE_KINDS } from '@/lib/agentic-os/cyber/cases';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { EvidenceForm } from './EvidenceForm';
 
 export interface CaseEvidencePanelProps {
@@ -73,9 +74,16 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
       )}
 
       {evidence.length === 0 ? (
-        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-          No evidence captured yet.
-        </p>
+        <EmptyState
+          icon={<FileText className="h-6 w-6" />}
+          title="No evidence captured yet"
+          description="Add artifacts, screenshots, logs, and IOCs so the investigation has a paper trail."
+          primaryCta={{
+            label: 'Add evidence',
+            icon: <Plus className="h-4 w-4" />,
+            onClick: () => setCreating(true),
+          }}
+        />
       ) : (
         <ul className="space-y-2">
           {evidence.map((ev) => {
