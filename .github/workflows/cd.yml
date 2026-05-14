@@ -89,11 +89,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # portal — Next.js, self-contained context (npm + COPY .)
+          # portal — Next.js, self-contained context (npm + COPY .).
+          # build_args wires the resolved git tag into NEXT_PUBLIC_APP_VERSION so
+          # /api/health surfaces the deployed version instead of "unknown".
           - service: portal
             image: portal
             dockerfile: apps/platform-api/portal/Dockerfile
             context: apps/platform-api/portal
+            build_args: NEXT_PUBLIC_APP_VERSION
           # platform-web — Next.js, pnpm monorepo, context = repo root
           - service: platform-web
             image: platform-web
@@ -161,6 +164,12 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ needs.resolve.outputs.sha }}
             org.opencontainers.image.version=${{ needs.resolve.outputs.tag }}
+          # Scoped per-service: only the portal Dockerfile declares
+          # NEXT_PUBLIC_APP_VERSION (consumed by /api/health to surface the
+          # deployed tag). Passing build-args to other services would
+          # invalidate their BuildKit cache on every tag bump, so we gate
+          # this via matrix.build_args (empty/unset for non-portal entries).
+          build-args: ${{ matrix.build_args && format('{0}={1}', matrix.build_args, needs.resolve.outputs.tag) || '' }}
           provenance: false
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
