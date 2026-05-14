@@ -7,6 +7,7 @@ import {
   getCbtLog,
 } from '@/lib/agentic-os/health/repo';
 import { CbtLogFormatter } from '@/components/agentic-os/health/cbt/formatters';
+import { CbtLogDetailTabs } from '@/components/agentic-os/health/cbt/cbt-log-detail-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,28 +81,25 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
         {fmt(log.completedAt ?? log.startedAt)}
       </p>
 
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
-        {(log.moodBefore !== null || log.moodAfter !== null) && (
-          <div>
-            <h3 className="text-xs uppercase tracking-wide text-text-secondary mb-1.5">
-              Mood
-            </h3>
-            <p className="text-sm text-white">
-              before: {log.moodBefore ?? '—'} → after: {log.moodAfter ?? '—'}
-            </p>
-          </div>
-        )}
-        <CbtLogFormatter log={log} />
-        {log.notes && (
-          <div>
-            <h3 className="text-xs uppercase tracking-wide text-text-secondary mb-1.5">
-              Notes
-            </h3>
-            <p className="text-sm text-white whitespace-pre-wrap">
-              {log.notes}
-            </p>
-          </div>
-        )}
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
+        <CbtLogDetailTabs
+          moodPanel={
+            log.moodBefore !== null || log.moodAfter !== null ? (
+              <p className="text-sm text-text-primary">
+                before: {log.moodBefore ?? '—'} → after:{' '}
+                {log.moodAfter ?? '—'}
+              </p>
+            ) : undefined
+          }
+          detailPanel={<CbtLogFormatter log={log} />}
+          notesPanel={
+            log.notes ? (
+              <p className="text-sm text-text-primary whitespace-pre-wrap">
+                {log.notes}
+              </p>
+            ) : undefined
+          }
+        />
       </div>
     </div>
   );

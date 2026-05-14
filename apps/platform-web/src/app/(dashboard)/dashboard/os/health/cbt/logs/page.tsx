@@ -9,6 +9,7 @@ import {
 } from '@/lib/agentic-os/health/repo';
 import { CBT_KIND_VALUES } from '@/lib/agentic-os/health/schemas';
 import { CbtLogList } from '@/components/agentic-os/health/cbt/cbt-log-list';
+import { CbtLogFilter } from '@/components/agentic-os/health/cbt/cbt-log-filter';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,47 +64,19 @@ export default async function CbtLogsPage({ searchParams }: PageProps) {
         <h1 className="text-2xl font-semibold text-white">CBT logs</h1>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        <FilterChip
-          label="All"
-          href="/dashboard/os/health/cbt/logs"
-          active={!kind}
+      <div className="mb-4">
+        <CbtLogFilter
+          kinds={(CBT_KIND_VALUES as readonly string[]).map((k) => ({
+            value: k,
+            label: KIND_LABELS[k] ?? k,
+          }))}
+          activeKind={kind ?? null}
         />
-        {(CBT_KIND_VALUES as readonly string[]).map((k) => (
-          <FilterChip
-            key={k}
-            label={KIND_LABELS[k] ?? k}
-            href={`/dashboard/os/health/cbt/logs?kind=${k}`}
-            active={kind === k}
-          />
-        ))}
       </div>
 
       <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <CbtLogList logs={logs} />
       </div>
     </div>
-  );
-}
-
-function FilterChip({
-  label,
-  href,
-  active,
-}: {
-  label: string;
-  href: string;
-  active: boolean;
-}) {
-  const cls = active
-    ? 'border-accent bg-accent/15 text-white'
-    : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50';
-  return (
-    <Link
-      href={href}
-      className={`text-xs rounded-full border px-3 py-1 transition ${cls}`}
-    >
-      {label}
-    </Link>
   );
 }
