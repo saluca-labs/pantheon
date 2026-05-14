@@ -27,6 +27,7 @@
 import { useState } from 'react';
 import { Bookmark, Plus, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 
 /** A persisted, named filter/sort preset. */
 export interface SavedView<TQuery> {
@@ -57,7 +58,7 @@ export interface SavedViewsProps<TQuery> {
   /** Optional: fires when a view's delete affordance is used. Omit to hide it. */
   onDeleteView?: (id: string) => void;
   /** Per-OS accent slug (matches registry.ts) for the active-pill tint. */
-  slug?: string;
+  slug?: OsSlug;
   /** Copy for the "all / no filter" reset pill. Omit to hide the reset pill. */
   allViewsLabel?: string;
   /** Fires when the reset pill is clicked. Required if `allViewsLabel` set. */

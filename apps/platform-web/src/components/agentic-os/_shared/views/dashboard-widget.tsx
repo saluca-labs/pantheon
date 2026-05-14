@@ -17,6 +17,7 @@
 
 import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 
 /** Emphasis level — controls surface elevation + border treatment. */
 export type DashboardWidgetVariant =
@@ -28,17 +29,12 @@ export type DashboardWidgetVariant =
   | 'attention'
   | 'danger';
 
-/** Per-OS slug — when set, the title rail picks up the OS accent tint. */
-export type DashboardWidgetOsSlug =
-  | 'health'
-  | 'maker'
-  | 'research'
-  | 'secure-dev'
-  | 'filmmaker'
-  | 'cyber'
-  | 'autobiographer'
-  | 'business'
-  | 'creator';
+/**
+ * Per-OS slug — when set, the title rail picks up the OS accent tint.
+ * Aliases the canonical `OsSlug` from `lib/agentic-os/registry.ts` so the
+ * primitive shares one source of truth with the rest of Wave B.
+ */
+export type DashboardWidgetOsSlug = OsSlug;
 
 export interface DashboardWidgetProps {
   /** Widget title — rendered in the header rail. */
