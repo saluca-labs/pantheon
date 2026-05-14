@@ -4,17 +4,21 @@
  * Creator OS — Editorial Calendar component (updated for Phase 2 schema).
  *
  * Lets creators plan posts with status and an optional publish date.
- * Posts are grouped by ISO week for a calendar-style view.
  *
- * Updated for Phase 2: channel and content_format dropped;
- * uses the new PostStatus and CreatorPost types from posts.ts.
- *
- * Wave C-4a (UI Depth Wave): this is a depth-winning surface — the
- * bespoke plan-a-post form, inline status-picker dropdowns, and ISO-week
- * grouping are deliberately preserved (the `CalendarView` primitive is a
- * month/week grid with different behavior). Only the ad-hoc empty state
- * is swapped for the shared `EmptyState`; full `CalendarView` adoption is
- * deferred to Wave D per the adoption-matrix judgment call.
+ * Wave D-4b (UI Depth Wave) — `CalendarView` adoption, additive pattern:
+ *   The bespoke ISO-week list was a depth-winning surface, but the posts it
+ *   groups all carry real date fields (`scheduledAt` / `publishedAt` /
+ *   `publishAt`), so they fit the shared month/week grid cleanly. The
+ *   editorial calendar now ADOPTS `CalendarView` for the calendar *display*
+ *   while keeping every bespoke editing affordance layered on:
+ *     - The "Plan a post" form is unchanged. `CalendarView.onCreate` now
+ *       pre-fills its date when a day cell's `+` is clicked.
+ *     - The inline status-picker `<select>` is preserved — it renders inside
+ *       each post chip via `renderEvent`, so drag-free status edits still work
+ *       right on the calendar.
+ *     - A "Week list" toggle keeps the original ISO-week grouping available
+ *       (depth not dropped — `groupByWeek` + `isoWeek` still used there).
+ *   Net: no capability lost, primitive genuinely adopted for the grid.
  *
  * @license MIT — original work for Tiresias platform
  */
@@ -26,7 +30,8 @@ import {
 } from '@/lib/agentic-os/creator/posts';
 import type { CreatorPost, PostStatus } from '@/lib/agentic-os/creator/posts';
 import { validatePost, isoWeek } from '@/lib/agentic-os/creator/calendar';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import { EmptyState, CalendarView } from '@/components/agentic-os/_shared/views';
+import type { CalendarViewMode } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   initial: CreatorPost[];
@@ -52,16 +57,30 @@ const STATUS_COLORS: Record<PostStatus, string> = {
   archived: 'bg-neutral-500/15 text-neutral-400 border-neutral-500/30',
 };
 
+/** The date a post is anchored to on the calendar — schedule wins, then publish. */
+function postDateStr(post: CreatorPost): string | null {
+  return post.scheduledAt ?? post.publishedAt ?? post.publishAt ?? null;
+}
+
 function groupByWeek(posts: CreatorPost[]): Map<string, CreatorPost[]> {
   const map = new Map<string, CreatorPost[]>();
   for (const post of posts) {
-    const dateStr = post.scheduledAt ?? post.publishedAt ?? post.publishAt;
+    const dateStr = postDateStr(post);
     const weekKey = dateStr ? isoWeek(new Date(dateStr)) : 'unscheduled';
     const bucket = map.get(weekKey) ?? [];
     bucket.push(post);
     map.set(weekKey, bucket);
   }
   return map;
+}
+
+/** A datetime-local value (no timezone) for the plan-a-post form's date field. */
+function toLocalInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}` +
+    `T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`
+  );
 }
 
 const BLANK_FORM = {
@@ -76,6 +95,11 @@ export function EditorialCalendar({ initial }: Props) {
   const [form, setForm] = useState({ ...BLANK_FORM });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // CalendarView is controlled — this component owns focus date + view mode.
+  const [calDate, setCalDate] = useState<Date>(() => new Date());
+  const [calMode, setCalMode] = useState<CalendarViewMode>('month');
+  const [layout, setLayout] = useState<'calendar' | 'weeklist'>('calendar');
 
   const weekGroups = useMemo(() => groupByWeek(posts), [posts]);
   const sortedWeeks = useMemo(() => {
@@ -145,10 +169,48 @@ export function EditorialCalendar({ initial }: Props) {
     }
   }
 
+  /** Day-cell `+` affordance: pre-fill the plan-a-post form's date and focus it. */
+  function handleCreateOnDate(date: Date) {
+    setForm((f) => ({ ...f, scheduledAt: toLocalInputValue(date) }));
+    setError(null);
+    // Scroll the form into view so the pre-filled date is obvious.
+    if (typeof document !== 'undefined') {
+      document
+        .getElementById('plan-a-post')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /** Inline status-picker chip — preserved bespoke affordance, now on the grid. */
+  function StatusPicker({ post }: { post: CreatorPost }) {
+    return (
+      <select
+        value={post.status}
+        onChange={(e) =>
+          handleStatusChange(post.id, e.target.value as PostStatus)
+        }
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Status for ${post.title}`}
+        className={`w-full text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border cursor-pointer bg-transparent ${STATUS_COLORS[post.status]}`}
+      >
+        {POST_STATUSES.map((s) => (
+          <option
+            key={s}
+            value={s}
+            className="bg-surface-2 text-white normal-case tracking-normal"
+          >
+            {s}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Add post form */}
+      {/* Add post form — unchanged behavior, now anchored for onCreate scroll. */}
       <form
+        id="plan-a-post"
         onSubmit={handleAdd}
         className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
@@ -207,7 +269,7 @@ export function EditorialCalendar({ initial }: Props) {
         </div>
       </form>
 
-      {/* Calendar view grouped by week */}
+      {/* Layout toggle: shared CalendarView grid vs. the bespoke ISO-week list. */}
       {posts.length === 0 ? (
         <EmptyState
           icon={<CalendarDays className="h-6 w-6" />}
@@ -215,47 +277,81 @@ export function EditorialCalendar({ initial }: Props) {
           description="Plan your first piece with the form above to start mapping out your publishing cadence."
         />
       ) : (
-        <div className="space-y-4">
-          {sortedWeeks.map((week) => {
-            const weekPosts = weekGroups.get(week) ?? [];
-            return (
-              <div key={week} className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
-                <div className="px-5 py-2 border-b border-border-subtle bg-surface-0">
-                  <span className="text-xs font-mono font-semibold text-text-secondary uppercase">
-                    {week === 'unscheduled' ? 'Unscheduled' : week}
-                  </span>
+        <>
+          <div className="flex overflow-hidden rounded-md border border-border-subtle w-fit">
+            {(['calendar', 'weeklist'] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setLayout(opt)}
+                className={`px-3 py-1 text-xs font-medium capitalize transition ${
+                  layout === opt
+                    ? 'bg-os-creator text-white'
+                    : 'bg-surface-2 text-text-secondary hover:text-white'
+                }`}
+              >
+                {opt === 'calendar' ? 'Calendar' : 'Week list'}
+              </button>
+            ))}
+          </div>
+
+          {layout === 'calendar' ? (
+            <CalendarView<CreatorPost>
+              events={posts}
+              view={calMode}
+              date={calDate}
+              slug="creator"
+              getEventDate={(post) => {
+                const d = postDateStr(post);
+                return d ? new Date(d) : null;
+              }}
+              getEventId={(post) => post.id}
+              onDateChange={setCalDate}
+              onViewChange={setCalMode}
+              onCreate={handleCreateOnDate}
+              renderEvent={(post) => (
+                <div className="rounded bg-surface-0 border border-border-subtle px-1.5 py-1 space-y-1">
+                  <p className="text-[11px] font-medium text-white leading-tight line-clamp-2">
+                    {post.title}
+                  </p>
+                  <StatusPicker post={post} />
                 </div>
-                <ul className="divide-y divide-border-subtle">
-                  {weekPosts.map((post) => (
-                    <li key={post.id} className="px-5 py-3 flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{post.title}</p>
-                        <p className="text-xs text-text-secondary">
-                          {post.tags.length > 0 && `Tags: ${post.tags.slice(0, 3).join(', ')}`}
-                          {post.scheduledAt && ` · ${new Date(post.scheduledAt).toLocaleDateString()}`}
-                          {post.publishedAt && ` · Published ${new Date(post.publishedAt).toLocaleDateString()}`}
-                        </p>
-                      </div>
-                      <div className="shrink-0 flex items-center gap-2">
-                        <select
-                          value={post.status}
-                          onChange={(e) => handleStatusChange(post.id, e.target.value as PostStatus)}
-                          className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border cursor-pointer bg-transparent ${STATUS_COLORS[post.status]}`}
-                        >
-                          {POST_STATUSES.map((s) => (
-                            <option key={s} value={s} className="bg-surface-2 text-white normal-case tracking-normal">
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
+              )}
+            />
+          ) : (
+            <div className="space-y-4">
+              {sortedWeeks.map((week) => {
+                const weekPosts = weekGroups.get(week) ?? [];
+                return (
+                  <div key={week} className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+                    <div className="px-5 py-2 border-b border-border-subtle bg-surface-0">
+                      <span className="text-xs font-mono font-semibold text-text-secondary uppercase">
+                        {week === 'unscheduled' ? 'Unscheduled' : week}
+                      </span>
+                    </div>
+                    <ul className="divide-y divide-border-subtle">
+                      {weekPosts.map((post) => (
+                        <li key={post.id} className="px-5 py-3 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{post.title}</p>
+                            <p className="text-xs text-text-secondary">
+                              {post.tags.length > 0 && `Tags: ${post.tags.slice(0, 3).join(', ')}`}
+                              {post.scheduledAt && ` · ${new Date(post.scheduledAt).toLocaleDateString()}`}
+                              {post.publishedAt && ` · Published ${new Date(post.publishedAt).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                          <div className="shrink-0 flex items-center gap-2 w-32">
+                            <StatusPicker post={post} />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

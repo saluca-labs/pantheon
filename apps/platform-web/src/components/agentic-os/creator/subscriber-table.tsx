@@ -12,6 +12,15 @@
  * bulk unsubscribe / reactivate / delete. Single-row actions and the
  * add-subscriber form are unchanged.
  *
+ * Wave D-4b (UI Depth Wave) — subscriber-table depth, built ON the Wave C
+ * selection model:
+ *   - Selected rows now get an `os-creator` tint + a left accent rail so a
+ *     multi-select reads at a glance.
+ *   - The table header shows a live "N selected" count next to the
+ *     select-all checkbox.
+ *   - A fourth bulk action — **Export CSV** — downloads the selected
+ *     subscribers client-side (no API change; the data is already loaded).
+ *
  * @license MIT — Tiresias Creator OS Phase 2 (internal).
  */
 
@@ -23,6 +32,7 @@ import {
   UserX,
   UserCheck,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import {
   EntitySearch,
@@ -207,6 +217,39 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
     setSelectedIds([]);
   }
 
+  /**
+   * Client-side CSV export of the selected subscribers. No API change — the
+   * full subscriber list is already in component state.
+   */
+  function bulkExportCsv(ids: string[]) {
+    const idSet = new Set(ids);
+    const rows = subs.filter((s) => idSet.has(s.id));
+    if (rows.length === 0) return;
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const header = ['email', 'name', 'status', 'source', 'created_at'];
+    const lines = [
+      header.join(','),
+      ...rows.map((s) =>
+        [
+          esc(s.email),
+          esc(s.name ?? ''),
+          esc(s.status),
+          esc(s.source ?? ''),
+          esc(s.createdAt),
+        ].join(','),
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `subscribers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="max-w-4xl">
       {/* Header */}
@@ -323,7 +366,17 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                   className="h-3.5 w-3.5 rounded border-border-strong bg-surface-2 accent-os-creator"
                 />
               </div>
-              <div className="col-span-3">Email</div>
+              <div className="col-span-3 flex items-center gap-2">
+                Email
+                {selectedIds.length > 0 && (
+                  <span
+                    data-testid="subscriber-selection-count"
+                    className="inline-flex items-center rounded bg-os-creator/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-os-creator tabular-nums"
+                  >
+                    {selectedIds.length} selected
+                  </span>
+                )}
+              </div>
               <div className="col-span-3">Name</div>
               <div className="col-span-2">Status</div>
               <div className="col-span-2">Date</div>
@@ -332,10 +385,17 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
 
             {/* Table body */}
             <div className="divide-y divide-border-subtle">
-              {filtered.map((sub) => (
+              {filtered.map((sub) => {
+                const selected = selectedIds.includes(sub.id);
+                return (
                 <div
                   key={sub.id}
-                  className="grid grid-cols-12 gap-3 px-5 py-3 items-center hover:bg-surface-3 transition text-sm"
+                  data-selected={selected || undefined}
+                  className={`grid grid-cols-12 gap-3 px-5 py-3 items-center transition text-sm border-l-2 ${
+                    selected
+                      ? 'bg-os-creator/10 border-l-os-creator'
+                      : 'border-l-transparent hover:bg-surface-3'
+                  }`}
                 >
                   <div className="col-span-1 flex items-center">
                     <input
@@ -405,7 +465,8 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -416,6 +477,12 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
               `${n} subscriber${n === 1 ? '' : 's'} selected`
             }
             actions={[
+              {
+                id: 'export',
+                label: 'Export CSV',
+                icon: <Download className="h-3.5 w-3.5" />,
+                onClick: (ids) => bulkExportCsv(ids),
+              },
               {
                 id: 'reactivate',
                 label: 'Reactivate',
