@@ -21,6 +21,7 @@ import type {
 import { pagesLabel } from '@/lib/agentic-os/filmmaker/breakdown';
 import { UnscheduledScenesPanel } from './UnscheduledScenesPanel';
 import { ShootingDayCard } from './ShootingDayCard';
+import { ScheduleTimelineView } from './ScheduleTimelineView';
 
 interface Props {
   projectId: string;
@@ -97,6 +98,11 @@ export function StripboardWorkspace({
         />
       </div>
 
+      {/* Shoot-calendar overview — TimelineView specialization over dated days.
+          Renders null when no day has a shootDate; the editor below is the
+          source of truth for ordinal (undated) days. */}
+      <ScheduleTimelineView days={days} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: unscheduled */}
         <div className="lg:col-span-1">
@@ -110,7 +116,7 @@ export function StripboardWorkspace({
         {/* Right: day cards */}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-semibold text-text-primary">
               Shooting days{' '}
               <span className="text-text-secondary font-normal">({days.length})</span>
             </h2>
@@ -152,8 +158,8 @@ function Stat({
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <p className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</p>
-      <p className="text-xl font-semibold text-white mt-1">{value}</p>
-      {hint && <p className="text-[10px] text-[#64748b] mt-0.5">{hint}</p>}
+      <p className="text-xl font-semibold text-text-primary mt-1 tabular-nums">{value}</p>
+      {hint && <p className="text-[10px] text-text-tertiary mt-0.5">{hint}</p>}
     </div>
   );
 }

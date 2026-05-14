@@ -158,3 +158,84 @@ export function groupByUnit(days: ShootingDay[]): Record<ShootingUnit, ShootingD
   }
   return out;
 }
+
+// ─── TimelineView adapter (Wave D specialization) ──────────────────────────
+
+/**
+ * One dated shooting day, shaped for the shared `TimelineView` primitive.
+ * Only days with a `shootDate` can be placed on a calendar axis — undated
+ * days stay ordinal and are surfaced by the bespoke two-pane editor only.
+ *
+ * `start` / `end` are the same UTC day (a single-day span); `laneId` is the
+ * shooting unit so main / second-unit / splinter days stack into rows.
+ */
+export interface ScheduleTimelineItem {
+  id: string;
+  start: Date;
+  end: Date;
+  laneId: ShootingUnit;
+  dayNumber: number;
+  label: string | null;
+  unit: ShootingUnit;
+  status: ShootingDayStatus;
+  sceneCount: number;
+  eighths: number;
+  shootMinutes: number;
+}
+
+/** Parse a `YYYY-MM-DD` string into a UTC Date, or null if unparseable. */
+function parseUtcDate(value: string | null): Date | null {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Map dated shooting days into `TimelineView` items. Undated days are
+ * dropped (they have no axis position) — callers should fall back to the
+ * ordinal day stack for those. Returns items sorted by date.
+ */
+export function buildScheduleTimelineItems(
+  days: ShootingDayWithStrips[],
+): ScheduleTimelineItem[] {
+  const items: ScheduleTimelineItem[] = [];
+  for (const day of days) {
+    const date = parseUtcDate(day.shootDate);
+    if (!date) continue;
+    items.push({
+      id: day.id,
+      start: date,
+      end: date,
+      laneId: day.unit,
+      dayNumber: day.dayNumber,
+      label: day.label,
+      unit: day.unit,
+      status: day.status,
+      sceneCount: day.strips.length,
+      eighths: totalEighths(day),
+      shootMinutes: totalShootMinutes(day),
+    });
+  }
+  return items.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+/**
+ * Compute the visible `{ start, end }` window for the schedule timeline:
+ * the earliest dated day minus 2 days, the latest plus 2, so the strip
+ * has breathing room at both edges. Returns null when nothing is dated.
+ */
+export function scheduleTimelineRange(
+  items: ScheduleTimelineItem[],
+): { start: Date; end: Date } | null {
+  if (items.length === 0) return null;
+  const times = items.map((i) => i.start.getTime());
+  const min = Math.min(...times);
+  const max = Math.max(...times);
+  const PAD = 2 * 86_400_000;
+  // Guarantee a non-zero span even when every day shares one date.
+  const start = new Date(min - PAD);
+  const end = new Date(max + PAD);
+  return { start, end };
+}
