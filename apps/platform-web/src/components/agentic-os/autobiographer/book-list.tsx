@@ -11,7 +11,9 @@
  */
 
 import { useMemo, useState } from 'react';
+import { BookOpenText } from 'lucide-react';
 import { BookCard, type BookCardData } from './book-card';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   BOOK_STATUSES,
   BOOK_STATUS_LABELS,
@@ -61,14 +63,15 @@ export function BookList({ initial }: { initial: BookCardData[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
-          <p className="text-sm font-medium text-white mb-1">No books yet</p>
-          <p className="text-xs text-text-secondary">
-            {statusFilter === 'all'
+        <EmptyState
+          icon={<BookOpenText className="h-6 w-6" />}
+          title={statusFilter === 'all' ? 'No books yet' : 'No books here'}
+          description={
+            statusFilter === 'all'
               ? 'Start a new book to begin capturing your story.'
-              : `No books in the "${BOOK_STATUS_LABELS[statusFilter as BookStatus]}" status.`}
-          </p>
-        </div>
+              : `No books in the "${BOOK_STATUS_LABELS[statusFilter as BookStatus]}" status.`
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filtered.map((b) => (

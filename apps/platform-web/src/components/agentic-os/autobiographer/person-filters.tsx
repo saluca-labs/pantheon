@@ -11,7 +11,7 @@
  * @license MIT — Tiresias Autobiographer OS (internal).
  */
 
-import { Search } from 'lucide-react';
+import { EntitySearch } from '@/components/agentic-os/_shared/views';
 import {
   CONSENT_STATES,
   CONSENT_LABELS,
@@ -79,16 +79,11 @@ export function PersonFilters({
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748b]" />
-        <input
-          type="search"
-          value={value.query}
-          onChange={(e) => onChange({ ...value, query: e.target.value })}
-          placeholder="Search by name or alias…"
-          className="w-full pl-9 pr-3 py-2 bg-surface-0 border border-border-subtle rounded text-sm text-white focus:outline-none focus:border-accent"
-        />
-      </div>
+      <EntitySearch
+        defaultValue={value.query}
+        placeholder="Search by name or alias…"
+        onQueryChange={(query) => onChange({ ...value, query })}
+      />
     </div>
   );
 }

@@ -16,10 +16,23 @@ import { ArrowLeft, ArrowRight, BookOpenText, NotebookPen, Users } from 'lucide-
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import { listBooks } from '@/lib/agentic-os/autobiographer/books-repo';
-import { listMemories } from '@/lib/agentic-os/autobiographer/memories-repo';
-import { listPeople } from '@/lib/agentic-os/autobiographer/people-repo';
+import {
+  listMemories,
+  countMemoriesForUser,
+} from '@/lib/agentic-os/autobiographer/memories-repo';
+import {
+  listPeople,
+  countPeopleForUser,
+} from '@/lib/agentic-os/autobiographer/people-repo';
+import {
+  listChaptersForUser,
+  countChaptersForUser,
+} from '@/lib/agentic-os/autobiographer/chapters-repo';
 import { BookList } from '@/components/agentic-os/autobiographer/book-list';
 import { BookActions } from '@/components/agentic-os/autobiographer/book-actions';
+import { AutobiographerHubWidgets } from '@/components/agentic-os/autobiographer/autobiographer-hub-widgets';
+import { AutobiographerRecentActivity } from '@/components/agentic-os/autobiographer/autobiographer-recent-activity';
+import { DashboardWidget } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,10 +47,22 @@ export default async function AutobiographerHubPage() {
     throw new Error('Autobiographer OS module missing from registry');
   }
 
-  const [books, recentMemories, people] = await Promise.all([
+  const [
+    books,
+    recentMemories,
+    people,
+    recentChapters,
+    chapterCount,
+    memoryCount,
+    peopleCount,
+  ] = await Promise.all([
     listBooks({ userId: user.userId, limit: 50 }),
     listMemories({ userId: user.userId, limit: 5 }),
     listPeople({ userId: user.userId, limit: 5 }),
+    listChaptersForUser(user.userId, { limit: 5 }),
+    countChaptersForUser(user.userId),
+    countMemoriesForUser(user.userId),
+    countPeopleForUser(user.userId),
   ]);
 
   const cards = books.map((b) => ({
@@ -79,6 +104,44 @@ export default async function AutobiographerHubPage() {
           </div>
         </div>
       </header>
+
+      <AutobiographerHubWidgets
+        books={books}
+        chapterCount={chapterCount}
+        memoryCount={memoryCount}
+        peopleCount={peopleCount}
+      />
+
+      <DashboardWidget
+        title="Recent activity"
+        osSlug="autobiographer"
+        footer={
+          <Link
+            href="/dashboard/os/autobiographer/timeline"
+            className="text-text-secondary hover:text-text-primary transition"
+          >
+            Open the timeline
+          </Link>
+        }
+      >
+        <AutobiographerRecentActivity
+          books={books.slice(0, 5).map((b) => ({
+            id: b.id,
+            title: b.title,
+            updatedAt: b.updatedAt,
+          }))}
+          memories={recentMemories.map((m) => ({
+            id: m.id,
+            title: m.title,
+            updatedAt: m.updatedAt,
+          }))}
+          chapters={recentChapters.map((c) => ({
+            id: c.id,
+            title: c.title ?? 'Untitled chapter',
+            updatedAt: c.updatedAt,
+          }))}
+        />
+      </DashboardWidget>
 
       <section>
         <div className="flex items-baseline justify-between mb-3">
