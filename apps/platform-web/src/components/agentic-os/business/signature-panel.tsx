@@ -3,13 +3,22 @@
  *
  * Canvas-based signature capture widget with mouse + touch support.
  *
+ * Wave D (UI Depth Wave) polish: the gating not-`sent` state now uses the
+ * shared `EmptyState` primitive ("doors, not apologies"), the error panel maps
+ * to the `danger` status token, the canvas gets a clearer dashed-border draw
+ * affordance, and legacy `text-white` / `text-[#64748b]` / `bg-[#3a56d4]`
+ * literals are migrated onto the visual-language tokens. Same capture flow,
+ * same route, same payload — presentation only.
+ *
  * @license MIT — Tiresias Business OS Phase 6 (internal).
  */
 
 'use client';
 
 import React, { useRef, useState, useCallback } from 'react';
+import { FileSignature, Eraser } from 'lucide-react';
 import type { BusinessDocument } from '@/lib/agentic-os/business/documents';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   document: BusinessDocument;
@@ -161,30 +170,38 @@ export default function SignaturePanel({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+    'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none transition';
   const labelClass = 'block text-xs text-text-secondary mb-1';
 
   if (doc.status !== 'sent') {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
-        <p className="text-sm text-text-secondary text-center">
-          {doc.status === 'draft'
+      <EmptyState
+        icon={<FileSignature className="h-6 w-6" />}
+        title={
+          doc.status === 'signed'
+            ? 'This document has been signed'
+            : doc.status === 'draft'
+              ? 'Signature capture is locked'
+              : 'Signature capture unavailable'
+        }
+        description={
+          doc.status === 'draft'
             ? 'Send this document to enable signature capture.'
             : doc.status === 'signed'
-              ? 'This document has been signed.'
-              : `Signature capture is not available for documents in '${doc.status}' status.`}
-        </p>
-      </div>
+              ? 'A signature is already on file for this document.'
+              : `Signatures can only be captured on sent documents — this one is '${doc.status}'.`
+        }
+      />
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h3 className="text-sm font-semibold text-white">Signature</h3>
+      <h3 className="text-sm font-semibold text-text-primary">Signature</h3>
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/5 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -213,33 +230,44 @@ export default function SignaturePanel({
 
       <div>
         <label className={labelClass}>Draw your signature</label>
-        <canvas
-          ref={canvasRef}
-          width={400}
-          height={120}
-          className="w-full max-w-[400px] h-[120px] rounded-lg border border-border-subtle bg-surface-0 cursor-crosshair"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-        />
-        <button
-          type="button"
-          onClick={clearCanvas}
-          className="mt-2 text-xs text-[#64748b] hover:text-white transition-colors"
-        >
-          Clear signature
-        </button>
+        <div className="max-w-[400px] rounded-lg border border-dashed border-border-strong bg-surface-0 p-1 transition focus-within:border-accent">
+          <canvas
+            ref={canvasRef}
+            width={400}
+            height={120}
+            aria-label="Signature drawing area"
+            className="h-[120px] w-full cursor-crosshair rounded touch-none"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+          />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between">
+          <p className="text-2xs text-text-tertiary">
+            Sign with your mouse or finger inside the box.
+          </p>
+          <button
+            type="button"
+            onClick={clearCanvas}
+            disabled={!hasSignature}
+            className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-text-primary disabled:opacity-40 transition"
+          >
+            <Eraser className="h-3 w-3" />
+            Clear
+          </button>
+        </div>
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
+        className="inline-flex items-center gap-2 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-white px-4 py-2 text-sm font-medium transition"
       >
+        <FileSignature className="h-4 w-4" />
         {loading ? 'Capturing...' : 'Capture Signature'}
       </button>
     </form>
