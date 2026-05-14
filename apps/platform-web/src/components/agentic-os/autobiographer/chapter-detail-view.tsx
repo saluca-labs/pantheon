@@ -11,6 +11,8 @@
  */
 
 import { useMemo, useState } from 'react';
+import { FileText } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   RevisionHistoryRail,
 } from './revision-history-rail';
@@ -80,10 +82,11 @@ export function ChapterDetailView({
             readOnly={active.author === 'coach'}
           />
         ) : (
-          <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-sm text-text-secondary text-center">
-            No revisions yet. Use the rail to create the first one — it will
-            be authored by you and start at version 1.
-          </div>
+          <EmptyState
+            icon={<FileText className="h-6 w-6" />}
+            title="No revisions yet"
+            description="Use the rail to create the first one — it will be authored by you and start at version 1."
+          />
         )}
       </div>
       <div className="col-span-3">

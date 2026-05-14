@@ -8,7 +8,9 @@
  * @license MIT — Tiresias Autobiographer OS Phase 5 (internal).
  */
 
+import { History } from 'lucide-react';
 import type { TimelineMemory } from '@/lib/agentic-os/autobiographer/timeline';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { TimelineCard } from './timeline-card';
 
 export interface TimelineListProps {
@@ -25,10 +27,11 @@ function decadeOf(memory: TimelineMemory): string {
 export function TimelineList({ memories }: TimelineListProps) {
   if (memories.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
-        No memories match the current filters. Try clearing one or
-        capturing a new memory.
-      </div>
+      <EmptyState
+        icon={<History className="h-6 w-6" />}
+        title="No memories on the timeline"
+        description="No memories match the current filters. Try clearing one, or capture a new memory."
+      />
     );
   }
   const groups: Array<{ label: string; rows: TimelineMemory[] }> = [];

@@ -11,7 +11,9 @@
  */
 
 import { useMemo, useState } from 'react';
+import { Users } from 'lucide-react';
 import { PersonCard, type PersonCardData } from './person-card';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   PersonFilters,
   type PersonFiltersValue,
@@ -51,16 +53,15 @@ export function PersonList({ initial }: PersonListProps) {
       <PersonFilters people={initial} value={value} onChange={setValue} />
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
-          <p className="text-sm font-medium text-white mb-1">
-            No people match
-          </p>
-          <p className="text-xs text-text-secondary">
-            {initial.length === 0
+        <EmptyState
+          icon={<Users className="h-6 w-6" />}
+          title={initial.length === 0 ? 'No people yet' : 'No people match'}
+          description={
+            initial.length === 0
               ? 'Add your first person — mom, dad, mentor, public figure — to start tracking who appears in your story.'
-              : 'Loosen the filters above to see more.'}
-          </p>
-        </div>
+              : 'Loosen the filters above to see more.'
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((p) => (

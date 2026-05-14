@@ -14,6 +14,8 @@
  * @license MIT — Tiresias Autobiographer OS Phase 4 (internal).
  */
 
+import { FileText } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { ChapterCard, type ChapterCardData } from './chapter-card';
 import { ChapterReorderHandle } from './chapter-reorder-handle';
 
@@ -29,10 +31,11 @@ export function BookChapterList({
 }: BookChapterListProps) {
   if (chapters.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
-        No chapters yet — create the first one with the button in the section
-        header.
-      </div>
+      <EmptyState
+        icon={<FileText className="h-6 w-6" />}
+        title="No chapters yet"
+        description="Create the first one with the button in the section header."
+      />
     );
   }
 
