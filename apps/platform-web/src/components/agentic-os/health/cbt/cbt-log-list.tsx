@@ -1,4 +1,6 @@
+import { ListChecks } from 'lucide-react';
 import { DataTable } from '@/components/agentic-os/_shared/data-table';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import type { CbtLog } from '@/lib/agentic-os/health/repo';
 
 const KIND_LABELS: Record<string, string> = {
@@ -31,7 +33,18 @@ export function CbtLogList({ logs }: { logs: CbtLog[] }) {
   return (
     <DataTable
       rows={logs}
-      empty="No CBT logs yet. Pick an exercise to get started."
+      empty={
+        <EmptyState
+          variant="bare"
+          icon={<ListChecks className="h-6 w-6" />}
+          title="No CBT logs yet"
+          description="Pick an exercise to get started — your completed work shows up here."
+          primaryCta={{
+            label: 'Browse exercises',
+            href: '/dashboard/os/health/cbt',
+          }}
+        />
+      }
       rowHref={(log) => `/dashboard/os/health/cbt/logs/${log.id}`}
       columns={[
         {

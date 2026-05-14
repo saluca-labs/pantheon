@@ -12,6 +12,7 @@ import { CaveatBlock } from '@/components/agentic-os/health/caveat-block';
 import { MeditationCatalogBrowser } from '@/components/agentic-os/health/meditate/meditation-catalog-browser';
 import { PlanCard } from '@/components/agentic-os/health/meditate/plan-card';
 import { DataTable } from '@/components/agentic-os/_shared/data-table';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,7 +113,18 @@ export default async function MeditatePage() {
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <DataTable
             rows={sessions}
-            empty="No meditation sessions logged yet."
+            empty={
+              <EmptyState
+                variant="bare"
+                icon={<Brain className="h-6 w-6" />}
+                title="No meditation sessions logged yet"
+                description="Log a session above, or follow your weekly plan to build a streak."
+                primaryCta={{
+                  label: 'Log a session',
+                  href: '/dashboard/os/health/meditate/log',
+                }}
+              />
+            }
             columns={[
               {
                 label: 'When',
