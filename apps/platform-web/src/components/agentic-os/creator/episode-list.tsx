@@ -1,7 +1,26 @@
 'use client';
 
+/**
+ * Creator OS Phase 6 — Podcast episode list component.
+ *
+ * Wave C-4a (UI Depth Wave): the "no podcast configured" and "no episodes
+ * yet" ad-hoc states are now the shared `EmptyState` primitive (the
+ * configure-show CTA is preserved as the primary action), and an
+ * `EntitySearch` bar filters episodes client-side by title. Routing and
+ * the new-episode flow are unchanged.
+ *
+ * @license MIT — Tiresias Creator OS Phase 6 (internal).
+ */
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CreatorEpisode, CreatorPodcast, EpisodeStatus } from '@/lib/agentic-os/creator/podcast';
+import { Mic, Plus } from 'lucide-react';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
+import type {
+  CreatorEpisode,
+  CreatorPodcast,
+  EpisodeStatus,
+} from '@/lib/agentic-os/creator/podcast';
 
 interface EpisodeListProps {
   episodes: CreatorEpisode[];
@@ -25,25 +44,26 @@ function formatDuration(seconds: number | null): string {
 
 export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (!podcast) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-semibold text-zinc-100 mb-2">
-          No podcast configured yet
-        </h2>
-        <p className="text-zinc-400 mb-6 max-w-md">
-          Set up your podcast show settings before creating episodes.
-        </p>
-        <button
-          onClick={() => router.push('/dashboard/os/creator/podcast/settings')}
-          className="inline-flex items-center gap-2 rounded-lg bg-fuchsia-500/20 px-4 py-2 text-sm font-medium text-fuchsia-300 hover:bg-fuchsia-500/30 transition-colors"
-        >
-          Configure show
-        </button>
-      </div>
+      <EmptyState
+        icon={<Mic className="h-6 w-6" />}
+        title="No podcast configured yet"
+        description="Set up your podcast show settings before creating episodes."
+        primaryCta={{
+          label: 'Configure show',
+          href: '/dashboard/os/creator/podcast/settings',
+        }}
+      />
     );
   }
+
+  const filtered = episodes.filter((ep) => {
+    if (!searchQuery.trim()) return true;
+    return ep.title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -58,22 +78,43 @@ export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
           onClick={() =>
             router.push('/dashboard/os/creator/podcast/episodes/new')
           }
-          className="inline-flex items-center gap-2 rounded-lg bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white hover:bg-fuchsia-400 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-os-creator px-4 py-2 text-sm font-semibold text-white hover:bg-os-creator/90 transition-colors"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="h-4 w-4" />
           New Episode
         </button>
       </div>
 
-      {episodes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-zinc-500">No episodes yet. Create your first episode!</p>
-        </div>
+      {episodes.length > 0 && (
+        <EntitySearch
+          placeholder="Search episodes by title…"
+          defaultValue={searchQuery}
+          onQueryChange={setSearchQuery}
+        />
+      )}
+
+      {filtered.length === 0 ? (
+        searchQuery ? (
+          <EmptyState
+            icon={<Mic className="h-6 w-6" />}
+            title="No episodes match"
+            description="Try a different search term."
+          />
+        ) : (
+          <EmptyState
+            icon={<Mic className="h-6 w-6" />}
+            title="No episodes yet"
+            description="Create your first episode to start building your show."
+            primaryCta={{
+              label: 'New Episode',
+              href: '/dashboard/os/creator/podcast/episodes/new',
+              icon: <Plus className="h-4 w-4" />,
+            }}
+          />
+        )
       ) : (
         <div className="grid gap-3">
-          {episodes.map((ep) => (
+          {filtered.map((ep) => (
             <button
               key={ep.id}
               onClick={() =>

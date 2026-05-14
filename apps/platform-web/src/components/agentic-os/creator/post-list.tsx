@@ -6,14 +6,24 @@
  * Renders a filterable list of publishing posts with status badges,
  * date display, and tag chips. Supports tab-based status filtering.
  *
+ * Wave C-4a (UI Depth Wave): the ad-hoc search input is now the shared
+ * `EntitySearch` primitive, the status tabs are mirrored by `SavedViews`
+ * quick-presets, and the zero-data / no-match states use `EmptyState`.
+ * Behavior is preserved — same filtering, same routes, same create flow.
+ *
  * @license MIT — Tiresias Creator OS Phase 2 (internal).
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, FileEdit, Calendar, Archive, Eye } from 'lucide-react';
+import { Plus, FileEdit, Calendar, Archive, Eye } from 'lucide-react';
+import {
+  EntitySearch,
+  SavedViews,
+  EmptyState,
+} from '@/components/agentic-os/_shared/views';
+import type { SavedView } from '@/components/agentic-os/_shared/views';
 import type { CreatorPost, PostStatus } from '@/lib/agentic-os/creator/posts';
-import { POST_STATUSES } from '@/lib/agentic-os/creator/posts';
 
 interface PostListProps {
   posts: CreatorPost[];
@@ -37,12 +47,12 @@ const STATUS_ICONS: Record<PostStatus, React.ReactNode> = {
 
 type FilterTab = 'all' | PostStatus;
 
-const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'draft', label: 'Drafts' },
-  { key: 'scheduled', label: 'Scheduled' },
-  { key: 'published', label: 'Published' },
-  { key: 'archived', label: 'Archived' },
+/** Status quick-presets — surfaced as `SavedViews` pills. */
+const STATUS_VIEWS: SavedView<FilterTab>[] = [
+  { id: 'draft', name: 'Drafts', query: 'draft' },
+  { id: 'scheduled', name: 'Scheduled', query: 'scheduled' },
+  { id: 'published', name: 'Published', query: 'published' },
+  { id: 'archived', name: 'Archived', query: 'archived' },
 ];
 
 export function PostList({ posts }: PostListProps) {
@@ -95,7 +105,7 @@ export function PostList({ posts }: PostListProps) {
           type="button"
           onClick={handleNewPost}
           disabled={creating}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#d946ef] text-white text-sm font-medium hover:bg-[#c026d3] disabled:opacity-50 transition"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-os-creator text-white text-sm font-medium hover:bg-os-creator/90 disabled:opacity-50 transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Creating…' : 'New Post'}
@@ -103,52 +113,50 @@ export function PostList({ posts }: PostListProps) {
       </div>
 
       {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary/60" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+      <div className="mb-4">
+        <EntitySearch
           placeholder="Search posts by title, excerpt, or tags…"
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none"
+          defaultValue={searchQuery}
+          onQueryChange={setSearchQuery}
         />
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center gap-1 mb-6 p-1 rounded-lg bg-surface-2 border border-border-subtle w-fit">
-        {FILTER_TABS.map((tab) => {
-          const count =
-            tab.key === 'all'
-              ? posts.length
-              : posts.filter((p) => p.status === tab.key).length;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                activeTab === tab.key
-                  ? 'bg-[#d946ef]/20 text-[#d946ef]'
-                  : 'text-text-secondary hover:text-white'
-              }`}
-            >
-              {tab.label}
-              {count > 0 && (
-                <span className="ml-1.5 text-[10px] opacity-60">({count})</span>
-              )}
-            </button>
-          );
-        })}
+      {/* Status quick-presets */}
+      <div className="mb-6">
+        <SavedViews<FilterTab>
+          views={STATUS_VIEWS}
+          activeViewId={activeTab === 'all' ? null : activeTab}
+          currentQuery={activeTab}
+          slug="creator"
+          allViewsLabel="All"
+          onClearView={() => setActiveTab('all')}
+          onSelectView={(view) => setActiveTab(view.query)}
+          onSaveView={() => {
+            /* status presets are fixed — saving a custom view is a Wave E concern */
+          }}
+        />
       </div>
 
       {/* Post list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
-          <FileEdit className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
-          <p className="text-sm text-text-secondary">
-            {searchQuery ? 'No posts match your search.' : 'No posts yet. Create your first post to get started.'}
-          </p>
-        </div>
+        searchQuery || activeTab !== 'all' ? (
+          <EmptyState
+            icon={<FileEdit className="h-6 w-6" />}
+            title="No posts match"
+            description="Loosen the search or status filter to see more."
+          />
+        ) : (
+          <EmptyState
+            icon={<FileEdit className="h-6 w-6" />}
+            title="No posts yet"
+            description="Draft your first post to start publishing and building your audience."
+            primaryCta={{
+              label: creating ? 'Creating…' : 'New Post',
+              onClick: handleNewPost,
+              icon: <Plus className="h-4 w-4" />,
+            }}
+          />
+        )
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 divide-y divide-border-subtle">
           {filtered.map((post) => (
@@ -156,11 +164,11 @@ export function PostList({ posts }: PostListProps) {
               key={post.id}
               type="button"
               onClick={() => router.push(`/dashboard/os/creator/posts/${post.id}`)}
-              className="w-full text-left px-5 py-4 hover:bg-[#222633] transition group"
+              className="w-full text-left px-5 py-4 hover:bg-surface-3 transition group"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-white truncate group-hover:text-[#d946ef] transition">
+                  <h3 className="text-sm font-medium text-white truncate group-hover:text-os-creator transition">
                     {post.title || 'Untitled'}
                   </h3>
                   {post.excerpt && (

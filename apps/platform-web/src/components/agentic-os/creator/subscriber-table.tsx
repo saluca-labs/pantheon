@@ -6,6 +6,12 @@
  * Renders the email subscriber list with add/status/delete actions.
  * Supports filtering by status and search.
  *
+ * Wave C-4a (UI Depth Wave): the ad-hoc search input is now the shared
+ * `EntitySearch` primitive, the zero-data / no-match states use
+ * `EmptyState`, and a row-selection model drives `BulkActionsBar` for
+ * bulk unsubscribe / reactivate / delete. Single-row actions and the
+ * add-subscriber form are unchanged.
+ *
  * @license MIT — Tiresias Creator OS Phase 2 (internal).
  */
 
@@ -15,15 +21,18 @@ import {
   Plus,
   Trash2,
   UserX,
-  Search,
   UserCheck,
   AlertTriangle,
 } from 'lucide-react';
+import {
+  EntitySearch,
+  EmptyState,
+  BulkActionsBar,
+} from '@/components/agentic-os/_shared/views';
 import type {
   CreatorSubscriber,
   SubscriberStatus,
 } from '@/lib/agentic-os/creator/subscribers';
-import { SUBSCRIBER_STATUSES } from '@/lib/agentic-os/creator/subscribers';
 
 interface SubscriberTableProps {
   subscribers: CreatorSubscriber[];
@@ -42,7 +51,7 @@ const STATUS_ICONS: Record<SubscriberStatus, React.ReactNode> = {
 };
 
 const inputCls =
-  'rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none';
+  'rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-os-creator outline-none';
 
 export function SubscriberTable({ subscribers }: SubscriberTableProps) {
   const [subs, setSubs] = useState<CreatorSubscriber[]>(subscribers);
@@ -54,6 +63,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
   const [filterStatus, setFilterStatus] = useState<SubscriberStatus | 'all'>(
     'all',
   );
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const activeCount = subs.filter((s) => s.status === 'active').length;
 
@@ -68,6 +78,26 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
     }
     return true;
   });
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((s) => selectedIds.includes(s.id));
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function toggleAll() {
+    if (allFilteredSelected) {
+      const filteredIds = new Set(filtered.map((s) => s.id));
+      setSelectedIds((prev) => prev.filter((id) => !filteredIds.has(id)));
+    } else {
+      setSelectedIds((prev) => [
+        ...new Set([...prev, ...filtered.map((s) => s.id)]),
+      ]);
+    }
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -134,7 +164,47 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
     );
     if (res.ok) {
       setSubs((prev) => prev.filter((s) => s.id !== id));
+      setSelectedIds((prev) => prev.filter((x) => x !== id));
     }
+  }
+
+  // ─── Bulk actions ─────────────────────────────────────────────────────
+  async function bulkStatusChange(ids: string[], status: SubscriberStatus) {
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        const res = await fetch(
+          `/api/tiresias/agentic-os/creator/subscribers/${id}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          },
+        );
+        return res.ok ? ((await res.json()) as CreatorSubscriber) : null;
+      }),
+    );
+    const updates = new Map(
+      results.filter((r): r is CreatorSubscriber => r !== null).map((r) => [r.id, r]),
+    );
+    setSubs((prev) => prev.map((s) => updates.get(s.id) ?? s));
+    setSelectedIds([]);
+  }
+
+  async function bulkDelete(ids: string[]) {
+    if (!confirm(`Remove ${ids.length} subscriber${ids.length === 1 ? '' : 's'}?`))
+      return;
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        const res = await fetch(
+          `/api/tiresias/agentic-os/creator/subscribers/${id}`,
+          { method: 'DELETE' },
+        );
+        return res.ok ? id : null;
+      }),
+    );
+    const removed = new Set(results.filter((id): id is string => id !== null));
+    setSubs((prev) => prev.filter((s) => !removed.has(s.id)));
+    setSelectedIds([]);
   }
 
   return (
@@ -192,7 +262,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
           <button
             type="submit"
             disabled={adding || !email.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#d946ef] text-white text-sm font-medium hover:bg-[#c026d3] disabled:opacity-50 transition whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-os-creator text-white text-sm font-medium hover:bg-os-creator/90 disabled:opacity-50 transition whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             {adding ? 'Adding…' : 'Add'}
@@ -203,14 +273,11 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
 
       {/* Search + status filter */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary/60" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+        <div className="flex-1">
+          <EntitySearch
             placeholder="Search by email or name…"
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none"
+            defaultValue={searchQuery}
+            onQueryChange={setSearchQuery}
           />
         </div>
         <select
@@ -229,94 +296,148 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
 
       {/* Subscriber list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
-          <Mail className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
-          <p className="text-sm text-text-secondary">
-            {searchQuery || filterStatus !== 'all'
-              ? 'No subscribers match your filters.'
-              : 'No subscribers yet. Add your first subscriber above.'}
-          </p>
-        </div>
+        searchQuery || filterStatus !== 'all' ? (
+          <EmptyState
+            icon={<Mail className="h-6 w-6" />}
+            title="No subscribers match"
+            description="Loosen the search or status filter to see more."
+          />
+        ) : (
+          <EmptyState
+            icon={<Mail className="h-6 w-6" />}
+            title="No subscribers yet"
+            description="Add your first subscriber above to start building your newsletter audience."
+          />
+        )
       ) : (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-border-subtle bg-surface-0 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
-            <div className="col-span-4">Email</div>
-            <div className="col-span-3">Name</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-2">Date</div>
-            <div className="col-span-1 text-right">Actions</div>
+        <>
+          <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-border-subtle bg-surface-0 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+              <div className="col-span-1 flex items-center">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleAll}
+                  aria-label="Select all subscribers"
+                  className="h-3.5 w-3.5 rounded border-border-strong bg-surface-2 accent-os-creator"
+                />
+              </div>
+              <div className="col-span-3">Email</div>
+              <div className="col-span-3">Name</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-2">Date</div>
+              <div className="col-span-1 text-right">Actions</div>
+            </div>
+
+            {/* Table body */}
+            <div className="divide-y divide-border-subtle">
+              {filtered.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="grid grid-cols-12 gap-3 px-5 py-3 items-center hover:bg-surface-3 transition text-sm"
+                >
+                  <div className="col-span-1 flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(sub.id)}
+                      onChange={() => toggleRow(sub.id)}
+                      aria-label={`Select ${sub.email}`}
+                      className="h-3.5 w-3.5 rounded border-border-strong bg-surface-2 accent-os-creator"
+                    />
+                  </div>
+                  <div className="col-span-3 min-w-0">
+                    <p className="text-white truncate">{sub.email}</p>
+                    {sub.source && (
+                      <p className="text-[10px] text-text-secondary/60">
+                        via {sub.source}
+                      </p>
+                    )}
+                  </div>
+                  <div className="col-span-3 min-w-0">
+                    <p className="text-text-secondary truncate">
+                      {sub.name ?? <span className="text-text-secondary/40">--</span>}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide border ${STATUS_COLORS[sub.status]}`}
+                    >
+                      {STATUS_ICONS[sub.status]}
+                      {sub.status}
+                    </span>
+                  </div>
+                  <div className="col-span-2 text-text-secondary/70 text-xs">
+                    {new Date(sub.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="col-span-1 flex items-center justify-end gap-1">
+                    {sub.status === 'active' && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleStatusChange(sub.id, 'unsubscribed')
+                        }
+                        className="p-1 rounded hover:bg-slate-500/10 text-text-secondary hover:text-white transition"
+                        title="Mark unsubscribed"
+                      >
+                        <UserX className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {sub.status === 'unsubscribed' && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleStatusChange(sub.id, 'active')
+                        }
+                        className="p-1 rounded hover:bg-emerald-500/10 text-text-secondary hover:text-emerald-300 transition"
+                        title="Re-activate"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(sub.id)}
+                      className="p-1 rounded hover:bg-red-500/10 text-text-secondary hover:text-red-400 transition"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Table body */}
-          <div className="divide-y divide-border-subtle">
-            {filtered.map((sub) => (
-              <div
-                key={sub.id}
-                className="grid grid-cols-12 gap-3 px-5 py-3 items-center hover:bg-[#222633] transition text-sm"
-              >
-                <div className="col-span-4 min-w-0">
-                  <p className="text-white truncate">{sub.email}</p>
-                  {sub.source && (
-                    <p className="text-[10px] text-text-secondary/60">
-                      via {sub.source}
-                    </p>
-                  )}
-                </div>
-                <div className="col-span-3 min-w-0">
-                  <p className="text-text-secondary truncate">
-                    {sub.name ?? <span className="text-text-secondary/40">--</span>}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide border ${STATUS_COLORS[sub.status]}`}
-                  >
-                    {STATUS_ICONS[sub.status]}
-                    {sub.status}
-                  </span>
-                </div>
-                <div className="col-span-2 text-text-secondary/70 text-xs">
-                  {new Date(sub.createdAt).toLocaleDateString()}
-                </div>
-                <div className="col-span-1 flex items-center justify-end gap-1">
-                  {sub.status === 'active' && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleStatusChange(sub.id, 'unsubscribed')
-                      }
-                      className="p-1 rounded hover:bg-slate-500/10 text-text-secondary hover:text-white transition"
-                      title="Mark unsubscribed"
-                    >
-                      <UserX className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  {sub.status === 'unsubscribed' && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleStatusChange(sub.id, 'active')
-                      }
-                      className="p-1 rounded hover:bg-emerald-500/10 text-text-secondary hover:text-emerald-300 transition"
-                      title="Re-activate"
-                    >
-                      <UserCheck className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(sub.id)}
-                    className="p-1 rounded hover:bg-red-500/10 text-text-secondary hover:text-red-400 transition"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          <BulkActionsBar
+            selectedIds={selectedIds}
+            onClear={() => setSelectedIds([])}
+            countLabel={(n) =>
+              `${n} subscriber${n === 1 ? '' : 's'} selected`
+            }
+            actions={[
+              {
+                id: 'reactivate',
+                label: 'Reactivate',
+                icon: <UserCheck className="h-3.5 w-3.5" />,
+                onClick: (ids) => bulkStatusChange(ids, 'active'),
+              },
+              {
+                id: 'unsubscribe',
+                label: 'Unsubscribe',
+                icon: <UserX className="h-3.5 w-3.5" />,
+                onClick: (ids) => bulkStatusChange(ids, 'unsubscribed'),
+              },
+              {
+                id: 'delete',
+                label: 'Delete',
+                icon: <Trash2 className="h-3.5 w-3.5" />,
+                variant: 'danger',
+                onClick: (ids) => bulkDelete(ids),
+              },
+            ]}
+          />
+        </>
       )}
     </div>
   );
