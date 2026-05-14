@@ -7,12 +7,17 @@
  * a "New Book" button that creates via the POST API and navigates to the
  * editor.
  *
+ * Wave C-4a (UI Depth Wave): adds the shared `EntitySearch` primitive for
+ * client-side title/description filtering, and swaps the ad-hoc empty
+ * state for `EmptyState`. The create flow and card routing are unchanged.
+ *
  * @license MIT — Tiresias Creator OS Phase 3 (internal).
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Plus } from 'lucide-react';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import type { CreatorBook } from '@/lib/agentic-os/creator/books';
 
 interface BookListProps {
@@ -23,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-border-subtle text-text-secondary',
   writing: 'bg-accent/20 text-accent',
   complete: 'bg-emerald-500/20 text-emerald-400',
-  published: 'bg-fuchsia-500/20 text-fuchsia-400',
+  published: 'bg-os-creator/20 text-os-creator',
 };
 
 function BookCard({ book }: { book: CreatorBook }) {
@@ -33,7 +38,7 @@ function BookCard({ book }: { book: CreatorBook }) {
     <button
       type="button"
       onClick={() => router.push(`/dashboard/os/creator/books/${book.id}`)}
-      className="group relative rounded-lg border border-border-subtle bg-surface-2 p-5 text-left hover:border-accent/50 hover:bg-[#1a1d2e] transition-colors"
+      className="group relative rounded-lg border border-border-subtle bg-surface-2 p-5 text-left hover:border-os-creator/50 hover:bg-surface-3 transition-colors"
     >
       {/* Cover image or placeholder */}
       <div className="mb-4 h-32 rounded-md bg-surface-0 border border-border-subtle flex items-center justify-center overflow-hidden">
@@ -53,7 +58,7 @@ function BookCard({ book }: { book: CreatorBook }) {
       </h3>
 
       {book.description && (
-        <p className="text-xs text-[#64748b] mb-3 line-clamp-2">
+        <p className="text-xs text-text-tertiary mb-3 line-clamp-2">
           {book.description}
         </p>
       )}
@@ -70,6 +75,16 @@ function BookCard({ book }: { book: CreatorBook }) {
 export function BookList({ books }: BookListProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filtered = books.filter((b) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      b.title.toLowerCase().includes(q) ||
+      (b.description ?? '').toLowerCase().includes(q)
+    );
+  });
 
   async function handleCreate() {
     setCreating(true);
@@ -94,7 +109,7 @@ export function BookList({ books }: BookListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Books</h2>
-          <p className="text-sm text-[#64748b] mt-0.5">
+          <p className="text-sm text-text-tertiary mt-0.5">
             Long-form writing with chapters, word-count tracking, and Pandoc export.
           </p>
         </div>
@@ -102,22 +117,45 @@ export function BookList({ books }: BookListProps) {
           type="button"
           onClick={handleCreate}
           disabled={creating}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-[#3651de] disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-os-creator text-white text-sm font-medium hover:bg-os-creator/90 disabled:opacity-50 transition-colors"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Creating…' : 'New Book'}
         </button>
       </div>
 
+      {/* Search */}
+      {books.length > 0 && (
+        <EntitySearch
+          placeholder="Search books by title or description…"
+          defaultValue={searchQuery}
+          onQueryChange={setSearchQuery}
+        />
+      )}
+
       {/* Book grid */}
-      {books.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-subtle bg-surface-0 p-12 text-center">
-          <BookOpen className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
-          <p className="text-[#64748b]">No books yet. Create your first book to start writing.</p>
-        </div>
+      {filtered.length === 0 ? (
+        searchQuery ? (
+          <EmptyState
+            icon={<BookOpen className="h-6 w-6" />}
+            title="No books match"
+            description="Try a different search term."
+          />
+        ) : (
+          <EmptyState
+            icon={<BookOpen className="h-6 w-6" />}
+            title="No books yet"
+            description="Create your first book to start writing long-form content."
+            primaryCta={{
+              label: creating ? 'Creating…' : 'New Book',
+              onClick: handleCreate,
+              icon: <Plus className="h-4 w-4" />,
+            }}
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {books.map((book) => (
+          {filtered.map((book) => (
             <BookCard key={book.id} book={book} />
           ))}
         </div>
