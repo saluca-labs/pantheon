@@ -41,7 +41,7 @@ export const STORYBOARD_STATUSES: StoryboardStatusInfo[] = [
   {
     status: 'archived',
     label: 'Archived',
-    color: 'text-[#64748b] bg-[#0f1117] border-[#2a2d3e]',
+    color: 'text-[#64748b] bg-surface-0 border-border-subtle',
   },
 ];
 

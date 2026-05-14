@@ -120,20 +120,20 @@ export default async function TimelinePage({ searchParams }: Props) {
     <div className="max-w-5xl space-y-5">
       <Link
         href="/dashboard/os/autobiographer"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Autobiographer OS
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-[#0f1117] p-2.5 border border-[#2a2d3e]">
-            <History className="w-6 h-6 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2.5 border border-border-subtle">
+            <History className="w-6 h-6 text-accent" />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-semibold text-white mb-1">Timeline</h1>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
+            <p className="text-sm text-text-secondary leading-relaxed">
               Cross-book memory feed, ordered by year of life. Filter by
               theme, kind, decade, person, or scope to a single book.
               Memories that feed chapters in an arc carry arc-membership

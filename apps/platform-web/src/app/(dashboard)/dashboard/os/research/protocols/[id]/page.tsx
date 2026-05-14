@@ -43,20 +43,20 @@ export default async function ProtocolDetailPage({ params }: Props) {
     <div className="max-w-6xl">
       <Link
         href="/dashboard/os/research/protocols"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to protocols library
       </Link>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 mb-6">
         <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <FileText className="w-5 h-5 text-[#4361EE]" />
+              <FileText className="w-5 h-5 text-accent" />
               <h1 className="text-2xl font-semibold text-white">{protocol.title}</h1>
               <ProtocolKindPill kind={protocol.kind} />
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-[#4361EE]/40 text-[#4361EE] bg-[#4361EE]/10">
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-accent/40 text-accent bg-accent/10">
                 v{protocol.version}
               </span>
               {protocol.parentProtocolId == null && (
@@ -70,7 +70,7 @@ export default async function ProtocolDetailPage({ params }: Props) {
                 {protocol.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                   >
                     {t}
                   </span>
@@ -85,7 +85,7 @@ export default async function ProtocolDetailPage({ params }: Props) {
                     href={u}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="block text-xs text-[#4361EE] hover:underline break-all"
+                    className="block text-xs text-accent hover:underline break-all"
                   >
                     {u}
                   </a>
@@ -98,7 +98,7 @@ export default async function ProtocolDetailPage({ params }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr,260px] gap-6">
-        <article className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <article className="rounded-xl border border-border-subtle bg-surface-2 p-6">
           {protocol.bodyMd ? (
             <div
               className="prose prose-invert max-w-none text-sm"
@@ -107,7 +107,7 @@ export default async function ProtocolDetailPage({ params }: Props) {
               <ReactMarkdown>{protocol.bodyMd}</ReactMarkdown>
             </div>
           ) : (
-            <p className="text-sm text-[#94a3b8] italic">No body yet.</p>
+            <p className="text-sm text-text-secondary italic">No body yet.</p>
           )}
         </article>
         <ProtocolVersionHistory protocol={protocol} versions={versions} />

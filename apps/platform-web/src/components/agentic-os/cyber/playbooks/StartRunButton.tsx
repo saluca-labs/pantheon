@@ -50,7 +50,7 @@ export function StartRunButton({ playbookId, disabled }: StartRunButtonProps) {
         type="button"
         onClick={() => void start()}
         disabled={busy || disabled}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
       >
         <Play className="w-4 h-4" />
         {busy ? 'Starting…' : 'Start run'}

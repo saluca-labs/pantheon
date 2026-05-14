@@ -83,30 +83,30 @@ export default async function AuthorDetailPage({ params }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/research/authors"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         All authors
       </Link>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#0f1117] border border-[#2a2d3e] flex items-center justify-center">
-            <UserIcon className="w-6 h-6 text-[#4361EE]" />
+          <div className="w-12 h-12 rounded-full bg-surface-0 border border-border-subtle flex items-center justify-center">
+            <UserIcon className="w-6 h-6 text-accent" />
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold text-white" data-testid="author-detail-name">
               {author.displayName}
             </h1>
             {(author.givenName || author.familyName) && (
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 {[author.givenName, author.familyName].filter(Boolean).join(' ')}
               </p>
             )}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#94a3b8]">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
           {author.affiliation && (
             <span className="inline-flex items-center gap-1">
               <Building2 className="w-3 h-3" />
@@ -116,7 +116,7 @@ export default async function AuthorDetailPage({ params }: Props) {
           {author.orcid && (
             <span className="inline-flex items-center gap-1">
               <IdCard className="w-3 h-3" />
-              <code className="text-[#cbd5e1]">{author.orcid}</code>
+              <code className="text-text-primary">{author.orcid}</code>
             </span>
           )}
         </div>
@@ -128,7 +128,7 @@ export default async function AuthorDetailPage({ params }: Props) {
         </h2>
         {papers.length === 0 ? (
           <p
-            className="text-sm text-[#94a3b8] italic py-8 text-center"
+            className="text-sm text-text-secondary italic py-8 text-center"
             data-testid="author-detail-papers-empty"
           >
             No papers link this author yet.

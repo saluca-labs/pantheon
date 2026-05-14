@@ -67,13 +67,13 @@ export function MoodEntryList({ entries, linkPrefix }: Props) {
               {(r.tags ?? []).map((t) => (
                 <span
                   key={t.id}
-                  className="text-[10px] rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[#94a3b8]"
+                  className="text-[10px] rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-text-secondary"
                 >
                   {t.name}
                 </span>
               ))}
               {(r.tags ?? []).length === 0 && (
-                <span className="text-[#94a3b8]/70">—</span>
+                <span className="text-text-secondary/70">—</span>
               )}
             </span>
           ),
@@ -90,13 +90,13 @@ export function MoodEntryList({ entries, linkPrefix }: Props) {
 export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8]">
+      <p className="text-sm text-text-secondary">
         No mood entries yet — log your first check-in above.
       </p>
     );
   }
   return (
-    <ul className="divide-y divide-[#2a2d3e]">
+    <ul className="divide-y divide-border-subtle">
       {entries.map((e) => (
         <li
           key={e.id}
@@ -109,7 +109,7 @@ export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
               {formatScore(e.anxietyScore)}
             </div>
             {e.notes && (
-              <p className="text-xs text-[#94a3b8] mt-0.5 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-text-secondary mt-0.5 line-clamp-2 leading-relaxed">
                 {e.notes}
               </p>
             )}
@@ -118,7 +118,7 @@ export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
                 {(e.tags ?? []).map((t) => (
                   <span
                     key={t.id}
-                    className="text-[10px] rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[#94a3b8]"
+                    className="text-[10px] rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-text-secondary"
                   >
                     {t.name}
                   </span>
@@ -128,7 +128,7 @@ export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
           </div>
           <Link
             href={`/dashboard/os/health/journal/new?mood=${e.id}`}
-            className="text-xs text-[#4361EE] hover:text-[#5d7aff] transition shrink-0"
+            className="text-xs text-accent hover:text-[#5d7aff] transition shrink-0"
           >
             Add journal →
           </Link>

@@ -71,7 +71,7 @@ export function ChapterReorderHandle({
         disabled={position === 0 || working}
         onClick={() => move(-1)}
         title="Move up"
-        className="w-6 h-4 text-[#94a3b8] hover:text-white disabled:opacity-30 disabled:hover:text-[#94a3b8] flex items-center justify-center"
+        className="w-6 h-4 text-text-secondary hover:text-white disabled:opacity-30 disabled:hover:text-text-secondary flex items-center justify-center"
       >
         <ChevronUp className="w-3.5 h-3.5" />
       </button>
@@ -80,7 +80,7 @@ export function ChapterReorderHandle({
         disabled={position >= total - 1 || working}
         onClick={() => move(1)}
         title="Move down"
-        className="w-6 h-4 text-[#94a3b8] hover:text-white disabled:opacity-30 disabled:hover:text-[#94a3b8] flex items-center justify-center"
+        className="w-6 h-4 text-text-secondary hover:text-white disabled:opacity-30 disabled:hover:text-text-secondary flex items-center justify-center"
       >
         <ChevronDown className="w-3.5 h-3.5" />
       </button>

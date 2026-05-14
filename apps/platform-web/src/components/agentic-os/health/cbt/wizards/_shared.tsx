@@ -63,7 +63,7 @@ export function MoodScale({
 }) {
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </label>
       <div className="flex items-center gap-1">
@@ -76,8 +76,8 @@ export function MoodScale({
               onClick={() => onChange(active ? null : n)}
               className={`w-8 h-8 rounded-md border text-xs font-medium transition ${
                 active
-                  ? 'border-[#4361EE] bg-[#4361EE]/20 text-white'
-                  : 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:border-[#4361EE]/40 hover:text-white'
+                  ? 'border-accent bg-accent/20 text-white'
+                  : 'border-border-subtle bg-surface-0 text-text-secondary hover:border-accent/40 hover:text-white'
               }`}
             >
               {n}
@@ -88,7 +88,7 @@ export function MoodScale({
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="ml-2 text-[10px] text-[#94a3b8] hover:text-white transition"
+            className="ml-2 text-[10px] text-text-secondary hover:text-white transition"
           >
             clear
           </button>
@@ -115,7 +115,7 @@ export function TextInput({
 }) {
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </label>
       {multiline ? (
@@ -124,7 +124,7 @@ export function TextInput({
           onChange={(e) => onChange(e.target.value)}
           rows={rows ?? 3}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 leading-relaxed resize-y"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2 leading-relaxed resize-y"
         />
       ) : (
         <input
@@ -132,7 +132,7 @@ export function TextInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2"
         />
       )}
     </div>
@@ -155,12 +155,12 @@ export function SubmitBar({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#2a2d3e]">
+    <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border-subtle">
       <button
         type="button"
         onClick={onClick}
         disabled={submitting || disabled}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
       >
         <Save className="w-4 h-4" />
         {submitting ? 'Saving…' : (label ?? 'Save log')}

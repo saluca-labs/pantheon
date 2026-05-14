@@ -22,10 +22,10 @@ export default async function AgenticOsSettingsPage() {
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-2">
-        <SlidersHorizontal className="w-6 h-6 text-[#4361EE]" />
+        <SlidersHorizontal className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">OS Settings</h1>
       </div>
-      <p className="text-[#94a3b8] mb-8">
+      <p className="text-text-secondary mb-8">
         Toggle Agentic OS modules on or off. Disabled modules are hidden from
         your sidebar and dashboard — your data is always preserved.
       </p>

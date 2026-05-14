@@ -56,7 +56,7 @@ export function NewRevisionButton({ chapterId, seedBody }: Props) {
         type="button"
         onClick={onClick}
         disabled={working}
-        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-60"
       >
         <Plus className="w-3.5 h-3.5" />
         {working ? 'Saving…' : 'New revision'}

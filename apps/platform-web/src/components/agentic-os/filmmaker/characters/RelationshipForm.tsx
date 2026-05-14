@@ -35,7 +35,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({
   label,
@@ -48,12 +48,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </span>
       {children}
       {hint && (
-        <span className="block text-[11px] text-[#94a3b8]/80 mt-1">{hint}</span>
+        <span className="block text-[11px] text-text-secondary/80 mt-1">{hint}</span>
       )}
     </label>
   );
@@ -197,7 +197,7 @@ export function RelationshipForm({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
           >
             Cancel
           </button>
@@ -205,7 +205,7 @@ export function RelationshipForm({
         <button
           type="submit"
           disabled={busy || !fromId || !toId || fromId === toId}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           {busy ? 'Saving…' : submitLabel}
         </button>

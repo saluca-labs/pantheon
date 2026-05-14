@@ -27,14 +27,14 @@ import { PhaseProgressMini } from './phase-progress-editor';
 const API = '/api/tiresias/agentic-os/filmmaker/projects';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_COLOR: Record<ProjectStatus, string> = {
   pre_production: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
   production: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
   post_production: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   wrapped: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  archived: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 type SortKey = 'name' | 'created' | 'target';
@@ -44,7 +44,7 @@ type FormatFilter = ProjectFormat | 'all';
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -135,14 +135,14 @@ function NewProjectDrawer({
     <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/60">
       <form
         onSubmit={submit}
-        className="h-full w-full max-w-md overflow-y-auto border-l border-[#2a2d3e] bg-[#0f1117] p-6 space-y-4"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-border-subtle bg-surface-0 p-6 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">New project</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-[#94a3b8] hover:text-white transition"
+            className="text-sm text-text-secondary hover:text-white transition"
           >
             Close
           </button>
@@ -252,14 +252,14 @@ function NewProjectDrawer({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Creating…' : 'Create project'}
           </button>
@@ -275,7 +275,7 @@ function ProjectCard({ project }: { project: FilmmakerProject }) {
   return (
     <Link
       href={`/dashboard/os/filmmaker/projects/${project.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden hover:border-[#4361EE]/60 transition group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 overflow-hidden hover:border-accent/60 transition group"
     >
       <div className="flex">
         {project.coverImageUrl ? (
@@ -283,19 +283,19 @@ function ProjectCard({ project }: { project: FilmmakerProject }) {
           <img
             src={project.coverImageUrl}
             alt=""
-            className="w-32 h-32 object-cover border-r border-[#2a2d3e] shrink-0"
+            className="w-32 h-32 object-cover border-r border-border-subtle shrink-0"
           />
         ) : (
-          <div className="w-32 h-32 shrink-0 border-r border-[#2a2d3e] bg-gradient-to-br from-[#4361EE]/15 to-[#1a1d27] flex items-center justify-center">
-            <Clapperboard className="w-8 h-8 text-[#4361EE]/50" />
+          <div className="w-32 h-32 shrink-0 border-r border-border-subtle bg-gradient-to-br from-accent/15 to-surface-2 flex items-center justify-center">
+            <Clapperboard className="w-8 h-8 text-accent/50" />
           </div>
         )}
         <div className="flex-1 min-w-0 p-4 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-white font-medium group-hover:text-[#4361EE] transition truncate">
+            <h3 className="text-white font-medium group-hover:text-accent transition truncate">
               {project.name}
             </h3>
-            <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1]">
+            <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded border border-border-subtle bg-surface-0 text-text-primary">
               {FORMAT_LABELS[project.format]}
             </span>
             <span
@@ -308,7 +308,7 @@ function ProjectCard({ project }: { project: FilmmakerProject }) {
             <p className="text-xs text-white/80 italic truncate">{project.logline}</p>
           )}
           {!project.logline && project.description && (
-            <p className="text-xs text-[#94a3b8] truncate">{project.description}</p>
+            <p className="text-xs text-text-secondary truncate">{project.description}</p>
           )}
           <PhaseProgressMini phases={project.phaseProgress} />
         </div>
@@ -383,7 +383,7 @@ export function ProjectsManager({ initialProjects }: { initialProjects: Filmmake
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           New project
@@ -391,7 +391,7 @@ export function ProjectsManager({ initialProjects }: { initialProjects: Filmmake
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           {projects.length === 0
             ? 'No projects yet. Create your first project above.'
             : 'No projects match the current filters.'}

@@ -27,7 +27,7 @@ export default async function CbtLandingPage() {
       <div className="max-w-3xl">
         <Link
           href="/dashboard/os/health"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
@@ -61,7 +61,7 @@ export default async function CbtLandingPage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
@@ -69,12 +69,12 @@ export default async function CbtLandingPage() {
 
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-6 h-6 text-[#4361EE]" />
+          <Sparkles className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">CBT exercises</h1>
         </div>
         <Link
           href="/dashboard/os/health/cbt/logs"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/50 text-white text-sm px-3 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:border-accent/50 text-white text-sm px-3 py-2 transition"
         >
           <ListChecks className="w-4 h-4" />
           All logs
@@ -90,7 +90,7 @@ export default async function CbtLandingPage() {
 
       <section className="mt-8 space-y-3">
         <h2 className="text-base font-semibold text-white">Recent logs</h2>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <CbtLogList logs={recentLogs} />
         </div>
       </section>

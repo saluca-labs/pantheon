@@ -51,13 +51,13 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {evidence.length} evidence item{evidence.length === 1 ? '' : 's'}
         </p>
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'Add evidence'}
@@ -73,7 +73,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
       )}
 
       {evidence.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No evidence captured yet.
         </p>
       ) : (
@@ -85,12 +85,12 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
             return (
               <li
                 key={ev.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+                className="rounded-lg border border-border-subtle bg-surface-2 p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] text-[#cbd5e1]">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle text-text-primary">
                         {kindLabel}
                       </span>
                       <span className="text-sm text-white truncate">
@@ -98,7 +98,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                       </span>
                     </div>
                     {ev.description && (
-                      <p className="text-xs text-[#cbd5e1] mt-1 whitespace-pre-wrap">
+                      <p className="text-xs text-text-primary mt-1 whitespace-pre-wrap">
                         {ev.description}
                       </p>
                     )}
@@ -107,17 +107,17 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                         href={ev.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-[#4361EE] hover:underline break-all mt-1 block"
+                        className="text-xs text-accent hover:underline break-all mt-1 block"
                       >
                         {ev.url}
                       </a>
                     )}
                     {ev.content && (
-                      <pre className="text-[11px] text-[#cbd5e1] bg-[#0f1117] border border-[#2a2d3e] rounded p-2 mt-2 overflow-auto max-h-48 whitespace-pre-wrap font-mono">
+                      <pre className="text-[11px] text-text-primary bg-surface-0 border border-border-subtle rounded p-2 mt-2 overflow-auto max-h-48 whitespace-pre-wrap font-mono">
                         {ev.content}
                       </pre>
                     )}
-                    <p className="text-[11px] text-[#94a3b8] mt-1">
+                    <p className="text-[11px] text-text-secondary mt-1">
                       Collected {new Date(ev.collectedAt).toLocaleString()}
                       {ev.collectedBy && ` · ${ev.collectedBy}`}
                     </p>
@@ -126,7 +126,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                         {ev.tags.map((t) => (
                           <span
                             key={t}
-                            className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+                            className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary"
                           >
                             {t}
                           </span>
@@ -138,7 +138,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                     <button
                       type="button"
                       onClick={() => setEditing(isEditing ? null : ev.id)}
-                      className="inline-flex items-center gap-1 rounded-md border border-[#2a2d3e] text-[#94a3b8] hover:text-white px-2 py-1 text-xs transition"
+                      className="inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-white px-2 py-1 text-xs transition"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       {isEditing ? 'Close' : 'Edit'}
@@ -147,7 +147,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                       type="button"
                       onClick={() => remove(ev.id)}
                       disabled={busy === ev.id}
-                      className="inline-flex items-center gap-1 rounded-md border border-[#2a2d3e] text-[#94a3b8] hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
+                      className="inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       Delete

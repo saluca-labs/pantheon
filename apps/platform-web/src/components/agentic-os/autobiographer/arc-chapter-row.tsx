@@ -104,8 +104,8 @@ export function ArcChapterRow({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm">
-      <div className="flex flex-col items-center justify-center text-[#94a3b8]">
+    <div className="flex items-center gap-2 rounded border border-border-subtle bg-surface-0 px-3 py-2 text-sm">
+      <div className="flex flex-col items-center justify-center text-text-secondary">
         <GripVertical className="w-3.5 h-3.5" />
       </div>
       <div className="flex flex-col items-center justify-center">
@@ -114,7 +114,7 @@ export function ArcChapterRow({
           disabled={index === 0 || busy}
           onClick={() => swap(-1)}
           title="Move up"
-          className="w-5 h-4 text-[#94a3b8] hover:text-white disabled:opacity-30 flex items-center justify-center"
+          className="w-5 h-4 text-text-secondary hover:text-white disabled:opacity-30 flex items-center justify-center"
         >
           <ChevronUp className="w-3 h-3" />
         </button>
@@ -123,7 +123,7 @@ export function ArcChapterRow({
           disabled={index >= total - 1 || busy}
           onClick={() => swap(1)}
           title="Move down"
-          className="w-5 h-4 text-[#94a3b8] hover:text-white disabled:opacity-30 flex items-center justify-center"
+          className="w-5 h-4 text-text-secondary hover:text-white disabled:opacity-30 flex items-center justify-center"
         >
           <ChevronDown className="w-3 h-3" />
         </button>
@@ -135,7 +135,7 @@ export function ArcChapterRow({
         <span className="text-white truncate block">
           {title ?? 'Untitled chapter'}
         </span>
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">
           {status}
         </span>
         {error && (

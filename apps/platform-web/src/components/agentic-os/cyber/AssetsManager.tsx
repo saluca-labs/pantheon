@@ -20,7 +20,7 @@ import { AssetCard } from './AssetCard';
 import { AssetForm } from './AssetForm';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
   const [creating, setCreating] = useState(false);
@@ -59,9 +59,9 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <label className="block min-w-[160px] flex-1">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Search</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Search</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -70,7 +70,7 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Kind</span>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as AssetKind | '')}
@@ -83,7 +83,7 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Criticality</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Criticality</span>
           <select
             value={criticality}
             onChange={(e) => setCriticality(e.target.value as AssetCriticality | '')}
@@ -96,7 +96,7 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Environment</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Environment</span>
           <select
             value={environment}
             onChange={(e) => setEnvironment(e.target.value)}
@@ -108,19 +108,19 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 text-xs text-[#94a3b8]">
+        <label className="flex items-center gap-2 text-xs text-text-secondary">
           <input
             type="checkbox"
             checked={showDecommissioned}
             onChange={(e) => setShowDecommissioned(e.target.checked)}
-            className="accent-[#4361EE]"
+            className="accent-accent"
           />
           Show decommissioned
         </label>
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'New asset'}
@@ -135,7 +135,7 @@ export function AssetsManager({ initialAssets }: { initialAssets: Asset[] }) {
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No assets match the current filters.
         </p>
       ) : (

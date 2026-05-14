@@ -33,7 +33,7 @@ import {
 } from '@/lib/agentic-os/research/evidence';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   hypothesisId: string;
@@ -129,10 +129,10 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-4">
+    <form onSubmit={submit} className="space-y-3 rounded-lg border border-border-subtle bg-surface-0/60 p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Polarity</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Polarity</span>
           <select
             value={polarity}
             onChange={(e) => setPolarity(e.target.value as EvidencePolarity)}
@@ -146,7 +146,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Source kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Source kind</span>
           <select
             value={sourceKind}
             onChange={(e) => {
@@ -168,7 +168,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
       {sourceKind === 'notebook_entry' && (
         <>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
               Notebook entry ID
             </span>
             <input
@@ -179,7 +179,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
               Notes (optional)
             </span>
             <textarea
@@ -193,13 +193,13 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
       )}
 
       {sourceKind === 'paper' && (
-        <div className="rounded-md border border-dashed border-[#2a2d3e] bg-[#0f1117] p-3 text-xs text-[#94a3b8]">
+        <div className="rounded-md border border-dashed border-border-subtle bg-surface-0 p-3 text-xs text-text-secondary">
           The literature library ships in <span className="text-white font-medium">Phase 4</span>.
           For now, use{' '}
           <button
             type="button"
             onClick={() => setSourceKind('external_url')}
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             External URL
           </button>{' '}
@@ -207,7 +207,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
           <button
             type="button"
             onClick={() => setSourceKind('free_text')}
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             Free text
           </button>{' '}
@@ -216,13 +216,13 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
       )}
 
       {sourceKind === 'dataset' && (
-        <div className="rounded-md border border-dashed border-[#2a2d3e] bg-[#0f1117] p-3 text-xs text-[#94a3b8]">
+        <div className="rounded-md border border-dashed border-border-subtle bg-surface-0 p-3 text-xs text-text-secondary">
           The dataset library ships in <span className="text-white font-medium">Phase 5</span>.
           For now, use{' '}
           <button
             type="button"
             onClick={() => setSourceKind('external_url')}
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             External URL
           </button>{' '}
@@ -233,7 +233,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
       {sourceKind === 'external_url' && (
         <>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">URL</span>
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">URL</span>
             <input
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
@@ -242,7 +242,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
               Notes (optional)
             </span>
             <textarea
@@ -257,7 +257,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
 
       {sourceKind === 'free_text' && (
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Notes</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Notes</span>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -277,7 +277,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
         <button
           type="submit"
           disabled={saving || !canSubmit()}
-          className="rounded-md bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
+          className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
         >
           {saving ? 'Linking…' : 'Link evidence'}
         </button>
@@ -285,7 +285,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+            className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>

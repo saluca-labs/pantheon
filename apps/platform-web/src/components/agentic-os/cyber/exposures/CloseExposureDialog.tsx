@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { Check, X, ShieldCheck } from 'lucide-react';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 type CloseStatus = 'mitigated' | 'resolved' | 'false_positive';
 
@@ -45,10 +45,10 @@ export function CloseExposureDialog({ exposureId }: { exposureId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
-      <p className="text-xs uppercase tracking-wide text-[#94a3b8]">Close exposure</p>
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
+      <p className="text-xs uppercase tracking-wide text-text-secondary">Close exposure</p>
       <label className="block">
-        <span className="block text-xs text-[#94a3b8] mb-1">Notes (optional)</span>
+        <span className="block text-xs text-text-secondary mb-1">Notes (optional)</span>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputCls} />
       </label>
       <div className="flex gap-2 flex-wrap">

@@ -58,7 +58,7 @@ export default async function ChapterDetailPage({ params }: Props) {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <Link
           href={`/dashboard/os/autobiographer/books/${book.id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to {book.title}
@@ -71,7 +71,7 @@ export default async function ChapterDetailPage({ params }: Props) {
           />
           <a
             href={`/api/tiresias/agentic-os/autobiographer/chapters/${chapter.id}/export.pdf`}
-            className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
+            className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40"
             title="Export this chapter as a PDF"
           >
             <Download className="w-3.5 h-3.5" />
@@ -92,8 +92,8 @@ export default async function ChapterDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-2">
-        <div className="flex items-center gap-2 text-xs text-[#94a3b8]">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs text-text-secondary">
           <span className="font-mono">{positionLabel}</span>
           {chapter.slug ? (
             <span className="font-mono text-[#64748b]">· {chapter.slug}</span>
@@ -106,11 +106,11 @@ export default async function ChapterDetailPage({ params }: Props) {
           <ChapterStatusPill status={chapter.status} />
         </div>
         {chapter.summary ? (
-          <p className="text-sm text-[#cbd5e1] leading-relaxed">
+          <p className="text-sm text-text-primary leading-relaxed">
             {chapter.summary}
           </p>
         ) : null}
-        <div className="flex items-center gap-3 text-xs text-[#94a3b8]">
+        <div className="flex items-center gap-3 text-xs text-text-secondary">
           <span className="inline-flex items-center gap-1">
             <FileText className="w-3.5 h-3.5" />
             {revisions.length}{' '}

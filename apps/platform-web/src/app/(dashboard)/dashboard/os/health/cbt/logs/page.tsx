@@ -52,14 +52,14 @@ export default async function CbtLogsPage({ searchParams }: PageProps) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/health/cbt"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to CBT
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <ListChecks className="w-6 h-6 text-[#4361EE]" />
+        <ListChecks className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">CBT logs</h1>
       </div>
 
@@ -79,7 +79,7 @@ export default async function CbtLogsPage({ searchParams }: PageProps) {
         ))}
       </div>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <CbtLogList logs={logs} />
       </div>
     </div>
@@ -96,8 +96,8 @@ function FilterChip({
   active: boolean;
 }) {
   const cls = active
-    ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-    : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50';
+    ? 'border-accent bg-accent/15 text-white'
+    : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50';
   return (
     <Link
       href={href}

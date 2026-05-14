@@ -105,19 +105,19 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
       )}
 
       {loading && entries.length === 0 ? (
-        <p className="text-xs text-[#94a3b8]" data-testid="notebook-timeline-loading">
+        <p className="text-xs text-text-secondary" data-testid="notebook-timeline-loading">
           Loading…
         </p>
       ) : entries.length === 0 ? (
         <div
-          className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#0f1117] p-8 text-center"
+          className="rounded-xl border border-dashed border-border-subtle bg-surface-0 p-8 text-center"
           data-testid="notebook-timeline-empty"
         >
-          <BookOpen className="w-8 h-8 text-[#4361EE]/40 mx-auto mb-2" />
+          <BookOpen className="w-8 h-8 text-accent/40 mx-auto mb-2" />
           <p className="text-sm text-white mb-1">
             {archived ? 'No archived entries' : 'No entries yet'}
           </p>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             {archived
               ? 'Archived entries will appear here when you archive them.'
               : 'Add your first note, observation, result, or to-do above.'}

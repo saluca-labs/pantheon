@@ -23,7 +23,7 @@ const SEVERITY_CLASS: Record<string, string> = {
 export function ScreenerHistory({ items }: Props) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8]">
+      <p className="text-sm text-text-secondary">
         No screeners submitted yet. Take a PHQ-9 or GAD-7 above to start your
         timeline.
       </p>
@@ -33,7 +33,7 @@ export function ScreenerHistory({ items }: Props) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+          <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
             <th className="py-2 pr-4 font-normal">Date</th>
             <th className="py-2 pr-4 font-normal">Screener</th>
             <th className="py-2 pr-4 font-normal">Score</th>
@@ -43,8 +43,8 @@ export function ScreenerHistory({ items }: Props) {
         </thead>
         <tbody>
           {items.map((row) => (
-            <tr key={row.id} className="border-t border-[#2a2d3e]">
-              <td className="py-2 pr-4 text-[#cbd5e1]">
+            <tr key={row.id} className="border-t border-border-subtle">
+              <td className="py-2 pr-4 text-text-primary">
                 {new Date(row.createdAt).toLocaleString()}
               </td>
               <td className="py-2 pr-4 text-white uppercase">{row.screener}</td>
@@ -58,7 +58,7 @@ export function ScreenerHistory({ items }: Props) {
                     Safety prompt
                   </span>
                 ) : (
-                  <span className="text-xs text-[#94a3b8]/70">—</span>
+                  <span className="text-xs text-text-secondary/70">—</span>
                 )}
               </td>
             </tr>

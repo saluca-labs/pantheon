@@ -62,10 +62,10 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
 
   return (
     <article
-      className={`rounded-xl border bg-[#1a1d27] p-4 transition ${
+      className={`rounded-xl border bg-surface-2 p-4 transition ${
         sample.isArchived
-          ? 'border-[#2a2d3e] opacity-60'
-          : 'border-[#2a2d3e] hover:border-[#4361EE]/40'
+          ? 'border-border-subtle opacity-60'
+          : 'border-border-subtle hover:border-accent/40'
       }`}
     >
       <header className="flex items-start justify-between gap-3 mb-2">
@@ -73,7 +73,7 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
           <h3 className="text-base font-semibold text-white truncate">
             {displayTitle}
           </h3>
-          <div className="flex items-center gap-2 mt-1 text-xs text-[#94a3b8]">
+          <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary">
             <span>{sample.wordCount} words</span>
             <span>•</span>
             <span>Updated {new Date(sample.updatedAt).toLocaleDateString()}</span>
@@ -82,7 +82,7 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
                 <span>•</span>
                 <Link
                   href={`/dashboard/os/autobiographer/memories/${sample.memoryId}`}
-                  className="inline-flex items-center gap-1 text-[#4361EE] hover:underline"
+                  className="inline-flex items-center gap-1 text-accent hover:underline"
                 >
                   <BookOpenText className="w-3 h-3" />
                   Sourced from memory
@@ -102,7 +102,7 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
             type="button"
             onClick={toggleArchive}
             disabled={busy}
-            className="text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+            className="text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white disabled:opacity-50 inline-flex items-center gap-1.5 transition"
             title={sample.isArchived ? 'Unarchive' : 'Archive'}
           >
             {sample.isArchived ? (
@@ -127,7 +127,7 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
         </div>
       </header>
 
-      <p className="text-sm text-[#cbd5e1]/80 leading-relaxed line-clamp-3 whitespace-pre-wrap">
+      <p className="text-sm text-text-primary/80 leading-relaxed line-clamp-3 whitespace-pre-wrap">
         {sample.bodyText}
       </p>
     </article>

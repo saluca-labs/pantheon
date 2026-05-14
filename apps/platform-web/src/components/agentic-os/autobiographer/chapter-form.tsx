@@ -36,7 +36,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({
   label,
@@ -49,7 +49,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </span>
       {children}
@@ -124,7 +124,7 @@ export function ChapterForm({ initial, onClose }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="w-full max-w-xl space-y-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5"
+      className="w-full max-w-xl space-y-4 rounded-xl border border-border-subtle bg-surface-2 p-5"
     >
       <h2 className="text-base font-semibold text-white">
         {isEdit ? 'Edit chapter' : 'New chapter'}
@@ -201,14 +201,14 @@ export function ChapterForm({ initial, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
+          className="text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-60"
+          className="text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-60"
         >
           {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create chapter'}
         </button>

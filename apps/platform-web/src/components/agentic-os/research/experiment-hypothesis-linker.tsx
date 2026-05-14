@@ -29,7 +29,7 @@ import {
 import type { Hypothesis } from '@/lib/agentic-os/research/hypotheses';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   experimentId: string;
@@ -100,9 +100,9 @@ export function ExperimentHypothesisLinker({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-4">
+    <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-0/60 p-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94a3b8]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-secondary" />
         <input
           value={query}
           onChange={(e) => {
@@ -115,20 +115,20 @@ export function ExperimentHypothesisLinker({
       </div>
 
       {!picked ? (
-        <div className="max-h-64 overflow-y-auto rounded-md border border-[#2a2d3e] bg-[#0f1117]">
+        <div className="max-h-64 overflow-y-auto rounded-md border border-border-subtle bg-surface-0">
           {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-xs text-[#94a3b8]">No hypotheses match.</p>
+            <p className="px-3 py-2 text-xs text-text-secondary">No hypotheses match.</p>
           ) : (
-            <ul role="listbox" className="divide-y divide-[#2a2d3e]">
+            <ul role="listbox" className="divide-y divide-border-subtle">
               {filtered.map((h) => (
                 <li key={h.id}>
                   <button
                     type="button"
                     onClick={() => setPicked(h)}
-                    className="w-full text-left px-3 py-2 hover:bg-[#1a1d27] focus:bg-[#1a1d27] focus:outline-none"
+                    className="w-full text-left px-3 py-2 hover:bg-surface-2 focus:bg-surface-2 focus:outline-none"
                   >
                     <div className="text-sm text-white">{h.title}</div>
-                    <div className="text-xs text-[#94a3b8] italic line-clamp-1">
+                    <div className="text-xs text-text-secondary italic line-clamp-1">
                       If {h.ifClause}, then {h.thenClause}.
                     </div>
                   </button>
@@ -139,19 +139,19 @@ export function ExperimentHypothesisLinker({
         </div>
       ) : (
         <>
-          <div className="rounded-md border border-[#4361EE]/40 bg-[#4361EE]/10 p-3 text-sm text-white">
+          <div className="rounded-md border border-accent/40 bg-accent/10 p-3 text-sm text-white">
             {picked.title}
             <button
               type="button"
               onClick={() => setPicked(null)}
-              className="ml-2 text-xs text-[#94a3b8] hover:text-white"
+              className="ml-2 text-xs text-text-secondary hover:text-white"
             >
               (change)
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Role</span>
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Role</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as LinkRole)}
@@ -165,7 +165,7 @@ export function ExperimentHypothesisLinker({
               </select>
             </label>
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">
                 Notes (optional)
               </span>
               <input
@@ -188,7 +188,7 @@ export function ExperimentHypothesisLinker({
         <button
           onClick={submit}
           disabled={saving || !picked}
-          className="inline-flex items-center gap-1.5 rounded-md bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
         >
           <Plus className="w-3.5 h-3.5" />
           {saving ? 'Linking…' : 'Link hypothesis'}
@@ -197,7 +197,7 @@ export function ExperimentHypothesisLinker({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+            className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>

@@ -267,7 +267,7 @@ export function RecipeEditor({
           </div>
         )}
 
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-3">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Name">
               <input
@@ -345,7 +345,7 @@ export function RecipeEditor({
               type="button"
               onClick={saveHeader}
               disabled={savingHeader || name.trim().length === 0}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
               {savingHeader
@@ -357,11 +357,11 @@ export function RecipeEditor({
           </div>
         </section>
 
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Ingredients</h2>
             {!recipeId && (
-              <span className="text-[11px] text-[#94a3b8]">
+              <span className="text-[11px] text-text-secondary">
                 Save the header first to add ingredients.
               </span>
             )}
@@ -389,10 +389,10 @@ export function RecipeEditor({
       </div>
 
       <aside className="space-y-4">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 sticky top-4">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 sticky top-4">
           <h3 className="text-sm font-semibold text-white mb-3">Nutrition</h3>
           {!nutrition ? (
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               Add ingredients to see computed nutrition.
             </p>
           ) : (
@@ -405,15 +405,15 @@ export function RecipeEditor({
         :global(.input) {
           width: 100%;
           border-radius: 0.5rem;
-          border: 1px solid #2a2d3e;
-          background: #0f1117;
+          border: 1px solid var(--border-subtle);
+          background: var(--surface-0);
           padding: 0.5rem 0.75rem;
           font-size: 0.875rem;
-          color: white;
+          color: var(--text-primary);
         }
         :global(.input:focus) {
           outline: none;
-          border-color: #4361ee;
+          border-color: var(--accent-base);
         }
       `}</style>
     </div>
@@ -431,7 +431,7 @@ function Field({
 }) {
   return (
     <label className={`block ${wide ? 'sm:col-span-2' : ''}`}>
-      <span className="mb-1 block text-xs text-[#94a3b8]">{label}</span>
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
       {children}
     </label>
   );
@@ -453,14 +453,14 @@ function IngredientRow({
   const label = ing.foodItem?.name ?? ing.freeformName ?? '—';
   const sublabel = ing.foodItem?.brand ?? null;
   return (
-    <li className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3">
+    <li className="rounded-lg border border-border-subtle bg-surface-0 p-3">
       <div className="flex items-start gap-2">
         <div className="flex shrink-0 flex-col gap-0.5">
           <button
             type="button"
             onClick={onMoveUp}
             disabled={!onMoveUp}
-            className="rounded p-0.5 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:bg-surface-2 hover:text-white disabled:opacity-30"
             aria-label="Move up"
           >
             <ArrowUp className="h-3 w-3" />
@@ -469,7 +469,7 @@ function IngredientRow({
             type="button"
             onClick={onMoveDown}
             disabled={!onMoveDown}
-            className="rounded p-0.5 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:bg-surface-2 hover:text-white disabled:opacity-30"
             aria-label="Move down"
           >
             <ArrowDown className="h-3 w-3" />
@@ -478,11 +478,11 @@ function IngredientRow({
         <div className="min-w-0 flex-1">
           <div className="text-sm text-white truncate">{label}</div>
           {sublabel && (
-            <div className="text-xs text-[#94a3b8] truncate">{sublabel}</div>
+            <div className="text-xs text-text-secondary truncate">{sublabel}</div>
           )}
           <div className="mt-1.5 flex flex-wrap items-end gap-2">
             <label className="block">
-              <span className="text-[10px] text-[#94a3b8]">Qty</span>
+              <span className="text-[10px] text-text-secondary">Qty</span>
               <input
                 type="number"
                 step="0.1"
@@ -495,7 +495,7 @@ function IngredientRow({
               />
             </label>
             <label className="block">
-              <span className="text-[10px] text-[#94a3b8]">Unit</span>
+              <span className="text-[10px] text-text-secondary">Unit</span>
               <select
                 defaultValue={ing.unit ?? ''}
                 onChange={(e) =>
@@ -512,7 +512,7 @@ function IngredientRow({
               </select>
             </label>
             <label className="block flex-1 min-w-[180px]">
-              <span className="text-[10px] text-[#94a3b8]">Notes</span>
+              <span className="text-[10px] text-text-secondary">Notes</span>
               <input
                 defaultValue={ing.notes ?? ''}
                 onBlur={(e) =>
@@ -527,7 +527,7 @@ function IngredientRow({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded p-1 text-[#94a3b8] hover:bg-red-500/15 hover:text-red-300"
+          className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
           aria-label="Delete"
         >
           <Trash2 className="h-4 w-4" />
@@ -575,8 +575,8 @@ function NewIngredientForm({
   };
 
   return (
-    <div className="mt-3 rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2">
-      <div className="text-[11px] uppercase tracking-wide text-[#94a3b8]">
+    <div className="mt-3 rounded-lg border border-dashed border-border-subtle bg-surface-0 p-3 space-y-2">
+      <div className="text-[11px] uppercase tracking-wide text-text-secondary">
         Add ingredient
       </div>
       <FoodCombobox
@@ -590,7 +590,7 @@ function NewIngredientForm({
       />
       <div className="flex flex-wrap items-end gap-2">
         <label className="block">
-          <span className="text-[10px] text-[#94a3b8]">Qty</span>
+          <span className="text-[10px] text-text-secondary">Qty</span>
           <input
             type="number"
             step="0.1"
@@ -601,7 +601,7 @@ function NewIngredientForm({
           />
         </label>
         <label className="block">
-          <span className="text-[10px] text-[#94a3b8]">Unit</span>
+          <span className="text-[10px] text-text-secondary">Unit</span>
           <select
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
@@ -619,7 +619,7 @@ function NewIngredientForm({
           type="button"
           onClick={submit}
           disabled={submitting || (!query.trim() && !selectedFood)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
         >
           <Plus className="h-3.5 w-3.5" />
           Add
@@ -633,7 +633,7 @@ function NutritionPanel({ nutrition }: { nutrition: RecipeNutritionData }) {
   return (
     <div className="space-y-3 text-sm">
       <div>
-        <div className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <div className="text-[10px] uppercase tracking-wide text-text-secondary">
           Per serving ({nutrition.servings.toFixed(1)} servings)
         </div>
         <div className="mt-1 grid grid-cols-2 gap-2 text-white">
@@ -644,7 +644,7 @@ function NutritionPanel({ nutrition }: { nutrition: RecipeNutritionData }) {
         </div>
       </div>
       <div>
-        <div className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <div className="text-[10px] uppercase tracking-wide text-text-secondary">
           Total
         </div>
         <div className="mt-1 grid grid-cols-2 gap-2 text-white">
@@ -666,8 +666,8 @@ function NutritionPanel({ nutrition }: { nutrition: RecipeNutritionData }) {
 
 function Macro({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2">
-      <div className="text-[10px] text-[#94a3b8]">{label}</div>
+    <div className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-2">
+      <div className="text-[10px] text-text-secondary">{label}</div>
       <div className="text-base tabular-nums">{value.toFixed(0)}</div>
     </div>
   );

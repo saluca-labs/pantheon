@@ -65,7 +65,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-[#94a3b8] leading-relaxed">
+      <p className="text-xs text-text-secondary leading-relaxed">
         For each domain that matters to you, rate how important it is and
         how aligned your recent actions have been. Then pick one concrete
         action you can take this week.
@@ -74,7 +74,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
         {rows.map((r, i) => (
           <li
             key={i}
-            className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-3"
+            className="rounded-xl border border-border-subtle bg-surface-0 p-4 space-y-3"
           >
             <div className="flex items-center justify-between gap-2">
               <input
@@ -82,13 +82,13 @@ export function ValuesClarifier({ exerciseId }: Props) {
                 value={r.domain}
                 onChange={(e) => setRow(i, { domain: e.target.value })}
                 placeholder="Domain (e.g. Family, Health, Work)"
-                className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2"
+                className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary px-3 py-2"
               />
               {rows.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeRow(i)}
-                  className="text-xs text-[#94a3b8] hover:text-red-300 px-2"
+                  className="text-xs text-text-secondary hover:text-red-300 px-2"
                 >
                   remove
                 </button>
@@ -111,7 +111,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
               onChange={(e) => setRow(i, { action: e.target.value })}
               rows={2}
               placeholder="One concrete action you can take this week"
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 leading-relaxed resize-y"
+              className="w-full rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary px-3 py-2 leading-relaxed resize-y"
             />
           </li>
         ))}
@@ -119,7 +119,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
       <button
         type="button"
         onClick={addRow}
-        className="text-xs text-[#4361EE] hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-[#5d7aff] transition"
       >
         + Add another domain
       </button>
@@ -144,7 +144,7 @@ function RatingRow({
 }) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1">
+      <label className="block text-[10px] uppercase tracking-wide text-text-secondary mb-1">
         {label} ({value})
       </label>
       <input
@@ -153,7 +153,7 @@ function RatingRow({
         max={10}
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
-        className="w-full accent-[#4361EE]"
+        className="w-full accent-accent"
       />
     </div>
   );

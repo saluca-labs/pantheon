@@ -84,21 +84,21 @@ export function ExportButton({ bookId, bookTitle }: ExportButtonProps) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={exporting}
-        className="inline-flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-md bg-[#1a1d27] border border-[#2a2d3e] text-xs text-[#94a3b8] hover:text-white hover:border-[#4361EE]/50 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-md bg-surface-2 border border-border-subtle text-xs text-text-secondary hover:text-white hover:border-accent/50 disabled:opacity-50 transition-colors"
       >
         <Download className="w-3.5 h-3.5" />
         {exporting ? 'Exporting…' : 'Export'}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 w-36 rounded-md border border-[#2a2d3e] bg-[#1a1d27] shadow-lg shadow-black/50 py-1 z-50">
+        <div className="absolute left-0 top-full mt-1 w-36 rounded-md border border-border-subtle bg-surface-2 shadow-lg shadow-black/50 py-1 z-50">
           {(Object.entries(FORMAT_LABELS) as [ExportFormat, typeof FORMAT_LABELS['docx']][]).map(
             ([format, { label, icon: Icon }]) => (
               <button
                 key={format}
                 type="button"
                 onClick={() => handleExport(format)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#0f1117] hover:text-white transition-colors"
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-secondary hover:bg-surface-0 hover:text-white transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {label}

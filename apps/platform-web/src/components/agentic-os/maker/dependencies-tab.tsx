@@ -90,15 +90,15 @@ export function DependenciesTab({ projectId, initial, candidateProjects }: Props
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-[#94a3b8] max-w-prose">
+        <p className="text-xs text-text-secondary max-w-prose">
           Wire up cross-project dependencies. Edges of kind{' '}
-          <code className="text-[#cbd5e1]">blocks</code> surface in the workshop-wide
-          Top Blockers feed when status is <code className="text-[#cbd5e1]">open</code>.
+          <code className="text-text-primary">blocks</code> surface in the workshop-wide
+          Top Blockers feed when status is <code className="text-text-primary">open</code>.
         </p>
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3651D9]"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3651D9]"
         >
           <Plus className="w-4 h-4" />
           Add dependency
@@ -170,35 +170,35 @@ function EdgeList({
   onRemove: (edge: ProjectDependencyHydrated) => void;
 }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-white inline-flex items-center gap-2">
           {icon}
           {title}
         </h3>
-        <p className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <p className="text-[10px] uppercase tracking-wide text-text-secondary">
           {subtitle}
         </p>
       </div>
       {edges.length === 0 ? (
-        <p className="text-xs text-[#94a3b8]">No edges.</p>
+        <p className="text-xs text-text-secondary">No edges.</p>
       ) : (
         <ul className="space-y-2">
           {edges.map((edge) => (
             <li
               key={edge.id}
-              className="rounded-md border border-[#2a2d3e] bg-[#0f1117] p-3"
+              className="rounded-md border border-border-subtle bg-surface-0 p-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/dashboard/os/maker/projects/${edge.peer.id}`}
-                    className="text-sm font-medium text-white hover:text-[#4361EE] truncate"
+                    className="text-sm font-medium text-white hover:text-accent truncate"
                   >
                     {edge.peer.name}
                   </Link>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wide">
-                    <span className="rounded-full border border-[#4361EE]/40 px-2 py-0.5 text-[#cbd5e1]">
+                    <span className="rounded-full border border-accent/40 px-2 py-0.5 text-text-primary">
                       {DEPENDENCY_KIND_LABELS[edge.kind]}
                     </span>
                     <span
@@ -210,10 +210,10 @@ function EdgeList({
                     >
                       {edge.status === 'open' ? 'Open' : 'Cleared'}
                     </span>
-                    <span className="text-[#94a3b8]">phase {edge.peer.phase}%</span>
+                    <span className="text-text-secondary">phase {edge.peer.phase}%</span>
                   </div>
                   {edge.notes && (
-                    <p className="mt-2 text-xs text-[#cbd5e1] whitespace-pre-wrap">
+                    <p className="mt-2 text-xs text-text-primary whitespace-pre-wrap">
                       {edge.notes}
                     </p>
                   )}
@@ -241,14 +241,14 @@ function EdgeList({
                     <button
                       type="button"
                       onClick={() => onRemove(edge)}
-                      className="rounded p-1 text-[#94a3b8] hover:bg-red-500/10 hover:text-red-300"
+                      className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
                       aria-label="Remove dependency"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                   {peerDirection === 'from' && (
-                    <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                    <span className="text-[10px] uppercase tracking-wide text-text-secondary">
                       read-only
                     </span>
                   )}

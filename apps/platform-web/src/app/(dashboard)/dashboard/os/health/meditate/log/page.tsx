@@ -24,18 +24,18 @@ export default async function MeditationLogPage() {
     <div className="max-w-2xl">
       <Link
         href="/dashboard/os/health/meditate"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to meditate
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <Brain className="w-6 h-6 text-[#4361EE]" />
+        <Brain className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Log a session</h1>
       </div>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
         <MeditationLogForm />
       </div>
     </div>

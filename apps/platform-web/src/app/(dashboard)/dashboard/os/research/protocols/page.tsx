@@ -27,18 +27,18 @@ export default async function ProtocolsLibraryPage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/research"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Research OS
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
-        <FileText className="w-6 h-6 text-[#4361EE]" />
+        <FileText className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Protocols library</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Workshop-global protocols, methods, SOPs, and analysis pipelines with
         version-history self-reference. Pin a protocol to an experiment at a
         frozen version string — the experiment stays reproducible against the

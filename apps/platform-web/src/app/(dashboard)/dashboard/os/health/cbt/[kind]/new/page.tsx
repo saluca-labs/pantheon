@@ -51,25 +51,25 @@ export default async function NewCbtLogPage({ params, searchParams }: PageProps)
     <div className="max-w-3xl">
       <Link
         href="/dashboard/os/health/cbt"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to CBT
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
-        <Sparkles className="w-6 h-6 text-[#4361EE]" />
+        <Sparkles className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">
           {exercise?.name ?? kind}
         </h1>
       </div>
       {exercise?.description && (
-        <p className="text-sm text-[#94a3b8] mb-5 leading-relaxed">
+        <p className="text-sm text-text-secondary mb-5 leading-relaxed">
           {exercise.description}
         </p>
       )}
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
         {kind === 'thought-record' && (
           <ThoughtRecordWizard
             exerciseId={exercise?.id}
@@ -98,7 +98,7 @@ export default async function NewCbtLogPage({ params, searchParams }: PageProps)
       </div>
 
       {exercise?.citation && (
-        <p className="text-[10px] text-[#94a3b8]/70 mt-3 leading-relaxed">
+        <p className="text-[10px] text-text-secondary/70 mt-3 leading-relaxed">
           Source: {exercise.citation}
         </p>
       )}

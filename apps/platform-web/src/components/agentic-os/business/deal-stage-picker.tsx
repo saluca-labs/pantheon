@@ -52,10 +52,10 @@ export default function DealStagePicker({ stage, onChange, disabled }: DealStage
       value={stage}
       onChange={(e) => onChange(e.target.value as DealStage)}
       disabled={disabled}
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border-0 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-[#4361EE] ${colors.bg} ${colors.text}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border-0 cursor-pointer appearance-none focus:outline-none focus:ring-2 focus:ring-accent ${colors.bg} ${colors.text}`}
     >
       {DEAL_STAGES.map((s) => (
-        <option key={s} value={s} className="bg-[#1a1d27] text-white">
+        <option key={s} value={s} className="bg-surface-2 text-white">
           {STAGE_COLORS[s].label}
         </option>
       ))}

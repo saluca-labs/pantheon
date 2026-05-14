@@ -55,7 +55,7 @@ export function CoachStarter() {
             type="button"
             disabled={submitting}
             onClick={() => send(s)}
-            className="text-left text-sm text-[#cbd5e1] rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
+            className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
           >
             {s}
           </button>
@@ -75,12 +75,12 @@ export function CoachStarter() {
           disabled={submitting}
           placeholder="Or type your own…"
           rows={2}
-          className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-[#4361EE] disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={submitting || !text.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
           Send

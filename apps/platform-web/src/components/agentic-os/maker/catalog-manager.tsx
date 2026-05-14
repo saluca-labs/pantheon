@@ -24,7 +24,7 @@ import {
 const API_BASE = '/api/tiresias/agentic-os/maker/catalog';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   initialRows: PartCatalogRow[];
@@ -115,12 +115,12 @@ export function CatalogManager({ initialRows }: Props) {
         <div className="space-y-0.5">
           <Link
             href={`/dashboard/os/maker/catalog/${row.id}`}
-            className="text-white hover:text-[#4361EE] transition font-medium"
+            className="text-white hover:text-accent transition font-medium"
           >
             {row.name}
           </Link>
           {row.manufacturer && (
-            <div className="text-[10px] text-[#94a3b8]">
+            <div className="text-[10px] text-text-secondary">
               {row.manufacturer}
               {row.mfgPartNumber ? ` · ${row.mfgPartNumber}` : ''}
             </div>
@@ -131,7 +131,7 @@ export function CatalogManager({ initialRows }: Props) {
     {
       label: 'Category',
       render: (row) => (
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">
           {PART_CATEGORY_LABELS[row.category]}
         </span>
       ),
@@ -143,7 +143,7 @@ export function CatalogManager({ initialRows }: Props) {
           className={`text-xs px-2 py-0.5 rounded border ${
             row.quantityOnHand > 0
               ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
-              : 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e]'
+              : 'text-text-secondary bg-surface-0 border-border-subtle'
           }`}
         >
           {formatQuantity(row.quantityOnHand)} {row.unit}
@@ -154,13 +154,13 @@ export function CatalogManager({ initialRows }: Props) {
       label: 'Tags',
       render: (row) =>
         row.tags.length === 0 ? (
-          <span className="text-[#94a3b8]">—</span>
+          <span className="text-text-secondary">—</span>
         ) : (
           <div className="flex flex-wrap gap-1">
             {row.tags.map((t) => (
               <span
                 key={t}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
               >
                 {t}
               </span>
@@ -203,21 +203,21 @@ export function CatalogManager({ initialRows }: Props) {
       </div>
 
       {/* List */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="rounded-lg border border-border-subtle bg-surface-2 p-4">
         <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} empty="No catalog rows yet." />
       </div>
 
       {/* Create */}
       <form
         onSubmit={addRow}
-        className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-3"
+        className="rounded-lg border border-border-subtle bg-surface-0 p-4 space-y-3"
       >
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
           New catalog row
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Name
             </span>
             <input
@@ -229,7 +229,7 @@ export function CatalogManager({ initialRows }: Props) {
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Category
             </span>
             <select
@@ -247,7 +247,7 @@ export function CatalogManager({ initialRows }: Props) {
             </select>
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Unit
             </span>
             <input
@@ -258,7 +258,7 @@ export function CatalogManager({ initialRows }: Props) {
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Manufacturer
             </span>
             <input
@@ -268,7 +268,7 @@ export function CatalogManager({ initialRows }: Props) {
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               MPN
             </span>
             <input
@@ -278,7 +278,7 @@ export function CatalogManager({ initialRows }: Props) {
             />
           </label>
           <label className="block">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               On hand
             </span>
             <input
@@ -294,7 +294,7 @@ export function CatalogManager({ initialRows }: Props) {
           </label>
         </div>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
             Tags (comma-separated)
           </span>
           <input
@@ -308,7 +308,7 @@ export function CatalogManager({ initialRows }: Props) {
           <button
             type="submit"
             disabled={adding || !newRow.name.trim()}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
           >
             {adding ? 'Adding…' : 'Create catalog row'}
           </button>

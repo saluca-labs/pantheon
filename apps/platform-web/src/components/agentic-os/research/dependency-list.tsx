@@ -52,14 +52,14 @@ export function DependencyList({ experimentId, initialView, peerOptions }: Props
   return (
     <div className="space-y-4" data-testid="dependency-list">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {view.upstream.length} upstream · {view.downstream.length} downstream
         </p>
         {!showAdd && (
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-[#2a2d3e] text-sm text-white px-2 py-1 hover:bg-[#1a1d27]"
+            className="inline-flex items-center gap-1.5 rounded border border-border-subtle text-sm text-white px-2 py-1 hover:bg-surface-2"
             data-testid="dependency-add-button"
           >
             <Plus className="w-4 h-4" />
@@ -82,12 +82,12 @@ export function DependencyList({ experimentId, initialView, peerOptions }: Props
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section data-testid="dependency-upstream-section">
-          <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1.5 mb-2">
+          <h3 className="text-xs uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5 mb-2">
             <ArrowRight className="w-3.5 h-3.5" />
             Upstream — this depends on
           </h3>
           {view.upstream.length === 0 ? (
-            <p className="text-sm text-[#94a3b8] italic">No upstream dependencies.</p>
+            <p className="text-sm text-text-secondary italic">No upstream dependencies.</p>
           ) : (
             <ul className="space-y-2">
               {view.upstream.map((d: ExperimentDependencyHydrated) => (
@@ -104,12 +104,12 @@ export function DependencyList({ experimentId, initialView, peerOptions }: Props
         </section>
 
         <section data-testid="dependency-downstream-section">
-          <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1.5 mb-2">
+          <h3 className="text-xs uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5 mb-2">
             <ArrowLeft className="w-3.5 h-3.5" />
             Downstream — depends on this
           </h3>
           {view.downstream.length === 0 ? (
-            <p className="text-sm text-[#94a3b8] italic">No downstream dependencies.</p>
+            <p className="text-sm text-text-secondary italic">No downstream dependencies.</p>
           ) : (
             <ul className="space-y-2">
               {view.downstream.map((d: ExperimentDependencyHydrated) => (

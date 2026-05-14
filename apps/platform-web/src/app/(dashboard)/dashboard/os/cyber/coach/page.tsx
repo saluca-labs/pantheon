@@ -31,7 +31,7 @@ export default async function CyberCoachLobbyPage() {
     <div className="max-w-5xl">
       <Link
         href={`/dashboard/os/cyber`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to CyberSec OS
@@ -46,12 +46,12 @@ export default async function CyberCoachLobbyPage() {
         <CoachConfigNotice />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-4">
-          <aside className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+          <aside className="rounded-xl border border-border-subtle bg-surface-2 p-4">
             <h2 className="text-sm font-semibold text-white mb-3">
               Conversations
             </h2>
             {conversations.length === 0 ? (
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 No conversations yet. Pick a mode and start one.
               </p>
             ) : (
@@ -60,7 +60,7 @@ export default async function CyberCoachLobbyPage() {
                   <li key={c.id}>
                     <Link
                       href={`/dashboard/os/cyber/coach/${c.id}`}
-                      className="block rounded-lg px-3 py-2 text-sm text-[#cbd5e1] hover:bg-[#0f1117] hover:text-white transition"
+                      className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
                     >
                       <div className="flex items-center gap-2">
                         <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
@@ -83,11 +83,11 @@ export default async function CyberCoachLobbyPage() {
             )}
           </aside>
 
-          <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+          <section className="rounded-xl border border-border-subtle bg-surface-2 p-6">
             <h2 className="text-base font-semibold text-white mb-1">
               Start a conversation
             </h2>
-            <p className="text-xs text-[#94a3b8] mb-4 leading-relaxed">
+            <p className="text-xs text-text-secondary mb-4 leading-relaxed">
               The coach sees the current SOC snapshot — open alerts, active
               IOCs, vulnerabilities, exposures, detection rules, and active
               playbook runs. Optionally scope the conversation to a single

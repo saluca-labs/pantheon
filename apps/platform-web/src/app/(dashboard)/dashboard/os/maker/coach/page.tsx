@@ -54,7 +54,7 @@ export default async function MakerCoachHubPage({ searchParams }: Props) {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/maker"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Maker OS
@@ -64,7 +64,7 @@ export default async function MakerCoachHubPage({ searchParams }: Props) {
         <Sparkles className="w-6 h-6 text-amber-300" />
         <h1 className="text-2xl font-semibold text-white">Maker Coach</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-6 leading-relaxed">
+      <p className="text-sm text-text-secondary mb-6 leading-relaxed">
         Project-aware AI advisor across procurement, build planning, and
         shop safety. The coach reads a current snapshot of your BOM, build
         steps, milestones, tools, and dependencies — depending on the

@@ -31,11 +31,11 @@ export function VoiceProfileJsonView({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded border border-[#2a2d3e] bg-[#0f1117]">
+    <div className="rounded border border-border-subtle bg-surface-0">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-3 py-1.5 text-xs uppercase tracking-wide text-[#94a3b8] hover:text-white inline-flex items-center gap-1.5"
+        className="w-full px-3 py-1.5 text-xs uppercase tracking-wide text-text-secondary hover:text-white inline-flex items-center gap-1.5"
       >
         {open ? (
           <ChevronDown className="w-3.5 h-3.5" />
@@ -45,12 +45,12 @@ export function VoiceProfileJsonView({
         View JSON
       </button>
       {open && (
-        <div className="px-3 pb-3 space-y-3 border-t border-[#2a2d3e] pt-3">
+        <div className="px-3 pb-3 space-y-3 border-t border-border-subtle pt-3">
           <div>
             <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
               style_summary
             </h4>
-            <p className="text-sm text-[#cbd5e1] leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
               {styleSummary}
             </p>
           </div>
@@ -64,7 +64,7 @@ export function VoiceProfileJsonView({
                 {styleAdjectives.map((a) => (
                   <span
                     key={a}
-                    className="text-xs px-2 py-0.5 rounded bg-[#1a1d27] border border-[#2a2d3e] text-[#cbd5e1]"
+                    className="text-xs px-2 py-0.5 rounded bg-surface-2 border border-border-subtle text-text-primary"
                   >
                     {a}
                   </span>
@@ -78,7 +78,7 @@ export function VoiceProfileJsonView({
               <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
                 style_rules
               </h4>
-              <ol className="list-decimal list-inside space-y-0.5 text-sm text-[#cbd5e1]">
+              <ol className="list-decimal list-inside space-y-0.5 text-sm text-text-primary">
                 {styleRules.map((r, i) => (
                   <li key={`${i}-${r.slice(0, 16)}`}>{r}</li>
                 ))}
@@ -95,7 +95,7 @@ export function VoiceProfileJsonView({
                 {exampleOpenings.map((o, i) => (
                   <blockquote
                     key={`${i}-${o.slice(0, 16)}`}
-                    className="text-xs italic text-[#cbd5e1]/90 border-l-2 border-[#4361EE]/40 pl-3 whitespace-pre-wrap"
+                    className="text-xs italic text-text-primary/90 border-l-2 border-accent/40 pl-3 whitespace-pre-wrap"
                   >
                     {o}
                   </blockquote>

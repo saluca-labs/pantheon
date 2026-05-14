@@ -28,9 +28,9 @@ const NUDGE: Record<CoachMode, string> = {
 
 export function CoachEmptyState({ mode }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-10 text-[#94a3b8]">
-      <MessageCircle className="w-7 h-7 mb-2 text-[#4361EE]/50" />
-      <p className="text-sm font-medium text-[#cbd5e1] mb-1">
+    <div className="flex flex-col items-center justify-center text-center py-10 text-text-secondary">
+      <MessageCircle className="w-7 h-7 mb-2 text-accent/50" />
+      <p className="text-sm font-medium text-text-primary mb-1">
         {COACH_MODE_LABELS[mode]} mode
       </p>
       <p className="text-xs max-w-md leading-relaxed">{NUDGE[mode]}</p>

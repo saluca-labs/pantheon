@@ -25,9 +25,9 @@ const INTENSITY_LABEL: Record<Intensity, string> = {
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
   light: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  moderate: 'text-[#4361EE] bg-[#4361EE]/10 border-[#4361EE]/40',
+  moderate: 'text-accent bg-accent/10 border-accent/40',
   vigorous: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  rest: 'text-[#cbd5e1] bg-[#0f1117] border-[#2a2d3e]',
+  rest: 'text-text-primary bg-surface-0 border-border-subtle',
 };
 
 export function ActivitySuggestionCard({
@@ -69,7 +69,7 @@ export function ActivitySuggestionCard({
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 flex items-center gap-2 text-xs text-[#94a3b8]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 flex items-center gap-2 text-xs text-text-secondary">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         Loading today&rsquo;s suggestion…
       </div>
@@ -80,14 +80,14 @@ export function ActivitySuggestionCard({
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-[#4361EE]/10 p-2 text-[#4361EE]">
+        <div className="rounded-lg bg-accent/10 p-2 text-accent">
           <Sparkles className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Today&rsquo;s suggestion
             </span>
             <span
@@ -97,7 +97,7 @@ export function ActivitySuggestionCard({
             </span>
           </div>
           {!compact && (
-            <p className="mt-1.5 text-sm text-[#cbd5e1] leading-snug">
+            <p className="mt-1.5 text-sm text-text-primary leading-snug">
               {data.rationale}
             </p>
           )}

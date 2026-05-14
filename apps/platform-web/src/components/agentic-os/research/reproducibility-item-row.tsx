@@ -89,7 +89,7 @@ export function ReproducibilityItemRow({
 
   return (
     <div
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 space-y-2"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-3 space-y-2"
       data-testid={`repro-item-row-${item.itemKey}`}
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -98,7 +98,7 @@ export function ReproducibilityItemRow({
             {reproItemKeyLabel(item.itemKey)}
           </span>
           {!isCanonical && (
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               custom
             </span>
           )}
@@ -109,7 +109,7 @@ export function ReproducibilityItemRow({
             value={state}
             onChange={(e) => handleStateChange(e.target.value as ReproState)}
             disabled={busy}
-            className="bg-[#0f1117] border border-[#2a2d3e] rounded text-xs text-white px-2 py-1"
+            className="bg-surface-0 border border-border-subtle rounded text-xs text-white px-2 py-1"
             data-testid={`repro-item-state-${item.itemKey}`}
           >
             {REPRO_STATE_VALUES.map((s) => (
@@ -121,7 +121,7 @@ export function ReproducibilityItemRow({
           <button
             type="button"
             onClick={() => setEditing((e) => !e)}
-            className="text-[10px] uppercase tracking-wide text-[#94a3b8] hover:text-white px-1.5 py-0.5"
+            className="text-[10px] uppercase tracking-wide text-text-secondary hover:text-white px-1.5 py-0.5"
             data-testid={`repro-item-edit-${item.itemKey}`}
           >
             {editing ? 'Close' : 'Edit'}
@@ -143,20 +143,20 @@ export function ReproducibilityItemRow({
           href={item.evidenceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline truncate"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:underline truncate"
         >
           <ExternalLink className="w-3 h-3" />
           {item.evidenceUrl}
         </a>
       )}
       {item.notes && !editing && (
-        <p className="text-xs text-[#cbd5e1] whitespace-pre-wrap">{item.notes}</p>
+        <p className="text-xs text-text-primary whitespace-pre-wrap">{item.notes}</p>
       )}
 
       {editing && (
-        <div className="space-y-2 pt-2 border-t border-[#2a2d3e]">
+        <div className="space-y-2 pt-2 border-t border-border-subtle">
           <div className="space-y-1">
-            <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <label className="text-xs uppercase tracking-wide text-text-secondary">
               Evidence URL
             </label>
             <input
@@ -165,11 +165,11 @@ export function ReproducibilityItemRow({
               onChange={(e) => setEvidenceUrl(e.target.value)}
               maxLength={2000}
               placeholder="https://…"
-              className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+              className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <label className="text-xs uppercase tracking-wide text-text-secondary">
               Notes
             </label>
             <textarea
@@ -177,14 +177,14 @@ export function ReproducibilityItemRow({
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               maxLength={4000}
-              className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+              className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
             />
           </div>
           <button
             type="button"
             onClick={handleSave}
             disabled={busy}
-            className="rounded bg-[#4361EE] text-white text-xs px-2 py-1 disabled:opacity-50"
+            className="rounded bg-accent text-white text-xs px-2 py-1 disabled:opacity-50"
           >
             Save
           </button>

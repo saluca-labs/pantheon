@@ -109,11 +109,11 @@ export function PseudonymRow({
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2">
+    <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 flex-wrap">
-            <UserCircle2 className="w-4 h-4 text-[#94a3b8] shrink-0" />
+            <UserCircle2 className="w-4 h-4 text-text-secondary shrink-0" />
             <span className="font-medium text-white text-sm">
               {personCanonicalName}
             </span>
@@ -143,13 +143,13 @@ export function PseudonymRow({
           onChange={(e) => setPseudonym(e.target.value)}
           placeholder="Pseudonym (replacement name)"
           disabled={busy}
-          className="flex-1 min-w-[180px] bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+          className="flex-1 min-w-[180px] bg-surface-2 border border-border-subtle rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-accent"
         />
         <button
           type="button"
           onClick={save}
           disabled={!canSave}
-          className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-[#2a2d3e] bg-[#1a1d27] text-[#cbd5e1] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-border-subtle bg-surface-2 text-text-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           <Save className="w-3.5 h-3.5" />
           Save
@@ -173,7 +173,7 @@ export function PseudonymRow({
         placeholder="Notes (optional — context, source agreement, etc.)"
         rows={2}
         disabled={busy}
-        className="w-full bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1 text-xs text-[#cbd5e1] focus:outline-none focus:border-[#4361EE]"
+        className="w-full bg-surface-2 border border-border-subtle rounded px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent"
       />
 
       {error && (

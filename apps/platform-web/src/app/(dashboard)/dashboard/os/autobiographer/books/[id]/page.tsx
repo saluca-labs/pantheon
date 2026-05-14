@@ -127,25 +127,25 @@ export default async function BookDetailPage({ params }: Props) {
     <div className="max-w-4xl space-y-6">
       <Link
         href="/dashboard/os/autobiographer"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Autobiographer OS
       </Link>
 
       {/* Header */}
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
         <div className="flex">
           {book.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={book.coverImageUrl}
               alt=""
-              className="w-40 h-48 object-cover border-r border-[#2a2d3e] shrink-0"
+              className="w-40 h-48 object-cover border-r border-border-subtle shrink-0"
             />
           ) : (
-            <div className="w-40 h-48 shrink-0 border-r border-[#2a2d3e] bg-gradient-to-br from-[#4361EE]/15 to-[#1a1d27] flex items-center justify-center">
-              <BookOpenText className="w-12 h-12 text-[#4361EE]/50" />
+            <div className="w-40 h-48 shrink-0 border-r border-border-subtle bg-gradient-to-br from-accent/15 to-surface-2 flex items-center justify-center">
+              <BookOpenText className="w-12 h-12 text-accent/50" />
             </div>
           )}
           <div className="flex-1 p-5 space-y-2">
@@ -158,15 +158,15 @@ export default async function BookDetailPage({ params }: Props) {
               </span>
             </div>
             {book.subtitle && (
-              <p className="text-sm text-[#cbd5e1]/90">{book.subtitle}</p>
+              <p className="text-sm text-text-primary/90">{book.subtitle}</p>
             )}
             {book.description && (
-              <p className="text-sm text-[#94a3b8] leading-relaxed">
+              <p className="text-sm text-text-secondary leading-relaxed">
                 {book.description}
               </p>
             )}
 
-            <div className="flex flex-wrap gap-3 text-xs text-[#94a3b8] pt-1">
+            <div className="flex flex-wrap gap-3 text-xs text-text-secondary pt-1">
               {book.targetCompletionDate && (
                 <span className="inline-flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
@@ -198,7 +198,7 @@ export default async function BookDetailPage({ params }: Props) {
                 {book.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary"
                   >
                     {t}
                   </span>
@@ -207,13 +207,13 @@ export default async function BookDetailPage({ params }: Props) {
             )}
 
             <div className="pt-2">
-              <div className="flex items-center justify-between text-[10px] text-[#94a3b8] mb-1">
+              <div className="flex items-center justify-between text-[10px] text-text-secondary mb-1">
                 <span>Overall progress</span>
                 <span className="text-white font-medium">{avg}%</span>
               </div>
-              <div className="h-1.5 rounded-full bg-[#0f1117] overflow-hidden max-w-md">
+              <div className="h-1.5 rounded-full bg-surface-0 overflow-hidden max-w-md">
                 <div
-                  className="h-full bg-[#4361EE] transition-all"
+                  className="h-full bg-accent transition-all"
                   style={{ width: `${avg}%` }}
                 />
               </div>
@@ -229,15 +229,15 @@ export default async function BookDetailPage({ params }: Props) {
           <div className="flex items-center gap-2">
             <Link
               href={`/dashboard/os/autobiographer/coach?book_id=${book.id}&mode=chapter_drafter`}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#4361EE]/40 bg-[#4361EE]/10 text-[#cbd5e1] hover:bg-[#4361EE]/20 hover:text-white"
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-accent/40 bg-accent/10 text-text-primary hover:bg-accent/20 hover:text-white"
               title="Open the AI coach scoped to this book"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#4361EE]" />
+              <Sparkles className="w-3.5 h-3.5 text-accent" />
               AI Coach
             </Link>
             <a
               href={`/api/tiresias/agentic-os/autobiographer/books/${book.id}/export.pdf`}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40"
               title="Export the entire book as a PDF"
             >
               <Download className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ export default async function BookDetailPage({ params }: Props) {
       <section id="arcs">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">Arcs</h2>
-          <span className="text-xs text-[#94a3b8]">
+          <span className="text-xs text-text-secondary">
             {arcs.length} {arcs.length === 1 ? 'arc' : 'arcs'} ·{' '}
             {primaryArc
               ? `Primary: ${primaryArc.title}`

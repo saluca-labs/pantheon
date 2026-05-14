@@ -32,7 +32,7 @@ export default async function NoteDetailPage({ params }: PageProps) {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Left sidebar: Note tree */}
-      <aside className="w-64 flex-shrink-0 border-r border-[#2a2d3e] bg-[#0f1117] overflow-hidden">
+      <aside className="w-64 flex-shrink-0 border-r border-border-subtle bg-surface-0 overflow-hidden">
         <NoteTree notes={allNotes} currentNoteId={note.id} />
       </aside>
 

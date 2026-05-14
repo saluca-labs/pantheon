@@ -88,13 +88,13 @@ export function DatasetForm({ experimentId, onClose }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4 space-y-3"
       data-testid="dataset-form"
     >
       <h3 className="text-sm font-semibold text-white">Add dataset</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           Name
           <input
             type="text"
@@ -102,16 +102,16 @@ export function DatasetForm({ experimentId, onClose }: Props) {
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={200}
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
             data-testid="dataset-form-name"
           />
         </label>
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           Kind
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as DatasetKind)}
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
             data-testid="dataset-form-kind"
           >
             {DATASET_KINDS.map((k) => (
@@ -123,7 +123,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
         </label>
       </div>
 
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         URL
         <input
           type="url"
@@ -131,70 +131,70 @@ export function DatasetForm({ experimentId, onClose }: Props) {
           onChange={(e) => setUrl(e.target.value)}
           required
           placeholder="https://…"
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
           data-testid="dataset-form-url"
         />
       </label>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           Version
           <input
             type="text"
             value={version}
             onChange={(e) => setVersion(e.target.value)}
             placeholder="v1.0"
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
           />
         </label>
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           Checksum
           <input
             type="text"
             value={checksum}
             onChange={(e) => setChecksum(e.target.value)}
             placeholder="sha256:…"
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white font-mono outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white font-mono outline-none focus:border-accent/60"
           />
         </label>
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           Published DOI
           <input
             type="text"
             value={publishedDoi}
             onChange={(e) => setPublishedDoi(e.target.value)}
             placeholder="10.…"
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
           />
         </label>
       </div>
 
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Tags (comma-separated)
         <input
           type="text"
           value={tagsStr}
           onChange={(e) => setTagsStr(e.target.value)}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
         />
       </label>
 
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Notes
         <textarea
           value={notesMd}
           onChange={(e) => setNotesMd(e.target.value)}
           rows={3}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
         />
       </label>
 
-      <label className="inline-flex items-center gap-2 text-xs text-[#94a3b8]">
+      <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
         <input
           type="checkbox"
           checked={archived}
           onChange={(e) => setArchived(e.target.checked)}
-          className="accent-[#4361EE]"
+          className="accent-accent"
         />
         Raw data archived externally (Zenodo, institutional repo, etc.)
       </label>
@@ -206,7 +206,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white transition"
+            className="text-xs px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>
@@ -214,7 +214,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="dataset-form-submit"
         >
           {busy && <Loader2 className="w-3 h-3 animate-spin" />}

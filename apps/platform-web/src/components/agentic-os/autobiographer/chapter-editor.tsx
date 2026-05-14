@@ -42,12 +42,12 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -156,7 +156,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
       {/* Chapter form */}
       <form
         onSubmit={handleSave}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-white">Chapter</h2>
 
@@ -208,7 +208,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Saving…' : 'Save chapter'}
           </button>
@@ -218,10 +218,10 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
       </form>
 
       {/* Life events */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4">
         <h2 className="text-sm font-semibold text-white">
           Life events{' '}
-          <span className="text-[#94a3b8] font-normal">({events.length})</span>
+          <span className="text-text-secondary font-normal">({events.length})</span>
         </h2>
 
         <form onSubmit={handleAddEvent} className="space-y-3">
@@ -263,7 +263,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
             <button
               type="submit"
               disabled={addingEvent}
-              className="rounded-lg border border-[#2a2d3e] text-white text-sm px-4 py-2 hover:border-[#4361EE] transition disabled:opacity-50"
+              className="rounded-lg border border-border-subtle text-white text-sm px-4 py-2 hover:border-accent transition disabled:opacity-50"
             >
               {addingEvent ? 'Adding…' : '+ Add event'}
             </button>
@@ -276,7 +276,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
             {events.map((ev) => (
               <li
                 key={ev.id}
-                className="flex items-start gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+                className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
                 <span className="mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
                   {ev.kind}
@@ -284,7 +284,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white font-medium">{ev.headline}</p>
                   {ev.occurredYear && (
-                    <p className="text-xs text-[#94a3b8]">{ev.occurredYear}</p>
+                    <p className="text-xs text-text-secondary">{ev.occurredYear}</p>
                   )}
                 </div>
               </li>

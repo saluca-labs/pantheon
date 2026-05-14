@@ -112,20 +112,20 @@ export function StripboardWorkspace({
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">
               Shooting days{' '}
-              <span className="text-[#94a3b8] font-normal">({days.length})</span>
+              <span className="text-text-secondary font-normal">({days.length})</span>
             </h2>
             <button
               type="button"
               onClick={addDay}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#1a1d27] text-[#cbd5e1] hover:border-[#4361EE]/60 hover:text-white disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-text-primary hover:border-accent/60 hover:text-white disabled:opacity-40"
             >
               <CalendarPlus className="w-3.5 h-3.5" /> Add day
             </button>
           </div>
           {days.length === 0 ? (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
-              <p className="text-sm text-[#94a3b8]">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
+              <p className="text-sm text-text-secondary">
                 No shooting days yet. Add one to start laying out the schedule.
               </p>
             </div>
@@ -150,8 +150,8 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
-      <p className="text-[10px] uppercase tracking-wide text-[#94a3b8]">{label}</p>
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+      <p className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</p>
       <p className="text-xl font-semibold text-white mt-1">{value}</p>
       {hint && <p className="text-[10px] text-[#64748b] mt-0.5">{hint}</p>}
     </div>

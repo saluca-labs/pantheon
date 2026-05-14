@@ -58,7 +58,7 @@ export function VoiceSampleEditButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white inline-flex items-center gap-1.5 transition"
+          className="text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white inline-flex items-center gap-1.5 transition"
         >
           <Pencil className="w-3.5 h-3.5" />
           Edit
@@ -90,7 +90,7 @@ export function VoiceSampleActions({ label }: { label?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-[#4361EE] text-white font-medium hover:bg-[#3a52d8] transition"
+        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] transition"
       >
         <Plus className="w-4 h-4" />
         {label ?? 'Add sample'}

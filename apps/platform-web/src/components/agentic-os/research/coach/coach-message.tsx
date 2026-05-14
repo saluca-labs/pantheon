@@ -29,8 +29,8 @@ export function CoachMessage({ message }: Props) {
       <div
         className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? 'bg-[#4361EE] text-white'
-            : 'bg-[#1a1d27] border border-[#2a2d3e] text-[#e2e8f0]'
+            ? 'bg-accent text-white'
+            : 'bg-surface-2 border border-border-subtle text-text-primary'
         }`}
       >
         {isAssistant ? (

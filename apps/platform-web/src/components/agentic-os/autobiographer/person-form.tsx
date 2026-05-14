@@ -117,7 +117,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-2xl bg-[#1a1d27] rounded-xl border border-[#2a2d3e] p-5 space-y-4 my-8"
+        className="w-full max-w-2xl bg-surface-2 rounded-xl border border-border-subtle p-5 space-y-4 my-8"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
@@ -126,7 +126,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -134,7 +134,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Canonical name<span className="text-red-400">*</span>
           </span>
           <input
@@ -142,13 +142,13 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
             onChange={(e) => setCanonicalName(e.target.value)}
             required
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder='e.g. "Maria del Carmen Ruvalcaba"'
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Aliases{' '}
             <span className="text-[#64748b] normal-case">(one per line)</span>
           </span>
@@ -156,26 +156,26 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
             value={aliasesInput}
             onChange={(e) => setAliasesInput(e.target.value)}
             rows={3}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder={'Mom\nMother\nMa'}
           />
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Relation
             </span>
             <input
               value={relation}
               onChange={(e) => setRelation(e.target.value)}
               maxLength={200}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder='e.g. "mother", "mentor", "colleague"'
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Image URL
             </span>
             <input
@@ -183,7 +183,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               maxLength={2000}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder="https://… (MCP-mediated storage transfer)"
             />
           </label>
@@ -191,7 +191,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Birth year
             </span>
             <input
@@ -200,12 +200,12 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
               max={9999}
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder="e.g. 1942"
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Death year
             </span>
             <input
@@ -214,7 +214,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
               max={9999}
               value={deathYear}
               onChange={(e) => setDeathYear(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder="Leave blank if living"
             />
           </label>
@@ -222,7 +222,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Consent to publish
             </span>
             <select
@@ -230,7 +230,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
               onChange={(e) =>
                 setConsentToPublish(e.target.value as ConsentState)
               }
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             >
               {CONSENT_STATES.map((s) => (
                 <option key={s} value={s}>
@@ -240,21 +240,21 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
             </select>
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Consent recorded by
             </span>
             <input
               value={consentRecordedBy}
               onChange={(e) => setConsentRecordedBy(e.target.value)}
               maxLength={500}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder='e.g. "verbal, 2026-04-12"'
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Notes
           </span>
           <textarea
@@ -262,7 +262,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             maxLength={5000}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="Anything else worth remembering about this person."
           />
         </label>
@@ -277,14 +277,14 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-3 py-1.5 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white transition"
+            className="text-sm px-3 py-1.5 rounded border border-border-subtle text-text-primary hover:text-white transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting || !canonicalName.trim()}
-            className="text-sm px-4 py-1.5 rounded bg-[#4361EE] text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
+            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Add person'}
           </button>

@@ -157,7 +157,7 @@ export function MemoryForm({
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-2xl bg-[#1a1d27] rounded-xl border border-[#2a2d3e] p-5 space-y-4 my-8"
+        className="w-full max-w-2xl bg-surface-2 rounded-xl border border-border-subtle p-5 space-y-4 my-8"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
@@ -166,7 +166,7 @@ export function MemoryForm({
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -174,7 +174,7 @@ export function MemoryForm({
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Title<span className="text-red-400">*</span>
           </span>
           <input
@@ -182,13 +182,13 @@ export function MemoryForm({
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="A short title for this memory"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Memory<span className="text-red-400">*</span>{' '}
             <span className="text-[#64748b] normal-case">(markdown)</span>
           </span>
@@ -198,70 +198,70 @@ export function MemoryForm({
             required
             rows={6}
             maxLength={200_000}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE] font-mono"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent font-mono"
             placeholder="What happened? Where? Who was there?"
           />
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               When in life
             </span>
             <input
               value={whenInLife}
               onChange={(e) => setWhenInLife(e.target.value)}
               maxLength={500}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder='e.g. "around 1985", "high school years"'
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Era date estimate
             </span>
             <input
               type="date"
               value={eraDateEstimate}
               onChange={(e) => setEraDateEstimate(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Location
           </span>
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             maxLength={500}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder={'e.g. "Albuquerque, NM" or "Grandma\'s kitchen"'}
           />
         </label>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Content tags (comma-separated)
             </span>
             <input
               value={contentTagsInput}
               onChange={(e) => setContentTagsInput(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder="family, work, first-love"
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Emotion tags (comma-separated)
             </span>
             <input
               value={emotionTagsInput}
               onChange={(e) => setEmotionTagsInput(e.target.value)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               placeholder="grief, joy, pride"
             />
           </label>
@@ -270,13 +270,13 @@ export function MemoryForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {!lockedBookId && (
             <label className="block">
-              <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+              <span className="text-xs uppercase tracking-wide text-text-secondary">
                 Attach to book
               </span>
               <select
                 value={bookId}
                 onChange={(e) => setBookId(e.target.value)}
-                className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+                className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
               >
                 <option value="">Workshop (no book)</option>
                 {books.map((b) => (
@@ -288,13 +288,13 @@ export function MemoryForm({
             </label>
           )}
           <label className="block">
-            <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-xs uppercase tracking-wide text-text-secondary">
               Source
             </span>
             <select
               value={source}
               onChange={(e) => setSource(e.target.value as MemorySource)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             >
               {MEMORY_SOURCES.map((s) => (
                 <option key={s} value={s}>
@@ -306,7 +306,7 @@ export function MemoryForm({
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Audio URL
           </span>
           <input
@@ -314,13 +314,13 @@ export function MemoryForm({
             value={audioUrl}
             onChange={(e) => setAudioUrl(e.target.value)}
             maxLength={2000}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="https://... (MCP-mediated storage transfer)"
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Transcript
           </span>
           <textarea
@@ -328,30 +328,30 @@ export function MemoryForm({
             onChange={(e) => setTranscript(e.target.value)}
             rows={3}
             maxLength={500_000}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="Paste a transcript of any audio capture here."
           />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-xs uppercase tracking-wide text-text-secondary">
             Photo URLs <span className="text-[#64748b] normal-case">(one per line)</span>
           </span>
           <textarea
             value={photoUrlsInput}
             onChange={(e) => setPhotoUrlsInput(e.target.value)}
             rows={2}
-            className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+            className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             placeholder="https://..."
           />
         </label>
 
-        <label className="inline-flex items-center gap-2 text-sm text-[#cbd5e1]">
+        <label className="inline-flex items-center gap-2 text-sm text-text-primary">
           <input
             type="checkbox"
             checked={isSensitive}
             onChange={(e) => setIsSensitive(e.target.checked)}
-            className="rounded border-[#2a2d3e] bg-[#0f1117]"
+            className="rounded border-border-subtle bg-surface-0"
           />
           Mark as sensitive (flagged for Phase 6 privacy review)
         </label>
@@ -366,14 +366,14 @@ export function MemoryForm({
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-3 py-1.5 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white transition"
+            className="text-sm px-3 py-1.5 rounded border border-border-subtle text-text-primary hover:text-white transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting || !title.trim() || !bodyMarkdown.trim()}
-            className="text-sm px-4 py-1.5 rounded bg-[#4361EE] text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
+            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Capture memory'}
           </button>

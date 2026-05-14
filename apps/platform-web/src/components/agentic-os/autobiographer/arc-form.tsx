@@ -121,15 +121,15 @@ export function ArcForm({
 
   return (
     <div className="fixed inset-0 z-40 bg-black/40 flex items-start justify-center p-6">
-      <div className="w-full max-w-md rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-border-subtle bg-surface-2 p-5 shadow-xl">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm uppercase tracking-wide text-[#94a3b8]">
+          <h3 className="text-sm uppercase tracking-wide text-text-secondary">
             {arcId ? 'Edit arc' : 'New arc'}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -144,7 +144,7 @@ export function ArcForm({
 
         <div className="space-y-3">
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Title
             </span>
             <input
@@ -152,17 +152,17 @@ export function ArcForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={255}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Kind
             </span>
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as ArcKind)}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             >
               {ARC_KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -172,7 +172,7 @@ export function ArcForm({
             </select>
           </label>
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Description (optional)
             </span>
             <textarea
@@ -180,10 +180,10 @@ export function ArcForm({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               maxLength={4000}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
-          <label className="inline-flex items-center gap-2 text-xs text-[#cbd5e1]">
+          <label className="inline-flex items-center gap-2 text-xs text-text-primary">
             <input
               type="checkbox"
               checked={isPrimary}
@@ -208,7 +208,7 @@ export function ArcForm({
             <button
               type="button"
               onClick={onClose}
-              className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white"
+              className="text-xs px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white"
             >
               Cancel
             </button>
@@ -216,7 +216,7 @@ export function ArcForm({
               type="button"
               onClick={submit}
               disabled={busy || title.trim().length === 0}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
             >
               <Save className="w-3.5 h-3.5" />
               Save

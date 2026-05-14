@@ -31,7 +31,7 @@ interface ApiResponse {
 }
 
 const inputCls =
-  'rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function formatTimestamp(iso: string): string {
   try {
@@ -101,10 +101,10 @@ export function AuditViewer() {
     <div className="space-y-4">
       <form
         onSubmit={applyFilters}
-        className="grid gap-3 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 md:grid-cols-5"
+        className="grid gap-3 rounded-lg border border-border-subtle bg-surface-2 p-4 md:grid-cols-5"
       >
         <label className="block">
-          <span className="mb-1.5 block text-xs uppercase tracking-wide text-[#94a3b8]">OS</span>
+          <span className="mb-1.5 block text-xs uppercase tracking-wide text-text-secondary">OS</span>
           <select
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
@@ -119,7 +119,7 @@ export function AuditViewer() {
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-xs uppercase tracking-wide text-[#94a3b8]">
+          <span className="mb-1.5 block text-xs uppercase tracking-wide text-text-secondary">
             Action
           </span>
           <input
@@ -131,7 +131,7 @@ export function AuditViewer() {
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-xs uppercase tracking-wide text-[#94a3b8]">From</span>
+          <span className="mb-1.5 block text-xs uppercase tracking-wide text-text-secondary">From</span>
           <input
             type="datetime-local"
             value={fromTs}
@@ -140,7 +140,7 @@ export function AuditViewer() {
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-xs uppercase tracking-wide text-[#94a3b8]">To</span>
+          <span className="mb-1.5 block text-xs uppercase tracking-wide text-text-secondary">To</span>
           <input
             type="datetime-local"
             value={toTs}
@@ -152,7 +152,7 @@ export function AuditViewer() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a52d4] disabled:opacity-60"
+            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a52d4] disabled:opacity-60"
           >
             {loading ? 'Loading…' : 'Apply filters'}
           </button>
@@ -165,9 +165,9 @@ export function AuditViewer() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-[#2a2d3e] bg-[#1a1d27]">
+      <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface-2">
         <table className="w-full text-sm">
-          <thead className="bg-[#0f1117] text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+          <thead className="bg-surface-0 text-left text-xs uppercase tracking-wide text-text-secondary">
             <tr>
               <th className="px-4 py-3">When</th>
               <th className="px-4 py-3">OS</th>
@@ -178,18 +178,18 @@ export function AuditViewer() {
           <tbody>
             {entries.length === 0 && hasLoaded && !loading && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-[#94a3b8]">
+                <td colSpan={4} className="px-4 py-8 text-center text-text-secondary">
                   No audit entries match these filters.
                 </td>
               </tr>
             )}
             {entries.map((e) => (
-              <tr key={e.id} className="border-t border-[#2a2d3e] align-top">
-                <td className="whitespace-nowrap px-4 py-3 text-[#cbd5e1]">
+              <tr key={e.id} className="border-t border-border-subtle align-top">
+                <td className="whitespace-nowrap px-4 py-3 text-text-primary">
                   {formatTimestamp(e.createdAt)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
-                  <span className="rounded border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-xs text-[#cbd5e1]">
+                  <span className="rounded border border-border-subtle bg-surface-0 px-2 py-0.5 text-xs text-text-primary">
                     {e.osSlug}
                   </span>
                 </td>
@@ -197,7 +197,7 @@ export function AuditViewer() {
                   {e.action}
                 </td>
                 <td className="px-4 py-3">
-                  <pre className="overflow-x-auto rounded bg-[#0f1117] p-2 text-xs text-[#94a3b8]">
+                  <pre className="overflow-x-auto rounded bg-surface-0 p-2 text-xs text-text-secondary">
                     {JSON.stringify(e.payload, null, 2)}
                   </pre>
                 </td>
@@ -213,7 +213,7 @@ export function AuditViewer() {
             type="button"
             disabled={loading}
             onClick={() => void fetchPage(false)}
-            className="rounded-md border border-[#2a2d3e] bg-[#1a1d27] px-4 py-2 text-sm text-white hover:bg-[#2a2d3e] disabled:opacity-60"
+            className="rounded-md border border-border-subtle bg-surface-2 px-4 py-2 text-sm text-white hover:bg-border-subtle disabled:opacity-60"
           >
             {loading ? 'Loading…' : 'Load more'}
           </button>

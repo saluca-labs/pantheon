@@ -39,7 +39,7 @@ export function PromptPicker({ prompts, hrefBase }: Props) {
 
   if (prompts.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8]">
+      <p className="text-sm text-text-secondary">
         No prompts loaded. Try refreshing — the seed migration may still be
         running.
       </p>
@@ -49,7 +49,7 @@ export function PromptPicker({ prompts, hrefBase }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-1">
-        <Sparkles className="w-4 h-4 text-[#4361EE]" />
+        <Sparkles className="w-4 h-4 text-accent" />
         <h3 className="text-sm font-semibold text-white">
           Pick a prompt to start
         </h3>
@@ -74,7 +74,7 @@ export function PromptPicker({ prompts, hrefBase }: Props) {
       <div className="space-y-2">
         {(activeCategory ? [activeCategory] : categories).map((c) => (
           <div key={c}>
-            <h4 className="text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <h4 className="text-[10px] uppercase tracking-wide text-text-secondary mb-1.5">
               {CATEGORY_LABELS[c] ?? c}
             </h4>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -83,13 +83,13 @@ export function PromptPicker({ prompts, hrefBase }: Props) {
                   <button
                     type="button"
                     onClick={() => pick(p.slug)}
-                    className="w-full text-left rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/50 hover:bg-[#1a1d27] transition p-3"
+                    className="w-full text-left rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/50 hover:bg-surface-2 transition p-3"
                   >
                     <p className="text-xs text-white leading-relaxed">
                       {p.prompt}
                     </p>
                     {p.source && (
-                      <p className="text-[10px] text-[#94a3b8]/70 mt-1.5">
+                      <p className="text-[10px] text-text-secondary/70 mt-1.5">
                         {p.source}
                       </p>
                     )}
@@ -101,7 +101,7 @@ export function PromptPicker({ prompts, hrefBase }: Props) {
         ))}
       </div>
 
-      <p className="text-[10px] text-[#94a3b8]/70 mt-3">
+      <p className="text-[10px] text-text-secondary/70 mt-3">
         Or skip the prompt and{' '}
         <button
           type="button"
@@ -131,8 +131,8 @@ function CategoryChip({
       onClick={onClick}
       className={`text-xs rounded-full border px-3 py-1 transition ${
         active
-          ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-          : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+          ? 'border-accent bg-accent/15 text-white'
+          : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
       }`}
     >
       {label}

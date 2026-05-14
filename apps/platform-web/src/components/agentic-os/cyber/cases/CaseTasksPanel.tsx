@@ -130,7 +130,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {tasks.length} task{tasks.length === 1 ? '' : 's'}
           {tasks.length > 0 && (
             <>
@@ -142,7 +142,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'Add task'}
@@ -158,7 +158,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
       )}
 
       {tasks.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No tasks yet.
         </p>
       ) : (
@@ -170,7 +170,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
             return (
               <li
                 key={t.id}
-                className={`rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 ${
+                className={`rounded-lg border border-border-subtle bg-surface-2 p-3 ${
                   cancelled ? 'opacity-60' : ''
                 }`}
               >
@@ -180,13 +180,13 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                     checked={done}
                     onChange={() => toggleDone(t)}
                     disabled={busy === t.id}
-                    className="mt-0.5 h-4 w-4 accent-[#4361EE]"
+                    className="mt-0.5 h-4 w-4 accent-accent"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`text-sm ${
-                          done ? 'line-through text-[#94a3b8]' : 'text-white'
+                          done ? 'line-through text-text-secondary' : 'text-white'
                         }`}
                       >
                         {t.title}
@@ -199,17 +199,17 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                         {t.priority}
                       </span>
                       {t.status !== 'open' && t.status !== 'done' && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary">
                           {TASK_STATUSES.find((s) => s.value === t.status)?.label ?? t.status}
                         </span>
                       )}
                     </div>
                     {t.description && (
-                      <p className="text-xs text-[#cbd5e1] mt-1 whitespace-pre-wrap">
+                      <p className="text-xs text-text-primary mt-1 whitespace-pre-wrap">
                         {t.description}
                       </p>
                     )}
-                    <div className="text-[11px] text-[#94a3b8] mt-1 flex flex-wrap gap-x-3">
+                    <div className="text-[11px] text-text-secondary mt-1 flex flex-wrap gap-x-3">
                       {t.assignedTo && <span>{t.assignedTo}</span>}
                       {t.dueAt && (
                         <span>Due {new Date(t.dueAt).toLocaleString()}</span>
@@ -226,7 +226,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                       type="button"
                       onClick={() => moveUp(i)}
                       disabled={i === 0}
-                      className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white disabled:opacity-30 p-1 transition"
+                      className="rounded border border-border-subtle text-text-secondary hover:text-white disabled:opacity-30 p-1 transition"
                       aria-label="Move up"
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
@@ -235,7 +235,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                       type="button"
                       onClick={() => moveDown(i)}
                       disabled={i === tasks.length - 1}
-                      className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white disabled:opacity-30 p-1 transition"
+                      className="rounded border border-border-subtle text-text-secondary hover:text-white disabled:opacity-30 p-1 transition"
                       aria-label="Move down"
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -245,7 +245,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                     <button
                       type="button"
                       onClick={() => setEditing(isEditing ? null : t.id)}
-                      className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white p-1 transition"
+                      className="rounded border border-border-subtle text-text-secondary hover:text-white p-1 transition"
                       aria-label="Edit task"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                       type="button"
                       onClick={() => remove(t.id)}
                       disabled={busy === t.id}
-                      className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 p-1 transition"
+                      className="rounded border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 p-1 transition"
                       aria-label="Delete task"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

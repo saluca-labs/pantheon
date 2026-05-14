@@ -51,7 +51,7 @@ export const BREAKDOWN_CATEGORIES: BreakdownCategoryInfo[] = [
   { category: 'sound_effects', label: 'Sound FX', icon: 'Volume2', color: 'text-blue-300 bg-blue-500/10 border-blue-500/30' },
   { category: 'music', label: 'Music', icon: 'Music', color: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' },
   { category: 'location', label: 'Location', icon: 'MapPin', color: 'text-lime-300 bg-lime-500/10 border-lime-500/30' },
-  { category: 'other', label: 'Other', icon: 'Tag', color: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]' },
+  { category: 'other', label: 'Other', icon: 'Tag', color: 'text-text-secondary bg-surface-2 border-border-subtle' },
 ];
 
 export const BREAKDOWN_CATEGORY_LABEL: Record<BreakdownCategory, string> =
@@ -100,10 +100,10 @@ export interface SceneStatusInfo {
 }
 
 export const SCENE_STATUSES: SceneStatusInfo[] = [
-  { status: 'unscheduled', label: 'Unscheduled', color: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]' },
+  { status: 'unscheduled', label: 'Unscheduled', color: 'text-text-secondary bg-surface-2 border-border-subtle' },
   { status: 'scheduled', label: 'Scheduled', color: 'text-blue-300 bg-blue-500/10 border-blue-500/30' },
   { status: 'shot', label: 'Shot', color: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' },
-  { status: 'omitted', label: 'Omitted', color: 'text-[#64748b] bg-[#0f1117] border-[#2a2d3e]' },
+  { status: 'omitted', label: 'Omitted', color: 'text-[#64748b] bg-surface-0 border-border-subtle' },
   { status: 'reshoot_needed', label: 'Reshoot', color: 'text-amber-300 bg-amber-500/10 border-amber-500/30' },
 ];
 

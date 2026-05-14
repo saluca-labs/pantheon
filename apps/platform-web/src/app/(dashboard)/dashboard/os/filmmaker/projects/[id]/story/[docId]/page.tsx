@@ -41,7 +41,7 @@ export default async function FilmmakerStoryDocumentPage({ params }: Props) {
     <div className="max-w-4xl">
       <Link
         href={`/dashboard/os/filmmaker/projects/${id}/story`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to story

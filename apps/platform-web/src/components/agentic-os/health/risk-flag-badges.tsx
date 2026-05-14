@@ -52,7 +52,7 @@ export function RiskFlagBadges({ flags }: RiskFlagBadgesProps) {
   const hasCrisis = flags.some((f) => f.kind === 'crisis-language');
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-baseline justify-between mb-3">
         <h3 className="text-sm font-semibold text-white">
           {flags.length === 1 ? 'Active risk flag' : `Active risk flags (${flags.length})`}

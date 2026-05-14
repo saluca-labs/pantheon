@@ -63,8 +63,8 @@ function NoteTreeItem({
       <div
         className={`group flex items-center gap-1 py-1 pr-2 rounded-md transition ${
           isActive
-            ? 'bg-[#4361EE]/15 text-white'
-            : 'text-[#94a3b8] hover:text-white hover:bg-[#1a1d27]'
+            ? 'bg-accent/15 text-white'
+            : 'text-text-secondary hover:text-white hover:bg-surface-2'
         }`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
@@ -76,7 +76,7 @@ function NoteTreeItem({
               e.preventDefault();
               setExpanded((v) => !v);
             }}
-            className="p-0.5 rounded hover:bg-[#2a2d3e] transition flex-shrink-0"
+            className="p-0.5 rounded hover:bg-border-subtle transition flex-shrink-0"
             title={expanded ? 'Collapse' : 'Expand'}
           >
             <ChevronRight
@@ -97,7 +97,7 @@ function NoteTreeItem({
           {node.note.icon ? (
             <span className="text-sm flex-shrink-0">{node.note.icon}</span>
           ) : (
-            <FileText className="w-3.5 h-3.5 text-[#94a3b8]/60 flex-shrink-0" />
+            <FileText className="w-3.5 h-3.5 text-text-secondary/60 flex-shrink-0" />
           )}
           <span className="text-sm truncate">
             {node.note.title || 'Untitled'}
@@ -128,13 +128,13 @@ export function NoteTree({ notes, currentNoteId }: NoteTreeProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#2a2d3e]">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[#94a3b8]">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border-subtle">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
           Notes
         </h2>
         <Link
           href="/dashboard/os/creator/notes/new"
-          className="p-1 rounded hover:bg-[#2a2d3e] text-[#94a3b8] hover:text-white transition"
+          className="p-1 rounded hover:bg-border-subtle text-text-secondary hover:text-white transition"
           title="New Note"
         >
           <Plus className="w-4 h-4" />
@@ -144,7 +144,7 @@ export function NoteTree({ notes, currentNoteId }: NoteTreeProps) {
       {/* Tree */}
       <nav className="flex-1 overflow-y-auto py-1">
         {tree.length === 0 ? (
-          <p className="px-4 py-6 text-xs text-[#94a3b8]/60 text-center">
+          <p className="px-4 py-6 text-xs text-text-secondary/60 text-center">
             No notes yet. Create your first note to get started.
           </p>
         ) : (

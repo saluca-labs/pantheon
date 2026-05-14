@@ -25,7 +25,7 @@ function Field({
 }) {
   return (
     <div>
-      <h3 className="text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1">
+      <h3 className="text-[10px] uppercase tracking-wide text-text-secondary mb-1">
         {label}
       </h3>
       <div className="text-sm text-white whitespace-pre-wrap leading-relaxed">
@@ -39,7 +39,7 @@ function Text({ value }: { value: unknown }) {
   if (typeof value === 'string' && value.trim().length > 0) {
     return <>{value}</>;
   }
-  return <span className="text-[#94a3b8]">—</span>;
+  return <span className="text-text-secondary">—</span>;
 }
 
 export function ThoughtRecordFormatter({ log }: FormatterProps) {
@@ -82,7 +82,7 @@ export function BehavioralActivationFormatter({ log }: FormatterProps) {
           {d.completed ? (
             <span className="text-emerald-300">Yes</span>
           ) : (
-            <span className="text-[#94a3b8]">Not yet</span>
+            <span className="text-text-secondary">Not yet</span>
           )}
         </Field>
       </div>
@@ -110,7 +110,7 @@ export function WorryTimeFormatter({ log }: FormatterProps) {
       </div>
       <Field label="Worries">
         {worries.length === 0 ? (
-          <span className="text-[#94a3b8]">—</span>
+          <span className="text-text-secondary">—</span>
         ) : (
           <ul className="list-disc pl-5 space-y-1">
             {worries.map((w, i) => (
@@ -118,7 +118,7 @@ export function WorryTimeFormatter({ log }: FormatterProps) {
                 {typeof w === 'string' ? (
                   w
                 ) : (
-                  <span className="text-[#94a3b8]">(unreadable)</span>
+                  <span className="text-text-secondary">(unreadable)</span>
                 )}
               </li>
             ))}
@@ -148,7 +148,7 @@ export function GroundingFormatter({ log }: FormatterProps) {
         return (
           <Field key={key} label={label}>
             {items.length === 0 ? (
-              <span className="text-[#94a3b8]">—</span>
+              <span className="text-text-secondary">—</span>
             ) : (
               <ul className="list-disc pl-5 space-y-1">
                 {items.map((it, i) => (
@@ -156,7 +156,7 @@ export function GroundingFormatter({ log }: FormatterProps) {
                     {typeof it === 'string' ? (
                       it
                     ) : (
-                      <span className="text-[#94a3b8]">(unreadable)</span>
+                      <span className="text-text-secondary">(unreadable)</span>
                     )}
                   </li>
                 ))}
@@ -175,7 +175,7 @@ export function GratitudeFormatter({ log }: FormatterProps) {
   return (
     <Field label="Three good things">
       {entries.length === 0 ? (
-        <span className="text-[#94a3b8]">—</span>
+        <span className="text-text-secondary">—</span>
       ) : (
         <ol className="list-decimal pl-5 space-y-1">
           {entries.map((e, i) => (
@@ -183,7 +183,7 @@ export function GratitudeFormatter({ log }: FormatterProps) {
               {typeof e === 'string' ? (
                 e
               ) : (
-                <span className="text-[#94a3b8]">(unreadable)</span>
+                <span className="text-text-secondary">(unreadable)</span>
               )}
             </li>
           ))}
@@ -198,11 +198,11 @@ export function ValuesFormatter({ log }: FormatterProps) {
   const values = Array.isArray(d.values) ? (d.values as unknown[]) : [];
   return (
     <div className="space-y-3">
-      <h3 className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+      <h3 className="text-[10px] uppercase tracking-wide text-text-secondary">
         Values
       </h3>
       {values.length === 0 ? (
-        <span className="text-sm text-[#94a3b8]">—</span>
+        <span className="text-sm text-text-secondary">—</span>
       ) : (
         <ul className="space-y-3">
           {values.map((v, i) => {
@@ -211,18 +211,18 @@ export function ValuesFormatter({ log }: FormatterProps) {
             return (
               <li
                 key={i}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+                className="rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
                 <div className="flex items-baseline justify-between gap-2 mb-1">
                   <span className="text-sm font-medium text-white">
                     {typeof row.domain === 'string' ? row.domain : '—'}
                   </span>
-                  <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                  <span className="text-[10px] uppercase tracking-wide text-text-secondary">
                     importance {String(row.importance ?? '—')} ·
                     alignment {String(row.current_alignment ?? '—')}
                   </span>
                 </div>
-                <p className="text-xs text-[#cbd5e1] leading-relaxed">
+                <p className="text-xs text-text-primary leading-relaxed">
                   {typeof row.action === 'string' && row.action.trim().length > 0
                     ? row.action
                     : '—'}
@@ -242,11 +242,11 @@ export function SleepHygieneFormatter({ log }: FormatterProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <h3 className="text-[10px] uppercase tracking-wide text-text-secondary mb-1.5">
           Checklist
         </h3>
         {items.length === 0 ? (
-          <span className="text-sm text-[#94a3b8]">—</span>
+          <span className="text-sm text-text-secondary">—</span>
         ) : (
           <ul className="space-y-1">
             {items.map((it, i) => {
@@ -262,11 +262,11 @@ export function SleepHygieneFormatter({ log }: FormatterProps) {
                     className={`inline-block w-3.5 h-3.5 rounded-sm border ${
                       met
                         ? 'bg-emerald-500/40 border-emerald-400/60'
-                        : 'bg-transparent border-[#2a2d3e]'
+                        : 'bg-transparent border-border-subtle'
                     }`}
                     aria-hidden="true"
                   />
-                  <span className={met ? '' : 'text-[#94a3b8]'}>
+                  <span className={met ? '' : 'text-text-secondary'}>
                     {typeof row.item === 'string' ? row.item : '—'}
                   </span>
                 </li>
@@ -301,7 +301,7 @@ export function CbtLogFormatter({ log }: FormatterProps) {
       return <SleepHygieneFormatter log={log} />;
     default:
       return (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           No formatter for kind <code>{log.kind}</code>.
         </p>
       );

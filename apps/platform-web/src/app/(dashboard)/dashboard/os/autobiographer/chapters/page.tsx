@@ -71,32 +71,32 @@ export default async function AutobiographerChaptersPage({
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/autobiographer"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Autobiographer OS
       </Link>
 
       <div className="flex items-center gap-3 mb-1">
-        <BookOpenText className="w-6 h-6 text-[#4361EE]" />
+        <BookOpenText className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Chapters</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-4">
+      <p className="text-sm text-text-secondary mb-4">
         Workshop-wide chapter index across every book. Pick a book chip to
         narrow the view, or click a chapter to open its detail page with the
         revision history, prose editor, and source-memory panel.
       </p>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 mb-5 flex items-start gap-2.5">
-        <Info className="w-4 h-4 text-[#4361EE] shrink-0 mt-0.5" />
-        <div className="text-xs text-[#cbd5e1] leading-relaxed">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-3 mb-5 flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+        <div className="text-xs text-text-primary leading-relaxed">
           The legacy single-chapter editor is still reachable but no longer
           the default surface. Phase 4 introduces book-scoped chapters with
           versioned revisions and the provenance join back to source
           memories — open a{' '}
           <Link
             href="/dashboard/os/autobiographer"
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             book
           </Link>{' '}

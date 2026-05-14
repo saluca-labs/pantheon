@@ -35,7 +35,7 @@ const ROLE_COLOR: Record<CharacterRole, string> = {
   antagonist: 'text-red-300 bg-red-500/10 border-red-500/30',
   deuteragonist: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   supporting: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  minor: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  minor: 'text-text-secondary bg-surface-2 border-border-subtle',
   ensemble: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
 };
 
@@ -103,9 +103,9 @@ export function CharacterDetailWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
         <div className="flex flex-col sm:flex-row">
-          <div className="sm:w-48 sm:h-48 h-32 bg-gradient-to-br from-[#4361EE]/20 to-[#1a1d27] sm:border-r border-b sm:border-b-0 border-[#2a2d3e] flex items-center justify-center shrink-0">
+          <div className="sm:w-48 sm:h-48 h-32 bg-gradient-to-br from-accent/20 to-surface-2 sm:border-r border-b sm:border-b-0 border-border-subtle flex items-center justify-center shrink-0">
             {current.portraitUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -131,7 +131,7 @@ export function CharacterDetailWorkspace({
                   {CHARACTER_ROLE_LABEL[current.role]}
                 </span>
                 {current.archetype && (
-                  <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1]">
+                  <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-primary">
                     {current.archetype}
                   </span>
                 )}
@@ -140,7 +140,7 @@ export function CharacterDetailWorkspace({
                 <p className="text-sm text-white/90 italic">{current.logline}</p>
               )}
               {(current.age || current.occupation || current.pronouns) && (
-                <p className="text-xs text-[#94a3b8] mt-2">
+                <p className="text-xs text-text-secondary mt-2">
                   {[current.age, current.occupation, current.pronouns]
                     .filter(Boolean)
                     .join(' · ')}
@@ -151,7 +151,7 @@ export function CharacterDetailWorkspace({
               <button
                 type="button"
                 onClick={() => setEditing((v) => !v)}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/60 text-white transition"
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:border-accent/60 text-white transition"
               >
                 <Pencil className="w-3.5 h-3.5" />
                 {editing ? 'Cancel edit' : 'Edit'}
@@ -170,7 +170,7 @@ export function CharacterDetailWorkspace({
       </div>
 
       {editing ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
           <CharacterForm
             initial={current}
             submitLabel="Save changes"
@@ -202,7 +202,7 @@ export function CharacterDetailWorkspace({
         </div>
       )}
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
         <RelationshipList
           projectId={projectId}
           characters={allCharacters}
@@ -213,9 +213,9 @@ export function CharacterDetailWorkspace({
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-4">
+          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Delete character?</h3>
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               This deletes{' '}
               <span className="text-white font-medium">{current.name}</span> and
               every linked relationship. This cannot be undone.
@@ -225,7 +225,7 @@ export function CharacterDetailWorkspace({
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+                className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
               >
                 Cancel
               </button>
@@ -253,7 +253,7 @@ function ReadOnlySection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
         {title}
       </h2>
@@ -275,7 +275,7 @@ function FieldRow({
   if (block) {
     return (
       <div>
-        <p className="text-[11px] uppercase tracking-wide text-[#94a3b8] mb-1">
+        <p className="text-[11px] uppercase tracking-wide text-text-secondary mb-1">
           {label}
         </p>
         <p className="text-sm text-white whitespace-pre-wrap">{value}</p>
@@ -284,7 +284,7 @@ function FieldRow({
   }
   return (
     <div className="flex items-baseline justify-between gap-3 text-sm">
-      <span className="text-[#94a3b8]">{label}</span>
+      <span className="text-text-secondary">{label}</span>
       <span className="text-white text-right">{value}</span>
     </div>
   );

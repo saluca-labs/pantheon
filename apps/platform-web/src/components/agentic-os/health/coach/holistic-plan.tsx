@@ -57,7 +57,7 @@ export function HolisticPlanGenerator() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8] max-w-2xl">
+        <p className="text-xs text-text-secondary max-w-2xl">
           A 1-week plan covering activity, nutrition, sleep, and mental health,
           grounded in your recent snapshot. Plans are generated fresh on every
           click — copy what's useful into your journal or notes.
@@ -66,7 +66,7 @@ export function HolisticPlanGenerator() {
           type="button"
           onClick={generate}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           {plan ? (
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -88,7 +88,7 @@ export function HolisticPlanGenerator() {
           {SECTIONS.map(({ key, label, icon: Icon, tone }) => (
             <div
               key={key}
-              className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4"
+              className="rounded-xl border border-border-subtle bg-surface-0 p-4"
             >
               <div className="flex items-center gap-2 mb-2">
                 <Icon className={`w-4 h-4 ${tone}`} />
@@ -98,7 +98,7 @@ export function HolisticPlanGenerator() {
                 {plan[key].map((rec, i) => (
                   <li
                     key={i}
-                    className="text-sm text-[#cbd5e1] leading-relaxed flex gap-2"
+                    className="text-sm text-text-primary leading-relaxed flex gap-2"
                   >
                     <span className="text-[#64748b] font-mono text-xs mt-0.5">
                       {i + 1}.

@@ -21,7 +21,7 @@ const ROLE_COLOR: Record<CharacterRole, string> = {
   antagonist: 'text-red-300 bg-red-500/10 border-red-500/30',
   deuteragonist: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   supporting: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  minor: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  minor: 'text-text-secondary bg-surface-2 border-border-subtle',
   ensemble: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
 };
 
@@ -39,9 +39,9 @@ export function CharacterCard({ character, projectId }: Props) {
   return (
     <Link
       href={`/dashboard/os/filmmaker/projects/${projectId}/characters/${character.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden hover:border-[#4361EE]/60 transition group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 overflow-hidden hover:border-accent/60 transition group"
     >
-      <div className="h-32 bg-gradient-to-br from-[#4361EE]/20 to-[#1a1d27] border-b border-[#2a2d3e] flex items-center justify-center relative">
+      <div className="h-32 bg-gradient-to-br from-accent/20 to-surface-2 border-b border-border-subtle flex items-center justify-center relative">
         {character.portraitUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -57,7 +57,7 @@ export function CharacterCard({ character, projectId }: Props) {
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold text-white truncate group-hover:text-[#4361EE] transition">
+          <h3 className="text-base font-semibold text-white truncate group-hover:text-accent transition">
             {character.name}
           </h3>
           <span
@@ -67,7 +67,7 @@ export function CharacterCard({ character, projectId }: Props) {
           </span>
         </div>
         {character.archetype && (
-          <p className="text-xs text-[#94a3b8]">{character.archetype}</p>
+          <p className="text-xs text-text-secondary">{character.archetype}</p>
         )}
         {character.logline && (
           <p className="text-sm text-white/80 line-clamp-2 italic">
@@ -79,7 +79,7 @@ export function CharacterCard({ character, projectId }: Props) {
             {character.tags.slice(0, 4).map((t) => (
               <span
                 key={t}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
               >
                 {t}
               </span>

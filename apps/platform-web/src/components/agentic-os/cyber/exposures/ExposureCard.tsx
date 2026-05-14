@@ -21,11 +21,11 @@ export function ExposureCard({ exposure }: { exposure: ExposureWithRefs }) {
   return (
     <Link
       href={`/dashboard/os/cyber/exposures/${exposure.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 transition hover:border-[#4361EE]/60 hover:bg-[#1f2230]"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-4 transition hover:border-accent/60 hover:bg-surface-3"
     >
       <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <AlertTriangle className="w-4 h-4 text-[#4361EE] shrink-0" />
+          <AlertTriangle className="w-4 h-4 text-accent shrink-0" />
           <span className="text-sm font-medium text-white truncate">
             {exposure.vulnerabilityCveId ?? '—'} · {exposure.vulnerabilityTitle}
           </span>
@@ -37,7 +37,7 @@ export function ExposureCard({ exposure }: { exposure: ExposureWithRefs }) {
           <ExposureStatusBadge status={exposure.status} />
         </div>
       </div>
-      <div className="flex items-center gap-x-3 gap-y-1 text-[11px] text-[#94a3b8] flex-wrap">
+      <div className="flex items-center gap-x-3 gap-y-1 text-[11px] text-text-secondary flex-wrap">
         <span>Asset: <span className="text-white/80">{exposure.assetName}</span></span>
         <span>Severity: {exposure.vulnerabilitySeverity}</span>
         <span>Detected {exposure.detectedAt.slice(0, 10)}</span>

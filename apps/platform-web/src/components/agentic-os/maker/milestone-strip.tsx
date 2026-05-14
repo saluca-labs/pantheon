@@ -40,18 +40,18 @@ import { MilestoneDeadlineControls } from './milestone-deadline-controls';
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_STYLE: Record<MilestoneStatus, string> = {
   done: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/5',
   overdue: 'border-red-500/50 text-red-300 bg-red-500/5',
   due_soon: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
-  upcoming: 'border-[#4361EE]/50 text-[#cbd5e1] bg-[#4361EE]/5',
-  undated: 'border-[#2a2d3e] text-[#94a3b8] bg-[#0f1117]',
+  upcoming: 'border-accent/50 text-text-primary bg-accent/5',
+  undated: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
 const STORED_STATUS_BADGE: Record<MilestoneStoredStatus, string> = {
-  pending: 'border-[#2a2d3e] text-[#94a3b8]',
+  pending: 'border-border-subtle text-text-secondary',
   at_risk: 'border-yellow-500/50 text-yellow-300',
   blocked: 'border-red-500/50 text-red-300',
   on_track: 'border-emerald-500/50 text-emerald-300',
@@ -60,8 +60,8 @@ const STORED_STATUS_BADGE: Record<MilestoneStoredStatus, string> = {
 };
 
 const PRIORITY_BADGE: Record<MilestonePriority, string> = {
-  low: 'border-[#2a2d3e] text-[#94a3b8]',
-  medium: 'border-[#4361EE]/50 text-[#cbd5e1]',
+  low: 'border-border-subtle text-text-secondary',
+  medium: 'border-accent/50 text-text-primary',
   high: 'border-amber-500/50 text-amber-300',
   critical: 'border-red-500/50 text-red-300',
 };
@@ -168,7 +168,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-[#94a3b8]">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
         <span>
           <span className="text-white font-medium">{stats.done}</span> / {stats.total} done
         </span>
@@ -193,7 +193,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
       )}
 
       {sorted.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#1a1d27]/30 p-6 text-center text-sm text-[#94a3b8]">
+        <div className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-6 text-center text-sm text-text-secondary">
           No milestones yet. Add your first project beat below.
         </div>
       ) : (
@@ -205,7 +205,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
             return (
               <li
                 key={m.id}
-                className={`rounded-lg border bg-[#1a1d27] ${STATUS_STYLE[status]}`}
+                className={`rounded-lg border bg-surface-2 ${STATUS_STYLE[status]}`}
               >
                 <div className="p-3">
                   <div className="flex items-start justify-between gap-2">
@@ -238,10 +238,10 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         {m.label}
                       </p>
                       {m.dueAt && (
-                        <p className="mt-1 text-xs text-[#94a3b8]">Due {m.dueAt}</p>
+                        <p className="mt-1 text-xs text-text-secondary">Due {m.dueAt}</p>
                       )}
                       {m.notes && (
-                        <p className="mt-2 text-xs text-[#cbd5e1] whitespace-pre-wrap">
+                        <p className="mt-2 text-xs text-text-primary whitespace-pre-wrap">
                           {m.notes}
                         </p>
                       )}
@@ -260,7 +260,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         className={`flex h-5 w-5 items-center justify-center rounded border transition ${
                           done
                             ? 'border-emerald-500 bg-emerald-500/30 text-emerald-200'
-                            : 'border-[#2a2d3e] hover:border-[#4361EE]'
+                            : 'border-border-subtle hover:border-accent'
                         }`}
                       >
                         {done && <Check className="w-3 h-3" />}
@@ -269,7 +269,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         type="button"
                         onClick={() => setExpandedId(expanded ? null : m.id)}
                         aria-label="Edit deadline"
-                        className="rounded p-1 text-[#94a3b8] hover:text-white"
+                        className="rounded p-1 text-text-secondary hover:text-white"
                       >
                         {expanded ? (
                           <ChevronUp className="w-3.5 h-3.5" />
@@ -281,7 +281,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         type="button"
                         onClick={() => remove(m)}
                         aria-label="Delete milestone"
-                        className="rounded p-1 text-[#94a3b8] hover:bg-red-500/10 hover:text-red-300"
+                        className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -289,7 +289,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                   </div>
                 </div>
                 {expanded && (
-                  <div className="border-t border-[#2a2d3e]/60 px-3 py-3">
+                  <div className="border-t border-border-subtle/60 px-3 py-3">
                     <MilestoneDeadlineControls
                       projectId={projectId}
                       milestone={m}
@@ -306,7 +306,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
       {/* Add form */}
       <form
         onSubmit={add}
-        className="space-y-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4"
+        className="space-y-2 rounded-lg border border-border-subtle bg-surface-2 p-4"
       >
         <h3 className="text-sm font-semibold text-white">Add a milestone</h3>
         <input
@@ -337,7 +337,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
           <button
             type="submit"
             disabled={adding || !draft.label.trim()}
-            className="rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-[#4361EE]"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Adding…' : 'Add milestone'}
           </button>

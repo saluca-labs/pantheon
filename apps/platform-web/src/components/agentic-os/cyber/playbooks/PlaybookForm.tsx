@@ -19,7 +19,7 @@ import {
 import { ATTACK_TACTICS } from '@/lib/agentic-os/cyber/detections';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const API = '/api/tiresias/agentic-os/cyber/playbooks';
 
@@ -93,11 +93,11 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
         e.preventDefault();
         void save();
       }}
-      className="space-y-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5"
+      className="space-y-4 rounded-xl border border-border-subtle bg-surface-2 p-5"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Name</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -107,7 +107,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Description</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Description</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -117,7 +117,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Category</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Category</span>
           <input
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -132,7 +132,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           </datalist>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Lifecycle</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Lifecycle</span>
           <select
             value={lifecycle}
             onChange={(e) => setLifecycle(e.target.value as PlaybookLifecycle)}
@@ -144,7 +144,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">MITRE tactic</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">MITRE tactic</span>
           <select
             value={tactic}
             onChange={(e) => setTactic(e.target.value)}
@@ -157,7 +157,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
             Tags (comma-separated)
           </span>
           <input
@@ -173,7 +173,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
         <button
           type="submit"
           disabled={saving || !name.trim()}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create playbook'}
         </button>
@@ -181,7 +181,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[#2a2d3e] text-[#94a3b8] hover:text-white px-3 py-1.5 text-sm transition"
+            className="rounded-lg border border-border-subtle text-text-secondary hover:text-white px-3 py-1.5 text-sm transition"
           >
             Cancel
           </button>

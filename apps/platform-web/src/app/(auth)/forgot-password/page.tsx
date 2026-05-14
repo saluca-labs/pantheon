@@ -57,13 +57,13 @@ export default async function ForgotPasswordPage({
 
   if (params.sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f1117]">
-        <div className="w-full max-w-md p-8 rounded-xl bg-[#1a1d27] border border-[#2a2d3e] shadow-2xl text-center">
+      <div className="min-h-screen flex items-center justify-center bg-surface-0">
+        <div className="w-full max-w-md p-8 rounded-xl bg-surface-2 border border-border-subtle shadow-2xl text-center">
           <h1 className="text-2xl font-bold text-white mb-3">Check your email</h1>
-          <p className="text-[#94a3b8] text-sm">
+          <p className="text-text-secondary text-sm">
             If an account exists for that email, you&apos;ll receive a reset link shortly.
           </p>
-          <a href="/login" className="mt-6 inline-block text-xs text-[#4361EE] hover:underline">
+          <a href="/login" className="mt-6 inline-block text-xs text-accent hover:underline">
             Back to sign in
           </a>
         </div>
@@ -72,18 +72,18 @@ export default async function ForgotPasswordPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f1117]">
-      <div className="w-full max-w-md p-8 rounded-xl bg-[#1a1d27] border border-[#2a2d3e] shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-surface-0">
+      <div className="w-full max-w-md p-8 rounded-xl bg-surface-2 border border-border-subtle shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">Reset password</h1>
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             Enter your email and we&apos;ll send a reset link.
           </p>
         </div>
 
         <form action={requestResetAction} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-[#94a3b8] mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1">
               Email
             </label>
             <input
@@ -92,21 +92,21 @@ export default async function ForgotPasswordPage({
               type="email"
               autoComplete="email"
               required
-              className="w-full h-10 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-white px-3 text-sm focus:outline-none focus:border-[#4361EE] placeholder-[#4a4d5e]"
+              className="w-full h-10 rounded-lg bg-surface-0 border border-border-subtle text-white px-3 text-sm focus:outline-none focus:border-accent placeholder-[#4a4d5e]"
               placeholder="you@example.com"
             />
           </div>
 
           <button
             type="submit"
-            className="flex items-center justify-center w-full h-12 rounded-lg bg-[#4361EE] text-white font-medium hover:bg-[#3651DE] transition-colors"
+            className="flex items-center justify-center w-full h-12 rounded-lg bg-accent text-white font-medium hover:bg-[#3651DE] transition-colors"
           >
             Send reset link
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-[#94a3b8]">
-          <a href="/login" className="text-[#4361EE] hover:underline">Back to sign in</a>
+        <p className="mt-4 text-center text-xs text-text-secondary">
+          <a href="/login" className="text-accent hover:underline">Back to sign in</a>
         </p>
       </div>
     </div>

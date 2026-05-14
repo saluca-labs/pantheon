@@ -21,7 +21,7 @@ export function AutoRefreshSelector({
     <div className="flex items-center gap-2">
       <label
         htmlFor="auto-refresh"
-        className="text-sm text-[#94a3b8] whitespace-nowrap"
+        className="text-sm text-text-secondary whitespace-nowrap"
       >
         Auto-refresh:
       </label>
@@ -29,7 +29,7 @@ export function AutoRefreshSelector({
         id="auto-refresh"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="bg-[#1a1d27] border border-[#2a2d3e] text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#4361EE]"
+        className="bg-surface-2 border border-border-subtle text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
       >
         {REFRESH_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>

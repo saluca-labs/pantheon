@@ -21,18 +21,18 @@ export default function PnlSnapshotList({
 }: Props) {
   if (snapshots.length === 0) {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
         <BarChart3 className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-        <p className="text-[#94a3b8] text-sm">{emptyMessage}</p>
+        <p className="text-text-secondary text-sm">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-[#2a2d3e] bg-[#0f1117]/50">
+          <tr className="border-b border-border-subtle bg-surface-0/50">
             <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
               Kind
             </th>

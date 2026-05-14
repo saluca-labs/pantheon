@@ -89,9 +89,9 @@ export function NoteEditorClient({ note: initialNote }: NoteEditorClientProps) {
             debouncedSave({ title: newTitle });
           }}
           placeholder="Untitled"
-          className="text-2xl font-semibold text-white bg-transparent border-none outline-none placeholder:text-[#94a3b8]/40 w-full"
+          className="text-2xl font-semibold text-white bg-transparent border-none outline-none placeholder:text-text-secondary/40 w-full"
         />
-        <span className="text-xs text-[#94a3b8]/60 flex-shrink-0 ml-4">
+        <span className="text-xs text-text-secondary/60 flex-shrink-0 ml-4">
           {saving ? 'Saving…' : 'Saved'}
         </span>
       </div>
@@ -108,7 +108,7 @@ export function NoteEditorClient({ note: initialNote }: NoteEditorClientProps) {
           }}
           placeholder="No icon"
           maxLength={2}
-          className="w-12 h-10 text-center text-lg bg-[#1a1d27] border border-[#2a2d3e] rounded-lg text-white focus:border-[#d946ef] outline-none"
+          className="w-12 h-10 text-center text-lg bg-surface-2 border border-border-subtle rounded-lg text-white focus:border-[#d946ef] outline-none"
           title="Emoji icon"
         />
         <input
@@ -123,7 +123,7 @@ export function NoteEditorClient({ note: initialNote }: NoteEditorClientProps) {
             debouncedSave({ tags });
           }}
           placeholder="Add tags (comma-separated)"
-          className="flex-1 bg-[#1a1d27] border border-[#2a2d3e] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/40 focus:border-[#d946ef] outline-none"
+          className="flex-1 bg-surface-2 border border-border-subtle rounded-lg px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none"
         />
       </div>
 

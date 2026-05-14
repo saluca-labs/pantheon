@@ -35,19 +35,19 @@ export function BlockerRow({ item }: Props) {
   return (
     <Link
       href={href}
-      className={`block rounded-md border px-2.5 py-2 hover:bg-[#0f1117] transition ${SEVERITY_STYLE[item.severity]}`}
+      className={`block rounded-md border px-2.5 py-2 hover:bg-surface-0 transition ${SEVERITY_STYLE[item.severity]}`}
       data-testid={`blocker-row-${item.kind}-${item.id}`}
     >
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-wide font-medium">
           {BLOCKER_SEVERITY_LABELS[item.severity]}
         </span>
-        <span className="text-[10px] text-[#94a3b8] truncate max-w-[40%]">
+        <span className="text-[10px] text-text-secondary truncate max-w-[40%]">
           {item.experimentName}
         </span>
       </div>
       <p className="mt-1 text-xs font-medium text-white line-clamp-2">{item.title}</p>
-      <div className="mt-1 flex items-center gap-3 text-[10px] text-[#94a3b8]">
+      <div className="mt-1 flex items-center gap-3 text-[10px] text-text-secondary">
         {item.dueAt && (
           <span className="inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -67,7 +67,7 @@ export function BlockerRow({ item }: Props) {
         )}
       </div>
       {item.reason && (
-        <p className="mt-1 text-[10px] text-[#cbd5e1] whitespace-pre-wrap line-clamp-2">
+        <p className="mt-1 text-[10px] text-text-primary whitespace-pre-wrap line-clamp-2">
           {item.reason}
         </p>
       )}

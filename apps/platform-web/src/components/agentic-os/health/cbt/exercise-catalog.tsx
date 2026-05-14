@@ -9,7 +9,7 @@ import type { CbtExercise } from '@/lib/agentic-os/health/repo';
 export function ExerciseCatalog({ exercises }: { exercises: CbtExercise[] }) {
   if (exercises.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8]">
+      <p className="text-sm text-text-secondary">
         Catalog isn’t loaded — try refreshing; the seed migration may still
         be running.
       </p>
@@ -21,24 +21,24 @@ export function ExerciseCatalog({ exercises }: { exercises: CbtExercise[] }) {
         <li key={ex.id}>
           <Link
             href={`/dashboard/os/health/cbt/${ex.kind}/new`}
-            className="block rounded-xl border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/50 hover:bg-[#1a1d27] transition p-5 group"
+            className="block rounded-xl border border-border-subtle bg-surface-0 hover:border-accent/50 hover:bg-surface-2 transition p-5 group"
           >
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-[#4361EE] mt-0.5 shrink-0" />
+              <Sparkles className="w-5 h-5 text-accent mt-0.5 shrink-0" />
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-white group-hover:text-[#cbd5e1] transition">
+                <h3 className="text-sm font-semibold text-white group-hover:text-text-primary transition">
                   {ex.name}
                 </h3>
-                <p className="text-xs text-[#94a3b8] mt-1.5 leading-relaxed">
+                <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
                   {ex.description}
                 </p>
                 {ex.citation && (
-                  <p className="text-[10px] text-[#94a3b8]/70 mt-2 leading-relaxed">
+                  <p className="text-[10px] text-text-secondary/70 mt-2 leading-relaxed">
                     Source: {ex.citation}
                   </p>
                 )}
               </div>
-              <ArrowRight className="w-4 h-4 text-[#4361EE] shrink-0 group-hover:translate-x-0.5 transition" />
+              <ArrowRight className="w-4 h-4 text-accent shrink-0 group-hover:translate-x-0.5 transition" />
             </div>
           </Link>
         </li>

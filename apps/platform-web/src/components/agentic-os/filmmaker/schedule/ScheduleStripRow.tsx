@@ -77,7 +77,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
     scene.interior === true ? 'INT.' : scene.interior === false ? 'EXT.' : '';
   const minutes = strip.estMinutes ?? meta?.estShootMinutes ?? null;
   return (
-    <li className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2.5">
+    <li className="rounded-lg border border-border-subtle bg-surface-0 p-2.5">
       <div className="flex items-start gap-2">
         <div className="flex flex-col gap-0.5 shrink-0">
           <button
@@ -85,7 +85,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
             onClick={() => moveTo(null, index - 1)}
             disabled={busy || index === 0}
             title="Move up"
-            className="text-[#94a3b8] hover:text-white disabled:opacity-20 p-0.5"
+            className="text-text-secondary hover:text-white disabled:opacity-20 p-0.5"
           >
             <ArrowUp className="w-3 h-3" />
           </button>
@@ -94,7 +94,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
             onClick={() => moveTo(null, index + 1)}
             disabled={busy || index === total - 1}
             title="Move down"
-            className="text-[#94a3b8] hover:text-white disabled:opacity-20 p-0.5"
+            className="text-text-secondary hover:text-white disabled:opacity-20 p-0.5"
           >
             <ArrowDown className="w-3 h-3" />
           </button>
@@ -104,19 +104,19 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
           <p className="text-[10px] text-[#64748b] font-mono">
             Scene {scene.sceneNumber.toString().padStart(2, '0')}
             {meta && meta.eighths > 0 && (
-              <span className="ml-2 text-[#94a3b8]">
+              <span className="ml-2 text-text-secondary">
                 · {pagesLabel(meta.eighths)} pp
               </span>
             )}
             {minutes != null && (
-              <span className="ml-2 text-[#94a3b8]">· {minutes} min</span>
+              <span className="ml-2 text-text-secondary">· {minutes} min</span>
             )}
           </p>
           <p className="text-xs text-white truncate">
-            {intExt && <span className="text-[#94a3b8] mr-1">{intExt}</span>}
+            {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
             {scene.location ?? scene.heading}
             {scene.timeOfDay && (
-              <span className="text-[#94a3b8]"> — {scene.timeOfDay}</span>
+              <span className="text-text-secondary"> — {scene.timeOfDay}</span>
             )}
           </p>
         </div>
@@ -127,7 +127,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
             onClick={() => setMoving((m) => !m)}
             disabled={busy}
             title="Move to another day"
-            className="text-[#94a3b8] hover:text-white p-1"
+            className="text-text-secondary hover:text-white p-1"
           >
             <MoveRight className="w-3 h-3" />
           </button>
@@ -136,15 +136,15 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
             onClick={deleteStrip}
             disabled={busy}
             title="Remove from day"
-            className="text-[#94a3b8] hover:text-red-300 p-1"
+            className="text-text-secondary hover:text-red-300 p-1"
           >
             <Trash2 className="w-3 h-3" />
           </button>
         </div>
       </div>
       {moving && (
-        <div className="mt-2 pt-2 border-t border-[#2a2d3e] space-y-1">
-          <p className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <div className="mt-2 pt-2 border-t border-border-subtle space-y-1">
+          <p className="text-[10px] uppercase tracking-wide text-text-secondary">
             Move to:
           </p>
           <div className="max-h-32 overflow-y-auto">
@@ -156,12 +156,12 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
                   type="button"
                   onClick={() => moveTo(d.id, 9999)}
                   disabled={busy}
-                  className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-[#2a2d3e] text-white disabled:opacity-40"
+                  className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-border-subtle text-white disabled:opacity-40"
                 >
                   Day {d.dayNumber}
                   {d.label ? ` — ${d.label}` : ''}
                   {d.unit !== 'main' && (
-                    <span className="text-[#94a3b8] ml-1">[{d.unit}]</span>
+                    <span className="text-text-secondary ml-1">[{d.unit}]</span>
                   )}
                 </button>
               ))}
@@ -174,7 +174,7 @@ export function ScheduleStripRow({ strip, day, index, total, allDays }: Props) {
           <button
             type="button"
             onClick={() => setMoving(false)}
-            className="text-[11px] text-[#94a3b8] hover:text-white"
+            className="text-[11px] text-text-secondary hover:text-white"
           >
             Cancel
           </button>

@@ -76,7 +76,7 @@ export function ScreenerWizard({ screener }: Props) {
   return (
     <div>
       <h2 className="text-lg font-semibold text-white mb-1">{def.title}</h2>
-      <p className="text-sm text-[#94a3b8] mb-3">{def.description}</p>
+      <p className="text-sm text-text-secondary mb-3">{def.description}</p>
 
       {result ? (
         <div className="space-y-4">
@@ -86,28 +86,28 @@ export function ScreenerWizard({ screener }: Props) {
               body="Your responses include a signal that we want to address right away. Plan generation is paused."
             />
           )}
-          <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4">
+          <div className="rounded-lg border border-border-subtle bg-surface-0 p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-[#94a3b8]">Score</span>
+              <span className="text-sm text-text-secondary">Score</span>
               <span className="text-2xl font-semibold text-white">
                 {result.score}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#94a3b8]">Severity</span>
+              <span className="text-sm text-text-secondary">Severity</span>
               <span className={`text-sm font-semibold ${SEVERITY_CLASS[result.severity]}`}>
                 {SEVERITY_LABEL[result.severity] ?? result.severity}
               </span>
             </div>
           </div>
-          <p className="text-xs text-[#94a3b8]/80">
+          <p className="text-xs text-text-secondary/80">
             This score is for self-awareness only and is not a diagnosis. If
             symptoms are interfering with your daily life, please connect with
             a licensed clinician.
           </p>
           <button
             onClick={reset}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:bg-[#1a1d27] text-sm text-white px-3 py-2 transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:bg-surface-2 text-sm text-white px-3 py-2 transition"
           >
             Take again
           </button>
@@ -119,10 +119,10 @@ export function ScreenerWizard({ screener }: Props) {
             {def.questions.map((q, i) => (
               <div
                 key={q.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+                className="rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
                 <p className="text-sm text-white mb-2">
-                  <span className="text-[#94a3b8] mr-2">{q.id}.</span>
+                  <span className="text-text-secondary mr-2">{q.id}.</span>
                   {q.text}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -133,11 +133,11 @@ export function ScreenerWizard({ screener }: Props) {
                       onClick={() => setAt(i, opt.value)}
                       className={`text-xs rounded border px-2 py-1.5 transition text-left ${
                         answers[i] === opt.value
-                          ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-                          : 'border-[#2a2d3e] bg-[#1a1d27] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                          ? 'border-accent bg-accent/15 text-white'
+                          : 'border-border-subtle bg-surface-2 text-text-primary hover:border-accent/50'
                       }`}
                     >
-                      <span className="block font-mono text-[10px] text-[#94a3b8]">
+                      <span className="block font-mono text-[10px] text-text-secondary">
                         {opt.value}
                       </span>
                       {opt.label}
@@ -153,12 +153,12 @@ export function ScreenerWizard({ screener }: Props) {
               type="button"
               onClick={onSubmit}
               disabled={!allAnswered || submitting}
-              className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+              className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
             >
               {submitting ? 'Submitting…' : `Submit ${def.title}`}
             </button>
             {!allAnswered && (
-              <span className="text-xs text-[#94a3b8]">
+              <span className="text-xs text-text-secondary">
                 {answers.filter((a) => a === null).length} question
                 {answers.filter((a) => a === null).length === 1 ? '' : 's'} left
               </span>

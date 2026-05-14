@@ -93,13 +93,13 @@ export function PaperList({ initialPapers }: Props) {
     <div className="space-y-4" data-testid="paper-list">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
         <input
           type="text"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search title or authors"
-          className="w-full pl-10 pr-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-list-search"
         />
       </div>
@@ -152,8 +152,8 @@ export function PaperList({ initialPapers }: Props) {
               onClick={() => setTag(tag === t ? null : t)}
               className={`text-[10px] px-1.5 py-0.5 rounded border transition ${
                 tag === t
-                  ? 'bg-[#4361EE]/20 border-[#4361EE]/60 text-white'
-                  : 'bg-[#0f1117] border-[#2a2d3e] text-[#94a3b8] hover:border-[#4361EE]/40'
+                  ? 'bg-accent/20 border-accent/60 text-white'
+                  : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
               }`}
               data-testid={`tag-chip-${t}`}
             >
@@ -175,12 +175,12 @@ export function PaperList({ initialPapers }: Props) {
       )}
 
       {/* Archive toggle */}
-      <label className="inline-flex items-center gap-2 text-xs text-[#94a3b8] cursor-pointer">
+      <label className="inline-flex items-center gap-2 text-xs text-text-secondary cursor-pointer">
         <input
           type="checkbox"
           checked={showArchived}
           onChange={(e) => setShowArchived(e.target.checked)}
-          className="accent-[#4361EE]"
+          className="accent-accent"
           data-testid="paper-list-archived-toggle"
         />
         Show archived
@@ -188,7 +188,7 @@ export function PaperList({ initialPapers }: Props) {
 
       {/* Status row */}
       {loading && (
-        <p className="text-xs text-[#94a3b8]" data-testid="paper-list-loading">
+        <p className="text-xs text-text-secondary" data-testid="paper-list-loading">
           Loading…
         </p>
       )}
@@ -201,7 +201,7 @@ export function PaperList({ initialPapers }: Props) {
       {/* Results */}
       {papers.length === 0 && !loading ? (
         <p
-          className="text-sm text-[#94a3b8] italic py-8 text-center"
+          className="text-sm text-text-secondary italic py-8 text-center"
           data-testid="paper-list-empty"
         >
           No papers match the current filters.
@@ -234,8 +234,8 @@ function ChipButton({
       onClick={onClick}
       className={`text-xs px-2 py-1 rounded-full border transition ${
         active
-          ? 'bg-[#4361EE]/20 border-[#4361EE]/60 text-white'
-          : 'bg-[#0f1117] border-[#2a2d3e] text-[#94a3b8] hover:border-[#4361EE]/40'
+          ? 'bg-accent/20 border-accent/60 text-white'
+          : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
       }`}
       data-testid={testId}
     >

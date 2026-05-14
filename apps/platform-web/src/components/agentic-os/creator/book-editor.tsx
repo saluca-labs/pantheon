@@ -73,8 +73,8 @@ function computeWordCount(content: Record<string, unknown>): number {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-[#2a2d3e] text-[#94a3b8]',
-  writing: 'bg-[#4361EE]/20 text-[#4361EE]',
+  draft: 'bg-border-subtle text-text-secondary',
+  writing: 'bg-accent/20 text-accent',
   complete: 'bg-emerald-500/20 text-emerald-400',
   published: 'bg-fuchsia-500/20 text-fuchsia-400',
 };
@@ -117,14 +117,14 @@ function SortableChapterRow({
       style={style}
       className={`group flex items-center gap-2 px-3 py-2 cursor-pointer rounded-md text-sm transition-colors ${
         isActive
-          ? 'bg-[#4361EE]/15 text-white border border-[#4361EE]/30'
-          : 'text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white border border-transparent'
+          ? 'bg-accent/15 text-white border border-accent/30'
+          : 'text-text-secondary hover:bg-surface-2 hover:text-white border border-transparent'
       }`}
       onClick={onClick}
     >
       <button
         type="button"
-        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-[#2a2d3e] hover:text-[#64748b] transition-opacity shrink-0"
+        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-text-tertiary hover:text-[#64748b] transition-opacity shrink-0"
         {...attributes}
         {...listeners}
       >
@@ -299,9 +299,9 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* ── Left Panel: Book info + Chapter list ──────────────────────── */}
-      <aside className="w-64 flex-shrink-0 border-r border-[#2a2d3e] bg-[#0f1117] flex flex-col overflow-hidden">
+      <aside className="w-64 flex-shrink-0 border-r border-border-subtle bg-surface-0 flex flex-col overflow-hidden">
         {/* Book header */}
-        <div className="p-4 border-b border-[#2a2d3e] space-y-3">
+        <div className="p-4 border-b border-border-subtle space-y-3">
           <button
             type="button"
             onClick={() => router.push('/dashboard/os/creator/books')}
@@ -315,14 +315,14 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
             type="text"
             value={book.title}
             onChange={(e) => handleBookTitleChange(e.target.value)}
-            className="w-full bg-transparent text-white font-semibold text-sm border border-transparent hover:border-[#2a2d3e] focus:border-[#4361EE] rounded px-2 py-1 outline-none transition-colors"
+            className="w-full bg-transparent text-white font-semibold text-sm border border-transparent hover:border-border-subtle focus:border-accent rounded px-2 py-1 outline-none transition-colors"
           />
 
           {/* Status picker */}
           <select
             value={book.status}
             onChange={(e) => handleStatusChange(e.target.value as BookStatus)}
-            className="w-full bg-[#1a1d27] text-xs text-[#94a3b8] border border-[#2a2d3e] rounded px-2 py-1.5 outline-none focus:border-[#4361EE] cursor-pointer"
+            className="w-full bg-surface-2 text-xs text-text-secondary border border-border-subtle rounded px-2 py-1.5 outline-none focus:border-accent cursor-pointer"
           >
             <option value="draft">Draft</option>
             <option value="writing">Writing</option>
@@ -352,7 +352,7 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
             type="button"
             onClick={handleCreateChapter}
             disabled={creatingChapter}
-            className="text-[#4361EE] hover:text-[#5a7bff] disabled:opacity-50 transition-colors"
+            className="text-accent hover:text-[#5a7bff] disabled:opacity-50 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -383,7 +383,7 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
           </DndContext>
 
           {chapterList.length === 0 && (
-            <p className="text-xs text-[#2a2d3e] text-center mt-8">
+            <p className="text-xs text-text-tertiary text-center mt-8">
               No chapters. Click + to add one.
             </p>
           )}
@@ -395,12 +395,12 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
         {selectedChapter ? (
           <>
             {/* Chapter toolbar */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2a2d3e] bg-[#0f1117]">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle bg-surface-0">
               <input
                 type="text"
                 value={selectedChapter.title}
                 onChange={(e) => handleChapterTitleChange(e.target.value)}
-                className="flex-1 bg-transparent text-white font-medium text-sm border border-transparent hover:border-[#2a2d3e] focus:border-[#4361EE] rounded px-2 py-1 outline-none transition-colors"
+                className="flex-1 bg-transparent text-white font-medium text-sm border border-transparent hover:border-border-subtle focus:border-accent rounded px-2 py-1 outline-none transition-colors"
               />
 
               <span className="text-xs text-[#64748b] shrink-0">

@@ -51,11 +51,11 @@ export function PersonList({ initial }: PersonListProps) {
       <PersonFilters people={initial} value={value} onChange={setValue} />
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-8 text-center">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
           <p className="text-sm font-medium text-white mb-1">
             No people match
           </p>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             {initial.length === 0
               ? 'Add your first person — mom, dad, mentor, public figure — to start tracking who appears in your story.'
               : 'Loosen the filters above to see more.'}
@@ -66,7 +66,7 @@ export function PersonList({ initial }: PersonListProps) {
           {filtered.map((p) => (
             <PersonCard key={p.id} person={p} />
           ))}
-          <p className="text-[10px] text-[#94a3b8] text-right">
+          <p className="text-[10px] text-text-secondary text-right">
             Showing {filtered.length} of {initial.length}{' '}
             {initial.length === 1 ? 'person' : 'people'}
           </p>

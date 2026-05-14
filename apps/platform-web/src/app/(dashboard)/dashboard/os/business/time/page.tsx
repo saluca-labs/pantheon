@@ -108,7 +108,7 @@ export default async function TimePage() {
       {/* Back link */}
       <Link
         href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -123,7 +123,7 @@ export default async function TimePage() {
       </div>
 
       {/* Running timer section */}
-      <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
           <Play className="w-4 h-4 text-teal-300" />
           Running Timer
@@ -136,7 +136,7 @@ export default async function TimePage() {
                 <p className="text-white text-sm font-medium mb-1">
                   {running.description || runningTaskName || 'No description'}
                 </p>
-                <p className="text-xs text-[#94a3b8]">
+                <p className="text-xs text-text-secondary">
                   {runningTaskName && (
                     <span className="mr-3">Task: {runningTaskName}</span>
                   )}
@@ -159,10 +159,10 @@ export default async function TimePage() {
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-[#94a3b8] text-sm mb-3">No timer running</p>
+            <p className="text-text-secondary text-sm mb-3">No timer running</p>
             <Link
               href="/dashboard/os/business/projects"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <Play className="w-4 h-4" />
               Go to projects to start a timer
@@ -172,7 +172,7 @@ export default async function TimePage() {
       </div>
 
       {/* Unbilled summary */}
-      <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-teal-300" />
           Unbilled Summary
@@ -181,12 +181,12 @@ export default async function TimePage() {
         {unbilledByProject.size > 0 ? (
           <div>
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="rounded-lg bg-[#0f1117] border border-[#2a2d3e] p-4">
-                <p className="text-xs text-[#94a3b8] mb-1">Total Unbilled Hours</p>
+              <div className="rounded-lg bg-surface-0 border border-border-subtle p-4">
+                <p className="text-xs text-text-secondary mb-1">Total Unbilled Hours</p>
                 <p className="text-xl font-mono text-white">{formatMinutes(totalUnbilledMinutes)}</p>
               </div>
-              <div className="rounded-lg bg-[#0f1117] border border-[#2a2d3e] p-4">
-                <p className="text-xs text-[#94a3b8] mb-1">Total Unbilled Amount</p>
+              <div className="rounded-lg bg-surface-0 border border-border-subtle p-4">
+                <p className="text-xs text-text-secondary mb-1">Total Unbilled Amount</p>
                 <p className="text-xl font-mono text-teal-300">{formatCents(totalUnbilledCents)}</p>
               </div>
             </div>
@@ -196,11 +196,11 @@ export default async function TimePage() {
                 <Link
                   key={projectId}
                   href={`/dashboard/os/business/projects/${projectId}`}
-                  className="flex items-center justify-between rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/50 px-4 py-3 transition-colors"
+                  className="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/50 px-4 py-3 transition-colors"
                 >
                   <span className="text-sm text-white">{data.projectName}</span>
                   <div className="flex items-center gap-4 text-xs">
-                    <span className="text-[#94a3b8]">{formatMinutes(data.totalMinutes)}</span>
+                    <span className="text-text-secondary">{formatMinutes(data.totalMinutes)}</span>
                     <span className="text-teal-300 font-mono">{formatCents(data.totalCents)}</span>
                   </div>
                 </Link>
@@ -208,14 +208,14 @@ export default async function TimePage() {
             </div>
           </div>
         ) : (
-          <p className="text-[#94a3b8] text-sm text-center py-4">
+          <p className="text-text-secondary text-sm text-center py-4">
             No unbilled time entries.
           </p>
         )}
       </div>
 
       {/* Recent entries */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
           <Calendar className="w-4 h-4 text-teal-300" />
           Recent Entries
@@ -225,7 +225,7 @@ export default async function TimePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#2a2d3e] text-[#64748b]">
+                <tr className="border-b border-border-subtle text-[#64748b]">
                   <th className="text-left py-2 font-medium">Description</th>
                   <th className="text-left py-2 font-medium">Task</th>
                   <th className="text-left py-2 font-medium">Project</th>
@@ -245,13 +245,13 @@ export default async function TimePage() {
                   return (
                     <tr
                       key={entry.id}
-                      className="border-b border-[#2a2d3e]/50 hover:bg-[#0f1117]/50 transition-colors"
+                      className="border-b border-border-subtle/50 hover:bg-surface-0/50 transition-colors"
                     >
                       <td className="py-2.5 text-white">
                         {entry.description || '--'}
                       </td>
-                      <td className="py-2.5 text-[#94a3b8]">{entry.taskTitle}</td>
-                      <td className="py-2.5 text-[#94a3b8]">{entry.projectTitle}</td>
+                      <td className="py-2.5 text-text-secondary">{entry.taskTitle}</td>
+                      <td className="py-2.5 text-text-secondary">{entry.projectTitle}</td>
                       <td className="py-2.5 text-[#64748b]">
                         {new Date(entry.startedAt).toLocaleDateString('en-US', {
                           month: 'short',
@@ -275,7 +275,7 @@ export default async function TimePage() {
             </table>
           </div>
         ) : (
-          <p className="text-[#94a3b8] text-sm text-center py-4">
+          <p className="text-text-secondary text-sm text-center py-4">
             No time entries yet.
           </p>
         )}

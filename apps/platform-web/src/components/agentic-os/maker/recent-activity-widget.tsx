@@ -47,14 +47,14 @@ export function RecentActivityWidget({ limit = 5 }: Props) {
   }, [limit]);
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-3 inline-flex items-center gap-2">
         <Hammer className="w-4 h-4" />
         Recent activity
       </h2>
-      {!loaded && <p className="text-xs text-[#94a3b8]">Loading…</p>}
+      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && entries.length === 0 && (
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           No build-log entries yet. Activity from any project will appear here.
         </p>
       )}
@@ -67,19 +67,19 @@ export function RecentActivityWidget({ limit = 5 }: Props) {
             <li key={entry.id}>
               <Link
                 href={`/dashboard/os/maker/projects/${entry.projectId}?tab=log`}
-                className="block rounded-md border border-transparent px-2 py-2 hover:border-[#2a2d3e] hover:bg-[#0f1117]"
+                className="block rounded-md border border-transparent px-2 py-2 hover:border-border-subtle hover:bg-surface-0"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-medium text-white truncate">
                     {entry.projectName}
                   </span>
-                  <span className="text-[10px] text-[#94a3b8] shrink-0">
+                  <span className="text-[10px] text-text-secondary shrink-0">
                     {dt.toLocaleDateString()}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-[#cbd5e1] line-clamp-2">{entry.body}</p>
+                <p className="mt-1 text-xs text-text-primary line-clamp-2">{entry.body}</p>
                 {(photoCount > 0 || linkCount > 0) && (
-                  <div className="mt-1 flex items-center gap-3 text-[10px] text-[#94a3b8]">
+                  <div className="mt-1 flex items-center gap-3 text-[10px] text-text-secondary">
                     {photoCount > 0 && (
                       <span className="inline-flex items-center gap-1">
                         <ImageIcon className="w-3 h-3" />

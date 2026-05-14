@@ -63,11 +63,11 @@ export function MeditationCatalogBrowser({ catalog, source }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-[#4361EE]" />
+          <Brain className="w-4 h-4 text-accent" />
           <h3 className="text-sm font-semibold text-white">
             Guided sessions
           </h3>
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]/70">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary/70">
             {source === 'medito' ? 'Medito catalog' : 'Static catalog'}
           </span>
         </div>
@@ -81,8 +81,8 @@ export function MeditationCatalogBrowser({ catalog, source }: Props) {
             onClick={() => setGoal(g.value)}
             className={`text-xs rounded-full border px-3 py-1 transition ${
               goal === g.value
-                ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-                : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                ? 'border-accent bg-accent/15 text-white'
+                : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
             }`}
           >
             {g.label}
@@ -94,22 +94,22 @@ export function MeditationCatalogBrowser({ catalog, source }: Props) {
         {filtered.map((entry) => (
           <li
             key={entry.slug}
-            className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4"
+            className="rounded-xl border border-border-subtle bg-surface-0 p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-white">{entry.title}</h4>
-                <p className="text-xs text-[#94a3b8] mt-1 leading-relaxed">
+                <p className="text-xs text-text-secondary mt-1 leading-relaxed">
                   {entry.description}
                 </p>
-                <div className="flex items-center gap-3 mt-2 text-[10px] text-[#94a3b8]/80">
+                <div className="flex items-center gap-3 mt-2 text-[10px] text-text-secondary/80">
                   <span className="inline-flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {entry.durationMin} min
                   </span>
                   <span>{entry.technique}</span>
                 </div>
-                <p className="text-[10px] text-[#94a3b8]/70 mt-2">
+                <p className="text-[10px] text-text-secondary/70 mt-2">
                   {entry.source}
                 </p>
               </div>
@@ -117,7 +117,7 @@ export function MeditationCatalogBrowser({ catalog, source }: Props) {
                 type="button"
                 onClick={() => logCompleted(entry)}
                 disabled={logging === entry.slug}
-                className="inline-flex items-center gap-1 rounded-lg border border-[#2a2d3e] hover:border-[#4361EE]/50 disabled:opacity-60 text-xs text-white px-2 py-1 transition"
+                className="inline-flex items-center gap-1 rounded-lg border border-border-subtle hover:border-accent/50 disabled:opacity-60 text-xs text-white px-2 py-1 transition"
                 title="Log this session as completed"
               >
                 <Plus className="w-3 h-3" />
@@ -128,7 +128,7 @@ export function MeditationCatalogBrowser({ catalog, source }: Props) {
         ))}
       </ul>
       {filtered.length === 0 && (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           No sessions for this filter. Try a different goal.
         </p>
       )}

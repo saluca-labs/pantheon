@@ -131,7 +131,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
         <button
           type="button"
           onClick={() => router.push(`/dashboard/os/health/journal/new`)}
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:bg-[#1a1d27] text-sm text-white px-3 py-2 transition"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 hover:bg-surface-2 text-sm text-white px-3 py-2 transition"
         >
           Add a journal entry →
         </button>
@@ -141,7 +141,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
             setSavedId(null);
             setNotes('');
           }}
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:bg-[#1a1d27] text-xs text-[#94a3b8] hover:text-white px-3 py-2 transition"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 hover:bg-surface-2 text-xs text-text-secondary hover:text-white px-3 py-2 transition"
         >
           Log another check-in
         </button>
@@ -175,7 +175,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       />
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Sleep quality
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -186,8 +186,8 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
               onClick={() => setSleepQuality(opt.value)}
               className={`text-xs rounded border px-2 py-1.5 transition text-center ${
                 sleepQuality === opt.value
-                  ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-                  : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                  ? 'border-accent bg-accent/15 text-white'
+                  : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
               }`}
             >
               {opt.label}
@@ -197,7 +197,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Tags
         </label>
         <div className="flex flex-wrap gap-1.5 mb-2">
@@ -210,8 +210,8 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
                 onClick={() => toggleTag(tag.id)}
                 className={`text-xs rounded-full border px-3 py-1 transition ${
                   selected
-                    ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-                    : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                    ? 'border-accent bg-accent/15 text-white'
+                    : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
                 }`}
               >
                 {tag.name}
@@ -231,13 +231,13 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
               }
             }}
             placeholder="Add a tag…"
-            className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-1.5"
+            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-1.5"
           />
           <button
             type="button"
             onClick={() => void addTag()}
             disabled={!newTagName.trim()}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:bg-[#1a1d27] disabled:opacity-50 text-xs text-white px-3 py-1.5 transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:bg-surface-2 disabled:opacity-50 text-xs text-white px-3 py-1.5 transition"
           >
             Add
           </button>
@@ -245,7 +245,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Notes (optional)
         </label>
         <textarea
@@ -253,9 +253,9 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
           placeholder="What's behind these scores today?"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 resize-y"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2 resize-y"
         />
-        <p className="text-[10px] text-[#94a3b8]/70 mt-1">
+        <p className="text-[10px] text-text-secondary/70 mt-1">
           Free-text notes are scanned for crisis language and routed to safety
           resources — they are never blocked or deleted.
         </p>
@@ -266,7 +266,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           {submitting
             ? 'Saving…'
@@ -293,7 +293,7 @@ function Slider({ icon, label, value, onChange, leftLabel, rightLabel }: SliderP
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[#94a3b8]">
+        <label className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-text-secondary">
           {icon}
           {label}
         </label>
@@ -306,9 +306,9 @@ function Slider({ icon, label, value, onChange, leftLabel, rightLabel }: SliderP
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[#4361EE]"
+        className="w-full accent-accent"
       />
-      <div className="flex justify-between text-[10px] text-[#94a3b8]/70 mt-0.5">
+      <div className="flex justify-between text-[10px] text-text-secondary/70 mt-0.5">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>

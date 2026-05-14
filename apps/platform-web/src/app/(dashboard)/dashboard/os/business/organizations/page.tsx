@@ -35,7 +35,7 @@ export default async function BusinessOrgsPage({ searchParams }: Props) {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Business OS
@@ -48,7 +48,7 @@ export default async function BusinessOrgsPage({ searchParams }: Props) {
         </div>
         <Link
           href="/dashboard/os/business/organizations?new=1"
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-1.5 transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-1.5 transition"
         >
           + Add organization
         </Link>

@@ -98,7 +98,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/deals"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Deals
@@ -113,7 +113,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const icons: Record<Tab, React.ReactNode> = {
             overview: <DollarSign className="w-3.5 h-3.5" />,
@@ -127,8 +127,8 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
               href={`?tab=${tab}`}
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white hover:border-[#2a2d3e]'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white hover:border-border-subtle'
               }`}
             >
               {icons[tab]}
@@ -155,7 +155,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
               <form action={restoreDealAction.bind(null, deal.id)}>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Restore
@@ -165,7 +165,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
               <form action={archiveDealAction.bind(null, deal.id)}>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-red-400 text-sm font-medium px-4 py-2 transition"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-red-400 text-sm font-medium px-4 py-2 transition"
                 >
                   <Archive className="w-4 h-4" />
                   Archive
@@ -175,8 +175,8 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
           </div>
 
           {isArchived && (
-            <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 text-center">
-              <p className="text-sm text-[#94a3b8]">
+            <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-4 text-center">
+              <p className="text-sm text-text-secondary">
                 This deal is archived. Restore it to make changes.
               </p>
             </div>
@@ -194,7 +194,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
       {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
       {activeTab === 'quotes' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {quotes.length} quote{quotes.length !== 1 ? 's' : ''} linked to this deal
           </p>
           {quotes.length > 0 ? (
@@ -202,7 +202,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
               <Link
                 key={q.id}
                 href={`/dashboard/os/business/quotes/${q.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -227,7 +227,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
       {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} linked to this deal
           </p>
           {invoices.length > 0 ? (
@@ -235,7 +235,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
               <Link
                 key={inv.id}
                 href={`/dashboard/os/business/invoices/${inv.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -262,7 +262,7 @@ export default async function DealDetailPage({ params, searchParams }: Props) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-white">Documents</h3>
-            <Link href={`/dashboard/os/business/documents?deal_id=${deal.id}`} className="text-xs text-[#4361EE] hover:underline">
+            <Link href={`/dashboard/os/business/documents?deal_id=${deal.id}`} className="text-xs text-accent hover:underline">
               View all →
             </Link>
           </div>

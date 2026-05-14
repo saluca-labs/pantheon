@@ -40,23 +40,23 @@ export default async function AutobiographerPeoplePage() {
     <div className="max-w-4xl space-y-5">
       <Link
         href="/dashboard/os/autobiographer"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Autobiographer OS
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-[#0f1117] p-2.5 border border-[#2a2d3e]">
-            <Users className="w-6 h-6 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2.5 border border-border-subtle">
+            <Users className="w-6 h-6 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-3 mb-1">
               <h1 className="text-xl font-semibold text-white">People</h1>
               <PersonActions />
             </div>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
+            <p className="text-sm text-text-secondary leading-relaxed">
               Workshop-global directory. Track who appears in your memories —
               family, friends, mentors, colleagues, public figures — and the
               consent state Phase 6 will key off when ghostwriting reaches

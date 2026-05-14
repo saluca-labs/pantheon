@@ -50,17 +50,17 @@ export default function ForecastStrip({ deals }: ForecastStripProps) {
   }, [deals]);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] px-4 py-2.5">
-      <span className="text-xs font-medium text-[#94a3b8]">Pipeline</span>
-      <span className="h-4 w-px bg-[#2a2d3e]" />
+    <div className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-2 px-4 py-2.5">
+      <span className="text-xs font-medium text-text-secondary">Pipeline</span>
+      <span className="h-4 w-px bg-border-subtle" />
       <span className="text-xs text-white font-semibold">
         {openDeals} open deal{openDeals !== 1 ? 's' : ''}
       </span>
-      <span className="text-xs text-[#94a3b8]">·</span>
+      <span className="text-xs text-text-secondary">·</span>
       <span className="text-xs text-teal-300 font-semibold">
         {formatDollars(totalValue)} total
       </span>
-      <span className="text-xs text-[#94a3b8]">·</span>
+      <span className="text-xs text-text-secondary">·</span>
       <span className="text-xs text-teal-300/80">
         {formatDollars(weightedValue)} weighted
       </span>

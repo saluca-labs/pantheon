@@ -66,7 +66,7 @@ const statusColors: Record<string, string> = {
 
 const priorityColors: Record<string, string> = {
   low: 'text-[#64748b]',
-  medium: 'text-[#94a3b8]',
+  medium: 'text-text-secondary',
   high: 'text-amber-400',
   urgent: 'text-red-400',
 };
@@ -101,15 +101,15 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       <div className="max-w-5xl">
         <Link
           href="/dashboard/os/business/projects"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Projects
         </Link>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
-          <p className="text-[#94a3b8] text-sm">Project not found.</p>
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
+          <p className="text-text-secondary text-sm">Project not found.</p>
         </div>
       </div>
     );
@@ -170,7 +170,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       {/* Back link */}
       <Link
         href="/dashboard/os/business/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -197,7 +197,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       </div>
 
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const icons: Record<Tab, React.ReactNode> = {
             overview: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
@@ -214,8 +214,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               href={`?tab=${tab}`}
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white hover:border-[#2a2d3e]'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white hover:border-border-subtle'
               }`}
             >
               {icons[tab]}
@@ -239,7 +239,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           </div>
           {/* Meta cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-1">Billing Model</p>
               <p className="text-sm text-white font-medium">{billingModelLabel}</p>
               {project.defaultRateCents != null && (
@@ -248,25 +248,25 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                 </p>
               )}
             </div>
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-1">Budget</p>
               <p className="text-sm text-white font-medium">
                 {project.budgetCents != null ? formatCents(project.budgetCents) : 'No budget set'}
               </p>
             </div>
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-1">Dates</p>
               <div className="space-y-1">
                 {project.startDate && (
-                  <p className="text-xs text-[#94a3b8]">Start: {project.startDate}</p>
+                  <p className="text-xs text-text-secondary">Start: {project.startDate}</p>
                 )}
                 {project.targetCompletionDate && (
-                  <p className="text-xs text-[#94a3b8]">
+                  <p className="text-xs text-text-secondary">
                     Target: {project.targetCompletionDate}
                   </p>
                 )}
                 {!project.startDate && !project.targetCompletionDate && (
-                  <p className="text-xs text-[#94a3b8]">No dates set</p>
+                  <p className="text-xs text-text-secondary">No dates set</p>
                 )}
               </div>
             </div>
@@ -274,7 +274,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
 
           {/* Linked contact and deal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-1">Contact</p>
               {contact ? (
                 <div>
@@ -283,10 +283,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-[#94a3b8]">No contact linked</p>
+                <p className="text-sm text-text-secondary">No contact linked</p>
               )}
             </div>
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-1">Deal</p>
               {deal ? (
                 <Link
@@ -296,16 +296,16 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                   {deal.title}
                 </Link>
               ) : (
-                <p className="text-sm text-[#94a3b8]">No deal linked</p>
+                <p className="text-sm text-text-secondary">No deal linked</p>
               )}
             </div>
           </div>
 
           {/* Description */}
           {project.descriptionMd && (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-2">Description</p>
-              <div className="text-sm text-[#94a3b8] whitespace-pre-wrap leading-relaxed">
+              <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
                 {project.descriptionMd}
               </div>
             </div>
@@ -313,13 +313,13 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
 
           {/* Tags */}
           {project.tags.length > 0 && (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
               <p className="text-xs text-[#64748b] mb-2">Tags</p>
               <div className="flex flex-wrap gap-2">
                 {project.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center rounded-md bg-[#0f1117] border border-[#2a2d3e] px-2.5 py-1 text-[10px] text-[#94a3b8]"
+                    className="inline-flex items-center rounded-md bg-surface-0 border border-border-subtle px-2.5 py-1 text-[10px] text-text-secondary"
                   >
                     {tag}
                   </span>
@@ -332,7 +332,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           <div>
             <Link
               href="?edit=1&tab=settings"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
               Edit project
@@ -346,13 +346,13 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
         <div className="space-y-6">
           {/* Header actions */}
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               {tasks.length} task{tasks.length !== 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">
               <Link
                 href="?tab=tasks&new_task=1"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add task
@@ -387,7 +387,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                     {statusTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors group"
+                        className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors group"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -441,9 +441,9 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               );
             })
           ) : (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
               <ListTodo className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-              <p className="text-[#94a3b8] text-sm">
+              <p className="text-text-secondary text-sm">
                 No tasks yet. Add your first task to start tracking work.
               </p>
             </div>
@@ -456,7 +456,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
         <div className="space-y-6">
           {/* Header actions */}
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               {timeEntries.length} time entr{timeEntries.length !== 1 ? 'ies' : 'y'}
             </p>
             <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                   <p className="text-sm text-white font-medium">
                     Timer running: {running.description || taskNames.get(running.taskId) || 'No description'}
                   </p>
-                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                  <p className="text-xs text-text-secondary mt-0.5">
                     Task: {taskNames.get(running.taskId) ?? 'Unknown'}
                   </p>
                 </div>
@@ -510,7 +510,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                 return (
                   <div
                     key={entry.id}
-                    className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-3 flex items-center justify-between hover:border-[#4361EE]/30 transition-colors"
+                    className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-3 flex items-center justify-between hover:border-accent/30 transition-colors"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-white">
@@ -568,9 +568,9 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               })}
             </div>
           ) : (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
               <Clock className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-              <p className="text-[#94a3b8] text-sm">
+              <p className="text-text-secondary text-sm">
                 No time entries yet. Start tracking time for this project.
               </p>
             </div>
@@ -581,7 +581,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
       {activeTab === 'quotes' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {quotes.length} quote{quotes.length !== 1 ? 's' : ''} linked to this project
           </p>
           {quotes.length > 0 ? (
@@ -589,7 +589,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               <Link
                 key={q.id}
                 href={`/dashboard/os/business/quotes/${q.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -614,7 +614,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} linked to this project
           </p>
           {invoices.length > 0 ? (
@@ -622,7 +622,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               <Link
                 key={inv.id}
                 href={`/dashboard/os/business/invoices/${inv.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -649,7 +649,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-white">Documents</h3>
-            <Link href={`/dashboard/os/business/documents?project_id=${id}`} className="text-xs text-[#4361EE] hover:underline">
+            <Link href={`/dashboard/os/business/documents?project_id=${id}`} className="text-xs text-accent hover:underline">
               View all →
             </Link>
           </div>
@@ -661,7 +661,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       {activeTab === 'settings' && (
         <div className="space-y-6">
           {showEdit ? (
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
               <h2 className="text-lg font-medium text-white mb-4">Edit Project</h2>
               <ProjectForm
                 contacts={contacts}
@@ -674,7 +674,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             <div className="space-y-4">
               <Link
                 href="?tab=settings&edit=1"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Edit project
@@ -683,9 +683,9 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           )}
 
           {/* Archive section */}
-          <div className="rounded-xl border border-red-900/50 bg-[#1a1d27] p-5 mt-6 pt-6 border-t border-red-900/30">
+          <div className="rounded-xl border border-red-900/50 bg-surface-2 p-5 mt-6 pt-6 border-t border-red-900/30">
             <h3 className="text-sm font-semibold text-red-400 mb-2">Danger Zone</h3>
-            <p className="text-xs text-[#94a3b8] mb-4">
+            <p className="text-xs text-text-secondary mb-4">
               Archiving this project will hide it from default views. You can restore it later.
             </p>
             <ArchiveProjectButton projectId={id} />

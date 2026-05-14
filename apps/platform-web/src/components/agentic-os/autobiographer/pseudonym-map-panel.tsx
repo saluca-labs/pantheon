@@ -36,15 +36,15 @@ export function PseudonymMapPanel({
   people,
 }: PseudonymMapPanelProps) {
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">Pseudonym map</h2>
-        <span className="text-xs text-[#94a3b8]">
+        <span className="text-xs text-text-secondary">
           {people.length} {people.length === 1 ? 'person' : 'people'} referenced
         </span>
       </div>
 
-      <p className="text-xs text-[#94a3b8] leading-relaxed">
+      <p className="text-xs text-text-secondary leading-relaxed">
         Substitutions apply to chapter / book PDF exports. Whole-token,
         word-boundary, case-preserving on the first letter. Aliases on the
         person row substitute identically to the canonical name.

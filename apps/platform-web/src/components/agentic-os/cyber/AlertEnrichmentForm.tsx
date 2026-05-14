@@ -17,7 +17,7 @@ import type { LogSource } from '@/lib/agentic-os/cyber/log-sources';
 import { Combobox, type ComboboxOption } from '@/components/agentic-os/_shared/combobox';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const API = '/api/tiresias/agentic-os/cyber/alerts';
 
@@ -110,11 +110,11 @@ export function AlertEnrichmentForm({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]">Enrichment</p>
+    <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-0 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Enrichment</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Asset</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Asset</span>
           <Combobox
             value={assetQuery}
             onChange={(v) => {
@@ -131,7 +131,7 @@ export function AlertEnrichmentForm({
           />
         </div>
         <div>
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Log source</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Log source</span>
           <Combobox
             value={logSourceQuery}
             onChange={(v) => {
@@ -148,7 +148,7 @@ export function AlertEnrichmentForm({
           />
         </div>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">MITRE tactic</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">MITRE tactic</span>
           <input
             value={tactic}
             onChange={(e) => setTactic(e.target.value)}
@@ -157,7 +157,7 @@ export function AlertEnrichmentForm({
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">MITRE technique</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">MITRE technique</span>
           <input
             value={technique}
             onChange={(e) => setTechnique(e.target.value)}
@@ -166,7 +166,7 @@ export function AlertEnrichmentForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Tags (comma-separated)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tags (comma-separated)</span>
           <input
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
@@ -180,7 +180,7 @@ export function AlertEnrichmentForm({
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : 'Save enrichment'}
         </button>

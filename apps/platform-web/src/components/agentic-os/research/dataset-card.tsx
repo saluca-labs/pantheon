@@ -53,7 +53,7 @@ export function DatasetCard({ dataset }: Props) {
 
   return (
     <div
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-2"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4 space-y-2"
       data-testid={`dataset-card-${dataset.id}`}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -71,12 +71,12 @@ export function DatasetCard({ dataset }: Props) {
             href={dataset.url}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline break-all"
+            className="inline-flex items-center gap-1 text-xs text-accent hover:underline break-all"
           >
             <ExternalLink className="w-3 h-3" />
             {dataset.url}
           </a>
-          <div className="mt-2 text-xs text-[#94a3b8] flex flex-wrap gap-x-3 gap-y-1">
+          <div className="mt-2 text-xs text-text-secondary flex flex-wrap gap-x-3 gap-y-1">
             {dataset.version && <span>v{dataset.version}</span>}
             {sizeLabel && <span>{sizeLabel}</span>}
             {dataset.checksum && (
@@ -89,7 +89,7 @@ export function DatasetCard({ dataset }: Props) {
               {dataset.tags.map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                 >
                   {t}
                 </span>
@@ -97,7 +97,7 @@ export function DatasetCard({ dataset }: Props) {
             </div>
           )}
           {dataset.notesMd && (
-            <p className="mt-2 text-xs text-[#94a3b8] whitespace-pre-wrap">{dataset.notesMd}</p>
+            <p className="mt-2 text-xs text-text-secondary whitespace-pre-wrap">{dataset.notesMd}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-2">

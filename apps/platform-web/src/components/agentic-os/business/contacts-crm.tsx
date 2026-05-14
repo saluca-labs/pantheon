@@ -21,12 +21,12 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -148,7 +148,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
       {/* Add contact */}
       <form
         onSubmit={handleAddPerson}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-white">Add contact</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -203,7 +203,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
           <button
             type="submit"
             disabled={savingPerson}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {savingPerson ? 'Adding…' : 'Add contact'}
           </button>
@@ -215,7 +215,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
       {/* Log interaction */}
       <form
         onSubmit={handleLogInteraction}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-white">Log interaction</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -255,7 +255,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
           <button
             type="submit"
             disabled={savingInteraction}
-            className="rounded-lg border border-[#2a2d3e] text-white text-sm px-4 py-2 hover:border-[#4361EE] transition disabled:opacity-50"
+            className="rounded-lg border border-border-subtle text-white text-sm px-4 py-2 hover:border-accent transition disabled:opacity-50"
           >
             {savingInteraction ? 'Logging…' : '+ Log'}
           </button>
@@ -264,26 +264,26 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
       </form>
 
       {/* Contacts list */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#2a2d3e]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-semibold text-white">
             Contacts{' '}
-            <span className="text-[#94a3b8] font-normal">({people.length})</span>
+            <span className="text-text-secondary font-normal">({people.length})</span>
           </h2>
         </div>
         {people.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-[#94a3b8] text-center">No contacts yet. Add your first above.</p>
+          <p className="px-5 py-8 text-sm text-text-secondary text-center">No contacts yet. Add your first above.</p>
         ) : (
-          <ul className="divide-y divide-[#2a2d3e]">
+          <ul className="divide-y divide-border-subtle">
             {people.map((p) => {
               const recentInteraction = interactions.find((i) => i.personId === p.id);
               return (
                 <li key={p.id} className="px-5 py-3 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-white">{fullName(p)}</p>
-                    {p.role && <p className="text-xs text-[#94a3b8]">{p.role}</p>}
+                    {p.role && <p className="text-xs text-text-secondary">{p.role}</p>}
                     {recentInteraction && (
-                      <p className="text-xs text-[#94a3b8] mt-0.5 italic truncate max-w-xs">
+                      <p className="text-xs text-text-secondary mt-0.5 italic truncate max-w-xs">
                         Last: {recentInteraction.summary}
                       </p>
                     )}

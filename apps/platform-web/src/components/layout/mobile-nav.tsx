@@ -21,7 +21,7 @@ export function MobileNav({ enabledSlugs }: MobileNavProps = {}) {
     <div className="md:hidden">
       <button
         onClick={() => setOpen(true)}
-        className="p-2 text-[#94a3b8] hover:text-white"
+        className="p-2 text-text-secondary hover:text-white"
         aria-label="Open menu"
       >
         <Menu className="w-5 h-5" />
@@ -30,14 +30,14 @@ export function MobileNav({ enabledSlugs }: MobileNavProps = {}) {
       {open && (
         <div className="fixed inset-0 z-50 bg-black/60" onClick={() => setOpen(false)}>
           <div
-            className="w-72 h-full bg-[#1a1d27] border-r border-[#2a2d3e] p-4 overflow-y-auto"
+            className="w-72 h-full bg-surface-2 border-r border-border-subtle p-4 overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
               <Logo />
               <button
                 onClick={() => setOpen(false)}
-                className="p-1 text-[#94a3b8] hover:text-white"
+                className="p-1 text-text-secondary hover:text-white"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -56,10 +56,10 @@ export function MobileNav({ enabledSlugs }: MobileNavProps = {}) {
                     onClick={() => item.enabled && setOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
-                        ? 'bg-[#4361EE]/10 text-[#4361EE] font-medium'
+                        ? 'bg-accent/10 text-accent font-medium'
                         : item.enabled
-                        ? 'text-[#94a3b8] hover:text-white hover:bg-[#2a2d3e]'
-                        : 'text-[#94a3b8]/40 cursor-not-allowed'
+                        ? 'text-text-secondary hover:text-white hover:bg-border-subtle'
+                        : 'text-text-secondary/40 cursor-not-allowed'
                     }`}
                     aria-disabled={!item.enabled}
                   >

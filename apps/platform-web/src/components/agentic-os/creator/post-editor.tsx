@@ -42,9 +42,9 @@ const STATUS_OPTIONS: { value: PostStatus; label: string; color: string }[] = [
 ];
 
 const inputCls =
-  'w-full rounded-lg border border-[#2a2d3e] bg-[#1a1d27] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/40 focus:border-[#d946ef] outline-none';
+  'w-full rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none';
 
-const labelCls = 'block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5';
+const labelCls = 'block text-xs uppercase tracking-wide text-text-secondary mb-1.5';
 
 export function PostEditor({ post: initialPost }: PostEditorProps) {
   const router = useRouter();
@@ -192,7 +192,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -200,7 +200,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
         <div className="flex items-center gap-2">
           {/* Save status */}
-          <span className="text-xs text-[#94a3b8]/60 mr-2">
+          <span className="text-xs text-text-secondary/60 mr-2">
             {saveStatus === 'saving' && 'Saving…'}
             {saveStatus === 'saved' && 'Saved'}
             {saveStatus === 'unsaved' && 'Unsaved'}
@@ -214,7 +214,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               setPost((prev) => ({ ...prev, status: newStatus }));
               debouncedSave({ status: newStatus });
             }}
-            className="text-xs font-semibold uppercase tracking-wide px-2 py-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-white cursor-pointer hover:border-[#d946ef]/50 transition"
+            className="text-xs font-semibold uppercase tracking-wide px-2 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-white cursor-pointer hover:border-[#d946ef]/50 transition"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>
@@ -234,7 +234,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               />
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-xs text-amber-300 hover:border-amber-500/50 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-amber-300 hover:border-amber-500/50 transition"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 Schedule
@@ -261,7 +261,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               type="button"
               onClick={handleArchive}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-xs text-[#94a3b8] hover:text-white hover:border-neutral-500/50 disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-text-secondary hover:text-white hover:border-neutral-500/50 disabled:opacity-50 transition"
               title="Archive"
             >
               <Archive className="w-3.5 h-3.5" />
@@ -291,7 +291,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
           debouncedSave({ title: newTitle });
         }}
         placeholder="Post title"
-        className="text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-[#94a3b8]/30 w-full mb-4"
+        className="text-3xl font-bold text-white bg-transparent border-none outline-none placeholder:text-text-secondary/30 w-full mb-4"
       />
 
       {/* Slug */}
@@ -308,7 +308,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
           placeholder="url-friendly-slug"
           className={inputCls}
         />
-        <p className="text-[10px] text-[#94a3b8]/50 mt-1">
+        <p className="text-[10px] text-text-secondary/50 mt-1">
           URL identifier for this post. Auto-generated from title; edit for a
           custom path.
         </p>
@@ -377,7 +377,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
       {/* Notes (internal) */}
       <details className="mt-8">
-        <summary className="text-xs uppercase tracking-wide text-[#94a3b8]/60 cursor-pointer hover:text-[#94a3b8] transition">
+        <summary className="text-xs uppercase tracking-wide text-text-secondary/60 cursor-pointer hover:text-text-secondary transition">
           Notes / Show Notes (internal, not published)
         </summary>
         <textarea

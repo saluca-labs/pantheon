@@ -35,7 +35,7 @@ function characterName(characters: Character[], id: string): string {
 }
 
 function tensionColor(t: number | null): string {
-  if (t == null) return 'bg-[#2a2d3e]';
+  if (t == null) return 'bg-border-subtle';
   if (t <= 2) return 'bg-emerald-500/60';
   if (t <= 5) return 'bg-amber-500/60';
   if (t <= 7) return 'bg-orange-500/70';
@@ -149,7 +149,7 @@ export function RelationshipList({
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
             Relationships
           </h2>
-          <span className="text-xs text-[#94a3b8]">({relationships.length})</span>
+          <span className="text-xs text-text-secondary">({relationships.length})</span>
         </div>
         <div className="flex items-center gap-2">
           {!anchorCharacterId && relationships.length > 0 && (
@@ -158,7 +158,7 @@ export function RelationshipList({
               onChange={(e) =>
                 setKindFilter(e.target.value as RelationshipKind | 'all')
               }
-              className="text-xs rounded border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-white"
+              className="text-xs rounded border border-border-subtle bg-surface-0 px-2 py-1 text-white"
             >
               <option value="all">All kinds</option>
               {Object.entries(RELATIONSHIP_KIND_LABEL).map(([k, label]) => (
@@ -173,7 +173,7 @@ export function RelationshipList({
             onClick={() => setAdding(true)}
             disabled={!canAdd}
             title={canAdd ? '' : 'Add at least two characters first'}
-            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 disabled:opacity-50 transition"
           >
             <Plus className="w-3.5 h-3.5" />
             Add relationship
@@ -182,7 +182,7 @@ export function RelationshipList({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           {anchorCharacterId
             ? 'No relationships yet for this character.'
             : 'No relationships yet.'}
@@ -192,28 +192,28 @@ export function RelationshipList({
           {visible.map((rel) => (
             <li
               key={rel.id}
-              className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 space-y-2"
+              className="rounded-lg border border-border-subtle bg-surface-2 p-3 space-y-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2 min-w-0">
-                  <Link2 className="w-4 h-4 text-[#94a3b8] shrink-0 mt-0.5" />
+                  <Link2 className="w-4 h-4 text-text-secondary shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-sm text-white">
                       <span className="font-medium">
                         {characterName(characters, rel.fromId)}
                       </span>{' '}
-                      <span className="text-[#94a3b8]">
+                      <span className="text-text-secondary">
                         {rel.direction === 'directional' ? '→' : '↔'}
                       </span>{' '}
                       <span className="font-medium">
                         {characterName(characters, rel.toId)}
                       </span>{' '}
-                      <span className="text-[10px] uppercase tracking-wide text-[#cbd5e1] bg-[#0f1117] border border-[#2a2d3e] rounded-full px-2 py-0.5 ml-1">
+                      <span className="text-[10px] uppercase tracking-wide text-text-primary bg-surface-0 border border-border-subtle rounded-full px-2 py-0.5 ml-1">
                         {RELATIONSHIP_KIND_LABEL[rel.kind]}
                       </span>
                     </p>
                     {rel.description && (
-                      <p className="text-xs text-[#94a3b8] mt-1 truncate">
+                      <p className="text-xs text-text-secondary mt-1 truncate">
                         {rel.description}
                       </p>
                     )}
@@ -223,7 +223,7 @@ export function RelationshipList({
                   <button
                     type="button"
                     onClick={() => setEditing(rel)}
-                    className="p-1.5 rounded text-[#94a3b8] hover:text-white hover:bg-[#0f1117] transition"
+                    className="p-1.5 rounded text-text-secondary hover:text-white hover:bg-surface-0 transition"
                     aria-label="Edit relationship"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -231,7 +231,7 @@ export function RelationshipList({
                   <button
                     type="button"
                     onClick={() => handleDelete(rel.id)}
-                    className="p-1.5 rounded text-[#94a3b8] hover:text-red-300 hover:bg-[#0f1117] transition"
+                    className="p-1.5 rounded text-text-secondary hover:text-red-300 hover:bg-surface-0 transition"
                     aria-label="Delete relationship"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -239,10 +239,10 @@ export function RelationshipList({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#94a3b8] w-14">
+                <span className="text-[11px] text-text-secondary w-14">
                   Tension {rel.tension == null ? '—' : rel.tension}
                 </span>
-                <div className="flex-1 h-1.5 rounded-full bg-[#0f1117] border border-[#2a2d3e] overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full bg-surface-0 border border-border-subtle overflow-hidden">
                   <div
                     className={`h-full ${tensionColor(rel.tension)}`}
                     style={{
@@ -298,13 +298,13 @@ function Modal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/60">
-      <div className="h-full w-full max-w-md overflow-y-auto border-l border-[#2a2d3e] bg-[#0f1117] p-6 space-y-4">
+      <div className="h-full w-full max-w-md overflow-y-auto border-l border-border-subtle bg-surface-0 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-[#94a3b8] hover:text-white transition"
+            className="text-sm text-text-secondary hover:text-white transition"
           >
             Close
           </button>

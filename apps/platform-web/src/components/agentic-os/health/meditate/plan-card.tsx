@@ -24,14 +24,14 @@ const DAY_LABELS: Record<string, string> = {
 export function PlanCard({ plan, catalog }: Props) {
   if (!plan) {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
         <div className="flex items-center gap-2 mb-2">
-          <CalendarDays className="w-5 h-5 text-[#4361EE]" />
+          <CalendarDays className="w-5 h-5 text-accent" />
           <h2 className="text-base font-semibold text-white">
             No active plan yet
           </h2>
         </div>
-        <p className="text-sm text-[#94a3b8] leading-relaxed">
+        <p className="text-sm text-text-secondary leading-relaxed">
           Generate a 7-day plan tailored to your recent mood, sleep, and
           stress signals. Plans are rules-based — no LLM is involved.
         </p>
@@ -48,15 +48,15 @@ export function PlanCard({ plan, catalog }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-[#4361EE]" />
+          <CalendarDays className="w-5 h-5 text-accent" />
           <h2 className="text-base font-semibold text-white">
             Week of {plan.weekStart}
           </h2>
         </div>
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]/70">
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary/70">
           {plan.plan.length} days
         </span>
       </div>
@@ -66,9 +66,9 @@ export function PlanCard({ plan, catalog }: Props) {
           return (
             <li
               key={`${slot.day}-${idx}`}
-              className="flex items-center gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-border-subtle bg-surface-0 px-3 py-2"
             >
-              <span className="text-xs font-mono text-[#94a3b8] w-10">
+              <span className="text-xs font-mono text-text-secondary w-10">
                 {DAY_LABELS[slot.day] ?? slot.day}
               </span>
               <div className="flex-1 min-w-0">
@@ -76,17 +76,17 @@ export function PlanCard({ plan, catalog }: Props) {
                   {entry?.title ?? slot.session_slug}
                 </div>
                 {entry?.description && (
-                  <div className="text-xs text-[#94a3b8] truncate">
+                  <div className="text-xs text-text-secondary truncate">
                     {entry.description}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0 text-[10px] text-[#94a3b8]">
+              <div className="flex items-center gap-2 shrink-0 text-[10px] text-text-secondary">
                 <span className="inline-flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {slot.duration_min}m
                 </span>
-                <span className="rounded-full border border-[#2a2d3e] px-2 py-0.5">
+                <span className="rounded-full border border-border-subtle px-2 py-0.5">
                   {slot.focus}
                 </span>
               </div>

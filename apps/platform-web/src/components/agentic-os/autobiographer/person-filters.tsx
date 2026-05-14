@@ -44,7 +44,7 @@ export function PersonFilters({
     <div className="space-y-3">
       {/* Consent chips */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
           Consent
         </span>
         <button
@@ -52,8 +52,8 @@ export function PersonFilters({
           onClick={() => onChange({ ...value, consentToPublish: 'all' })}
           className={`text-xs px-2.5 py-1 rounded-full border transition ${
             value.consentToPublish === 'all'
-              ? 'bg-[#4361EE] text-white border-[#4361EE]'
-              : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+              ? 'bg-accent text-white border-accent'
+              : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
           }`}
         >
           All ({people.length})
@@ -68,8 +68,8 @@ export function PersonFilters({
               onClick={() => onChange({ ...value, consentToPublish: s })}
               className={`text-xs px-2.5 py-1 rounded-full border transition ${
                 value.consentToPublish === s
-                  ? 'bg-[#4361EE] text-white border-[#4361EE]'
-                  : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
               }`}
             >
               {CONSENT_LABELS[s]} ({count})
@@ -86,7 +86,7 @@ export function PersonFilters({
           value={value.query}
           onChange={(e) => onChange({ ...value, query: e.target.value })}
           placeholder="Search by name or alias…"
-          className="w-full pl-9 pr-3 py-2 bg-[#0f1117] border border-[#2a2d3e] rounded text-sm text-white focus:outline-none focus:border-[#4361EE]"
+          className="w-full pl-9 pr-3 py-2 bg-surface-0 border border-border-subtle rounded text-sm text-white focus:outline-none focus:border-accent"
         />
       </div>
     </div>

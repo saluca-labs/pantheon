@@ -42,10 +42,10 @@ export function HypothesisLinkedExperiments({ rows: initialRows }: Props) {
           id="linked-experiments-heading"
           className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
         >
-          <FlaskConical className="w-4 h-4 text-[#4361EE]" />
+          <FlaskConical className="w-4 h-4 text-accent" />
           Linked experiments
         </h2>
-        <p className="text-sm text-[#94a3b8] italic">
+        <p className="text-sm text-text-secondary italic">
           Not yet linked to any experiment. Open an experiment and use the
           Hypotheses tab there to add a link.
         </p>
@@ -59,7 +59,7 @@ export function HypothesisLinkedExperiments({ rows: initialRows }: Props) {
         id="linked-experiments-heading"
         className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
       >
-        <FlaskConical className="w-4 h-4 text-[#4361EE]" />
+        <FlaskConical className="w-4 h-4 text-accent" />
         Linked experiments
       </h2>
       <div className="space-y-2">

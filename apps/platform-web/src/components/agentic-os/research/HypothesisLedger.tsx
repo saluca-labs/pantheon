@@ -30,7 +30,7 @@ import { HypothesisArchiveButton } from './hypothesis-archive-button';
 const API = '/api/tiresias/agentic-os/research/hypotheses';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_COLOR: Record<HypothesisStatus, string> = {
   draft:        'text-slate-300 bg-slate-500/10 border-slate-500/30',
@@ -39,13 +39,13 @@ const STATUS_COLOR: Record<HypothesisStatus, string> = {
   supported:    'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
   refuted:      'text-red-300 bg-red-500/10 border-red-500/30',
   inconclusive: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  archived:     'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  archived:     'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -109,7 +109,7 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+    <form onSubmit={submit} className="space-y-4 rounded-xl border border-border-subtle bg-surface-2 p-5">
       <h3 className="text-sm font-semibold text-white">New hypothesis</h3>
       <Field label="Title / short name">
         <input
@@ -120,7 +120,7 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
         />
       </Field>
       <div className="space-y-3">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           Structure your hypothesis as:{' '}
           <span className="italic">If [X], then [Y], because [Z].</span>
         </p>
@@ -192,7 +192,7 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
       >
         {saving ? 'Adding…' : 'Add hypothesis'}
       </button>
@@ -237,17 +237,17 @@ function HypothesisCard({
   const statement = renderHypothesisStatement(hyp);
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-3">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <Link
             href={`/dashboard/os/research/hypotheses/${hyp.id}`}
-            className="text-white font-medium hover:text-[#4361EE] inline-flex items-center gap-1"
+            className="text-white font-medium hover:text-accent inline-flex items-center gap-1"
           >
             <span className="truncate">{hyp.title}</span>
             <ExternalLink className="w-3 h-3 shrink-0" />
           </Link>
-          <p className="text-sm text-[#94a3b8] mt-1 italic leading-relaxed">{statement}</p>
+          <p className="text-sm text-text-secondary mt-1 italic leading-relaxed">{statement}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span
@@ -255,11 +255,11 @@ function HypothesisCard({
           >
             {hyp.status}
           </span>
-          <span className="text-[10px] px-2 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]">
+          <span className="text-[10px] px-2 py-0.5 rounded border border-border-subtle text-text-secondary">
             {hyp.confidence} confidence
           </span>
           {hyp.archivedAt && (
-            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]">
+            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-secondary">
               Archived
             </span>
           )}
@@ -271,7 +271,7 @@ function HypothesisCard({
           {hyp.tags.map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
@@ -284,7 +284,7 @@ function HypothesisCard({
           <select
             value={newStatus}
             onChange={(e) => setNewStatus(e.target.value as HypothesisStatus)}
-            className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+            className="rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none"
           >
             {HYPOTHESIS_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
@@ -295,7 +295,7 @@ function HypothesisCard({
           <button
             onClick={updateStatus}
             disabled={updating || newStatus === hyp.status}
-            className="text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white disabled:opacity-40 transition"
+            className="text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white disabled:opacity-40 transition"
           >
             {updating ? 'Updating…' : 'Update status'}
           </button>
@@ -371,21 +371,21 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
         <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
           {showArchived ? 'Archived hypotheses' : 'Active hypotheses'}
         </h2>
-        <label className="inline-flex items-center gap-2 text-xs text-[#94a3b8]">
+        <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
           <input
             type="checkbox"
             checked={showArchived}
             onChange={(e) => setShowArchived(e.target.checked)}
-            className="rounded border-[#2a2d3e] bg-[#0f1117]"
+            className="rounded border-border-subtle bg-surface-0"
           />
           Show archived
         </label>
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#94a3b8]">Loading…</p>
+        <p className="text-sm text-text-secondary">Loading…</p>
       ) : hypotheses.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           {showArchived ? 'No archived hypotheses.' : 'No hypotheses yet. Add your first one above.'}
         </p>
       ) : (

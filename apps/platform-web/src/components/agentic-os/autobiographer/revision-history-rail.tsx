@@ -70,16 +70,16 @@ export function RevisionHistoryRail({
   }
 
   return (
-    <aside className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 space-y-2">
+    <aside className="rounded-xl border border-border-subtle bg-surface-2 p-3 space-y-2">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-xs uppercase tracking-wide text-[#94a3b8]">
+        <h3 className="text-xs uppercase tracking-wide text-text-secondary">
           Revision history
         </h3>
         <button
           type="button"
           onClick={createRevision}
           disabled={creating}
-          className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40 disabled:opacity-60"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40 disabled:opacity-60"
         >
           <Plus className="w-3 h-3" />
           {creating ? 'Saving…' : 'New revision'}
@@ -87,7 +87,7 @@ export function RevisionHistoryRail({
       </div>
       {error ? <p className="text-[11px] text-red-400">{error}</p> : null}
       {revisions.length === 0 ? (
-        <p className="text-xs text-[#94a3b8]">No revisions yet.</p>
+        <p className="text-xs text-text-secondary">No revisions yet.</p>
       ) : (
         <div className="space-y-1.5">
           {revisions.map((r) => (

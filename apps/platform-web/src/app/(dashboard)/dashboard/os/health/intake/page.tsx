@@ -42,14 +42,14 @@ export default async function HealthIntakePage({ searchParams }: Props) {
     <div className="max-w-3xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <ClipboardList className="w-6 h-6 text-[#4361EE]" />
+        <ClipboardList className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Intake & profile</h1>
       </div>
 
@@ -72,20 +72,20 @@ export default async function HealthIntakePage({ searchParams }: Props) {
 
       {phase === 'physical' ? (
         <>
-          <div className="mt-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+          <div className="mt-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
             <IntakeForm initial={profile} />
           </div>
           <div className="mt-4 flex justify-end">
             <Link
               href="/dashboard/os/health/intake?phase=mental"
-              className="text-sm font-medium text-[#4361EE] hover:text-[#5d7aff] transition"
+              className="text-sm font-medium text-accent hover:text-[#5d7aff] transition"
             >
               Continue to mental-health intake →
             </Link>
           </div>
         </>
       ) : (
-        <div className="mt-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="mt-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
           {mentalConsentGranted ? (
             <MentalIntakeForm initial={mentalProfile} />
           ) : (
@@ -120,8 +120,8 @@ function PhaseLink({
   active: boolean;
 }) {
   const cls = active
-    ? 'rounded-md border border-[#4361EE]/60 bg-[#4361EE]/15 text-white'
-    : 'rounded-md border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/40';
+    ? 'rounded-md border border-accent/60 bg-accent/15 text-white'
+    : 'rounded-md border border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/40';
   return (
     <Link
       href={`/dashboard/os/health/intake?phase=${phase}`}

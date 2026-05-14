@@ -87,7 +87,7 @@ export function PostList({ posts }: PostListProps) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-white mb-1">Publishing</h1>
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             Blog posts and newsletter content with scheduling, RSS, and subscriber management.
           </p>
         </div>
@@ -104,18 +104,18 @@ export function PostList({ posts }: PostListProps) {
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]/60" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary/60" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search posts by title, excerpt, or tags…"
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#94a3b8]/40 focus:border-[#d946ef] outline-none"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none"
         />
       </div>
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1 mb-6 p-1 rounded-lg bg-[#1a1d27] border border-[#2a2d3e] w-fit">
+      <div className="flex items-center gap-1 mb-6 p-1 rounded-lg bg-surface-2 border border-border-subtle w-fit">
         {FILTER_TABS.map((tab) => {
           const count =
             tab.key === 'all'
@@ -129,7 +129,7 @@ export function PostList({ posts }: PostListProps) {
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 activeTab === tab.key
                   ? 'bg-[#d946ef]/20 text-[#d946ef]'
-                  : 'text-[#94a3b8] hover:text-white'
+                  : 'text-text-secondary hover:text-white'
               }`}
             >
               {tab.label}
@@ -143,14 +143,14 @@ export function PostList({ posts }: PostListProps) {
 
       {/* Post list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] px-5 py-10 text-center">
-          <FileEdit className="w-8 h-8 text-[#94a3b8]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
+          <FileEdit className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary">
             {searchQuery ? 'No posts match your search.' : 'No posts yet. Create your first post to get started.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] divide-y divide-[#2a2d3e]">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 divide-y divide-border-subtle">
           {filtered.map((post) => (
             <button
               key={post.id}
@@ -164,7 +164,7 @@ export function PostList({ posts }: PostListProps) {
                     {post.title || 'Untitled'}
                   </h3>
                   {post.excerpt && (
-                    <p className="text-xs text-[#94a3b8] mt-1 line-clamp-2">
+                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">
                       {post.excerpt}
                     </p>
                   )}
@@ -176,7 +176,7 @@ export function PostList({ posts }: PostListProps) {
                       {post.status}
                     </span>
                     {post.status === 'scheduled' && post.scheduledAt && (
-                      <span className="text-[10px] text-[#94a3b8]">
+                      <span className="text-[10px] text-text-secondary">
                         {new Date(post.scheduledAt).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -185,11 +185,11 @@ export function PostList({ posts }: PostListProps) {
                       </span>
                     )}
                     {post.publishedAt && (
-                      <span className="text-[10px] text-[#94a3b8]">
+                      <span className="text-[10px] text-text-secondary">
                         Published {new Date(post.publishedAt).toLocaleDateString()}
                       </span>
                     )}
-                    <span className="text-[10px] text-[#94a3b8]/60">
+                    <span className="text-[10px] text-text-secondary/60">
                       Updated {new Date(post.updatedAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -201,13 +201,13 @@ export function PostList({ posts }: PostListProps) {
                     {post.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="px-1.5 py-0.5 rounded text-[10px] bg-[#2a2d3e] text-[#94a3b8]"
+                        className="px-1.5 py-0.5 rounded text-[10px] bg-border-subtle text-text-secondary"
                       >
                         {tag}
                       </span>
                     ))}
                     {post.tags.length > 3 && (
-                      <span className="text-[10px] text-[#94a3b8]/60">
+                      <span className="text-[10px] text-text-secondary/60">
                         +{post.tags.length - 3}
                       </span>
                     )}
