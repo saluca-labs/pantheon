@@ -20,7 +20,7 @@ import {
 import { listThemes } from '@/lib/agentic-os/autobiographer/themes-repo';
 import { getAutobiographerPool } from '@/lib/agentic-os/autobiographer/session';
 import { TimelineFilters } from '@/components/agentic-os/autobiographer/timeline-filters';
-import { TimelineList } from '@/components/agentic-os/autobiographer/timeline-list';
+import { TimelineViewSwitcher } from '@/components/agentic-os/autobiographer/timeline-view-switcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,8 +136,9 @@ export default async function TimelinePage({ searchParams }: Props) {
             <p className="text-sm text-text-secondary leading-relaxed">
               Cross-book memory feed, ordered by year of life. Filter by
               theme, kind, decade, person, or scope to a single book.
-              Memories that feed chapters in an arc carry arc-membership
-              stripes.
+              Switch between the grouped view — decade headers,
+              arc-membership stripes, full excerpts — and the axis view,
+              a cross-book year axis with one lane per book.
             </p>
           </div>
         </div>
@@ -156,7 +157,7 @@ export default async function TimelinePage({ searchParams }: Props) {
         emotionTags={emotionTags}
       />
 
-      <TimelineList memories={memories} />
+      <TimelineViewSwitcher memories={memories} />
     </div>
   );
 }
