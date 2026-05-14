@@ -48,8 +48,8 @@ export function LockShortfallModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-amber-500/30 bg-[#1a1d27] shadow-xl">
-        <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#2a2d3e]">
+      <div className="w-full max-w-lg rounded-xl border border-amber-500/30 bg-surface-2 shadow-xl">
+        <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border-subtle">
           <div className="inline-flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-amber-300" />
             <h2 className="text-base font-semibold text-white">
@@ -59,7 +59,7 @@ export function LockShortfallModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white transition"
+            className="text-text-secondary hover:text-white transition"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -67,7 +67,7 @@ export function LockShortfallModal({
         </header>
 
         <div className="px-4 py-3 space-y-3">
-          <p className="text-sm text-[#cbd5e1] leading-relaxed">
+          <p className="text-sm text-text-primary leading-relaxed">
             Locking this chapter requires the following review checks to be
             in <code className="text-emerald-300">passed</code> or{' '}
             <code className="text-sky-300">waived</code> status:
@@ -79,7 +79,7 @@ export function LockShortfallModal({
               return (
                 <li
                   key={kind}
-                  className="text-sm text-[#cbd5e1] inline-flex items-center gap-2"
+                  className="text-sm text-text-primary inline-flex items-center gap-2"
                 >
                   <span className="text-[#64748b]">·</span>
                   {label}
@@ -107,7 +107,7 @@ export function LockShortfallModal({
                 return (
                   <li
                     key={m.kind}
-                    className="text-sm text-[#cbd5e1] inline-flex items-center gap-2"
+                    className="text-sm text-text-primary inline-flex items-center gap-2"
                   >
                     <span className="text-[#64748b]">·</span>
                     <span>{label}</span>
@@ -121,17 +121,17 @@ export function LockShortfallModal({
           </div>
         </div>
 
-        <footer className="px-4 py-3 border-t border-[#2a2d3e] flex items-center justify-between gap-2">
+        <footer className="px-4 py-3 border-t border-border-subtle flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white transition"
+            className="text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white transition"
           >
             Close
           </button>
           <Link
             href={`/dashboard/os/autobiographer/privacy?bookId=${bookId}`}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#4361EE]/40 bg-[#4361EE]/10 text-[#4361EE] hover:text-white hover:bg-[#4361EE]/20 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/40 bg-accent/10 text-accent hover:text-white hover:bg-accent/20 transition"
           >
             Open privacy hub
             <ArrowRight className="w-3.5 h-3.5" />

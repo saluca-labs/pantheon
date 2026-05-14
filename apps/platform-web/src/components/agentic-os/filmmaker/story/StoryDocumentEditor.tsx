@@ -82,7 +82,7 @@ export const StoryDocumentEditor = forwardRef<StoryDocumentEditorHandle, Props>(
         CharacterCount.configure({}),
         Link.configure({
           openOnClick: false,
-          HTMLAttributes: { class: 'text-[#4361EE] underline underline-offset-2' },
+          HTMLAttributes: { class: 'text-accent underline underline-offset-2' },
         }),
       ],
       content: initialContentJson as any,
@@ -175,17 +175,17 @@ export const StoryDocumentEditor = forwardRef<StoryDocumentEditorHandle, Props>(
           type="text"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          className="w-full bg-transparent border-b border-[#2a2d3e] focus:border-[#4361EE] outline-none text-2xl font-semibold text-white py-2"
+          className="w-full bg-transparent border-b border-border-subtle focus:border-accent outline-none text-2xl font-semibold text-white py-2"
           placeholder="Document title"
         />
 
         {editor && <Toolbar editor={editor} />}
 
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <EditorContent editor={editor} />
         </div>
 
-        <div className="flex items-center justify-between text-xs text-[#94a3b8]">
+        <div className="flex items-center justify-between text-xs text-text-secondary">
           <span>{wordCount.toLocaleString()} words</span>
           <span>
             {savingState === 'saving' && 'Saving…'}
@@ -205,12 +205,12 @@ export const StoryDocumentEditor = forwardRef<StoryDocumentEditorHandle, Props>(
 
 function Toolbar({ editor }: { editor: Editor }) {
   const btn =
-    'inline-flex items-center justify-center w-8 h-8 rounded border border-[#2a2d3e] ' +
-    'bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 transition ' +
-    'data-[active=true]:bg-[#4361EE]/20 data-[active=true]:text-white data-[active=true]:border-[#4361EE]/60';
+    'inline-flex items-center justify-center w-8 h-8 rounded border border-border-subtle ' +
+    'bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 transition ' +
+    'data-[active=true]:bg-accent/20 data-[active=true]:text-white data-[active=true]:border-accent/60';
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-2">
+    <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-2 p-2">
       <button
         type="button"
         className={btn}
@@ -229,7 +229,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       >
         <Italic className="w-4 h-4" />
       </button>
-      <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+      <div className="w-px h-5 bg-border-subtle mx-1" />
       <button
         type="button"
         className={btn}
@@ -257,7 +257,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       >
         <Heading3 className="w-4 h-4" />
       </button>
-      <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+      <div className="w-px h-5 bg-border-subtle mx-1" />
       <button
         type="button"
         className={btn}
@@ -294,7 +294,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       >
         <Code className="w-4 h-4" />
       </button>
-      <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+      <div className="w-px h-5 bg-border-subtle mx-1" />
       <button
         type="button"
         className={btn}

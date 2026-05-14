@@ -21,10 +21,10 @@ export function CoachCitationChip({ memoryId, title }: Props) {
   return (
     <Link
       href={`/dashboard/os/autobiographer/memories?focus=${memoryId}`}
-      className="inline-flex items-center gap-1 rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[10px] text-[#cbd5e1] hover:border-[#4361EE]/60 hover:text-white transition"
+      className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-[10px] text-text-primary hover:border-accent/60 hover:text-white transition"
       title={memoryId}
     >
-      <NotebookPen className="w-3 h-3 text-[#4361EE]" />
+      <NotebookPen className="w-3 h-3 text-accent" />
       <span className="truncate max-w-[12rem]">{label}</span>
     </Link>
   );

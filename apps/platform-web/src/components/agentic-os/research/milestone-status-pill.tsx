@@ -12,11 +12,11 @@ import {
 } from '@/lib/agentic-os/research/milestones';
 
 const STATUS_STYLE: Record<MilestoneStatus, string> = {
-  pending: 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]',
+  pending: 'border-border-subtle bg-surface-0 text-text-secondary',
   at_risk: 'border-yellow-500/50 bg-yellow-500/5 text-yellow-300',
   blocked: 'border-red-500/50 bg-red-500/5 text-red-300',
   on_track: 'border-emerald-500/50 bg-emerald-500/5 text-emerald-300',
-  done: 'border-[#4361EE]/50 bg-[#4361EE]/10 text-white',
+  done: 'border-accent/50 bg-accent/10 text-white',
   missed: 'border-red-600/60 bg-red-500/10 text-red-300',
 };
 

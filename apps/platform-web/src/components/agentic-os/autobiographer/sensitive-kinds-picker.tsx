@@ -82,14 +82,14 @@ export function SensitiveKindsPicker({
   }
 
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1.5">
+        <h3 className="text-xs uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5">
           <ShieldAlert className="w-3.5 h-3.5 text-amber-300/80" />
           {label}
         </h3>
         {busy && (
-          <span className="text-xs text-[#94a3b8]">Saving…</span>
+          <span className="text-xs text-text-secondary">Saving…</span>
         )}
       </div>
 
@@ -125,7 +125,7 @@ export function SensitiveKindsPicker({
               onClick={() => addKind(k)}
               disabled={busy}
               title={SENSITIVE_KIND_DESCRIPTIONS[k]}
-              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-dashed border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/40 transition"
+              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-dashed border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/40 transition"
             >
               <Plus className="w-3 h-3" />
               {SENSITIVE_KIND_LABELS[k]}

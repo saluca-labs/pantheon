@@ -82,17 +82,17 @@ export default async function MemoryDetailPage({ params }: Props) {
     <div className="max-w-3xl space-y-5">
       <Link
         href="/dashboard/os/autobiographer/memories"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         All memory captures
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-white">{memory.title}</h1>
-            <p className="text-xs text-[#94a3b8] mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               Last updated {new Date(memory.updatedAt).toLocaleString()}
               {' • '}
               {MEMORY_SOURCE_LABELS[memory.source]}
@@ -119,7 +119,7 @@ export default async function MemoryDetailPage({ params }: Props) {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs text-[#94a3b8]">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
           {(memory.whenInLife || memory.eraDateEstimate) && (
             <span className="inline-flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ export default async function MemoryDetailPage({ params }: Props) {
           {book && (
             <Link
               href={`/dashboard/os/autobiographer/books/${book.id}`}
-              className="inline-flex items-center gap-1 text-[#4361EE] hover:underline"
+              className="inline-flex items-center gap-1 text-accent hover:underline"
             >
               <TagIcon className="w-3.5 h-3.5" />
               {book.title}
@@ -157,7 +157,7 @@ export default async function MemoryDetailPage({ params }: Props) {
             {memory.contentTags.map((t) => (
               <span
                 key={`c-${t}`}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary"
               >
                 {t}
               </span>
@@ -178,11 +178,11 @@ export default async function MemoryDetailPage({ params }: Props) {
         <SensitiveKindsBadges kinds={memory.sensitiveKinds} variant="expanded" />
       )}
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3">
           Memory
         </h2>
-        <pre className="whitespace-pre-wrap text-sm text-[#cbd5e1] font-sans leading-relaxed">
+        <pre className="whitespace-pre-wrap text-sm text-text-primary font-sans leading-relaxed">
           {memory.bodyMarkdown}
         </pre>
       </section>
@@ -200,10 +200,10 @@ export default async function MemoryDetailPage({ params }: Props) {
 
       <MemoryThemesSection memoryId={memory.id} />
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-1">
+            <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-1">
               Voice sample
             </h2>
             <p className="text-xs text-[#64748b]">
@@ -222,8 +222,8 @@ export default async function MemoryDetailPage({ params }: Props) {
       </section>
 
       {memory.audioUrl && (
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-          <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3 inline-flex items-center gap-1.5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+          <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
             <Mic className="w-4 h-4" />
             Audio
           </h2>
@@ -231,16 +231,16 @@ export default async function MemoryDetailPage({ params }: Props) {
             href={memory.audioUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-[#4361EE] hover:underline break-all"
+            className="text-sm text-accent hover:underline break-all"
           >
             {memory.audioUrl}
           </a>
           {memory.transcript && (
             <>
-              <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] mt-4 mb-2">
+              <h3 className="text-xs uppercase tracking-wide text-text-secondary mt-4 mb-2">
                 Transcript
               </h3>
-              <pre className="whitespace-pre-wrap text-sm text-[#cbd5e1] font-sans leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm text-text-primary font-sans leading-relaxed">
                 {memory.transcript}
               </pre>
             </>
@@ -249,8 +249,8 @@ export default async function MemoryDetailPage({ params }: Props) {
       )}
 
       {memory.photoUrls.length > 0 && (
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-          <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3 inline-flex items-center gap-1.5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+          <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
             <ImageIcon className="w-4 h-4" />
             Photos
           </h2>
@@ -261,7 +261,7 @@ export default async function MemoryDetailPage({ params }: Props) {
                   href={u}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[#4361EE] hover:underline break-all"
+                  className="text-sm text-accent hover:underline break-all"
                 >
                   {u}
                 </a>

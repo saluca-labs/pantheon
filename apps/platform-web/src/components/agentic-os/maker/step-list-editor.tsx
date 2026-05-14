@@ -33,10 +33,10 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_COLOR: Record<'pending' | 'blocked' | 'done', string> = {
-  pending: 'border-[#2a2d3e] text-[#94a3b8]',
+  pending: 'border-border-subtle text-text-secondary',
   blocked: 'border-amber-500/50 text-amber-300',
   done: 'border-emerald-500/50 text-emerald-300',
 };
@@ -162,7 +162,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
   return (
     <div className="space-y-4">
       {/* Stats strip */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-[#94a3b8]">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
         <span>
           <span className="text-white font-medium">{stats.done}</span> / {stats.total} done
         </span>
@@ -189,7 +189,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
       {/* Step list */}
       <ul className="space-y-2">
         {steps.length === 0 && (
-          <li className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#1a1d27]/30 p-6 text-center text-sm text-[#94a3b8]">
+          <li className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-6 text-center text-sm text-text-secondary">
             No steps yet. Add your first build step below.
           </li>
         )}
@@ -199,8 +199,8 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
           return (
             <li
               key={step.id}
-              className={`flex items-start gap-3 rounded-lg border bg-[#1a1d27] px-3 py-3 ${
-                done ? 'border-emerald-500/30' : 'border-[#2a2d3e]'
+              className={`flex items-start gap-3 rounded-lg border bg-surface-2 px-3 py-3 ${
+                done ? 'border-emerald-500/30' : 'border-border-subtle'
               }`}
             >
               <button
@@ -210,18 +210,18 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
                   done
                     ? 'border-emerald-500 bg-emerald-500/30 text-emerald-200'
-                    : 'border-[#2a2d3e] hover:border-[#4361EE]'
+                    : 'border-border-subtle hover:border-accent'
                 }`}
               >
                 {done && <Check className="w-3 h-3" />}
               </button>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                  <span className="text-[10px] uppercase tracking-wide text-text-secondary">
                     #{step.ordinal}
                   </span>
                   <span
-                    className={`text-sm ${done ? 'text-[#94a3b8] line-through' : 'text-white'}`}
+                    className={`text-sm ${done ? 'text-text-secondary line-through' : 'text-white'}`}
                   >
                     {step.title}
                   </span>
@@ -231,14 +231,14 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                     {status}
                   </span>
                   {step.estMinutes != null && (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-[#94a3b8]">
+                    <span className="inline-flex items-center gap-1 text-[10px] text-text-secondary">
                       <Clock className="w-3 h-3" />
                       {step.estMinutes}m
                     </span>
                   )}
                 </div>
                 {step.body && (
-                  <p className="mt-1 text-xs text-[#cbd5e1] whitespace-pre-wrap">
+                  <p className="mt-1 text-xs text-text-primary whitespace-pre-wrap">
                     {step.body}
                   </p>
                 )}
@@ -255,7 +255,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                   onClick={() => move(step, -1)}
                   disabled={idx === 0}
                   aria-label="Move up"
-                  className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -264,7 +264,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                   onClick={() => move(step, 1)}
                   disabled={idx === steps.length - 1}
                   aria-label="Move down"
-                  className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -272,7 +272,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                   type="button"
                   onClick={() => deleteStep(step)}
                   aria-label="Delete step"
-                  className="rounded p-1 text-[#94a3b8] hover:bg-red-500/10 hover:text-red-300"
+                  className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -285,7 +285,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
       {/* Add form */}
       <form
         onSubmit={addStep}
-        className="space-y-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4"
+        className="space-y-2 rounded-lg border border-border-subtle bg-surface-2 p-4"
       >
         <h3 className="text-sm font-semibold text-white">Add a step</h3>
         <input
@@ -317,7 +317,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
           <button
             type="submit"
             disabled={adding || !newStep.title.trim()}
-            className="ml-auto rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-[#4361EE]"
+            className="ml-auto rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Adding…' : 'Add step'}
           </button>

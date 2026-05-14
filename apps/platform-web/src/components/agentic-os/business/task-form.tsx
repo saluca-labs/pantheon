@@ -101,11 +101,11 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
   }
 
   const inputClass =
-    'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none transition';
-  const labelClass = 'block text-xs font-medium text-[#94a3b8] mb-1';
+    'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none transition';
+  const labelClass = 'block text-xs font-medium text-text-secondary mb-1';
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4">
       <h3 className="text-white text-sm font-semibold">
         {isEditing ? 'Edit Task' : 'New Task'}
       </h3>
@@ -138,7 +138,7 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
             onChange={(e) => setStatus(e.target.value as TaskStatus)}
           >
             {TASK_STATUSES.map((s) => (
-              <option key={s} value={s} className="bg-[#1a1d27] text-white">
+              <option key={s} value={s} className="bg-surface-2 text-white">
                 {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
               </option>
             ))}
@@ -152,7 +152,7 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
             onChange={(e) => setPriority(e.target.value as TaskPriority)}
           >
             {TASK_PRIORITIES.map((p) => (
-              <option key={p} value={p} className="bg-[#1a1d27] text-white">
+              <option key={p} value={p} className="bg-surface-2 text-white">
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </option>
             ))}
@@ -201,9 +201,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
               type="checkbox"
               checked={isBillable}
               onChange={(e) => setIsBillable(e.target.checked)}
-              className="rounded border-[#2a2d3e] bg-[#0f1117] accent-[#4361EE]"
+              className="rounded border-border-subtle bg-surface-0 accent-accent"
             />
-            <span className="text-xs text-[#94a3b8]">Billable</span>
+            <span className="text-xs text-text-secondary">Billable</span>
           </label>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
         <button
           type="button"
           onClick={() => onCreated?.()}
-          className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE] text-[#94a3b8] text-sm font-medium px-4 py-1.5 transition"
+          className="rounded-lg border border-border-subtle bg-surface-2 hover:border-accent text-text-secondary text-sm font-medium px-4 py-1.5 transition"
         >
           Cancel
         </button>

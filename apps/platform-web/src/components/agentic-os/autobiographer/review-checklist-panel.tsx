@@ -71,12 +71,12 @@ export function ReviewChecklistPanel({
   chapters,
 }: ReviewChecklistPanelProps) {
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-5">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-5">
       <div>
         <h2 className="text-sm font-semibold text-white mb-2">
           Review checklist
         </h2>
-        <p className="text-xs text-[#94a3b8] leading-relaxed">
+        <p className="text-xs text-text-secondary leading-relaxed">
           Chapter lock requires {REQUIRED_BASE_CHECKS.join(' + ')} (plus{' '}
           <span className="text-amber-300/80">sensitive_flagged</span> for
           chapters with any sensitive content) to be Passed or Waived.
@@ -84,7 +84,7 @@ export function ReviewChecklistPanel({
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-xs uppercase tracking-wide text-[#94a3b8]">
+        <h3 className="text-xs uppercase tracking-wide text-text-secondary">
           Book-level
         </h3>
         <div className="space-y-2">
@@ -105,11 +105,11 @@ export function ReviewChecklistPanel({
           if (c.hasSensitiveContent) required.push('sensitive_flagged');
           return (
             <div key={c.chapterId} className="space-y-2">
-              <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-2">
+              <h3 className="text-xs uppercase tracking-wide text-text-secondary inline-flex items-center gap-2">
                 <span className="font-mono text-[#64748b]">
                   Ch {String(c.position + 1).padStart(2, '0')}
                 </span>
-                <span className="text-[#cbd5e1] normal-case font-medium">
+                <span className="text-text-primary normal-case font-medium">
                   {c.title}
                 </span>
                 {c.hasSensitiveContent && (

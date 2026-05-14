@@ -48,7 +48,7 @@ export function PersonArchiveButton({ personId, archived }: Props) {
       type="button"
       onClick={handle}
       disabled={busy}
-      className="rounded-md border border-[#2a2d3e] text-xs text-[#94a3b8] hover:text-white hover:border-[#4361EE] transition px-3 py-1.5 disabled:opacity-50"
+      className="rounded-md border border-border-subtle text-xs text-text-secondary hover:text-white hover:border-accent transition px-3 py-1.5 disabled:opacity-50"
     >
       {busy ? '…' : archived ? 'Restore person' : 'Archive person'}
     </button>

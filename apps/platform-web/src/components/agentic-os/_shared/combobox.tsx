@@ -122,19 +122,19 @@ export function Combobox<T>({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none disabled:opacity-50"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none disabled:opacity-50"
         />
         {loading && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#94a3b8]">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-text-secondary">
             …
           </span>
         )}
       </div>
 
       {open && (value.length > 0 || options.length > 0) && (
-        <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-[#2a2d3e] bg-[#0f1117] shadow-lg">
+        <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border-subtle bg-surface-0 shadow-lg">
           {options.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-[#94a3b8]">
+            <div className="px-3 py-2 text-xs text-text-secondary">
               {emptyLabel}
             </div>
           ) : (
@@ -147,13 +147,13 @@ export function Combobox<T>({
                 onMouseEnter={() => setHighlight(i)}
                 className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
                   i === highlight
-                    ? 'bg-[#4361EE]/15 text-white'
-                    : 'text-[#cbd5e1] hover:bg-[#1a1d27]'
+                    ? 'bg-accent/15 text-white'
+                    : 'text-text-primary hover:bg-surface-2'
                 }`}
               >
                 <span className="truncate">{opt.label}</span>
                 {opt.sublabel && (
-                  <span className="truncate text-xs text-[#94a3b8]">
+                  <span className="truncate text-xs text-text-secondary">
                     {opt.sublabel}
                   </span>
                 )}

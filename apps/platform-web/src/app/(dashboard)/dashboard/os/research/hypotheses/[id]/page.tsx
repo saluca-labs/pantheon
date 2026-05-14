@@ -114,7 +114,7 @@ export default async function ResearchHypothesisDetailPage({ params }: Props) {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/research/hypotheses"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to hypothesis ledger
@@ -127,7 +127,7 @@ export default async function ResearchHypothesisDetailPage({ params }: Props) {
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-2">
             Description
           </h2>
-          <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 text-[#cbd5e1]">
+          <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-border-subtle bg-surface-2 p-5 text-text-primary">
             <ReactMarkdown>{hypothesis.descriptionMd}</ReactMarkdown>
           </div>
         </section>

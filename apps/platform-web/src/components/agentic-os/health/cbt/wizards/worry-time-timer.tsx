@@ -96,7 +96,7 @@ export function WorryTimeTimer({ exerciseId }: Props) {
         placeholder="e.g. Today 6:00 PM, tomorrow morning"
       />
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Duration (minutes)
         </label>
         <input
@@ -109,12 +109,12 @@ export function WorryTimeTimer({ exerciseId }: Props) {
               Math.max(1, Math.min(120, parseInt(e.target.value || '0', 10) || 1)),
             )
           }
-          className="w-32 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white px-3 py-2"
+          className="w-32 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white px-3 py-2"
         />
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Worries to address
         </label>
         <ul className="space-y-2">
@@ -125,13 +125,13 @@ export function WorryTimeTimer({ exerciseId }: Props) {
                 onChange={(e) => setWorryAt(idx, e.target.value)}
                 rows={2}
                 placeholder="Name one worry"
-                className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 leading-relaxed resize-y"
+                className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2 leading-relaxed resize-y"
               />
               {worries.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeWorry(idx)}
-                  className="text-xs text-[#94a3b8] hover:text-red-300 px-2"
+                  className="text-xs text-text-secondary hover:text-red-300 px-2"
                 >
                   remove
                 </button>
@@ -142,15 +142,15 @@ export function WorryTimeTimer({ exerciseId }: Props) {
         <button
           type="button"
           onClick={addWorry}
-          className="mt-2 text-xs text-[#4361EE] hover:text-[#5d7aff] transition"
+          className="mt-2 text-xs text-accent hover:text-[#5d7aff] transition"
         >
           + Add another worry
         </button>
       </div>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-0 p-5">
         <div className="flex items-center gap-3 mb-3">
-          <Timer className="w-5 h-5 text-[#4361EE]" />
+          <Timer className="w-5 h-5 text-accent" />
           <h3 className="text-sm font-semibold text-white">Countdown</h3>
         </div>
         <div className="text-4xl font-mono text-white tracking-tight">
@@ -160,7 +160,7 @@ export function WorryTimeTimer({ exerciseId }: Props) {
           <button
             type="button"
             onClick={() => setRunning((r) => !r)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/50 text-white text-xs px-3 py-1.5 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:border-accent/50 text-white text-xs px-3 py-1.5 transition"
           >
             {running ? (
               <Pause className="w-3 h-3" />
@@ -175,7 +175,7 @@ export function WorryTimeTimer({ exerciseId }: Props) {
               setRunning(false);
               setSecondsLeft(durationMin * 60);
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/50 text-white text-xs px-3 py-1.5 transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:border-accent/50 text-white text-xs px-3 py-1.5 transition"
           >
             <RotateCcw className="w-3 h-3" />
             Reset

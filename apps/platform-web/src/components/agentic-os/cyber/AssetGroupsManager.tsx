@@ -52,7 +52,7 @@ export function AssetGroupsManager({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {initialGroups.length} {initialGroups.length === 1 ? 'group' : 'groups'}
         </p>
         <button
@@ -61,7 +61,7 @@ export function AssetGroupsManager({
             setEditing(null);
             setCreating((c) => !c);
           }}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'New group'}
@@ -83,7 +83,7 @@ export function AssetGroupsManager({
       )}
 
       {initialGroups.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No asset groups yet.
         </p>
       ) : (
@@ -91,11 +91,11 @@ export function AssetGroupsManager({
           {initialGroups.map((g) => (
             <li
               key={g.id}
-              className="flex items-start gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+              className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white">{g.name}</p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   {g.memberCount} {g.memberCount === 1 ? 'member' : 'members'}
                   {g.description && ` · ${g.description}`}
                 </p>
@@ -104,7 +104,7 @@ export function AssetGroupsManager({
                     {g.tags.map((t) => (
                       <span
                         key={t}
-                        className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+                        className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary"
                       >
                         {t}
                       </span>
@@ -116,7 +116,7 @@ export function AssetGroupsManager({
                 <button
                   type="button"
                   onClick={() => void openEdit(g)}
-                  className="inline-flex items-center gap-1 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-text-primary hover:text-white px-2 py-1 text-xs transition"
                 >
                   <Pencil className="w-3 h-3" />
                   Edit
@@ -125,7 +125,7 @@ export function AssetGroupsManager({
                   type="button"
                   onClick={() => void remove(g)}
                   disabled={busy === g.id}
-                  className="inline-flex items-center gap-1 rounded border border-[#2a2d3e] text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
                 >
                   <Trash2 className="w-3 h-3" />
                   Delete

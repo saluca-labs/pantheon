@@ -24,7 +24,7 @@ export function NewArcButton({ bookId }: NewArcButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40 transition"
+        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40 transition"
       >
         <Plus className="w-3.5 h-3.5" />
         New arc

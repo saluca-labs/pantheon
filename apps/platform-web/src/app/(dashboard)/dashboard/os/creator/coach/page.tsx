@@ -47,7 +47,7 @@ export default async function CreatorCoachPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-white">AI Content Coach</h1>
-        <p className="text-sm text-[#94a3b8] mt-1">
+        <p className="text-sm text-text-secondary mt-1">
           Five-mode creator coach: content strategy, writing, audience growth,
           monetization, and general guidance.
         </p>

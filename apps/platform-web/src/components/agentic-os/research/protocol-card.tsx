@@ -19,16 +19,16 @@ export function ProtocolCard({ protocol }: Props) {
   return (
     <Link
       href={`/dashboard/os/research/protocols/${protocol.id}`}
-      className="block rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/40 transition"
+      className="block rounded-lg border border-border-subtle bg-surface-2 p-4 hover:border-accent/40 transition"
       data-testid={`protocol-card-${protocol.id}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <FileText className="w-4 h-4 text-[#4361EE]" />
+            <FileText className="w-4 h-4 text-accent" />
             <h3 className="text-sm font-semibold text-white truncate">{protocol.title}</h3>
             <ProtocolKindPill kind={protocol.kind} />
-            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-[#2a2d3e] text-[#94a3b8] bg-[#0f1117]">
+            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-border-subtle text-text-secondary bg-surface-0">
               v{protocol.version}
             </span>
           </div>
@@ -37,7 +37,7 @@ export function ProtocolCard({ protocol }: Props) {
               {protocol.tags.slice(0, 8).map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                 >
                   {t}
                 </span>
@@ -45,7 +45,7 @@ export function ProtocolCard({ protocol }: Props) {
             </div>
           )}
           {protocol.bodyMd && (
-            <p className="mt-2 text-xs text-[#94a3b8] line-clamp-2">
+            <p className="mt-2 text-xs text-text-secondary line-clamp-2">
               {protocol.bodyMd.replace(/[`*_#>]+/g, '').slice(0, 200)}
             </p>
           )}

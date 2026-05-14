@@ -112,7 +112,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
   if (editing) {
     return (
       <div
-        className="rounded-xl border border-[#4361EE]/40 bg-[#1a1d27] p-4"
+        className="rounded-xl border border-accent/40 bg-surface-2 p-4"
         data-testid={`notebook-entry-card-editing-${entry.id}`}
       >
         <NotebookEntryEditor
@@ -139,7 +139,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
 
   return (
     <article
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4"
       data-testid={`notebook-entry-card-${entry.id}`}
     >
       <header className="flex items-start justify-between gap-3 mb-2 flex-wrap">
@@ -151,7 +151,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="p-1.5 rounded text-[#94a3b8] hover:text-white hover:bg-[#0f1117]"
+            className="p-1.5 rounded text-text-secondary hover:text-white hover:bg-surface-0"
             aria-label="Edit entry"
             data-testid={`card-edit-${entry.id}`}
           >
@@ -160,7 +160,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
           <button
             type="button"
             onClick={() => setConfirmingArchive((v) => !v)}
-            className="p-1.5 rounded text-[#94a3b8] hover:text-rose-300 hover:bg-[#0f1117]"
+            className="p-1.5 rounded text-text-secondary hover:text-rose-300 hover:bg-surface-0"
             aria-label="Archive entry"
             data-testid={`card-archive-${entry.id}`}
           >
@@ -169,14 +169,14 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
         </div>
       </header>
 
-      <p className="flex items-center gap-1 text-[10px] text-[#94a3b8] mb-3">
+      <p className="flex items-center gap-1 text-[10px] text-text-secondary mb-3">
         <Clock className="w-3 h-3" />
         {formatEntryAt(entry.entryAt)}
       </p>
 
       {entry.bodyMd && (
         <div
-          className="prose prose-invert prose-sm max-w-none text-[#cbd5e1] [&_a]:text-[#4361EE] [&_code]:text-[#94a3b8] [&_code]:bg-[#0f1117] [&_code]:px-1 [&_code]:rounded mb-3"
+          className="prose prose-invert prose-sm max-w-none text-text-primary [&_a]:text-accent [&_code]:text-text-secondary [&_code]:bg-surface-0 [&_code]:px-1 [&_code]:rounded mb-3"
           data-testid={`card-body-${entry.id}`}
         >
           <ReactMarkdown>{entry.bodyMd}</ReactMarkdown>
@@ -191,7 +191,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
                 href={u}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[#4361EE] hover:underline"
+                className="inline-flex items-center gap-1 text-accent hover:underline"
               >
                 <LinkIcon className="w-3 h-3" />
                 <span className="truncate">{u}</span>
@@ -206,7 +206,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
           {entry.tags.map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
@@ -216,10 +216,10 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
 
       {confirmingArchive && (
         <div
-          className="mt-3 pt-3 border-t border-[#2a2d3e] flex items-center justify-between gap-3"
+          className="mt-3 pt-3 border-t border-border-subtle flex items-center justify-between gap-3"
           data-testid={`card-archive-confirm-${entry.id}`}
         >
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             Archive this entry? You can restore it from the timeline filter.
           </p>
           <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
               type="button"
               onClick={() => setConfirmingArchive(false)}
               disabled={submitting}
-              className="text-xs text-[#94a3b8] hover:text-white"
+              className="text-xs text-text-secondary hover:text-white"
             >
               Cancel
             </button>

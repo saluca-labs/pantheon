@@ -11,6 +11,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { ErrorRatesResponse } from '@/lib/api/schemas/errors';
+import {
+  ACCENT,
+  CHART_AXIS_STROKE,
+  CHART_GRID_STROKE,
+  CHART_LEGEND_STYLE,
+  DANGER,
+} from '@/lib/design/chart-tokens';
 
 interface ErrorRateChartProps {
   data: ErrorRatesResponse | undefined;
@@ -42,13 +49,13 @@ function CustomTooltip({
   const entry = payload[0]?.payload;
 
   return (
-    <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-3 text-sm">
+    <div className="bg-surface-2 border border-border-subtle rounded-lg p-3 text-sm">
       <p className="text-white font-medium mb-1">{label}</p>
-      <p className="text-[#E17055]">Errors: {entry?.error_count ?? 0}</p>
-      <p className="text-[#4361EE]">
+      <p className="text-danger">Errors: {entry?.error_count ?? 0}</p>
+      <p className="text-accent">
         Total Requests: {entry?.total_requests ?? 0}
       </p>
-      <p className="text-[#94a3b8]">
+      <p className="text-text-secondary">
         Error Rate: {((entry?.error_rate ?? 0) * 100).toFixed(2)}%
       </p>
     </div>
@@ -58,55 +65,55 @@ function CustomTooltip({
 export function ErrorRateChart({ data, isLoading }: ErrorRateChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
-        <div className="h-64 animate-pulse bg-[#2a2d3e] rounded-lg" />
+      <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
+        <div className="h-64 animate-pulse bg-border-subtle rounded-lg" />
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
+      <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
         <h3 className="text-white font-medium text-sm mb-2">
           Error Rates by Provider
         </h3>
         <div className="h-64 flex items-center justify-center">
-          <p className="text-[#94a3b8]">No error data available</p>
+          <p className="text-text-secondary">No error data available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
+    <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
       <h3 className="text-white font-medium text-sm mb-2">
         Error Rates by Provider
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
-          <CartesianGrid stroke="#2a2d3e" strokeDasharray="3 3" />
+          <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
           <XAxis
             dataKey="provider"
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            axisLine={{ stroke: '#2a2d3e' }}
+            tick={{ fill: CHART_AXIS_STROKE, fontSize: 12 }}
+            axisLine={{ stroke: CHART_GRID_STROKE }}
           />
           <YAxis
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            axisLine={{ stroke: '#2a2d3e' }}
+            tick={{ fill: CHART_AXIS_STROKE, fontSize: 12 }}
+            axisLine={{ stroke: CHART_GRID_STROKE }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+          <Legend wrapperStyle={CHART_LEGEND_STYLE} />
           <Bar
             dataKey="total_requests"
             name="Total Requests"
-            fill="#4361EE"
+            fill={ACCENT}
             opacity={0.4}
             radius={[4, 4, 0, 0]}
           />
           <Bar
             dataKey="error_count"
             name="Errors"
-            fill="#E17055"
+            fill={DANGER}
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

@@ -22,7 +22,7 @@ const SOURCES = ['all', 'system', 'custom'] as const;
 
 const INTENSITY_COLOR: Record<string, string> = {
   light: 'text-emerald-300',
-  moderate: 'text-[#4361EE]',
+  moderate: 'text-accent',
   vigorous: 'text-amber-300',
 };
 
@@ -86,12 +86,12 @@ export function WorkoutLibrary({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <label className="relative flex-1 min-w-[220px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search workouts"
-            className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] py-2 pl-9 pr-3 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+            className="w-full rounded-lg border border-border-subtle bg-surface-0 py-2 pl-9 pr-3 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
           />
         </label>
         <select
@@ -99,7 +99,7 @@ export function WorkoutLibrary({
           onChange={(e) =>
             setCategory(e.target.value as (typeof CATEGORIES)[number])
           }
-          className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+          className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -112,7 +112,7 @@ export function WorkoutLibrary({
           onChange={(e) =>
             setSource(e.target.value as (typeof SOURCES)[number])
           }
-          className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+          className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
         >
           {SOURCES.map((s) => (
             <option key={s} value={s}>
@@ -126,16 +126,16 @@ export function WorkoutLibrary({
         </select>
         <Link
           href="/dashboard/os/health/workouts/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
         >
           <Plus className="h-4 w-4" />
           Create workout
         </Link>
-        {loading && <span className="text-xs text-[#94a3b8]">Loading…</span>}
+        {loading && <span className="text-xs text-text-secondary">Loading…</span>}
       </div>
 
       {templates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27] p-8 text-center text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center text-sm text-text-secondary">
           No workouts match. Adjust filters or create a new template.
         </div>
       ) : (
@@ -143,7 +143,7 @@ export function WorkoutLibrary({
           {templates.map((t) => (
             <li
               key={t.id}
-              className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/50 transition flex flex-col"
+              className="rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/50 transition flex flex-col"
             >
               <Link
                 href={`/dashboard/os/health/workouts/${t.id}`}
@@ -151,20 +151,20 @@ export function WorkoutLibrary({
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span
-                    className={`text-[10px] uppercase tracking-wide rounded-full border border-[#2a2d3e] px-2 py-0.5 ${
+                    className={`text-[10px] uppercase tracking-wide rounded-full border border-border-subtle px-2 py-0.5 ${
                       t.source === 'system'
-                        ? 'text-[#4361EE]'
-                        : 'text-[#cbd5e1]'
+                        ? 'text-accent'
+                        : 'text-text-primary'
                     }`}
                   >
                     {t.source === 'system' ? 'Built-in' : 'Custom'}
                   </span>
-                  <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                  <span className="text-[10px] uppercase tracking-wide text-text-secondary">
                     {t.category}
                   </span>
                 </div>
                 <div className="text-sm font-semibold text-white">{t.name}</div>
-                <div className="mt-0.5 text-xs text-[#94a3b8]">
+                <div className="mt-0.5 text-xs text-text-secondary">
                   {t.estDurationMin} min ·{' '}
                   <span className={INTENSITY_COLOR[t.targetIntensity]}>
                     {t.targetIntensity}
@@ -178,7 +178,7 @@ export function WorkoutLibrary({
                   )}
                 </div>
                 {t.description && (
-                  <p className="mt-2 text-xs text-[#cbd5e1] leading-snug line-clamp-3">
+                  <p className="mt-2 text-xs text-text-primary leading-snug line-clamp-3">
                     {t.description}
                   </p>
                 )}
@@ -187,7 +187,7 @@ export function WorkoutLibrary({
                     {t.tags.slice(0, 4).map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[10px] text-[#cbd5e1]"
+                        className="rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-[10px] text-text-primary"
                       >
                         {tag}
                       </span>
@@ -200,7 +200,7 @@ export function WorkoutLibrary({
                   type="button"
                   onClick={() => clone(t.id)}
                   disabled={cloning === t.id}
-                  className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white disabled:opacity-60"
+                  className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-primary hover:border-accent/50 hover:text-white disabled:opacity-60"
                 >
                   <Copy className="h-3.5 w-3.5" />
                   {cloning === t.id ? 'Cloning…' : 'Use as starting point'}

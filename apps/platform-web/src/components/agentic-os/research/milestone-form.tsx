@@ -81,38 +81,38 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4"
+      className="space-y-3 rounded-lg border border-border-subtle bg-surface-2 p-4"
       data-testid="milestone-form"
     >
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-[#94a3b8]">Title</label>
+        <label className="text-xs uppercase tracking-wide text-text-secondary">Title</label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={200}
           required
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-xs uppercase tracking-wide text-text-secondary">
             Due date
           </label>
           <input
             type="date"
             value={dueAt ?? ''}
             onChange={(e) => setDueAt(e.target.value)}
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">Status</label>
+          <label className="text-xs uppercase tracking-wide text-text-secondary">Status</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as MilestoneStatus)}
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           >
             {MILESTONE_STATUS_VALUES.map((s) => (
               <option key={s} value={s}>
@@ -122,13 +122,13 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-xs uppercase tracking-wide text-text-secondary">
             Priority
           </label>
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as MilestonePriority)}
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           >
             {MILESTONE_PRIORITY_VALUES.map((p) => (
               <option key={p} value={p}>
@@ -138,7 +138,7 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           </select>
         </div>
       </div>
-      <label className="inline-flex items-center gap-2 text-sm text-[#cbd5e1]">
+      <label className="inline-flex items-center gap-2 text-sm text-text-primary">
         <input
           type="checkbox"
           checked={isBlocker}
@@ -148,7 +148,7 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
       </label>
       {(isBlocker || status === 'blocked' || status === 'at_risk' || status === 'missed') && (
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <label className="text-xs uppercase tracking-wide text-text-secondary">
             Blocked reason
           </label>
           <textarea
@@ -156,12 +156,12 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
             onChange={(e) => setBlockedReason(e.target.value)}
             rows={2}
             maxLength={4000}
-            className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white"
+            className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
           />
         </div>
       )}
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+        <label className="text-xs uppercase tracking-wide text-text-secondary">
           Notes (markdown)
         </label>
         <textarea
@@ -169,7 +169,7 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           onChange={(e) => setNotesMd(e.target.value)}
           rows={3}
           maxLength={20000}
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white font-mono"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white font-mono"
         />
       </div>
       {error && <p className="text-xs text-red-300">{error}</p>}
@@ -177,7 +177,7 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
         <button
           type="submit"
           disabled={submitting || title.trim().length === 0}
-          className="rounded bg-[#4361EE] text-white text-sm font-medium px-3 py-1.5 disabled:opacity-50"
+          className="rounded bg-accent text-white text-sm font-medium px-3 py-1.5 disabled:opacity-50"
         >
           {submitting ? 'Saving…' : initial ? 'Save changes' : 'Add milestone'}
         </button>
@@ -185,7 +185,7 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           <button
             type="button"
             onClick={onCancel}
-            className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white text-sm px-3 py-1.5"
+            className="rounded border border-border-subtle text-text-secondary hover:text-white text-sm px-3 py-1.5"
           >
             Cancel
           </button>

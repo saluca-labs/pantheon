@@ -48,34 +48,34 @@ export default async function FilmmakerRelationshipsPage({ params }: Props) {
     <div className="max-w-5xl">
       <Link
         href={`/dashboard/os/filmmaker/projects/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to project
       </Link>
 
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-wide text-[#94a3b8]">Relationships</p>
+        <p className="text-xs uppercase tracking-wide text-text-secondary">Relationships</p>
         <h1 className="text-2xl font-semibold text-white">{project.name}</h1>
-        <p className="text-sm text-[#94a3b8] mt-1">
+        <p className="text-sm text-text-secondary mt-1">
           The graph of who knows whom — text-only for now. Visual graph is a future polish pass.
         </p>
       </div>
 
       {characters.length < 2 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/40 p-10 text-center">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/40 p-10 text-center">
           <p className="text-sm text-white">
             Add at least two characters to begin mapping relationships.
           </p>
           <Link
             href={`/dashboard/os/filmmaker/projects/${id}/characters`}
-            className="mt-3 inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-[#2a2d3e] bg-[#4361EE]/80 hover:bg-[#4361EE] text-white transition"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-border-subtle bg-accent/80 hover:bg-accent text-white transition"
           >
             Go to characters
           </Link>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
           <RelationshipList
             projectId={id}
             characters={characters}

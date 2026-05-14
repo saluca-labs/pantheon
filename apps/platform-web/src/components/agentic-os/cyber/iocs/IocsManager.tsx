@@ -14,7 +14,7 @@ import { IocCard } from './IocCard';
 import { IocForm } from './IocForm';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function IocsManager({ initialIocs }: { initialIocs: Ioc[] }) {
   const [creating, setCreating] = useState(false);
@@ -41,13 +41,13 @@ export function IocsManager({ initialIocs }: { initialIocs: Ioc[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <label className="block min-w-[200px] flex-1">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Search</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Search</span>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Value, title, tag…" className={inputCls} />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Kind</span>
           <select value={kind} onChange={(e) => setKind(e.target.value as IocKind | '')} className={inputCls}>
             <option value="">All</option>
             {IOC_KINDS.map((k) => (
@@ -56,7 +56,7 @@ export function IocsManager({ initialIocs }: { initialIocs: Ioc[] }) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Threat</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Threat</span>
           <select value={threatType} onChange={(e) => setThreatType(e.target.value as ThreatType | '')} className={inputCls}>
             <option value="">All</option>
             {THREAT_TYPES.map((t) => (
@@ -67,7 +67,7 @@ export function IocsManager({ initialIocs }: { initialIocs: Ioc[] }) {
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'Add IOC'}
@@ -79,7 +79,7 @@ export function IocsManager({ initialIocs }: { initialIocs: Ioc[] }) {
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No IOCs match the current filters.
         </p>
       ) : (

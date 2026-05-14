@@ -42,7 +42,7 @@ const STATUS_ICONS: Record<SubscriberStatus, React.ReactNode> = {
 };
 
 const inputCls =
-  'rounded-lg border border-[#2a2d3e] bg-[#1a1d27] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/40 focus:border-[#d946ef] outline-none';
+  'rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none';
 
 export function SubscriberTable({ subscribers }: SubscriberTableProps) {
   const [subs, setSubs] = useState<CreatorSubscriber[]>(subscribers);
@@ -143,7 +143,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-white mb-1">Subscribers</h1>
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             Manage your email subscriber list.
             {activeCount > 0 && (
               <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-300">
@@ -158,14 +158,14 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
       {/* Add subscriber form */}
       <form
         onSubmit={handleAdd}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6"
       >
         <h2 className="text-sm font-semibold text-white mb-3">
           Add a subscriber
         </h2>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Email
             </label>
             <input
@@ -178,7 +178,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
             />
           </div>
           <div className="flex-1 min-w-[150px]">
-            <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Name (optional)
             </label>
             <input
@@ -204,13 +204,13 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
       {/* Search + status filter */}
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]/60" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary/60" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by email or name…"
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#94a3b8]/40 focus:border-[#d946ef] outline-none"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none"
           />
         </div>
         <select
@@ -229,18 +229,18 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
 
       {/* Subscriber list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] px-5 py-10 text-center">
-          <Mail className="w-8 h-8 text-[#94a3b8]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
+          <Mail className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary">
             {searchQuery || filterStatus !== 'all'
               ? 'No subscribers match your filters.'
               : 'No subscribers yet. Add your first subscriber above.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-[#2a2d3e] bg-[#0f1117] text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]">
+          <div className="grid grid-cols-12 gap-3 px-5 py-2.5 border-b border-border-subtle bg-surface-0 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
             <div className="col-span-4">Email</div>
             <div className="col-span-3">Name</div>
             <div className="col-span-2">Status</div>
@@ -249,7 +249,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
           </div>
 
           {/* Table body */}
-          <div className="divide-y divide-[#2a2d3e]">
+          <div className="divide-y divide-border-subtle">
             {filtered.map((sub) => (
               <div
                 key={sub.id}
@@ -258,14 +258,14 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                 <div className="col-span-4 min-w-0">
                   <p className="text-white truncate">{sub.email}</p>
                   {sub.source && (
-                    <p className="text-[10px] text-[#94a3b8]/60">
+                    <p className="text-[10px] text-text-secondary/60">
                       via {sub.source}
                     </p>
                   )}
                 </div>
                 <div className="col-span-3 min-w-0">
-                  <p className="text-[#94a3b8] truncate">
-                    {sub.name ?? <span className="text-[#94a3b8]/40">--</span>}
+                  <p className="text-text-secondary truncate">
+                    {sub.name ?? <span className="text-text-secondary/40">--</span>}
                   </p>
                 </div>
                 <div className="col-span-2">
@@ -276,7 +276,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                     {sub.status}
                   </span>
                 </div>
-                <div className="col-span-2 text-[#94a3b8]/70 text-xs">
+                <div className="col-span-2 text-text-secondary/70 text-xs">
                   {new Date(sub.createdAt).toLocaleDateString()}
                 </div>
                 <div className="col-span-1 flex items-center justify-end gap-1">
@@ -286,7 +286,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                       onClick={() =>
                         handleStatusChange(sub.id, 'unsubscribed')
                       }
-                      className="p-1 rounded hover:bg-slate-500/10 text-[#94a3b8] hover:text-white transition"
+                      className="p-1 rounded hover:bg-slate-500/10 text-text-secondary hover:text-white transition"
                       title="Mark unsubscribed"
                     >
                       <UserX className="w-3.5 h-3.5" />
@@ -298,7 +298,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                       onClick={() =>
                         handleStatusChange(sub.id, 'active')
                       }
-                      className="p-1 rounded hover:bg-emerald-500/10 text-[#94a3b8] hover:text-emerald-300 transition"
+                      className="p-1 rounded hover:bg-emerald-500/10 text-text-secondary hover:text-emerald-300 transition"
                       title="Re-activate"
                     >
                       <UserCheck className="w-3.5 h-3.5" />
@@ -307,7 +307,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                   <button
                     type="button"
                     onClick={() => handleDelete(sub.id)}
-                    className="p-1 rounded hover:bg-red-500/10 text-[#94a3b8] hover:text-red-400 transition"
+                    className="p-1 rounded hover:bg-red-500/10 text-text-secondary hover:text-red-400 transition"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

@@ -32,7 +32,7 @@ export default async function CreatorCoachSessionPage({ params }: PageProps) {
     <div className="space-y-4">
       <Link
         href="/dashboard/os/creator/coach"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Coach

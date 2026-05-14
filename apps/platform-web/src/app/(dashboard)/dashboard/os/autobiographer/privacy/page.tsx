@@ -109,25 +109,25 @@ export default async function PrivacyHubPage({ searchParams }: Props) {
       <div className="max-w-5xl space-y-4">
         <Link
           href="/dashboard/os/autobiographer"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Autobiographer OS
         </Link>
 
-        <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <div className="inline-flex items-center gap-2 mb-2">
-            <ShieldCheck className="w-5 h-5 text-[#4361EE]" />
+            <ShieldCheck className="w-5 h-5 text-accent" />
             <h1 className="text-xl font-semibold text-white">Privacy review</h1>
           </div>
-          <p className="text-sm text-[#cbd5e1] leading-relaxed">
+          <p className="text-sm text-text-primary leading-relaxed">
             Per-book consent audit, pseudonym map, and pre-publication review
             checklist. Required checks gate chapter lock and the "final" PDF
             export.
           </p>
         </header>
 
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
           <h2 className="text-sm font-semibold text-white">Pick a book</h2>
           {books.length === 0 ? (
             <p className="text-xs text-[#64748b] italic">
@@ -139,15 +139,15 @@ export default async function PrivacyHubPage({ searchParams }: Props) {
                 <li key={b.id}>
                   <Link
                     href={`/dashboard/os/autobiographer/privacy?bookId=${b.id}`}
-                    className="flex items-center justify-between gap-2 px-3 py-2 rounded border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition"
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded border border-border-subtle bg-surface-0 hover:border-accent/60 hover:bg-surface-3 transition"
                   >
                     <span className="inline-flex items-center gap-2 min-w-0">
-                      <BookOpenText className="w-4 h-4 text-[#4361EE] shrink-0" />
+                      <BookOpenText className="w-4 h-4 text-accent shrink-0" />
                       <span className="truncate text-white text-sm">
                         {b.title}
                       </span>
                     </span>
-                    <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                    <span className="text-[10px] uppercase tracking-wide text-text-secondary">
                       {b.status}
                     </span>
                   </Link>
@@ -216,18 +216,18 @@ export default async function PrivacyHubPage({ searchParams }: Props) {
     <div className="max-w-5xl space-y-4">
       <Link
         href="/dashboard/os/autobiographer/privacy"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Choose a different book
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="inline-flex items-center gap-2 mb-2">
-          <ShieldCheck className="w-5 h-5 text-[#4361EE]" />
+          <ShieldCheck className="w-5 h-5 text-accent" />
           <h1 className="text-xl font-semibold text-white">{book.title}</h1>
         </div>
-        <p className="text-sm text-[#cbd5e1] leading-relaxed">
+        <p className="text-sm text-text-primary leading-relaxed">
           Privacy review for this book. Resolve the people roster, set
           pseudonyms for anyone who shouldn't be named in the manuscript, and
           work the review checklist down to all-green before locking chapters

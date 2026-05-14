@@ -17,7 +17,7 @@ const COLOR: Record<DatasetKind, string> = {
   timeseries: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
   sequence: 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10',
   sim: 'border-violet-500/40 text-violet-300 bg-violet-500/10',
-  other: 'border-[#2a2d3e] text-[#94a3b8] bg-[#0f1117]',
+  other: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
 export function DatasetKindPill({ kind }: { kind: DatasetKind }) {

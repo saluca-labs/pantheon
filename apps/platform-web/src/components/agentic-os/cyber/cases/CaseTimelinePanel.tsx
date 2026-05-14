@@ -37,7 +37,7 @@ const EVENT_ICONS: Record<CaseEventKind, typeof MessageSquare> = {
 };
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export interface CaseTimelinePanelProps {
   caseId: string;
@@ -83,10 +83,10 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
           e.preventDefault();
           void submit();
         }}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-2"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-2"
       >
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Add note</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Add note</span>
           <textarea
             value={noteBody}
             onChange={(e) => setNoteBody(e.target.value)}
@@ -99,7 +99,7 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
           <button
             type="submit"
             disabled={saving || !noteBody.trim()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
           >
             <Send className="w-4 h-4" />
             {saving ? 'Posting…' : 'Post'}
@@ -109,7 +109,7 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
       </form>
 
       {events.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No events recorded yet.
         </p>
       ) : (
@@ -119,21 +119,21 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
             return (
               <li
                 key={ev.id}
-                className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3"
+                className="rounded-xl border border-border-subtle bg-surface-2 p-3"
               >
                 <div className="flex items-start gap-2">
-                  <Icon className="w-4 h-4 text-[#4361EE] mt-0.5 shrink-0" />
+                  <Icon className="w-4 h-4 text-accent mt-0.5 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-[#cbd5e1]">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-text-primary">
                         {ev.kind.replace(/_/g, ' ')}
                       </span>
                       {ev.author && (
-                        <span className="text-[11px] text-[#94a3b8]">
+                        <span className="text-[11px] text-text-secondary">
                           · {ev.author}
                         </span>
                       )}
-                      <span className="text-[11px] text-[#94a3b8] ml-auto">
+                      <span className="text-[11px] text-text-secondary ml-auto">
                         {new Date(ev.createdAt).toLocaleString()}
                       </span>
                     </div>

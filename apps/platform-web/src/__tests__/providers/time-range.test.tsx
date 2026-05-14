@@ -25,14 +25,16 @@ describe('TimeRangeSelector', () => {
   });
 
   it('applies accent styling to the active time range', () => {
+    // Asserts on the design-token class (Wave A migration replaced the
+    // literal `#4361EE` hex with the `accent` semantic token).
     const onChange = vi.fn();
     render(<TimeRangeSelector value="7d" onChange={onChange} />);
 
     const activeButton = screen.getByText('7d');
-    expect(activeButton.className).toContain('4361EE');
+    expect(activeButton.className).toContain('text-accent');
 
     const inactiveButton = screen.getByText('1h');
-    expect(inactiveButton.className).not.toContain('4361EE');
+    expect(inactiveButton.className).not.toContain('text-accent');
   });
 
   it('sets aria-pressed on the active button', () => {

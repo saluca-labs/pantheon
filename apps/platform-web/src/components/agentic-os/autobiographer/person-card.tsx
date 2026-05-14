@@ -40,7 +40,7 @@ export function PersonCard({ person }: { person: PersonCardData }) {
   return (
     <Link
       href={`/dashboard/os/autobiographer/people/${person.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
     >
       <div className="flex items-start gap-3">
         {person.imageUrl ? (
@@ -48,23 +48,23 @@ export function PersonCard({ person }: { person: PersonCardData }) {
           <img
             src={person.imageUrl}
             alt=""
-            className="w-12 h-12 rounded-full object-cover border border-[#2a2d3e] shrink-0"
+            className="w-12 h-12 rounded-full object-cover border border-border-subtle shrink-0"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#4361EE]/15 to-[#1a1d27] border border-[#2a2d3e] flex items-center justify-center shrink-0">
-            <User2 className="w-5 h-5 text-[#4361EE]/60" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent/15 to-surface-2 border border-border-subtle flex items-center justify-center shrink-0">
+            <User2 className="w-5 h-5 text-accent/60" />
           </div>
         )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <h3 className="text-white font-medium group-hover:text-[#4361EE] transition truncate">
+            <h3 className="text-white font-medium group-hover:text-accent transition truncate">
               {person.canonicalName}
             </h3>
             <ConsentBadge state={person.consentToPublish} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[#94a3b8]">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
             {person.relation && (
               <span className="inline-flex items-center gap-1">
                 <TagIcon className="w-3 h-3" />
@@ -84,7 +84,7 @@ export function PersonCard({ person }: { person: PersonCardData }) {
           </div>
 
           {person.notes && (
-            <p className="text-xs text-[#94a3b8] mt-1.5 truncate">
+            <p className="text-xs text-text-secondary mt-1.5 truncate">
               {person.notes}
             </p>
           )}

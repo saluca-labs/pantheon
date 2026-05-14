@@ -279,7 +279,7 @@ export function MealPlanCalendar({
           <button
             type="button"
             onClick={() => setWeekStart(addDaysISO(weekStart, -7))}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2 text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+            className="rounded-lg border border-border-subtle bg-surface-0 p-2 text-text-primary hover:border-accent/50 hover:text-white"
             aria-label="Previous week"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -287,19 +287,19 @@ export function MealPlanCalendar({
           <button
             type="button"
             onClick={() => setWeekStart(mondayOfClient(todayUtc()))}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+            className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-xs text-text-primary hover:border-accent/50 hover:text-white"
           >
             This week
           </button>
           <button
             type="button"
             onClick={() => setWeekStart(addDaysISO(weekStart, 7))}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2 text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+            className="rounded-lg border border-border-subtle bg-surface-0 p-2 text-text-primary hover:border-accent/50 hover:text-white"
             aria-label="Next week"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <span className="ml-2 text-sm text-[#cbd5e1]">
+          <span className="ml-2 text-sm text-text-primary">
             Week of {weekStart}
           </span>
         </div>
@@ -308,13 +308,13 @@ export function MealPlanCalendar({
             <button
               type="button"
               onClick={copyWeek}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-xs text-text-primary hover:border-accent/50 hover:text-white"
             >
               <Copy className="h-3.5 w-3.5" />
               Copy week →
             </button>
           )}
-          {loading && <span className="text-xs text-[#94a3b8]">Loading…</span>}
+          {loading && <span className="text-xs text-text-secondary">Loading…</span>}
         </div>
       </div>
 
@@ -328,12 +328,12 @@ export function MealPlanCalendar({
         <table className="w-full min-w-[760px] border-separate border-spacing-1">
           <thead>
             <tr>
-              <th className="w-24 text-left text-xs text-[#94a3b8] font-normal pl-2"></th>
+              <th className="w-24 text-left text-xs text-text-secondary font-normal pl-2"></th>
               {DAY_LABEL.map((d, i) => (
                 <th
                   key={d}
                   className={`text-left text-xs px-2 py-1 ${
-                    todayDow === i ? 'text-white' : 'text-[#94a3b8]'
+                    todayDow === i ? 'text-white' : 'text-text-secondary'
                   }`}
                 >
                   <div>{d}</div>
@@ -347,7 +347,7 @@ export function MealPlanCalendar({
           <tbody>
             {SLOTS.map((slot) => (
               <tr key={slot}>
-                <td className="align-top text-xs text-[#cbd5e1] font-medium pl-2 pt-2">
+                <td className="align-top text-xs text-text-primary font-medium pl-2 pt-2">
                   {SLOT_LABEL[slot]}
                 </td>
                 {DAY_LABEL.map((_, day) => {
@@ -358,8 +358,8 @@ export function MealPlanCalendar({
                       key={day}
                       className={`align-top rounded-lg border p-1.5 min-w-[110px] ${
                         isToday
-                          ? 'border-[#4361EE]/40 bg-[#4361EE]/5'
-                          : 'border-[#2a2d3e] bg-[#1a1d27]'
+                          ? 'border-accent/40 bg-accent/5'
+                          : 'border-border-subtle bg-surface-2'
                       }`}
                     >
                       <div className="space-y-1.5">
@@ -393,7 +393,7 @@ export function MealPlanCalendar({
                               editing: null,
                             })
                           }
-                          className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-[#2a2d3e] py-1 text-[10px] text-[#94a3b8] hover:border-[#4361EE]/50 hover:text-white"
+                          className="flex w-full items-center justify-center gap-1 rounded border border-dashed border-border-subtle py-1 text-[10px] text-text-secondary hover:border-accent/50 hover:text-white"
                         >
                           <Plus className="h-3 w-3" /> Add
                         </button>
@@ -462,14 +462,14 @@ function CellItem({
     slot.freeformText ??
     '—';
   return (
-    <div className="rounded border border-[#2a2d3e] bg-[#0f1117] p-1.5">
+    <div className="rounded border border-border-subtle bg-surface-0 p-1.5">
       <button
         type="button"
         onClick={onEdit}
         className="block w-full text-left"
       >
         <div className="text-[11px] text-white truncate">{label}</div>
-        <div className="text-[9px] text-[#94a3b8]">
+        <div className="text-[9px] text-text-secondary">
           {slot.servings} svg
           {slot.recipe ? ' · recipe' : ''}
           {slot.foodItem ? ' · food' : ''}
@@ -481,7 +481,7 @@ function CellItem({
             type="button"
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="rounded p-0.5 text-[#94a3b8] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:text-white disabled:opacity-30"
             aria-label="Move up"
           >
             <ArrowUp className="h-3 w-3" />
@@ -490,7 +490,7 @@ function CellItem({
             type="button"
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="rounded p-0.5 text-[#94a3b8] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:text-white disabled:opacity-30"
             aria-label="Move down"
           >
             <ArrowDown className="h-3 w-3" />
@@ -504,7 +504,7 @@ function CellItem({
               className={`rounded p-0.5 ${
                 logged
                   ? 'text-emerald-400'
-                  : 'text-[#94a3b8] hover:text-emerald-400'
+                  : 'text-text-secondary hover:text-emerald-400'
               }`}
               aria-label="I ate this"
               title="I ate this"
@@ -515,7 +515,7 @@ function CellItem({
           <button
             type="button"
             onClick={onDelete}
-            className="rounded p-0.5 text-[#94a3b8] hover:text-red-300"
+            className="rounded p-0.5 text-text-secondary hover:text-red-300"
             aria-label="Delete"
           >
             <Trash2 className="h-3 w-3" />
@@ -616,19 +616,19 @@ function SlotDrawer({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl border border-[#2a2d3e] bg-[#1a1d27] p-5 sm:rounded-2xl"
+        className="w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-white">
-            <Utensils className="inline h-4 w-4 mr-1.5 text-[#4361EE]" />
+            <Utensils className="inline h-4 w-4 mr-1.5 text-accent" />
             {editing ? 'Edit' : 'Plan'} {SLOT_LABEL[mealSlot].toLowerCase()} —{' '}
             {DAY_LABEL[dayOfWeek]}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+            className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -644,8 +644,8 @@ function SlotDrawer({
                 onClick={() => setMode(m)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                   mode === m
-                    ? 'bg-[#4361EE] text-white'
-                    : 'border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                    ? 'bg-accent text-white'
+                    : 'border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
                 }`}
               >
                 {m === 'recipe' ? 'Recipe' : m === 'food' ? 'Food' : 'Freeform'}
@@ -655,11 +655,11 @@ function SlotDrawer({
 
           {mode === 'recipe' && (
             <label className="block">
-              <span className="mb-1 block text-xs text-[#94a3b8]">Recipe</span>
+              <span className="mb-1 block text-xs text-text-secondary">Recipe</span>
               <select
                 value={recipeId ?? ''}
                 onChange={(e) => setRecipeId(e.target.value || null)}
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
               >
                 <option value="">Select a recipe…</option>
                 {recipes.map((r) => (
@@ -673,7 +673,7 @@ function SlotDrawer({
 
           {mode === 'food' && (
             <div>
-              <span className="mb-1 block text-xs text-[#94a3b8]">Food</span>
+              <span className="mb-1 block text-xs text-text-secondary">Food</span>
               <FoodCombobox
                 value={foodQuery}
                 onChange={setFoodQuery}
@@ -688,21 +688,21 @@ function SlotDrawer({
 
           {mode === 'freeform' && (
             <label className="block">
-              <span className="mb-1 block text-xs text-[#94a3b8]">
+              <span className="mb-1 block text-xs text-text-secondary">
                 Freeform note
               </span>
               <input
                 value={freeformText}
                 onChange={(e) => setFreeformText(e.target.value)}
                 placeholder={'e.g. "leftovers", "eat out"'}
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
               />
             </label>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-xs text-[#94a3b8]">
+              <span className="mb-1 block text-xs text-text-secondary">
                 Servings
               </span>
               <input
@@ -711,19 +711,19 @@ function SlotDrawer({
                 min="0.1"
                 value={String(servings)}
                 onChange={(e) => setServings(Number(e.target.value) || 1)}
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
               />
             </label>
           </div>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-[#94a3b8]">Notes</span>
+            <span className="mb-1 block text-xs text-text-secondary">Notes</span>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional"
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
             />
           </label>
 
@@ -737,14 +737,14 @@ function SlotDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-2 text-sm text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-2 text-sm text-text-primary hover:border-accent/50 hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
             >
               {submitting ? 'Saving…' : 'Save'}
             </button>

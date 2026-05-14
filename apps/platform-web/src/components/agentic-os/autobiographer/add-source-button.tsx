@@ -109,14 +109,14 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/40"
+        className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:border-accent/40"
       >
         <Plus className="w-3 h-3" />
         Add source
       </button>
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+          <div className="w-full max-w-lg rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">
                 Link a memory as a source
@@ -124,7 +124,7 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-xs text-[#94a3b8] hover:text-white"
+                className="text-xs text-text-secondary hover:text-white"
               >
                 Close
               </button>
@@ -136,33 +136,33 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by title or era"
-                className="w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] pl-7 pr-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-md border border-border-subtle bg-surface-0 pl-7 pr-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
               />
             </div>
             {error ? (
               <p className="text-xs text-red-400">{error}</p>
             ) : null}
-            <div className="max-h-80 overflow-auto rounded-md border border-[#2a2d3e] bg-[#0f1117]">
+            <div className="max-h-80 overflow-auto rounded-md border border-border-subtle bg-surface-0">
               {loading ? (
-                <p className="p-3 text-xs text-[#94a3b8]">Loading…</p>
+                <p className="p-3 text-xs text-text-secondary">Loading…</p>
               ) : filtered.length === 0 ? (
-                <p className="p-3 text-xs text-[#94a3b8]">
+                <p className="p-3 text-xs text-text-secondary">
                   No memories match. Capture more in the Memory Captures
                   page first.
                 </p>
               ) : (
-                <ul className="divide-y divide-[#2a2d3e]">
+                <ul className="divide-y divide-border-subtle">
                   {filtered.map((m) => (
                     <li
                       key={m.id}
-                      className="flex items-center justify-between gap-2 p-2 hover:bg-[#1a1d27]"
+                      className="flex items-center justify-between gap-2 p-2 hover:bg-surface-2"
                     >
                       <div className="min-w-0">
                         <div className="text-sm text-white truncate">
                           {m.title}
                         </div>
                         {m.whenInLife ? (
-                          <div className="text-[11px] text-[#94a3b8] truncate">
+                          <div className="text-[11px] text-text-secondary truncate">
                             {m.whenInLife}
                           </div>
                         ) : null}
@@ -171,7 +171,7 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
                         type="button"
                         disabled={adding === m.id}
                         onClick={() => link(m.id)}
-                        className="text-[11px] px-2 py-1 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-60 shrink-0"
+                        className="text-[11px] px-2 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-60 shrink-0"
                       >
                         {adding === m.id ? 'Linking…' : 'Link'}
                       </button>

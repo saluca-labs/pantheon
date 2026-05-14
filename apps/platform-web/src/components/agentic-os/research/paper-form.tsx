@@ -190,7 +190,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           maxLength={500}
           data-testid="paper-form-title-input"
         />
@@ -200,7 +200,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as PaperKind)}
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-form-kind-select"
         >
           {PAPER_KINDS.map((k) => (
@@ -218,7 +218,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
             value={doi}
             onChange={(e) => setDoi(e.target.value)}
             placeholder="10.1234/abcd.5678"
-            className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="paper-form-doi-input"
           />
         </Field>
@@ -228,7 +228,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
             value={arxivId}
             onChange={(e) => setArxivId(e.target.value)}
             placeholder="2401.12345"
-            className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="paper-form-arxiv-input"
           />
         </Field>
@@ -240,7 +240,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://"
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-form-url-input"
         />
       </Field>
@@ -255,7 +255,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
           value={authorsText}
           onChange={(e) => setAuthorsText(e.target.value)}
           placeholder="Smith, J. & Doe, A."
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-form-authors-text-input"
         />
       </Field>
@@ -277,7 +277,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
             value={venue}
             onChange={(e) => setVenue(e.target.value)}
             placeholder="Journal name, conference, …"
-            className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="paper-form-venue-input"
           />
         </Field>
@@ -288,7 +288,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
             onChange={(e) => setYear(e.target.value)}
             min={1500}
             max={2200}
-            className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="paper-form-year-input"
           />
         </Field>
@@ -303,7 +303,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
           value={abstractMd}
           onChange={(e) => setAbstractMd(e.target.value)}
           rows={6}
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none font-mono"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none font-mono"
           data-testid="paper-form-abstract-input"
         />
       </Field>
@@ -318,7 +318,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
           value={tagsRaw}
           onChange={(e) => setTagsRaw(e.target.value)}
           placeholder="topology, robotics, benchmark"
-          className="w-full px-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-form-tags-input"
         />
       </Field>
@@ -335,7 +335,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white"
           >
             <X className="w-3.5 h-3.5" />
             Cancel
@@ -344,7 +344,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/85 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/85 disabled:opacity-60"
           data-testid="paper-form-submit"
         >
           <Save className="w-3.5 h-3.5" />
@@ -368,9 +368,9 @@ function Field({
 }) {
   return (
     <label className="block" data-testid={testId}>
-      <span className="block text-xs text-[#94a3b8] mb-1">{label}</span>
+      <span className="block text-xs text-text-secondary mb-1">{label}</span>
       {children}
-      {hint && <span className="block text-[10px] text-[#94a3b8] mt-1">{hint}</span>}
+      {hint && <span className="block text-[10px] text-text-secondary mt-1">{hint}</span>}
     </label>
   );
 }

@@ -28,7 +28,7 @@ import {
 import { SpecSheetForm } from './spec-sheet-form';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export type SpecSheetScope =
   | { kind: 'workshop' }
@@ -148,7 +148,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
             <button
               type="button"
               onClick={() => setShowAdd((v) => !v)}
-              className="rounded-md border border-[#4361EE] bg-[#4361EE]/10 px-3 py-2 text-sm text-white hover:bg-[#4361EE]/20 transition"
+              className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
             >
               {showAdd ? 'Cancel' : '+ Add spec sheet'}
             </button>
@@ -171,17 +171,17 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-8 text-center">
-          <p className="text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
+          <p className="text-sm text-text-secondary">
             No spec sheets yet.
             {!readOnly && ' Add your first one with the button above.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="border-b border-[#2a2d3e] bg-[#0f1117]/50">
-              <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+            <thead className="border-b border-border-subtle bg-surface-0/50">
+              <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Kind</th>
                 <th className="px-4 py-3 font-medium">Attached to</th>
@@ -196,7 +196,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
                 return (
                   <tr
                     key={s.id}
-                    className="border-b border-[#2a2d3e] last:border-b-0 hover:bg-[#0f1117]/30 transition"
+                    className="border-b border-border-subtle last:border-b-0 hover:bg-surface-0/30 transition"
                   >
                     <td className="px-4 py-3 text-white font-medium">
                       {s.title}
@@ -205,7 +205,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
                           {s.tags.map((t) => (
                             <span
                               key={t}
-                              className="text-[9px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                             >
                               {t}
                             </span>
@@ -213,19 +213,19 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-[#cbd5e1]">
+                    <td className="px-4 py-3 text-text-primary">
                       {SPEC_SHEET_KIND_LABELS[s.kind]}
                     </td>
-                    <td className="px-4 py-3 text-[#cbd5e1]">
+                    <td className="px-4 py-3 text-text-primary">
                       {att ? SPEC_SHEET_ATTACHMENT_LABELS[att] : '—'}
                     </td>
-                    <td className="px-4 py-3 text-[#cbd5e1]">{s.revision ?? '—'}</td>
+                    <td className="px-4 py-3 text-text-primary">{s.revision ?? '—'}</td>
                     <td className="px-4 py-3">
                       <a
                         href={s.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#4361EE] hover:underline text-xs"
+                        className="text-accent hover:underline text-xs"
                       >
                         Open
                       </a>
@@ -235,7 +235,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
                         <button
                           type="button"
                           onClick={() => handleDelete(s.id)}
-                          className="text-xs text-[#94a3b8] hover:text-red-400 transition"
+                          className="text-xs text-text-secondary hover:text-red-400 transition"
                         >
                           Delete
                         </button>

@@ -150,16 +150,16 @@ export function MealLogger({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <label className="flex items-center gap-2 text-sm text-[#cbd5e1]">
+        <label className="flex items-center gap-2 text-sm text-text-primary">
           <span>Date</span>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-2 py-1.5 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+            className="rounded-lg border border-border-subtle bg-surface-0 px-2 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
           />
         </label>
-        {loading && <span className="text-xs text-[#94a3b8]">Refreshing…</span>}
+        {loading && <span className="text-xs text-text-secondary">Refreshing…</span>}
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
 
@@ -201,8 +201,8 @@ export function MealLogger({
 
 function Totals({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3">
-      <div className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-text-secondary">
         {label}
       </div>
       <div className="text-xl font-semibold text-white tabular-nums">
@@ -226,10 +226,10 @@ function SlotCard({
   onDelete: (id: string) => void;
 }) {
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Utensils className="h-4 w-4 text-[#4361EE]" />
+          <Utensils className="h-4 w-4 text-accent" />
           <h2 className="text-sm font-semibold text-white">
             {SLOT_LABELS[slot]}
           </h2>
@@ -237,7 +237,7 @@ function SlotCard({
         <button
           type="button"
           onClick={onAdd}
-          className="inline-flex items-center gap-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white transition"
+          className="inline-flex items-center gap-1 rounded-lg border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-text-primary hover:border-accent/50 hover:text-white transition"
         >
           <Plus className="h-3 w-3" />
           Add
@@ -245,19 +245,19 @@ function SlotCard({
       </div>
 
       {entries.length === 0 ? (
-        <p className="text-xs text-[#94a3b8]">No entries yet.</p>
+        <p className="text-xs text-text-secondary">No entries yet.</p>
       ) : (
         <ul className="space-y-2">
           {entries.map((e) => (
             <li
               key={e.id}
-              className="flex items-start justify-between gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+              className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-surface-0 p-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="text-sm text-white truncate">
                   {e.foodItem?.name ?? e.freeformDescription ?? '—'}
                 </div>
-                <div className="mt-1 text-xs text-[#94a3b8]">
+                <div className="mt-1 text-xs text-text-secondary">
                   {e.servings} ×{' '}
                   {e.nutrients.kcal !== null
                     ? `${Math.round(e.nutrients.kcal)} kcal`
@@ -273,7 +273,7 @@ function SlotCard({
                     : ''}
                 </div>
                 {e.notes && (
-                  <div className="mt-1 text-xs text-[#cbd5e1] italic line-clamp-2">
+                  <div className="mt-1 text-xs text-text-primary italic line-clamp-2">
                     {e.notes}
                   </div>
                 )}
@@ -282,7 +282,7 @@ function SlotCard({
                 <button
                   type="button"
                   onClick={() => onEdit(e)}
-                  className="rounded p-1 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white"
+                  className="rounded p-1 text-text-secondary hover:bg-surface-2 hover:text-white"
                   aria-label="Edit"
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -290,7 +290,7 @@ function SlotCard({
                 <button
                   type="button"
                   onClick={() => onDelete(e.id)}
-                  className="rounded p-1 text-[#94a3b8] hover:bg-red-500/15 hover:text-red-300"
+                  className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
                   aria-label="Delete"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -388,7 +388,7 @@ function MealDrawer({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl border border-[#2a2d3e] bg-[#1a1d27] p-5 sm:rounded-2xl"
+        className="w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -398,7 +398,7 @@ function MealDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+            className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -407,7 +407,7 @@ function MealDrawer({
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-[#94a3b8]">
+            <label className="mb-1 block text-xs text-text-secondary">
               Food (search the catalog or type freeform)
             </label>
             <FoodCombobox
@@ -446,12 +446,12 @@ function MealDrawer({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-[#94a3b8]">Notes</label>
+            <label className="mb-1 block text-xs text-text-secondary">Notes</label>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
               placeholder="Optional"
             />
           </div>
@@ -466,14 +466,14 @@ function MealDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-2 text-sm text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-2 text-sm text-text-primary hover:border-accent/50 hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
             >
               {submitting ? 'Saving…' : 'Save'}
             </button>
@@ -495,14 +495,14 @@ function NumField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-[#94a3b8]">{label}</span>
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
       <input
         type="number"
         step="0.1"
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+        className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
       />
     </label>
   );

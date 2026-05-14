@@ -107,24 +107,24 @@ export function ActivityLogger({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <label className="flex items-center gap-2 text-sm text-[#cbd5e1]">
+        <label className="flex items-center gap-2 text-sm text-text-primary">
           <span>Date</span>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-2 py-1.5 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+            className="rounded-lg border border-border-subtle bg-surface-0 px-2 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
           />
         </label>
         <button
           type="button"
           onClick={() => setDrawer({ open: true, editing: null })}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] transition"
         >
           <Plus className="h-4 w-4" />
           Log activity
         </button>
-        {loading && <span className="text-xs text-[#94a3b8]">Refreshing…</span>}
+        {loading && <span className="text-xs text-text-secondary">Refreshing…</span>}
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
 
@@ -134,13 +134,13 @@ export function ActivityLogger({
         <Totals label="activities" value={summary.activity_count} />
       </div>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="mb-3 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[#4361EE]" />
+          <Activity className="h-4 w-4 text-accent" />
           <h2 className="text-sm font-semibold text-white">Today's activities</h2>
         </div>
         {entries.length === 0 ? (
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             Nothing logged yet. Tap "Log activity" to add one.
           </p>
         ) : (
@@ -148,23 +148,23 @@ export function ActivityLogger({
             {entries.map((e) => (
               <li
                 key={e.id}
-                className="flex items-start justify-between gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+                className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-white">
                     {e.activityType}{' '}
-                    <span className="text-xs text-[#94a3b8]">
+                    <span className="text-xs text-text-secondary">
                       · {e.intensity}
                     </span>
                   </div>
-                  <div className="mt-1 text-xs text-[#94a3b8]">
+                  <div className="mt-1 text-xs text-text-secondary">
                     {e.durationMin} min
                     {e.kcalBurned !== null
                       ? ` · ${Math.round(e.kcalBurned)} kcal`
                       : ''}
                   </div>
                   {e.notes && (
-                    <div className="mt-1 text-xs text-[#cbd5e1] italic line-clamp-2">
+                    <div className="mt-1 text-xs text-text-primary italic line-clamp-2">
                       {e.notes}
                     </div>
                   )}
@@ -173,7 +173,7 @@ export function ActivityLogger({
                   <button
                     type="button"
                     onClick={() => setDrawer({ open: true, editing: e })}
-                    className="rounded p-1 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white"
+                    className="rounded p-1 text-text-secondary hover:bg-surface-2 hover:text-white"
                     aria-label="Edit"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -181,7 +181,7 @@ export function ActivityLogger({
                   <button
                     type="button"
                     onClick={() => void deleteEntry(e.id)}
-                    className="rounded p-1 text-[#94a3b8] hover:bg-red-500/15 hover:text-red-300"
+                    className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -211,8 +211,8 @@ export function ActivityLogger({
 
 function Totals({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3">
-      <div className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-text-secondary">
         {label}
       </div>
       <div className="text-xl font-semibold text-white tabular-nums">
@@ -298,7 +298,7 @@ function ActivityDrawer({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl border border-[#2a2d3e] bg-[#1a1d27] p-5 sm:rounded-2xl"
+        className="w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -308,7 +308,7 @@ function ActivityDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+            className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -317,7 +317,7 @@ function ActivityDrawer({
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-[#94a3b8]">
+            <label className="mb-1 block text-xs text-text-secondary">
               Activity type
             </label>
             <Combobox<ActivityOption>
@@ -332,7 +332,7 @@ function ActivityDrawer({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-xs text-[#94a3b8]">
+              <span className="mb-1 block text-xs text-text-secondary">
                 Duration (min)
               </span>
               <input
@@ -343,15 +343,15 @@ function ActivityDrawer({
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 required
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs text-[#94a3b8]">Intensity</span>
+              <span className="mb-1 block text-xs text-text-secondary">Intensity</span>
               <select
                 value={intensity}
                 onChange={(e) => setIntensity(e.target.value as Intensity)}
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
               >
                 <option value="light">Light</option>
                 <option value="moderate">Moderate</option>
@@ -359,7 +359,7 @@ function ActivityDrawer({
               </select>
             </label>
             <label className="block col-span-2">
-              <span className="mb-1 block text-xs text-[#94a3b8]">
+              <span className="mb-1 block text-xs text-text-secondary">
                 kcal burned (override; estimated when blank)
               </span>
               <input
@@ -369,18 +369,18 @@ function ActivityDrawer({
                 value={kcal}
                 onChange={(e) => setKcal(e.target.value)}
                 placeholder="Auto-estimated from MET + duration"
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
               />
             </label>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-[#94a3b8]">Notes</label>
+            <label className="mb-1 block text-xs text-text-secondary">Notes</label>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
               placeholder="Optional"
             />
           </div>
@@ -395,14 +395,14 @@ function ActivityDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-2 text-sm text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-2 text-sm text-text-primary hover:border-accent/50 hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
             >
               {submitting ? 'Saving…' : 'Save'}
             </button>

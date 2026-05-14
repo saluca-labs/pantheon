@@ -78,20 +78,20 @@ export function ProtocolList({ initialProtocols }: Props) {
     <div className="space-y-4" data-testid="protocol-list">
       <div className="flex items-center justify-between gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
           <input
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search title"
-            className="w-full pl-10 pr-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="protocol-list-search"
           />
         </div>
         <button
           type="button"
           onClick={() => setFormOpen((o) => !o)}
-          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/80 transition"
+          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 transition"
           data-testid="protocol-list-add"
         >
           <Plus className="w-3 h-3" />
@@ -121,8 +121,8 @@ export function ProtocolList({ initialProtocols }: Props) {
               onClick={() => setTag(tag === t ? null : t)}
               className={`text-[10px] px-1.5 py-0.5 rounded border transition ${
                 tag === t
-                  ? 'bg-[#4361EE]/20 border-[#4361EE]/60 text-white'
-                  : 'bg-[#0f1117] border-[#2a2d3e] text-[#94a3b8] hover:border-[#4361EE]/40'
+                  ? 'bg-accent/20 border-accent/60 text-white'
+                  : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
               }`}
               data-testid={`protocol-tag-chip-${t}`}
             >
@@ -146,7 +146,7 @@ export function ProtocolList({ initialProtocols }: Props) {
       {formOpen && <ProtocolForm onClose={() => setFormOpen(false)} />}
 
       {loading && (
-        <p className="text-xs text-[#94a3b8]" data-testid="protocol-list-loading">
+        <p className="text-xs text-text-secondary" data-testid="protocol-list-loading">
           Loading…
         </p>
       )}
@@ -158,7 +158,7 @@ export function ProtocolList({ initialProtocols }: Props) {
 
       {protocols.length === 0 && !loading ? (
         <p
-          className="text-sm text-[#94a3b8] italic py-8 text-center"
+          className="text-sm text-text-secondary italic py-8 text-center"
           data-testid="protocol-list-empty"
         >
           No protocols yet. Click <strong>Add protocol</strong> to record one.
@@ -191,8 +191,8 @@ function ChipButton({
       onClick={onClick}
       className={`text-xs px-2 py-1 rounded-full border transition ${
         active
-          ? 'bg-[#4361EE]/20 border-[#4361EE]/60 text-white'
-          : 'bg-[#0f1117] border-[#2a2d3e] text-[#94a3b8] hover:border-[#4361EE]/40'
+          ? 'bg-accent/20 border-accent/60 text-white'
+          : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
       }`}
       data-testid={testId}
     >

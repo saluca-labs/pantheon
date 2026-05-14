@@ -68,7 +68,7 @@ export function VoiceBuildProfileButton({
         type="button"
         onClick={build}
         disabled={disabled}
-        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-[#4361EE] text-white font-medium hover:bg-[#3a52d8] disabled:opacity-50 disabled:cursor-not-allowed transition"
+        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         <Sparkles className="w-4 h-4" />
         {busy

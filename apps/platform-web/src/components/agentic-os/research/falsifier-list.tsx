@@ -43,7 +43,7 @@ export function FalsifierList({ hypothesisId, initialFalsifiers }: Props) {
             <AlertOctagon className="w-4 h-4 text-rose-300" />
             Falsifiers
           </h2>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             What observation would refute this hypothesis? Pre-register the
             criterion before you start running.
           </p>
@@ -51,7 +51,7 @@ export function FalsifierList({ hypothesisId, initialFalsifiers }: Props) {
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white transition"
           >
             <Plus className="w-3.5 h-3.5" />
             Add falsifier
@@ -69,7 +69,7 @@ export function FalsifierList({ hypothesisId, initialFalsifiers }: Props) {
       )}
 
       {falsifiers.length === 0 && !adding ? (
-        <p className="text-sm text-[#94a3b8] italic">No falsifiers yet.</p>
+        <p className="text-sm text-text-secondary italic">No falsifiers yet.</p>
       ) : (
         <div className="space-y-2">
           {falsifiers.map((f) => (

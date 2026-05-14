@@ -17,7 +17,7 @@ import { formatQuantity, type PartVariant } from '@/lib/agentic-os/maker/catalog
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   catalogId: string;
@@ -80,12 +80,12 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
   return (
     <div className="space-y-3">
       {variants.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">No variants yet.</p>
+        <p className="text-sm text-text-secondary">No variants yet.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+              <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
                 <th className="py-2 pr-4 font-normal">Label</th>
                 <th className="py-2 pr-4 font-normal">On hand</th>
                 <th className="py-2 pr-4 font-normal"></th>
@@ -93,7 +93,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
             </thead>
             <tbody>
               {variants.map((v) => (
-                <tr key={v.id} className="border-t border-[#2a2d3e]">
+                <tr key={v.id} className="border-t border-border-subtle">
                   <td className="py-2 pr-4 text-white">{v.variantLabel}</td>
                   <td className="py-2 pr-4">
                     <input
@@ -110,7 +110,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
                       className={`${inputCls} w-24`}
                       aria-label={`On-hand for ${v.variantLabel}`}
                     />
-                    <span className="text-xs text-[#94a3b8] ml-2">
+                    <span className="text-xs text-text-secondary ml-2">
                       ({formatQuantity(v.quantityOnHand)})
                     </span>
                   </td>
@@ -118,7 +118,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
                     <button
                       type="button"
                       onClick={() => void removeVariant(v)}
-                      className="text-xs text-[#94a3b8] hover:text-red-300 transition"
+                      className="text-xs text-text-secondary hover:text-red-300 transition"
                       aria-label="Remove variant"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
 
       <form
         onSubmit={addVariant}
-        className="flex flex-wrap gap-3 pt-3 border-t border-[#2a2d3e]"
+        className="flex flex-wrap gap-3 pt-3 border-t border-border-subtle"
       >
         <input
           value={newLabel}
@@ -154,7 +154,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
         <button
           type="submit"
           disabled={busy || !newLabel.trim()}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {busy ? 'Adding…' : 'Add variant'}
         </button>

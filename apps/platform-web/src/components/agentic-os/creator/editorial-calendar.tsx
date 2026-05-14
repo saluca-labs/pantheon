@@ -24,12 +24,12 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -150,7 +150,7 @@ export function EditorialCalendar({ initial }: Props) {
       {/* Add post form */}
       <form
         onSubmit={handleAdd}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-white">Plan a post</h2>
 
@@ -199,7 +199,7 @@ export function EditorialCalendar({ initial }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Adding…' : 'Add to calendar'}
           </button>
@@ -209,26 +209,26 @@ export function EditorialCalendar({ initial }: Props) {
 
       {/* Calendar view grouped by week */}
       {posts.length === 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] px-5 py-10 text-center">
-          <p className="text-sm text-[#94a3b8]">No posts yet. Plan your first piece above.</p>
+        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
+          <p className="text-sm text-text-secondary">No posts yet. Plan your first piece above.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {sortedWeeks.map((week) => {
             const weekPosts = weekGroups.get(week) ?? [];
             return (
-              <div key={week} className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
-                <div className="px-5 py-2 border-b border-[#2a2d3e] bg-[#0f1117]">
-                  <span className="text-xs font-mono font-semibold text-[#94a3b8] uppercase">
+              <div key={week} className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+                <div className="px-5 py-2 border-b border-border-subtle bg-surface-0">
+                  <span className="text-xs font-mono font-semibold text-text-secondary uppercase">
                     {week === 'unscheduled' ? 'Unscheduled' : week}
                   </span>
                 </div>
-                <ul className="divide-y divide-[#2a2d3e]">
+                <ul className="divide-y divide-border-subtle">
                   {weekPosts.map((post) => (
                     <li key={post.id} className="px-5 py-3 flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{post.title}</p>
-                        <p className="text-xs text-[#94a3b8]">
+                        <p className="text-xs text-text-secondary">
                           {post.tags.length > 0 && `Tags: ${post.tags.slice(0, 3).join(', ')}`}
                           {post.scheduledAt && ` · ${new Date(post.scheduledAt).toLocaleDateString()}`}
                           {post.publishedAt && ` · Published ${new Date(post.publishedAt).toLocaleDateString()}`}
@@ -241,7 +241,7 @@ export function EditorialCalendar({ initial }: Props) {
                           className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border cursor-pointer bg-transparent ${STATUS_COLORS[post.status]}`}
                         >
                           {POST_STATUSES.map((s) => (
-                            <option key={s} value={s} className="bg-[#1a1d27] text-white normal-case tracking-normal">
+                            <option key={s} value={s} className="bg-surface-2 text-white normal-case tracking-normal">
                               {s}
                             </option>
                           ))}

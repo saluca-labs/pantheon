@@ -64,27 +64,27 @@ export function FoodLibrary({ initialItems }: FoodLibraryProps) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-[#94a3b8]">
+        <span className="text-xs text-text-secondary">
           {items.length} custom food{items.length === 1 ? '' : 's'}
           {loading ? ' · refreshing…' : ''}
         </span>
         <button
           type="button"
           onClick={() => setDrawer({ open: true, editing: null })}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
         >
           <Plus className="h-4 w-4" />
           Create food
         </button>
       </div>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2">
         {items.length === 0 ? (
-          <p className="p-6 text-sm text-[#94a3b8]">
+          <p className="p-6 text-sm text-text-secondary">
             No custom foods yet. Create one to use it in meal entries.
           </p>
         ) : (
-          <ul className="divide-y divide-[#2a2d3e]">
+          <ul className="divide-y divide-border-subtle">
             {items.map((it) => (
               <li
                 key={it.id}
@@ -94,12 +94,12 @@ export function FoodLibrary({ initialItems }: FoodLibraryProps) {
                   <div className="text-sm font-medium text-white truncate">
                     {it.name}
                     {it.brand && (
-                      <span className="ml-2 text-xs font-normal text-[#94a3b8]">
+                      <span className="ml-2 text-xs font-normal text-text-secondary">
                         {it.brand}
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 text-xs text-[#94a3b8]">
+                  <div className="mt-1 text-xs text-text-secondary">
                     {it.servingLabel
                       ? `${it.servingLabel}`
                       : it.servingSizeG
@@ -116,7 +116,7 @@ export function FoodLibrary({ initialItems }: FoodLibraryProps) {
                   <button
                     type="button"
                     onClick={() => setDrawer({ open: true, editing: it })}
-                    className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+                    className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white"
                     aria-label="Edit"
                   >
                     <Pencil className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function FoodLibrary({ initialItems }: FoodLibraryProps) {
                   <button
                     type="button"
                     onClick={() => void onDelete(it.id)}
-                    className="rounded p-1 text-[#94a3b8] hover:bg-red-500/15 hover:text-red-300"
+                    className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
                     aria-label="Delete"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -244,7 +244,7 @@ function FoodDrawer({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-t-2xl border border-[#2a2d3e] bg-[#1a1d27] p-5 sm:rounded-2xl"
+        className="w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -254,7 +254,7 @@ function FoodDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#94a3b8] hover:bg-[#0f1117] hover:text-white"
+            className="rounded p-1 text-text-secondary hover:bg-surface-0 hover:text-white"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -295,14 +295,14 @@ function FoodDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-2 text-sm text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+              className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-2 text-sm text-text-primary hover:border-accent/50 hover:text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || name.trim().length === 0}
-              className="rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
             >
               {submitting ? 'Saving…' : 'Save'}
             </button>
@@ -328,14 +328,14 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-[#94a3b8]">{label}</span>
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+        className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
       />
     </label>
   );
@@ -352,14 +352,14 @@ function NumField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-[#94a3b8]">{label}</span>
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
       <input
         type="number"
         step="0.1"
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+        className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
       />
     </label>
   );

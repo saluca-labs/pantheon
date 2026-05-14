@@ -72,20 +72,20 @@ export function ArcChapterAttachButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white transition"
       >
         <Plus className="w-3.5 h-3.5" />
         Attach chapter
       </button>
       {open && (
-        <ul className="absolute z-10 mt-1 w-72 max-h-64 overflow-y-auto rounded border border-[#2a2d3e] bg-[#0f1117] shadow-lg">
+        <ul className="absolute z-10 mt-1 w-72 max-h-64 overflow-y-auto rounded border border-border-subtle bg-surface-0 shadow-lg">
           {attachable.map((c) => (
             <li key={c.id}>
               <button
                 type="button"
                 onClick={() => attach(c.id)}
                 disabled={busy}
-                className="w-full text-left px-3 py-1.5 text-xs flex items-center justify-between gap-2 hover:bg-[#1a1d27] text-[#cbd5e1]"
+                className="w-full text-left px-3 py-1.5 text-xs flex items-center justify-between gap-2 hover:bg-surface-2 text-text-primary"
               >
                 <span className="truncate">
                   {c.title ?? 'Untitled chapter'}

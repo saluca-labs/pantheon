@@ -31,7 +31,7 @@ export function CoachCitationPanel({ assistantText, memoryTitles }: Props) {
   const citations = useMemo(() => parseCitations(assistantText), [assistantText]);
   if (citations.length === 0) {
     return (
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 text-xs text-[#64748b] italic">
+      <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 text-xs text-[#64748b] italic">
         No citation markers yet. The drafter appends a{' '}
         <code className="font-mono">[cites: …]</code> line after each paragraph;
         none have been emitted on this turn.
@@ -40,8 +40,8 @@ export function CoachCitationPanel({ assistantText, memoryTitles }: Props) {
   }
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-xs font-semibold text-[#cbd5e1]">
-        <Quote className="w-3.5 h-3.5 text-[#4361EE]" />
+      <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
+        <Quote className="w-3.5 h-3.5 text-accent" />
         Citation map ({citations.length}{' '}
         {citations.length === 1 ? 'paragraph' : 'paragraphs'})
       </div>
@@ -49,9 +49,9 @@ export function CoachCitationPanel({ assistantText, memoryTitles }: Props) {
         {citations.map((c) => (
           <li
             key={c.paragraph_index}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-1.5"
+            className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-1.5"
           >
-            <div className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <div className="text-[10px] uppercase tracking-wide text-text-secondary">
               Paragraph {c.paragraph_index}
             </div>
             <div className="flex flex-wrap gap-1">

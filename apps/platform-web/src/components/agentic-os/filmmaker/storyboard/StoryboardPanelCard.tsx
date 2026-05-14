@@ -36,8 +36,8 @@ export function StoryboardPanelCard({
   onDelete,
 }: Props) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden flex flex-col">
-      <div className="aspect-video bg-[#0f1117] border-b border-[#2a2d3e] flex items-center justify-center">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden flex flex-col">
+      <div className="aspect-video bg-surface-0 border-b border-border-subtle flex items-center justify-center">
         {panel.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -56,7 +56,7 @@ export function StoryboardPanelCard({
             Panel {panel.position}
           </span>
           {panel.durationSeconds != null ? (
-            <span className="text-[10px] text-[#94a3b8]">
+            <span className="text-[10px] text-text-secondary">
               {panel.durationSeconds}s
             </span>
           ) : null}
@@ -69,24 +69,24 @@ export function StoryboardPanelCard({
         </div>
 
         {panel.description ? (
-          <p className="text-xs text-[#cbd5e1] leading-relaxed">
+          <p className="text-xs text-text-primary leading-relaxed">
             {truncate(panel.description, 140)}
           </p>
         ) : null}
 
         {panel.dialogueExcerpt ? (
-          <p className="text-[11px] italic text-[#94a3b8]">
+          <p className="text-[11px] italic text-text-secondary">
             "{truncate(panel.dialogueExcerpt, 80)}"
           </p>
         ) : null}
 
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-[#2a2d3e]">
+        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-border-subtle">
           <div className="flex gap-1">
             <button
               type="button"
               onClick={onMoveUp}
               disabled={isFirst}
-              className="p-1 rounded text-[#94a3b8] hover:text-white hover:bg-[#0f1117] disabled:opacity-30 transition"
+              className="p-1 rounded text-text-secondary hover:text-white hover:bg-surface-0 disabled:opacity-30 transition"
               aria-label="Move up"
             >
               <ChevronUp className="w-4 h-4" />
@@ -95,7 +95,7 @@ export function StoryboardPanelCard({
               type="button"
               onClick={onMoveDown}
               disabled={isLast}
-              className="p-1 rounded text-[#94a3b8] hover:text-white hover:bg-[#0f1117] disabled:opacity-30 transition"
+              className="p-1 rounded text-text-secondary hover:text-white hover:bg-surface-0 disabled:opacity-30 transition"
               aria-label="Move down"
             >
               <ChevronDown className="w-4 h-4" />
@@ -105,7 +105,7 @@ export function StoryboardPanelCard({
             <button
               type="button"
               onClick={onEdit}
-              className="p-1 rounded text-[#94a3b8] hover:text-white hover:bg-[#0f1117] transition"
+              className="p-1 rounded text-text-secondary hover:text-white hover:bg-surface-0 transition"
               aria-label="Edit"
             >
               <Pencil className="w-4 h-4" />
@@ -113,7 +113,7 @@ export function StoryboardPanelCard({
             <button
               type="button"
               onClick={onDelete}
-              className="p-1 rounded text-[#94a3b8] hover:text-red-400 hover:bg-[#0f1117] transition"
+              className="p-1 rounded text-text-secondary hover:text-red-400 hover:bg-surface-0 transition"
               aria-label="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -127,7 +127,7 @@ export function StoryboardPanelCard({
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]">
+    <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary">
       {children}
     </span>
   );

@@ -22,7 +22,7 @@ const KIND_COLOR: Record<string, string> = {
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  low:    'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e]',
+  low:    'text-text-secondary bg-surface-0 border-border-subtle',
   medium: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
   high:   'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
 };
@@ -75,7 +75,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-4 space-y-2">
+    <div className="rounded-lg border border-border-subtle bg-surface-0/60 p-4 space-y-2">
       <p className="text-sm text-white leading-relaxed">{prediction.text}</p>
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
@@ -93,13 +93,13 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setEditing(true)}
-            className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white transition"
           >
             <Pencil className="w-3 h-3" /> Edit
           </button>
           {confirmingDelete ? (
             <span className="inline-flex items-center gap-1.5 text-xs">
-              <span className="text-[#94a3b8]">Delete?</span>
+              <span className="text-text-secondary">Delete?</span>
               <button
                 onClick={handleDelete}
                 disabled={busy}
@@ -109,7 +109,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
               </button>
               <button
                 onClick={() => setConfirmingDelete(false)}
-                className="text-[#94a3b8] hover:text-white"
+                className="text-text-secondary hover:text-white"
               >
                 No
               </button>
@@ -117,7 +117,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
           ) : (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-red-300 transition"
+              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
             >
               <Trash2 className="w-3 h-3" /> Delete
             </button>

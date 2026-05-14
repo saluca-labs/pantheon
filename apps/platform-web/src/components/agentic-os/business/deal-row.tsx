@@ -46,16 +46,16 @@ export default function DealRow({ deal, contactName, orgName }: DealRowProps) {
   const expectedClose = formatDate(deal.expectedCloseDate);
 
   return (
-    <tr className="border-b border-[#2a2d3e] hover:bg-[#1e2130] transition-colors">
+    <tr className="border-b border-border-subtle hover:bg-[#1e2130] transition-colors">
       <td className="px-4 py-2.5">
         <Link
           href={`/dashboard/os/business/deals/${deal.id}`}
-          className="text-white text-xs font-medium hover:text-[#4361EE] transition-colors"
+          className="text-white text-xs font-medium hover:text-accent transition-colors"
         >
           {deal.title}
         </Link>
       </td>
-      <td className="px-4 py-2.5 text-xs text-[#94a3b8]">
+      <td className="px-4 py-2.5 text-xs text-text-secondary">
         {contactName || '--'}
         {contactName && orgName && <span className="mx-1">·</span>}
         {orgName && !contactName && <span>{orgName}</span>}
@@ -67,7 +67,7 @@ export default function DealRow({ deal, contactName, orgName }: DealRowProps) {
       <td className="px-4 py-2.5">
         <DealStagePicker stage={deal.stage} disabled />
       </td>
-      <td className="px-4 py-2.5 text-xs text-[#94a3b8]">
+      <td className="px-4 py-2.5 text-xs text-text-secondary">
         {expectedClose ?? '--'}
       </td>
     </tr>

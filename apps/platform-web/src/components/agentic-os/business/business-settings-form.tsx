@@ -16,7 +16,7 @@ import {
 } from '@/lib/agentic-os/business/settings';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   initial: BusinessSettings;
@@ -93,11 +93,11 @@ export function BusinessSettingsForm({ initial }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Business name</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Business name</span>
           <input
             value={form.business_name}
             onChange={(e) => setForm((f) => ({ ...f, business_name: e.target.value }))}
@@ -105,7 +105,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Logo URL</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Logo URL</span>
           <input
             value={form.logo_url}
             onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
@@ -115,7 +115,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Address</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Address</span>
           <textarea
             value={form.address}
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
@@ -123,7 +123,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Tax ID (EIN / ABN / VAT)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tax ID (EIN / ABN / VAT)</span>
           <input
             value={form.tax_id}
             onChange={(e) => setForm((f) => ({ ...f, tax_id: e.target.value }))}
@@ -131,7 +131,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Default currency</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Default currency</span>
           <input
             value={form.default_currency}
             onChange={(e) => setForm((f) => ({ ...f, default_currency: e.target.value }))}
@@ -145,7 +145,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           </datalist>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Invoice prefix</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Invoice prefix</span>
           <input
             value={form.invoice_number_prefix}
             onChange={(e) => setForm((f) => ({ ...f, invoice_number_prefix: e.target.value }))}
@@ -153,7 +153,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Quote prefix</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Quote prefix</span>
           <input
             value={form.quote_number_prefix}
             onChange={(e) => setForm((f) => ({ ...f, quote_number_prefix: e.target.value }))}
@@ -161,7 +161,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Default payment terms</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Default payment terms</span>
           <input
             value={form.default_payment_terms}
             onChange={(e) => setForm((f) => ({ ...f, default_payment_terms: e.target.value }))}
@@ -175,7 +175,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           </datalist>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Default hourly rate ($)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Default hourly rate ($)</span>
           <input
             value={form.default_hourly_rate_dollars}
             onChange={(e) => setForm((f) => ({ ...f, default_hourly_rate_dollars: e.target.value }))}
@@ -185,7 +185,7 @@ export function BusinessSettingsForm({ initial }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Accent color</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Accent color</span>
           <select
             value={form.accent_color}
             onChange={(e) => setForm((f) => ({ ...f, accent_color: e.target.value }))}
@@ -201,7 +201,7 @@ export function BusinessSettingsForm({ initial }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>

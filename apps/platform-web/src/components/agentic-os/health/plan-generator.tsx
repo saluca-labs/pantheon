@@ -74,7 +74,7 @@ export function PlanGenerator() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           What’s on your mind today? (optional)
         </label>
         <textarea
@@ -82,9 +82,9 @@ export function PlanGenerator() {
           onChange={(e) => setFreeText(e.target.value)}
           rows={3}
           placeholder="e.g. I want to sleep better and start moving more."
-          className="w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+          className="w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
         />
-        <p className="text-xs text-[#94a3b8]/70 mt-1.5">
+        <p className="text-xs text-text-secondary/70 mt-1.5">
           We’ll incorporate your profile, goals, and recent screener results.
           If we detect signs of crisis, we’ll pause and surface support
           resources instead.
@@ -95,7 +95,7 @@ export function PlanGenerator() {
         type="button"
         onClick={onGenerate}
         disabled={loading}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
       >
         {loading ? 'Generating…' : 'Generate plan'}
       </button>
@@ -111,7 +111,7 @@ export function PlanGenerator() {
 
       {plan && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4">
+          <div className="rounded-lg border border-border-subtle bg-surface-0 p-4">
             <p className="text-sm text-white">{plan.summary}</p>
           </div>
 
@@ -122,7 +122,7 @@ export function PlanGenerator() {
               return (
                 <div
                   key={i}
-                  className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4"
+                  className="rounded-lg border border-border-subtle bg-surface-0 p-4"
                 >
                   <div className="flex items-start gap-3">
                     <Icon className={`w-4 h-4 mt-1 shrink-0 ${cat.tone}`} />
@@ -137,14 +137,14 @@ export function PlanGenerator() {
                       <h3 className="text-sm font-semibold text-white mb-1">
                         {r.title}
                       </h3>
-                      <p className="text-sm text-[#cbd5e1] leading-relaxed mb-2">
+                      <p className="text-sm text-text-primary leading-relaxed mb-2">
                         {r.body}
                       </p>
                       <a
                         href={r.source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-[#4361EE] hover:underline"
+                        className="text-xs text-accent hover:underline"
                       >
                         Source: {r.source.label}
                       </a>
@@ -155,7 +155,7 @@ export function PlanGenerator() {
             })}
           </div>
 
-          <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4">
+          <div className="rounded-lg border border-border-subtle bg-surface-0 p-4">
             <h3 className="text-sm font-semibold text-white mb-2">
               All sources cited above
             </h3>
@@ -166,7 +166,7 @@ export function PlanGenerator() {
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#4361EE] hover:underline"
+                    className="text-accent hover:underline"
                   >
                     {s.label}
                   </a>

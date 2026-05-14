@@ -43,7 +43,7 @@ export async function ArcList({ bookId, arcs }: ArcListProps) {
     <div className="space-y-3">
       <NewArcButton bookId={bookId} />
       {arcs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
           No arcs yet. Create one to define a custom chapter ordering for
           this book — or stick with the default position order.
         </div>
@@ -51,7 +51,7 @@ export async function ArcList({ bookId, arcs }: ArcListProps) {
         arcs.map((a) => (
           <details
             key={a.id}
-            className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27]/50 group"
+            className="rounded-xl border border-border-subtle bg-surface-2/50 group"
           >
             <summary className="list-none cursor-pointer">
               <ArcCard
@@ -65,7 +65,7 @@ export async function ArcList({ bookId, arcs }: ArcListProps) {
                 }}
               />
             </summary>
-            <div className="border-t border-[#2a2d3e] p-3 bg-[#0f1117]/40">
+            <div className="border-t border-border-subtle p-3 bg-surface-0/40">
               <ArcChapterList arcId={a.id} bookId={bookId} />
             </div>
           </details>

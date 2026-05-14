@@ -59,7 +59,7 @@ export const SHOOTING_DAY_STATUSES: ShootingDayStatusInfo[] = [
   { status: 'planned', label: 'Planned', color: 'text-blue-300 bg-blue-500/10 border-blue-500/30' },
   { status: 'in_progress', label: 'In Progress', color: 'text-amber-300 bg-amber-500/10 border-amber-500/30' },
   { status: 'completed', label: 'Completed', color: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' },
-  { status: 'cancelled', label: 'Cancelled', color: 'text-[#64748b] bg-[#0f1117] border-[#2a2d3e]' },
+  { status: 'cancelled', label: 'Cancelled', color: 'text-[#64748b] bg-surface-0 border-border-subtle' },
 ];
 
 export const SHOOTING_DAY_STATUS_LABEL: Record<ShootingDayStatus, string> =

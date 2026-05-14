@@ -21,7 +21,7 @@ export const CONSENT_STATE_COLOR: Record<ConsentState, string> = {
   withheld: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
   deceased: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   public_figure: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  not_applicable: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  not_applicable: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 const CONSENT_ICON: Record<ConsentState, typeof ShieldCheck> = {

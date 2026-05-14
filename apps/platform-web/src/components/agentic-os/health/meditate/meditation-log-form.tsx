@@ -50,7 +50,7 @@ export function MeditationLogForm() {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Session source
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -61,8 +61,8 @@ export function MeditationLogForm() {
               onClick={() => setSource(s)}
               className={`text-xs rounded-full border px-3 py-1 transition ${
                 source === s
-                  ? 'border-[#4361EE] bg-[#4361EE]/15 text-white'
-                  : 'border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:border-[#4361EE]/50'
+                  ? 'border-accent bg-accent/15 text-white'
+                  : 'border-border-subtle bg-surface-0 text-text-primary hover:border-accent/50'
               }`}
             >
               {s === 'manual'
@@ -83,7 +83,7 @@ export function MeditationLogForm() {
         />
       )}
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Duration (minutes)
         </label>
         <input
@@ -99,7 +99,7 @@ export function MeditationLogForm() {
               ),
             )
           }
-          className="w-32 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white px-3 py-2"
+          className="w-32 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white px-3 py-2"
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -114,12 +114,12 @@ export function MeditationLogForm() {
         rows={3}
         placeholder="How did the session go?"
       />
-      <div className="flex items-center gap-3 pt-2 border-t border-[#2a2d3e]">
+      <div className="flex items-center gap-3 pt-2 border-t border-border-subtle">
         <button
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting ? 'Saving…' : 'Save session'}

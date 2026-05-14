@@ -32,7 +32,7 @@ const STATUS_COLOR: Record<ProjectStatus, string> = {
   production: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
   post_production: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   wrapped: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  archived: 'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 function daysUntil(target: string | null): number | null {
@@ -65,24 +65,24 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/filmmaker/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to projects
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden mb-6">
         {project.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={project.coverImageUrl}
             alt={project.name}
-            className="w-full h-48 object-cover border-b border-[#2a2d3e]"
+            className="w-full h-48 object-cover border-b border-border-subtle"
           />
         ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-[#4361EE]/20 to-[#1a1d27] border-b border-[#2a2d3e] flex items-center justify-center">
-            <Clapperboard className="w-10 h-10 text-[#4361EE]/50" />
+          <div className="w-full h-32 bg-gradient-to-br from-accent/20 to-surface-2 border-b border-border-subtle flex items-center justify-center">
+            <Clapperboard className="w-10 h-10 text-accent/50" />
           </div>
         )}
 
@@ -90,7 +90,7 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap mb-2">
               <h1 className="text-2xl font-semibold text-white">{project.name}</h1>
-              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1]">
+              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-primary">
                 {FORMAT_LABELS[project.format]}
               </span>
               <span
@@ -103,14 +103,14 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
               <p className="text-sm text-white/90 italic mb-2">{project.logline}</p>
             )}
             {project.description && (
-              <p className="text-sm text-[#94a3b8]">{project.description}</p>
+              <p className="text-sm text-text-secondary">{project.description}</p>
             )}
             {project.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1">
                 {project.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                   >
                     {t}
                   </span>
@@ -133,7 +133,7 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
 
         {/* Stats + shots link */}
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
             <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
               Stats
             </h2>
@@ -171,163 +171,163 @@ export default async function FilmmakerProjectHubPage({ params }: Props) {
 
           <Link
             href={`/dashboard/os/filmmaker/shots?projectId=${project.id}`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div>
-              <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+              <p className="text-sm font-medium text-white group-hover:text-accent transition">
                 Shot list
               </p>
-              <p className="text-xs text-[#94a3b8] mt-0.5">
+              <p className="text-xs text-text-secondary mt-0.5">
                 {project.shotCount === 0
                   ? 'No shots yet — start the breakdown.'
                   : `${project.shotCount} shots, ${project.completedShotCount} done.`}
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/story`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <ScrollText className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <ScrollText className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Story
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Bible, treatment, logline, outline, pitch deck.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/screenplay`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <FileText className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <FileText className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Screenplay
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Fountain editor — scenes, characters, version history.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/characters`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <UserSquare2 className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <UserSquare2 className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Characters
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Character sheets — identity, psychology, voice.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/relationships`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <Link2 className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <Link2 className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Relationships
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Who knows whom — kinds, direction, tension.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/breakdown`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <Layers className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <Layers className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Breakdown
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Tag scenes with cast, props, vehicles, costume, fx.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/schedule`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <CalendarDays className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <CalendarDays className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Schedule
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Stripboard — drop scenes onto shooting days.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/storyboards`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <Images className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <Images className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   Storyboards
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Visual boards with ordered panels — angle, move, shot size.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
 
           <Link
             href={`/dashboard/os/filmmaker/projects/${project.id}/coach`}
-            className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+            className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
           >
             <div className="flex items-start gap-3">
-              <Sparkles className="w-4 h-4 text-[#94a3b8] mt-0.5 group-hover:text-[#4361EE] transition" />
+              <Sparkles className="w-4 h-4 text-text-secondary mt-0.5 group-hover:text-accent transition" />
               <div>
-                <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition">
+                <p className="text-sm font-medium text-white group-hover:text-accent transition">
                   AI coach
                 </p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Development exec, script reader, dialogue doctor, scheduler.
                 </p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+            <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
           </Link>
         </div>
       </div>
@@ -346,7 +346,7 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="inline-flex items-center gap-2 text-[#94a3b8]">
+      <span className="inline-flex items-center gap-2 text-text-secondary">
         {icon}
         {label}
       </span>

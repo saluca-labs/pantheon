@@ -81,12 +81,12 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
   }
 
   return (
-    <form onSubmit={submit} className="space-y-2 p-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117]">
+    <form onSubmit={submit} className="space-y-2 p-3 rounded-lg border border-border-subtle bg-surface-0">
       <div className="flex flex-wrap gap-2">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as BreakdownCategory)}
-          className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
         >
           {BREAKDOWN_CATEGORIES.map((c) => (
             <option key={c.category} value={c.category}>
@@ -99,7 +99,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name (e.g. SARAH, Coffee cup, 1950s Cadillac)"
-          className="flex-1 min-w-[180px] text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white placeholder-[#64748b]"
+          className="flex-1 min-w-[180px] text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white placeholder-[#64748b]"
           required
         />
         <input
@@ -108,11 +108,11 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
           max={10000}
           value={quantity}
           onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-          className="w-16 text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+          className="w-16 text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
           title="Quantity"
         />
         {category === 'cast' && (
-          <label className="flex items-center gap-1.5 text-xs text-[#94a3b8] px-2">
+          <label className="flex items-center gap-1.5 text-xs text-text-secondary px-2">
             <input
               type="checkbox"
               checked={isPrincipal}
@@ -127,7 +127,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Optional description"
         rows={2}
-        className="w-full text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white placeholder-[#64748b]"
+        className="w-full text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white placeholder-[#64748b]"
       />
       {error && <p className="text-xs text-red-300">{error}</p>}
       <div className="flex items-center gap-2 justify-end">
@@ -135,7 +135,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white"
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border-subtle text-text-secondary hover:text-white"
           >
             <X className="w-3 h-3" /> Cancel
           </button>
@@ -143,7 +143,7 @@ export function BreakdownElementForm({ sceneId, initial, onSaved, onCancel }: Pr
         <button
           type="submit"
           disabled={busy || !name.trim()}
-          className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded bg-[#4361EE] text-white disabled:opacity-40"
+          className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white disabled:opacity-40"
         >
           <Save className="w-3 h-3" /> {initial ? 'Update' : 'Add'}
         </button>

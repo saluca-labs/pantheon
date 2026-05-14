@@ -146,12 +146,12 @@ export function FoodCombobox({
             type="button"
             onClick={onUsdaSearch}
             disabled={value.trim().length < 2 || usdaLoading}
-            className="text-[#4361EE] hover:text-[#3a56d4] disabled:opacity-40 disabled:hover:text-[#4361EE]"
+            className="text-accent hover:text-[#3a56d4] disabled:opacity-40 disabled:hover:text-accent"
           >
             {usdaLoading ? 'Searching USDA…' : 'Search USDA Foods →'}
           </button>
         ) : (
-          <span className="text-[#94a3b8]">
+          <span className="text-text-secondary">
             {usdaError
               ? usdaError
               : `${usdaItems.length} USDA result${usdaItems.length === 1 ? '' : 's'} merged.`}
@@ -161,7 +161,7 @@ export function FoodCombobox({
           <button
             type="button"
             onClick={() => onSelect(null)}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
           >
             Clear selection
           </button>

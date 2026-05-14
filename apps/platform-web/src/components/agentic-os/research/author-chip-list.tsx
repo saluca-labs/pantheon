@@ -28,7 +28,7 @@ export function AuthorChipList({ authors, fallback, showPositions, hrefFor }: Pr
     if (fallback && fallback.trim().length > 0) {
       return (
         <p
-          className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8]"
+          className="inline-flex items-center gap-1.5 text-xs text-text-secondary"
           data-testid="author-chip-list-fallback"
         >
           <Users className="w-3 h-3" />
@@ -38,7 +38,7 @@ export function AuthorChipList({ authors, fallback, showPositions, hrefFor }: Pr
     }
     return (
       <p
-        className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] italic"
+        className="inline-flex items-center gap-1.5 text-xs text-text-secondary italic"
         data-testid="author-chip-list-empty"
       >
         <Users className="w-3 h-3" />

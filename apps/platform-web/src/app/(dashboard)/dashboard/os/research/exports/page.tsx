@@ -78,18 +78,18 @@ export default async function ExportsLandingPage() {
     <div className="max-w-3xl">
       <Link
         href="/dashboard/os/research"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Research OS
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
-        <FileDown className="w-6 h-6 text-[#4361EE]" />
+        <FileDown className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Reproducibility exports</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Each row below is a previous PDF export. To create a new one, open an
         experiment and click <strong>Export PDF</strong> in the header. Empty
         experiments are refused — there must be notebook entries, hypotheses,
@@ -98,7 +98,7 @@ export default async function ExportsLandingPage() {
 
       {recent.length === 0 ? (
         <p
-          className="text-sm text-[#94a3b8] italic py-6 text-center rounded-lg border border-[#2a2d3e] bg-[#1a1d27]"
+          className="text-sm text-text-secondary italic py-6 text-center rounded-lg border border-border-subtle bg-surface-2"
           data-testid="exports-empty"
         >
           No exports yet. Open an experiment and click Export PDF to record one.
@@ -108,7 +108,7 @@ export default async function ExportsLandingPage() {
           {recent.map((e, i) => (
             <li
               key={`${e.experimentId}-${i}`}
-              className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 flex items-center justify-between gap-3 flex-wrap"
+              className="rounded-lg border border-border-subtle bg-surface-2 p-4 flex items-center justify-between gap-3 flex-wrap"
               data-testid={`exports-row-${i}`}
             >
               <div className="flex-1 min-w-0">
@@ -118,7 +118,7 @@ export default async function ExportsLandingPage() {
                 >
                   {e.experimentName}
                 </Link>
-                <div className="text-xs text-[#94a3b8] flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                <div className="text-xs text-text-secondary flex flex-wrap gap-x-3 gap-y-1 mt-1">
                   <span>{e.createdAt.slice(0, 19).replace('T', ' ')} UTC</span>
                   <span>{e.notebookRendered} notebook rows rendered</span>
                   <span>{formatBytes(e.bytes)}</span>
@@ -126,7 +126,7 @@ export default async function ExportsLandingPage() {
               </div>
               <Link
                 href={`/dashboard/os/research/experiments/${e.experimentId}`}
-                className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
               >
                 <FileDown className="w-3.5 h-3.5" />
                 Open experiment

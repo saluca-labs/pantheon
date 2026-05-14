@@ -28,21 +28,21 @@ export default async function ResearchBlockersPage() {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/research"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Research
       </Link>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
         <h1 className="text-xl font-semibold text-white inline-flex items-center gap-2">
           <ShieldAlert className="w-5 h-5" />
           Workshop blockers
         </h1>
-        <p className="text-sm text-[#94a3b8] mt-1 max-w-prose">
+        <p className="text-sm text-text-secondary mt-1 max-w-prose">
           Every active blocker across your research experiments in one place —
           milestones that are missed, blocked, overdue, or at risk in the next
-          7 days, plus open <code className="text-[#cbd5e1]">blocks</code>{' '}
+          7 days, plus open <code className="text-text-primary">blocks</code>{' '}
           dependency edges.
         </p>
       </div>

@@ -20,7 +20,7 @@ export function BookActions() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-[#4361EE] text-white font-medium hover:bg-[#3a52d8] transition"
+        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] transition"
       >
         <Plus className="w-4 h-4" />
         New book

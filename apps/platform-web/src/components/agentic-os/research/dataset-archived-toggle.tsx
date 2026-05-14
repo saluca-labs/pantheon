@@ -47,7 +47,7 @@ export function DatasetArchivedToggle({ datasetId, archived }: Props) {
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-white transition disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-white transition disabled:opacity-50"
       data-testid={`dataset-archived-toggle-${datasetId}`}
     >
       {busy ? (

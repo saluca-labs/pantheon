@@ -23,7 +23,7 @@ import {
 } from '@/lib/agentic-os/maker/maintenance';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   toolId: string;
@@ -136,7 +136,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
         <button
           type="button"
           onClick={() => setShowAdd((v) => !v)}
-          className="rounded-md border border-[#4361EE] bg-[#4361EE]/10 px-2.5 py-1 text-xs text-white hover:bg-[#4361EE]/20 transition"
+          className="rounded-md border border-accent bg-accent/10 px-2.5 py-1 text-xs text-white hover:bg-accent/20 transition"
         >
           {showAdd ? 'Cancel' : '+ Log event'}
         </button>
@@ -144,7 +144,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
 
       {/* Stats strip */}
       {events.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#94a3b8]">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-text-secondary">
           <span>
             <strong className="text-white">{stats.total}</strong> event
             {stats.total === 1 ? '' : 's'}
@@ -179,7 +179,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
       {showAdd && (
         <form
           onSubmit={add}
-          className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2"
+          className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select
@@ -235,7 +235,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
           <button
             type="submit"
             disabled={adding}
-            className="rounded-md bg-[#4361EE] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+            className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/80 disabled:opacity-50 transition"
           >
             {adding ? 'Logging…' : 'Log event'}
           </button>
@@ -243,8 +243,8 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
       )}
 
       {events.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[#2a2d3e] p-4 text-center">
-          <p className="text-xs text-[#94a3b8]">
+        <div className="rounded-lg border border-dashed border-border-subtle p-4 text-center">
+          <p className="text-xs text-text-secondary">
             No maintenance events logged yet. Note when the tool is cleaned, serviced,
             calibrated, repaired, or inspected.
           </p>
@@ -256,20 +256,20 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
             return (
               <div
                 key={ev.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+                className="rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Wrench className="w-3.5 h-3.5 text-[#4361EE]" />
+                      <Wrench className="w-3.5 h-3.5 text-accent" />
                       <span className="text-sm font-medium text-white">
                         {MAINTENANCE_EVENT_KIND_LABELS[ev.eventKind]}
                       </span>
-                      <span className="text-[10px] text-[#94a3b8]">
+                      <span className="text-[10px] text-text-secondary">
                         {new Date(ev.performedAt).toLocaleString()}
                       </span>
                     </div>
-                    <div className="text-[11px] text-[#94a3b8] flex flex-wrap gap-x-3 gap-y-0.5">
+                    <div className="text-[11px] text-text-secondary flex flex-wrap gap-x-3 gap-y-0.5">
                       {ev.vendor && <span>Vendor: {ev.vendor}</span>}
                       {ev.costCents != null && (
                         <span>Cost: {formatCost(ev.costCents, ev.currency)}</span>
@@ -285,7 +285,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
                                   ? 'text-red-300'
                                   : daysOut <= 7
                                     ? 'text-amber-300'
-                                    : 'text-[#cbd5e1]'
+                                    : 'text-text-primary'
                               }`}
                             >
                               {daysOut < 0
@@ -300,7 +300,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
                       )}
                     </div>
                     {ev.notes && (
-                      <p className="text-[12px] text-[#cbd5e1] whitespace-pre-wrap">
+                      <p className="text-[12px] text-text-primary whitespace-pre-wrap">
                         {ev.notes}
                       </p>
                     )}
@@ -308,7 +308,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
                   <button
                     type="button"
                     onClick={() => remove(ev)}
-                    className="rounded-md border border-[#2a2d3e] bg-[#1a1d27] px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+                    className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

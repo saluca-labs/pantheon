@@ -203,24 +203,24 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/research"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Research OS
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden mb-6">
         {experiment.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={experiment.coverImageUrl}
             alt={experiment.name}
-            className="w-full h-48 object-cover border-b border-[#2a2d3e]"
+            className="w-full h-48 object-cover border-b border-border-subtle"
           />
         ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-[#4361EE]/20 to-[#1a1d27] border-b border-[#2a2d3e] flex items-center justify-center">
-            <FlaskConical className="w-10 h-10 text-[#4361EE]/50" />
+          <div className="w-full h-32 bg-gradient-to-br from-accent/20 to-surface-2 border-b border-border-subtle flex items-center justify-center">
+            <FlaskConical className="w-10 h-10 text-accent/50" />
           </div>
         )}
 
@@ -234,21 +234,21 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 {EXPERIMENT_STATUS_LABELS[experiment.status]}
               </span>
               {experiment.archivedAt && (
-                <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]">
+                <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-secondary">
                   Archived
                 </span>
               )}
               <ReproducibilityScoreBadge score={reproRollup.score} />
             </div>
             {experiment.description && (
-              <p className="text-sm text-[#94a3b8]">{experiment.description}</p>
+              <p className="text-sm text-text-secondary">{experiment.description}</p>
             )}
             {experiment.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1">
                 {experiment.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                   >
                     {t}
                   </span>
@@ -261,7 +261,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
       </div>
 
       {/* Tab strip */}
-      <div className="flex flex-wrap items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex flex-wrap items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -271,14 +271,14 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               href={`/dashboard/os/research/experiments/${experiment.id}${tab.key === 'overview' ? '' : `?tab=${tab.key}`}`}
               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm transition border-b-2 -mb-px ${
                 isActive
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white'
               }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.key === 'reproducibility' && reproRollup.score != null && (
-                <span className="ml-1 text-[10px] text-[#94a3b8]">
+                <span className="ml-1 text-[10px] text-text-secondary">
                   ({Math.round(reproRollup.score * 100)}%)
                 </span>
               )}
@@ -297,7 +297,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               <ExperimentPhaseProgress phaseProgress={experiment.phaseProgress} />
             </div>
             <div className="space-y-4">
-              <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+              <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
                 <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
                   Stats
                 </h2>
@@ -337,18 +337,18 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="overview-milestones-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <Target className="w-4 h-4 text-[#4361EE]" />
+                <Target className="w-4 h-4 text-accent" />
                 Milestones
               </h2>
               <Link
                 href={`/dashboard/os/research/experiments/${experiment.id}?tab=milestones`}
-                className="text-[10px] uppercase tracking-wide text-[#4361EE] hover:underline"
+                className="text-[10px] uppercase tracking-wide text-accent hover:underline"
               >
                 Open milestones tab
               </Link>
             </div>
             {milestoneStrip.length === 0 ? (
-              <p className="text-sm text-[#94a3b8] italic">No milestones yet.</p>
+              <p className="text-sm text-text-secondary italic">No milestones yet.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {milestoneStrip.map((m) => (
@@ -370,7 +370,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               >
                 Lab notebook
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Timestamped observations, results, decisions, questions, and to-dos.
               </p>
             </div>
@@ -390,16 +390,16 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="hypotheses-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <Lightbulb className="w-4 h-4 text-[#4361EE]" />
+                <Lightbulb className="w-4 h-4 text-accent" />
                 Linked hypotheses
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Link workshop-wide hypotheses this experiment tests, motivates, or relates to.
               </p>
             </div>
             <Link
               href="/dashboard/os/research/hypotheses"
-              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
             >
               <BookOpen className="w-3.5 h-3.5" />
               Open hypothesis ledger
@@ -421,17 +421,17 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="literature-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <BookOpenText className="w-4 h-4 text-[#4361EE]" />
+                <BookOpenText className="w-4 h-4 text-accent" />
                 Literature references
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Link papers from the workshop-global library to this experiment.
                 Different relevance values for the same paper are allowed.
               </p>
             </div>
             <Link
               href="/dashboard/os/research/library"
-              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
             >
               <BookOpenText className="w-3.5 h-3.5" />
               Open library
@@ -452,10 +452,10 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="datasets-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <Database className="w-4 h-4 text-[#4361EE]" />
+                <Database className="w-4 h-4 text-accent" />
                 Datasets
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Per-experiment dataset pointers. URL-only — the binary content
                 is governed by the MCP storage-transfer contract.
               </p>
@@ -473,17 +473,17 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="protocols-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <FileText className="w-4 h-4 text-[#4361EE]" />
+                <FileText className="w-4 h-4 text-accent" />
                 Pinned protocols
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Pin a workshop-global protocol at a frozen version string —
                 reproducibility anchor for this experiment.
               </p>
             </div>
             <Link
               href="/dashboard/os/research/protocols"
-              className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
             >
               <FileText className="w-3.5 h-3.5" />
               Open protocols library
@@ -493,7 +493,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
             <ExperimentProtocolLinker experimentId={experiment.id} />
             {protocolPins.length === 0 ? (
               <p
-                className="text-sm text-[#94a3b8] italic py-6 text-center"
+                className="text-sm text-text-secondary italic py-6 text-center"
                 data-testid="protocols-tab-empty"
               >
                 No protocols pinned yet.
@@ -519,10 +519,10 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="milestones-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <Target className="w-4 h-4 text-[#4361EE]" />
+                <Target className="w-4 h-4 text-accent" />
                 Milestones
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Deadlines, statuses, and blocker flags for this experiment.
                 The Top Blockers feed surfaces at-risk milestones workshop-wide.
               </p>
@@ -543,11 +543,11 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="dependencies-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <Network className="w-4 h-4 text-[#4361EE]" />
+                <Network className="w-4 h-4 text-accent" />
                 Dependencies
               </h2>
-              <p className="text-xs text-[#94a3b8]">
-                Directed edges to other experiments. Open <code className="text-[#cbd5e1]">blocks</code>{' '}
+              <p className="text-xs text-text-secondary">
+                Directed edges to other experiments. Open <code className="text-text-primary">blocks</code>{' '}
                 edges surface on the Top Blockers feed.
               </p>
             </div>
@@ -568,10 +568,10 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
                 id="repro-heading"
                 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
               >
-                <ShieldCheck className="w-4 h-4 text-[#4361EE]" />
+                <ShieldCheck className="w-4 h-4 text-accent" />
                 Reproducibility
               </h2>
-              <p className="text-xs text-[#94a3b8]">
+              <p className="text-xs text-text-secondary">
                 Checklist with score = done / (pending + in_progress + done).
                 Not applicable + waived are excluded from the denominator.
               </p>
@@ -595,10 +595,10 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               id="coach-heading"
               className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-[#4361EE]" />
+              <Sparkles className="w-4 h-4 text-accent" />
               AI coach
             </h2>
-            <p className="text-xs text-[#94a3b8] mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               Experiment-scoped AI advisor across lit reviewer, hypothesis
               critic, methods advisor, and general. Methods advisor refuses
               regulated advice (IRB / IACUC / EHS / clinical) and refers
@@ -611,7 +611,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
           <Link
             href={`/dashboard/os/research/coach?experiment_id=${experiment.id}&mode=methods_advisor`}
             data-testid="coach-tab-cta"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3651DE] text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-4 py-2 transition"
           >
             <Sparkles className="w-4 h-4" />
             Open experiment coach
@@ -633,7 +633,7 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="inline-flex items-center gap-2 text-[#94a3b8]">
+      <span className="inline-flex items-center gap-2 text-text-secondary">
         {icon}
         {label}
       </span>

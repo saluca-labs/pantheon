@@ -12,7 +12,7 @@ import { InteractionRow } from './interaction-row';
 export function InteractionTimeline({ interactions }: { interactions: Interaction[] }) {
   if (interactions.length === 0) {
     return (
-      <p className="text-sm text-[#94a3b8] italic">
+      <p className="text-sm text-text-secondary italic">
         No interactions logged yet. Log one above to start the timeline.
       </p>
     );

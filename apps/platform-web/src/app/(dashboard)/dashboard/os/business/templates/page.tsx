@@ -35,13 +35,13 @@ export default async function TemplatesPage({ searchParams }: Props) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-white">Document Templates</h1>
-          <p className="text-sm text-[#94a3b8] mt-1">
+          <p className="text-sm text-text-secondary mt-1">
             Reusable NDA, SOW, MSA, and custom templates with version history.
           </p>
         </div>
         <Link
           href="/dashboard/os/business/templates/new"
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           New template

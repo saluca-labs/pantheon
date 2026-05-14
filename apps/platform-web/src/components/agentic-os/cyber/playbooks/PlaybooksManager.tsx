@@ -14,7 +14,7 @@ import { PlaybookCard } from './PlaybookCard';
 import { PlaybookForm } from './PlaybookForm';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function PlaybooksManager({ initialPlaybooks }: { initialPlaybooks: Playbook[] }) {
   const [creating, setCreating] = useState(false);
@@ -39,9 +39,9 @@ export function PlaybooksManager({ initialPlaybooks }: { initialPlaybooks: Playb
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <label className="block min-w-[180px] flex-1">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Search</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Search</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -50,7 +50,7 @@ export function PlaybooksManager({ initialPlaybooks }: { initialPlaybooks: Playb
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Lifecycle</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Lifecycle</span>
           <select
             value={lifecycle}
             onChange={(e) => setLifecycle(e.target.value as PlaybookLifecycle | '')}
@@ -65,7 +65,7 @@ export function PlaybooksManager({ initialPlaybooks }: { initialPlaybooks: Playb
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'New playbook'}
@@ -80,7 +80,7 @@ export function PlaybooksManager({ initialPlaybooks }: { initialPlaybooks: Playb
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No playbooks match the current filters.
         </p>
       ) : (

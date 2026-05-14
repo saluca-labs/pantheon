@@ -14,7 +14,7 @@ interface Props {
 }
 
 function styleForScore(score: number | null): string {
-  if (score == null) return 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]';
+  if (score == null) return 'border-border-subtle bg-surface-0 text-text-secondary';
   if (score >= 0.8) return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300';
   if (score >= 0.5) return 'border-sky-500/50 bg-sky-500/10 text-sky-300';
   if (score >= 0.25) return 'border-amber-500/50 bg-amber-500/10 text-amber-300';

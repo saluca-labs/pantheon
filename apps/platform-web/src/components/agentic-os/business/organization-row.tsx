@@ -14,7 +14,7 @@ export function OrganizationRow({ organization }: { organization: Organization }
   return (
     <Link
       href={`/dashboard/os/business/organizations/${organization.id}`}
-      className="block rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 hover:border-[#4361EE] transition"
+      className="block rounded-lg border border-border-subtle bg-surface-2 p-3 hover:border-accent transition"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -25,7 +25,7 @@ export function OrganizationRow({ organization }: { organization: Organization }
             )}
           </p>
           {organization.industry && (
-            <p className="text-xs text-[#94a3b8] truncate">{organization.industry}</p>
+            <p className="text-xs text-text-secondary truncate">{organization.industry}</p>
           )}
         </div>
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-teal-500/15 text-teal-300 border-teal-500/30">

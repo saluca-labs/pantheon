@@ -75,7 +75,7 @@ describe('Sidebar', () => {
   it('marks Policy as active when on /dashboard', () => {
     render(<Sidebar />);
     const policyLink = screen.getByText('Policy').closest('a');
-    expect(policyLink?.className).toContain('text-[#4361EE]');
+    expect(policyLink?.className).toContain('text-accent');
   });
 
   it('disables non-implemented nav items', () => {

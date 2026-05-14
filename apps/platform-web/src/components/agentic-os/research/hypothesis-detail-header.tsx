@@ -28,7 +28,7 @@ const STATUS_COLOR: Record<HypothesisStatus, string> = {
   supported:    'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
   refuted:      'text-red-300 bg-red-500/10 border-red-500/30',
   inconclusive: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  archived:     'text-[#94a3b8] bg-[#1a1d27] border-[#2a2d3e]',
+  archived:     'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
@@ -95,7 +95,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 mb-6">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 mb-6">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold text-white mb-2">{hypothesis.title}</h1>
@@ -111,7 +111,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
               {hypothesis.confidence} confidence
             </span>
             {isArchived && (
-              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]">
+              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-secondary">
                 Archived
               </span>
             )}
@@ -122,7 +122,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
             <button
               onClick={handleRestore}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white disabled:opacity-50 transition"
             >
               <ArchiveRestore className="w-3.5 h-3.5" />
               {busy ? 'Restoring…' : 'Restore'}
@@ -131,7 +131,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
             <button
               onClick={handleArchive}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white disabled:opacity-50 transition"
             >
               <Archive className="w-3.5 h-3.5" />
               {busy ? 'Archiving…' : 'Archive'}
@@ -152,7 +152,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
           {hypothesis.tags.map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
@@ -172,7 +172,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
 function ClauseRow({ label, text }: { label: string; text: string }) {
   return (
     <div className="flex gap-3 items-baseline">
-      <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] w-14 shrink-0">
+      <span className="text-[10px] uppercase tracking-wide text-text-secondary w-14 shrink-0">
         {label}
       </span>
       <span className="text-sm text-white leading-relaxed">{text}</span>

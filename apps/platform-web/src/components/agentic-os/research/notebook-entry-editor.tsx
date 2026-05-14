@@ -150,7 +150,7 @@ export function NotebookEntryEditor({
     <form onSubmit={handleSubmit} className="space-y-3" data-testid="notebook-entry-editor">
       {/* Kind picker */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] mr-1">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-text-secondary mr-1">
           Kind
         </span>
         {ENTRY_KINDS.map((k) => {
@@ -163,7 +163,7 @@ export function NotebookEntryEditor({
               className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border transition ${
                 active
                   ? ENTRY_KIND_COLOR[k]
-                  : 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e] hover:text-white'
+                  : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
               }`}
               data-testid={`editor-kind-${k}`}
             >
@@ -177,7 +177,7 @@ export function NotebookEntryEditor({
       <div>
         <label
           htmlFor="notebook-entry-title"
-          className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] block mb-1"
+          className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1"
         >
           Title
         </label>
@@ -189,7 +189,7 @@ export function NotebookEntryEditor({
           required
           maxLength={300}
           placeholder="Short headline for this entry"
-          className="w-full px-3 py-2 rounded bg-[#0f1117] border border-[#2a2d3e] text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#4361EE]/60"
+          className="w-full px-3 py-2 rounded bg-surface-0 border border-border-subtle text-white placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
         />
       </div>
 
@@ -197,7 +197,7 @@ export function NotebookEntryEditor({
       <div>
         <label
           htmlFor="notebook-entry-body"
-          className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] block mb-1"
+          className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1"
         >
           Body (markdown)
         </label>
@@ -208,16 +208,16 @@ export function NotebookEntryEditor({
           rows={6}
           maxLength={50_000}
           placeholder="What happened, what you observed, why it matters…"
-          className="w-full px-3 py-2 rounded bg-[#0f1117] border border-[#2a2d3e] text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#4361EE]/60 font-mono text-xs leading-relaxed"
+          className="w-full px-3 py-2 rounded bg-surface-0 border border-border-subtle text-white placeholder:text-text-secondary focus:outline-none focus:border-accent/60 font-mono text-xs leading-relaxed"
         />
-        <p className="mt-1 text-[10px] text-[#94a3b8]">
+        <p className="mt-1 text-[10px] text-text-secondary">
           Standard markdown. Raw HTML is not rendered.
         </p>
       </div>
 
       {/* Attached URLs */}
       <div>
-        <label className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] block mb-1">
+        <label className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
           Attached URLs
         </label>
         <div className="flex gap-2">
@@ -232,13 +232,13 @@ export function NotebookEntryEditor({
               }
             }}
             placeholder="https://…"
-            className="flex-1 px-3 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-white text-xs placeholder:text-[#94a3b8] focus:outline-none focus:border-[#4361EE]/60"
+            className="flex-1 px-3 py-1.5 rounded bg-surface-0 border border-border-subtle text-white text-xs placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
             data-testid="editor-url-input"
           />
           <button
             type="button"
             onClick={addUrl}
-            className="inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/40"
+            className="inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/40"
             data-testid="editor-url-add"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -250,13 +250,13 @@ export function NotebookEntryEditor({
             {urls.map((u, idx) => (
               <li
                 key={`${u}-${idx}`}
-                className="flex items-center gap-2 text-xs text-[#cbd5e1]"
+                className="flex items-center gap-2 text-xs text-text-primary"
               >
                 <span className="flex-1 truncate">{u}</span>
                 <button
                   type="button"
                   onClick={() => removeUrl(idx)}
-                  className="text-[#94a3b8] hover:text-rose-300"
+                  className="text-text-secondary hover:text-rose-300"
                   aria-label={`Remove ${u}`}
                   data-testid={`editor-url-remove-${idx}`}
                 >
@@ -270,7 +270,7 @@ export function NotebookEntryEditor({
 
       {/* Tags */}
       <div>
-        <label className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] block mb-1">
+        <label className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
           Tags
         </label>
         <div className="flex gap-2">
@@ -286,13 +286,13 @@ export function NotebookEntryEditor({
             }}
             placeholder="enzyme, kinetics, replicate-3"
             maxLength={60}
-            className="flex-1 px-3 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-white text-xs placeholder:text-[#94a3b8] focus:outline-none focus:border-[#4361EE]/60"
+            className="flex-1 px-3 py-1.5 rounded bg-surface-0 border border-border-subtle text-white text-xs placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
             data-testid="editor-tag-input"
           />
           <button
             type="button"
             onClick={addTag}
-            className="inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/40"
+            className="inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/40"
             data-testid="editor-tag-add"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -304,13 +304,13 @@ export function NotebookEntryEditor({
             {tags.map((t, idx) => (
               <span
                 key={`${t}-${idx}`}
-                className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]"
+                className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary"
               >
                 {t}
                 <button
                   type="button"
                   onClick={() => removeTag(idx)}
-                  className="text-[#94a3b8] hover:text-rose-300"
+                  className="text-text-secondary hover:text-rose-300"
                   aria-label={`Remove tag ${t}`}
                   data-testid={`editor-tag-remove-${idx}`}
                 >
@@ -326,7 +326,7 @@ export function NotebookEntryEditor({
       <div>
         <label
           htmlFor="notebook-entry-at"
-          className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8] block mb-1"
+          className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1"
         >
           Entry timestamp
         </label>
@@ -335,10 +335,10 @@ export function NotebookEntryEditor({
           type="datetime-local"
           value={entryAtLocal}
           onChange={(e) => setEntryAtLocal(e.target.value)}
-          className="px-3 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-white text-xs focus:outline-none focus:border-[#4361EE]/60"
+          className="px-3 py-1.5 rounded bg-surface-0 border border-border-subtle text-white text-xs focus:outline-none focus:border-accent/60"
           data-testid="editor-entry-at"
         />
-        <p className="mt-1 text-[10px] text-[#94a3b8]">
+        <p className="mt-1 text-[10px] text-text-secondary">
           Defaults to now. Backdate freely when transcribing from a paper journal.
         </p>
       </div>
@@ -355,7 +355,7 @@ export function NotebookEntryEditor({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="px-3 py-1.5 rounded text-xs text-[#94a3b8] hover:text-white"
+            className="px-3 py-1.5 rounded text-xs text-text-secondary hover:text-white"
             data-testid="editor-cancel"
           >
             Cancel
@@ -364,7 +364,7 @@ export function NotebookEntryEditor({
         <button
           type="submit"
           disabled={submitting || !title.trim()}
-          className="px-3 py-1.5 rounded text-xs font-medium bg-[#4361EE] text-white hover:bg-[#4361EE]/80 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 rounded text-xs font-medium bg-accent text-white hover:bg-accent/80 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="editor-submit"
         >
           {submitting ? 'Saving…' : submitLabel}

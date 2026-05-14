@@ -17,12 +17,12 @@ import {
 } from '@/lib/agentic-os/research/experiments';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </span>
       {children}
@@ -75,14 +75,14 @@ export function ExperimentFilters({
         </select>
       </Field>
       <Field label="Archived">
-        <label className="flex items-center gap-2 h-[38px] px-3 rounded-md border border-[#2a2d3e] bg-[#0f1117] cursor-pointer">
+        <label className="flex items-center gap-2 h-[38px] px-3 rounded-md border border-border-subtle bg-surface-0 cursor-pointer">
           <input
             type="checkbox"
             checked={showArchived}
             onChange={(e) => onShowArchivedChange(e.target.checked)}
-            className="accent-[#4361EE]"
+            className="accent-accent"
           />
-          <span className="text-sm text-[#cbd5e1]">Show archived</span>
+          <span className="text-sm text-text-primary">Show archived</span>
         </label>
       </Field>
     </div>

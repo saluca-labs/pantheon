@@ -31,16 +31,16 @@ const KIND_COLOR: Record<ArcKind, string> = {
   chronological: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
   thematic: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
   character_led: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  custom: 'text-[#cbd5e1] bg-[#1a1d27] border-[#2a2d3e]',
+  custom: 'text-text-primary bg-surface-2 border-border-subtle',
 };
 
 export function ArcCard({ arc }: ArcCardProps) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/30 transition">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/30 transition">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <GitBranch className="w-4 h-4 text-[#4361EE]/60 shrink-0" />
+            <GitBranch className="w-4 h-4 text-accent/60 shrink-0" />
             <h3 className="text-sm font-semibold text-white truncate">
               {arc.title}
             </h3>
@@ -57,7 +57,7 @@ export function ArcCard({ arc }: ArcCardProps) {
             )}
           </div>
           {arc.description && (
-            <p className="text-xs text-[#94a3b8] leading-relaxed mt-1.5">
+            <p className="text-xs text-text-secondary leading-relaxed mt-1.5">
               {arc.description}
             </p>
           )}

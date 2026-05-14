@@ -82,13 +82,13 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
   return (
     <div className="space-y-4">
       {prompt && (
-        <div className="rounded-lg border border-[#4361EE]/30 bg-[#4361EE]/5 p-4">
-          <div className="text-[10px] uppercase tracking-wide text-[#4361EE] mb-1">
+        <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+          <div className="text-[10px] uppercase tracking-wide text-accent mb-1">
             {prompt.category.replace(/-/g, ' ')}
           </div>
           <p className="text-sm text-white leading-relaxed">{prompt.prompt}</p>
           {prompt.source && (
-            <p className="text-[10px] text-[#94a3b8]/70 mt-2">
+            <p className="text-[10px] text-text-secondary/70 mt-2">
               Source: {prompt.source}
             </p>
           )}
@@ -96,7 +96,7 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
       )}
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Title (optional)
         </label>
         <input
@@ -104,12 +104,12 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="A line that captures the gist"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2"
         />
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Entry
         </label>
         <textarea
@@ -117,9 +117,9 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
           onChange={(e) => setBody(e.target.value)}
           rows={14}
           placeholder="Write freely. The screen is yours."
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 leading-relaxed resize-y"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2 leading-relaxed resize-y"
         />
-        <p className="text-[10px] text-[#94a3b8]/70 mt-1">
+        <p className="text-[10px] text-text-secondary/70 mt-1">
           Free-text entries are scanned for crisis language so the safety
           resources can surface — they are never blocked or deleted.
         </p>
@@ -130,7 +130,7 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting || body.trim().length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting

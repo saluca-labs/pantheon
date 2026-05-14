@@ -74,7 +74,7 @@ export function Grounding54321({ exerciseId, step }: Props) {
         label: slot.label,
         content: (
           <div className="space-y-3">
-            <p className="text-xs text-[#94a3b8] leading-relaxed">{slot.hint}</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{slot.hint}</p>
             <ul className="space-y-2">
               {Array.from({ length: slot.count }).map((_, i) => (
                 <li key={i}>
@@ -83,7 +83,7 @@ export function Grounding54321({ exerciseId, step }: Props) {
                     value={data[slot.field][i] ?? ''}
                     onChange={(e) => setSlot(slot.field, i, e.target.value)}
                     placeholder={`#${i + 1}`}
-                    className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2"
+                    className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2"
                   />
                 </li>
               ))}

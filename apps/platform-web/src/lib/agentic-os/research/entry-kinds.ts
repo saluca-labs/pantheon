@@ -54,7 +54,7 @@ export const ENTRY_KIND_DESCRIPTIONS: Record<EntryKind, string> = {
  * on the experiment card).
  */
 export const ENTRY_KIND_COLOR: Record<EntryKind, string> = {
-  note: 'text-[#94a3b8] bg-[#0f1117] border-[#2a2d3e]',
+  note: 'text-text-secondary bg-surface-0 border-border-subtle',
   observation: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
   result: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
   decision: 'text-violet-300 bg-violet-500/10 border-violet-500/30',

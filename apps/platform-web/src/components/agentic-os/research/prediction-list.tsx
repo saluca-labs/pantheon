@@ -46,17 +46,17 @@ export function PredictionList({ hypothesisId, initialPredictions }: Props) {
             id="predictions-heading"
             className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
           >
-            <Sparkles className="w-4 h-4 text-[#4361EE]" />
+            <Sparkles className="w-4 h-4 text-accent" />
             Predictions
           </h2>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             What you expect to observe if the hypothesis holds.
           </p>
         </div>
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white transition"
           >
             <Plus className="w-3.5 h-3.5" />
             Add prediction
@@ -74,7 +74,7 @@ export function PredictionList({ hypothesisId, initialPredictions }: Props) {
       )}
 
       {predictions.length === 0 && !adding ? (
-        <p className="text-sm text-[#94a3b8] italic">No predictions yet.</p>
+        <p className="text-sm text-text-secondary italic">No predictions yet.</p>
       ) : (
         <div className="space-y-2">
           {predictions.map((p) => (

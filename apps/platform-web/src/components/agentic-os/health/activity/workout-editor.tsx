@@ -192,7 +192,7 @@ export function WorkoutEditor({ initialTemplate }: WorkoutEditorProps) {
         </div>
       )}
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-3">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Name">
             <input
@@ -264,7 +264,7 @@ export function WorkoutEditor({ initialTemplate }: WorkoutEditorProps) {
             type="button"
             onClick={saveHeader}
             disabled={savingHeader || name.trim().length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
           >
             <Save className="h-4 w-4" />
             {savingHeader
@@ -276,11 +276,11 @@ export function WorkoutEditor({ initialTemplate }: WorkoutEditorProps) {
         </div>
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Blocks</h2>
           {!templateId && (
-            <span className="text-[11px] text-[#94a3b8]">
+            <span className="text-[11px] text-text-secondary">
               Save the header first to add blocks.
             </span>
           )}
@@ -306,7 +306,7 @@ export function WorkoutEditor({ initialTemplate }: WorkoutEditorProps) {
                 key={k}
                 type="button"
                 onClick={() => addBlock(k)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-xs text-[#cbd5e1] hover:border-[#4361EE]/50 hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border-subtle bg-surface-0 px-3 py-2 text-xs text-text-primary hover:border-accent/50 hover:text-white"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add {k}
@@ -320,15 +320,15 @@ export function WorkoutEditor({ initialTemplate }: WorkoutEditorProps) {
         :global(.we-input) {
           width: 100%;
           border-radius: 0.5rem;
-          border: 1px solid #2a2d3e;
-          background: #0f1117;
+          border: 1px solid var(--border-subtle);
+          background: var(--surface-0);
           padding: 0.5rem 0.75rem;
           font-size: 0.875rem;
-          color: white;
+          color: var(--text-primary);
         }
         :global(.we-input:focus) {
           outline: none;
-          border-color: #4361ee;
+          border-color: var(--accent-base);
         }
       `}</style>
     </div>
@@ -346,7 +346,7 @@ function Field({
 }) {
   return (
     <label className={`block ${wide ? 'sm:col-span-2' : ''}`}>
-      <span className="mb-1 block text-xs text-[#94a3b8]">{label}</span>
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
       {children}
     </label>
   );
@@ -366,14 +366,14 @@ function BlockRow({
   onMoveDown?: () => void;
 }) {
   return (
-    <li className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3">
+    <li className="rounded-lg border border-border-subtle bg-surface-0 p-3">
       <div className="flex items-start gap-2">
         <div className="flex shrink-0 flex-col gap-0.5">
           <button
             type="button"
             onClick={onMoveUp}
             disabled={!onMoveUp}
-            className="rounded p-0.5 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:bg-surface-2 hover:text-white disabled:opacity-30"
             aria-label="Move up"
           >
             <ArrowUp className="h-3 w-3" />
@@ -382,7 +382,7 @@ function BlockRow({
             type="button"
             onClick={onMoveDown}
             disabled={!onMoveDown}
-            className="rounded p-0.5 text-[#94a3b8] hover:bg-[#1a1d27] hover:text-white disabled:opacity-30"
+            className="rounded p-0.5 text-text-secondary hover:bg-surface-2 hover:text-white disabled:opacity-30"
             aria-label="Move down"
           >
             <ArrowDown className="h-3 w-3" />
@@ -391,7 +391,7 @@ function BlockRow({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-end gap-2">
             <label className="block">
-              <span className="text-[10px] text-[#94a3b8]">Kind</span>
+              <span className="text-[10px] text-text-secondary">Kind</span>
               <select
                 defaultValue={block.kind}
                 onChange={(e) =>
@@ -407,7 +407,7 @@ function BlockRow({
               </select>
             </label>
             <label className="block flex-1 min-w-[180px]">
-              <span className="text-[10px] text-[#94a3b8]">Name</span>
+              <span className="text-[10px] text-text-secondary">Name</span>
               <input
                 defaultValue={block.name}
                 onBlur={(e) =>
@@ -420,7 +420,7 @@ function BlockRow({
           {block.kind === 'exercise' && (
             <div className="flex flex-wrap items-end gap-2">
               <label className="block">
-                <span className="text-[10px] text-[#94a3b8]">Sets</span>
+                <span className="text-[10px] text-text-secondary">Sets</span>
                 <input
                   type="number"
                   min="0"
@@ -435,7 +435,7 @@ function BlockRow({
                 />
               </label>
               <label className="block">
-                <span className="text-[10px] text-[#94a3b8]">Reps</span>
+                <span className="text-[10px] text-text-secondary">Reps</span>
                 <input
                   defaultValue={block.reps ?? ''}
                   onBlur={(e) =>
@@ -446,7 +446,7 @@ function BlockRow({
                 />
               </label>
               <label className="block">
-                <span className="text-[10px] text-[#94a3b8]">Dur (s)</span>
+                <span className="text-[10px] text-text-secondary">Dur (s)</span>
                 <input
                   type="number"
                   min="0"
@@ -461,7 +461,7 @@ function BlockRow({
                 />
               </label>
               <label className="block">
-                <span className="text-[10px] text-[#94a3b8]">Rest (s)</span>
+                <span className="text-[10px] text-text-secondary">Rest (s)</span>
                 <input
                   type="number"
                   min="0"
@@ -476,7 +476,7 @@ function BlockRow({
                 />
               </label>
               <label className="block">
-                <span className="text-[10px] text-[#94a3b8]">Weight</span>
+                <span className="text-[10px] text-text-secondary">Weight</span>
                 <input
                   defaultValue={block.weightHint ?? ''}
                   onBlur={(e) =>
@@ -490,7 +490,7 @@ function BlockRow({
           )}
           {block.kind === 'rest' && (
             <label className="block">
-              <span className="text-[10px] text-[#94a3b8]">Duration (s)</span>
+              <span className="text-[10px] text-text-secondary">Duration (s)</span>
               <input
                 type="number"
                 min="0"
@@ -506,7 +506,7 @@ function BlockRow({
             </label>
           )}
           <label className="block">
-            <span className="text-[10px] text-[#94a3b8]">Notes</span>
+            <span className="text-[10px] text-text-secondary">Notes</span>
             <input
               defaultValue={block.notes ?? ''}
               onBlur={(e) =>
@@ -520,7 +520,7 @@ function BlockRow({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded p-1 text-[#94a3b8] hover:bg-red-500/15 hover:text-red-300"
+          className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
           aria-label="Delete block"
         >
           <Trash2 className="h-4 w-4" />

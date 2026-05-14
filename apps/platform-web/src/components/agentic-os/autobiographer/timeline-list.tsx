@@ -25,7 +25,7 @@ function decadeOf(memory: TimelineMemory): string {
 export function TimelineList({ memories }: TimelineListProps) {
   if (memories.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center text-sm text-[#94a3b8]">
+      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
         No memories match the current filters. Try clearing one or
         capturing a new memory.
       </div>
@@ -46,7 +46,7 @@ export function TimelineList({ memories }: TimelineListProps) {
     <div className="space-y-6">
       {groups.map((g) => (
         <section key={g.label}>
-          <h3 className="text-xs uppercase tracking-wider text-[#94a3b8] mb-2">
+          <h3 className="text-xs uppercase tracking-wider text-text-secondary mb-2">
             {g.label}
           </h3>
           <div className="space-y-3">

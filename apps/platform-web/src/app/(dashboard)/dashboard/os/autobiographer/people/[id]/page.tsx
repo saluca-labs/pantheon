@@ -59,24 +59,24 @@ export default async function PersonDetailPage({ params }: Props) {
     <div className="max-w-3xl space-y-5">
       <Link
         href="/dashboard/os/autobiographer/people"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         All people
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start gap-4">
           {person.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={person.imageUrl}
               alt=""
-              className="w-20 h-20 rounded-full object-cover border border-[#2a2d3e] shrink-0"
+              className="w-20 h-20 rounded-full object-cover border border-border-subtle shrink-0"
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4361EE]/15 to-[#1a1d27] border border-[#2a2d3e] flex items-center justify-center shrink-0">
-              <User2 className="w-8 h-8 text-[#4361EE]/60" />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/15 to-surface-2 border border-border-subtle flex items-center justify-center shrink-0">
+              <User2 className="w-8 h-8 text-accent/60" />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -85,7 +85,7 @@ export default async function PersonDetailPage({ params }: Props) {
                 <h1 className="text-xl font-semibold text-white">
                   {person.canonicalName}
                 </h1>
-                <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-[#94a3b8]">
+                <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-text-secondary">
                   {person.relation && (
                     <span className="inline-flex items-center gap-1">
                       <TagIcon className="w-3.5 h-3.5" />
@@ -114,13 +114,13 @@ export default async function PersonDetailPage({ params }: Props) {
 
             {person.aliases.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+                <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
                   Aliases
                 </span>
                 {person.aliases.map((a) => (
                   <span
                     key={a}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary"
                   >
                     {a}
                   </span>
@@ -129,7 +129,7 @@ export default async function PersonDetailPage({ params }: Props) {
             )}
 
             {person.notes && (
-              <p className="text-sm text-[#cbd5e1]/80 mt-3 leading-relaxed">
+              <p className="text-sm text-text-primary/80 mt-3 leading-relaxed">
                 {person.notes}
               </p>
             )}
@@ -139,17 +139,17 @@ export default async function PersonDetailPage({ params }: Props) {
 
       {/* Consent history (Phase 2 surfaces only the latest record; Phase 6
           adds a full history table). */}
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3">
           Consent
         </h2>
-        <div className="text-sm text-[#cbd5e1] space-y-1">
+        <div className="text-sm text-text-primary space-y-1">
           <p>
             Current state:{' '}
             <ConsentBadge state={person.consentToPublish} size="md" />
           </p>
           {person.consentRecordedAt && (
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               Last recorded {new Date(person.consentRecordedAt).toLocaleString()}
               {person.consentRecordedBy ? ` — ${person.consentRecordedBy}` : ''}
             </p>
@@ -157,8 +157,8 @@ export default async function PersonDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3 inline-flex items-center gap-1.5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
           <Calendar className="w-4 h-4" />
           Memories mentioning {person.canonicalName} ({memories.length})
         </h2>
@@ -172,20 +172,20 @@ export default async function PersonDetailPage({ params }: Props) {
             {memories.map((m) => (
               <li
                 key={m.memoryId}
-                className="rounded border border-[#2a2d3e] bg-[#0f1117] px-3 py-2"
+                className="rounded border border-border-subtle bg-surface-0 px-3 py-2"
               >
                 <Link
                   href={`/dashboard/os/autobiographer/memories/${m.memoryId}`}
-                  className="text-sm text-white hover:text-[#4361EE] transition"
+                  className="text-sm text-white hover:text-accent transition"
                 >
                   {m.title}
                 </Link>
-                <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-[#94a3b8]">
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-text-secondary">
                   {(m.whenInLife || m.eraDateEstimate) && (
                     <span>{m.whenInLife ?? m.eraDateEstimate}</span>
                   )}
                   {m.role && (
-                    <span className="px-1.5 py-0.5 rounded bg-[#1a1d27] border border-[#2a2d3e] text-[#cbd5e1]">
+                    <span className="px-1.5 py-0.5 rounded bg-surface-2 border border-border-subtle text-text-primary">
                       {m.role}
                     </span>
                   )}
@@ -196,8 +196,8 @@ export default async function PersonDetailPage({ params }: Props) {
         )}
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-3 inline-flex items-center gap-1.5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
           <BookOpenText className="w-4 h-4" />
           Books they appear in
         </h2>
@@ -212,15 +212,15 @@ export default async function PersonDetailPage({ params }: Props) {
             {books.map((b) => (
               <li
                 key={b.bookId}
-                className="flex items-center justify-between rounded border border-[#2a2d3e] bg-[#0f1117] px-3 py-2"
+                className="flex items-center justify-between rounded border border-border-subtle bg-surface-0 px-3 py-2"
               >
                 <Link
                   href={`/dashboard/os/autobiographer/books/${b.bookId}`}
-                  className="text-sm text-white hover:text-[#4361EE] transition"
+                  className="text-sm text-white hover:text-accent transition"
                 >
                   {b.bookTitle}
                 </Link>
-                <span className="text-[10px] text-[#94a3b8]">
+                <span className="text-[10px] text-text-secondary">
                   {b.memoryCount}{' '}
                   {b.memoryCount === 1 ? 'memory' : 'memories'}
                 </span>

@@ -105,11 +105,11 @@ export default function TimeEntryForm({
   }
 
   const inputClass =
-    'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none transition';
-  const labelClass = 'block text-xs font-medium text-[#94a3b8] mb-1';
+    'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none transition';
+  const labelClass = 'block text-xs font-medium text-text-secondary mb-1';
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4">
       <h3 className="text-white text-sm font-semibold">
         {isEditing ? 'Edit Time Entry' : mode === 'timer' ? 'Start Timer' : 'Log Time'}
       </h3>
@@ -122,14 +122,14 @@ export default function TimeEntryForm({
 
       {/* Mode toggle (create only) */}
       {!isEditing && (
-        <div className="flex gap-1 bg-[#0f1117] rounded-lg p-1">
+        <div className="flex gap-1 bg-surface-0 rounded-lg p-1">
           <button
             type="button"
             onClick={() => setMode('timer')}
             className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
               mode === 'timer'
-                ? 'bg-[#4361EE] text-white'
-                : 'text-[#94a3b8] hover:text-white'
+                ? 'bg-accent text-white'
+                : 'text-text-secondary hover:text-white'
             }`}
           >
             Start Timer
@@ -139,8 +139,8 @@ export default function TimeEntryForm({
             onClick={() => setMode('manual')}
             className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
               mode === 'manual'
-                ? 'bg-[#4361EE] text-white'
-                : 'text-[#94a3b8] hover:text-white'
+                ? 'bg-accent text-white'
+                : 'text-text-secondary hover:text-white'
             }`}
           >
             Log Time
@@ -159,7 +159,7 @@ export default function TimeEntryForm({
         >
           <option value="">Select a task...</option>
           {tasks.map((t) => (
-            <option key={t.id} value={t.id} className="bg-[#1a1d27] text-white">
+            <option key={t.id} value={t.id} className="bg-surface-2 text-white">
               {t.title}
             </option>
           ))}
@@ -179,7 +179,7 @@ export default function TimeEntryForm({
 
       {/* Timer mode: just a start-button note */}
       {mode === 'timer' && !isEditing && (
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           The timer will start immediately and track elapsed time until you stop it.
         </p>
       )}
@@ -229,9 +229,9 @@ export default function TimeEntryForm({
               type="checkbox"
               checked={isBillable}
               onChange={(e) => setIsBillable(e.target.checked)}
-              className="rounded border-[#2a2d3e] bg-[#0f1117] accent-[#4361EE]"
+              className="rounded border-border-subtle bg-surface-0 accent-accent"
             />
-            <span className="text-xs text-[#94a3b8]">Billable</span>
+            <span className="text-xs text-text-secondary">Billable</span>
           </label>
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function TimeEntryForm({
         <button
           type="button"
           onClick={() => onCreated?.()}
-          className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE] text-[#94a3b8] text-sm font-medium px-4 py-1.5 transition"
+          className="rounded-lg border border-border-subtle bg-surface-2 hover:border-accent text-text-secondary text-sm font-medium px-4 py-1.5 transition"
         >
           Cancel
         </button>

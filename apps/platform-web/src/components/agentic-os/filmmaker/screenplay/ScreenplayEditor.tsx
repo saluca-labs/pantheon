@@ -144,7 +144,9 @@ const fountainTheme = EditorView.theme({
   },
   '.cm-fountain-parenthetical': {
     fontStyle: 'italic',
-    color: '#94a3b8',
+    // Matches text-secondary token (lib/design/chart-tokens.ts → TEXT_SECONDARY).
+    // Kept as a literal here because CodeMirror theme objects don't accept CSS vars.
+    color: '#a4acbf',
     paddingLeft: '3em',
   },
   '.cm-fountain-transition': {

@@ -39,19 +39,19 @@ export function StatCard({
 }: StatCardProps) {
   const Icon = trend ? TREND_ICON[trend] : null;
   const trendColor = (() => {
-    if (!trend || trend === 'flat') return 'text-[#94a3b8]';
+    if (!trend || trend === 'flat') return 'text-text-secondary';
     const isGood = trend === 'up' ? !trendDownIsGood : trendDownIsGood;
     return isGood ? 'text-emerald-300' : 'text-amber-300';
   })();
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
           {icon ? (
-            <span className="text-[#4361EE] shrink-0">{icon}</span>
+            <span className="text-accent shrink-0">{icon}</span>
           ) : null}
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] truncate">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary truncate">
             {label}
           </span>
         </div>
@@ -63,7 +63,7 @@ export function StatCard({
         {value === null || value === undefined || value === '' ? '—' : value}
       </div>
       {sublabel ? (
-        <p className="text-xs text-[#94a3b8] mt-1">{sublabel}</p>
+        <p className="text-xs text-text-secondary mt-1">{sublabel}</p>
       ) : null}
     </div>
   );

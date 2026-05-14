@@ -22,6 +22,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import {
+  CHART_AXIS_STROKE,
+  CHART_GRID_STROKE,
+  CHART_LEGEND_STYLE,
+  CHART_PALETTE,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+} from '@/lib/design/chart-tokens';
 
 export interface TrendSeries {
   /** Stable key used as the y-axis data key for this series. */
@@ -44,15 +52,9 @@ export interface TrendChartProps {
   emptyLabel?: string;
 }
 
-const FALLBACK_COLORS = [
-  '#4361EE',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#a855f7',
-  '#06b6d4',
-  '#ec4899',
-];
+/** Chart palette sourced from `lib/design/chart-tokens.ts` so changes to
+ * the design system propagate without editing every chart. */
+const FALLBACK_COLORS = CHART_PALETTE;
 
 /** Merge series into a single row-per-date dataset for recharts. */
 function mergeSeries(series: TrendSeries[]): Record<string, number | string | null>[] {
@@ -81,7 +83,7 @@ export function TrendChart({
   if (!hasData) {
     return (
       <div
-        className="flex items-center justify-center rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117]/40 text-xs text-[#94a3b8]"
+        className="flex items-center justify-center rounded-lg border border-dashed border-border-subtle bg-surface-0/40 text-xs text-text-secondary"
         style={{ height }}
       >
         {emptyLabel}
@@ -93,31 +95,25 @@ export function TrendChart({
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={merged} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
-          <CartesianGrid stroke="#2a2d3e" strokeDasharray="3 3" />
+          <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            stroke="#94a3b8"
+            stroke={CHART_AXIS_STROKE}
             tick={{ fontSize: 11 }}
             tickLine={false}
           />
           <YAxis
-            stroke="#94a3b8"
+            stroke={CHART_AXIS_STROKE}
             tick={{ fontSize: 11 }}
             tickLine={false}
             domain={yDomain ?? ['auto', 'auto']}
           />
           <Tooltip
-            contentStyle={{
-              background: '#1a1d27',
-              border: '1px solid #2a2d3e',
-              borderRadius: 8,
-              fontSize: 12,
-              color: '#fff',
-            }}
-            labelStyle={{ color: '#94a3b8' }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
           />
           <Legend
-            wrapperStyle={{ fontSize: 11, color: '#94a3b8' }}
+            wrapperStyle={CHART_LEGEND_STYLE}
             iconType="line"
           />
           {series.map((s, i) => (

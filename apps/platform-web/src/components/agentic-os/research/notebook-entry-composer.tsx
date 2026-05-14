@@ -78,7 +78,7 @@ export function NotebookEntryComposer({ experimentId, onCreated }: Props) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium bg-[#4361EE]/15 border border-[#4361EE]/40 text-[#cbd5e1] hover:bg-[#4361EE]/25 hover:text-white"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium bg-accent/15 border border-accent/40 text-text-primary hover:bg-accent/25 hover:text-white"
           data-testid="composer-open"
         >
           <Plus className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function NotebookEntryComposer({ experimentId, onCreated }: Props) {
 
   return (
     <div
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 mb-4"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4 mb-4"
       data-testid="notebook-entry-composer"
     >
       <h3 className="text-sm font-semibold text-white mb-3">New notebook entry</h3>

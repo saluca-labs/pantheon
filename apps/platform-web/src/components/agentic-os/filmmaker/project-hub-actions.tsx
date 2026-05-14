@@ -27,14 +27,14 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
-      {hint && <span className="block text-[11px] text-[#94a3b8]/80 mt-1">{hint}</span>}
+      {hint && <span className="block text-[11px] text-text-secondary/80 mt-1">{hint}</span>}
     </label>
   );
 }
@@ -65,7 +65,7 @@ export function ProjectHubActions({ project }: Props) {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/60 text-white transition"
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:border-accent/60 text-white transition"
       >
         <Pencil className="w-3.5 h-3.5" />
         Edit
@@ -85,9 +85,9 @@ export function ProjectHubActions({ project }: Props) {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-4">
+          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Delete project?</h3>
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               This deletes <span className="text-white font-medium">{project.name}</span> and every linked shot. This cannot be undone.
             </p>
             <div className="flex justify-end gap-2">
@@ -95,7 +95,7 @@ export function ProjectHubActions({ project }: Props) {
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+                className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
               >
                 Cancel
               </button>
@@ -181,14 +181,14 @@ function EditDrawer({
     <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/60">
       <form
         onSubmit={submit}
-        className="h-full w-full max-w-md overflow-y-auto border-l border-[#2a2d3e] bg-[#0f1117] p-6 space-y-4"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-border-subtle bg-surface-0 p-6 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Edit project</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-[#94a3b8] hover:text-white transition"
+            className="text-sm text-text-secondary hover:text-white transition"
           >
             Close
           </button>
@@ -299,14 +299,14 @@ function EditDrawer({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || !form.name.trim()}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

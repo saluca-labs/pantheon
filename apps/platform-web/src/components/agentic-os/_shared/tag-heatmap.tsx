@@ -44,7 +44,7 @@ export function TagHeatmap({
 
   if (rows.length === 0 || buckets.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117]/40 p-6 text-xs text-[#94a3b8] text-center">
+      <div className="rounded-lg border border-dashed border-border-subtle bg-surface-0/40 p-6 text-xs text-text-secondary text-center">
         {emptyLabel}
       </div>
     );
@@ -55,13 +55,13 @@ export function TagHeatmap({
       <table className="w-full text-xs border-separate border-spacing-1">
         <thead>
           <tr>
-            <th className="text-left text-[10px] uppercase tracking-wide text-[#94a3b8] font-normal pr-2 sticky left-0 bg-transparent">
+            <th className="text-left text-[10px] uppercase tracking-wide text-text-secondary font-normal pr-2 sticky left-0 bg-transparent">
               Tag
             </th>
             {buckets.map((b) => (
               <th
                 key={b}
-                className="text-center text-[10px] uppercase tracking-wide text-[#94a3b8] font-normal px-1 py-1"
+                className="text-center text-[10px] uppercase tracking-wide text-text-secondary font-normal px-1 py-1"
               >
                 {b}
               </th>
@@ -71,7 +71,7 @@ export function TagHeatmap({
         <tbody>
           {rows.map((tag) => (
             <tr key={tag}>
-              <th className="text-left text-xs text-[#cbd5e1] font-medium pr-2 py-1 sticky left-0 bg-transparent whitespace-nowrap">
+              <th className="text-left text-xs text-text-primary font-medium pr-2 py-1 sticky left-0 bg-transparent whitespace-nowrap">
                 {tag}
               </th>
               {buckets.map((bucket) => {
@@ -81,7 +81,7 @@ export function TagHeatmap({
                   <td
                     key={bucket}
                     title={`${tag} · ${bucket}: ${count}`}
-                    className="text-center font-medium rounded-md border border-[#2a2d3e]"
+                    className="text-center font-medium rounded-md border border-border-subtle"
                     style={{
                       backgroundColor:
                         count === 0

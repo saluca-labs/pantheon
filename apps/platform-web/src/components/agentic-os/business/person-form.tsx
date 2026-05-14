@@ -21,7 +21,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function PersonForm({ organizations, onCreated }: Props) {
   const router = useRouter();
@@ -98,12 +98,12 @@ export function PersonForm({ organizations, onCreated }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
     >
       <h2 className="text-sm font-semibold text-white">Add person</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">First name</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">First name</span>
           <input
             value={form.firstName}
             onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
@@ -113,7 +113,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Last name</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Last name</span>
           <input
             value={form.lastName}
             onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
@@ -123,7 +123,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Email</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Email</span>
           <input
             type="email"
             value={form.email}
@@ -133,7 +133,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Phone</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Phone</span>
           <input
             value={form.phone}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -142,7 +142,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Role</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Role</span>
           <input
             value={form.role}
             onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
@@ -151,7 +151,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           />
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Organization</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Organization</span>
           <select
             value={form.organizationId}
             onChange={(e) => setForm((f) => ({ ...f, organizationId: e.target.value }))}
@@ -164,7 +164,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Stage / Tier</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Stage / Tier</span>
           <input
             value={form.stage}
             onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))}
@@ -179,7 +179,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
           </datalist>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Tags (comma-separated)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tags (comma-separated)</span>
           <input
             value={form.tagsRaw}
             onChange={(e) => setForm((f) => ({ ...f, tagsRaw: e.target.value }))}
@@ -189,7 +189,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
         </label>
       </div>
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Address</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Address</span>
         <input
           value={form.address}
           onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
@@ -197,7 +197,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
         />
       </label>
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Notes (one line)</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Notes (one line)</span>
         <input
           value={form.notes}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -205,7 +205,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
         />
       </label>
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Description (markdown)</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Description (markdown)</span>
         <textarea
           value={form.descriptionMd}
           onChange={(e) => setForm((f) => ({ ...f, descriptionMd: e.target.value }))}
@@ -216,7 +216,7 @@ export function PersonForm({ organizations, onCreated }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           {saving ? 'Adding…' : 'Add person'}
         </button>
