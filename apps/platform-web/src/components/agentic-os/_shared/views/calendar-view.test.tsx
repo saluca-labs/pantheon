@@ -12,6 +12,16 @@
  *   6. `onCreate` affordance fires with the cell's date.
  *   7. Empty path: zero events still renders a full grid.
  *
+ * Slot-grid mode (W-E.1b) — additive layout variant:
+ *   8. Renders a slot-row × day-of-week matrix: one row per slot def, 7
+ *      day columns relative to `weekStart`.
+ *   9. Items bucket into the correct (slot, day) cell and sort by `position`.
+ *  10. Move-up / move-down arrows fire `onReorder` with the right payload and
+ *      are disabled at the cell edges.
+ *  11. The optional per-item action button fires `onAction` with the item.
+ *  12. `onCreate` fires with { slotKey, dayOfWeek }; the today column is marked.
+ *  13. The default `date-grid` layout is unaffected when `layout` is omitted.
+ *
  * TIMEZONE DISCIPLINE: every Date in this file is constructed via `Date.UTC`,
  * and `today` is injected explicitly — never `new Date()`. This is the exact
  * class of bug the v0.1.58 isoWeek TZ-leak fix addressed; the tests must not
@@ -289,5 +299,262 @@ describe('CalendarView — create affordance', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /^month$/i })).not.toBeInTheDocument();
+  });
+
+  it('reports the date-grid layout via data-layout when layout is omitted', () => {
+    render(
+      <CalendarView<Evt>
+        events={[]}
+        view="month"
+        date={FOCUS_MAY}
+        today={TODAY}
+        getEventDate={(e) => new Date(e.when)}
+        getEventId={(e) => e.uid}
+        renderEvent={(e) => <span>{e.label}</span>}
+        onDateChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('calendar-view')).toHaveAttribute(
+      'data-layout',
+      'date-grid',
+    );
+  });
+});
+
+// ─── slot-grid mode (W-E.1b) ────────────────────────────────────────────────
+
+interface PlanItem {
+  pid: string;
+  slot: string; // slot key
+  dow: number; // 0-6, weekStart-relative
+  pos: number; // position within the (slot, day) cell
+  name: string;
+}
+
+// weekStart deliberately given as a mid-week date — the component snaps it to
+// the prior UTC Monday (2026-05-11).
+const WEEK_START = new Date(Date.UTC(2026, 4, 13)); // Wed 2026-05-13
+const SLOT_DEFS = [
+  { key: 'breakfast', label: 'Breakfast' },
+  { key: 'lunch', label: 'Lunch' },
+  { key: 'dinner', label: 'Dinner' },
+];
+
+function renderSlotGrid(overrides: Record<string, unknown> = {}) {
+  const onReorder = vi.fn();
+  const onCreate = vi.fn();
+  const onWeekChange = vi.fn();
+  const items: PlanItem[] = [
+    { pid: 'i1', slot: 'breakfast', dow: 0, pos: 0, name: 'Oatmeal' },
+    { pid: 'i2', slot: 'breakfast', dow: 0, pos: 1, name: 'Coffee' },
+    { pid: 'i3', slot: 'dinner', dow: 2, pos: 0, name: 'Salmon' },
+  ];
+  const utils = render(
+    <CalendarView<PlanItem>
+      layout="slot-grid"
+      slots={SLOT_DEFS}
+      items={items}
+      weekStart={WEEK_START}
+      today={TODAY}
+      getItemId={(i) => i.pid}
+      getItemSlot={(i) => i.slot}
+      getItemDayOfWeek={(i) => i.dow}
+      getItemPosition={(i) => i.pos}
+      renderItem={(i) => <span>{i.name}</span>}
+      onReorder={onReorder}
+      onCreate={onCreate}
+      onWeekChange={onWeekChange}
+      {...overrides}
+    />,
+  );
+  return { onReorder, onCreate, onWeekChange, items, ...utils };
+}
+
+describe('CalendarView — slot-grid: matrix rendering', () => {
+  it('reports the slot-grid layout via data-layout', () => {
+    renderSlotGrid();
+    expect(screen.getByTestId('calendar-view')).toHaveAttribute(
+      'data-layout',
+      'slot-grid',
+    );
+  });
+
+  it('renders one row per slot definition', () => {
+    renderSlotGrid();
+    for (const def of SLOT_DEFS) {
+      expect(
+        screen.getByTestId(`calendar-slot-row-${def.key}`),
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByText('Breakfast')).toBeInTheDocument();
+    expect(screen.getByText('Dinner')).toBeInTheDocument();
+  });
+
+  it('renders 7 weekday columns relative to weekStart', () => {
+    const { container } = renderSlotGrid();
+    expect(
+      container.querySelectorAll('[data-testid^="calendar-slot-col-"]'),
+    ).toHaveLength(7);
+    // weekStart snaps to Mon 2026-05-11 → first column header shows "May 11".
+    expect(screen.getByText('May 11')).toBeInTheDocument();
+    expect(screen.getByText('May 17')).toBeInTheDocument();
+  });
+
+  it('renders a cell for every (slot, day) intersection', () => {
+    const { container } = renderSlotGrid();
+    // 3 slots × 7 days.
+    expect(
+      container.querySelectorAll('[data-testid^="calendar-slot-cell-"]'),
+    ).toHaveLength(21);
+  });
+
+  it('marks the today column (TODAY = Wed 2026-05-13 = dow 2)', () => {
+    renderSlotGrid();
+    expect(screen.getByTestId('calendar-slot-col-2')).toHaveAttribute(
+      'data-today',
+      'true',
+    );
+    expect(screen.getByTestId('calendar-slot-col-0')).not.toHaveAttribute(
+      'data-today',
+    );
+  });
+});
+
+describe('CalendarView — slot-grid: item bucketing', () => {
+  it('places items into their (slot, day) cell, position-sorted', () => {
+    renderSlotGrid();
+    const breakfastMon = screen.getByTestId('calendar-slot-cell-breakfast-0');
+    expect(within(breakfastMon).getByText('Oatmeal')).toBeInTheDocument();
+    expect(within(breakfastMon).getByText('Coffee')).toBeInTheDocument();
+    // pos 0 (Oatmeal) renders before pos 1 (Coffee).
+    const itemEls = within(breakfastMon).getAllByTestId(
+      /^calendar-slot-item-/,
+    );
+    expect(itemEls[0]!).toHaveTextContent('Oatmeal');
+    expect(itemEls[1]!).toHaveTextContent('Coffee');
+  });
+
+  it('sorts by position even when input order is reversed', () => {
+    const items: PlanItem[] = [
+      { pid: 'b', slot: 'lunch', dow: 1, pos: 2, name: 'Second' },
+      { pid: 'a', slot: 'lunch', dow: 1, pos: 1, name: 'First' },
+    ];
+    renderSlotGrid({ items });
+    const cell = screen.getByTestId('calendar-slot-cell-lunch-1');
+    const itemEls = within(cell).getAllByTestId(/^calendar-slot-item-/);
+    expect(itemEls[0]!).toHaveTextContent('First');
+    expect(itemEls[1]!).toHaveTextContent('Second');
+  });
+
+  it('leaves empty cells empty', () => {
+    renderSlotGrid();
+    const emptyCell = screen.getByTestId('calendar-slot-cell-lunch-5');
+    expect(
+      within(emptyCell).queryByTestId(/^calendar-slot-item-/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('CalendarView — slot-grid: intra-cell reorder', () => {
+  it('fires onReorder with the up payload for a non-top item', () => {
+    const { onReorder } = renderSlotGrid();
+    // i2 (Coffee) is at position 1 — it can move up.
+    const coffee = screen.getByTestId('calendar-slot-item-i2');
+    fireEvent.click(within(coffee).getByLabelText('Move up'));
+    expect(onReorder).toHaveBeenCalledWith({
+      itemId: 'i2',
+      slotKey: 'breakfast',
+      dayOfWeek: 0,
+      direction: 'up',
+    });
+  });
+
+  it('fires onReorder with the down payload for a non-bottom item', () => {
+    const { onReorder } = renderSlotGrid();
+    // i1 (Oatmeal) is at position 0 — it can move down.
+    const oatmeal = screen.getByTestId('calendar-slot-item-i1');
+    fireEvent.click(within(oatmeal).getByLabelText('Move down'));
+    expect(onReorder).toHaveBeenCalledWith({
+      itemId: 'i1',
+      slotKey: 'breakfast',
+      dayOfWeek: 0,
+      direction: 'down',
+    });
+  });
+
+  it('disables Move-up on the first item and Move-down on the last', () => {
+    renderSlotGrid();
+    const oatmeal = screen.getByTestId('calendar-slot-item-i1'); // pos 0
+    const coffee = screen.getByTestId('calendar-slot-item-i2'); // pos 1 (last)
+    expect(within(oatmeal).getByLabelText('Move up')).toBeDisabled();
+    expect(within(oatmeal).getByLabelText('Move down')).not.toBeDisabled();
+    expect(within(coffee).getByLabelText('Move up')).not.toBeDisabled();
+    expect(within(coffee).getByLabelText('Move down')).toBeDisabled();
+  });
+
+  it('disables both arrows for a lone item in a cell', () => {
+    renderSlotGrid();
+    const salmon = screen.getByTestId('calendar-slot-item-i3');
+    expect(within(salmon).getByLabelText('Move up')).toBeDisabled();
+    expect(within(salmon).getByLabelText('Move down')).toBeDisabled();
+  });
+});
+
+describe('CalendarView — slot-grid: per-item action', () => {
+  it('renders the action button and fires onAction with the item', () => {
+    const onAction = vi.fn();
+    renderSlotGrid({
+      itemAction: {
+        label: 'Log',
+        ariaLabel: (i: PlanItem) => `Log ${i.name}`,
+        onAction,
+      },
+    });
+    fireEvent.click(screen.getByLabelText('Log Oatmeal'));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onAction.mock.calls[0]![0]).toMatchObject({ pid: 'i1' });
+  });
+
+  it('renders no action button when itemAction is omitted', () => {
+    renderSlotGrid();
+    expect(screen.queryByLabelText(/^Log /)).not.toBeInTheDocument();
+  });
+
+  it('disables the action button when isEnabled returns false', () => {
+    const onAction = vi.fn();
+    renderSlotGrid({
+      itemAction: {
+        label: 'Log',
+        ariaLabel: (i: PlanItem) => `Log ${i.name}`,
+        onAction,
+        isEnabled: (i: PlanItem) => i.pid !== 'i1',
+      },
+    });
+    expect(screen.getByLabelText('Log Oatmeal')).toBeDisabled();
+    expect(screen.getByLabelText('Log Coffee')).not.toBeDisabled();
+  });
+});
+
+describe('CalendarView — slot-grid: create + navigation', () => {
+  it('fires onCreate with the slot key and day-of-week', () => {
+    const { onCreate } = renderSlotGrid();
+    fireEvent.click(screen.getByLabelText('Add to dinner on day 4'));
+    expect(onCreate).toHaveBeenCalledWith({ slotKey: 'dinner', dayOfWeek: 4 });
+  });
+
+  it('steps the week by 7 UTC days via the nav arrows', () => {
+    const { onWeekChange } = renderSlotGrid();
+    fireEvent.click(screen.getByLabelText('Next'));
+    // weekStart snapped to Mon 2026-05-11; +7 → 2026-05-18.
+    expect(dateKey(onWeekChange.mock.calls[0]![0])).toBe('2026-05-18');
+    onWeekChange.mockClear();
+    fireEvent.click(screen.getByLabelText('Previous'));
+    expect(dateKey(onWeekChange.mock.calls[0]![0])).toBe('2026-05-04');
+  });
+
+  it('hides week navigation when onWeekChange is omitted', () => {
+    renderSlotGrid({ onWeekChange: undefined });
+    expect(screen.queryByLabelText('Next')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Previous')).not.toBeInTheDocument();
   });
 });
