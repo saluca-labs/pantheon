@@ -10,18 +10,34 @@
  * newline-separated URL entries that parse to `{url, kind, label}` via the
  * pure helper in `log.ts`.
  *
- * Wave C-3a: the ad-hoc `<ul>` timeline + empty `<li>` are replaced by the
- * shared `ActivityFeed` primitive. Each entry's rich body (photo grids,
- * link/file lists, delete button) is preserved verbatim through the
- * `renderItem` render-prop escape hatch; `ActivityFeed` supplies the
- * day-grouping headers, ordering, and the `EmptyState`. The compose form is
- * unchanged.
+ * Wave C-3a: the ad-hoc `<ul>` timeline + empty `<li>` were replaced by the
+ * shared `ActivityFeed` primitive — day-grouping, ordering, EmptyState.
  *
- * @license MIT — Tiresias Maker OS Phase 3 (internal).
+ * Wave D.4 — feed redesign (builds ON the Wave C ActivityFeed adoption, does
+ * not replace it):
+ *  - The flat date string per entry is gone; `ActivityFeed`'s day headers
+ *    already group by day, so each entry now leads with a compact relative
+ *    timestamp ("3h ago") + a kind-derived accent dot via `summarizeEntry`.
+ *  - Photo attachments render in a tighter responsive grid with a count
+ *    badge when an entry carries more than the inline preview cap.
+ *  - Link / file / video attachments collapse into a single chip row with
+ *    per-kind icons instead of a stacked list — far more scannable in a
+ *    dense feed.
+ *  - The compose form gains a live attachment-kind summary chip row.
+ *  - A header strip surfaces the entry count + photo count at a glance.
+ *
+ * @license MIT — Tiresias Maker OS Phase 3 + Wave D.4 (internal).
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { Link as LinkIcon, Trash2, Play, FileText, Hammer } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Link as LinkIcon,
+  Trash2,
+  Play,
+  FileText,
+  Hammer,
+  ImageIcon,
+} from 'lucide-react';
 import {
   parseUrlInput,
   type AttachedUrl,
@@ -32,12 +48,46 @@ import type { ActivityEvent } from '@/components/agentic-os/_shared/views';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
+/** How many photo thumbnails to render inline before collapsing to a "+N" tile. */
+const PHOTO_PREVIEW_CAP = 6;
+
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   projectId: string;
   initialEntries: BuildLogEntry[];
+}
+
+/** Compact relative-time label: "just now" / "3h ago" / "2d ago". */
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  const diffMs = Date.now() - then;
+  if (!Number.isFinite(diffMs)) return '';
+  const min = Math.round(diffMs / 60_000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.round(hr / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Derive a feed-row summary for one entry: photo / attachment counts so the
+ * row can show at-a-glance badges without re-walking `attachedUrls` in JSX.
+ */
+function summarizeEntry(entry: BuildLogEntry): {
+  photos: AttachedUrl[];
+  others: AttachedUrl[];
+} {
+  const photos = entry.attachedUrls.filter((u) => u.kind === 'photo');
+  const others = entry.attachedUrls.filter((u) => u.kind !== 'photo');
+  return { photos, others };
 }
 
 export function BuildLogFeed({ projectId, initialEntries }: Props) {
@@ -60,6 +110,15 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
   }, [refresh]);
 
   const previewUrls = parseUrlInput(urlInput);
+
+  // Header strip stats — entry count + total photos across the feed.
+  const feedStats = useMemo(() => {
+    let photos = 0;
+    for (const e of entries) {
+      for (const u of e.attachedUrls) if (u.kind === 'photo') photos += 1;
+    }
+    return { entries: entries.length, photos };
+  }, [entries]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -132,13 +191,31 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
           className={`${inputCls} resize-y font-mono text-xs`}
         />
         {previewUrls.length > 0 && (
-          <div className="text-xs text-text-secondary">
-            Will attach {previewUrls.length} URL{previewUrls.length === 1 ? '' : 's'}:{' '}
-            {previewUrls.map((u, i) => (
-              <span key={i} className="mr-2">
-                {u.kind}:{u.label ?? u.url}
-              </span>
-            ))}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-secondary">
+            <span>
+              Will attach {previewUrls.length} URL
+              {previewUrls.length === 1 ? '' : 's'}:
+            </span>
+            {previewUrls.map((u, i) => {
+              const Icon =
+                u.kind === 'photo'
+                  ? ImageIcon
+                  : u.kind === 'video'
+                    ? Play
+                    : u.kind === 'file'
+                      ? FileText
+                      : LinkIcon;
+              return (
+                <span
+                  key={i}
+                  data-testid="build-log-compose-chip"
+                  className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5"
+                >
+                  <Icon className="h-3 w-3" />
+                  {u.label ?? u.kind}
+                </span>
+              );
+            })}
           </div>
         )}
         {error && (
@@ -157,19 +234,48 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
         </div>
       </form>
 
-      {/* Feed — ActivityFeed primitive, rich entry body via renderItem */}
+      {/* Header strip — at-a-glance feed stats */}
+      {feedStats.entries > 0 && (
+        <div
+          data-testid="build-log-stats"
+          className="flex flex-wrap items-center gap-3 px-1 text-xs text-text-secondary"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <Hammer className="h-3.5 w-3.5" />
+            <span className="tabular-nums text-text-primary">
+              {feedStats.entries}
+            </span>{' '}
+            {feedStats.entries === 1 ? 'entry' : 'entries'}
+          </span>
+          {feedStats.photos > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              <ImageIcon className="h-3.5 w-3.5" />
+              <span className="tabular-nums text-text-primary">
+                {feedStats.photos}
+              </span>{' '}
+              {feedStats.photos === 1 ? 'photo' : 'photos'}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Feed — ActivityFeed primitive, redesigned rich entry body via renderItem */}
       <ActivityFeed<BuildLogEvent>
         events={entries.map((entry) => ({
           id: entry.id,
           occurredAt: entry.createdAt,
-          tone: 'accent',
+          // Entries with photos read warmer; plain notes stay accent.
+          tone: entry.attachedUrls.some((u) => u.kind === 'photo')
+            ? 'positive'
+            : 'accent',
           entry,
         }))}
         grouping="day"
         emptyState={{
           icon: <Hammer className="h-6 w-6" />,
           title: 'No log entries yet',
-          description: 'Capture your first build note above — notes, photos, and links land here in a timestamped feed.',
+          description:
+            'Capture your first build note above — notes, photos, and links land here in a timestamped feed.',
         }}
         renderItem={(event) => (
           <LogEntryBody entry={event.entry} onDelete={remove} />
@@ -191,13 +297,19 @@ function LogEntryBody({
   entry: BuildLogEntry;
   onDelete: (entry: BuildLogEntry) => void;
 }) {
-  const photos = entry.attachedUrls.filter((u) => u.kind === 'photo');
-  const others = entry.attachedUrls.filter((u) => u.kind !== 'photo');
-  const dt = new Date(entry.createdAt);
+  const { photos, others } = summarizeEntry(entry);
+  const shownPhotos = photos.slice(0, PHOTO_PREVIEW_CAP);
+  const overflowPhotos = photos.length - shownPhotos.length;
+
   return (
     <div className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs text-text-secondary">{dt.toLocaleString()}</div>
+        <div
+          className="text-xs text-text-secondary tabular-nums"
+          title={new Date(entry.createdAt).toLocaleString()}
+        >
+          {relativeTime(entry.createdAt)}
+        </div>
         <button
           type="button"
           onClick={() => onDelete(entry)}
@@ -207,47 +319,67 @@ function LogEntryBody({
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
-      <p className="mt-2 whitespace-pre-wrap text-sm text-white">{entry.body}</p>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-white">
+        {entry.body}
+      </p>
+
+      {/* Photos — tighter responsive grid with a "+N" overflow tile */}
       {photos.length > 0 && (
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {photos.map((p, i) => (
-            <a
-              key={i}
-              href={p.url}
-              target="_blank"
-              rel="noreferrer"
-              className="block overflow-hidden rounded-md border border-border-subtle"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={p.url}
-                alt={p.label ?? 'attached photo'}
-                className="aspect-video w-full object-cover transition hover:opacity-80"
-              />
-            </a>
-          ))}
+        <div
+          data-testid="build-log-photo-grid"
+          className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-4"
+        >
+          {shownPhotos.map((p, i) => {
+            const isLastShown =
+              i === shownPhotos.length - 1 && overflowPhotos > 0;
+            return (
+              <a
+                key={i}
+                href={p.url}
+                target="_blank"
+                rel="noreferrer"
+                className="relative block overflow-hidden rounded-md border border-border-subtle"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.url}
+                  alt={p.label ?? 'attached photo'}
+                  className="aspect-square w-full object-cover transition hover:opacity-80"
+                />
+                {isLastShown && (
+                  <span
+                    data-testid="build-log-photo-overflow"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-semibold text-white"
+                  >
+                    +{overflowPhotos}
+                  </span>
+                )}
+              </a>
+            );
+          })}
         </div>
       )}
+
+      {/* Link / file / video attachments — single scannable chip row */}
       {others.length > 0 && (
-        <ul className="mt-3 space-y-1">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {others.map((u, i) => {
             const Icon =
               u.kind === 'video' ? Play : u.kind === 'file' ? FileText : LinkIcon;
             return (
-              <li key={i}>
-                <a
-                  href={u.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {u.label ?? u.url}
-                </a>
-              </li>
+              <a
+                key={i}
+                href={u.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex max-w-[14rem] items-center gap-1.5 rounded-full border border-border-subtle bg-surface-0 px-2.5 py-1 text-xs text-accent transition hover:border-accent/60"
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{u.label ?? u.url}</span>
+              </a>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

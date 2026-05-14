@@ -3,15 +3,28 @@
 /**
  * Maker OS — ConsumableTracker.
  *
- * Per-tool table of consumables (bits, blades, filters, etc.) with a
- * hours_remaining / max_hours progress bar and a one-click "replace" button
- * that resets hours_remaining to max_hours.
+ * Per-tool table of consumables (bits, blades, filters, etc.) with a one-click
+ * "replace" button that resets hours_remaining to max_hours.
  *
- * @license MIT — Tiresias Maker OS Phase 4 (internal).
+ * Wave C kept the consumable row as a thin flat progress bar.
+ *
+ * Wave D.4 — consumable wear gauges (no API / query changes; consumes the
+ * existing `percentRemaining` / `consumableStatus` pure helpers):
+ *  - The thin flat bar is replaced by a proper `WearGauge` — a segmented
+ *    life-remaining gauge with a bold percentage read-out, status-tinted
+ *    fill, and a "low" / "exhausted" threshold tick so the maker sees how
+ *    close to replacement a consumable is at a glance.
+ *  - Untracked consumables (no hours data) get an explicit "untracked"
+ *    gauge state instead of silently rendering nothing.
+ *  - A header strip rolls up how many consumables are low / exhausted so
+ *    the section reads as a maintenance dashboard, not just a list.
+ *  - Row layout, add form, replace + delete flows are unchanged.
+ *
+ * @license MIT — Tiresias Maker OS Phase 4 + Wave D.4 (internal).
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { Trash2, RotateCcw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Trash2, RotateCcw, AlertTriangle, CircleAlert } from 'lucide-react';
 import {
   CONSUMABLE_KIND_VALUES,
   CONSUMABLE_KIND_LABELS,
@@ -27,7 +40,7 @@ import {
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
-const STATUS_BAR: Record<ConsumableStatus, string> = {
+const STATUS_FILL: Record<ConsumableStatus, string> = {
   exhausted: 'bg-red-500',
   low: 'bg-amber-500',
   ok: 'bg-emerald-500',
@@ -48,9 +61,87 @@ const STATUS_TEXT: Record<ConsumableStatus, string> = {
   unknown: 'text-text-secondary',
 };
 
+/** How many segments the wear gauge is divided into. */
+const GAUGE_SEGMENTS = 10;
+/** The low-life threshold (matches `consumableStatus`'s 20% boundary). */
+const LOW_THRESHOLD = 0.2;
+
 interface Props {
   toolId: string;
   initialConsumables: ToolConsumable[];
+}
+
+/**
+ * Segmented wear gauge for one consumable. `pct` is life-remaining in
+ * [0, 1], or null when the consumable has no hours data (untracked). The
+ * gauge fills left-to-right; a threshold tick marks the "low" boundary.
+ */
+function WearGauge({
+  pct,
+  status,
+}: {
+  pct: number | null;
+  status: ConsumableStatus;
+}) {
+  if (pct == null) {
+    return (
+      <div
+        data-testid="wear-gauge"
+        data-state="untracked"
+        className="flex items-center gap-2"
+      >
+        <div className="flex h-2.5 flex-1 gap-0.5">
+          {Array.from({ length: GAUGE_SEGMENTS }).map((_, i) => (
+            <span
+              key={i}
+              className="flex-1 rounded-[1px] bg-surface-2"
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+        <span className="w-12 shrink-0 text-right text-[10px] tabular-nums text-text-secondary">
+          — —
+        </span>
+      </div>
+    );
+  }
+
+  const filledSegments = Math.round(pct * GAUGE_SEGMENTS);
+  const lowSegment = Math.round(LOW_THRESHOLD * GAUGE_SEGMENTS);
+
+  return (
+    <div
+      data-testid="wear-gauge"
+      data-state={status}
+      className="flex items-center gap-2"
+    >
+      <div className="relative flex h-2.5 flex-1 gap-0.5">
+        {Array.from({ length: GAUGE_SEGMENTS }).map((_, i) => {
+          const isFilled = i < filledSegments;
+          // The low-threshold tick sits on the boundary segment.
+          const isThreshold = i === lowSegment - 1;
+          return (
+            <span
+              key={i}
+              className={`relative flex-1 rounded-[1px] transition-colors ${
+                isFilled ? STATUS_FILL[status] : 'bg-surface-2'
+              }`}
+              aria-hidden="true"
+            >
+              {isThreshold && (
+                <span className="absolute -bottom-1 right-0 h-1 w-px bg-text-tertiary" />
+              )}
+            </span>
+          );
+        })}
+      </div>
+      <span
+        className={`w-12 shrink-0 text-right text-xs font-semibold tabular-nums ${STATUS_TEXT[status]}`}
+      >
+        {Math.round(pct * 100)}%
+      </span>
+    </div>
+  );
 }
 
 export function ConsumableTracker({ toolId, initialConsumables }: Props) {
@@ -162,12 +253,44 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
 
   const sorted = sortConsumables(items);
 
+  // Header rollup — low / exhausted counts across the tool's consumables.
+  const wearStats = useMemo(() => {
+    let low = 0;
+    let exhausted = 0;
+    for (const c of items) {
+      const s = consumableStatus(c);
+      if (s === 'low') low += 1;
+      else if (s === 'exhausted') exhausted += 1;
+    }
+    return { low, exhausted };
+  }, [items]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white uppercase tracking-wide">
-          Consumables
-        </h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="text-sm font-semibold text-white uppercase tracking-wide">
+            Consumables
+          </h3>
+          {wearStats.exhausted > 0 && (
+            <span
+              data-testid="consumable-rollup-exhausted"
+              className="inline-flex items-center gap-1 text-[10px] text-red-300"
+            >
+              <CircleAlert className="h-3 w-3" />
+              <span className="tabular-nums">{wearStats.exhausted}</span> exhausted
+            </span>
+          )}
+          {wearStats.low > 0 && (
+            <span
+              data-testid="consumable-rollup-low"
+              className="inline-flex items-center gap-1 text-[10px] text-amber-300"
+            >
+              <AlertTriangle className="h-3 w-3" />
+              <span className="tabular-nums">{wearStats.low}</span> low
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setShowAdd((v) => !v)}
@@ -247,7 +370,8 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
             return (
               <div
                 key={c.id}
-                className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2"
+                data-testid={`consumable-row-${c.id}`}
+                className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2.5"
               >
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
@@ -289,14 +413,10 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                     </button>
                   </div>
                 </div>
-                {pct != null && (
-                  <div className="h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
-                    <div
-                      className={`h-full ${STATUS_BAR[status]} transition-all`}
-                      style={{ width: `${Math.round(pct * 100)}%` }}
-                    />
-                  </div>
-                )}
+
+                {/* Wear gauge — segmented life-remaining indicator */}
+                <WearGauge pct={pct} status={status} />
+
                 {c.notes && (
                   <p className="text-[10px] text-text-secondary">{c.notes}</p>
                 )}
