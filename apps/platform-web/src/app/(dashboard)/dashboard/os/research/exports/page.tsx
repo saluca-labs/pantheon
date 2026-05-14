@@ -16,6 +16,7 @@ import { ArrowLeft, FileDown } from 'lucide-react';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { getResearchPool } from '@/lib/agentic-os/research/session';
 import { getExperiment } from '@/lib/agentic-os/research/repo';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,12 +98,17 @@ export default async function ExportsLandingPage() {
       </p>
 
       {recent.length === 0 ? (
-        <p
-          className="text-sm text-text-secondary italic py-6 text-center rounded-lg border border-border-subtle bg-surface-2"
-          data-testid="exports-empty"
-        >
-          No exports yet. Open an experiment and click Export PDF to record one.
-        </p>
+        <div data-testid="exports-empty">
+          <EmptyState
+            icon={<FileDown className="h-6 w-6" />}
+            title="No exports yet"
+            description="Open an experiment and click Export PDF to record a reproducibility export. Empty experiments are refused — there must be notebook entries, hypotheses, papers, datasets, or protocols."
+            primaryCta={{
+              label: 'Browse experiments',
+              href: '/dashboard/os/research/experiments',
+            }}
+          />
+        </div>
       ) : (
         <ul className="space-y-2" data-testid="exports-list">
           {recent.map((e, i) => (

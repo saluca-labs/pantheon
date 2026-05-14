@@ -11,9 +11,9 @@
  * @license MIT — Tiresias Research OS (internal).
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Lightbulb } from 'lucide-react';
 import type {
   Hypothesis,
   HypothesisStatus,
@@ -25,6 +25,7 @@ import {
   renderHypothesisStatement,
   validateHypothesis,
 } from '@/lib/agentic-os/research/hypotheses';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import { HypothesisArchiveButton } from './hypothesis-archive-button';
 
 const API = '/api/tiresias/agentic-os/research/hypotheses';
@@ -316,6 +317,19 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>(initialHypotheses);
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return hypotheses;
+    return hypotheses.filter(
+      (h) =>
+        h.title.toLowerCase().includes(q) ||
+        h.ifClause.toLowerCase().includes(q) ||
+        h.thenClause.toLowerCase().includes(q) ||
+        h.tags.some((t) => t.toLowerCase().includes(q)),
+    );
+  }, [hypotheses, query]);
 
   // When the toggle flips, refetch from the API with the matching scope.
   useEffect(() => {
@@ -382,15 +396,36 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
         </label>
       </div>
 
+      <EntitySearch
+        placeholder="Search hypotheses by title, clause, or tag"
+        debounceMs={0}
+        onQueryChange={setQuery}
+      />
+
       {loading ? (
         <p className="text-sm text-text-secondary">Loading…</p>
-      ) : hypotheses.length === 0 ? (
-        <p className="text-sm text-text-secondary">
-          {showArchived ? 'No archived hypotheses.' : 'No hypotheses yet. Add your first one above.'}
-        </p>
+      ) : visible.length === 0 ? (
+        hypotheses.length === 0 ? (
+          <EmptyState
+            icon={<Lightbulb className="h-6 w-6" />}
+            title={showArchived ? 'No archived hypotheses' : 'No hypotheses yet'}
+            description={
+              showArchived
+                ? 'Hypotheses you archive will appear here.'
+                : 'Track research questions in the standard If…then…because format — predictions, falsifiers, and the experiments that test them.'
+            }
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            icon={<Lightbulb className="h-6 w-6" />}
+            title="No hypotheses match"
+            description="Try a different search term."
+          />
+        )
       ) : (
         <div className="space-y-4">
-          {hypotheses.map((h) => (
+          {visible.map((h) => (
             <HypothesisCard
               key={h.id}
               hyp={h}

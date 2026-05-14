@@ -76,6 +76,7 @@ import { MilestoneCard } from '@/components/agentic-os/research/milestone-card';
 import { DependencyList } from '@/components/agentic-os/research/dependency-list';
 import { ReproducibilityChecklist } from '@/components/agentic-os/research/reproducibility-checklist';
 import { ReproducibilityScoreBadge } from '@/components/agentic-os/research/reproducibility-score-badge';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -348,7 +349,16 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
               </Link>
             </div>
             {milestoneStrip.length === 0 ? (
-              <p className="text-sm text-text-secondary italic">No milestones yet.</p>
+              <EmptyState
+                variant="bare"
+                icon={<Target className="h-6 w-6" />}
+                title="No milestones yet"
+                description="Add deadlines from the Milestones tab. At-risk and overdue milestones surface on the workshop-wide Top Blockers feed."
+                primaryCta={{
+                  label: 'Open milestones tab',
+                  href: `/dashboard/os/research/experiments/${experiment.id}?tab=milestones`,
+                }}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {milestoneStrip.map((m) => (
@@ -492,12 +502,14 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
           <div className="space-y-3">
             <ExperimentProtocolLinker experimentId={experiment.id} />
             {protocolPins.length === 0 ? (
-              <p
-                className="text-sm text-text-secondary italic py-6 text-center"
-                data-testid="protocols-tab-empty"
-              >
-                No protocols pinned yet.
-              </p>
+              <div data-testid="protocols-tab-empty">
+                <EmptyState
+                  variant="bare"
+                  icon={<FileText className="h-6 w-6" />}
+                  title="No protocols pinned yet"
+                  description="Pin a workshop-global protocol at a frozen version string — the reproducibility anchor for this experiment."
+                />
+              </div>
             ) : (
               protocolPins.map((pin) => (
                 <ExperimentProtocolPinnedRow
