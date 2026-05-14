@@ -97,13 +97,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
       - run: pnpm install --frozen-lockfile
       - name: Build shared packages first
-        run: |
-          pnpm --filter @platform/config build || true
-          pnpm --filter @platform/types build || true
-          pnpm --filter @platform/observability build || true
-          pnpm --filter @platform/blob-store build || true
-          pnpm --filter @platform/llm build || true
-          pnpm --filter @platform/memory build || true
+        run: pnpm --filter "./packages/*" run build || true   # build all workspace packages so app typechecks resolve @platform/*
       - name: Typecheck
         run: pnpm typecheck   # gating — type errors (incl. test files) fail CI
 
