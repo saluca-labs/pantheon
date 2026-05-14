@@ -25,13 +25,13 @@ import {
 } from '@/lib/agentic-os/maker/consumables';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_BAR: Record<ConsumableStatus, string> = {
   exhausted: 'bg-red-500',
   low: 'bg-amber-500',
   ok: 'bg-emerald-500',
-  unknown: 'bg-[#2a2d3e]',
+  unknown: 'bg-border-subtle',
 };
 
 const STATUS_LABEL: Record<ConsumableStatus, string> = {
@@ -45,7 +45,7 @@ const STATUS_TEXT: Record<ConsumableStatus, string> = {
   exhausted: 'text-red-300',
   low: 'text-amber-300',
   ok: 'text-emerald-300',
-  unknown: 'text-[#94a3b8]',
+  unknown: 'text-text-secondary',
 };
 
 interface Props {
@@ -171,7 +171,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
         <button
           type="button"
           onClick={() => setShowAdd((v) => !v)}
-          className="rounded-md border border-[#4361EE] bg-[#4361EE]/10 px-2.5 py-1 text-xs text-white hover:bg-[#4361EE]/20 transition"
+          className="rounded-md border border-accent bg-accent/10 px-2.5 py-1 text-xs text-white hover:bg-accent/20 transition"
         >
           {showAdd ? 'Cancel' : '+ Add'}
         </button>
@@ -182,7 +182,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
       {showAdd && (
         <form
           onSubmit={add}
-          className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2"
+          className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2"
         >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input
@@ -226,7 +226,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
           <button
             type="submit"
             disabled={adding}
-            className="rounded-md bg-[#4361EE] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+            className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/80 disabled:opacity-50 transition"
           >
             {adding ? 'Adding…' : 'Add consumable'}
           </button>
@@ -234,8 +234,8 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
       )}
 
       {sorted.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[#2a2d3e] p-4 text-center">
-          <p className="text-xs text-[#94a3b8]">
+        <div className="rounded-lg border border-dashed border-border-subtle p-4 text-center">
+          <p className="text-xs text-text-secondary">
             No consumables tracked yet.
           </p>
         </div>
@@ -247,14 +247,14 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
             return (
               <div
                 key={c.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2"
+                className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2"
               >
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-white font-medium">
                       {c.name}
                       {c.kind && (
-                        <span className="ml-2 text-[10px] text-[#94a3b8] uppercase tracking-wide">
+                        <span className="ml-2 text-[10px] text-text-secondary uppercase tracking-wide">
                           {c.kind}
                         </span>
                       )}
@@ -262,7 +262,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                     <div className={`text-[10px] ${STATUS_TEXT[status]}`}>
                       {STATUS_LABEL[status]}
                       {c.hoursRemaining != null && c.maxHours != null && (
-                        <span className="ml-1 text-[#94a3b8]">
+                        <span className="ml-1 text-text-secondary">
                           ({formatHours(c.hoursRemaining)} / {formatHours(c.maxHours)} h)
                         </span>
                       )}
@@ -273,7 +273,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                       <button
                         type="button"
                         onClick={() => replace(c)}
-                        className="rounded-md border border-[#2a2d3e] bg-[#1a1d27] px-2 py-1 text-[10px] text-[#cbd5e1] hover:bg-[#2a2d3e] inline-flex items-center gap-1 transition"
+                        className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-text-primary hover:bg-border-subtle inline-flex items-center gap-1 transition"
                         title="Reset hours remaining to max"
                       >
                         <RotateCcw className="w-3 h-3" />
@@ -283,14 +283,14 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                     <button
                       type="button"
                       onClick={() => remove(c)}
-                      className="rounded-md border border-[#2a2d3e] bg-[#1a1d27] px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+                      className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
                 {pct != null && (
-                  <div className="h-1.5 w-full rounded-full bg-[#1a1d27] overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
                     <div
                       className={`h-full ${STATUS_BAR[status]} transition-all`}
                       style={{ width: `${Math.round(pct * 100)}%` }}
@@ -298,7 +298,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                   </div>
                 )}
                 {c.notes && (
-                  <p className="text-[10px] text-[#94a3b8]">{c.notes}</p>
+                  <p className="text-[10px] text-text-secondary">{c.notes}</p>
                 )}
               </div>
             );

@@ -48,10 +48,10 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
   return (
     <Link
       href={`/dashboard/os/autobiographer/memories/${memory.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <h3 className="text-white font-medium group-hover:text-[#4361EE] transition truncate">
+        <h3 className="text-white font-medium group-hover:text-accent transition truncate">
           {memory.title}
         </h3>
         <div className="flex items-center gap-1 shrink-0">
@@ -66,7 +66,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
           )}
           {hasPhotos && (
             <span
-              className="text-[10px] text-[#94a3b8] inline-flex items-center gap-0.5"
+              className="text-[10px] text-text-secondary inline-flex items-center gap-0.5"
               title={`${memory.photoUrls.length} photo${memory.photoUrls.length === 1 ? '' : 's'}`}
             >
               <ImageIcon className="w-3 h-3" />
@@ -75,7 +75,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
           )}
           {hasAudio && (
             <span
-              className="text-[10px] text-[#94a3b8] inline-flex items-center gap-0.5"
+              className="text-[10px] text-text-secondary inline-flex items-center gap-0.5"
               title="Has audio"
             >
               <Mic className="w-3 h-3" />
@@ -84,9 +84,9 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
         </div>
       </div>
 
-      <p className="text-xs text-[#94a3b8] leading-relaxed mb-2">{preview}</p>
+      <p className="text-xs text-text-secondary leading-relaxed mb-2">{preview}</p>
 
-      <div className="flex flex-wrap items-center gap-2 text-[10px] text-[#94a3b8]">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] text-text-secondary">
         {(memory.whenInLife || memory.eraDateEstimate) && (
           <span className="inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -107,7 +107,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
           {memory.contentTags.slice(0, 4).map((t) => (
             <span
               key={`c-${t}`}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#cbd5e1]"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-primary"
             >
               {t}
             </span>

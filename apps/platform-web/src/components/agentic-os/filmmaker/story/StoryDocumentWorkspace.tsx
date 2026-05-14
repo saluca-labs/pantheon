@@ -160,7 +160,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs uppercase tracking-wide text-[#94a3b8]">
+          <p className="text-xs uppercase tracking-wide text-text-secondary">
             {STORY_DOCUMENT_KIND_LABEL[doc.kind]} · v{doc.version}
           </p>
           {lastSavedAt && (
@@ -174,7 +174,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
             type="button"
             onClick={saveSnapshot}
             disabled={snapshotting}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 disabled:opacity-50 transition"
           >
             <Camera className="w-3.5 h-3.5" />
             {snapshotting ? 'Saving…' : 'Save snapshot'}
@@ -182,7 +182,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
           <button
             type="button"
             onClick={() => setHistoryOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 transition"
           >
             <History className="w-3.5 h-3.5" />
             {historyOpen ? 'Hide history' : `History (${versions.length})`}
@@ -210,10 +210,10 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
       />
 
       {historyOpen && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
           <h3 className="text-sm font-semibold text-white mb-3">Version history</h3>
           {versions.length === 0 ? (
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               No snapshots yet. Click <span className="text-white">Save snapshot</span> to take one.
             </p>
           ) : (
@@ -221,11 +221,11 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
               {versions.map((v) => (
                 <li
                   key={v.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2.5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-0 p-2.5"
                 >
                   <div>
                     <p className="text-sm text-white">v{v.version}</p>
-                    <p className="text-[11px] text-[#94a3b8]">
+                    <p className="text-[11px] text-text-secondary">
                       {new Date(v.createdAt).toLocaleString()} ·{' '}
                       {v.wordCount.toLocaleString()} words
                     </p>
@@ -233,7 +233,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
                   <button
                     type="button"
                     onClick={() => restoreVersion(v.id)}
-                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 transition"
+                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-border-subtle text-text-primary hover:text-white hover:border-accent/60 transition"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     Restore

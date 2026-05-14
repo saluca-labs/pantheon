@@ -20,8 +20,8 @@ interface BookListProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-[#2a2d3e] text-[#94a3b8]',
-  writing: 'bg-[#4361EE]/20 text-[#4361EE]',
+  draft: 'bg-border-subtle text-text-secondary',
+  writing: 'bg-accent/20 text-accent',
   complete: 'bg-emerald-500/20 text-emerald-400',
   published: 'bg-fuchsia-500/20 text-fuchsia-400',
 };
@@ -33,10 +33,10 @@ function BookCard({ book }: { book: CreatorBook }) {
     <button
       type="button"
       onClick={() => router.push(`/dashboard/os/creator/books/${book.id}`)}
-      className="group relative rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-5 text-left hover:border-[#4361EE]/50 hover:bg-[#1a1d2e] transition-colors"
+      className="group relative rounded-lg border border-border-subtle bg-surface-2 p-5 text-left hover:border-accent/50 hover:bg-[#1a1d2e] transition-colors"
     >
       {/* Cover image or placeholder */}
-      <div className="mb-4 h-32 rounded-md bg-[#0f1117] border border-[#2a2d3e] flex items-center justify-center overflow-hidden">
+      <div className="mb-4 h-32 rounded-md bg-surface-0 border border-border-subtle flex items-center justify-center overflow-hidden">
         {book.coverImageUrl ? (
           <img
             src={book.coverImageUrl}
@@ -44,7 +44,7 @@ function BookCard({ book }: { book: CreatorBook }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <BookOpen className="w-8 h-8 text-[#2a2d3e]" />
+          <BookOpen className="w-8 h-8 text-text-tertiary" />
         )}
       </div>
 
@@ -102,7 +102,7 @@ export function BookList({ books }: BookListProps) {
           type="button"
           onClick={handleCreate}
           disabled={creating}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4361EE] text-white text-sm font-medium hover:bg-[#3651de] disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-[#3651de] disabled:opacity-50 transition-colors"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Creating…' : 'New Book'}
@@ -111,8 +111,8 @@ export function BookList({ books }: BookListProps) {
 
       {/* Book grid */}
       {books.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117] p-12 text-center">
-          <BookOpen className="w-12 h-12 text-[#2a2d3e] mx-auto mb-3" />
+        <div className="rounded-lg border border-dashed border-border-subtle bg-surface-0 p-12 text-center">
+          <BookOpen className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
           <p className="text-[#64748b]">No books yet. Create your first book to start writing.</p>
         </div>
       ) : (

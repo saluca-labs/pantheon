@@ -30,7 +30,7 @@ export default async function HealthNutritionPage() {
       <div className="max-w-3xl">
         <Link
           href="/dashboard/os/health"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
@@ -64,7 +64,7 @@ export default async function HealthNutritionPage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
@@ -72,18 +72,18 @@ export default async function HealthNutritionPage() {
 
       <div className="flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3">
-          <Utensils className="w-6 h-6 text-[#4361EE]" />
+          <Utensils className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">Nutrition log</h1>
         </div>
         <Link
           href="/dashboard/os/health/nutrition/foods"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/50 text-white text-sm px-3 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/50 text-white text-sm px-3 py-2 transition"
         >
           <BookOpen className="w-4 h-4" />
           Custom foods
         </Link>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-5 leading-relaxed">
+      <p className="text-sm text-text-secondary mb-5 leading-relaxed">
         Log meals manually or by searching the catalog. Phase 5b adds USDA
         FoodData Central + recipe builder.
       </p>

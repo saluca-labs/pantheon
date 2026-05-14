@@ -125,12 +125,12 @@ export function CbtLogEditor({ log }: Props) {
         placeholder="Optional additional notes."
       />
 
-      <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#2a2d3e]">
+      <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border-subtle">
         <button
           type="button"
           onClick={() => void onSave()}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting ? 'Saving…' : 'Save changes'}
@@ -231,7 +231,7 @@ function KindFields({ kind, data, onPatch }: KindFieldsProps) {
               type="checkbox"
               checked={!!data.completed}
               onChange={(e) => onPatch({ completed: e.target.checked })}
-              className="accent-[#4361EE]"
+              className="accent-accent"
             />
             Completed
           </label>
@@ -254,7 +254,7 @@ function KindFields({ kind, data, onPatch }: KindFieldsProps) {
               onChange={(v) => onPatch({ scheduled_at: v })}
             />
             <div>
-              <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+              <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                 Duration (min)
               </label>
               <input
@@ -265,7 +265,7 @@ function KindFields({ kind, data, onPatch }: KindFieldsProps) {
                 onChange={(e) =>
                   onPatch({ duration_min: Number(e.target.value) || 0 })
                 }
-                className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white px-3 py-2"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white px-3 py-2"
               />
             </div>
           </div>
@@ -352,7 +352,7 @@ function KindFields({ kind, data, onPatch }: KindFieldsProps) {
       );
     default:
       return (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           No editor for kind <code>{kind}</code>.
         </p>
       );
@@ -383,7 +383,7 @@ function StringListEditor({
   }
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </label>
       <ul className="space-y-2">
@@ -393,13 +393,13 @@ function StringListEditor({
               type="text"
               value={v}
               onChange={(e) => update(i, e.target.value)}
-              className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white px-3 py-2"
+              className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white px-3 py-2"
             />
             {items.length > 1 && (
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-[#94a3b8] hover:text-red-300 px-2"
+                className="text-xs text-text-secondary hover:text-red-300 px-2"
               >
                 remove
               </button>
@@ -410,7 +410,7 @@ function StringListEditor({
       <button
         type="button"
         onClick={add}
-        className="mt-2 text-xs text-[#4361EE] hover:text-[#5d7aff] transition"
+        className="mt-2 text-xs text-accent hover:text-[#5d7aff] transition"
       >
         + Add
       </button>
@@ -437,7 +437,7 @@ function FixedListEditor({
   }
   return (
     <div>
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </label>
       <ul className="space-y-2">
@@ -447,7 +447,7 @@ function FixedListEditor({
               type="text"
               value={v}
               onChange={(e) => update(i, e.target.value)}
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white px-3 py-2"
+              className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white px-3 py-2"
             />
           </li>
         ))}
@@ -499,14 +499,14 @@ function ValuesEditor({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8]">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary">
         Values
       </label>
       <ul className="space-y-3">
         {rows.map((r, i) => (
           <li
             key={i}
-            className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2"
+            className="rounded-xl border border-border-subtle bg-surface-0 p-3 space-y-2"
           >
             <div className="flex items-center gap-2">
               <input
@@ -514,13 +514,13 @@ function ValuesEditor({
                 value={r.domain}
                 onChange={(e) => update(i, { domain: e.target.value })}
                 placeholder="Domain"
-                className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white px-3 py-2"
+                className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white px-3 py-2"
               />
               {rows.length > 1 && (
                 <button
                   type="button"
                   onClick={() => remove(i)}
-                  className="text-xs text-[#94a3b8] hover:text-red-300 px-2"
+                  className="text-xs text-text-secondary hover:text-red-300 px-2"
                 >
                   remove
                 </button>
@@ -528,7 +528,7 @@ function ValuesEditor({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1">
+                <label className="block text-[10px] uppercase tracking-wide text-text-secondary mb-1">
                   Importance ({r.importance})
                 </label>
                 <input
@@ -539,11 +539,11 @@ function ValuesEditor({
                   onChange={(e) =>
                     update(i, { importance: parseInt(e.target.value, 10) })
                   }
-                  className="w-full accent-[#4361EE]"
+                  className="w-full accent-accent"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wide text-[#94a3b8] mb-1">
+                <label className="block text-[10px] uppercase tracking-wide text-text-secondary mb-1">
                   Current alignment ({r.current_alignment})
                 </label>
                 <input
@@ -556,7 +556,7 @@ function ValuesEditor({
                       current_alignment: parseInt(e.target.value, 10),
                     })
                   }
-                  className="w-full accent-[#4361EE]"
+                  className="w-full accent-accent"
                 />
               </div>
             </div>
@@ -565,7 +565,7 @@ function ValuesEditor({
               onChange={(e) => update(i, { action: e.target.value })}
               rows={2}
               placeholder="One concrete action"
-              className="w-full rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white px-3 py-2 leading-relaxed resize-y"
+              className="w-full rounded-lg border border-border-subtle bg-surface-2 text-sm text-white px-3 py-2 leading-relaxed resize-y"
             />
           </li>
         ))}
@@ -573,7 +573,7 @@ function ValuesEditor({
       <button
         type="button"
         onClick={add}
-        className="text-xs text-[#4361EE] hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-[#5d7aff] transition"
       >
         + Add domain
       </button>
@@ -616,33 +616,33 @@ function ChecklistEditor({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs uppercase tracking-wide text-[#94a3b8]">
+      <label className="block text-xs uppercase tracking-wide text-text-secondary">
         Checklist
       </label>
       <ul className="space-y-2">
         {rows.map((r, i) => (
           <li
             key={i}
-            className="flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-2"
+            className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-0 p-2"
           >
             <input
               type="checkbox"
               checked={r.met}
               onChange={(e) => update(i, { met: e.target.checked })}
-              className="accent-[#4361EE]"
+              className="accent-accent"
             />
             <input
               type="text"
               value={r.item}
               onChange={(e) => update(i, { item: e.target.value })}
               placeholder="Item"
-              className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white px-3 py-2"
+              className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white px-3 py-2"
             />
             {rows.length > 1 && (
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-[#94a3b8] hover:text-red-300 px-2"
+                className="text-xs text-text-secondary hover:text-red-300 px-2"
               >
                 remove
               </button>
@@ -653,7 +653,7 @@ function ChecklistEditor({
       <button
         type="button"
         onClick={add}
-        className="text-xs text-[#4361EE] hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-[#5d7aff] transition"
       >
         + Add item
       </button>

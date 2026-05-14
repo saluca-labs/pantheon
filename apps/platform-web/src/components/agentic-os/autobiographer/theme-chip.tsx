@@ -22,7 +22,7 @@ const COLOR_CLASS: Record<string, string> = {
   slate: 'text-slate-300 bg-slate-500/10 border-slate-500/30',
   orange: 'text-orange-300 bg-orange-500/10 border-orange-500/30',
 };
-const DEFAULT_CLASS = 'text-[#cbd5e1] bg-[#1a1d27] border-[#2a2d3e]';
+const DEFAULT_CLASS = 'text-text-primary bg-surface-2 border-border-subtle';
 
 export interface ThemeChipProps {
   name: string;
@@ -58,7 +58,7 @@ export function ThemeChip({
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${name}`}
-          className="ml-0.5 text-[#94a3b8] hover:text-white"
+          className="ml-0.5 text-text-secondary hover:text-white"
         >
           ×
         </button>

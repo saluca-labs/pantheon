@@ -17,7 +17,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full sm:w-auto rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full sm:w-auto rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export function PeopleList({ initialPeople, organizations }: Props) {
   const [people] = useState<Person[]>(initialPeople);
@@ -67,7 +67,7 @@ export function PeopleList({ initialPeople, organizations }: Props) {
             <option key={o.id} value={o.id}>{o.name}</option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 text-xs text-[#94a3b8]">
+        <label className="flex items-center gap-1.5 text-xs text-text-secondary">
           <input
             type="checkbox"
             checked={showArchived}
@@ -75,13 +75,13 @@ export function PeopleList({ initialPeople, organizations }: Props) {
           />
           Show archived
         </label>
-        <span className="text-xs text-[#94a3b8] ml-auto">
+        <span className="text-xs text-text-secondary ml-auto">
           {filtered.length} of {people.length}
         </span>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] italic">No people match the current filters.</p>
+        <p className="text-sm text-text-secondary italic">No people match the current filters.</p>
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {filtered.map((p) => (

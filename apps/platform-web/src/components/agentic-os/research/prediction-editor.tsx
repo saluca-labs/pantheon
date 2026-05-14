@@ -20,7 +20,7 @@ import {
 import { CONFIDENCE_LEVELS, type ConfidenceLevel } from '@/lib/agentic-os/research/hypotheses';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface CreateProps {
   mode: 'create';
@@ -103,7 +103,7 @@ export function PredictionEditor(props: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-4">
+    <form onSubmit={submit} className="space-y-3 rounded-lg border border-border-subtle bg-surface-0/60 p-4">
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -113,7 +113,7 @@ export function PredictionEditor(props: Props) {
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Kind</span>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as PredictionKind)}
@@ -127,7 +127,7 @@ export function PredictionEditor(props: Props) {
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1">Confidence</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1">Confidence</span>
           <select
             value={confidence}
             onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
@@ -150,7 +150,7 @@ export function PredictionEditor(props: Props) {
         <button
           type="submit"
           disabled={saving || !text.trim()}
-          className="rounded-md bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
+          className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
         >
           {saving
             ? props.mode === 'edit'
@@ -164,7 +164,7 @@ export function PredictionEditor(props: Props) {
           <button
             type="button"
             onClick={props.onCancel}
-            className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+            className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-text-secondary hover:text-white transition"
           >
             Cancel
           </button>

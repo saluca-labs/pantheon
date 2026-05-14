@@ -87,17 +87,17 @@ export function Checklist({
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.id}>
-            <label className="flex items-start gap-2 rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/40 px-3 py-2 cursor-pointer transition">
+            <label className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/40 px-3 py-2 cursor-pointer transition">
               <input
                 type="checkbox"
                 checked={!!met[item.id]}
                 onChange={() => toggle(item.id)}
-                className="mt-0.5 h-4 w-4 accent-[#4361EE]"
+                className="mt-0.5 h-4 w-4 accent-accent"
               />
               <span className="flex-1">
                 <span className="block text-sm text-white">{item.label}</span>
                 {item.hint && (
-                  <span className="block text-xs text-[#94a3b8] mt-0.5">
+                  <span className="block text-xs text-text-secondary mt-0.5">
                     {item.hint}
                   </span>
                 )}
@@ -108,7 +108,7 @@ export function Checklist({
       </ul>
       {withNotes && (
         <div>
-          <label className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+          <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
             Notes (optional)
           </label>
           <textarea
@@ -116,7 +116,7 @@ export function Checklist({
             onChange={(e) => setNotesValue(e.target.value)}
             rows={3}
             placeholder="Anything to add"
-            className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#94a3b8] px-3 py-2 leading-relaxed resize-y"
+            className="w-full rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-secondary px-3 py-2 leading-relaxed resize-y"
           />
         </div>
       )}

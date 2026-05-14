@@ -20,7 +20,7 @@ import {
 import { ReferenceForm } from './reference-form';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   projectId: string;
@@ -123,14 +123,14 @@ export function ProjectReferencesPicker({
         <button
           type="button"
           onClick={() => setShowPicker((v) => !v)}
-          className="rounded-md border border-[#4361EE] bg-[#4361EE]/10 px-3 py-2 text-sm text-white hover:bg-[#4361EE]/20 transition"
+          className="rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm text-white hover:bg-accent/20 transition"
         >
           {showPicker ? 'Close picker' : '+ Link reference'}
         </button>
         <button
           type="button"
           onClick={() => setShowCreate((v) => !v)}
-          className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-[#cbd5e1] hover:text-white transition"
+          className="rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-text-primary hover:text-white transition"
         >
           {showCreate ? 'Cancel' : '+ Create new reference'}
         </button>
@@ -150,7 +150,7 @@ export function ProjectReferencesPicker({
       )}
 
       {showPicker && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
           <input
             type="text"
             placeholder="Search library by title / author / tag…"
@@ -159,13 +159,13 @@ export function ProjectReferencesPicker({
             className={inputCls}
           />
           {filteredLibrary.length === 0 ? (
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               {library.length === 0
                 ? 'Your library is empty. Use “Create new reference” to add the first.'
                 : 'No matching unlinked references.'}
             </p>
           ) : (
-            <ul className="divide-y divide-[#2a2d3e] max-h-72 overflow-y-auto">
+            <ul className="divide-y divide-border-subtle max-h-72 overflow-y-auto">
               {filteredLibrary.map((r) => (
                 <li
                   key={r.id}
@@ -173,7 +173,7 @@ export function ProjectReferencesPicker({
                 >
                   <div className="min-w-0">
                     <div className="text-sm text-white truncate">{r.title}</div>
-                    <div className="text-[10px] text-[#94a3b8] truncate">
+                    <div className="text-[10px] text-text-secondary truncate">
                       {REFERENCE_KIND_LABELS[r.kind]}
                       {r.authors ? ` · ${r.authors}` : ''}
                       {r.publishedAt ? ` · ${r.publishedAt}` : ''}
@@ -183,7 +183,7 @@ export function ProjectReferencesPicker({
                     type="button"
                     onClick={() => attach(r.id)}
                     disabled={pendingId === r.id}
-                    className="text-xs text-[#4361EE] hover:underline disabled:opacity-50"
+                    className="text-xs text-accent hover:underline disabled:opacity-50"
                   >
                     {pendingId === r.id ? 'Linking…' : 'Link'}
                   </button>
@@ -196,16 +196,16 @@ export function ProjectReferencesPicker({
 
       {/* Linked references list */}
       {links.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-8 text-center">
-          <p className="text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
+          <p className="text-sm text-text-secondary">
             No references linked to this project yet.
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="border-b border-[#2a2d3e] bg-[#0f1117]/50">
-              <tr className="text-left text-xs uppercase tracking-wide text-[#94a3b8]">
+            <thead className="border-b border-border-subtle bg-surface-0/50">
+              <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Kind</th>
                 <th className="px-4 py-3 font-medium">Authors</th>
@@ -217,15 +217,15 @@ export function ProjectReferencesPicker({
               {links.map((l) => (
                 <tr
                   key={l.id}
-                  className="border-b border-[#2a2d3e] last:border-b-0 hover:bg-[#0f1117]/30 transition"
+                  className="border-b border-border-subtle last:border-b-0 hover:bg-surface-0/30 transition"
                 >
                   <td className="px-4 py-3 text-white font-medium">
                     {l.referenceTitle}
                   </td>
-                  <td className="px-4 py-3 text-[#cbd5e1]">
+                  <td className="px-4 py-3 text-text-primary">
                     {REFERENCE_KIND_LABELS[l.referenceKind]}
                   </td>
-                  <td className="px-4 py-3 text-[#cbd5e1]">
+                  <td className="px-4 py-3 text-text-primary">
                     {l.referenceAuthors ?? '—'}
                   </td>
                   <td className="px-4 py-3">
@@ -233,7 +233,7 @@ export function ProjectReferencesPicker({
                       href={l.referenceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#4361EE] hover:underline text-xs"
+                      className="text-accent hover:underline text-xs"
                     >
                       Open
                     </a>
@@ -242,7 +242,7 @@ export function ProjectReferencesPicker({
                     <button
                       type="button"
                       onClick={() => detach(l.referenceId)}
-                      className="text-xs text-[#94a3b8] hover:text-red-400 transition"
+                      className="text-xs text-text-secondary hover:text-red-400 transition"
                     >
                       Unlink
                     </button>

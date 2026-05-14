@@ -37,7 +37,7 @@ export default async function PlaybookDetailPage({
     <div className="max-w-5xl space-y-6">
       <Link
         href="/dashboard/os/cyber/playbooks"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to playbooks
@@ -45,7 +45,7 @@ export default async function PlaybookDetailPage({
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <BookText className="w-6 h-6 text-[#4361EE]" />
+          <BookText className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">{playbook.name}</h1>
         </div>
         <StartRunButton playbookId={playbook.id} disabled={!canStart} />
@@ -61,7 +61,7 @@ export default async function PlaybookDetailPage({
       <PlaybookStepsEditor playbook={playbook} />
 
       <section>
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-2">
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-2">
           Runs for this playbook ({runs.length})
         </h2>
         <RunsListPanel runs={runs} />

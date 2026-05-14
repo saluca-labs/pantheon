@@ -25,7 +25,7 @@ interface Props {
 export function PaperCard({ paper, authors = [], linkedExperimentsCount }: Props) {
   return (
     <article
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/40 transition"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/40 transition"
       data-testid={`paper-card-${paper.id}`}
     >
       <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
@@ -40,18 +40,18 @@ export function PaperCard({ paper, authors = [], linkedExperimentsCount }: Props
           <div className="mt-1 flex items-center gap-2 flex-wrap">
             <PaperKindPill kind={paper.kind} />
             {paper.year != null && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-[#94a3b8]">
+              <span className="inline-flex items-center gap-1 text-[10px] text-text-secondary">
                 <Calendar className="w-3 h-3" />
                 {paper.year}
               </span>
             )}
             {paper.venue && (
-              <span className="text-[10px] text-[#94a3b8] truncate max-w-[40ch]">
+              <span className="text-[10px] text-text-secondary truncate max-w-[40ch]">
                 {paper.venue}
               </span>
             )}
             {paper.archivedAt && (
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]">
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-border-subtle bg-surface-0 text-text-secondary">
                 Archived
               </span>
             )}
@@ -62,7 +62,7 @@ export function PaperCard({ paper, authors = [], linkedExperimentsCount }: Props
             href={paper.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline shrink-0"
+            className="inline-flex items-center gap-1 text-xs text-accent hover:underline shrink-0"
             data-testid={`paper-card-url-${paper.id}`}
           >
             <LinkIcon className="w-3 h-3" />
@@ -80,7 +80,7 @@ export function PaperCard({ paper, authors = [], linkedExperimentsCount }: Props
           {paper.tags.map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
@@ -88,12 +88,12 @@ export function PaperCard({ paper, authors = [], linkedExperimentsCount }: Props
         </div>
       )}
 
-      <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-[#94a3b8]">
+      <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-text-secondary">
         <span className="inline-flex items-center gap-1">
           {paper.doi ? (
-            <>DOI: <code className="text-[#cbd5e1]">{paper.doi}</code></>
+            <>DOI: <code className="text-text-primary">{paper.doi}</code></>
           ) : paper.arxivId ? (
-            <>arXiv: <code className="text-[#cbd5e1]">{paper.arxivId}</code></>
+            <>arXiv: <code className="text-text-primary">{paper.arxivId}</code></>
           ) : (
             <span className="inline-flex items-center gap-1">
               <FileQuestion className="w-3 h-3" />

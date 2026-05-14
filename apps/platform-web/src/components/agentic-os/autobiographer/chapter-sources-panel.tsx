@@ -56,9 +56,9 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
   }
 
   return (
-    <aside className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 space-y-2">
+    <aside className="rounded-xl border border-border-subtle bg-surface-2 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2 mb-1">
-        <h3 className="text-xs uppercase tracking-wide text-[#94a3b8]">
+        <h3 className="text-xs uppercase tracking-wide text-text-secondary">
           Source memories
         </h3>
         <AddSourceButton
@@ -70,7 +70,7 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
       {error ? <p className="text-[11px] text-red-400">{error}</p> : null}
 
       {sources.length === 0 ? (
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           No source memories linked yet. Click <span className="font-medium">Add source</span>{' '}
           to pull a memory into this chapter's provenance trail.
         </p>
@@ -79,18 +79,18 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
           {sources.map((s) => (
             <li
               key={s.id}
-              className="rounded-md border border-[#2a2d3e] bg-[#0f1117] p-2.5"
+              className="rounded-md border border-border-subtle bg-surface-0 p-2.5"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/os/autobiographer/memories/${s.memoryId}`}
-                    className="text-sm text-white hover:text-[#4361EE] truncate block"
+                    className="text-sm text-white hover:text-accent truncate block"
                   >
                     {s.memoryTitle}
                   </Link>
                   {s.memoryWhenInLife ? (
-                    <p className="text-[11px] text-[#94a3b8] truncate">
+                    <p className="text-[11px] text-text-secondary truncate">
                       {s.memoryWhenInLife}
                     </p>
                   ) : null}
@@ -100,20 +100,20 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
                   onClick={() => unlink(s.memoryId)}
                   disabled={working === s.memoryId}
                   title="Unlink from chapter"
-                  className="text-[#94a3b8] hover:text-red-400 disabled:opacity-50"
+                  className="text-text-secondary hover:text-red-400 disabled:opacity-50"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[#94a3b8]">
-                <span className="px-1.5 py-0.5 rounded border border-[#2a2d3e] bg-[#1a1d27]">
+              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-text-secondary">
+                <span className="px-1.5 py-0.5 rounded border border-border-subtle bg-surface-2">
                   weight {s.weight.toFixed(2)}
                 </span>
                 <span
                   className={`px-1.5 py-0.5 rounded border ${
                     s.paragraphCitationCount > 0
                       ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                      : 'border-[#2a2d3e] bg-[#1a1d27] text-[#94a3b8]'
+                      : 'border-border-subtle bg-surface-2 text-text-secondary'
                   }`}
                 >
                   {s.paragraphCitationCount}{' '}
@@ -123,7 +123,7 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
                 </span>
               </div>
               {s.notes ? (
-                <p className="text-[11px] text-[#cbd5e1] mt-1.5 line-clamp-2">
+                <p className="text-[11px] text-text-primary mt-1.5 line-clamp-2">
                   {s.notes}
                 </p>
               ) : null}

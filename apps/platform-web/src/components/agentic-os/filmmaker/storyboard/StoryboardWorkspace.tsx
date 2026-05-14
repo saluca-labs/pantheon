@@ -165,27 +165,27 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="md:col-span-2 block">
-            <span className="block text-xs font-medium text-[#94a3b8] uppercase tracking-wide mb-1">
+            <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
               Name
             </span>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md bg-[#0f1117] border border-[#2a2d3e] px-3 py-2 text-sm text-white"
+              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-medium text-[#94a3b8] uppercase tracking-wide mb-1">
+            <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
               Status
             </span>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as StoryboardStatus)}
-              className="w-full rounded-md bg-[#0f1117] border border-[#2a2d3e] px-3 py-2 text-sm text-white"
+              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
             >
               {STORYBOARD_STATUS_VALUES.map((s) => (
                 <option key={s} value={s}>
@@ -197,13 +197,13 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
         </div>
 
         <label className="block">
-          <span className="block text-xs font-medium text-[#94a3b8] uppercase tracking-wide mb-1">
+          <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
             Scene reference (optional)
           </span>
           <select
             value={sceneId ?? ''}
             onChange={(e) => setSceneId(e.target.value === '' ? null : e.target.value)}
-            className="w-full rounded-md bg-[#0f1117] border border-[#2a2d3e] px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
           >
             <option value="">— No scene linked —</option>
             {scenes.map((s) => (
@@ -215,14 +215,14 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
         </label>
 
         <label className="block">
-          <span className="block text-xs font-medium text-[#94a3b8] uppercase tracking-wide mb-1">
+          <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
             Description
           </span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-md bg-[#0f1117] border border-[#2a2d3e] px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
           />
         </label>
 
@@ -240,7 +240,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
               href={`/api/tiresias/agentic-os/filmmaker/storyboards/${storyboard.id}/exports/storyboard.pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] hover:bg-[#0f1117] text-sm text-white/90 px-3 py-2 transition"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle hover:bg-surface-0 text-sm text-white/90 px-3 py-2 transition"
             >
               <Download className="w-4 h-4" />
               Export PDF
@@ -249,7 +249,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
               type="button"
               onClick={saveHeader}
               disabled={savingHeader}
-              className="rounded-md bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
+              className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
             >
               {savingHeader ? 'Saving…' : 'Save header'}
             </button>
@@ -271,7 +271,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
             setShowAdd(true);
             setEditingPanel(null);
           }}
-          className="inline-flex items-center gap-2 rounded-md bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium text-sm px-3 py-2 transition"
+          className="inline-flex items-center gap-2 rounded-md bg-accent hover:bg-[#3a56d4] text-white font-medium text-sm px-3 py-2 transition"
         >
           <FilePlus className="w-4 h-4" />
           Add panel
@@ -279,9 +279,9 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
       </div>
 
       {panels.length === 0 && !showAdd ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
-          <Printer className="w-8 h-8 text-[#4361EE]/60 mx-auto mb-3" />
-          <p className="text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center">
+          <Printer className="w-8 h-8 text-accent/60 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary">
             Add the first beat to get started.
           </p>
         </div>

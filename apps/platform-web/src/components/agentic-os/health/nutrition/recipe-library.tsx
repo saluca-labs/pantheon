@@ -49,26 +49,26 @@ export function RecipeLibrary({ initialRecipes }: RecipeLibraryProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <label className="relative flex-1 min-w-[220px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search recipes"
-            className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] py-2 pl-9 pr-3 text-sm text-white placeholder:text-[#64748b] focus:border-[#4361EE] focus:outline-none"
+            className="w-full rounded-lg border border-border-subtle bg-surface-0 py-2 pl-9 pr-3 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
           />
         </label>
         <Link
           href="/dashboard/os/health/recipes/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
         >
           <Plus className="h-4 w-4" />
           Create recipe
         </Link>
-        {loading && <span className="text-xs text-[#94a3b8]">Loading…</span>}
+        {loading && <span className="text-xs text-text-secondary">Loading…</span>}
       </div>
 
       {recipes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27] p-8 text-center text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center text-sm text-text-secondary">
           No recipes yet. Create your first to plan meals and roll up nutrition.
         </div>
       ) : (
@@ -76,7 +76,7 @@ export function RecipeLibrary({ initialRecipes }: RecipeLibraryProps) {
           {recipes.map((r) => (
             <li
               key={r.id}
-              className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden hover:border-[#4361EE]/50 transition"
+              className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden hover:border-accent/50 transition"
             >
               <Link
                 href={`/dashboard/os/health/recipes/${r.id}`}
@@ -90,13 +90,13 @@ export function RecipeLibrary({ initialRecipes }: RecipeLibraryProps) {
                     className="h-32 w-full object-cover"
                   />
                 ) : (
-                  <div className="h-20 bg-gradient-to-br from-[#4361EE]/15 to-[#2a2d3e]" />
+                  <div className="h-20 bg-gradient-to-br from-accent/15 to-border-subtle" />
                 )}
                 <div className="p-4">
                   <div className="text-sm font-semibold text-white truncate">
                     {r.name}
                   </div>
-                  <div className="mt-0.5 text-xs text-[#94a3b8]">
+                  <div className="mt-0.5 text-xs text-text-secondary">
                     {r.servings} serving{r.servings === 1 ? '' : 's'}
                   </div>
                   {r.tags.length > 0 && (
@@ -104,7 +104,7 @@ export function RecipeLibrary({ initialRecipes }: RecipeLibraryProps) {
                       {r.tags.slice(0, 4).map((t) => (
                         <span
                           key={t}
-                          className="rounded-full border border-[#2a2d3e] bg-[#0f1117] px-2 py-0.5 text-[10px] text-[#cbd5e1]"
+                          className="rounded-full border border-border-subtle bg-surface-0 px-2 py-0.5 text-[10px] text-text-primary"
                         >
                           {t}
                         </span>

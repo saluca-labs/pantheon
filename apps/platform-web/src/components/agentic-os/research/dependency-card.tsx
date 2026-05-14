@@ -46,11 +46,11 @@ export function DependencyCard({ edge, direction, onRemoved }: Props) {
   const Arrow = direction === 'upstream' ? ArrowRight : ArrowLeft;
   return (
     <div
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-3"
       data-testid={`dependency-card-${edge.id}`}
     >
       <div className="flex items-center gap-2 flex-wrap">
-        <Arrow className="w-4 h-4 text-[#94a3b8]" />
+        <Arrow className="w-4 h-4 text-text-secondary" />
         <Link
           href={`/dashboard/os/research/experiments/${edge.peer.id}`}
           className="text-sm font-medium text-white hover:underline truncate flex-1 min-w-0"
@@ -70,7 +70,7 @@ export function DependencyCard({ edge, direction, onRemoved }: Props) {
         </button>
       </div>
       {edge.notes && (
-        <p className="mt-2 text-xs text-[#cbd5e1] whitespace-pre-wrap">{edge.notes}</p>
+        <p className="mt-2 text-xs text-text-primary whitespace-pre-wrap">{edge.notes}</p>
       )}
     </div>
   );

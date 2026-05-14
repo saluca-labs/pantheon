@@ -158,7 +158,7 @@ export function CoachSession({
           ) : (
             <h2
               onClick={() => setEditingTitle(true)}
-              className="text-lg font-semibold text-white cursor-text hover:text-[#cbd5e1] truncate"
+              className="text-lg font-semibold text-white cursor-text hover:text-text-primary truncate"
               title="Click to rename"
             >
               {title}
@@ -168,7 +168,7 @@ export function CoachSession({
             {COACH_MODE_LABELS[mode]}
           </span>
           {projectId && (
-            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#4361EE]/30 bg-[#4361EE]/10 text-[#cbd5e1] shrink-0">
+            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-accent/30 bg-accent/10 text-text-primary shrink-0">
               project-scoped
             </span>
           )}
@@ -176,7 +176,7 @@ export function CoachSession({
         <button
           type="button"
           onClick={deleteSession}
-          className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-red-300 transition"
+          className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-red-300 transition"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Delete
@@ -185,7 +185,7 @@ export function CoachSession({
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-4"
+        className="flex-1 overflow-y-auto rounded-xl border border-border-subtle bg-surface-0 p-4 space-y-4"
       >
         {messages.length === 0 && (
           <p className="text-xs text-[#64748b] italic">
@@ -225,7 +225,7 @@ export function CoachSession({
               void send();
             }
           }}
-          className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-amber-400 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-amber-400 disabled:opacity-50"
         />
         <button
           type="submit"
@@ -249,7 +249,7 @@ function CoachMessageBubble({ message }: { message: CoachUiMessage }) {
         className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
           isUser
             ? 'bg-amber-500 text-black'
-            : 'bg-[#1a1d27] border border-[#2a2d3e] text-[#e2e8f0]'
+            : 'bg-surface-2 border border-border-subtle text-text-primary'
         }`}
       >
         {isAssistant ? (

@@ -76,13 +76,13 @@ export function StoryDocumentList({ projectId, initialDocuments, activeDocumentI
                 <h3 className="text-xs font-semibold text-white uppercase tracking-wide">
                   {label}
                 </h3>
-                <p className="text-[11px] text-[#94a3b8] mt-0.5">{description}</p>
+                <p className="text-[11px] text-text-secondary mt-0.5">{description}</p>
               </div>
               <button
                 type="button"
                 onClick={() => createDocument(kind)}
                 disabled={creatingKind === kind}
-                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-50 transition"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary hover:text-white hover:border-accent/60 disabled:opacity-50 transition"
               >
                 <Plus className="w-3.5 h-3.5" />
                 {creatingKind === kind ? 'Creating…' : 'New'}
@@ -94,10 +94,10 @@ export function StoryDocumentList({ projectId, initialDocuments, activeDocumentI
                 type="button"
                 onClick={() => createDocument(kind)}
                 disabled={creatingKind === kind}
-                className="w-full rounded-lg border border-dashed border-[#2a2d3e] bg-[#1a1d27]/40 p-3 text-left hover:border-[#4361EE]/60 transition disabled:opacity-50"
+                className="w-full rounded-lg border border-dashed border-border-subtle bg-surface-2/40 p-3 text-left hover:border-accent/60 transition disabled:opacity-50"
               >
                 <p className="text-sm text-white">Create a {label}</p>
-                <p className="text-xs text-[#94a3b8] mt-0.5">{description}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{description}</p>
               </button>
             ) : (
               <ul className="space-y-1">
@@ -108,15 +108,15 @@ export function StoryDocumentList({ projectId, initialDocuments, activeDocumentI
                       className={[
                         'block rounded-lg border p-2.5 transition',
                         doc.id === activeDocumentId
-                          ? 'border-[#4361EE]/60 bg-[#4361EE]/10'
-                          : 'border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/40',
+                          ? 'border-accent/60 bg-accent/10'
+                          : 'border-border-subtle bg-surface-2 hover:border-accent/40',
                       ].join(' ')}
                     >
                       <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-[#94a3b8] shrink-0" />
+                        <FileText className="w-3.5 h-3.5 text-text-secondary shrink-0" />
                         <span className="text-sm text-white truncate">{doc.title}</span>
                       </div>
-                      <p className="text-[11px] text-[#94a3b8] mt-1">
+                      <p className="text-[11px] text-text-secondary mt-1">
                         {doc.wordCount.toLocaleString()} words · v{doc.version}
                       </p>
                     </Link>

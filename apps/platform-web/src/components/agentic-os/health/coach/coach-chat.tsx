@@ -137,12 +137,12 @@ export function CoachChat({ conversationId, initialTitle, initialMessages }: Pro
               }
             }}
             autoFocus
-            className="bg-transparent text-lg font-semibold text-white border-b border-[#4361EE] focus:outline-none px-1"
+            className="bg-transparent text-lg font-semibold text-white border-b border-accent focus:outline-none px-1"
           />
         ) : (
           <h2
             onClick={() => setEditingTitle(true)}
-            className="text-lg font-semibold text-white cursor-text hover:text-[#cbd5e1]"
+            className="text-lg font-semibold text-white cursor-text hover:text-text-primary"
             title="Click to rename"
           >
             {title}
@@ -151,7 +151,7 @@ export function CoachChat({ conversationId, initialTitle, initialMessages }: Pro
         <button
           type="button"
           onClick={deleteConversation}
-          className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-red-300 transition"
+          className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-red-300 transition"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Delete
@@ -166,7 +166,7 @@ export function CoachChat({ conversationId, initialTitle, initialMessages }: Pro
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-4"
+        className="flex-1 overflow-y-auto rounded-xl border border-border-subtle bg-surface-0 p-4 space-y-4"
       >
         {messages.length === 0 && (
           <p className="text-xs text-[#64748b] italic">
@@ -206,12 +206,12 @@ export function CoachChat({ conversationId, initialTitle, initialMessages }: Pro
               void send();
             }
           }}
-          className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-[#4361EE] disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={streaming || !text.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
           Send
@@ -229,8 +229,8 @@ function CoachMessageBubble({ message }: { message: CoachUiMessage }) {
       <div
         className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? 'bg-[#4361EE]/90 text-white'
-            : 'bg-[#1a1d27] border border-[#2a2d3e] text-[#e2e8f0]'
+            ? 'bg-accent/90 text-white'
+            : 'bg-surface-2 border border-border-subtle text-text-primary'
         }`}
       >
         {message.toolCalls && message.toolCalls.length > 0 && (
@@ -238,7 +238,7 @@ function CoachMessageBubble({ message }: { message: CoachUiMessage }) {
             {message.toolCalls.map((tc) => (
               <span
                 key={tc.id}
-                className="inline-flex items-center gap-1 rounded-full bg-[#0f1117] border border-[#2a2d3e] text-[10px] font-mono text-[#94a3b8] px-2 py-0.5"
+                className="inline-flex items-center gap-1 rounded-full bg-surface-0 border border-border-subtle text-[10px] font-mono text-text-secondary px-2 py-0.5"
               >
                 <Wrench className="w-3 h-3" />
                 {tc.name}

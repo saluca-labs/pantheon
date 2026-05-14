@@ -80,7 +80,7 @@ export function TopBlockersList({ initial = [] }: Props) {
   return (
     <div className="space-y-4" data-testid="top-blockers-list">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Kind</span>
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</span>
         <Chip
           active={kindFilter === 'all'}
           onClick={() => setKindFilter('all')}
@@ -96,7 +96,7 @@ export function TopBlockersList({ initial = [] }: Props) {
             testId={`kind-chip-${k}`}
           />
         ))}
-        <span className="ml-3 text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <span className="ml-3 text-[10px] uppercase tracking-wide text-text-secondary">
           Severity
         </span>
         <Chip
@@ -116,15 +116,15 @@ export function TopBlockersList({ initial = [] }: Props) {
         ))}
       </div>
 
-      {!loaded && <p className="text-xs text-[#94a3b8]">Loading…</p>}
+      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && grouped.length === 0 && (
         <div
-          className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#1a1d27]/30 p-8 text-center"
+          className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-8 text-center"
           data-testid="top-blockers-list-empty"
         >
-          <ShieldAlert className="w-6 h-6 text-[#4361EE] mx-auto mb-2" />
+          <ShieldAlert className="w-6 h-6 text-accent mx-auto mb-2" />
           <p className="text-sm text-white">All clear.</p>
-          <p className="text-xs text-[#94a3b8] mt-1">
+          <p className="text-xs text-text-secondary mt-1">
             No active blockers across your experiments.
           </p>
         </div>
@@ -133,13 +133,13 @@ export function TopBlockersList({ initial = [] }: Props) {
       {grouped.map((group) => (
         <div
           key={group.experimentId}
-          className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+          className="rounded-xl border border-border-subtle bg-surface-2 p-4"
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-white">{group.experimentName}</h3>
             <Link
               href={`/dashboard/os/research/experiments/${group.experimentId}`}
-              className="text-[10px] uppercase tracking-wide text-[#4361EE] hover:underline"
+              className="text-[10px] uppercase tracking-wide text-accent hover:underline"
             >
               Open experiment
             </Link>
@@ -175,8 +175,8 @@ function Chip({
       data-testid={testId}
       className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-wide transition ${
         active
-          ? 'border-[#4361EE] bg-[#4361EE]/10 text-white'
-          : 'border-[#2a2d3e] text-[#94a3b8] hover:text-white'
+          ? 'border-accent bg-accent/10 text-white'
+          : 'border-border-subtle text-text-secondary hover:text-white'
       }`}
     >
       {label}

@@ -48,7 +48,7 @@ export default function DealCard({ deal, contactName, orgName }: DealCardProps) 
   return (
     <Link
       href={`/dashboard/os/business/deals/${deal.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 hover:border-[#4361EE] transition-colors w-[280px] shrink-0"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-3 hover:border-accent transition-colors w-[280px] shrink-0"
     >
       {/* Title */}
       <h4 className="text-white text-sm font-semibold truncate mb-2">{deal.title}</h4>
@@ -63,7 +63,7 @@ export default function DealCard({ deal, contactName, orgName }: DealCardProps) 
 
       {/* Contact / Org */}
       {(contactName || orgName) && (
-        <div className="text-[#94a3b8] text-xs mb-1.5 truncate">
+        <div className="text-text-secondary text-xs mb-1.5 truncate">
           {contactName && <span>{contactName}</span>}
           {contactName && orgName && <span className="mx-1">·</span>}
           {orgName && <span>{orgName}</span>}
@@ -71,7 +71,7 @@ export default function DealCard({ deal, contactName, orgName }: DealCardProps) 
       )}
 
       {/* Probability + Close Date */}
-      <div className="flex items-center justify-between text-xs text-[#94a3b8] mb-2">
+      <div className="flex items-center justify-between text-xs text-text-secondary mb-2">
         <span>{deal.probabilityPct}% prob.</span>
         {expectedClose && <span>{expectedClose}</span>}
       </div>
@@ -82,7 +82,7 @@ export default function DealCard({ deal, contactName, orgName }: DealCardProps) 
           {deal.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center rounded-md bg-[#0f1117] border border-[#2a2d3e] px-1.5 py-0.5 text-[10px] text-[#94a3b8]"
+              className="inline-flex items-center rounded-md bg-surface-0 border border-border-subtle px-1.5 py-0.5 text-[10px] text-text-secondary"
             >
               {tag}
             </span>

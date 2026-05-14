@@ -26,7 +26,7 @@ import { ProjectCard } from './project-card';
 const API = '/api/tiresias/agentic-os/maker/projects';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export type SortKey = 'name' | 'created' | 'target';
 export type StatusFilter = ProjectStatus | 'all';
@@ -34,7 +34,7 @@ export type StatusFilter = ProjectStatus | 'all';
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </span>
       {children}
@@ -125,14 +125,14 @@ function NewProjectDrawer({
     <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/60">
       <form
         onSubmit={submit}
-        className="h-full w-full max-w-md overflow-y-auto border-l border-[#2a2d3e] bg-[#0f1117] p-6 space-y-4"
+        className="h-full w-full max-w-md overflow-y-auto border-l border-border-subtle bg-surface-0 p-6 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">New project</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-[#94a3b8] hover:text-white transition"
+            className="text-sm text-text-secondary hover:text-white transition"
           >
             Close
           </button>
@@ -218,14 +218,14 @@ function NewProjectDrawer({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/60 text-white px-4 py-2 text-sm transition"
+            className="rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/60 text-white px-4 py-2 text-sm transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Creating…' : 'Create project'}
           </button>
@@ -286,7 +286,7 @@ export function ProjectsManager({ initialProjects }: { initialProjects: MakerPro
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           New project
@@ -294,7 +294,7 @@ export function ProjectsManager({ initialProjects }: { initialProjects: MakerPro
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           {projects.length === 0
             ? 'No projects yet. Create your first project above.'
             : 'No projects match the current filters.'}

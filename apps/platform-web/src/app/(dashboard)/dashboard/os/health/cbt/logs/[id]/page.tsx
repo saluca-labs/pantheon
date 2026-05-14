@@ -55,7 +55,7 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
     <div className="max-w-3xl">
       <Link
         href="/dashboard/os/health/cbt/logs"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         All logs
@@ -63,27 +63,27 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
 
       <div className="flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-3 min-w-0">
-          <ListChecks className="w-6 h-6 text-[#4361EE]" />
+          <ListChecks className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white truncate">
             {KIND_LABELS[log.kind] ?? log.kind}
           </h1>
         </div>
         <Link
           href={`/dashboard/os/health/cbt/logs/${log.id}/edit`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#1f2230] text-[#cbd5e1] text-xs font-medium px-3 py-1.5 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-primary text-xs font-medium px-3 py-1.5 transition"
         >
           <Pencil className="w-3.5 h-3.5" />
           Edit
         </Link>
       </div>
-      <p className="text-xs text-[#94a3b8] mb-5">
+      <p className="text-xs text-text-secondary mb-5">
         {fmt(log.completedAt ?? log.startedAt)}
       </p>
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
         {(log.moodBefore !== null || log.moodAfter !== null) && (
           <div>
-            <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <h3 className="text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Mood
             </h3>
             <p className="text-sm text-white">
@@ -94,7 +94,7 @@ export default async function CbtLogDetailPage({ params }: PageProps) {
         <CbtLogFormatter log={log} />
         {log.notes && (
           <div>
-            <h3 className="text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <h3 className="text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Notes
             </h3>
             <p className="text-sm text-white whitespace-pre-wrap">

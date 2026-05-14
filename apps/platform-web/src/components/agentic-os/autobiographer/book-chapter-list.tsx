@@ -29,7 +29,7 @@ export function BookChapterList({
 }: BookChapterListProps) {
   if (chapters.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center text-sm text-[#94a3b8]">
+      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
         No chapters yet — create the first one with the button in the section
         header.
       </div>

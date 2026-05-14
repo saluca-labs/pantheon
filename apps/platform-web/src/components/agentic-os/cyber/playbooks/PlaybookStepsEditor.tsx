@@ -25,7 +25,7 @@ import {
 } from '@/lib/agentic-os/cyber/playbooks';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const FIELD_TYPES: PlaybookStepField['type'][] = ['text', 'textarea', 'select', 'checkbox'];
 
@@ -128,7 +128,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
               key={k.value}
               type="button"
               onClick={() => add(k.value)}
-              className="inline-flex items-center gap-1 rounded-lg border border-[#2a2d3e] hover:border-[#4361EE]/60 text-[#cbd5e1] hover:text-white px-2 py-1 text-xs transition"
+              className="inline-flex items-center gap-1 rounded-lg border border-border-subtle hover:border-accent/60 text-text-primary hover:text-white px-2 py-1 text-xs transition"
             >
               <Plus className="w-3 h-3" />
               {k.label}
@@ -138,7 +138,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
       </header>
 
       {steps.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No steps yet. Add one above to start.
         </p>
       ) : (
@@ -146,16 +146,16 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
           {steps.map((step, idx) => (
             <li
               key={idx}
-              className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3"
+              className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] text-[#94a3b8]">
+                <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle text-text-secondary">
                   step {idx + 1}
                 </span>
                 <select
                   value={step.kind}
                   onChange={(e) => update(idx, { kind: e.target.value as PlaybookStepKind })}
-                  className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+                  className="rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none"
                 >
                   {PLAYBOOK_STEP_KINDS.map((k) => (
                     <option key={k.value} value={k.value}>{k.label}</option>
@@ -175,7 +175,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
               </div>
 
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Label</span>
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Label</span>
                 <input
                   value={step.label}
                   onChange={(e) => update(idx, { label: e.target.value })}
@@ -184,7 +184,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                   Instructions (markdown)
                 </span>
                 <textarea
@@ -197,11 +197,11 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wide text-[#94a3b8]">Fields</span>
+                  <span className="text-xs uppercase tracking-wide text-text-secondary">Fields</span>
                   <button
                     type="button"
                     onClick={() => addField(idx)}
-                    className="text-[11px] text-[#4361EE] hover:text-[#5d7aff] transition"
+                    className="text-[11px] text-accent hover:text-[#5d7aff] transition"
                   >
                     + Add field
                   </button>
@@ -209,37 +209,37 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
                 {(step.fields ?? []).map((field, fidx) => (
                   <div
                     key={fidx}
-                    className="grid grid-cols-12 gap-2 items-center rounded border border-[#2a2d3e] bg-[#0f1117] p-2"
+                    className="grid grid-cols-12 gap-2 items-center rounded border border-border-subtle bg-surface-0 p-2"
                   >
                     <input
                       value={field.name}
                       onChange={(e) => updateField(idx, fidx, { name: e.target.value })}
                       placeholder="name"
-                      className="col-span-3 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+                      className="col-span-3 rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none"
                     />
                     <input
                       value={field.label}
                       onChange={(e) => updateField(idx, fidx, { label: e.target.value })}
                       placeholder="Label"
-                      className="col-span-4 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+                      className="col-span-4 rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none"
                     />
                     <select
                       value={field.type}
                       onChange={(e) =>
                         updateField(idx, fidx, { type: e.target.value as PlaybookStepField['type'] })
                       }
-                      className="col-span-2 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+                      className="col-span-2 rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none"
                     >
                       {FIELD_TYPES.map((t) => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
-                    <label className="col-span-2 inline-flex items-center gap-1 text-[11px] text-[#cbd5e1]">
+                    <label className="col-span-2 inline-flex items-center gap-1 text-[11px] text-text-primary">
                       <input
                         type="checkbox"
                         checked={field.required ?? false}
                         onChange={(e) => updateField(idx, fidx, { required: e.target.checked })}
-                        className="accent-[#4361EE]"
+                        className="accent-accent"
                       />
                       required
                     </label>
@@ -263,7 +263,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
           type="button"
           onClick={() => void save()}
           disabled={saving || !dirty}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : dirty ? 'Save steps' : 'Saved'}
         </button>
@@ -290,7 +290,7 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="rounded-md border border-[#2a2d3e] hover:border-[#4361EE]/60 disabled:opacity-40 disabled:cursor-not-allowed text-[#cbd5e1] px-1.5 py-1 transition"
+      className="rounded-md border border-border-subtle hover:border-accent/60 disabled:opacity-40 disabled:cursor-not-allowed text-text-primary px-1.5 py-1 transition"
     >
       {children}
     </button>

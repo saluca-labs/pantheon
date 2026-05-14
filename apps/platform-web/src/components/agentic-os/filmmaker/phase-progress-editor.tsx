@@ -89,7 +89,7 @@ export function PhaseProgressEditor({ projectId, initial }: Props) {
       {PHASE_KEYS.map((key) => {
         const pct = phases[key];
         return (
-          <div key={key} className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3">
+          <div key={key} className="rounded-lg border border-border-subtle bg-surface-2 p-3">
             <div className="flex items-center justify-between gap-3 mb-2">
               <span className="text-sm font-medium text-white">{PHASE_LABELS[key]}</span>
               <div className="flex items-center gap-1.5">
@@ -97,7 +97,7 @@ export function PhaseProgressEditor({ projectId, initial }: Props) {
                   type="button"
                   onClick={() => bump(key, -STEP)}
                   disabled={pct <= 0}
-                  className="w-7 h-7 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition"
+                  className="w-7 h-7 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/60 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition"
                   aria-label={`Decrease ${PHASE_LABELS[key]}`}
                 >
                   −
@@ -109,23 +109,23 @@ export function PhaseProgressEditor({ projectId, initial }: Props) {
                   value={pct}
                   onChange={(e) => setValue(key, e.target.value)}
                   onBlur={() => flush(pending)}
-                  className="w-14 text-center rounded border border-[#2a2d3e] bg-[#0f1117] px-1.5 py-1 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+                  className="w-14 text-center rounded border border-border-subtle bg-surface-0 px-1.5 py-1 text-sm text-white focus:border-accent focus:outline-none"
                 />
-                <span className="text-xs text-[#94a3b8]">%</span>
+                <span className="text-xs text-text-secondary">%</span>
                 <button
                   type="button"
                   onClick={() => bump(key, STEP)}
                   disabled={pct >= 100}
-                  className="w-7 h-7 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/60 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition"
+                  className="w-7 h-7 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/60 disabled:opacity-40 disabled:cursor-not-allowed text-sm transition"
                   aria-label={`Increase ${PHASE_LABELS[key]}`}
                 >
                   +
                 </button>
               </div>
             </div>
-            <div className="h-1.5 rounded-full bg-[#0f1117] overflow-hidden">
+            <div className="h-1.5 rounded-full bg-surface-0 overflow-hidden">
               <div
-                className="h-full bg-[#4361EE] transition-all"
+                className="h-full bg-accent transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -145,13 +145,13 @@ export function PhaseProgressMini({ phases }: { phases: PhaseProgress }) {
     <div className="grid grid-cols-5 gap-1">
       {PHASE_KEYS.map((key) => (
         <div key={key} className="flex flex-col items-center gap-1">
-          <div className="h-1 w-full rounded-full bg-[#0f1117] overflow-hidden">
+          <div className="h-1 w-full rounded-full bg-surface-0 overflow-hidden">
             <div
-              className="h-full bg-[#4361EE]"
+              className="h-full bg-accent"
               style={{ width: `${phases[key]}%` }}
             />
           </div>
-          <span className="text-[9px] uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-[9px] uppercase tracking-wide text-text-secondary">
             {PHASE_LABELS[key].split('-')[0].slice(0, 4)}
           </span>
         </div>

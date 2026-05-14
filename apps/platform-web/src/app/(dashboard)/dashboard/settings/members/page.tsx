@@ -108,7 +108,7 @@ export default function MembersPage() {
       <h1 className="text-2xl font-bold text-white mb-6">Team Members</h1>
 
       {membersQuery.isLoading && (
-        <p className="text-[#94a3b8]">Loading members...</p>
+        <p className="text-text-secondary">Loading members...</p>
       )}
 
       {membersQuery.isError && (
@@ -116,14 +116,14 @@ export default function MembersPage() {
       )}
 
       {!membersQuery.isLoading && members.length === 0 && (
-        <p className="text-[#94a3b8]">No members found.</p>
+        <p className="text-text-secondary">No members found.</p>
       )}
 
       {members.length > 0 && (
-        <div className="rounded-lg border border-[#2a2d3e] overflow-hidden mb-8">
+        <div className="rounded-lg border border-border-subtle overflow-hidden mb-8">
           <table className="w-full">
             <thead>
-              <tr className="bg-[#1e2130] text-left text-sm text-[#94a3b8]">
+              <tr className="bg-[#1e2130] text-left text-sm text-text-secondary">
                 <th className="px-4 py-3 font-medium">Name</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Role</th>
@@ -134,7 +134,7 @@ export default function MembersPage() {
               {members.map((member, idx) => (
                 <tr
                   key={member.id}
-                  className={idx % 2 === 0 ? 'bg-[#1a1d27]' : 'bg-[#1e2130]'}
+                  className={idx % 2 === 0 ? 'bg-surface-2' : 'bg-[#1e2130]'}
                 >
                   <td className="px-4 py-3 text-white text-sm">
                     {member.user
@@ -142,14 +142,14 @@ export default function MembersPage() {
                         'Unknown'
                       : 'Unknown'}
                   </td>
-                  <td className="px-4 py-3 text-[#94a3b8] text-sm">
+                  <td className="px-4 py-3 text-text-secondary text-sm">
                     {member.user?.email ?? 'N/A'}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <RoleGate
                       allowedRoles={[Role.ADMIN]}
                       fallback={
-                        <span className="text-[#94a3b8] capitalize">
+                        <span className="text-text-secondary capitalize">
                           {member.role_slug}
                         </span>
                       }
@@ -162,7 +162,7 @@ export default function MembersPage() {
                             role: e.target.value,
                           })
                         }
-                        className="bg-[#2a2d3e] text-white text-sm rounded px-2 py-1 border border-[#3a3d4e] focus:outline-none focus:border-[#4361EE]"
+                        className="bg-border-subtle text-white text-sm rounded px-2 py-1 border border-[#3a3d4e] focus:outline-none focus:border-accent"
                         disabled={roleChangeMutation.isPending}
                       >
                         <option value={Role.ADMIN}>Admin</option>
@@ -254,13 +254,13 @@ function PermissionConfigSection({
   };
 
   if (isLoading) {
-    return <p className="text-[#94a3b8] mt-8">Loading permission configuration...</p>;
+    return <p className="text-text-secondary mt-8">Loading permission configuration...</p>;
   }
 
   return (
     <div>
       <h2 className="text-xl font-bold text-white mt-8">Permission Configuration</h2>
-      <p className="text-[#94a3b8] text-sm mb-4">
+      <p className="text-text-secondary text-sm mb-4">
         Configure which roles can perform which actions
       </p>
 
@@ -275,13 +275,13 @@ function PermissionConfigSection({
               {allPermissions.map((perm) => (
                 <label
                   key={perm}
-                  className="flex items-center gap-2 text-sm text-[#94a3b8] cursor-pointer hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-white transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={activePerms.has(perm)}
                     onChange={() => togglePermission(role, perm)}
-                    className="rounded border-[#3a3d4e] bg-[#2a2d3e] text-[#4361EE] focus:ring-[#4361EE] focus:ring-offset-0"
+                    className="rounded border-[#3a3d4e] bg-border-subtle text-accent focus:ring-accent focus:ring-offset-0"
                   />
                   {PERMISSION_LABELS[perm] ?? perm}
                 </label>
@@ -291,7 +291,7 @@ function PermissionConfigSection({
               <button
                 onClick={() => handleSave(role)}
                 disabled={isSaving}
-                className="mt-3 px-4 py-1.5 bg-[#4361EE] text-white text-sm rounded hover:bg-[#4361EE]/80 transition-colors disabled:opacity-50"
+                className="mt-3 px-4 py-1.5 bg-accent text-white text-sm rounded hover:bg-accent/80 transition-colors disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : 'Save'}
               </button>

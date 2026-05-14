@@ -95,7 +95,7 @@ export default function LineItemForm({
   );
 
   const inputClass =
-    'rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-2 py-1.5 text-xs text-white placeholder-[#64748b] focus:border-[#4361EE] focus:outline-none';
+    'rounded-lg border border-border-subtle bg-surface-0 px-2 py-1.5 text-xs text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
   const labelClass = 'block text-[10px] text-[#64748b] mb-0.5';
 
   return (
@@ -160,7 +160,7 @@ export default function LineItemForm({
         </div>
         <div className="w-24 text-right self-end">
           <p className="text-xs text-[#64748b]">{fmtCents(lineTotal)}</p>
-          {taxRateBp > 0 && <p className="text-[10px] text-[#94a3b8]">+{fmtCents(lineTax)} tax</p>}
+          {taxRateBp > 0 && <p className="text-[10px] text-text-secondary">+{fmtCents(lineTax)} tax</p>}
           <p className="text-xs font-mono text-white">{fmtCents(grandTotal)}</p>
         </div>
         <div className="self-end">

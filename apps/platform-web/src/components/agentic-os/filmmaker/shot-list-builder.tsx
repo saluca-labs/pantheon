@@ -24,14 +24,14 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const selectCls = inputCls;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">{label}</span>
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -117,7 +117,7 @@ export function ShotListBuilder({ projectId, initial }: Props) {
       {/* Add shot form */}
       <form
         onSubmit={handleAdd}
-        className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-4"
+        className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-white">Add shot</h2>
 
@@ -205,7 +205,7 @@ export function ShotListBuilder({ projectId, initial }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Adding…' : 'Add shot'}
           </button>
@@ -214,22 +214,22 @@ export function ShotListBuilder({ projectId, initial }: Props) {
       </form>
 
       {/* Shot list table */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#2a2d3e]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
+        <div className="px-5 py-3 border-b border-border-subtle">
           <h2 className="text-sm font-semibold text-white">
             Shot list{' '}
-            <span className="text-[#94a3b8] font-normal">({shots.length} shots)</span>
+            <span className="text-text-secondary font-normal">({shots.length} shots)</span>
           </h2>
         </div>
 
         {shots.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-[#94a3b8] text-center">
+          <p className="px-5 py-8 text-sm text-text-secondary text-center">
             No shots yet. Add your first shot above.
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a2d3e] text-xs text-[#94a3b8] uppercase tracking-wide">
+              <tr className="border-b border-border-subtle text-xs text-text-secondary uppercase tracking-wide">
                 <th className="px-4 py-2 text-left">Label</th>
                 <th className="px-4 py-2 text-left">Subject</th>
                 <th className="px-4 py-2 text-left hidden sm:table-cell">Dur.</th>
@@ -240,13 +240,13 @@ export function ShotListBuilder({ projectId, initial }: Props) {
               {shots.map((s) => (
                 <tr
                   key={s.id}
-                  className="border-b border-[#2a2d3e] last:border-0 hover:bg-[#0f1117]/60 transition"
+                  className="border-b border-border-subtle last:border-0 hover:bg-surface-0/60 transition"
                 >
-                  <td className="px-4 py-2 font-mono text-xs text-[#cbd5e1]">
+                  <td className="px-4 py-2 font-mono text-xs text-text-primary">
                     {formatShotLabel(s)}
                   </td>
                   <td className="px-4 py-2 text-white max-w-[200px] truncate">{s.subject}</td>
-                  <td className="px-4 py-2 text-[#94a3b8] hidden sm:table-cell">
+                  <td className="px-4 py-2 text-text-secondary hidden sm:table-cell">
                     {s.estimatedSeconds != null ? `${s.estimatedSeconds}s` : '—'}
                   </td>
                   <td className="px-4 py-2 text-center">
@@ -255,7 +255,7 @@ export function ShotListBuilder({ projectId, initial }: Props) {
                       className={`w-5 h-5 rounded border text-xs font-bold transition ${
                         s.completed
                           ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-[#2a2d3e] text-transparent hover:border-[#4361EE]'
+                          : 'border-border-subtle text-transparent hover:border-accent'
                       }`}
                       aria-label={s.completed ? 'Mark incomplete' : 'Mark complete'}
                     >

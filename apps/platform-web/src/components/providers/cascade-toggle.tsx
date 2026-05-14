@@ -35,13 +35,13 @@ export function CascadeToggle({ value, onChange }: CascadeToggleProps) {
   return (
     <button
       onClick={handleToggle}
-      className="flex items-center gap-2 text-sm text-[#94a3b8] hover:text-white transition-colors"
+      className="flex items-center gap-2 text-sm text-text-secondary hover:text-white transition-colors"
       aria-pressed={value}
       title="Toggle cascade order visibility"
     >
       <span
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          value ? 'bg-[#4361EE]' : 'bg-[#2a2d3e]'
+          value ? 'bg-accent' : 'bg-border-subtle'
         }`}
       >
         <span

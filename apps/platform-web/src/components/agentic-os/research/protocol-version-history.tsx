@@ -22,15 +22,15 @@ interface Props {
 export function ProtocolVersionHistory({ protocol, versions }: Props) {
   return (
     <aside
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-3"
       data-testid="protocol-version-history"
     >
-      <div className="flex items-center gap-1.5 mb-2 text-xs uppercase tracking-wide text-[#94a3b8]">
+      <div className="flex items-center gap-1.5 mb-2 text-xs uppercase tracking-wide text-text-secondary">
         <History className="w-3.5 h-3.5" />
         Version history
       </div>
       {versions.length === 0 ? (
-        <p className="text-xs text-[#94a3b8] italic">No versions.</p>
+        <p className="text-xs text-text-secondary italic">No versions.</p>
       ) : (
         <ol className="space-y-1.5">
           {versions.map((v) => {
@@ -41,8 +41,8 @@ export function ProtocolVersionHistory({ protocol, versions }: Props) {
                   href={`/dashboard/os/research/protocols/${v.id}`}
                   className={`block px-2 py-1.5 rounded text-xs transition ${
                     isCurrent
-                      ? 'bg-[#4361EE]/20 border border-[#4361EE]/40 text-white'
-                      : 'border border-transparent hover:border-[#2a2d3e] hover:bg-[#0f1117] text-[#94a3b8]'
+                      ? 'bg-accent/20 border border-accent/40 text-white'
+                      : 'border border-transparent hover:border-border-subtle hover:bg-surface-0 text-text-secondary'
                   }`}
                   data-testid={`protocol-version-history-row-${v.id}`}
                 >

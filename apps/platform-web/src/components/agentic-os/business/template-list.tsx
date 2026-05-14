@@ -27,8 +27,8 @@ export default function TemplateList({ templates, kindFilter, onKindChange }: Pr
             onClick={() => onKindChange(undefined)}
             className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-medium transition-colors ${
               !kindFilter
-                ? 'bg-[#4361EE] text-white'
-                : 'bg-[#1a1d27] border border-[#2a2d3e] text-[#94a3b8] hover:text-white'
+                ? 'bg-accent text-white'
+                : 'bg-surface-2 border border-border-subtle text-text-secondary hover:text-white'
             }`}
           >
             All
@@ -39,8 +39,8 @@ export default function TemplateList({ templates, kindFilter, onKindChange }: Pr
               onClick={() => onKindChange(k)}
               className={`inline-flex items-center rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 kindFilter === k
-                  ? 'bg-[#4361EE] text-white'
-                  : 'bg-[#1a1d27] border border-[#2a2d3e] text-[#94a3b8] hover:text-white'
+                  ? 'bg-accent text-white'
+                  : 'bg-surface-2 border border-border-subtle text-text-secondary hover:text-white'
               }`}
             >
               {k === '1099' ? '1099' : k.replace('_', ' ').toUpperCase()}
@@ -50,10 +50,10 @@ export default function TemplateList({ templates, kindFilter, onKindChange }: Pr
       )}
 
       {templates.length > 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] overflow-hidden">
+        <div className="rounded-xl border border-border-subtle overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#2a2d3e] bg-[#1a1d27]">
+              <tr className="border-b border-border-subtle bg-surface-2">
                 <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
                   Kind
                 </th>
@@ -79,9 +79,9 @@ export default function TemplateList({ templates, kindFilter, onKindChange }: Pr
           </table>
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
           <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm">
+          <p className="text-text-secondary text-sm">
             No templates yet. Create your first template to get started.
           </p>
         </div>

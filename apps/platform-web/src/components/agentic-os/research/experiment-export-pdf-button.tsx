@@ -63,7 +63,7 @@ export function ExperimentExportPdfButton({ experimentId }: Props) {
         type="button"
         onClick={onClick}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#4361EE]/40 text-[#4361EE] hover:bg-[#4361EE]/10 disabled:opacity-50 transition"
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/40 text-accent hover:bg-accent/10 disabled:opacity-50 transition"
         data-testid="experiment-export-pdf-button"
       >
         {busy ? (

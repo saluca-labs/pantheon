@@ -43,7 +43,7 @@ export default async function FilmmakerShotsPage({ searchParams }: Props) {
       <div className="max-w-4xl">
         <Link
           href="/dashboard/os/filmmaker/projects"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Projects
@@ -51,20 +51,20 @@ export default async function FilmmakerShotsPage({ searchParams }: Props) {
 
         <div className="flex items-center justify-between gap-3 mb-1">
           <div className="flex items-center gap-3">
-            <Clapperboard className="w-6 h-6 text-[#4361EE]" />
+            <Clapperboard className="w-6 h-6 text-accent" />
             <h1 className="text-2xl font-semibold text-white">Shot List Builder</h1>
           </div>
           <a
             href={`/api/tiresias/agentic-os/filmmaker/projects/${project.id}/exports/shot-list.pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] hover:bg-[#1a1d27] text-sm text-white/90 px-3 py-2 transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle hover:bg-surface-2 text-sm text-white/90 px-3 py-2 transition"
           >
             <Download className="w-4 h-4" />
             Export PDF
           </a>
         </div>
-        <p className="text-sm text-[#94a3b8] mb-6">
+        <p className="text-sm text-text-secondary mb-6">
           Project:{' '}
           <span className="text-white font-medium">{project.name}</span>
           {' · '}
@@ -98,22 +98,22 @@ async function ProjectSelector({ userId }: { userId: string }) {
     <div className="max-w-2xl">
       <Link
         href="/dashboard/os/filmmaker"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Filmmaker OS
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <FolderOpen className="w-6 h-6 text-[#4361EE]" />
+        <FolderOpen className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Select a Project</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Choose a project to open its shot list, or{' '}
         <Link
           href="/dashboard/os/filmmaker/projects"
-          className="text-[#4361EE] hover:underline"
+          className="text-accent hover:underline"
         >
           manage your projects
         </Link>
@@ -121,11 +121,11 @@ async function ProjectSelector({ userId }: { userId: string }) {
       </p>
 
       {projects.length === 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 text-center">
-          <p className="text-sm text-[#94a3b8] mb-4">No projects yet.</p>
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 text-center">
+          <p className="text-sm text-text-secondary mb-4">No projects yet.</p>
           <Link
             href="/dashboard/os/filmmaker/projects"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
           >
             <FolderOpen className="w-4 h-4" />
             Create your first project
@@ -137,17 +137,17 @@ async function ProjectSelector({ userId }: { userId: string }) {
             <Link
               key={p.id}
               href={`/dashboard/os/filmmaker/shots?projectId=${p.id}`}
-              className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/50 transition group"
+              className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/50 transition group"
             >
               <div>
-                <p className="text-white font-medium group-hover:text-[#4361EE] transition">
+                <p className="text-white font-medium group-hover:text-accent transition">
                   {p.name}
                 </p>
                 {p.description && (
-                  <p className="text-sm text-[#94a3b8] mt-0.5 truncate max-w-sm">{p.description}</p>
+                  <p className="text-sm text-text-secondary mt-0.5 truncate max-w-sm">{p.description}</p>
                 )}
               </div>
-              <span className="text-xs text-[#94a3b8] group-hover:text-white transition">
+              <span className="text-xs text-text-secondary group-hover:text-white transition">
                 Open →
               </span>
             </Link>

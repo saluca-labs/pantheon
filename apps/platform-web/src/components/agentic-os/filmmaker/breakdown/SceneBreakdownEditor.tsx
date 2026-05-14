@@ -81,11 +81,11 @@ export function SceneBreakdownEditor({
   }
 
   return (
-    <div className="space-y-4 p-4 border-t border-[#2a2d3e] bg-[#0f1117]">
+    <div className="space-y-4 p-4 border-t border-border-subtle bg-surface-0">
       {/* Meta editor */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Eighths</span>
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">Eighths</span>
           <input
             type="number"
             min={0}
@@ -94,14 +94,14 @@ export function SceneBreakdownEditor({
             onChange={(e) =>
               patchMeta({ eighths: Math.max(0, Number(e.target.value) || 0) })
             }
-            className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
           />
           <span className="text-[10px] text-[#64748b]">
             {pagesLabel(meta?.eighths ?? 0)} pages
           </span>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Est. minutes</span>
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">Est. minutes</span>
           <input
             type="number"
             min={0}
@@ -112,12 +112,12 @@ export function SceneBreakdownEditor({
                 estShootMinutes: e.target.value === '' ? null : Number(e.target.value),
               })
             }
-            className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
             placeholder="—"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Complexity</span>
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">Complexity</span>
           <select
             value={meta?.complexity ?? ''}
             onChange={(e) =>
@@ -125,7 +125,7 @@ export function SceneBreakdownEditor({
                 complexity: (e.target.value || null) as SceneComplexity | null,
               })
             }
-            className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
           >
             <option value="">—</option>
             {SCENE_COMPLEXITIES.map((c) => (
@@ -136,11 +136,11 @@ export function SceneBreakdownEditor({
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Status</span>
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">Status</span>
           <select
             value={meta?.status ?? 'unscheduled'}
             onChange={(e) => patchMeta({ status: e.target.value as SceneStatus })}
-            className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
           >
             {SCENE_STATUSES.map((s) => (
               <option key={s.status} value={s.status}>
@@ -151,12 +151,12 @@ export function SceneBreakdownEditor({
         </label>
       </div>
       <label className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">Production notes</span>
+        <span className="text-[10px] uppercase tracking-wide text-text-secondary">Production notes</span>
         <textarea
           value={meta?.notes ?? ''}
           onChange={(e) => patchMeta({ notes: e.target.value || null })}
           rows={2}
-          className="text-xs bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
           placeholder="Notes for the AD / line producer..."
         />
       </label>
@@ -182,13 +182,13 @@ export function SceneBreakdownEditor({
                 ) : (
                   <li
                     key={el.id}
-                    className="flex items-start justify-between gap-2 text-xs p-2 rounded bg-[#1a1d27] border border-[#2a2d3e]"
+                    className="flex items-start justify-between gap-2 text-xs p-2 rounded bg-surface-2 border border-border-subtle"
                   >
                     <div className="min-w-0">
                       <p className="text-white">
                         {el.name}
                         {el.quantity > 1 && (
-                          <span className="text-[#94a3b8] ml-1">× {el.quantity}</span>
+                          <span className="text-text-secondary ml-1">× {el.quantity}</span>
                         )}
                         {el.isPrincipal && (
                           <span className="ml-2 text-[10px] px-1 py-0.5 rounded border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
@@ -197,14 +197,14 @@ export function SceneBreakdownEditor({
                         )}
                       </p>
                       {el.description && (
-                        <p className="text-[#94a3b8] mt-0.5">{el.description}</p>
+                        <p className="text-text-secondary mt-0.5">{el.description}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => setEditingId(el.id)}
-                        className="text-[#94a3b8] hover:text-white p-1"
+                        className="text-text-secondary hover:text-white p-1"
                         title="Edit"
                       >
                         <Pencil className="w-3 h-3" />
@@ -212,7 +212,7 @@ export function SceneBreakdownEditor({
                       <button
                         type="button"
                         onClick={() => deleteElement(el.id)}
-                        className="text-[#94a3b8] hover:text-red-300 p-1"
+                        className="text-text-secondary hover:text-red-300 p-1"
                         title="Delete"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -240,7 +240,7 @@ export function SceneBreakdownEditor({
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#2a2d3e] bg-[#1a1d27] text-[#cbd5e1] hover:border-[#4361EE]/60 hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-text-primary hover:border-accent/60 hover:text-white"
         >
           <Plus className="w-3 h-3" /> Add element
         </button>

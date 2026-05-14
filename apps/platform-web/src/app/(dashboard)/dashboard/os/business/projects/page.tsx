@@ -56,7 +56,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       {/* Back link */}
       <Link
         href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -72,7 +72,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New project
@@ -81,7 +81,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
 
       {/* New project form */}
       {showNew && (
-        <div className="mb-6 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
           <h2 className="text-lg font-medium text-white mb-4">New Project</h2>
           <ProjectForm contacts={contacts} deals={dealsList} />
         </div>
@@ -95,8 +95,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
             href="?"
             className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
               !sp.status
-                ? 'bg-[#4361EE] border-[#4361EE] text-white'
-                : 'border-[#2a2d3e] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/50'
+                ? 'bg-accent border-accent text-white'
+                : 'border-border-subtle text-text-secondary hover:text-white hover:border-accent/50'
             }`}
           >
             All
@@ -110,8 +110,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
                 href={href}
                 className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
                   isActive
-                    ? 'bg-[#4361EE] border-[#4361EE] text-white'
-                    : 'border-[#2a2d3e] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/50'
+                    ? 'bg-accent border-accent text-white'
+                    : 'border-border-subtle text-text-secondary hover:text-white hover:border-accent/50'
                 }`}
               >
                 {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -126,16 +126,16 @@ export default async function ProjectsPage({ searchParams }: Props) {
             {sp.status && <input type="hidden" name="status" value={sp.status} />}
             <select
               name="billing_model"
-              className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white focus:border-[#4361EE] focus:outline-none"
+              className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white focus:border-accent focus:outline-none"
               defaultValue={sp.billing_model ?? ''}
               onChange={(e) => {
                 const form = e.target.form;
                 if (form) form.submit();
               }}
             >
-              <option value="" className="bg-[#1a1d27] text-white">All billing models</option>
+              <option value="" className="bg-surface-2 text-white">All billing models</option>
               {BILLING_MODELS.map((m) => (
-                <option key={m} value={m} className="bg-[#1a1d27] text-white">
+                <option key={m} value={m} className="bg-surface-2 text-white">
                   {m.charAt(0).toUpperCase() + m.slice(1)}
                 </option>
               ))}
@@ -150,11 +150,11 @@ export default async function ProjectsPage({ searchParams }: Props) {
               type="text"
               defaultValue={sp.q ?? ''}
               placeholder="Search projects..."
-              className="flex-1 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+              className="flex-1 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
             />
             <button
               type="submit"
-              className="rounded-md bg-[#4361EE] hover:bg-[#3a56d4] text-white text-xs font-medium px-3 py-1.5 transition"
+              className="rounded-md bg-accent hover:bg-[#3a56d4] text-white text-xs font-medium px-3 py-1.5 transition"
             >
               Search
             </button>
@@ -174,9 +174,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-12 text-center">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
           <Briefcase className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm">
+          <p className="text-text-secondary text-sm">
             No projects yet. Create your first project to start tracking work.
           </p>
         </div>

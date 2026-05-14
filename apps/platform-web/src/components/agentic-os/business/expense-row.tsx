@@ -57,14 +57,14 @@ export default function ExpenseRow({ expense }: Props) {
   }, [expense.id, router]);
 
   return (
-    <tr className="border-b border-[#2a2d3e] hover:bg-[#1a1d27]/50 transition-colors">
+    <tr className="border-b border-border-subtle hover:bg-surface-2/50 transition-colors">
       <td className="py-3 px-4">
         <ExpenseCategoryPill category={expense.category} />
       </td>
       <td className="py-3 px-4 text-sm text-white max-w-[200px] truncate">
         {expense.vendor || '—'}
       </td>
-      <td className="py-3 px-4 text-sm text-[#94a3b8] max-w-[250px] truncate">
+      <td className="py-3 px-4 text-sm text-text-secondary max-w-[250px] truncate">
         {expense.description || '—'}
       </td>
       <td className="py-3 px-4 text-xs text-[#64748b]">
@@ -94,7 +94,7 @@ export default function ExpenseRow({ expense }: Props) {
               href={expense.receiptUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#2a2d3e] text-[#64748b] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
               title="View receipt"
             >
               <Receipt className="w-3.5 h-3.5" />
@@ -104,7 +104,7 @@ export default function ExpenseRow({ expense }: Props) {
             <button
               onClick={handleReimburse}
               disabled={reimbursing}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#2a2d3e] text-[#64748b] hover:text-amber-400 transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-amber-400 transition-colors"
               title="Mark reimbursed"
             >
               <BadgeCheck className="w-3.5 h-3.5" />
@@ -115,7 +115,7 @@ export default function ExpenseRow({ expense }: Props) {
               // Edit — navigate to edit form via URL param or modal
               router.push(`?edit=${expense.id}`);
             }}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#2a2d3e] text-[#64748b] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
             title="Edit expense"
           >
             <Pencil className="w-3.5 h-3.5" />

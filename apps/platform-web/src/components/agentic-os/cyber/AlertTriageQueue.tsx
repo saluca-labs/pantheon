@@ -35,7 +35,7 @@ const STATUS_STYLE: Record<AlertStatus, string> = {
 };
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function AlertCard({
   alert,
@@ -88,7 +88,7 @@ function AlertCard({
   const ts = new Date(alert.occurredAt).toLocaleString();
 
   return (
-    <div className={`rounded-xl border border-[#2a2d3e] bg-[#1a1d27] border-l-4 ${sev.border}`}>
+    <div className={`rounded-xl border border-border-subtle bg-surface-2 border-l-4 ${sev.border}`}>
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
@@ -102,24 +102,24 @@ function AlertCard({
             <span className={`text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border ${STATUS_STYLE[alert.status]}`}>
               {alert.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] text-[#94a3b8]">{alert.category.replace('_', ' ')}</span>
+            <span className="text-[10px] text-text-secondary">{alert.category.replace('_', ' ')}</span>
             {asset && (
-              <span className="text-[10px] text-[#94a3b8]">· asset: <span className="text-white">{asset.name}</span></span>
+              <span className="text-[10px] text-text-secondary">· asset: <span className="text-white">{asset.name}</span></span>
             )}
             {(alert.tactic || alert.technique) && (
-              <span className="text-[10px] text-[#94a3b8]">
+              <span className="text-[10px] text-text-secondary">
                 · {[alert.tactic, alert.technique].filter(Boolean).join(' / ')}
               </span>
             )}
           </div>
           <p className="text-sm text-white font-medium">{alert.title}</p>
-          <p className="text-xs text-[#94a3b8] mt-0.5">{alert.source} · {ts}</p>
+          <p className="text-xs text-text-secondary mt-0.5">{alert.source} · {ts}</p>
           {alert.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {alert.tags.map((t) => (
                 <span
                   key={t}
-                  className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+                  className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary"
                 >
                   {t}
                 </span>
@@ -127,26 +127,26 @@ function AlertCard({
             </div>
           )}
         </div>
-        <span className="text-[#94a3b8] text-xs pt-1">{expanded ? '▲' : '▼'}</span>
+        <span className="text-text-secondary text-xs pt-1">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-[#2a2d3e] pt-3">
-          <p className="text-sm text-[#94a3b8] leading-relaxed">{alert.description}</p>
+        <div className="px-4 pb-4 space-y-4 border-t border-border-subtle pt-3">
+          <p className="text-sm text-text-secondary leading-relaxed">{alert.description}</p>
 
           {alert.sourceIp && (
-            <p className="text-xs text-[#94a3b8]">Source IP: <span className="font-mono text-white">{alert.sourceIp}</span></p>
+            <p className="text-xs text-text-secondary">Source IP: <span className="font-mono text-white">{alert.sourceIp}</span></p>
           )}
           {logSource && (
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               Log source: <span className="text-white">{logSource.name}</span>{' '}
-              <span className="text-[#94a3b8]">({logSource.kind})</span>
+              <span className="text-text-secondary">({logSource.kind})</span>
             </p>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Status</span>
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Status</span>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value as AlertStatus)}
@@ -158,7 +158,7 @@ function AlertCard({
               </select>
             </label>
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Assign to</span>
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Assign to</span>
               <input
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
@@ -167,7 +167,7 @@ function AlertCard({
               />
             </label>
             <label className="block sm:col-span-1">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Notes</span>
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Notes</span>
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -181,7 +181,7 @@ function AlertCard({
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+              className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
             >
               {saving ? 'Saving…' : 'Update'}
             </button>
@@ -226,16 +226,16 @@ export function AlertTriageQueue({
   return (
     <div className="space-y-6">
       {/* Summary row */}
-      <div className="flex flex-wrap gap-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap gap-4 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <div className="flex gap-4 text-sm">
           <span className="text-red-300">{counts.open} Open</span>
           <span className="text-amber-300">{counts.investigating} Investigating</span>
           <span className="text-emerald-300">{counts.resolved} Resolved</span>
-          <span className="text-[#94a3b8]">{counts.false_positive} False Positive</span>
+          <span className="text-text-secondary">{counts.false_positive} False Positive</span>
         </div>
         <button
           onClick={() => setShowAll((s) => !s)}
-          className="ml-auto text-xs px-3 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white transition"
+          className="ml-auto text-xs px-3 py-1 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white transition"
         >
           {showAll ? 'Show active only' : 'Show all'}
         </button>
@@ -243,7 +243,7 @@ export function AlertTriageQueue({
 
       {/* Alert list */}
       {displayed.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">{showAll ? 'No alerts.' : 'No active alerts. All clear!'}</p>
+        <p className="text-sm text-text-secondary">{showAll ? 'No alerts.' : 'No active alerts. All clear!'}</p>
       ) : (
         <div className="space-y-3">
           {displayed.map((a) => (

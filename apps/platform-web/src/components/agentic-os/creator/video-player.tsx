@@ -52,7 +52,7 @@ export function VideoPlayer({ src, title }: VideoPlayerProps) {
   }, [src]);
 
   return (
-    <div className="rounded-lg overflow-hidden border border-[#2a2d3e] bg-[#0f1117]">
+    <div className="rounded-lg overflow-hidden border border-border-subtle bg-surface-0">
       <video
         ref={videoRef}
         className="video-js vjs-big-play-centered"

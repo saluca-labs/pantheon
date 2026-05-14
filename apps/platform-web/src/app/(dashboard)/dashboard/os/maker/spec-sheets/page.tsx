@@ -27,7 +27,7 @@ export default async function MakerSpecSheetsPage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/maker"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Maker OS
@@ -35,10 +35,10 @@ export default async function MakerSpecSheetsPage() {
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <FileText className="w-6 h-6 text-[#4361EE]" />
+          <FileText className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">Spec sheets</h1>
         </div>
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           Datasheets, drawings, manuals, and compliance certificates attached to a
           part, tool, or project. URL-only — link to your cloud drive, vendor site,
           or external host.

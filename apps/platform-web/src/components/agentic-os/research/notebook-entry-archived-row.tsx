@@ -62,15 +62,15 @@ export function NotebookEntryArchivedRow({ entry, onRestored }: Props) {
 
   return (
     <div
-      className="flex items-center justify-between gap-3 rounded border border-[#2a2d3e] bg-[#0f1117] px-3 py-2"
+      className="flex items-center justify-between gap-3 rounded border border-border-subtle bg-surface-0 px-3 py-2"
       data-testid={`archived-row-${entry.id}`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <ArchiveIcon className="w-3.5 h-3.5 text-[#94a3b8] shrink-0" />
+        <ArchiveIcon className="w-3.5 h-3.5 text-text-secondary shrink-0" />
         <NotebookEntryKindPill kind={entry.entryKind} />
-        <span className="text-sm text-[#cbd5e1] truncate">{entry.title}</span>
+        <span className="text-sm text-text-primary truncate">{entry.title}</span>
         {entry.archivedAt && (
-          <span className="text-[10px] text-[#94a3b8] shrink-0">
+          <span className="text-[10px] text-text-secondary shrink-0">
             archived {shortIso(entry.archivedAt)}
           </span>
         )}
@@ -85,7 +85,7 @@ export function NotebookEntryArchivedRow({ entry, onRestored }: Props) {
           type="button"
           onClick={handleRestore}
           disabled={submitting}
-          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#1a1d27] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/40"
+          className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border-subtle bg-surface-2 text-text-primary hover:text-white hover:border-accent/40"
           data-testid={`archived-row-restore-${entry.id}`}
         >
           <RotateCcw className="w-3 h-3" />

@@ -21,7 +21,7 @@ import {
 import { LogSourceForm } from './LogSourceForm';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const API = '/api/tiresias/agentic-os/cyber/log-sources';
 
@@ -59,9 +59,9 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Kind</span>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as LogSourceKind | '')}
@@ -74,7 +74,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Status</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Status</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as LogSourceStatus | '')}
@@ -92,7 +92,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
             setEditing(null);
             setCreating((c) => !c);
           }}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'New source'}
@@ -114,7 +114,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No log sources match the current filters.
         </p>
       ) : (
@@ -122,7 +122,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
           {filtered.map((s) => (
             <li
               key={s.id}
-              className="flex items-start gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+              className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-2 p-4"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -135,13 +135,13 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
                     {s.status}
                   </span>
                 </div>
-                <p className="text-xs text-[#94a3b8]">
+                <p className="text-xs text-text-secondary">
                   {s.kind}
                   {s.vendor && ` · ${s.vendor}`}
                   {s.endpointHint && ` · ${s.endpointHint}`}
                 </p>
                 {s.notes && (
-                  <p className="text-xs text-[#94a3b8] mt-1 line-clamp-2">{s.notes}</p>
+                  <p className="text-xs text-text-secondary mt-1 line-clamp-2">{s.notes}</p>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -151,7 +151,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
                     setCreating(false);
                     setEditing(s);
                   }}
-                  className="inline-flex items-center gap-1 rounded border border-[#2a2d3e] text-[#cbd5e1] hover:text-white px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-text-primary hover:text-white px-2 py-1 text-xs transition"
                 >
                   <Pencil className="w-3 h-3" />
                   Edit
@@ -160,7 +160,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
                   type="button"
                   onClick={() => void remove(s)}
                   disabled={busy === s.id}
-                  className="inline-flex items-center gap-1 rounded border border-[#2a2d3e] text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
                 >
                   <Trash2 className="w-3 h-3" />
                   Delete

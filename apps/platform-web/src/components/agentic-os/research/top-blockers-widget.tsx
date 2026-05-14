@@ -57,7 +57,7 @@ export function TopBlockersWidget({ initial = [], limit = 5 }: Props) {
 
   return (
     <div
-      className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-4"
       data-testid="top-blockers-widget"
     >
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -67,14 +67,14 @@ export function TopBlockersWidget({ initial = [], limit = 5 }: Props) {
         </h2>
         <Link
           href="/dashboard/os/research/blockers"
-          className="text-[10px] uppercase tracking-wide text-[#4361EE] hover:underline"
+          className="text-[10px] uppercase tracking-wide text-accent hover:underline"
         >
           View all
         </Link>
       </div>
-      {!loaded && <p className="text-xs text-[#94a3b8]">Loading…</p>}
+      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && items.length === 0 && (
-        <p className="text-xs text-[#94a3b8]" data-testid="top-blockers-widget-empty">
+        <p className="text-xs text-text-secondary" data-testid="top-blockers-widget-empty">
           All clear.
         </p>
       )}

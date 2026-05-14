@@ -141,17 +141,17 @@ export function AuthorPicker({ value, onChange }: Props) {
           {value.map((p, i) => (
             <li
               key={p.authorId ?? `new-${i}`}
-              className="flex items-center gap-2 px-2 py-1 rounded bg-[#0f1117] border border-[#2a2d3e]"
+              className="flex items-center gap-2 px-2 py-1 rounded bg-surface-0 border border-border-subtle"
               data-testid={`author-picker-row-${i}`}
             >
-              <span className="text-[10px] text-[#94a3b8] w-5">{p.position}</span>
-              <GripVertical className="w-3 h-3 text-[#94a3b8]" />
+              <span className="text-[10px] text-text-secondary w-5">{p.position}</span>
+              <GripVertical className="w-3 h-3 text-text-secondary" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white truncate">
                   {p.resolved?.displayName ?? p.displayName}
                 </p>
                 {(p.resolved?.affiliation || p.affiliation) && (
-                  <p className="text-[10px] text-[#94a3b8] truncate">
+                  <p className="text-[10px] text-text-secondary truncate">
                     {p.resolved?.affiliation ?? p.affiliation}
                   </p>
                 )}
@@ -160,7 +160,7 @@ export function AuthorPicker({ value, onChange }: Props) {
                 type="button"
                 onClick={() => moveUp(i)}
                 disabled={i === 0}
-                className="text-xs text-[#94a3b8] hover:text-white disabled:opacity-30"
+                className="text-xs text-text-secondary hover:text-white disabled:opacity-30"
                 aria-label="Move up"
               >
                 ↑
@@ -169,7 +169,7 @@ export function AuthorPicker({ value, onChange }: Props) {
                 type="button"
                 onClick={() => moveDown(i)}
                 disabled={i === value.length - 1}
-                className="text-xs text-[#94a3b8] hover:text-white disabled:opacity-30"
+                className="text-xs text-text-secondary hover:text-white disabled:opacity-30"
                 aria-label="Move down"
               >
                 ↓
@@ -177,7 +177,7 @@ export function AuthorPicker({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => removeAt(i)}
-                className="text-[#94a3b8] hover:text-rose-300"
+                className="text-text-secondary hover:text-rose-300"
                 aria-label="Remove"
                 data-testid={`author-picker-remove-${i}`}
               >
@@ -190,41 +190,41 @@ export function AuthorPicker({ value, onChange }: Props) {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search authors by name…"
-          className="w-full pl-10 pr-3 py-2 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="author-picker-search"
         />
       </div>
 
       {loading && (
-        <p className="text-xs text-[#94a3b8]" data-testid="author-picker-loading">
+        <p className="text-xs text-text-secondary" data-testid="author-picker-loading">
           Searching…
         </p>
       )}
 
       {results.length > 0 && (
-        <ul className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] overflow-hidden divide-y divide-[#2a2d3e] max-h-60 overflow-y-auto" data-testid="author-picker-results">
+        <ul className="rounded-lg border border-border-subtle bg-surface-0 overflow-hidden divide-y divide-border-subtle max-h-60 overflow-y-auto" data-testid="author-picker-results">
           {results.map((a) => (
             <li
               key={a.id}
-              className="px-3 py-2 hover:bg-[#1a1d27] cursor-pointer flex items-center justify-between"
+              className="px-3 py-2 hover:bg-surface-2 cursor-pointer flex items-center justify-between"
               onClick={() => addExisting(a)}
               data-testid={`author-picker-result-${a.id}`}
             >
               <div className="min-w-0">
                 <p className="text-sm text-white truncate">{a.displayName}</p>
                 {(a.affiliation || a.orcid) && (
-                  <p className="text-[10px] text-[#94a3b8] truncate">
+                  <p className="text-[10px] text-text-secondary truncate">
                     {a.affiliation || a.orcid}
                   </p>
                 )}
               </div>
-              <span className="text-[10px] text-[#4361EE]">Add</span>
+              <span className="text-[10px] text-accent">Add</span>
             </li>
           ))}
         </ul>
@@ -238,7 +238,7 @@ export function AuthorPicker({ value, onChange }: Props) {
             setCreating(true);
             setDraft({ displayName: search.trim() || '' });
           }}
-          className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
           data-testid="author-picker-create-toggle"
         >
           <Plus className="w-3 h-3" />
@@ -248,7 +248,7 @@ export function AuthorPicker({ value, onChange }: Props) {
 
       {creating && (
         <div
-          className="rounded-lg border border-[#4361EE]/40 bg-[#0f1117] p-3 space-y-2"
+          className="rounded-lg border border-accent/40 bg-surface-0 p-3 space-y-2"
           data-testid="author-picker-create-form"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -297,14 +297,14 @@ export function AuthorPicker({ value, onChange }: Props) {
                 setDraft({});
                 setError(null);
               }}
-              className="text-xs text-[#94a3b8] hover:text-white"
+              className="text-xs text-text-secondary hover:text-white"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={addNew}
-              className="text-xs px-2 py-1 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/85"
+              className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-accent/85"
               data-testid="author-picker-create-confirm"
             >
               Add author
@@ -331,7 +331,7 @@ function LabeledInput({
 }) {
   return (
     <label className="block">
-      <span className="block text-[10px] text-[#94a3b8] uppercase tracking-wide mb-0.5">
+      <span className="block text-[10px] text-text-secondary uppercase tracking-wide mb-0.5">
         {label}
       </span>
       <input
@@ -339,7 +339,7 @@ function LabeledInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-2 py-1 rounded bg-[#1a1d27] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+        className="w-full px-2 py-1 rounded bg-surface-2 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
         data-testid={testId}
       />
     </label>

@@ -162,7 +162,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
       <div>
         <label
           htmlFor="v-title"
-          className="block text-sm font-medium text-[#94a3b8] mb-1.5"
+          className="block text-sm font-medium text-text-secondary mb-1.5"
         >
           Title *
         </label>
@@ -172,7 +172,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="My video"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#4361EE] focus:outline-none"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-accent focus:outline-none"
           required
         />
       </div>
@@ -181,7 +181,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
       <div>
         <label
           htmlFor="v-desc"
-          className="block text-sm font-medium text-[#94a3b8] mb-1.5"
+          className="block text-sm font-medium text-text-secondary mb-1.5"
         >
           Description
         </label>
@@ -191,7 +191,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
           onChange={(e) => setDescription(e.target.value)}
           placeholder="A short summary of the video content"
           rows={3}
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#4361EE] focus:outline-none resize-vertical"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-accent focus:outline-none resize-vertical"
         />
       </div>
 
@@ -199,7 +199,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
       <div>
         <label
           htmlFor="v-url"
-          className="block text-sm font-medium text-[#94a3b8] mb-1.5"
+          className="block text-sm font-medium text-text-secondary mb-1.5"
         >
           HLS Manifest URL *
         </label>
@@ -209,7 +209,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://cdn.example.com/videos/abc/index.m3u8"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#4361EE] focus:outline-none font-mono"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-accent focus:outline-none font-mono"
           required
         />
         <p className="text-[11px] text-[#475569] mt-1">
@@ -221,7 +221,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
       <div>
         <label
           htmlFor="v-thumb"
-          className="block text-sm font-medium text-[#94a3b8] mb-1.5"
+          className="block text-sm font-medium text-text-secondary mb-1.5"
         >
           Thumbnail URL
         </label>
@@ -231,7 +231,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
           value={thumbnailUrl}
           onChange={(e) => setThumbnailUrl(e.target.value)}
           placeholder="https://cdn.example.com/thumbnails/abc.jpg"
-          className="w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#4361EE] focus:outline-none font-mono"
+          className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-accent focus:outline-none font-mono"
         />
       </div>
 
@@ -239,7 +239,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
       <div>
         <label
           htmlFor="v-dur"
-          className="block text-sm font-medium text-[#94a3b8] mb-1.5"
+          className="block text-sm font-medium text-text-secondary mb-1.5"
         >
           Duration (seconds)
         </label>
@@ -250,7 +250,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
           value={durationSeconds}
           onChange={(e) => setDurationSeconds(e.target.value)}
           placeholder="360"
-          className="w-48 rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#4361EE] focus:outline-none"
+          className="w-48 rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-accent focus:outline-none"
         />
       </div>
 
@@ -259,7 +259,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4361EE] text-white text-sm font-medium hover:bg-[#3651de] disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-[#3651de] disabled:opacity-50 transition-colors"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving…' : isNew ? 'Create Video' : 'Save Changes'}
@@ -267,7 +267,7 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
         <button
           type="button"
           onClick={handleCancel}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#2a2d3e] text-[#94a3b8] text-sm font-medium hover:text-white hover:border-[#475569] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border-subtle text-text-secondary text-sm font-medium hover:text-white hover:border-[#475569] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Cancel
