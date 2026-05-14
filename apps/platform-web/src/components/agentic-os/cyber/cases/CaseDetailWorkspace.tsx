@@ -3,12 +3,15 @@
 /**
  * CyberSec OS — Case detail workspace.
  *
- * Header (title, status, severity, priority, assigned-to) + tabbed body:
- * Overview / Alerts / Evidence / Tasks / Timeline.
+ * The flagship incident workspace: header (title, status, severity, priority,
+ * assigned-to) + a tabbed body — Overview / Alerts / Evidence / Tasks /
+ * Timeline.
  *
- * Wave C-2a: the bespoke `<nav>` + `TabBtn` tab strip is replaced with the
- * shared `CrossEntityTabs` primitive — lazy content, count badges, roving
- * keyboard focus, per-OS (`cyber`) accent. Tab content is unchanged.
+ * Wave C-2a replaced the bespoke `<nav>` + `TabBtn` strip with the shared
+ * `CrossEntityTabs` primitive. Wave D wraps that in the `CaseWorkspaceTabs`
+ * island so the active tab is URL-synced (`?tab=`) — shareable, refresh-safe,
+ * and back/forward navigable. Tab content is unchanged; the server component
+ * validates `?tab=` and passes it as `activeTab`.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
@@ -24,12 +27,12 @@ import type {
   CasePriority,
 } from '@/lib/agentic-os/cyber/cases';
 import { CASE_STATUSES } from '@/lib/agentic-os/cyber/cases';
-import { CrossEntityTabs } from '@/components/agentic-os/_shared/views';
 import { CaseForm } from './CaseForm';
 import { CaseTimelinePanel } from './CaseTimelinePanel';
 import { CaseAlertsPanel } from './CaseAlertsPanel';
 import { CaseEvidencePanel } from './CaseEvidencePanel';
 import { CaseTasksPanel } from './CaseTasksPanel';
+import { CaseWorkspaceTabs, normalizeCaseTab } from './CaseWorkspaceTabs';
 
 const SEV_STYLE: Record<CaseSeverity, string> = {
   critical: 'text-red-200 bg-red-600/20 border-red-500/50',
@@ -59,8 +62,11 @@ const PRI_STYLE: Record<CasePriority, string> = {
 
 export function CaseDetailWorkspace({
   caseDetail,
+  activeTab = 'overview',
 }: {
   caseDetail: CaseDetail;
+  /** The `?tab=` value the server validated — seeds the active workspace tab. */
+  activeTab?: string;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -170,9 +176,8 @@ export function CaseDetailWorkspace({
         )}
       </header>
 
-      <CrossEntityTabs
-        slug="cyber"
-        defaultTab="overview"
+      <CaseWorkspaceTabs
+        activeTab={normalizeCaseTab(activeTab)}
         tabs={[
           {
             key: 'overview',
