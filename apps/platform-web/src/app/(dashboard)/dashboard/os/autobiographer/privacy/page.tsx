@@ -26,9 +26,7 @@ import {
   chapterHasSensitiveContent,
   listChaptersForBook,
 } from '@/lib/agentic-os/autobiographer/chapters-repo';
-import { PrivacyPeoplePanel } from '@/components/agentic-os/autobiographer/privacy-people-panel';
-import { PseudonymMapPanel } from '@/components/agentic-os/autobiographer/pseudonym-map-panel';
-import { ReviewChecklistPanel } from '@/components/agentic-os/autobiographer/review-checklist-panel';
+import { PrivacyReviewWizard } from '@/components/agentic-os/autobiographer/privacy-review-wizard';
 import { EmptyState } from '@/components/agentic-os/_shared/views';
 import type { ConsentState } from '@/lib/agentic-os/autobiographer/people';
 
@@ -236,19 +234,17 @@ export default async function PrivacyHubPage({ searchParams }: Props) {
           <h1 className="text-xl font-semibold text-white">{book.title}</h1>
         </div>
         <p className="text-sm text-text-primary leading-relaxed">
-          Privacy review for this book. Resolve the people roster, set
-          pseudonyms for anyone who shouldn't be named in the manuscript, and
-          work the review checklist down to all-green before locking chapters
-          for export.
+          A guided privacy review for this book. Step through the people
+          roster, the pseudonym map, and the review checklist; the final
+          step gives you a readiness snapshot before locking chapters for
+          export.
         </p>
       </header>
 
-      <PrivacyPeoplePanel people={people} />
-
-      <PseudonymMapPanel bookId={book.id} people={pseudonymPeople} />
-
-      <ReviewChecklistPanel
+      <PrivacyReviewWizard
         bookId={book.id}
+        people={people}
+        pseudonymPeople={pseudonymPeople}
         bookLevelChecks={checks.book.map((row) => ({
           id: row.id,
           kind: row.kind,

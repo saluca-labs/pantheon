@@ -59,10 +59,11 @@ export function ChapterDetailView({
     author: r.author,
     wordCount: r.wordCount,
     createdAt: r.createdAt,
+    summary: r.summary,
   }));
 
   return (
-    <div className="grid grid-cols-12 gap-4">
+    <div className="grid grid-cols-12 items-start gap-4">
       <div className="col-span-3">
         <RevisionHistoryRail
           chapterId={chapterId}
