@@ -1,13 +1,21 @@
 /**
  * Maker OS — dashboard hub.
  *
- * Mirrors the Health / Filmmaker / Cyber hubs: a `DashboardHub` shell driven
- * by the registry entry plus the markdown plan as a collapsed accordion.
+ * Server component. Wave C-3a: the hub's "at a glance" surface is now wired
+ * through `DashboardHub`'s declarative `dashboard` prop (v0.1.61) instead of
+ * the bolted-on `flagBanner` strip that held the `RecentActivityWidget` +
+ * `BlockersWidget` client components:
+ *   - `widgets`  — aggregate workshop stats (active projects + avg progress,
+ *                  workshop tools + down count, recent build activity, open
+ *                  blockers with severity-escalated variant)
+ *   - `chart`    — trailing-14-day build-log activity bar chart
+ *   - `activity` — recent build-log feed across every project
  *
- * Phase 3 added the Recent activity widget that surfaces the latest
- * build-log entries across all of the user's Maker projects. Phase 6 adds
- * the Top Blockers widget side-by-side: workshop-wide milestones at risk +
- * open `blocks` dependency edges.
+ * The data-shape adapter lives in `lib/agentic-os/maker/dashboard-spec.tsx`
+ * (mirrors the Cyber sub-wave-2 pattern). The hub fetches the repo payloads
+ * server-side; the spec is pure. The legacy `RecentActivityWidget` /
+ * `BlockersWidget` client components are now unused — left in place for the
+ * Wave D Maker specialization pass rather than deleted mid-adoption.
  *
  * @license MIT — Tiresias Maker OS (internal).
  */
@@ -17,9 +25,13 @@ import { findAgenticOsModule } from '@/lib/agentic-os/registry';
 import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
-import { RecentActivityWidget } from '@/components/agentic-os/maker/recent-activity-widget';
-import { BlockersWidget } from '@/components/agentic-os/maker/blockers-widget';
-import { listTopBlockers } from '@/lib/agentic-os/maker/repo';
+import {
+  listProjects,
+  listTools,
+  listRecentLogEntries,
+  listTopBlockers,
+} from '@/lib/agentic-os/maker/repo';
+import { buildMakerDashboardSpec } from '@/lib/agentic-os/maker/dashboard-spec';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,19 +46,26 @@ export default async function MakerOsPage() {
     throw new Error('Maker OS module missing from registry');
   }
 
-  const plan = await loadAgenticOsPlan(MAKER_SLUG);
-  const initialBlockers = await listTopBlockers(user.userId, { limit: 5 });
+  const [plan, projects, tools, recentLogEntries, blockers] = await Promise.all([
+    loadAgenticOsPlan(MAKER_SLUG),
+    listProjects(user.userId),
+    listTools({ userId: user.userId }),
+    listRecentLogEntries(user.userId, 25),
+    listTopBlockers(user.userId, { limit: 100 }),
+  ]);
+
+  const dashboard = buildMakerDashboardSpec({
+    projects,
+    tools,
+    recentLogEntries,
+    blockers,
+  });
 
   return (
     <DashboardHub
       module={mod}
       roadmapMarkdown={plan ?? null}
-      flagBanner={
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <RecentActivityWidget />
-          <BlockersWidget initial={initialBlockers} />
-        </div>
-      }
+      dashboard={dashboard}
     />
   );
 }
