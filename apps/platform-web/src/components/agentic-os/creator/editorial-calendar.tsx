@@ -17,7 +17,7 @@ import {
   POST_STATUSES,
 } from '@/lib/agentic-os/creator/posts';
 import type { CreatorPost, PostStatus } from '@/lib/agentic-os/creator/posts';
-import { validatePost } from '@/lib/agentic-os/creator/calendar';
+import { validatePost, isoWeek } from '@/lib/agentic-os/creator/calendar';
 
 interface Props {
   initial: CreatorPost[];
@@ -53,15 +53,6 @@ function groupByWeek(posts: CreatorPost[]): Map<string, CreatorPost[]> {
     map.set(weekKey, bucket);
   }
   return map;
-}
-
-function isoWeek(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 const BLANK_FORM = {
