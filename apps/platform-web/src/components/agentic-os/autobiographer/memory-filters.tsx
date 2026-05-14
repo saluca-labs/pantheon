@@ -74,7 +74,7 @@ export function MemoryFilters({
       {/* Book scope + sensitive */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
             Scope
           </span>
           {(['all', 'workshop'] as const).map((s) => (
@@ -84,8 +84,8 @@ export function MemoryFilters({
               onClick={() => onChange({ ...value, bookId: s })}
               className={`text-xs px-2.5 py-1 rounded-full border transition ${
                 value.bookId === s
-                  ? 'bg-[#4361EE] text-white border-[#4361EE]'
-                  : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
               }`}
             >
               {s === 'all' ? 'All books' : 'Workshop-only'}
@@ -98,8 +98,8 @@ export function MemoryFilters({
               onClick={() => onChange({ ...value, bookId: b.id })}
               className={`text-xs px-2.5 py-1 rounded-full border transition ${
                 value.bookId === b.id
-                  ? 'bg-[#4361EE] text-white border-[#4361EE]'
-                  : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
               }`}
             >
               {b.title}
@@ -108,7 +108,7 @@ export function MemoryFilters({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 ml-auto">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
             Sensitive
           </span>
           {(['any', 'yes', 'no'] as const).map((s) => (
@@ -118,8 +118,8 @@ export function MemoryFilters({
               onClick={() => onChange({ ...value, isSensitive: s })}
               className={`text-xs px-2.5 py-1 rounded-full border transition ${
                 value.isSensitive === s
-                  ? 'bg-[#4361EE] text-white border-[#4361EE]'
-                  : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                  ? 'bg-accent text-white border-accent'
+                  : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
               }`}
             >
               {s === 'any' ? 'Any' : s === 'yes' ? 'Flagged' : 'Unflagged'}
@@ -131,7 +131,7 @@ export function MemoryFilters({
       {/* Content tag chips */}
       {contentTagCounts.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
             Content tag
           </span>
           <button
@@ -139,8 +139,8 @@ export function MemoryFilters({
             onClick={() => onChange({ ...value, contentTag: null })}
             className={`text-xs px-2 py-0.5 rounded border transition ${
               value.contentTag === null
-                ? 'bg-[#4361EE]/20 text-white border-[#4361EE]/60'
-                : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                ? 'bg-accent/20 text-white border-accent/60'
+                : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
             }`}
           >
             All
@@ -157,8 +157,8 @@ export function MemoryFilters({
               }
               className={`text-xs px-2 py-0.5 rounded border transition ${
                 value.contentTag === t
-                  ? 'bg-[#4361EE]/20 text-white border-[#4361EE]/60'
-                  : 'bg-[#0f1117] text-[#cbd5e1] border-[#2a2d3e] hover:text-white'
+                  ? 'bg-accent/20 text-white border-accent/60'
+                  : 'bg-surface-0 text-text-primary border-border-subtle hover:text-white'
               }`}
             >
               {t} <span className="text-[#64748b]">{count}</span>
@@ -168,7 +168,7 @@ export function MemoryFilters({
             <button
               type="button"
               onClick={() => setShowAllContent(true)}
-              className="text-xs text-[#94a3b8] hover:text-white"
+              className="text-xs text-text-secondary hover:text-white"
             >
               +{contentTagCounts.length - 8} more
             </button>
@@ -179,7 +179,7 @@ export function MemoryFilters({
       {/* Emotion tag chips */}
       {emotionTagCounts.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8] mr-1">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary mr-1">
             Emotion
           </span>
           <button
@@ -188,7 +188,7 @@ export function MemoryFilters({
             className={`text-xs px-2 py-0.5 rounded border transition ${
               value.emotionTag === null
                 ? 'bg-rose-500/20 text-white border-rose-500/60'
-                : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+                : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
             }`}
           >
             All
@@ -216,7 +216,7 @@ export function MemoryFilters({
             <button
               type="button"
               onClick={() => setShowAllEmotion(true)}
-              className="text-xs text-[#94a3b8] hover:text-white"
+              className="text-xs text-text-secondary hover:text-white"
             >
               +{emotionTagCounts.length - 8} more
             </button>

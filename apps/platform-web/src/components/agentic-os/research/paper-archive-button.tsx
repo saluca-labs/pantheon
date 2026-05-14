@@ -71,7 +71,7 @@ export function PaperArchiveButton({ paper, onChanged }: Props) {
         className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border transition ${
           isArchived
             ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
-            : 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-rose-300 hover:border-rose-500/40'
+            : 'border-border-subtle bg-surface-0 text-text-secondary hover:text-rose-300 hover:border-rose-500/40'
         }`}
         data-testid={`paper-archive-${isArchived ? 'restore' : 'archive'}-${paper.id}`}
       >
@@ -91,14 +91,14 @@ export function PaperArchiveButton({ paper, onChanged }: Props) {
   }
   return (
     <div className="inline-flex items-center gap-2" data-testid="paper-archive-confirm">
-      <span className="text-xs text-[#94a3b8]">
+      <span className="text-xs text-text-secondary">
         {isArchived ? 'Restore this paper?' : 'Archive this paper?'}
       </span>
       <button
         type="button"
         onClick={() => setConfirming(false)}
         disabled={submitting}
-        className="text-xs text-[#94a3b8] hover:text-white"
+        className="text-xs text-text-secondary hover:text-white"
       >
         Cancel
       </button>

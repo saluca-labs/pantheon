@@ -41,11 +41,11 @@ export function DetectionRuleCard({ rule }: { rule: DetectionRule }) {
   return (
     <Link
       href={`/dashboard/os/cyber/detections/${rule.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 transition hover:border-[#4361EE]/60 hover:bg-[#1f2230]"
+      className="block rounded-xl border border-border-subtle bg-surface-2 p-4 transition hover:border-accent/60 hover:bg-surface-3"
     >
       <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Shield className="w-4 h-4 text-[#4361EE] shrink-0" />
+          <Shield className="w-4 h-4 text-accent shrink-0" />
           <span className="text-sm font-medium text-white truncate">{rule.name}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -55,10 +55,10 @@ export function DetectionRuleCard({ rule }: { rule: DetectionRule }) {
       </div>
 
       {excerpt && (
-        <p className="text-xs text-[#cbd5e1] mb-2 leading-relaxed">{excerpt}</p>
+        <p className="text-xs text-text-primary mb-2 leading-relaxed">{excerpt}</p>
       )}
 
-      <div className="flex items-center gap-x-3 gap-y-1 text-[11px] text-[#94a3b8] flex-wrap">
+      <div className="flex items-center gap-x-3 gap-y-1 text-[11px] text-text-secondary flex-wrap">
         {rule.tactic && (
           <span className="inline-flex items-center gap-1">
             <Hash className="w-3 h-3" />
@@ -78,7 +78,7 @@ export function DetectionRuleCard({ rule }: { rule: DetectionRule }) {
           </span>
         )}
         {rule.author && (
-          <span className="text-[#94a3b8]/80">by {rule.author}</span>
+          <span className="text-text-secondary/80">by {rule.author}</span>
         )}
       </div>
 
@@ -87,13 +87,13 @@ export function DetectionRuleCard({ rule }: { rule: DetectionRule }) {
           {rule.tags.slice(0, 5).map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
           ))}
           {rule.tags.length > 5 && (
-            <span className="text-[10px] text-[#94a3b8]">+{rule.tags.length - 5}</span>
+            <span className="text-[10px] text-text-secondary">+{rule.tags.length - 5}</span>
           )}
         </div>
       )}

@@ -57,7 +57,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
   return (
     <Link
       href={`/dashboard/os/business/projects/${project.id}`}
-      className="block rounded-xl border border-[#2a2d3e] bg-[#1a1d27] hover:border-[#4361EE]/50 transition-colors p-5 group"
+      className="block rounded-xl border border-border-subtle bg-surface-2 hover:border-accent/50 transition-colors p-5 group"
     >
       {/* Top row: title + status */}
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -80,11 +80,11 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
 
       {/* Billing model + rate */}
       <div className="flex items-center gap-3 mb-3">
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#4361EE]/10 border border-[#4361EE]/30 px-2 py-0.5 text-[10px] font-medium text-[#4361EE]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/30 px-2 py-0.5 text-[10px] font-medium text-accent">
           {billingModelLabels[project.billingModel] ?? project.billingModel}
         </span>
         {project.defaultRateCents != null && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-[#94a3b8]">
+          <span className="inline-flex items-center gap-1 text-[10px] text-text-secondary">
             <DollarSign className="w-3 h-3" />
             {formatCents(project.defaultRateCents)}/hr
           </span>
@@ -94,11 +94,11 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
       {/* Budget gauge */}
       {project.budgetCents != null && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-[10px] text-[#94a3b8] mb-1">
+          <div className="flex items-center justify-between text-[10px] text-text-secondary mb-1">
             <span>Budget</span>
             <span>{formatCents(project.budgetCents)}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0f1117] overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-surface-0 overflow-hidden">
             <div
               className="h-full rounded-full bg-teal-500/60"
               style={{ width: `${Math.min(budgetPercent, 100)}%` }}
@@ -125,9 +125,9 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
 
       {/* Linked deal */}
       {deal && (
-        <div className="mt-2 pt-2 border-t border-[#2a2d3e]">
+        <div className="mt-2 pt-2 border-t border-border-subtle">
           <p className="text-[10px] text-[#64748b]">
-            Deal: <span className="text-[#94a3b8]">{deal.title}</span>
+            Deal: <span className="text-text-secondary">{deal.title}</span>
           </p>
         </div>
       )}

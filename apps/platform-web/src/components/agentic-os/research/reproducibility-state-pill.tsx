@@ -10,10 +10,10 @@ import {
 } from '@/lib/agentic-os/research/reproducibility';
 
 const STATE_STYLE: Record<ReproState, string> = {
-  pending: 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]',
+  pending: 'border-border-subtle bg-surface-0 text-text-secondary',
   in_progress: 'border-sky-500/50 bg-sky-500/5 text-sky-300',
   done: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300',
-  not_applicable: 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] opacity-60',
+  not_applicable: 'border-border-subtle bg-surface-0 text-text-secondary opacity-60',
   waived: 'border-amber-500/50 bg-amber-500/5 text-amber-300',
 };
 

@@ -89,9 +89,9 @@ export default function TemplateForm({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-[#4361EE] focus:outline-none';
+    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
   const selectClass = inputClass;
-  const labelClass = 'block text-xs text-[#94a3b8] mb-1';
+  const labelClass = 'block text-xs text-text-secondary mb-1';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -180,7 +180,7 @@ export default function TemplateForm({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
       >
         {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Template'}
       </button>

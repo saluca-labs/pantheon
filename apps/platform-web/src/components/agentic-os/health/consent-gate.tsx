@@ -67,7 +67,7 @@ export function ConsentGate({ initial }: Props) {
         <ShieldCheck className="w-5 h-5 text-emerald-300 mt-0.5 shrink-0" />
         <div>
           <h3 className="text-sm font-semibold text-white">Consent required</h3>
-          <p className="text-xs text-[#94a3b8] mt-1 leading-relaxed">
+          <p className="text-xs text-text-secondary mt-1 leading-relaxed">
             Health OS keeps your data scoped by purpose. You can grant or
             revoke each scope independently. Mental-health features are
             gated by the mental-health consent — no mh data is written
@@ -81,11 +81,11 @@ export function ConsentGate({ initial }: Props) {
           return (
             <div
               key={scope}
-              className="flex items-start justify-between gap-3 rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3"
+              className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-surface-0 p-3"
             >
               <div className="min-w-0">
                 <div className="text-sm font-medium text-white">{label}</div>
-                <p className="text-xs text-[#94a3b8] leading-relaxed">{copy}</p>
+                <p className="text-xs text-text-secondary leading-relaxed">{copy}</p>
               </div>
               <button
                 type="button"

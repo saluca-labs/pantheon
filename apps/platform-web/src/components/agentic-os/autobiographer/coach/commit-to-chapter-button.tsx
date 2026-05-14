@@ -46,8 +46,8 @@ export function CommitToChapterButton({
       disabled={!canEnable}
       className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition ${
         value
-          ? 'bg-[#4361EE]/15 text-[#cbd5e1] border-[#4361EE]/60'
-          : 'bg-[#0f1117] text-[#94a3b8] border-[#2a2d3e] hover:text-white'
+          ? 'bg-accent/15 text-text-primary border-accent/60'
+          : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
       } disabled:opacity-40`}
       title={
         chapterId

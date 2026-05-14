@@ -67,11 +67,11 @@ export function MemoryList({ initial, books, scopedBookId }: MemoryListProps) {
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-8 text-center">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
           <p className="text-sm font-medium text-white mb-1">
             No memories match
           </p>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             {initial.length === 0
               ? 'Capture your first memory to start building the library.'
               : 'Loosen the filters above to see more.'}
@@ -82,7 +82,7 @@ export function MemoryList({ initial, books, scopedBookId }: MemoryListProps) {
           {filtered.map((m) => (
             <MemoryCard key={m.id} memory={m} />
           ))}
-          <p className="text-[10px] text-[#94a3b8] text-right">
+          <p className="text-[10px] text-text-secondary text-right">
             Showing {filtered.length} of {initial.length}{' '}
             {initial.length === 1 ? 'memory' : 'memories'}
           </p>

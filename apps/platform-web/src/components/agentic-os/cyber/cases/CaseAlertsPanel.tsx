@@ -60,13 +60,13 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {linkedAlerts.length} alert{linkedAlerts.length === 1 ? '' : 's'} linked
         </p>
         <button
           type="button"
           onClick={() => setShowAttach(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           Attach alert
@@ -74,7 +74,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
       </div>
 
       {linkedAlerts.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-6 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
           No alerts linked yet. Attach existing alerts to keep this case grounded
           in the raw detections.
         </p>
@@ -83,7 +83,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
           {linkedAlerts.map((a) => (
             <li
               key={a.id}
-              className="flex items-start justify-between gap-3 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+              className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-surface-2 p-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -96,7 +96,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
                   </span>
                   <span className="text-sm text-white truncate">{a.title}</span>
                 </div>
-                <p className="text-[11px] text-[#94a3b8]">
+                <p className="text-[11px] text-text-secondary">
                   {new Date(a.occurredAt).toLocaleString()}
                 </p>
               </div>
@@ -104,7 +104,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
                 type="button"
                 onClick={() => detach(a.id)}
                 disabled={busy === a.id}
-                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-[#2a2d3e] text-[#94a3b8] hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
+                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
                 aria-label="Detach alert"
               >
                 <Link2Off className="w-3.5 h-3.5" />

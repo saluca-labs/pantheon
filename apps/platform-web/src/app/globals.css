@@ -1,30 +1,182 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ *
+ * Pantheon design tokens
+ *
+ * Source-of-truth for every color/space/type primitive used across
+ * `apps/platform-web`. Documented in `_design/tokens.md` (semantic
+ * mapping) and `_design/visual-language.md` (do/don't rules).
+ *
+ * Aesthetic anchor: Linear-base + per-OS accents.
+ *   - Refined dark, 4-step surface ladder
+ *   - Restrained accent (one system indigo + per-OS tints)
+ *   - 4 semantic status colors (positive/warning/attention/danger)
+ *   - Comfortable density, modular 1.20 type scale
+ *
+ * Theme: dark-only (light mode deferred per decision 5.7).
+ *
+ * IMPORTANT: do not introduce new gray-blue or accent shades here
+ * without first updating tokens.md. Wave B/C/D primitives are
+ * contracted to consume these tokens, not raw hex.
+ * ------------------------------------------------------------------ */
+
 :root {
-  --background: #0f1117;
-  --foreground: #e2e8f0;
-  --surface: #1a1d27;
-  --border: #2a2d3e;
-  --muted: #94a3b8;
-  --accent: #4361EE;
-  --green: #00B894;
-  --amber: #FDCB6E;
-  --red: #E17055;
-  --navy: #1A1A2E;
+  /* Surface ladder (4 steps, dark-only) */
+  --surface-0: #0b0d12;
+  --surface-1: #13151c;
+  --surface-2: #1a1d27;
+  --surface-3: #1f2230;
+
+  /* Borders (2 weights) */
+  --border-subtle: #23263a;
+  --border-strong: #363b54;
+
+  /* Text hierarchy (3 weights) */
+  --text-primary: #f1f3f9;
+  --text-secondary: #a4acbf;
+  --text-tertiary: #6c7589;
+
+  /* System accent */
+  --accent-base: #5b6cff;
+  --accent-soft: #3a4699;
+
+  /* Semantic status */
+  --positive: #34d399;
+  --warning: #fbbf24;
+  --attention: #fb923c;
+  --danger: #f87171;
+
+  /* Per-OS accents (one per registry slug) */
+  --os-health: #34d399;          /* emerald-400 */
+  --os-maker: #fbbf24;           /* amber-400 */
+  --os-research: #38bdf8;        /* sky-400 */
+  --os-secure-dev: #a78bfa;      /* violet-400 */
+  --os-filmmaker: #fb7185;       /* rose-400 */
+  --os-cyber: #f87171;           /* red-400 */
+  --os-autobiographer: #818cf8;  /* indigo-400 */
+  --os-business: #2dd4bf;        /* teal-400 */
+  --os-creator: #e879f9;         /* fuchsia-400 */
+
+  /* Legacy aliases — kept so any stragglers using `var(--background)`
+   * etc. don't break mid-migration. Remove in Wave E coherence pass. */
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
+  --surface: var(--surface-2);
+  --border: var(--border-subtle);
+  --muted: var(--text-secondary);
+  --accent: var(--accent-base);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
+  /* Map :root vars to Tailwind 4 token utilities. Each `--color-<name>`
+   * declaration here generates `bg-<name>` / `text-<name>` / `border-<name>`
+   * utility classes automatically. */
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-accent: var(--accent-base);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+  --color-attention: var(--attention);
+  --color-danger: var(--danger);
+
+  --color-os-health: var(--os-health);
+  --color-os-maker: var(--os-maker);
+  --color-os-research: var(--os-research);
+  --color-os-secure-dev: var(--os-secure-dev);
+  --color-os-filmmaker: var(--os-filmmaker);
+  --color-os-cyber: var(--os-cyber);
+  --color-os-autobiographer: var(--os-autobiographer);
+  --color-os-business: var(--os-business);
+  --color-os-creator: var(--os-creator);
+
+  /* Legacy aliases (preserved during migration). Wave E removes. */
+  --color-background: var(--surface-0);
+  --color-foreground: var(--text-primary);
+  --color-surface: var(--surface-2);
+  --color-border: var(--border-subtle);
+  --color-muted: var(--text-secondary);
+
+  /* Type scale — modular 1.20 ratio (minor third). Tighter than Tailwind's
+   * default to suit dashboard density. */
+  --text-2xs: 0.625rem;        /* 10px */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;          /* 12px */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.875rem;         /* 14px */
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1rem;           /* 16px */
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;         /* 18px */
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;          /* 20px */
+  --text-xl--line-height: 1.625rem;
+  --text-2xl: 1.5rem;          /* 24px */
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 1.875rem;        /* 30px */
+  --text-3xl--line-height: 2.125rem;
+  --text-4xl: 2.25rem;         /* 36px */
+  --text-4xl--line-height: 2.5rem;
+
+  /* Radius scale — Linear-ish soft corners. */
+  --radius-sm: 0.375rem;       /* 6px  — pills, badges */
+  --radius-md: 0.5rem;         /* 8px  — buttons, inputs */
+  --radius-lg: 0.625rem;       /* 10px — icon tiles, nav items */
+  --radius-xl: 0.875rem;       /* 14px — cards (default) */
+  --radius-2xl: 1.25rem;       /* 20px — hero surfaces, dialogs */
+
+  /* Fonts (mapped to Geist via next/font in app/layout.tsx) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Comfortable-density rhythm: nudge body to slightly more relaxed line-height
+ * than Tailwind 4 default. Headings retain tight leading via the scale above. */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom utility: 220ms transition for hover lifts and stage swaps. */
+@utility transition-slow {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 220ms;
+}
+
+/* Custom utility: subtle elevated card hover lift used by Wave B hub widgets.
+ * Pure CSS, no motion library per decision 5.3. */
+@utility hover-lift {
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Focus ring polish — accent-based, accessible, dark-theme calibrated. */
+*:focus-visible {
+  outline: 2px solid var(--accent-base);
+  outline-offset: 2px;
+}
+
+/* Selection — accent-tinted for brand consistency. */
+::selection {
+  background: color-mix(in srgb, var(--accent-base) 30%, transparent);
+  color: var(--text-primary);
 }

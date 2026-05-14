@@ -46,7 +46,7 @@ export function ChapterList({
 
   if (initial.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center text-sm text-[#94a3b8]">
+      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
         No chapters yet. Open a book and create one from the book detail page.
       </div>
     );
@@ -64,8 +64,8 @@ export function ChapterList({
             onClick={() => setBookFilter(null)}
             className={`px-2 py-1 rounded border transition ${
               bookFilter === null
-                ? 'bg-[#4361EE] border-[#4361EE] text-white'
-                : 'bg-[#0f1117] border-[#2a2d3e] text-[#cbd5e1] hover:border-[#4361EE]/40'
+                ? 'bg-accent border-accent text-white'
+                : 'bg-surface-0 border-border-subtle text-text-primary hover:border-accent/40'
             }`}
           >
             All
@@ -77,8 +77,8 @@ export function ChapterList({
               onClick={() => setBookFilter(b.id)}
               className={`px-2 py-1 rounded border transition ${
                 bookFilter === b.id
-                  ? 'bg-[#4361EE] border-[#4361EE] text-white'
-                  : 'bg-[#0f1117] border-[#2a2d3e] text-[#cbd5e1] hover:border-[#4361EE]/40'
+                  ? 'bg-accent border-accent text-white'
+                  : 'bg-surface-0 border-border-subtle text-text-primary hover:border-accent/40'
               }`}
             >
               {b.title}
@@ -88,7 +88,7 @@ export function ChapterList({
       ) : null}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-5 text-sm text-[#94a3b8] text-center">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-5 text-sm text-text-secondary text-center">
           No chapters match this filter.
         </div>
       ) : (

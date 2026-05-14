@@ -34,35 +34,35 @@ export function PersonDetailShell({ person, organization, initialInteractions }:
   return (
     <div className="space-y-6">
       {/* Meta card */}
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-2">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-2">
         <h1 className="text-xl font-semibold text-white">{fullName(person)}</h1>
-        {person.role && <p className="text-sm text-[#94a3b8]">{person.role}</p>}
+        {person.role && <p className="text-sm text-text-secondary">{person.role}</p>}
         {organization && (
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             <span className="text-white">{organization.name}</span>
           </p>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs">
           {person.email && (
             <div>
-              <span className="text-[#94a3b8] uppercase tracking-wide mr-1.5">Email</span>
+              <span className="text-text-secondary uppercase tracking-wide mr-1.5">Email</span>
               <span className="text-white">{person.email}</span>
             </div>
           )}
           {person.phone && (
             <div>
-              <span className="text-[#94a3b8] uppercase tracking-wide mr-1.5">Phone</span>
+              <span className="text-text-secondary uppercase tracking-wide mr-1.5">Phone</span>
               <span className="text-white">{person.phone}</span>
             </div>
           )}
           {person.address && (
             <div className="sm:col-span-2">
-              <span className="text-[#94a3b8] uppercase tracking-wide mr-1.5">Address</span>
+              <span className="text-text-secondary uppercase tracking-wide mr-1.5">Address</span>
               <span className="text-white">{person.address}</span>
             </div>
           )}
           <div>
-            <span className="text-[#94a3b8] uppercase tracking-wide mr-1.5">Stage / Tier</span>
+            <span className="text-text-secondary uppercase tracking-wide mr-1.5">Stage / Tier</span>
             <span className="text-white">{person.stage}</span>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function PersonDetailShell({ person, organization, initialInteractions }:
 
       {/* Description (markdown — no rehype-raw) */}
       {person.descriptionMd && person.descriptionMd.trim() !== '' && (
-        <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <h2 className="text-sm font-semibold text-white mb-3">Description</h2>
           <div className="prose prose-invert prose-sm max-w-none">
             <ReactMarkdown>{person.descriptionMd}</ReactMarkdown>

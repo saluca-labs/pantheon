@@ -64,23 +64,23 @@ export default async function VoiceStudioPage() {
     <div className="max-w-4xl space-y-6">
       <Link
         href="/dashboard/os/autobiographer"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Autobiographer OS
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-[#0f1117] p-2.5 border border-[#2a2d3e]">
-            <Mic2 className="w-6 h-6 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2.5 border border-border-subtle">
+            <Mic2 className="w-6 h-6 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-3 mb-1">
               <h1 className="text-xl font-semibold text-white">Voice Studio</h1>
               <VoiceSampleActions />
             </div>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
+            <p className="text-sm text-text-secondary leading-relaxed">
               Curate the prose that sounds like you, then build a versioned
               voice profile the Phase 7 chapter drafter will consume. Samples
               can be backed by an existing memory or freshly typed.
@@ -106,7 +106,7 @@ export default async function VoiceStudioPage() {
         <VoiceSampleList initial={sampleCards} />
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-3">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 className="text-base font-semibold text-white">Voice profile</h2>
           <VoiceBuildProfileButton activeSampleCount={activeSampleCount} />
@@ -123,7 +123,7 @@ export default async function VoiceStudioPage() {
       <section>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">Profile versions</h2>
-          <span className="text-xs text-[#94a3b8]">
+          <span className="text-xs text-text-secondary">
             {profiles.length}{' '}
             {profiles.length === 1 ? 'version' : 'versions'}
           </span>

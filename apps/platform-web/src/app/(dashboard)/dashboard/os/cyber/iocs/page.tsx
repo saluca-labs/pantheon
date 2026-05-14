@@ -21,16 +21,16 @@ export default async function CyberIocsPage() {
     <div className="max-w-6xl">
       <Link
         href="/dashboard/os/cyber"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to CyberSec OS
       </Link>
       <div className="flex items-center gap-3 mb-6">
-        <Globe className="w-6 h-6 text-[#4361EE]" />
+        <Globe className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">IOCs</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Indicator-of-compromise catalogue — IPs, domains, file hashes, URLs,
         and more. Each IOC carries a per-kind regex validation, confidence,
         and optional expiry; trends matches them against incoming alerts.

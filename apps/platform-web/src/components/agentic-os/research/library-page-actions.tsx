@@ -26,7 +26,7 @@ export function LibraryPageActions({ initialShowNew = false }: Props) {
         <button
           type="button"
           onClick={() => setShowNew(true)}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/85"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/85"
           data-testid="library-add-paper-toggle"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -34,7 +34,7 @@ export function LibraryPageActions({ initialShowNew = false }: Props) {
         </button>
       ) : (
         <div
-          className="rounded-xl border border-[#4361EE]/40 bg-[#1a1d27] p-4"
+          className="rounded-xl border border-accent/40 bg-surface-2 p-4"
           data-testid="library-add-paper-form"
         >
           <div className="flex items-center justify-between gap-3 mb-3">
@@ -44,7 +44,7 @@ export function LibraryPageActions({ initialShowNew = false }: Props) {
             <button
               type="button"
               onClick={() => setShowNew(false)}
-              className="text-[#94a3b8] hover:text-white"
+              className="text-text-secondary hover:text-white"
               aria-label="Close form"
             >
               <X className="w-4 h-4" />

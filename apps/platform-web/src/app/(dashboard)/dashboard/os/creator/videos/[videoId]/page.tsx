@@ -53,20 +53,20 @@ export default async function CreatorVideoDetailPage({ params }: Props) {
       <VideoPlayer src={video.url} title={video.title} />
 
       {/* Metadata */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-lg border border-border-subtle bg-surface-2 p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-white mb-1">
               {video.title}
             </h1>
             {video.description && (
-              <p className="text-sm text-[#94a3b8] mb-4">{video.description}</p>
+              <p className="text-sm text-text-secondary mb-4">{video.description}</p>
             )}
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-[#64748b]">
               <span className="inline-flex items-center gap-1">
                 <span className="text-[#475569]">URL:</span>
-                <code className="text-[#94a3b8] font-mono max-w-[400px] truncate">
+                <code className="text-text-secondary font-mono max-w-[400px] truncate">
                   {video.url}
                 </code>
               </span>
@@ -100,7 +100,7 @@ export default async function CreatorVideoDetailPage({ params }: Props) {
       </div>
 
       {/* Edit form */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-6">
+      <div className="rounded-lg border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-sm font-semibold text-white mb-4">
           Edit Video Details
         </h2>

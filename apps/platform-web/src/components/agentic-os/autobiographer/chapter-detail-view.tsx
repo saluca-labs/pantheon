@@ -80,7 +80,7 @@ export function ChapterDetailView({
             readOnly={active.author === 'coach'}
           />
         ) : (
-          <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-sm text-[#94a3b8] text-center">
+          <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-sm text-text-secondary text-center">
             No revisions yet. Use the rail to create the first one — it will
             be authored by you and start at version 1.
           </div>

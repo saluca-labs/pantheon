@@ -101,26 +101,26 @@ export function CoachHub({ experimentId, initialMode, sessions }: Props) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-4">
-      <aside className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <aside className="rounded-xl border border-border-subtle bg-surface-2 p-4">
         <h2 className="text-sm font-semibold text-white mb-3">Recent sessions</h2>
         <CoachSessionList sessions={sessions} />
       </aside>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 space-y-4">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#4361EE]" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h2 className="text-base font-semibold text-white">
             Start a session
           </h2>
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
             Mode
           </p>
           <CoachModePicker value={mode} onChange={setMode} disabled={submitting} />
-          <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">
-            <span className="font-medium text-[#cbd5e1]">{COACH_MODE_LABELS[mode]}.</span>{' '}
+          <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+            <span className="font-medium text-text-primary">{COACH_MODE_LABELS[mode]}.</span>{' '}
             {COACH_MODE_DESCRIPTIONS[mode]}
           </p>
         </div>
@@ -134,7 +134,7 @@ export function CoachHub({ experimentId, initialMode, sessions }: Props) {
         )}
 
         <div>
-          <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
             Quick prompts
           </p>
           <CoachQuickPrompts
@@ -157,12 +157,12 @@ export function CoachHub({ experimentId, initialMode, sessions }: Props) {
             disabled={submitting || !canStart}
             placeholder="Or type your own…"
             rows={2}
-            className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#0f1117] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-[#4361EE] disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={submitting || !text.trim() || !canStart}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             Send

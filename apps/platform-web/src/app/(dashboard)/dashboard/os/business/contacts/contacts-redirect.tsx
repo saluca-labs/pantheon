@@ -20,7 +20,7 @@ export function ContactsRedirect() {
     return () => clearTimeout(t);
   }, [router]);
   return (
-    <p className="text-xs text-[#94a3b8]/70">
+    <p className="text-xs text-text-secondary/70">
       Redirecting to <span className="text-white">/dashboard/os/business</span>…
     </p>
   );

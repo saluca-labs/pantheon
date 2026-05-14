@@ -32,7 +32,7 @@ export function ExperimentPhaseProgress({ phaseProgress }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <span className="text-xs text-[#94a3b8]">
+        <span className="text-xs text-text-secondary">
           Overall progress: <span className="text-white font-medium">{avg}%</span>
         </span>
       </div>
@@ -40,18 +40,18 @@ export function ExperimentPhaseProgress({ phaseProgress }: Props) {
       {EXPERIMENT_PHASES.map((key) => {
         const pct = phaseProgress[key] ?? 0;
         return (
-          <div key={key} className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3">
+          <div key={key} className="rounded-lg border border-border-subtle bg-surface-2 p-3">
             <div className="flex items-center justify-between gap-3 mb-2">
               <span className="text-sm font-medium text-white">
                 {EXPERIMENT_PHASE_LABELS[key]}
               </span>
-              <span className="text-xs text-[#94a3b8]">
+              <span className="text-xs text-text-secondary">
                 <span className="text-white font-medium">{pct}</span>%
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-[#0f1117] overflow-hidden">
+            <div className="h-1.5 rounded-full bg-surface-0 overflow-hidden">
               <div
-                className="h-full bg-[#4361EE] transition-all"
+                className="h-full bg-accent transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -75,13 +75,13 @@ export function ExperimentPhaseProgressMini({
     <div className="grid grid-cols-5 gap-1">
       {EXPERIMENT_PHASES.map((key) => (
         <div key={key} className="flex flex-col items-center gap-1">
-          <div className="h-1 w-full rounded-full bg-[#0f1117] overflow-hidden">
+          <div className="h-1 w-full rounded-full bg-surface-0 overflow-hidden">
             <div
-              className="h-full bg-[#4361EE]"
+              className="h-full bg-accent"
               style={{ width: `${phaseProgress[key] ?? 0}%` }}
             />
           </div>
-          <span className="text-[9px] uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-[9px] uppercase tracking-wide text-text-secondary">
             {EXPERIMENT_PHASE_LABELS[key].slice(0, 4)}
           </span>
         </div>

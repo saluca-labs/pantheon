@@ -48,14 +48,14 @@ export default async function FilmmakerScreenplayPage({ params }: Props) {
     <div className="max-w-7xl">
       <Link
         href={`/dashboard/os/filmmaker/projects/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to project
       </Link>
 
       <div className="mb-4">
-        <p className="text-xs uppercase tracking-wide text-[#94a3b8]">Screenplay</p>
+        <p className="text-xs uppercase tracking-wide text-text-secondary">Screenplay</p>
         <h1 className="text-2xl font-semibold text-white">{project.name}</h1>
       </div>
 

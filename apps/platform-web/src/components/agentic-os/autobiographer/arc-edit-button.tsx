@@ -25,7 +25,7 @@ export function ArcEditButton({ arcId, initial }: ArcEditButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white transition"
         title="Edit arc"
       >
         <Pencil className="w-3 h-3" />

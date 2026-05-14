@@ -20,7 +20,7 @@ export function PersonRow({ person, orgName }: Props) {
   return (
     <Link
       href={`/dashboard/os/business/people/${person.id}`}
-      className="block rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3 hover:border-[#4361EE] transition"
+      className="block rounded-lg border border-border-subtle bg-surface-2 p-3 hover:border-accent transition"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -31,10 +31,10 @@ export function PersonRow({ person, orgName }: Props) {
             )}
           </p>
           {person.role && (
-            <p className="text-xs text-[#94a3b8] truncate">{person.role}</p>
+            <p className="text-xs text-text-secondary truncate">{person.role}</p>
           )}
           {orgName && (
-            <p className="text-[11px] text-[#94a3b8]/80 truncate">{orgName}</p>
+            <p className="text-[11px] text-text-secondary/80 truncate">{orgName}</p>
           )}
         </div>
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-slate-500/15 text-slate-300 border-slate-500/30">

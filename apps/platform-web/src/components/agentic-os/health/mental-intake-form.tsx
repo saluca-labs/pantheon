@@ -183,7 +183,7 @@ export function MentalIntakeForm({ initial, onSaved }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
         >
           {saving ? 'Saving…' : 'Save mental-health profile'}
         </button>
@@ -195,7 +195,7 @@ export function MentalIntakeForm({ initial, onSaved }: Props) {
 }
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 function Field({
   label,
@@ -208,12 +208,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {label}
       </span>
       {children}
       {hint && (
-        <span className="block text-[11px] text-[#94a3b8]/80 mt-1.5 leading-relaxed">
+        <span className="block text-[11px] text-text-secondary/80 mt-1.5 leading-relaxed">
           {hint}
         </span>
       )}
@@ -236,9 +236,9 @@ function CheckboxField({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-[#2a2d3e] bg-[#0f1117] text-[#4361EE] focus:ring-[#4361EE]"
+        className="mt-0.5 h-4 w-4 rounded border-border-subtle bg-surface-0 text-accent focus:ring-accent"
       />
-      <span className="text-sm text-[#cbd5e1]">{label}</span>
+      <span className="text-sm text-text-primary">{label}</span>
     </label>
   );
 }

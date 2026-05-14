@@ -72,7 +72,7 @@ export default async function MakerCatalogDetailPage({ params }: Props) {
         suppliers={suppliers}
         usage={usage}
       />
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 max-w-5xl">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 max-w-5xl">
         <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3">
           Spec sheets
         </h3>

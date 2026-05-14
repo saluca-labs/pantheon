@@ -19,14 +19,14 @@ export function TrendsDashboard({ trends }: { trends: TrendsPayload }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           Rolling 30-day trends across alerts, vulnerabilities, exposures, and
           IOC hits. Export the current exposure snapshot as PDF for
           stakeholders.
         </p>
         <a
           href="/api/tiresias/agentic-os/cyber/exports/exposure-report.pdf"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
         >
           <Download className="w-4 h-4" />
           Export exposure report PDF
@@ -49,7 +49,7 @@ export function TrendsDashboard({ trends }: { trends: TrendsPayload }) {
 
       <section>
         <h2 className="text-sm font-semibold text-white mb-3">Alert volume (30d)</h2>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
           <AlertVolumeChart alertsByDay={trends.alertsByDay} />
         </div>
       </section>
@@ -65,7 +65,7 @@ export function TrendsDashboard({ trends }: { trends: TrendsPayload }) {
       <section>
         <h2 className="text-sm font-semibold text-white mb-3">Top vulnerable assets</h2>
         <TopVulnerableAssetsTable rows={trends.topVulnerableAssets} />
-        <p className="mt-2 text-xs text-[#94a3b8]">
+        <p className="mt-2 text-xs text-text-secondary">
           <Link href="/dashboard/os/cyber/exposures" className="hover:text-white">
             See all exposures →
           </Link>

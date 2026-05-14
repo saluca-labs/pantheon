@@ -161,13 +161,13 @@ export default function SignaturePanel({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-[#4361EE] focus:outline-none';
-  const labelClass = 'block text-xs text-[#94a3b8] mb-1';
+    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+  const labelClass = 'block text-xs text-text-secondary mb-1';
 
   if (doc.status !== 'sent') {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
-        <p className="text-sm text-[#94a3b8] text-center">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
+        <p className="text-sm text-text-secondary text-center">
           {doc.status === 'draft'
             ? 'Send this document to enable signature capture.'
             : doc.status === 'signed'
@@ -217,7 +217,7 @@ export default function SignaturePanel({
           ref={canvasRef}
           width={400}
           height={120}
-          className="w-full max-w-[400px] h-[120px] rounded-lg border border-[#2a2d3e] bg-[#0f1117] cursor-crosshair"
+          className="w-full max-w-[400px] h-[120px] rounded-lg border border-border-subtle bg-surface-0 cursor-crosshair"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -238,7 +238,7 @@ export default function SignaturePanel({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
+        className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
       >
         {loading ? 'Capturing...' : 'Capture Signature'}
       </button>

@@ -48,7 +48,7 @@ export default async function MakerToolDetailPage({ params }: Props) {
     <div className="max-w-5xl space-y-6">
       <Link
         href="/dashboard/os/maker/tools"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to tools
@@ -61,7 +61,7 @@ export default async function MakerToolDetailPage({ params }: Props) {
         projectsUsing={projectsUsing}
       />
 
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
         <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3">
           Spec sheets
         </h3>

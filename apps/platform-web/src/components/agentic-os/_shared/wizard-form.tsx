@@ -70,10 +70,10 @@ export function WizardForm({
           const isActive = step.id === active.id;
           const isPast = idx < activeIndex;
           const cls = isActive
-            ? 'rounded-md border border-[#4361EE]/60 bg-[#4361EE]/15 text-white'
+            ? 'rounded-md border border-accent/60 bg-accent/15 text-white'
             : isPast
               ? 'rounded-md border border-emerald-500/40 bg-emerald-500/5 text-emerald-200'
-              : 'rounded-md border border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white hover:border-[#4361EE]/40';
+              : 'rounded-md border border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/40';
           return (
             <Link
               key={step.id}
@@ -93,7 +93,7 @@ export function WizardForm({
         {activeIndex > 0 ? (
           <Link
             href={hrefFor(steps[activeIndex - 1]!.id)}
-            className="text-[#94a3b8] hover:text-white transition"
+            className="text-text-secondary hover:text-white transition"
           >
             ← {steps[activeIndex - 1]!.label}
           </Link>
@@ -103,7 +103,7 @@ export function WizardForm({
         {activeIndex < steps.length - 1 ? (
           <Link
             href={hrefFor(steps[activeIndex + 1]!.id)}
-            className="text-[#4361EE] hover:text-[#5d7aff] transition font-medium"
+            className="text-accent hover:text-[#5d7aff] transition font-medium"
           >
             {steps[activeIndex + 1]!.label} →
           </Link>

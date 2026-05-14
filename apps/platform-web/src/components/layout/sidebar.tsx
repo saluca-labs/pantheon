@@ -104,16 +104,16 @@ function NavLink({ item, isActive, onClick }: NavLinkProps) {
       aria-current={isActive ? 'page' : undefined}
       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
         isActive
-          ? 'bg-[#4361EE]/10 text-[#4361EE] font-medium'
+          ? 'bg-accent/10 text-accent font-medium'
           : item.enabled
-          ? 'text-[#94a3b8] hover:text-white hover:bg-[#2a2d3e]'
-          : 'text-[#94a3b8]/40 cursor-not-allowed'
+          ? 'text-text-secondary hover:text-white hover:bg-border-subtle'
+          : 'text-text-secondary/40 cursor-not-allowed'
       }`}
     >
       <Icon className="w-4 h-4 shrink-0" />
       <span className="flex-1 truncate">{item.label}</span>
       {item.badge && (
-        <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#2a2d3e] text-[#94a3b8] border border-[#2a2d3e]">
+        <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-border-subtle text-text-secondary border border-border-subtle">
           {item.badge}
         </span>
       )}
@@ -141,7 +141,7 @@ export function NavGroup({ title, icon: Icon, items, pathname, defaultOpen = tru
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-wider text-[#94a3b8]/70 hover:text-white"
+        className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] uppercase tracking-wider text-text-secondary/70 hover:text-white"
       >
         {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         <Icon className="w-3.5 h-3.5" />
@@ -173,8 +173,8 @@ export function Sidebar({ enabledSlugs }: SidebarProps = {}) {
   const agenticItems = agenticOsNavItems(enabledSlugs);
 
   return (
-    <aside className="hidden md:flex w-60 flex-col bg-[#1a1d27] border-r border-[#2a2d3e] h-screen sticky top-0">
-      <div className="p-4 border-b border-[#2a2d3e]">
+    <aside className="hidden md:flex w-60 flex-col bg-surface-2 border-r border-border-subtle h-screen sticky top-0">
+      <div className="p-4 border-b border-border-subtle">
         <Logo />
       </div>
 
@@ -198,7 +198,7 @@ export function Sidebar({ enabledSlugs }: SidebarProps = {}) {
         />
       </nav>
 
-      <div className="p-4 border-t border-[#2a2d3e] text-xs text-[#94a3b8]">
+      <div className="p-4 border-t border-border-subtle text-xs text-text-secondary">
         Governance-First AI-Security&trade;
       </div>
     </aside>

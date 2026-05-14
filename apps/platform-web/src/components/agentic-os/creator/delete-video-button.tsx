@@ -54,7 +54,7 @@ export function DeleteVideoButton({ videoId }: DeleteVideoButtonProps) {
           type="button"
           onClick={() => setConfirming(false)}
           disabled={deleting}
-          className="px-3 py-1.5 rounded-lg border border-[#2a2d3e] text-[#94a3b8] text-xs font-medium hover:text-white transition-colors"
+          className="px-3 py-1.5 rounded-lg border border-border-subtle text-text-secondary text-xs font-medium hover:text-white transition-colors"
         >
           Cancel
         </button>

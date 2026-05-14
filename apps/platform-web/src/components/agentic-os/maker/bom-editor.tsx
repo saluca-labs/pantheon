@@ -29,7 +29,7 @@ import { formatPrice } from '@/lib/agentic-os/maker/suppliers';
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   projectId: string;
@@ -144,11 +144,11 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
         <div className="space-y-0.5">
           <Link
             href={`/dashboard/os/maker/catalog/${row.catalog.id}`}
-            className="text-white hover:text-[#4361EE] transition font-medium"
+            className="text-white hover:text-accent transition font-medium"
           >
             {row.catalog.name}
           </Link>
-          <div className="text-[10px] text-[#94a3b8] uppercase tracking-wide">
+          <div className="text-[10px] text-text-secondary uppercase tracking-wide">
             {row.catalog.category}
             {row.variant ? ` · ${row.variant.variantLabel}` : ''}
           </div>
@@ -214,7 +214,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
         <button
           type="button"
           onClick={() => void removeLine(row.line)}
-          className="text-xs text-[#94a3b8] hover:text-red-300 transition"
+          className="text-xs text-text-secondary hover:text-red-300 transition"
           aria-label="Remove BOM line"
         >
           Remove
@@ -227,8 +227,8 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
     <div className="space-y-5">
       {/* Totals */}
       <div className="flex flex-wrap gap-4 text-sm">
-        <span className="text-[#94a3b8]">{summary.linesCount} lines</span>
-        <span className="text-[#cbd5e1]">
+        <span className="text-text-secondary">{summary.linesCount} lines</span>
+        <span className="text-text-primary">
           Total: {formatPrice(summary.totalEstCostCents, summary.currency)}
         </span>
         {summary.totalDeficit > 0 && (
@@ -244,7 +244,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
       </div>
 
       {/* Lines */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <div className="rounded-lg border border-border-subtle bg-surface-2 p-4">
         <DataTable
           rows={summary.rows}
           columns={columns}
@@ -256,15 +256,15 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
       {/* Add line */}
       <form
         onSubmit={addLine}
-        className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-3"
+        className="rounded-lg border border-border-subtle bg-surface-0 p-4 space-y-3"
       >
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
           Add line
         </h4>
         {catalog.length === 0 ? (
-          <div className="text-sm text-[#94a3b8]">
+          <div className="text-sm text-text-secondary">
             No catalog rows yet.{' '}
-            <Link href="/dashboard/os/maker/catalog" className="text-[#4361EE] hover:underline">
+            <Link href="/dashboard/os/maker/catalog" className="text-accent hover:underline">
               Create one in the catalog
             </Link>
             , then come back here.
@@ -273,7 +273,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <label className="block sm:col-span-2">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                   Catalog row
                 </span>
                 <select
@@ -292,7 +292,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
                 </select>
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                   Quantity
                 </span>
                 <input
@@ -308,7 +308,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
                 />
               </label>
               <label className="block">
-                <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+                <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                   Priority
                 </span>
                 <select
@@ -327,7 +327,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
               </label>
             </div>
             <label className="block">
-              <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+              <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                 Notes (optional)
               </span>
               <input
@@ -341,14 +341,14 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
               <button
                 type="submit"
                 disabled={adding || !newLine.partCatalogId}
-                className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+                className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
               >
                 {adding ? 'Adding…' : 'Add line'}
               </button>
               <button
                 type="button"
                 onClick={() => void refreshCatalog()}
-                className="text-xs text-[#94a3b8] hover:text-white transition"
+                className="text-xs text-text-secondary hover:text-white transition"
               >
                 Refresh catalog
               </button>

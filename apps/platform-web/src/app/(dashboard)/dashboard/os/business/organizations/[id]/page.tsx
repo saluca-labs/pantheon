@@ -44,14 +44,14 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/organizations"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Organizations
       </Link>
 
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const icons: Record<Tab, React.ReactNode> = {
             overview: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
@@ -64,8 +64,8 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
               href={tab === 'overview' ? '?' : `?tab=${tab}`}
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white hover:border-[#2a2d3e]'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white hover:border-border-subtle'
               }`}
             >
               {icons[tab]}
@@ -95,9 +95,9 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
 
       {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
       {activeTab === 'quotes' && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
           <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm">
+          <p className="text-text-secondary text-sm">
             Quotes and invoices are per-contact. Open a contact to see their billing history.
           </p>
         </div>
@@ -105,9 +105,9 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
 
       {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
           <Receipt className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm">
+          <p className="text-text-secondary text-sm">
             Quotes and invoices are per-contact. Open a contact to see their billing history.
           </p>
         </div>

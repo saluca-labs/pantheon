@@ -106,13 +106,13 @@ export function CaseDetailWorkspace({
     <div className="max-w-5xl space-y-6">
       <Link
         href="/dashboard/os/cyber/cases"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to cases
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 space-y-3">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -141,7 +141,7 @@ export function CaseDetailWorkspace({
                 {caseDetail.priority}
               </span>
             </div>
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               {caseDetail.assignedTo ? `Assigned to ${caseDetail.assignedTo}` : 'Unassigned'}
               {caseDetail.tactic && ` · ${caseDetail.tactic}`}
               {caseDetail.technique && ` · ${caseDetail.technique}`}
@@ -151,7 +151,7 @@ export function CaseDetailWorkspace({
             <button
               type="button"
               onClick={() => setEditing((e) => !e)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-[#cbd5e1] hover:text-white hover:border-[#4361EE]/60 px-3 py-1.5 text-sm transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-text-primary hover:text-white hover:border-accent/60 px-3 py-1.5 text-sm transition"
             >
               <Pencil className="w-4 h-4" />
               {editing ? 'Close' : 'Edit'}
@@ -160,7 +160,7 @@ export function CaseDetailWorkspace({
               type="button"
               onClick={remove}
               disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-red-300 hover:text-red-200 hover:border-red-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-red-300 hover:text-red-200 hover:border-red-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
             >
               <Trash2 className="w-4 h-4" />
               Delete
@@ -177,7 +177,7 @@ export function CaseDetailWorkspace({
         )}
       </header>
 
-      <nav className="flex flex-wrap gap-1 border-b border-[#2a2d3e]">
+      <nav className="flex flex-wrap gap-1 border-b border-border-subtle">
         <TabBtn current={tab} value="overview" onClick={() => setTab('overview')}>
           <Layers className="w-4 h-4" /> Overview
         </TabBtn>
@@ -235,8 +235,8 @@ function TabBtn({
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 px-3 py-2 -mb-px border-b-2 text-sm transition ${
         active
-          ? 'border-[#4361EE] text-white'
-          : 'border-transparent text-[#94a3b8] hover:text-white'
+          ? 'border-accent text-white'
+          : 'border-transparent text-text-secondary hover:text-white'
       }`}
     >
       {children}
@@ -248,14 +248,14 @@ function OverviewPanel({ caseDetail }: { caseDetail: CaseDetail }) {
   return (
     <div className="space-y-4">
       {caseDetail.summary && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <h2 className="text-base font-semibold text-white mb-2">Summary</h2>
-          <p className="text-sm text-[#cbd5e1] whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">
             {caseDetail.summary}
           </p>
         </div>
       )}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <h2 className="text-base font-semibold text-white mb-3">Metadata</h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <Row label="MITRE tactic" value={caseDetail.tactic} />
@@ -274,14 +274,14 @@ function OverviewPanel({ caseDetail }: { caseDetail: CaseDetail }) {
         </dl>
         {caseDetail.tags.length > 0 && (
           <div className="mt-3">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Tags
             </span>
             <div className="flex flex-wrap gap-1">
               {caseDetail.tags.map((t) => (
                 <span
                   key={t}
-                  className="text-xs px-2 py-0.5 rounded border border-[#2a2d3e] text-[#cbd5e1]"
+                  className="text-xs px-2 py-0.5 rounded border border-border-subtle text-text-primary"
                 >
                   {t}
                 </span>
@@ -297,7 +297,7 @@ function OverviewPanel({ caseDetail }: { caseDetail: CaseDetail }) {
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-[#94a3b8] mb-0.5">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-text-secondary mb-0.5">{label}</dt>
       <dd className="text-white">{value ?? '—'}</dd>
     </div>
   );

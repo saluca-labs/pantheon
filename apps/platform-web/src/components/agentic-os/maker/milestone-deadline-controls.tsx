@@ -33,17 +33,17 @@ import {
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'rounded-md border border-[#2a2d3e] bg-[#0f1117] px-2 py-1 text-xs text-white focus:border-[#4361EE] focus:outline-none';
+  'rounded-md border border-border-subtle bg-surface-0 px-2 py-1 text-xs text-white focus:border-accent focus:outline-none';
 
 const PRIORITY_STYLE: Record<MilestonePriority, string> = {
-  low: 'border-[#2a2d3e] text-[#94a3b8]',
-  medium: 'border-[#4361EE]/50 text-[#cbd5e1]',
+  low: 'border-border-subtle text-text-secondary',
+  medium: 'border-accent/50 text-text-primary',
   high: 'border-amber-500/50 text-amber-300',
   critical: 'border-red-500/50 text-red-300',
 };
 
 const STATUS_STYLE: Record<MilestoneStoredStatus, string> = {
-  pending: 'border-[#2a2d3e] text-[#94a3b8]',
+  pending: 'border-border-subtle text-text-secondary',
   at_risk: 'border-yellow-500/50 text-yellow-300',
   blocked: 'border-red-500/50 text-red-300',
   on_track: 'border-emerald-500/50 text-emerald-300',
@@ -89,7 +89,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-secondary">
           Due
           <input
             type="date"
@@ -100,7 +100,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
           />
         </label>
 
-        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-secondary">
           Priority
           <select
             value={milestone.priority}
@@ -116,7 +116,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
           </select>
         </label>
 
-        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-secondary">
           Status
           <select
             value={milestone.status}
@@ -132,7 +132,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
           </select>
         </label>
 
-        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-[#94a3b8]">
+        <label className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-secondary">
           <input
             type="checkbox"
             checked={milestone.isBlocker}
@@ -150,7 +150,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
         milestone.status === 'at_risk' ||
         milestone.status === 'missed') && (
         <div className="space-y-1">
-          <label className="text-[10px] uppercase tracking-wide text-[#94a3b8] inline-flex items-center gap-1">
+          <label className="text-[10px] uppercase tracking-wide text-text-secondary inline-flex items-center gap-1">
             <Flag className="w-3 h-3" />
             Blocked reason
           </label>

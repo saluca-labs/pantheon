@@ -97,7 +97,7 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/80 transition"
+        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 transition"
         data-testid="experiment-protocol-linker-toggle"
       >
         <Plus className="w-3 h-3" />
@@ -109,11 +109,11 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4 space-y-3"
       data-testid="experiment-protocol-linker"
     >
       <h3 className="text-sm font-semibold text-white">Pin a protocol</h3>
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Protocol
         <select
           value={protocolId}
@@ -123,7 +123,7 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
             if (p) setPinnedVersion(p.version);
           }}
           required
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
           data-testid="experiment-protocol-linker-protocol"
         >
           <option value="">{hydrating ? 'Loading…' : 'Select a protocol'}</option>
@@ -134,7 +134,7 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
           ))}
         </select>
       </label>
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Pinned version
         <input
           type="text"
@@ -142,21 +142,21 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
           onChange={(e) => setPinnedVersion(e.target.value)}
           placeholder={selected ? selected.version : 'e.g. 1.0'}
           maxLength={60}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
           data-testid="experiment-protocol-linker-version"
         />
         <span className="text-[10px] text-[#64748b]">
           Leave blank to pin the protocol's current version.
         </span>
       </label>
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Notes
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           maxLength={2000}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
         />
       </label>
       {err && <p className="text-xs text-rose-400">{err}</p>}
@@ -164,14 +164,14 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white transition"
+          className="text-xs px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white transition"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="experiment-protocol-linker-submit"
         >
           {busy && <Loader2 className="w-3 h-3 animate-spin" />}

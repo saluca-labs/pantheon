@@ -70,7 +70,7 @@ export default async function DashboardLayout({
           <Sidebar enabledSlugs={enabledSlugs} />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Topbar userEmail={result.user.email} displayName={result.user.displayName} />
-            <div className="md:hidden px-4 py-2 border-b border-[#2a2d3e] bg-[#1a1d27]">
+            <div className="md:hidden px-4 py-2 border-b border-border-subtle bg-surface-2">
               <MobileNav enabledSlugs={enabledSlugs} />
             </div>
             <main className="flex-1 overflow-y-auto p-6">

@@ -23,7 +23,7 @@ export default async function BusinessSettingsPage() {
     <div className="max-w-3xl">
       <Link
         href="/dashboard/os/business"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Business OS
@@ -33,7 +33,7 @@ export default async function BusinessSettingsPage() {
         <SettingsIcon className="w-6 h-6 text-teal-300" />
         <h1 className="text-2xl font-semibold text-white">Business settings</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Workshop-global settings used by future phases (invoice / quote
         rendering, PDF chrome, default currency, hourly rate).  Changes
         apply immediately to new documents.

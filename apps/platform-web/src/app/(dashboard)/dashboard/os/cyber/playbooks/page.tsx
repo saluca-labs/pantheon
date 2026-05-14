@@ -25,18 +25,18 @@ export default async function CyberPlaybooksPage() {
     <div className="max-w-6xl">
       <Link
         href="/dashboard/os/cyber"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to CyberSec OS
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <BookText className="w-6 h-6 text-[#4361EE]" />
+        <BookText className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Playbooks</h1>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Response playbooks. Each playbook is an orderable list of steps
         (checklist / input / decision / runbook step) that can be executed as a
         run with full per-step audit.

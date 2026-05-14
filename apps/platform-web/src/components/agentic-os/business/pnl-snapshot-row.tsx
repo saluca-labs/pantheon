@@ -65,13 +65,13 @@ export default function PnlSnapshotRow({ snapshot }: Props) {
   const isPositive = snapshot.marginCents >= 0;
 
   return (
-    <tr className="border-b border-[#2a2d3e] hover:bg-[#1a1d27]/50 transition-colors">
+    <tr className="border-b border-border-subtle hover:bg-surface-2/50 transition-colors">
       <td className="py-3 px-4">
         <span className="inline-flex items-center rounded-md border border-teal-800 bg-teal-900/30 px-2 py-0.5 text-[10px] font-medium text-teal-300">
           {snapshot.periodKind}
         </span>
       </td>
-      <td className="py-3 px-4 text-sm text-[#94a3b8]">
+      <td className="py-3 px-4 text-sm text-text-secondary">
         {snapshot.periodStart} — {snapshot.periodEnd}
       </td>
       <td className="py-3 px-4 text-sm font-mono text-white text-right">
@@ -106,7 +106,7 @@ export default function PnlSnapshotRow({ snapshot }: Props) {
           <button
             onClick={handleToggleLock}
             disabled={loading}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-[#2a2d3e] text-[#64748b] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
             title={snapshot.isLocked ? 'Unlock' : 'Lock'}
           >
             {snapshot.isLocked ? (

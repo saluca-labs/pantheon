@@ -84,10 +84,10 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
 
   return (
     <article
-      className={`rounded-xl border bg-[#1a1d27] p-4 space-y-3 ${
+      className={`rounded-xl border bg-surface-2 p-4 space-y-3 ${
         profile.isActive
           ? 'border-emerald-500/40 ring-1 ring-emerald-500/20'
-          : 'border-[#2a2d3e]'
+          : 'border-border-subtle'
       }`}
     >
       <header className="flex items-start justify-between gap-3">
@@ -103,7 +103,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-[#94a3b8]">
+          <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary">
             <span>{new Date(profile.builtAt).toLocaleString()}</span>
             <span>•</span>
             <span>{profile.sampleCount} samples</span>
@@ -139,7 +139,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
         </div>
       </header>
 
-      <p className="text-sm text-[#cbd5e1] leading-relaxed line-clamp-3 whitespace-pre-wrap">
+      <p className="text-sm text-text-primary leading-relaxed line-clamp-3 whitespace-pre-wrap">
         {profile.styleSummary}
       </p>
 

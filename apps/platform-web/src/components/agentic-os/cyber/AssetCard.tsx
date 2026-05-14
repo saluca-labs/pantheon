@@ -26,13 +26,13 @@ export function AssetCard({ asset }: { asset: Asset }) {
   return (
     <Link
       href={`/dashboard/os/cyber/assets/${asset.id}`}
-      className={`group rounded-xl border bg-[#1a1d27] p-4 transition hover:border-[#4361EE]/60 hover:bg-[#1f2230] ${
-        isDecommissioned ? 'border-[#2a2d3e]/60 opacity-70' : 'border-[#2a2d3e]'
+      className={`group rounded-xl border bg-surface-2 p-4 transition hover:border-accent/60 hover:bg-surface-3 ${
+        isDecommissioned ? 'border-border-subtle/60 opacity-70' : 'border-border-subtle'
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Server className="w-4 h-4 text-[#4361EE] shrink-0" />
+          <Server className="w-4 h-4 text-accent shrink-0" />
           <span className="text-sm font-medium text-white truncate">
             {asset.name}
           </span>
@@ -45,7 +45,7 @@ export function AssetCard({ asset }: { asset: Asset }) {
           {asset.criticality}
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#94a3b8]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
         <span>{kindLabel}</span>
         {asset.environment && <span>· {asset.environment}</span>}
         {asset.hostname && (
@@ -57,20 +57,20 @@ export function AssetCard({ asset }: { asset: Asset }) {
           {asset.tags.slice(0, 4).map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]"
+              className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary"
             >
               {t}
             </span>
           ))}
           {asset.tags.length > 4 && (
-            <span className="text-[10px] text-[#94a3b8]">
+            <span className="text-[10px] text-text-secondary">
               +{asset.tags.length - 4}
             </span>
           )}
         </div>
       )}
       {isDecommissioned && (
-        <p className="text-[10px] text-[#94a3b8] mt-2 italic">
+        <p className="text-[10px] text-text-secondary mt-2 italic">
           Decommissioned
         </p>
       )}

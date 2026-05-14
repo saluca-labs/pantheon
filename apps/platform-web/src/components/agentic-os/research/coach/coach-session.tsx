@@ -158,18 +158,18 @@ export function CoachSession({
                   }
                 }}
                 autoFocus
-                className="bg-transparent text-lg font-semibold text-white border-b border-[#4361EE] focus:outline-none px-1"
+                className="bg-transparent text-lg font-semibold text-white border-b border-accent focus:outline-none px-1"
               />
             ) : (
               <h2
                 onClick={() => setEditingTitle(true)}
-                className="text-lg font-semibold text-white cursor-text hover:text-[#cbd5e1] truncate"
+                className="text-lg font-semibold text-white cursor-text hover:text-text-primary truncate"
                 title="Click to rename"
               >
                 {title}
               </h2>
             )}
-            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#4361EE]/40 bg-[#4361EE]/10 text-[#cbd5e1] shrink-0">
+            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-accent/40 bg-accent/10 text-text-primary shrink-0">
               {COACH_MODE_LABELS[mode]}
             </span>
             {experimentId && (
@@ -181,7 +181,7 @@ export function CoachSession({
           <button
             type="button"
             onClick={deleteSession}
-            className="inline-flex items-center gap-1.5 text-xs text-[#94a3b8] hover:text-red-300 transition"
+            className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-red-300 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Delete
@@ -216,12 +216,12 @@ export function CoachSession({
                   void send();
                 }
               }}
-              className="flex-1 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-[#4361EE] disabled:opacity-50"
+              className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={streaming || !text.trim()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               Send

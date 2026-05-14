@@ -71,11 +71,11 @@ export function ReproducibilityItemForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-wrap items-end gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+      className="flex flex-wrap items-end gap-2 rounded-lg border border-border-subtle bg-surface-2 p-3"
       data-testid="repro-item-form"
     >
       <div className="space-y-1 flex-1 min-w-0">
-        <label className="text-xs uppercase tracking-wide text-[#94a3b8]">
+        <label className="text-xs uppercase tracking-wide text-text-secondary">
           New item_key
         </label>
         <input
@@ -84,13 +84,13 @@ export function ReproducibilityItemForm({
           onChange={(e) => setItemKey(e.target.value)}
           maxLength={60}
           placeholder="e.g. compute_environment_pinned"
-          className="w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-sm text-white font-mono"
+          className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white font-mono"
         />
       </div>
       <button
         type="submit"
         disabled={submitting || itemKey.length === 0}
-        className="rounded bg-[#4361EE] text-white text-sm font-medium px-3 py-1.5 disabled:opacity-50"
+        className="rounded bg-accent text-white text-sm font-medium px-3 py-1.5 disabled:opacity-50"
       >
         {submitting ? 'Adding…' : 'Add'}
       </button>
@@ -98,7 +98,7 @@ export function ReproducibilityItemForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white text-sm px-3 py-1.5"
+          className="rounded border border-border-subtle text-text-secondary hover:text-white text-sm px-3 py-1.5"
         >
           Cancel
         </button>

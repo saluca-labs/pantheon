@@ -12,7 +12,7 @@ import {
 const KIND_STYLE: Record<DependencyKind, string> = {
   feeds: 'border-sky-500/50 bg-sky-500/5 text-sky-300',
   blocks: 'border-red-500/50 bg-red-500/5 text-red-300',
-  informs: 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8]',
+  informs: 'border-border-subtle bg-surface-0 text-text-secondary',
   replicates: 'border-emerald-500/50 bg-emerald-500/5 text-emerald-300',
 };
 

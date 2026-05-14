@@ -38,16 +38,16 @@ export default async function FilmmakerCharacterListPage({ params }: Props) {
     <div className="max-w-6xl">
       <Link
         href={`/dashboard/os/filmmaker/projects/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to project
       </Link>
 
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-wide text-[#94a3b8]">Characters</p>
+        <p className="text-xs uppercase tracking-wide text-text-secondary">Characters</p>
         <h1 className="text-2xl font-semibold text-white">{project.name}</h1>
-        <p className="text-sm text-[#94a3b8] mt-1">
+        <p className="text-sm text-text-secondary mt-1">
           Character sheets — identity, psychology, voice, and relationships.
         </p>
       </div>

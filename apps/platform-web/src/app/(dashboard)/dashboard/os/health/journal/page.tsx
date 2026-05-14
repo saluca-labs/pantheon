@@ -34,7 +34,7 @@ export default async function HealthJournalPage() {
       <div className="max-w-3xl">
         <Link
           href="/dashboard/os/health"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
@@ -68,7 +68,7 @@ export default async function HealthJournalPage() {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
@@ -76,12 +76,12 @@ export default async function HealthJournalPage() {
 
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="w-6 h-6 text-[#4361EE]" />
+          <BookOpen className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">Journal</h1>
         </div>
         <Link
           href="/dashboard/os/health/journal/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-2 transition"
         >
           <Plus className="w-4 h-4" />
           New entry
@@ -91,17 +91,17 @@ export default async function HealthJournalPage() {
       <CaveatBlock />
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,360px)] gap-4">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
           <h2 className="text-base font-semibold text-white mb-3">
             Recent entries
           </h2>
           {entries.length === 0 ? (
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               No entries yet. Pick a prompt or start from a blank page using
               the “New entry” button above.
             </p>
           ) : (
-            <ul className="divide-y divide-[#2a2d3e]">
+            <ul className="divide-y divide-border-subtle">
               {entries.map((e) => (
                 <li key={e.id} className="py-3">
                   <Link
@@ -109,19 +109,19 @@ export default async function HealthJournalPage() {
                     className="block group"
                   >
                     <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="text-sm font-medium text-white group-hover:text-[#4361EE] transition truncate">
+                      <h3 className="text-sm font-medium text-white group-hover:text-accent transition truncate">
                         {e.title || 'Untitled entry'}
                       </h3>
-                      <span className="text-xs text-[#94a3b8] shrink-0">
+                      <span className="text-xs text-text-secondary shrink-0">
                         {formatDate(e.entryAt)}
                       </span>
                     </div>
                     {e.prompt && (
-                      <div className="text-[10px] uppercase tracking-wide text-[#4361EE] mt-0.5">
+                      <div className="text-[10px] uppercase tracking-wide text-accent mt-0.5">
                         {e.prompt.category.replace(/-/g, ' ')}
                       </div>
                     )}
-                    <p className="text-xs text-[#94a3b8] mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-text-secondary mt-1 line-clamp-2 leading-relaxed">
                       {e.body}
                     </p>
                   </Link>
@@ -131,7 +131,7 @@ export default async function HealthJournalPage() {
           )}
         </div>
 
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <PromptPicker prompts={prompts} />
         </div>
       </div>

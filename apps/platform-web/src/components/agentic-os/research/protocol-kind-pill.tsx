@@ -16,7 +16,7 @@ const COLOR: Record<ProtocolKind, string> = {
   sop: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
   analysis: 'border-violet-500/40 text-violet-300 bg-violet-500/10',
   code_pipeline: 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10',
-  other: 'border-[#2a2d3e] text-[#94a3b8] bg-[#0f1117]',
+  other: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
 export function ProtocolKindPill({ kind }: { kind: ProtocolKind }) {
