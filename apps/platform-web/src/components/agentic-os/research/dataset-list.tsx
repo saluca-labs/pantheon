@@ -7,13 +7,14 @@
  */
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Database } from 'lucide-react';
 import type { Dataset } from '@/lib/agentic-os/research/datasets';
 import {
   DATASET_KINDS,
   DATASET_KIND_LABELS,
   type DatasetKind,
 } from '@/lib/agentic-os/research/dataset-kinds';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { DatasetCard } from './dataset-card';
 import { DatasetForm } from './dataset-form';
 
@@ -94,10 +95,18 @@ export function DatasetList({ experimentId, initialDatasets }: Props) {
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-text-secondary italic py-6 text-center" data-testid="dataset-list-empty">
-          No datasets attached yet. Click <strong>Add dataset</strong> to record a
-          URL + version + checksum.
-        </p>
+        <div data-testid="dataset-list-empty">
+          <EmptyState
+            icon={<Database className="h-6 w-6" />}
+            title="No datasets attached yet"
+            description="Per-experiment dataset pointers — URL, version, and checksum. The binary content is governed by the MCP storage-transfer contract."
+            primaryCta={{
+              label: 'Add dataset',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: () => setFormOpen(true),
+            }}
+          />
+        </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((d) => (

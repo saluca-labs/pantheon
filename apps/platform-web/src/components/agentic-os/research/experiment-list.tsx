@@ -11,13 +11,14 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, FlaskConical } from 'lucide-react';
 import {
   applyExperimentFilters,
   type SortKey,
   type StatusFilter,
 } from '@/lib/agentic-os/research/experiments';
 import type { ResearchExperiment } from '@/lib/agentic-os/research/repo';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import { ExperimentCard } from './experiment-card';
 import { ExperimentFilters } from './experiment-filters';
 import { ExperimentForm } from './experiment-form';
@@ -32,16 +33,23 @@ export function ExperimentList({
   const [sort, setSort] = useState<SortKey>('created');
   const [showArchived, setShowArchived] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState('');
 
-  const visible = useMemo(
-    () =>
-      applyExperimentFilters(experiments, {
-        status: statusFilter,
-        sort,
-        archived: showArchived,
-      }),
-    [experiments, statusFilter, sort, showArchived],
-  );
+  const visible = useMemo(() => {
+    const filtered = applyExperimentFilters(experiments, {
+      status: statusFilter,
+      sort,
+      archived: showArchived,
+    });
+    const q = query.trim().toLowerCase();
+    if (!q) return filtered;
+    return filtered.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        e.description.toLowerCase().includes(q) ||
+        e.tags.some((t) => t.toLowerCase().includes(q)),
+    );
+  }, [experiments, statusFilter, sort, showArchived, query]);
 
   function onCreated(e: ResearchExperiment) {
     setExperiments((prev) => [e, ...prev]);
@@ -69,14 +77,36 @@ export function ExperimentList({
         </button>
       </div>
 
+      <EntitySearch
+        placeholder="Search experiments by name, description, or tag"
+        debounceMs={0}
+        onQueryChange={setQuery}
+      />
+
       {visible.length === 0 ? (
-        <p className="text-sm text-text-secondary">
-          {experiments.length === 0
-            ? 'No experiments yet. Create your first experiment above.'
-            : showArchived
-              ? 'No archived experiments match the current filters.'
-              : 'No experiments match the current filters.'}
-        </p>
+        experiments.length === 0 ? (
+          <EmptyState
+            icon={<FlaskConical className="h-6 w-6" />}
+            title="No experiments yet"
+            description="Each experiment is a top-level project with its own lab notebook, hypotheses, literature, and 5-phase lifecycle."
+            primaryCta={{
+              label: 'New experiment',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: () => setCreating(true),
+            }}
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            icon={<FlaskConical className="h-6 w-6" />}
+            title={
+              showArchived
+                ? 'No archived experiments match'
+                : 'No experiments match'
+            }
+            description="Try clearing the search or adjusting the status filter."
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {visible.map((e) => (
