@@ -81,14 +81,8 @@ export function CoachHub({ initialMode, sessions }: Props) {
         const body = await streamRes.json().catch(() => ({}));
         throw new Error(body.message || body.error || `HTTP ${streamRes.status}`);
       }
-      if (streamRes.body) {
-        const reader = streamRes.body.getReader();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-      }
+      // Wave-0: JSON response now; drain to complete persistence.
+      await streamRes.json().catch(() => null);
       router.push(`/dashboard/os/creator/coach/${session.id}`);
     } catch (err) {
       setError((err as Error).message);

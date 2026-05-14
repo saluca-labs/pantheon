@@ -23,7 +23,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import {
   COACH_MODE_VALUES,
@@ -36,7 +35,7 @@ import {
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/research/coach/system-prompt';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/research/coach/anthropic';
@@ -49,8 +48,6 @@ const Body = z.object({
   experiment_id: z.string().uuid().nullable().optional(),
   message: z.string().min(1).max(8000),
 });
-
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentResearchUser();
@@ -107,49 +104,35 @@ export async function POST(request: NextRequest) {
   }
 
   const modelId = getCoachModelId();
-  const provider = getAnthropicProvider();
-  const uiMessages: UIMessage[] = [
-    {
-      id: 'quick-0',
-      role: 'user',
-      parts: [{ type: 'text', text: parsed.data.message }],
-    },
-  ];
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-  });
+  let text = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: parsed.data.message,
+      tenantId: user.tenantId,
+      osSlug: 'research',
+      model: modelId,
+    });
+    text = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[research.coach.quick] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const delta of result.textStream) {
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[research.coach.quick] stream error', err);
-        } finally {
-          const trailer = {
-            mode,
-            system_prompt_version: SYSTEM_PROMPT_VERSION,
-            context_truncated: contextTruncated,
-          };
-          controller.enqueue(
-            encoder.encode(RECORD_SEPARATOR + JSON.stringify(trailer) + '\n'),
-          );
-          controller.close();
-        }
-      },
-    }),
+  return NextResponse.json(
     {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-store',
-      },
+      mode,
+      text,
+      model: modelId,
+      latency_ms: latencyMs,
+      system_prompt_version: SYSTEM_PROMPT_VERSION,
+      context_truncated: contextTruncated,
     },
+    { headers: { 'Cache-Control': 'no-store' } },
   );
 }

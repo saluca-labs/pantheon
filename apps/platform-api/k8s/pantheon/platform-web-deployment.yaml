@@ -126,6 +126,60 @@ spec:
                   name: pantheon-secrets
                   key: blob-store-secret-key
                   optional: true
+            # --- @platform/llm wiring (Wave 0) ----------------------------------
+            # Provider selection priority (highest first):
+            #   1. per-call opts.provider, 2. tenant feature flag,
+            #   3. LLM_DEFAULT_PROVIDER (this var), 4. 'ollama' built-in default.
+            # Coaches pass provider: 'anthropic' explicitly today; ANTHROPIC_API_KEY
+            # must be present (>=32 chars) for the registry to register it.
+            - name: LLM_DEFAULT_PROVIDER
+              value: "anthropic"
+            - name: LLM_DEFAULT_MODEL
+              value: "claude-sonnet-4-6"
+            - name: LLM_RATE_LIMIT_RPM
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: llm-rate-limit-rpm
+                  optional: true
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: anthropic-api-key
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: openai-api-key
+                  optional: true
+            - name: OLLAMA_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: ollama-host
+                  optional: true
+            # Per-OS coach model overrides — read by coach/anthropic.ts
+            # wrappers via process.env. Optional; default = LLM_DEFAULT_MODEL.
+            - name: COACH_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: coach-model
+                  optional: true
+            - name: ANTHROPIC_COACH_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: anthropic-coach-model
+                  optional: true
+            - name: VOICE_BUILDER_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: voice-builder-model
+                  optional: true
           resources:
             requests:
               cpu: 250m

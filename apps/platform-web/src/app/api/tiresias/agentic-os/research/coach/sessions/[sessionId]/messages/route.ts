@@ -28,7 +28,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { recordAudit } from '@/lib/agentic-os/research/repo';
 import {
@@ -45,7 +44,7 @@ import {
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/research/coach/system-prompt';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/research/coach/anthropic';
@@ -61,8 +60,6 @@ const Body = z.object({
 interface Props {
   params: Promise<{ sessionId: string }>;
 }
-
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export async function POST(request: NextRequest, { params }: Props) {
   const user = await getCurrentResearchUser();
@@ -150,91 +147,81 @@ export async function POST(request: NextRequest, { params }: Props) {
     );
   }
 
-  // Compose UI messages from the full transcript so the model sees prior
-  // turns. The user turn we just appended is included.
-  const transcript = [...session.messages, userTurn];
-  const uiMessages: UIMessage[] = transcript
-    .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .map((m, i) => ({
-      id: `${sessionId}-${i}`,
-      role: m.role as 'user' | 'assistant',
-      parts: [{ type: 'text', text: m.content }],
-    }));
-
-  const provider = getAnthropicProvider();
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-  });
+  // Compose user prompt by flattening transcript so the model sees prior
+  // turns. Wave 0: `@platform/llm` has no multi-message API yet, so we
+  // concatenate.
+  const transcript = [...session.messages, userTurn]
+    .filter((m) => m.role === 'user' || m.role === 'assistant');
+  const userBody = transcript
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
 
   const sessionExperimentId = session.experimentId;
   const sessionMode = session.mode;
 
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        let assistantText = '';
-        try {
-          for await (const delta of result.textStream) {
-            assistantText += delta;
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[research.coach.messages] stream error', err);
-        }
+  let assistantText = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: userBody,
+      tenantId: user.tenantId,
+      osSlug: 'research',
+      model: modelId,
+    });
+    assistantText = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[research.coach.messages] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-        // Persist the assistant turn unconditionally (transcript is the
-        // source of truth even if downstream bookkeeping fails).
-        try {
-          const assistantTurn: CoachMessage = {
-            role: 'assistant',
-            content: assistantText,
-            created_at: new Date().toISOString(),
-          };
-          await appendMessages(sessionId, user.userId, [assistantTurn]);
-          await patchMetadata(sessionId, user.userId, {
-            system_prompt_version: SYSTEM_PROMPT_VERSION,
-            last_regulated_topics: regulatedTopicsHit,
-          });
-          await recordAudit({
-            actorId: user.userId,
-            action: 'research.coach.message_appended',
-            payload: {
-              session_id: sessionId,
-              mode: sessionMode,
-              model: modelId,
-              system_prompt_version: SYSTEM_PROMPT_VERSION,
-              context_truncated: contextTruncated,
-              assistant_chars: assistantText.length,
-              regulated_topics: regulatedTopicsHit,
-            },
-            projectId: sessionExperimentId,
-          });
-        } catch (err) {
-          console.error(
-            '[research.coach.messages] persistence failed',
-            err,
-          );
-        }
-
-        const trailer = {
-          session_id: sessionId,
-          mode: sessionMode,
-          system_prompt_version: SYSTEM_PROMPT_VERSION,
-          context_truncated: contextTruncated,
-        };
-        controller.enqueue(
-          encoder.encode(RECORD_SEPARATOR + JSON.stringify(trailer) + '\n'),
-        );
-        controller.close();
+  // Persist the assistant turn (transcript is the source of truth even
+  // if downstream bookkeeping fails).
+  try {
+    const assistantTurn: CoachMessage = {
+      role: 'assistant',
+      content: assistantText,
+      created_at: new Date().toISOString(),
+    };
+    await appendMessages(sessionId, user.userId, [assistantTurn]);
+    await patchMetadata(sessionId, user.userId, {
+      system_prompt_version: SYSTEM_PROMPT_VERSION,
+      last_regulated_topics: regulatedTopicsHit,
+    });
+    await recordAudit({
+      actorId: user.userId,
+      action: 'research.coach.message_appended',
+      payload: {
+        session_id: sessionId,
+        mode: sessionMode,
+        model: modelId,
+        system_prompt_version: SYSTEM_PROMPT_VERSION,
+        context_truncated: contextTruncated,
+        assistant_chars: assistantText.length,
+        regulated_topics: regulatedTopicsHit,
       },
-    }),
+      projectId: sessionExperimentId,
+    });
+  } catch (err) {
+    console.error('[research.coach.messages] persistence failed', err);
+  }
+
+  return NextResponse.json(
+    {
+      session_id: sessionId,
+      mode: sessionMode,
+      text: assistantText,
+      model: modelId,
+      latency_ms: latencyMs,
+      system_prompt_version: SYSTEM_PROMPT_VERSION,
+      context_truncated: contextTruncated,
+    },
     {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store',
         'x-coach-session-id': sessionId,
       },

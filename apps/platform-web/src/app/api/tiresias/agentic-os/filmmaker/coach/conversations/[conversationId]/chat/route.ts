@@ -14,7 +14,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, stepCountIs, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { recordAudit } from '@/lib/agentic-os/filmmaker/repo';
 import {
@@ -27,9 +26,8 @@ import {
   buildSystemPrompt,
   SYSTEM_PROMPT_VERSION,
 } from '@/lib/agentic-os/filmmaker/coach/system-prompt';
-import { buildCoachTools } from '@/lib/agentic-os/filmmaker/coach/tools';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/filmmaker/coach/anthropic';
@@ -107,92 +105,65 @@ export async function POST(request: NextRequest, { params }: Props) {
   });
   const systemPrompt = buildSystemPrompt(context, conversation.mode);
 
-  const tools = buildCoachTools({
-    projectId: conversation.projectId,
-    userId: user.userId,
-    conversationId,
-  });
+  // Tools DEFERRED — `@platform/llm` Wave-0 has no function-calling.
+  let assistantText = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: parsed.data.message,
+      tenantId: user.tenantId,
+      osSlug: 'filmmaker',
+      model: modelId,
+    });
+    assistantText = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[filmmaker.coach.chat] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-  const provider = getAnthropicProvider();
-
-  const uiMessages: UIMessage[] = [
-    {
-      id: userMessage.id,
-      role: 'user',
-      parts: [{ type: 'text', text: parsed.data.message }],
-    },
-  ];
-
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-    tools,
-    stopWhen: stepCountIs(5),
-    async onFinish(event) {
-      try {
-        const assistantText = event.text ?? '';
-        const toolCalls = (event.toolCalls ?? []).map((tc) => ({
-          id: tc.toolCallId,
-          name: tc.toolName,
-          input: tc.input,
-        }));
-        const assistantMessage = await appendMessage({
-          conversationId,
-          role: 'assistant',
-          content: assistantText,
-          toolCalls: toolCalls.length ? toolCalls : null,
-          metadata: {
-            model: modelId,
-            system_prompt_version: SYSTEM_PROMPT_VERSION,
-            usage: event.totalUsage,
-          },
-        });
-        await touchConversation(conversationId, user.userId);
-        await recordAudit({
-          actorId: user.userId,
-          action: 'filmmaker.coach.turn',
-          payload: {
-            conversation_id: conversationId,
-            user_message_id: userMessage.id,
-            assistant_message_id: assistantMessage.id,
-            tool_calls: toolCalls.length,
-            mode: conversation.mode,
-          },
-          projectId: conversation.projectId,
-        });
-      } catch (err) {
-        console.error('[filmmaker.coach.chat] onFinish persistence failed', err);
-      }
-    },
-  });
-
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const delta of result.textStream) {
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[filmmaker.coach.chat] stream error', err);
-        } finally {
-          const sentinel =
-            String.fromCharCode(0x1e) +
-            JSON.stringify({
-              conversation_id: conversationId,
-            }) +
-            '\n';
-          controller.enqueue(encoder.encode(sentinel));
-          controller.close();
-        }
+  try {
+    const assistantMessage = await appendMessage({
+      conversationId,
+      role: 'assistant',
+      content: assistantText,
+      toolCalls: null,
+      metadata: {
+        model: modelId,
+        system_prompt_version: SYSTEM_PROMPT_VERSION,
+        latency_ms: latencyMs,
       },
-    }),
+    });
+    await touchConversation(conversationId, user.userId);
+    await recordAudit({
+      actorId: user.userId,
+      action: 'filmmaker.coach.turn',
+      payload: {
+        conversation_id: conversationId,
+        user_message_id: userMessage.id,
+        assistant_message_id: assistantMessage.id,
+        tool_calls: 0,
+        mode: conversation.mode,
+      },
+      projectId: conversation.projectId,
+    });
+  } catch (err) {
+    console.error('[filmmaker.coach.chat] persistence failed', err);
+  }
+
+  return NextResponse.json(
+    {
+      conversation_id: conversationId,
+      text: assistantText,
+      model: modelId,
+      latency_ms: latencyMs,
+    },
     {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-store',
         'x-coach-conversation-id': conversationId,
       },

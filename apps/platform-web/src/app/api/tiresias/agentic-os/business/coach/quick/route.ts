@@ -16,13 +16,12 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { COACH_MODE_VALUES } from '@/lib/agentic-os/business/coach/modes';
 import { buildCoachContext } from '@/lib/agentic-os/business/coach/context';
 import { buildSystemPrompt } from '@/lib/agentic-os/business/coach/system-prompt';
 import {
-  getAnthropicProvider,
+  callCoachLlm,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/business/coach/anthropic';
@@ -83,46 +82,28 @@ export async function POST(request: NextRequest) {
   }
 
   const modelId = getCoachModelId();
-  const provider = getAnthropicProvider();
-  const uiMessages: UIMessage[] = [
-    {
-      id: 'quick-0',
-      role: 'user',
-      parts: [{ type: 'text', text: parsed.data.message }],
-    },
-  ];
-  const modelMessages = await convertToModelMessages(uiMessages);
-  const result = streamText({
-    model: provider(modelId),
-    system: systemPrompt,
-    messages: modelMessages,
-  });
+  let text = '';
+  let latencyMs = 0;
+  try {
+    const r = await callCoachLlm({
+      system: systemPrompt,
+      user: parsed.data.message,
+      tenantId: user.tenantId,
+      osSlug: 'business',
+      model: modelId,
+    });
+    text = r.text;
+    latencyMs = r.latencyMs;
+  } catch (err) {
+    console.error('[business.coach.quick] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
-  return new Response(
-    new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const encoder = new TextEncoder();
-        try {
-          for await (const delta of result.textStream) {
-            controller.enqueue(encoder.encode(delta));
-          }
-        } catch (err) {
-          console.error('[business.coach.quick] stream error', err);
-        } finally {
-          const sentinel =
-            String.fromCharCode(0x1e) +
-            JSON.stringify({ mode: parsed.data.mode }) +
-            '\n';
-          controller.enqueue(encoder.encode(sentinel));
-          controller.close();
-        }
-      },
-    }),
-    {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-store',
-      },
-    },
+  return NextResponse.json(
+    { mode: parsed.data.mode, text, model: modelId, latency_ms: latencyMs },
+    { headers: { 'Cache-Control': 'no-store' } },
   );
 }
