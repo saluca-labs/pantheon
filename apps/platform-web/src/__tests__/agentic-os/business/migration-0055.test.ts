@@ -23,7 +23,14 @@ const MIGRATION_PATH = path.resolve(
   __dirname,
   '../../../../../../packages/database/alembic/versions/0055_business_phase1.py',
 );
-const sql = readFileSync(MIGRATION_PATH, 'utf8');
+// Normalize line endings: the migration is authored LF, but on Windows with
+// `core.autocrlf=true` (Git's default on Windows) the file checks out with
+// CRLF. The assertions below use literal "\n" inside multi-line patterns —
+// without normalization they'd fail on Windows. Repo also declares
+// `*.py text eol=lf` in .gitattributes so fresh clones will be LF-canonical,
+// but this normalization is the defense-in-depth so the test stays portable
+// to any worktree.
+const sql = readFileSync(MIGRATION_PATH, 'utf8').replace(/\r\n/g, '\n');
 
 describe('migration 0055_business_phase1', () => {
   it('declares the correct revision identifier', () => {
