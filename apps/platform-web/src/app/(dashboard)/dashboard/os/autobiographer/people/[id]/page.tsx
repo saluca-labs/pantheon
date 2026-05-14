@@ -13,9 +13,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import {
   ArrowLeft,
-  Calendar,
   Tag as TagIcon,
-  BookOpenText,
   User2,
 } from 'lucide-react';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
@@ -26,6 +24,7 @@ import {
 } from '@/lib/agentic-os/autobiographer/memory-people-repo';
 import { ConsentBadge } from '@/components/agentic-os/autobiographer/consent-badge';
 import { PersonEditButton } from '@/components/agentic-os/autobiographer/person-edit-button';
+import { PersonRelatedTabs } from '@/components/agentic-os/autobiographer/person-related-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,76 +157,24 @@ export default async function PersonDetailPage({ params }: Props) {
       </section>
 
       <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
-          <Calendar className="w-4 h-4" />
-          Memories mentioning {person.canonicalName} ({memories.length})
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3">
+          Linked to {person.canonicalName}
         </h2>
-        {memories.length === 0 ? (
-          <p className="text-xs text-[#64748b] italic">
-            No memories link to this person yet. Open a memory and use the
-            People picker to add them.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {memories.map((m) => (
-              <li
-                key={m.memoryId}
-                className="rounded border border-border-subtle bg-surface-0 px-3 py-2"
-              >
-                <Link
-                  href={`/dashboard/os/autobiographer/memories/${m.memoryId}`}
-                  className="text-sm text-white hover:text-accent transition"
-                >
-                  {m.title}
-                </Link>
-                <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-text-secondary">
-                  {(m.whenInLife || m.eraDateEstimate) && (
-                    <span>{m.whenInLife ?? m.eraDateEstimate}</span>
-                  )}
-                  {m.role && (
-                    <span className="px-1.5 py-0.5 rounded bg-surface-2 border border-border-subtle text-text-primary">
-                      {m.role}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-3 inline-flex items-center gap-1.5">
-          <BookOpenText className="w-4 h-4" />
-          Books they appear in
-        </h2>
-        {books.length === 0 ? (
-          <p className="text-xs text-[#64748b] italic">
-            They don&apos;t appear in any books yet. Memories must be
-            attached to a book for it to show up here. Phase 4 will add the
-            chapter axis as well.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {books.map((b) => (
-              <li
-                key={b.bookId}
-                className="flex items-center justify-between rounded border border-border-subtle bg-surface-0 px-3 py-2"
-              >
-                <Link
-                  href={`/dashboard/os/autobiographer/books/${b.bookId}`}
-                  className="text-sm text-white hover:text-accent transition"
-                >
-                  {b.bookTitle}
-                </Link>
-                <span className="text-[10px] text-text-secondary">
-                  {b.memoryCount}{' '}
-                  {b.memoryCount === 1 ? 'memory' : 'memories'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <PersonRelatedTabs
+          personName={person.canonicalName}
+          memories={memories.map((m) => ({
+            memoryId: m.memoryId,
+            title: m.title,
+            whenInLife: m.whenInLife,
+            eraDateEstimate: m.eraDateEstimate,
+            role: m.role,
+          }))}
+          books={books.map((b) => ({
+            bookId: b.bookId,
+            bookTitle: b.bookTitle,
+            memoryCount: b.memoryCount,
+          }))}
+        />
       </section>
     </div>
   );

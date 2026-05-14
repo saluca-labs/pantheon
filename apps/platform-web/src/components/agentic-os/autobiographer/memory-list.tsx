@@ -11,7 +11,9 @@
  */
 
 import { useMemo, useState } from 'react';
+import { NotebookPen } from 'lucide-react';
 import { MemoryCard, type MemoryCardData } from './memory-card';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   MemoryFilters,
   type BookOption,
@@ -67,16 +69,17 @@ export function MemoryList({ initial, books, scopedBookId }: MemoryListProps) {
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-8 text-center">
-          <p className="text-sm font-medium text-white mb-1">
-            No memories match
-          </p>
-          <p className="text-xs text-text-secondary">
-            {initial.length === 0
+        <EmptyState
+          icon={<NotebookPen className="h-6 w-6" />}
+          title={
+            initial.length === 0 ? 'No memories yet' : 'No memories match'
+          }
+          description={
+            initial.length === 0
               ? 'Capture your first memory to start building the library.'
-              : 'Loosen the filters above to see more.'}
-          </p>
-        </div>
+              : 'Loosen the filters above to see more.'
+          }
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((m) => (
