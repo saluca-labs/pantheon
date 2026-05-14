@@ -94,9 +94,9 @@ export function SceneBreakdownEditor({
             onChange={(e) =>
               patchMeta({ eighths: Math.max(0, Number(e.target.value) || 0) })
             }
-            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           />
-          <span className="text-[10px] text-[#64748b]">
+          <span className="text-[10px] text-text-tertiary">
             {pagesLabel(meta?.eighths ?? 0)} pages
           </span>
         </label>
@@ -112,7 +112,7 @@ export function SceneBreakdownEditor({
                 estShootMinutes: e.target.value === '' ? null : Number(e.target.value),
               })
             }
-            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
             placeholder="—"
           />
         </label>
@@ -125,7 +125,7 @@ export function SceneBreakdownEditor({
                 complexity: (e.target.value || null) as SceneComplexity | null,
               })
             }
-            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           >
             <option value="">—</option>
             {SCENE_COMPLEXITIES.map((c) => (
@@ -140,7 +140,7 @@ export function SceneBreakdownEditor({
           <select
             value={meta?.status ?? 'unscheduled'}
             onChange={(e) => patchMeta({ status: e.target.value as SceneStatus })}
-            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+            className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           >
             {SCENE_STATUSES.map((s) => (
               <option key={s.status} value={s.status}>
@@ -156,7 +156,7 @@ export function SceneBreakdownEditor({
           value={meta?.notes ?? ''}
           onChange={(e) => patchMeta({ notes: e.target.value || null })}
           rows={2}
-          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-white"
+          className="text-xs bg-surface-2 border border-border-subtle rounded px-2 py-1.5 text-text-primary"
           placeholder="Notes for the AD / line producer..."
         />
       </label>
@@ -185,13 +185,13 @@ export function SceneBreakdownEditor({
                     className="flex items-start justify-between gap-2 text-xs p-2 rounded bg-surface-2 border border-border-subtle"
                   >
                     <div className="min-w-0">
-                      <p className="text-white">
+                      <p className="text-text-primary">
                         {el.name}
                         {el.quantity > 1 && (
                           <span className="text-text-secondary ml-1">× {el.quantity}</span>
                         )}
                         {el.isPrincipal && (
-                          <span className="ml-2 text-[10px] px-1 py-0.5 rounded border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+                          <span className="ml-2 text-[10px] px-1 py-0.5 rounded border border-positive/30 text-positive bg-positive/10">
                             principal
                           </span>
                         )}
@@ -212,7 +212,7 @@ export function SceneBreakdownEditor({
                       <button
                         type="button"
                         onClick={() => deleteElement(el.id)}
-                        className="text-text-secondary hover:text-red-300 p-1"
+                        className="text-text-secondary hover:text-danger p-1"
                         title="Delete"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -225,7 +225,7 @@ export function SceneBreakdownEditor({
           </div>
         ))}
         {elements.length === 0 && !adding && (
-          <p className="text-xs text-[#64748b] italic">No elements tagged yet.</p>
+          <p className="text-xs text-text-tertiary italic">No elements tagged yet.</p>
         )}
       </div>
 

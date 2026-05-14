@@ -75,7 +75,7 @@ export function BreakdownWorkspace({
           type="button"
           disabled
           title="Coming with AI coach — Phase 7"
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-[#64748b] cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-border-subtle bg-surface-2 text-text-tertiary cursor-not-allowed"
         >
           <Sparkles className="w-3 h-3" /> Auto-extract from script
         </button>
@@ -105,10 +105,10 @@ export function BreakdownWorkspace({
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] text-[#64748b] font-mono">
+                    <span className="text-[10px] text-text-tertiary font-mono">
                       {scene.sceneNumber.toString().padStart(2, '0')}
                     </span>
-                    <p className="text-sm text-white truncate">
+                    <p className="text-sm text-text-primary truncate">
                       {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
                       {scene.location ?? scene.heading}
                       {scene.timeOfDay && (

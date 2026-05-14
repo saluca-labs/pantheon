@@ -19,6 +19,7 @@ import type {
 } from '@/lib/agentic-os/filmmaker/storyboards';
 import { STORYBOARD_STATUS_VALUES } from '@/lib/agentic-os/filmmaker/storyboards';
 import type { ScreenplayScene } from '@/lib/agentic-os/filmmaker/screenplays';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { StoryboardPanelCard } from './StoryboardPanelCard';
 import { StoryboardPanelForm, type PanelFormData } from './StoryboardPanelForm';
 
@@ -175,7 +176,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
             />
           </label>
           <label className="block">
@@ -185,7 +186,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as StoryboardStatus)}
-              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+              className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
             >
               {STORYBOARD_STATUS_VALUES.map((s) => (
                 <option key={s} value={s}>
@@ -203,7 +204,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
           <select
             value={sceneId ?? ''}
             onChange={(e) => setSceneId(e.target.value === '' ? null : e.target.value)}
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           >
             <option value="">— No scene linked —</option>
             {scenes.map((s) => (
@@ -222,7 +223,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </label>
 
@@ -230,7 +231,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
           <button
             type="button"
             onClick={deleteStoryboard}
-            className="inline-flex items-center gap-1.5 text-xs text-red-400/80 hover:text-red-300 transition"
+            className="inline-flex items-center gap-1.5 text-xs text-danger/80 hover:text-danger transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Delete storyboard
@@ -240,7 +241,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
               href={`/api/tiresias/agentic-os/filmmaker/storyboards/${storyboard.id}/exports/storyboard.pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle hover:bg-surface-0 text-sm text-white/90 px-3 py-2 transition"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle hover:bg-surface-0 text-sm text-text-primary px-3 py-2 transition"
             >
               <Download className="w-4 h-4" />
               Export PDF
@@ -249,21 +250,21 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
               type="button"
               onClick={saveHeader}
               disabled={savingHeader}
-              className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
+              className="rounded-md bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
             >
               {savingHeader ? 'Saving…' : 'Save header'}
             </button>
           </div>
         </div>
-        <p className="text-[10px] text-[#64748b]">
+        <p className="text-2xs text-text-tertiary">
           Tip — print the PDF for a paper review or share the URL with collaborators.
         </p>
       </div>
 
       {/* Panels grid */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-          Panels ({panels.length})
+        <h2 className="text-2xs font-semibold uppercase tracking-wide text-text-tertiary">
+          Panels <span className="tabular-nums text-text-secondary">({panels.length})</span>
         </h2>
         <button
           type="button"
@@ -271,7 +272,7 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
             setShowAdd(true);
             setEditingPanel(null);
           }}
-          className="inline-flex items-center gap-2 rounded-md bg-accent hover:bg-[#3a56d4] text-white font-medium text-sm px-3 py-2 transition"
+          className="inline-flex items-center gap-2 rounded-md bg-accent hover:bg-accent/90 text-white font-medium text-sm px-3 py-2 transition"
         >
           <FilePlus className="w-4 h-4" />
           Add panel
@@ -279,14 +280,21 @@ export function StoryboardWorkspace({ projectId, storyboard, scenes }: Props) {
       </div>
 
       {panels.length === 0 && !showAdd ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center">
-          <Printer className="w-8 h-8 text-accent/60 mx-auto mb-3" />
-          <p className="text-sm text-text-secondary">
-            Add the first beat to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Printer className="h-6 w-6" />}
+          title="No panels yet"
+          description="Add the first beat — each panel holds a frame, camera angle, move, shot size, and a line of action."
+          primaryCta={{
+            label: 'Add first panel',
+            onClick: () => {
+              setShowAdd(true);
+              setEditingPanel(null);
+            },
+            icon: <FilePlus className="h-4 w-4" />,
+          }}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {panels.map((panel, i) => (
             <div
               key={panel.id}

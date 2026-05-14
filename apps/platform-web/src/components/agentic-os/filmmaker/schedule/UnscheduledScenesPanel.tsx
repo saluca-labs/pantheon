@@ -78,7 +78,7 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
 
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-      <h2 className="text-sm font-semibold text-white mb-1">
+      <h2 className="text-sm font-semibold text-text-primary mb-1">
         Unscheduled scenes{' '}
         <span className="text-text-secondary font-normal">({scenes.length})</span>
       </h2>
@@ -86,7 +86,7 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
         Click a scene to drop it onto a shooting day.
       </p>
       {scenes.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic">
+        <p className="text-xs text-text-tertiary italic">
           Every scene is scheduled. Nice work.
         </p>
       ) : (
@@ -101,10 +101,10 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
             return (
               <li key={scene.id}>
                 <div className="rounded-lg border border-border-subtle bg-surface-0 p-2.5">
-                  <p className="text-[11px] text-[#64748b] font-mono">
+                  <p className="text-[11px] text-text-tertiary font-mono">
                     {scene.sceneNumber.toString().padStart(2, '0')}
                   </p>
-                  <p className="text-xs text-white truncate">
+                  <p className="text-xs text-text-primary truncate">
                     {intExt && <span className="text-text-secondary mr-1">{intExt}</span>}
                     {scene.location ?? scene.heading}
                     {scene.timeOfDay && (
@@ -125,7 +125,7 @@ export function UnscheduledScenesPanel({ projectId, scenes, days }: Props) {
                             type="button"
                             onClick={() => scheduleOn(scene.id, d.id)}
                             disabled={busy === scene.id}
-                            className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-border-subtle text-white disabled:opacity-40"
+                            className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-surface-3 text-text-primary disabled:opacity-40"
                           >
                             Day {d.dayNumber}
                             {d.label ? ` — ${d.label}` : ''}

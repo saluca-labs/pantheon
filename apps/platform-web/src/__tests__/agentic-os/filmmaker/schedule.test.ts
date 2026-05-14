@@ -15,6 +15,8 @@ import {
   groupByUnit,
   totalShootMinutes,
   totalEighths,
+  buildScheduleTimelineItems,
+  scheduleTimelineRange,
   type ShootingDay,
   type ShootingDayWithStrips,
   type ScheduleStripJoined,
@@ -142,6 +144,152 @@ describe('totalShootMinutes / totalEighths', () => {
     };
     expect(totalShootMinutes(day)).toBe(75);
     expect(totalEighths(day)).toBe(12);
+  });
+});
+
+// ─── Wave D — TimelineView adapter ──────────────────────────────────────────
+
+describe('buildScheduleTimelineItems / scheduleTimelineRange', () => {
+  function dayWithStrips(
+    overrides: Partial<ShootingDayWithStrips> = {},
+  ): ShootingDayWithStrips {
+    return {
+      id: 'd1',
+      projectId: 'p',
+      shootDate: null,
+      dayNumber: 1,
+      label: null,
+      callTime: null,
+      wrapTime: null,
+      unit: 'main',
+      status: 'planned',
+      notes: null,
+      metadata: {},
+      createdAt: '',
+      updatedAt: '',
+      strips: [],
+      ...overrides,
+    };
+  }
+
+  it('drops undated days — they have no axis position', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({ id: 'undated', shootDate: null }),
+    ]);
+    expect(items).toEqual([]);
+  });
+
+  it('maps a dated day into a single-day span on its unit lane', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({
+        id: 'd1',
+        shootDate: '2026-06-10',
+        dayNumber: 3,
+        unit: 'second_unit',
+        status: 'in_progress',
+      }),
+    ]);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: 'd1',
+      laneId: 'second_unit',
+      dayNumber: 3,
+      status: 'in_progress',
+    });
+    // start === end (a single-day span), both UTC-anchored.
+    expect(items[0]!.start.getTime()).toBe(items[0]!.end.getTime());
+    expect(items[0]!.start.toISOString()).toBe('2026-06-10T00:00:00.000Z');
+  });
+
+  it('carries scene-count / eighths / minutes from the day strips', () => {
+    const strip = (eighths: number, minutes: number): ScheduleStripJoined => ({
+      id: `s-${eighths}`,
+      shootingDayId: 'd1',
+      sceneId: 'sc',
+      orderIndex: 0,
+      estMinutes: minutes,
+      notes: null,
+      createdAt: '',
+      updatedAt: '',
+      scene: {
+        id: 'sc',
+        screenplayId: 's',
+        versionId: 'v',
+        sceneNumber: 1,
+        heading: 'INT.',
+        interior: true,
+        location: null,
+        timeOfDay: null,
+        pageStart: null,
+        eighths: null,
+        dialogueWordCounts: {},
+        actionText: null,
+        dialogueText: null,
+        metadata: {},
+      },
+      sceneMeta: {
+        id: 'm',
+        sceneId: 'sc',
+        eighths,
+        estShootMinutes: null,
+        notes: null,
+        complexity: null,
+        status: 'scheduled',
+        metadata: {},
+        createdAt: '',
+        updatedAt: '',
+      },
+    });
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({
+        id: 'd1',
+        shootDate: '2026-06-10',
+        strips: [strip(8, 30), strip(4, 15)],
+      }),
+    ]);
+    expect(items[0]).toMatchObject({
+      sceneCount: 2,
+      eighths: 12,
+      shootMinutes: 45,
+    });
+  });
+
+  it('sorts items chronologically regardless of input order', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({ id: 'late', shootDate: '2026-06-20', dayNumber: 2 }),
+      dayWithStrips({ id: 'early', shootDate: '2026-06-01', dayNumber: 1 }),
+    ]);
+    expect(items.map((i) => i.id)).toEqual(['early', 'late']);
+  });
+
+  it('ignores an unparseable shootDate string', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({ id: 'junk', shootDate: 'not-a-date' }),
+    ]);
+    expect(items).toEqual([]);
+  });
+
+  it('scheduleTimelineRange returns null when nothing is dated', () => {
+    expect(scheduleTimelineRange([])).toBeNull();
+  });
+
+  it('scheduleTimelineRange pads the window 2 days each side', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({ id: 'a', shootDate: '2026-06-10' }),
+      dayWithStrips({ id: 'b', shootDate: '2026-06-14' }),
+    ]);
+    const range = scheduleTimelineRange(items)!;
+    expect(range).not.toBeNull();
+    expect(range.start.toISOString()).toBe('2026-06-08T00:00:00.000Z');
+    expect(range.end.toISOString()).toBe('2026-06-16T00:00:00.000Z');
+  });
+
+  it('scheduleTimelineRange yields a non-zero span even for a single dated day', () => {
+    const items = buildScheduleTimelineItems([
+      dayWithStrips({ id: 'solo', shootDate: '2026-06-10' }),
+    ]);
+    const range = scheduleTimelineRange(items)!;
+    expect(range.end.getTime()).toBeGreaterThan(range.start.getTime());
   });
 });
 

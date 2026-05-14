@@ -65,7 +65,7 @@ export function StoryboardList({ projectId, initial }: Props) {
           type="button"
           onClick={createStoryboard}
           disabled={busy}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           <FilePlus className="w-4 h-4" />
           New storyboard
@@ -93,7 +93,7 @@ export function StoryboardList({ projectId, initial }: Props) {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <p className="text-sm font-medium text-white group-hover:text-accent transition truncate">
+                    <p className="text-sm font-medium text-text-primary group-hover:text-accent transition truncate">
                       {sb.name}
                     </p>
                     <span

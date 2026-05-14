@@ -90,9 +90,9 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
           placeholder="https://…"
-          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
         />
-        <p className="text-[10px] text-[#64748b] mt-1">
+        <p className="text-[10px] text-text-tertiary mt-1">
           URL-only (image hosting lives outside this surface).
         </p>
       </Field>
@@ -104,7 +104,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
             value={shotSize}
             onChange={(e) => setShotSize(e.target.value)}
             placeholder="WS / MS / CU / ECU"
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </Field>
         <Field label="Camera angle">
@@ -113,7 +113,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
             value={cameraAngle}
             onChange={(e) => setCameraAngle(e.target.value)}
             placeholder="Low angle / Bird's eye"
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </Field>
         <Field label="Camera move">
@@ -122,7 +122,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
             value={cameraMove}
             onChange={(e) => setCameraMove(e.target.value)}
             placeholder="Dolly in / Static / Handheld"
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </Field>
       </div>
@@ -132,7 +132,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
         />
       </Field>
 
@@ -142,7 +142,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
             value={dialogueExcerpt}
             onChange={(e) => setDialogueExcerpt(e.target.value)}
             rows={2}
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </Field>
         <Field label="Duration (seconds)">
@@ -153,7 +153,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
             max="999"
             value={durationSeconds}
             onChange={(e) => setDurationSeconds(e.target.value)}
-            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+            className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
           />
         </Field>
       </div>
@@ -163,7 +163,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-white"
+          className="w-full rounded-md bg-surface-0 border border-border-subtle px-3 py-2 text-sm text-text-primary focus:border-accent outline-none transition"
         />
       </Field>
 
@@ -173,14 +173,14 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-border-subtle text-sm text-white/80 hover:bg-surface-0 px-3 py-2 transition"
+          className="rounded-md border border-border-subtle text-sm text-text-secondary hover:bg-surface-0 hover:text-text-primary px-3 py-2 transition"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={busy}
-          className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
+          className="rounded-md bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium text-sm px-4 py-2 transition"
         >
           {busy ? 'Saving…' : initial ? 'Save panel' : 'Add panel'}
         </button>

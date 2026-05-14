@@ -81,8 +81,8 @@ function Stat({
   return (
     <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <p className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</p>
-      <p className="text-xl font-semibold text-white mt-1">{value}</p>
-      {hint && <p className="text-[10px] text-[#64748b] mt-0.5">{hint}</p>}
+      <p className="text-xl font-semibold text-text-primary mt-1 tabular-nums">{value}</p>
+      {hint && <p className="text-[10px] text-text-tertiary mt-0.5">{hint}</p>}
     </div>
   );
 }
