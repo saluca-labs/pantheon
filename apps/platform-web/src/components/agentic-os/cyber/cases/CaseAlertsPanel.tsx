@@ -11,8 +11,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Link2Off, Plus } from 'lucide-react';
+import { Link2Off, Plus, AlertTriangle } from 'lucide-react';
 import type { CaseDetail } from '@/lib/agentic-os/cyber/cases';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { AttachAlertDialog } from './AttachAlertDialog';
 
 const SEVERITY_BADGE: Record<string, string> = {
@@ -74,10 +75,16 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
       </div>
 
       {linkedAlerts.length === 0 ? (
-        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-          No alerts linked yet. Attach existing alerts to keep this case grounded
-          in the raw detections.
-        </p>
+        <EmptyState
+          icon={<AlertTriangle className="h-6 w-6" />}
+          title="No alerts linked yet"
+          description="Attach existing alerts to keep this case grounded in the raw detections."
+          primaryCta={{
+            label: 'Attach alert',
+            icon: <Plus className="h-4 w-4" />,
+            onClick: () => setShowAttach(true),
+          }}
+        />
       ) : (
         <ul className="space-y-2">
           {linkedAlerts.map((a) => (
