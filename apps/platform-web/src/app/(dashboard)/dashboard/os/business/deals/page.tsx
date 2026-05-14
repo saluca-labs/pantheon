@@ -8,6 +8,7 @@ import { listOrganizations } from '@/lib/agentic-os/business/orgs-repo';
 import DealForm from '@/components/agentic-os/business/deal-form';
 import DealKanban from '@/components/agentic-os/business/deal-kanban';
 import ForecastStrip from '@/components/agentic-os/business/forecast-strip';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,11 +79,12 @@ export default async function DealsPage({ searchParams }: Props) {
       {deals.length > 0 ? (
         <DealKanban deals={deals} contacts={contacts} orgs={orgs} />
       ) : (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <p className="text-text-secondary text-sm">
-            No deals yet. Create your first deal to start tracking your pipeline.
-          </p>
-        </div>
+        <EmptyState
+          icon={<DollarSign className="h-6 w-6" />}
+          title="No deals yet"
+          description="Create your first deal to start tracking your pipeline."
+          primaryCta={{ label: 'Add deal', href: '?new=1' }}
+        />
       )}
     </div>
   );
