@@ -14,6 +14,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { listAuthors, authorPaperCounts } from '@/lib/agentic-os/research/authors-repo';
 import { familyNameBucket } from '@/lib/agentic-os/research/authors';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,13 +72,17 @@ export default async function AuthorsListPage() {
       </p>
 
       {authors.length === 0 ? (
-        <p
-          className="text-sm text-text-secondary italic py-8 text-center"
-          data-testid="authors-list-empty"
-        >
-          No authors yet. Add authors via a new paper&apos;s structured-authors
-          picker.
-        </p>
+        <div data-testid="authors-list-empty">
+          <EmptyState
+            icon={<Users className="h-6 w-6" />}
+            title="No authors yet"
+            description="Authors are added from a new paper's structured-authors picker — either inline (auto-create) or via the picker. They show up here bucketed by family-name initial."
+            primaryCta={{
+              label: 'Go to the library',
+              href: '/dashboard/os/research/library',
+            }}
+          />
+        </div>
       ) : (
         <div className="space-y-6" data-testid="authors-list">
           {sortedBuckets.map(([bucket, list]) => (

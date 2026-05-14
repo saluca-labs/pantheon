@@ -12,13 +12,14 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, X, FileText } from 'lucide-react';
 import type { Protocol } from '@/lib/agentic-os/research/protocols';
 import {
   PROTOCOL_KINDS,
   PROTOCOL_KIND_LABELS,
   type ProtocolKind,
 } from '@/lib/agentic-os/research/protocol-kinds';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import { ProtocolCard } from './protocol-card';
 import { ProtocolForm } from './protocol-form';
 
@@ -77,15 +78,12 @@ export function ProtocolList({ initialProtocols }: Props) {
   return (
     <div className="space-y-4" data-testid="protocol-list">
       <div className="flex items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+        <div className="flex-1" data-testid="protocol-list-search">
+          <EntitySearch
             placeholder="Search title"
-            className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
-            data-testid="protocol-list-search"
+            defaultValue={q}
+            debounceMs={200}
+            onQueryChange={setQ}
           />
         </div>
         <button
@@ -157,12 +155,18 @@ export function ProtocolList({ initialProtocols }: Props) {
       )}
 
       {protocols.length === 0 && !loading ? (
-        <p
-          className="text-sm text-text-secondary italic py-8 text-center"
-          data-testid="protocol-list-empty"
-        >
-          No protocols yet. Click <strong>Add protocol</strong> to record one.
-        </p>
+        <div data-testid="protocol-list-empty">
+          <EmptyState
+            icon={<FileText className="h-6 w-6" />}
+            title="No protocols yet"
+            description="Workshop-global methods, SOPs, and analysis pipelines with version-history pinning. Pin a protocol to an experiment at a frozen version to keep it reproducible."
+            primaryCta={{
+              label: 'Add protocol',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: () => setFormOpen(true),
+            }}
+          />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {protocols.map((p) => (

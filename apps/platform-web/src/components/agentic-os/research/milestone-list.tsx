@@ -10,7 +10,8 @@
  */
 
 import { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Target } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { MilestoneCard } from './milestone-card';
 import { MilestoneForm } from './milestone-form';
 import {
@@ -80,12 +81,18 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
       )}
 
       {sorted.length === 0 && !showAdd ? (
-        <p
-          className="text-sm text-text-secondary italic py-6 text-center"
-          data-testid="milestone-list-empty"
-        >
-          No milestones yet.
-        </p>
+        <div data-testid="milestone-list-empty">
+          <EmptyState
+            icon={<Target className="h-6 w-6" />}
+            title="No milestones yet"
+            description="Track deadlines, statuses, and blocker flags for this experiment. At-risk and overdue milestones surface on the workshop-wide Top Blockers feed."
+            primaryCta={{
+              label: 'Add milestone',
+              icon: <Plus className="h-4 w-4" />,
+              onClick: () => setShowAdd(true),
+            }}
+          />
+        </div>
       ) : (
         <ul className="space-y-2">
           {sorted.map((m) => (
