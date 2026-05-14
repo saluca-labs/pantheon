@@ -27,7 +27,7 @@ import {
   type TimelineItemBase,
   type TimelineLane,
   type TimelineRange,
-} from './TimelineView';
+} from './timeline-view';
 
 // A clean 100-day window so percentages are easy to reason about.
 const RANGE: TimelineRange = {

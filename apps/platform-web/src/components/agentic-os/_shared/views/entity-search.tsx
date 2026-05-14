@@ -26,6 +26,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from './empty-state';
 
 export interface EntitySearchResult {
   /** Stable identifier — used as React key and for highlight tracking. */
@@ -224,11 +225,13 @@ export function EntitySearch<TResult extends EntitySearchResult>({
           className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border-subtle bg-surface-2 shadow-lg"
         >
           {list.length === 0 ? (
-            <div
-              data-testid="entity-search-no-results"
-              className="px-3 py-4 text-center text-xs text-text-secondary"
-            >
-              {noResultsLabel}
+            <div data-testid="entity-search-no-results">
+              <EmptyState
+                variant="bare"
+                icon={<Search className="h-5 w-5" aria-hidden="true" />}
+                title={noResultsLabel}
+                className="py-6"
+              />
             </div>
           ) : (
             list.map((result, i) => (

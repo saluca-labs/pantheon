@@ -27,6 +27,7 @@
 import { useMemo } from 'react';
 import clsx from 'clsx';
 import { isoWeek } from '@/lib/agentic-os/creator/calendar';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 import {
   WEEKDAY_LABELS,
   addUtcDays,
@@ -37,8 +38,7 @@ import {
   monthLabel,
   weekRangeLabel,
   type CalendarCell,
-  type OsSlug,
-} from './CalendarView.utils';
+} from './calendar-view.utils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
