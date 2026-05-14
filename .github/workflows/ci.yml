@@ -104,7 +104,7 @@ jobs:
           pnpm --filter @platform/blob-store build || true
           pnpm --filter @platform/llm build || true
       - name: Typecheck
-        run: pnpm typecheck || true   # non-fatal until tsconfig is fully wired
+        run: pnpm typecheck   # gating — type errors (incl. test files) fail CI
 
   # ── Test ─────────────────────────────────────────────────────────────────────
   test:
