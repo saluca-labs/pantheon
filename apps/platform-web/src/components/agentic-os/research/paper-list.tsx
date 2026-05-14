@@ -16,9 +16,10 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { X, BookOpenText } from 'lucide-react';
 import type { Paper } from '@/lib/agentic-os/research/papers';
 import { PAPER_KINDS, PAPER_KIND_LABELS, type PaperKind } from '@/lib/agentic-os/research/paper-kinds';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import { PaperCard } from './paper-card';
 
 interface Props {
@@ -92,15 +93,12 @@ export function PaperList({ initialPapers }: Props) {
   return (
     <div className="space-y-4" data-testid="paper-list">
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-        <input
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+      <div data-testid="paper-list-search">
+        <EntitySearch
           placeholder="Search title or authors"
-          className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-0 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
-          data-testid="paper-list-search"
+          defaultValue={q}
+          debounceMs={200}
+          onQueryChange={setQ}
         />
       </div>
 
@@ -200,12 +198,14 @@ export function PaperList({ initialPapers }: Props) {
 
       {/* Results */}
       {papers.length === 0 && !loading ? (
-        <p
-          className="text-sm text-text-secondary italic py-8 text-center"
-          data-testid="paper-list-empty"
-        >
-          No papers match the current filters.
-        </p>
+        <div data-testid="paper-list-empty">
+          <EmptyState
+            variant="bare"
+            icon={<BookOpenText className="h-6 w-6" />}
+            title="No papers match the current filters"
+            description="Try clearing the search, kind, year, or tag filters — or add a paper from the Add paper action above."
+          />
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {papers.map((p) => (
