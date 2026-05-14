@@ -70,6 +70,8 @@ import { ProjectReferencesPicker } from '@/components/agentic-os/maker/project-r
 import { PdfExportButton } from '@/components/agentic-os/maker/pdf-export-button';
 import { DependenciesTab } from '@/components/agentic-os/maker/dependencies-tab';
 import { STATUS_COLOR } from '@/components/agentic-os/maker/project-card';
+import { ProjectPhaseStrip } from '@/components/agentic-os/maker/project-phase-strip';
+import { ProjectOverviewLinks } from '@/components/agentic-os/maker/project-overview-links';
 
 export const dynamic = 'force-dynamic';
 
@@ -170,8 +172,9 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
       : [[], []];
 
   // Phase 5 specs tab — union of project / parts-in-BOM / project-tool sheets.
+  // Wave D.4 also loads this for the Overview tab's inline linked-specs digest.
   const initialSpecSheets =
-    activeTab === 'specs'
+    activeTab === 'specs' || activeTab === 'overview'
       ? await listSpecSheetsForProject(project.id, user.userId)
       : [];
 
@@ -275,6 +278,12 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
         </div>
       </div>
 
+      {/* Phase strip — Wave D.4: at-a-glance lifecycle progress above the tabs */}
+      <ProjectPhaseStrip
+        phaseProgress={project.phaseProgress}
+        status={project.status}
+      />
+
       {/* Tab strip */}
       <div className="flex flex-wrap items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
@@ -304,12 +313,21 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
 
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Phase tracker */}
-          <div className="lg:col-span-2 space-y-3">
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-              Phase progress
-            </h2>
-            <PhaseProgressEditor projectId={project.id} initial={project.phaseProgress} />
+          {/* Phase tracker + inline linked specs / parts */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
+                Phase progress
+              </h2>
+              <PhaseProgressEditor projectId={project.id} initial={project.phaseProgress} />
+            </div>
+
+            {/* Wave D.4 — linked specs + parts surfaced inline on Overview */}
+            <ProjectOverviewLinks
+              projectId={project.id}
+              bomSummary={exportSummary}
+              specSheets={initialSpecSheets}
+            />
           </div>
 
           {/* Stats */}
