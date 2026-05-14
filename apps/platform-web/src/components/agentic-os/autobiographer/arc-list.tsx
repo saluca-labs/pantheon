@@ -8,8 +8,10 @@
  * @license MIT — Tiresias Autobiographer OS Phase 5 (internal).
  */
 
+import { Spline } from 'lucide-react';
 import { getAutobiographerPool } from '@/lib/agentic-os/autobiographer/session';
 import type { AutobiographerArc } from '@/lib/agentic-os/autobiographer/arcs-repo';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { ArcCard } from './arc-card';
 import { NewArcButton } from './new-arc-button';
 import { ArcChapterList } from './arc-chapter-list';
@@ -43,10 +45,11 @@ export async function ArcList({ bookId, arcs }: ArcListProps) {
     <div className="space-y-3">
       <NewArcButton bookId={bookId} />
       {arcs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
-          No arcs yet. Create one to define a custom chapter ordering for
-          this book — or stick with the default position order.
-        </div>
+        <EmptyState
+          icon={<Spline className="h-6 w-6" />}
+          title="No arcs yet"
+          description="Create one to define a custom chapter ordering for this book — or stick with the default position order."
+        />
       ) : (
         arcs.map((a) => (
           <details
