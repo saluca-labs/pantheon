@@ -3,20 +3,24 @@
 /**
  * Autobiographer OS — RevisionHistoryRail.
  *
- * Left column of the chapter detail page. Lists every revision with
- * author chip + created_at + word count, and lets the user select
- * which revision is showing in the center pane. The "New revision"
- * button copies the current body into a fresh user-authored revision.
+ * Left column of the chapter editor. A proper revision-history rail
+ * (Wave D upgrade from the Wave C inline sidebar): a sticky panel
+ * alongside the editor with a revision count header, per-revision
+ * word-count deltas, summary previews, and the "New revision" action.
+ * Selecting a revision swaps it into the center editor without a page
+ * reload. The "New revision" button copies the current body into a
+ * fresh user-authored revision.
  *
  * @license MIT — Tiresias Autobiographer OS Phase 4 (internal).
  */
 
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { History, Plus } from 'lucide-react';
 import { RevisionCard, type RevisionCardData } from './revision-card';
 
 interface Props {
   chapterId: string;
+  /** Revisions in version-DESC order (newest first), as the repo returns them. */
   revisions: RevisionCardData[];
   activeRevisionId: string | null;
   onSelect: (revisionId: string) => void;
@@ -36,6 +40,18 @@ export function RevisionHistoryRail({
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Word count of the chronologically-previous revision, keyed by id,
+  // so each card can show its delta. `revisions` is version-DESC, so the
+  // previous revision is the *next* element in the array.
+  const previousWordCountById = useMemo(() => {
+    const map = new Map<string, number | null>();
+    revisions.forEach((r, i) => {
+      const prev = revisions[i + 1];
+      map.set(r.id, prev ? prev.wordCount : null);
+    });
+    return map;
+  }, [revisions]);
 
   async function createRevision() {
     setCreating(true);
@@ -70,10 +86,17 @@ export function RevisionHistoryRail({
   }
 
   return (
-    <aside className="rounded-xl border border-border-subtle bg-surface-2 p-3 space-y-2">
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="text-xs uppercase tracking-wide text-text-secondary">
+    <aside
+      data-testid="revision-history-rail"
+      className="rounded-xl border border-border-subtle bg-surface-2 p-3 space-y-2 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+    >
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <h3 className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-text-secondary">
+          <History className="w-3.5 h-3.5" />
           Revision history
+          <span className="font-mono normal-case text-[10px] text-text-tertiary">
+            {revisions.length}
+          </span>
         </h3>
         <button
           type="button"
@@ -96,10 +119,17 @@ export function RevisionHistoryRail({
               revision={r}
               isActive={r.id === activeRevisionId}
               onSelect={onSelect}
+              previousWordCount={previousWordCountById.get(r.id) ?? null}
             />
           ))}
         </div>
       )}
+      {revisions.length > 1 ? (
+        <p className="pt-1 text-[10px] leading-snug text-text-tertiary">
+          Deltas compare each revision to the one before it. Coach
+          revisions are read-only.
+        </p>
+      ) : null}
     </aside>
   );
 }
