@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { HeartPulse } from 'lucide-react';
 import type { MoodEntry } from '@/lib/agentic-os/health/repo';
 import { DataTable } from '@/components/agentic-os/_shared/data-table';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   entries: MoodEntry[];
@@ -35,7 +37,14 @@ export function MoodEntryList({ entries, linkPrefix }: Props) {
   return (
     <DataTable<MoodEntry>
       rows={entries}
-      empty="No mood entries yet — log your first check-in above."
+      empty={
+        <EmptyState
+          variant="bare"
+          icon={<HeartPulse className="h-6 w-6" />}
+          title="No mood entries yet"
+          description="Log your first check-in above and your trail will start here."
+        />
+      }
       rowKey={(r) => r.id}
       rowHref={
         linkPrefix ? (r) => `${linkPrefix}/${r.id}` : undefined
@@ -90,9 +99,12 @@ export function MoodEntryList({ entries, linkPrefix }: Props) {
 export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-text-secondary">
-        No mood entries yet — log your first check-in above.
-      </p>
+      <EmptyState
+        variant="bare"
+        icon={<HeartPulse className="h-6 w-6" />}
+        title="No mood entries yet"
+        description="Log your first check-in above and your trail will start here."
+      />
     );
   }
   return (

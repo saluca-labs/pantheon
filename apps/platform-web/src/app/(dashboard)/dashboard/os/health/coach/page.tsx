@@ -7,6 +7,7 @@ import { isCoachConfigured } from '@/lib/agentic-os/health/coach/anthropic';
 import { CaveatBlock } from '@/components/agentic-os/health/caveat-block';
 import { CoachStarter } from '@/components/agentic-os/health/coach/coach-starter';
 import { CoachConfigNotice } from '@/components/agentic-os/health/coach/coach-config-notice';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,9 +52,13 @@ export default async function HealthCoachIndexPage() {
               Conversations
             </h2>
             {conversations.length === 0 ? (
-              <p className="text-xs text-text-secondary">
-                No conversations yet. Start one to the right.
-              </p>
+              <EmptyState
+                variant="bare"
+                icon={<MessageCircle className="h-6 w-6" />}
+                title="No conversations yet"
+                description="Start one from the panel on the right."
+                className="px-2 py-6"
+              />
             ) : (
               <ul className="space-y-1">
                 {conversations.map((c) => (
@@ -63,12 +68,12 @@ export default async function HealthCoachIndexPage() {
                       className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
                     >
                       <div className="flex items-center gap-2">
-                        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
+                        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
                         <span className="truncate">
                           {c.title ?? 'Untitled conversation'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-[#64748b]">
+                      <span className="text-2xs text-text-tertiary">
                         {new Date(c.updatedAt).toLocaleString()}
                       </span>
                     </Link>

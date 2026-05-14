@@ -4,8 +4,16 @@ import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { RiskFlagBadges } from '@/components/agentic-os/health/risk-flag-badges';
 import { ConsentGate } from '@/components/agentic-os/health/consent-gate';
+import { HealthHubOverview } from '@/components/agentic-os/health/hub/health-hub-overview';
 import { getCurrentHealthUser } from '@/lib/agentic-os/health/session';
-import { listConsents, listRiskFlags } from '@/lib/agentic-os/health/repo';
+import {
+  listConsents,
+  listRiskFlags,
+  listMoodEntries,
+  listScreeners,
+  listJournalEntries,
+  listCbtLogs,
+} from '@/lib/agentic-os/health/repo';
 import type { ConsentScope } from '@/lib/agentic-os/health/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -37,12 +45,48 @@ export default async function HealthOsPage() {
     consentMap[row.scope] = row.granted;
   }
 
+  // The hub dashboard strip surfaces mental-health data (mood / screeners /
+  // journal / CBT), so it only loads once the mental scope is granted —
+  // mirrors the per-feature consent gating without changing any query.
+  const moodSince = new Date();
+  moodSince.setDate(moodSince.getDate() - 14);
+  const [moodEntries, screeners, journalEntries, cbtLogs] = consentMap.mental
+    ? await Promise.all([
+        listMoodEntries(user.userId, {
+          from: moodSince,
+          withTags: false,
+          limit: 50,
+        }),
+        listScreeners(user.userId, 10),
+        listJournalEntries(user.userId, { limit: 6 }),
+        listCbtLogs(user.userId, { limit: 8 }),
+      ])
+    : [[], [], [], []];
+
   return (
-    <DashboardHub
-      module={mod}
-      flagBanner={flags.length > 0 ? <RiskFlagBadges flags={flags} /> : null}
-      consentGate={<ConsentGate initial={consentMap} />}
-      roadmapMarkdown={plan ?? null}
-    />
+    <div className="max-w-5xl">
+      {/* Wave C-1b: hub dashboard strip — "what should I do next" above the
+          standard feature grid. Only shown once the mental scope is granted. */}
+      {consentMap.mental ? (
+        <HealthHubOverview
+          flags={flags}
+          moodEntries={moodEntries}
+          screeners={screeners}
+          journalEntries={journalEntries.map((j) => ({
+            id: j.id,
+            title: j.title,
+            entryAt: j.entryAt,
+          }))}
+          cbtLogs={cbtLogs}
+        />
+      ) : null}
+
+      <DashboardHub
+        module={mod}
+        flagBanner={flags.length > 0 ? <RiskFlagBadges flags={flags} /> : null}
+        consentGate={<ConsentGate initial={consentMap} />}
+        roadmapMarkdown={plan ?? null}
+      />
+    </div>
   );
 }
