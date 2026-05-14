@@ -4,8 +4,10 @@
  * CyberSec OS — Detection rule editor (create + edit).
  *
  * Full editor with lifecycle, severity, tactic + technique, log_source_kind,
- * false-positives + references + tags chip inputs, and a textarea JSON editor
- * for the `detection` body with on-blur JSON.parse validation.
+ * false-positives + references + tags chip inputs, and — Wave D — a
+ * CodeMirror-hosted `SigmaDetectionEditor` for the `detection` body with
+ * Sigma-key / JSON syntax highlighting and on-blur JSON.parse validation
+ * (replacing the prior plain `<textarea>`).
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
@@ -24,6 +26,7 @@ import {
   DETECTION_SEVERITIES,
   ATTACK_TACTICS,
 } from '@/lib/agentic-os/cyber/detections';
+import { SigmaDetectionEditor } from './SigmaDetectionEditor';
 
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
@@ -74,15 +77,6 @@ export function DetectionRuleForm({ rule, onSaved, onCancel }: DetectionRuleForm
     } catch {
       return null;
     }
-  }
-
-  function onDetectionBlur() {
-    if (detectionText.trim().length === 0) {
-      setDetectionJsonError(null);
-      return;
-    }
-    const parsed = parseDetection();
-    setDetectionJsonError(parsed === null ? 'Invalid JSON object' : null);
   }
 
   async function save() {
@@ -237,22 +231,30 @@ export function DetectionRuleForm({ rule, onSaved, onCancel }: DetectionRuleForm
             className={inputCls}
           />
         </label>
-        <label className="block sm:col-span-2">
+        <div className="block sm:col-span-2">
           <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
-            Detection body (JSON)
+            Sigma detection body (JSON)
           </span>
-          <textarea
-            value={detectionText}
-            onChange={(e) => setDetectionText(e.target.value)}
-            onBlur={onDetectionBlur}
-            rows={8}
-            className={inputCls + ' font-mono text-[12px] leading-snug'}
-            placeholder='{ "condition": "selection AND count(failed_logins) > 10 within 5m" }'
-          />
+          <div className="overflow-hidden rounded-md border border-border-subtle focus-within:border-accent">
+            <SigmaDetectionEditor
+              initialText={detectionText}
+              onChange={setDetectionText}
+              onValidityChange={(valid) =>
+                setDetectionJsonError(valid ? null : 'Invalid JSON object')
+              }
+              height="220px"
+            />
+          </div>
+          <p className="mt-1 text-[11px] text-text-secondary">
+            Sigma-style detection block — <code>condition</code> +{' '}
+            named search identifiers (<code>selection</code>,{' '}
+            <code>filter</code>). Stored as JSON; syntax-highlighted on the
+            fly.
+          </p>
           {detectionJsonError && (
             <span className="block mt-1 text-[11px] text-red-300">{detectionJsonError}</span>
           )}
-        </label>
+        </div>
         <label className="block sm:col-span-2">
           <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
             False positives (one per line)
