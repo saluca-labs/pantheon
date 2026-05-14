@@ -1,12 +1,21 @@
 'use client';
 
 /**
- * Research OS Phase 2 — Notebook timeline.
+ * Research OS Phase 2 + Wave D — Notebook timeline.
  *
- * Reverse-chronological list of NotebookEntryCard. Wires the filter
- * chips, the pinned composer, and a refetch loop tied to the filter
- * state. Behaves identically for active and archived modes — only the
- * card variant changes (card vs archived row).
+ * Hosts the lab-notebook entries for one experiment. Wires the kind-filter
+ * chips, the pinned composer, a refetch loop tied to the filter state, and
+ * — Wave D — a list / timeline view toggle.
+ *
+ *  - **List** view: the original reverse-chronological `NotebookEntryCard`
+ *    stack (unchanged behaviour; archived mode swaps the archived row).
+ *  - **Timeline** view: `NotebookEntryTimeline`, which renders the same
+ *    entries on the shared `TimelineView` primitive — one lane per entry
+ *    kind, each entry a clickable point.
+ *
+ * Neither view nor any capability is removed; the toggle just changes how
+ * the same filtered entry set is drawn. Archived mode pins to the list
+ * view (restore affordances live on the archived row).
  *
  * Lives client-side: the parent page hands us the initial list (server-
  * rendered for SEO + speed of first paint) and we manage all filter
@@ -18,7 +27,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, List, GanttChartSquare } from 'lucide-react';
 import type { NotebookEntry } from '@/lib/agentic-os/research/notebook-entries';
 import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { NotebookEntryComposer } from './notebook-entry-composer';
@@ -28,6 +37,9 @@ import {
 } from './notebook-entry-filter-chips';
 import { NotebookEntryCard } from './notebook-entry-card';
 import { NotebookEntryArchivedRow } from './notebook-entry-archived-row';
+import { NotebookEntryTimeline } from './notebook-entry-timeline';
+
+type NotebookViewMode = 'list' | 'timeline';
 
 interface Props {
   experimentId: string;
@@ -42,6 +54,7 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
   const [kind, setKind] = useState<EntryKindFilter>('all');
   const [tag, setTag] = useState('');
   const [archived, setArchived] = useState(false);
+  const [view, setView] = useState<NotebookViewMode>('list');
 
   const refetch = useCallback(async () => {
     setLoading(true);
@@ -78,6 +91,10 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
     refetch();
   }, [refetch]);
 
+  // Archived entries only make sense in the list view (restore affordances
+  // live on the archived row) — pin back to list when archived flips on.
+  const effectiveView: NotebookViewMode = archived ? 'list' : view;
+
   return (
     <div data-testid="notebook-timeline">
       {!archived && (
@@ -87,14 +104,54 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
         />
       )}
 
-      <NotebookEntryFilterChips
-        kind={kind}
-        tag={tag}
-        archived={archived}
-        onKindChange={setKind}
-        onTagChange={setTag}
-        onArchivedChange={setArchived}
-      />
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <NotebookEntryFilterChips
+          kind={kind}
+          tag={tag}
+          archived={archived}
+          onKindChange={setKind}
+          onTagChange={setTag}
+          onArchivedChange={setArchived}
+        />
+
+        {!archived && (
+          <div
+            className="inline-flex items-center rounded-md border border-border-subtle bg-surface-0 p-0.5"
+            role="group"
+            aria-label="Notebook view mode"
+            data-testid="notebook-view-toggle"
+          >
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              aria-pressed={effectiveView === 'list'}
+              data-testid="notebook-view-list"
+              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition ${
+                effectiveView === 'list'
+                  ? 'bg-accent/20 text-white'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              <List className="w-3 h-3" />
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('timeline')}
+              aria-pressed={effectiveView === 'timeline'}
+              data-testid="notebook-view-timeline"
+              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition ${
+                effectiveView === 'timeline'
+                  ? 'bg-accent/20 text-white'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              <GanttChartSquare className="w-3 h-3" />
+              Timeline
+            </button>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div
@@ -121,6 +178,12 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
             }
           />
         </div>
+      ) : effectiveView === 'timeline' ? (
+        <NotebookEntryTimeline
+          entries={entries}
+          kind={kind}
+          onMutated={() => refetch()}
+        />
       ) : (
         <div className="space-y-3">
           {entries.map((entry) =>
