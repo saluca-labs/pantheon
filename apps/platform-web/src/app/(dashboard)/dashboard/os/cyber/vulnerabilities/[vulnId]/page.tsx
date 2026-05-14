@@ -8,7 +8,7 @@
 
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, Bug } from 'lucide-react';
+import { ArrowLeft, Bug, Crosshair } from 'lucide-react';
 import { getCurrentCyberUser } from '@/lib/agentic-os/cyber/session';
 import {
   getVulnerability,
@@ -17,6 +17,7 @@ import {
 } from '@/lib/agentic-os/cyber/repo';
 import { ExposureForm } from '@/components/agentic-os/cyber/exposures/ExposureForm';
 import { ExposureCard } from '@/components/agentic-os/cyber/exposures/ExposureCard';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,9 +84,11 @@ export default async function VulnerabilityDetailPage({ params }: Props) {
 
       <h2 className="text-lg font-semibold text-white mb-3">Exposures ({exposures.length})</h2>
       {exposures.length === 0 ? (
-        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-          No exposures linked yet. Use the form above to link an asset.
-        </p>
+        <EmptyState
+          icon={<Crosshair className="h-6 w-6" />}
+          title="No exposures linked yet"
+          description="Use the form above to link this vulnerability to an affected asset and start tracking remediation."
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {exposures.map((e) => (
