@@ -106,19 +106,19 @@ export default function DealDetailShell({
 
   const cardClass = 'rounded-xl border border-border-subtle bg-surface-2 p-5';
   const labelClass = 'block text-xs font-medium text-text-secondary mb-1';
-  const valueClass = 'text-sm text-white';
+  const valueClass = 'text-sm text-text-primary';
 
   return (
     <div className="space-y-5">
       {/* Meta Card */}
       <div className={cardClass}>
         <div className="flex items-start justify-between mb-4">
-          <h2 className="text-white text-lg font-bold">{deal.title}</h2>
+          <h2 className="text-text-primary text-lg font-bold">{deal.title}</h2>
           <DealStagePicker stage={deal.stage} disabled={isTerminal} onChange={handleStageChange} />
         </div>
 
         {stageError && (
-          <div className="mb-4 rounded-md border border-red-800 bg-red-900/20 px-3 py-2 text-xs text-red-400">
+          <div className="mb-4 rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
             {stageError}
           </div>
         )}
@@ -126,7 +126,7 @@ export default function DealDetailShell({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           <div>
             <span className={labelClass}>Value</span>
-            <span className={`${valueClass} text-teal-300`}>
+            <span className={`${valueClass} text-os-business tabular-nums`}>
               {deal.valueCents != null ? formatValue(deal.valueCents, deal.currency) : '--'}
             </span>
           </div>
@@ -191,11 +191,11 @@ export default function DealDetailShell({
               onChange={(e) => {
                 if (e.target.value) handleStageChange(e.target.value as DealStage);
               }}
-              className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
+              className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none transition"
             >
               <option value="" disabled className="bg-surface-2 text-text-secondary">Select stage...</option>
               {DEAL_STAGES.filter((s) => s !== deal.stage).map((s) => (
-                <option key={s} value={s} className="bg-surface-2 text-white">
+                <option key={s} value={s} className="bg-surface-2 text-text-primary">
                   {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                 </option>
               ))}
@@ -212,7 +212,7 @@ export default function DealDetailShell({
             {deal.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center rounded-md bg-surface-0 border border-border-subtle px-2 py-0.5 text-xs text-teal-300"
+                className="inline-flex items-center rounded bg-os-business/15 border border-os-business/30 px-2 py-0.5 text-xs text-os-business"
               >
                 {tag}
               </span>
@@ -223,9 +223,9 @@ export default function DealDetailShell({
 
       {/* Lost reason */}
       {deal.stage === 'lost' && deal.lostReason && (
-        <div className={`${cardClass} border-red-800/40`}>
+        <div className={`${cardClass} border-danger/30`}>
           <span className={labelClass}>Lost Reason</span>
-          <p className="text-sm text-red-400 mt-1">{deal.lostReason}</p>
+          <p className="text-sm text-danger mt-1">{deal.lostReason}</p>
         </div>
       )}
 

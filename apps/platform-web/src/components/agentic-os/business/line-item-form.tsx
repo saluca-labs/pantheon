@@ -1,6 +1,11 @@
 /**
  * Business OS Phase 4 — line item inline row editor.
  *
+ * Wave D (UI Depth Wave) polish: migrated the hand-spelled hex / `text-white`
+ * / `bg-teal-600` literals onto the visual-language tokens (text hierarchy,
+ * `danger` status token, `os-business` accent for the add button). Same
+ * fields, same submit payload, same routes — presentation only.
+ *
  * @license MIT — Tiresias Business OS Phase 4 (internal).
  */
 
@@ -95,14 +100,14 @@ export default function LineItemForm({
   );
 
   const inputClass =
-    'rounded-lg border border-border-subtle bg-surface-0 px-2 py-1.5 text-xs text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
-  const labelClass = 'block text-[10px] text-[#64748b] mb-0.5';
+    'rounded-md border border-border-subtle bg-surface-0 px-2 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none transition';
+  const labelClass = 'block text-2xs text-text-tertiary mb-0.5';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
-        <div className="rounded border border-red-800 bg-red-900/20 p-2">
-          <p className="text-xs text-red-400">{error}</p>
+        <div className="rounded-md border border-danger/30 bg-danger/5 p-2">
+          <p className="text-xs text-danger">{error}</p>
         </div>
       )}
 
@@ -159,15 +164,17 @@ export default function LineItemForm({
           />
         </div>
         <div className="w-24 text-right self-end">
-          <p className="text-xs text-[#64748b]">{fmtCents(lineTotal)}</p>
-          {taxRateBp > 0 && <p className="text-[10px] text-text-secondary">+{fmtCents(lineTax)} tax</p>}
-          <p className="text-xs font-mono text-white">{fmtCents(grandTotal)}</p>
+          <p className="text-xs tabular-nums text-text-tertiary">{fmtCents(lineTotal)}</p>
+          {taxRateBp > 0 && (
+            <p className="text-2xs tabular-nums text-text-secondary">+{fmtCents(lineTax)} tax</p>
+          )}
+          <p className="font-mono text-xs tabular-nums text-text-primary">{fmtCents(grandTotal)}</p>
         </div>
         <div className="self-end">
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
+            className="inline-flex items-center rounded-md bg-os-business/15 text-os-business hover:bg-os-business/25 disabled:opacity-50 text-xs font-medium px-3 py-1.5 transition"
           >
             {loading ? '...' : isEdit ? 'Update' : 'Add'}
           </button>

@@ -1,17 +1,26 @@
 /**
  * Business OS Phase 5 — live P&L summary panel.
  *
- * Displays a date range input with computed revenue, expense, and margin
- * totals from the summary API.
+ * Wave D (UI Depth Wave) specialization: the ad-hoc `rounded-xl border` stat
+ * cards are replaced with the shared `DashboardWidget` grid (revenue / expense
+ * / margin per currency, status-tinted by margin sign), and a `ChartCard` bar
+ * chart visualizes the revenue-vs-expense-vs-margin breakdown. Same summary
+ * API, same date-range controls, same PDF export — presentation only.
  *
  * @license MIT — Tiresias Business OS Phase 5 (internal).
  */
 
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Download } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Download, BarChart3 } from 'lucide-react';
 import type { PnlSummaryCurrency } from '@/lib/agentic-os/business/pnl-snapshots';
+import {
+  ChartCard,
+  DashboardWidget,
+  EmptyState,
+  type ChartSeries,
+} from '@/components/agentic-os/_shared/views';
 
 function fmtCents(cents: number): string {
   return `$${(Math.abs(cents) / 100).toLocaleString('en-US', {
@@ -67,13 +76,24 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
     );
   };
 
+  // One bar series per currency: revenue / expense / margin grouped per axis.
+  const chartSeries: ChartSeries[] = summary.map((s) => ({
+    key: s.currency,
+    label: s.currency,
+    data: [
+      { x: 'Revenue', y: s.revenueCents / 100 },
+      { x: 'Expenses', y: s.expenseCents / 100 },
+      { x: 'Margin', y: s.marginCents / 100 },
+    ],
+  }));
+
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-medium text-white">P&L Summary</h2>
+    <div className="space-y-4" data-testid="pnl-summary-panel">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-lg font-medium text-text-primary">P&L Summary</h2>
         <button
           onClick={handleExportPdf}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 hover:bg-border-subtle text-text-secondary hover:text-white text-xs font-medium px-3 py-1.5 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 hover:bg-surface-3 text-text-secondary hover:text-text-primary text-xs font-medium px-3 py-1.5 transition"
         >
           <Download className="w-3.5 h-3.5" />
           Export PDF
@@ -81,30 +101,30 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
       </div>
 
       {/* Date range inputs */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 flex-wrap">
         <div>
-          <label className="block text-[10px] text-[#64748b] mb-1">From</label>
+          <label className="block text-2xs text-text-tertiary mb-1">From</label>
           <input
             type="date"
             value={periodStart}
             onChange={(e) => setPeriodStart(e.target.value)}
-            className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
+            className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-text-primary focus:border-accent focus:outline-none transition"
           />
         </div>
         <div>
-          <label className="block text-[10px] text-[#64748b] mb-1">To</label>
+          <label className="block text-2xs text-text-tertiary mb-1">To</label>
           <input
             type="date"
             value={periodEnd}
             onChange={(e) => setPeriodEnd(e.target.value)}
-            className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
+            className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-text-primary focus:border-accent focus:outline-none transition"
           />
         </div>
         <div className="pt-5">
           <button
             onClick={fetchSummary}
             disabled={loading}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
+            className="rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -112,58 +132,80 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3 mb-4">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/5 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
-      {/* Summary cards */}
+      {/* Widget grid — one revenue / expense / margin trio per currency */}
       {summary.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {summary.map((s) => (
-            <React.Fragment key={s.currency}>
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider">
-                    Revenue ({s.currency})
-                  </span>
-                </div>
-                <p className="text-xl font-bold text-white">{fmtCents(s.revenueCents)}</p>
-              </div>
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingDown className="w-4 h-4 text-red-400" />
-                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider">
-                    Expenses ({s.currency})
-                  </span>
-                </div>
-                <p className="text-xl font-bold text-white">{fmtCents(s.expenseCents)}</p>
-              </div>
-              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className={`w-4 h-4 ${s.marginCents >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
-                  <span className="text-[10px] text-[#64748b] uppercase tracking-wider">
-                    Margin ({s.currency})
-                  </span>
-                </div>
-                <p className={`text-xl font-bold ${s.marginCents >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div
+              key={s.currency}
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+              data-testid={`pnl-summary-currency-${s.currency}`}
+            >
+              <DashboardWidget
+                title={`Revenue (${s.currency})`}
+                icon={<DollarSign className="h-4 w-4" />}
+                variant="positive"
+                data-testid={`pnl-widget-revenue-${s.currency}`}
+              >
+                <p className="text-2xl font-semibold text-text-primary tabular-nums">
+                  {fmtCents(s.revenueCents)}
+                </p>
+              </DashboardWidget>
+              <DashboardWidget
+                title={`Expenses (${s.currency})`}
+                icon={<TrendingDown className="h-4 w-4" />}
+                variant="danger"
+                data-testid={`pnl-widget-expenses-${s.currency}`}
+              >
+                <p className="text-2xl font-semibold text-text-primary tabular-nums">
+                  {fmtCents(s.expenseCents)}
+                </p>
+              </DashboardWidget>
+              <DashboardWidget
+                title={`Margin (${s.currency})`}
+                icon={<TrendingUp className="h-4 w-4" />}
+                variant={s.marginCents >= 0 ? 'positive' : 'danger'}
+                data-testid={`pnl-widget-margin-${s.currency}`}
+              >
+                <p
+                  className={`text-2xl font-semibold tabular-nums ${
+                    s.marginCents >= 0 ? 'text-positive' : 'text-danger'
+                  }`}
+                >
+                  {s.marginCents < 0 ? '-' : ''}
                   {fmtCents(s.marginCents)}
                 </p>
-              </div>
-            </React.Fragment>
+              </DashboardWidget>
+            </div>
           ))}
+
+          {/* Breakdown chart — revenue vs expenses vs margin per currency */}
+          <ChartCard
+            title="P&L breakdown"
+            icon={<BarChart3 className="h-4 w-4" />}
+            kind="bar"
+            series={chartSeries}
+            height={220}
+            osSlug="business"
+            loading={loading}
+          />
         </div>
       ) : (
         !loading && (
-          <div className="text-center py-8">
-            <p className="text-sm text-[#64748b]">
-              Select a date range and click Refresh to compute P&L.
-            </p>
-          </div>
+          <EmptyState
+            icon={<BarChart3 className="h-6 w-6" />}
+            title="No P&L data for this range"
+            description="Pick a date range and refresh to compute revenue, expenses, and margin."
+            primaryCta={{ label: 'Refresh', onClick: fetchSummary }}
+            variant="bare"
+          />
         )
       )}
     </div>
   );
 }
-
