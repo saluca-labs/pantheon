@@ -12,6 +12,8 @@
  */
 
 import { useMemo, useState } from 'react';
+import { Mic } from 'lucide-react';
+import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   VoiceSampleCard,
   type VoiceSampleCardData,
@@ -78,21 +80,28 @@ export function VoiceSampleList({ initial }: VoiceSampleListProps) {
             </button>
           ))}
         </div>
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+        <EntitySearch
+          defaultValue={q}
           placeholder="Search samples…"
-          className="bg-surface-0 border border-border-subtle rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-accent w-64"
+          onQueryChange={setQ}
+          className="w-64"
         />
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 text-center text-sm text-text-secondary">
-          {initial.length === 0
-            ? 'No voice samples yet. Add a paragraph or page of your own writing — backed by an existing memory, or freshly typed.'
-            : 'No samples match these filters.'}
-        </div>
+        <EmptyState
+          icon={<Mic className="h-6 w-6" />}
+          title={
+            initial.length === 0
+              ? 'No voice samples yet'
+              : 'No samples match these filters'
+          }
+          description={
+            initial.length === 0
+              ? 'Add a paragraph or page of your own writing — backed by an existing memory, or freshly typed.'
+              : 'Loosen the filters above to see more.'
+          }
+        />
       ) : (
         <div className="space-y-3">
           {visible.map((s) => (

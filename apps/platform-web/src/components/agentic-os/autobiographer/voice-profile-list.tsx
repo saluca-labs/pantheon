@@ -9,6 +9,8 @@
  * @license MIT — Tiresias Autobiographer OS Phase 3 (internal).
  */
 
+import { Fingerprint } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import {
   VoiceProfileCard,
   type VoiceProfileCardData,
@@ -21,10 +23,11 @@ export interface VoiceProfileListProps {
 export function VoiceProfileList({ initial }: VoiceProfileListProps) {
   if (initial.length === 0) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 text-center text-sm text-text-secondary">
-        No voice profiles built yet. Build one from your active samples to
-        unlock the Phase 7 chapter drafter.
-      </div>
+      <EmptyState
+        icon={<Fingerprint className="h-6 w-6" />}
+        title="No voice profiles built yet"
+        description="Build one from your active samples to unlock the Phase 7 chapter drafter."
+      />
     );
   }
 

@@ -397,6 +397,22 @@ export async function listMemoriesForBook(
 }
 
 /**
+ * Workshop-wide memory count for a user. Cheap aggregate used by the
+ * hub dashboard widgets (Wave C-3b) so the tile reports a true total
+ * rather than a list-cap-limited length.
+ */
+export async function countMemoriesForUser(userId: string): Promise<number> {
+  const pool = getAutobiographerPool();
+  const r = await pool.query(
+    `SELECT COUNT(*)::int AS n
+       FROM agos_autobiographer_memories
+      WHERE user_id = $1`,
+    [userId],
+  );
+  return Number(r.rows[0]?.n ?? 0);
+}
+
+/**
  * Bulk fetch memories by id, filtered by user. Used by the Phase 4 PDF
  * export route to resolve citation memory ids to display titles in a
  * single round trip. Returns memories that exist and belong to the
