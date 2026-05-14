@@ -28,6 +28,27 @@ import {
 export type AgenticOsStatus = 'live' | 'preview' | 'planned';
 
 /**
+ * Canonical union of every Agentic OS slug. This is the single source of
+ * truth — `AGENTIC_OS_MODULES` below uses exactly these values for its
+ * `slug` fields. Shared-view primitives (Wave B+) import this rather than
+ * redeclaring their own slug unions.
+ *
+ * NOTE: `AgenticOsModule.slug` is intentionally left as bare `string` for
+ * now to avoid a typecheck cascade across the registry's many call sites;
+ * a later coherence wave can tighten it to `OsSlug`.
+ */
+export type OsSlug =
+  | 'health'
+  | 'maker'
+  | 'research'
+  | 'secure-dev'
+  | 'filmmaker'
+  | 'cyber'
+  | 'autobiographer'
+  | 'business'
+  | 'creator';
+
+/**
  * A single shipped feature/sub-page inside an Agentic OS module. The OS shell
  * renders these as the primary feature grid; an empty list falls back to a
  * "coming soon" placeholder.

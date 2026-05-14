@@ -1,6 +1,36 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ *
+ * Per-OS accent safelist (Tailwind 4 JIT)
+ *
+ * Wave B shared-view primitives (`_shared/views/*`) build per-OS accent
+ * class names as TEMPLATE LITERALS — e.g. `bg-os-${slug}`, `text-os-${slug}`,
+ * `ring-os-${slug}/40`. Tailwind's source scanner only sees *literal*
+ * class strings, so those dynamically-constructed utilities would be
+ * tree-shaken out of the compiled CSS and the per-OS accents would
+ * silently not render.
+ *
+ * `@source inline(...)` force-generates the listed utilities. The brace
+ * list mirrors the 9 registry slugs (`lib/agentic-os/registry.ts` →
+ * `OsSlug`) crossed with every utility prefix + opacity modifier the
+ * primitives actually use:
+ *   - bg-os-<slug>            kanban column dot, timeline milestone marker
+ *   - bg-os-<slug>/15         dashboard-widget icon tile, cross-entity count, saved-views pill
+ *   - bg-os-<slug>/20         calendar-view "today" cell
+ *   - bg-os-<slug>/70         timeline span bar
+ *   - text-os-<slug>          dashboard-widget, cross-entity-tabs, saved-views, calendar-view
+ *   - border-os-<slug>        cross-entity-tabs active underline, kanban drop-target ring
+ *   - border-os-<slug>/30     saved-views active pill border
+ *   - ring-os-<slug>/40       calendar-view "today" cell ring
+ *
+ * If a future wave introduces a new os-<slug> utility variant, ADD IT HERE.
+ * ------------------------------------------------------------------ */
+@source inline("{bg,text,border}-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}");
+@source inline("bg-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}/{15,20,70}");
+@source inline("border-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}/30");
+@source inline("ring-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}/40");
+
+/* ------------------------------------------------------------------ *
  * Pantheon design tokens
  *
  * Source-of-truth for every color/space/type primitive used across

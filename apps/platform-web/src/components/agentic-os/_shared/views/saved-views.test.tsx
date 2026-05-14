@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SavedViews, type SavedView } from './SavedViews';
+import { SavedViews, type SavedView } from './saved-views';
 
 interface DealQuery {
   stage: string;

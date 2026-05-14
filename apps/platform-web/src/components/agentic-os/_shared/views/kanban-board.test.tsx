@@ -19,7 +19,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
-import { KanbanBoard, type KanbanColumn } from './KanbanBoard';
+import { KanbanBoard, type KanbanColumn } from './kanban-board';
 
 interface Card {
   id: string;

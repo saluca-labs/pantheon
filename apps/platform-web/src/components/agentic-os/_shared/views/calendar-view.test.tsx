@@ -22,14 +22,14 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import { CalendarView } from './CalendarView';
+import { CalendarView } from './calendar-view';
 import {
   addUtcMonths,
   buildMonthGrid,
   buildWeekGrid,
   dateKey,
   startOfUtcWeek,
-} from './CalendarView.utils';
+} from './calendar-view.utils';
 
 // A fixed UTC reference instant: Wed 2026-05-13.
 const TODAY = new Date(Date.UTC(2026, 4, 13));

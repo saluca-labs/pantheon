@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { EntitySearch } from './EntitySearch';
+import { EntitySearch } from './entity-search';
 
 interface Person {
   id: string;

@@ -40,7 +40,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
-import type { OsSlug } from './CalendarView.utils';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
