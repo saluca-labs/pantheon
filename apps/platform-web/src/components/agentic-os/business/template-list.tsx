@@ -1,7 +1,11 @@
 /**
- * Business OS Phase 6 — template list / table.
+ * Business OS — template list / table.
  *
- * @license MIT — Tiresias Business OS Phase 6 (internal).
+ * Wave C (UI Depth Wave) adoption: the ad-hoc empty-state div is replaced
+ * with the shared `EmptyState` primitive. The filter chips + table render
+ * are unchanged.
+ *
+ * @license MIT — Tiresias Business OS (internal).
  */
 
 'use client';
@@ -10,6 +14,7 @@ import { FileText } from 'lucide-react';
 import TemplateRow from './template-row';
 import type { DocTemplate, DocTemplateKind } from '@/lib/agentic-os/business/doc-templates';
 import { DOC_TEMPLATE_KINDS } from '@/lib/agentic-os/business/doc-templates';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   templates: DocTemplate[];
@@ -79,12 +84,11 @@ export default function TemplateList({ templates, kindFilter, onKindChange }: Pr
           </table>
         </div>
       ) : (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-text-secondary text-sm">
-            No templates yet. Create your first template to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={<FileText className="h-6 w-6" />}
+          title="No templates yet"
+          description="Create your first template to get started."
+        />
       )}
     </div>
   );
