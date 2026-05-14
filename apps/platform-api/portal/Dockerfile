@@ -24,6 +24,13 @@ ARG NEXT_PUBLIC_SOULGATE_API_URL=http://soulgate.tiresias.svc.cluster.local
 ENV NEXT_PUBLIC_SOULGATE_API_URL=$NEXT_PUBLIC_SOULGATE_API_URL
 ARG NEXT_PUBLIC_SOULWATCH_API_URL=http://soulwatch.tiresias.svc.cluster.local
 ENV NEXT_PUBLIC_SOULWATCH_API_URL=$NEXT_PUBLIC_SOULWATCH_API_URL
+# Deployed git tag (e.g. v0.1.57). Surfaced by /api/health for ops visibility.
+# CD passes this via docker/build-push-action build-args from the resolved tag;
+# local builds fall back to "unknown". The route runs server-side at request
+# time (force-dynamic + runtime=nodejs), so we also re-declare ARG+ENV in the
+# runner stage below — ENV from the builder stage does not propagate.
+ARG NEXT_PUBLIC_APP_VERSION=unknown
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
 RUN npm run build
 
@@ -33,6 +40,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# Surface the deployed tag at runtime for /api/health. Same value as the
+# builder-stage ARG (forwarded by CD via build-args); defaults to "unknown".
+ARG NEXT_PUBLIC_APP_VERSION=unknown
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
