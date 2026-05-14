@@ -16,18 +16,6 @@
  * @license MIT — Tiresias platform (internal).
  */
 
-/** OS slug union — mirrors `lib/agentic-os/registry.ts`. Shared by Wave B.3 views. */
-export type OsSlug =
-  | 'health'
-  | 'maker'
-  | 'research'
-  | 'secure-dev'
-  | 'filmmaker'
-  | 'cyber'
-  | 'autobiographer'
-  | 'business'
-  | 'creator';
-
 /** A single rendered calendar cell. `date` is always UTC midnight. */
 export interface CalendarCell {
   /** UTC-midnight Date for this day. */

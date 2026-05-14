@@ -31,7 +31,7 @@
 
 import { useMemo } from 'react';
 import clsx from 'clsx';
-import type { OsSlug } from './CalendarView.utils';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
