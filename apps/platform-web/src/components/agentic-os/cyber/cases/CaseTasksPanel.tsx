@@ -17,9 +17,11 @@ import {
   ChevronDown,
   Pencil,
   Trash2,
+  CheckSquare,
 } from 'lucide-react';
 import type { Task } from '@/lib/agentic-os/cyber/cases';
 import { TASK_STATUSES } from '@/lib/agentic-os/cyber/cases';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { TaskForm } from './TaskForm';
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -158,9 +160,16 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
       )}
 
       {tasks.length === 0 ? (
-        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-          No tasks yet.
-        </p>
+        <EmptyState
+          icon={<CheckSquare className="h-6 w-6" />}
+          title="No tasks yet"
+          description="Break the investigation into checklist items so nothing slips between analysts."
+          primaryCta={{
+            label: 'Add task',
+            icon: <Plus className="h-4 w-4" />,
+            onClick: () => setCreating(true),
+          }}
+        />
       ) : (
         <ul className="space-y-1.5">
           {tasks.map((t, i) => {

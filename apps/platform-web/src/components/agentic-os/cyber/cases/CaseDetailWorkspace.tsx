@@ -6,22 +6,17 @@
  * Header (title, status, severity, priority, assigned-to) + tabbed body:
  * Overview / Alerts / Evidence / Tasks / Timeline.
  *
+ * Wave C-2a: the bespoke `<nav>` + `TabBtn` tab strip is replaced with the
+ * shared `CrossEntityTabs` primitive — lazy content, count badges, roving
+ * keyboard focus, per-OS (`cyber`) accent. Tab content is unchanged.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Pencil,
-  Trash2,
-  Activity,
-  AlertTriangle,
-  FileText,
-  CheckSquare,
-  Layers,
-} from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import type {
   CaseDetail,
   CaseSeverity,
@@ -29,6 +24,7 @@ import type {
   CasePriority,
 } from '@/lib/agentic-os/cyber/cases';
 import { CASE_STATUSES } from '@/lib/agentic-os/cyber/cases';
+import { CrossEntityTabs } from '@/components/agentic-os/_shared/views';
 import { CaseForm } from './CaseForm';
 import { CaseTimelinePanel } from './CaseTimelinePanel';
 import { CaseAlertsPanel } from './CaseAlertsPanel';
@@ -61,15 +57,12 @@ const PRI_STYLE: Record<CasePriority, string> = {
   p5: 'text-slate-400 bg-slate-500/10',
 };
 
-type Tab = 'overview' | 'alerts' | 'evidence' | 'tasks' | 'timeline';
-
 export function CaseDetailWorkspace({
   caseDetail,
 }: {
   caseDetail: CaseDetail;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('overview');
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,70 +170,59 @@ export function CaseDetailWorkspace({
         )}
       </header>
 
-      <nav className="flex flex-wrap gap-1 border-b border-border-subtle">
-        <TabBtn current={tab} value="overview" onClick={() => setTab('overview')}>
-          <Layers className="w-4 h-4" /> Overview
-        </TabBtn>
-        <TabBtn current={tab} value="alerts" onClick={() => setTab('alerts')}>
-          <AlertTriangle className="w-4 h-4" /> Alerts ({caseDetail.linkedAlerts.length})
-        </TabBtn>
-        <TabBtn current={tab} value="evidence" onClick={() => setTab('evidence')}>
-          <FileText className="w-4 h-4" /> Evidence ({caseDetail.evidence.length})
-        </TabBtn>
-        <TabBtn current={tab} value="tasks" onClick={() => setTab('tasks')}>
-          <CheckSquare className="w-4 h-4" /> Tasks ({openTaskCount})
-        </TabBtn>
-        <TabBtn current={tab} value="timeline" onClick={() => setTab('timeline')}>
-          <Activity className="w-4 h-4" /> Timeline ({caseDetail.events.length})
-        </TabBtn>
-      </nav>
-
-      <section>
-        {tab === 'overview' && <OverviewPanel caseDetail={caseDetail} />}
-        {tab === 'alerts' && (
-          <CaseAlertsPanel
-            caseId={caseDetail.id}
-            linkedAlerts={caseDetail.linkedAlerts}
-          />
-        )}
-        {tab === 'evidence' && (
-          <CaseEvidencePanel caseId={caseDetail.id} evidence={caseDetail.evidence} />
-        )}
-        {tab === 'tasks' && (
-          <CaseTasksPanel caseId={caseDetail.id} tasks={caseDetail.tasks} />
-        )}
-        {tab === 'timeline' && (
-          <CaseTimelinePanel caseId={caseDetail.id} events={caseDetail.events} />
-        )}
-      </section>
+      <CrossEntityTabs
+        slug="cyber"
+        defaultTab="overview"
+        tabs={[
+          {
+            key: 'overview',
+            label: 'Overview',
+            content: () => <OverviewPanel caseDetail={caseDetail} />,
+          },
+          {
+            key: 'alerts',
+            label: 'Alerts',
+            count: caseDetail.linkedAlerts.length,
+            content: () => (
+              <CaseAlertsPanel
+                caseId={caseDetail.id}
+                linkedAlerts={caseDetail.linkedAlerts}
+              />
+            ),
+          },
+          {
+            key: 'evidence',
+            label: 'Evidence',
+            count: caseDetail.evidence.length,
+            content: () => (
+              <CaseEvidencePanel
+                caseId={caseDetail.id}
+                evidence={caseDetail.evidence}
+              />
+            ),
+          },
+          {
+            key: 'tasks',
+            label: 'Tasks',
+            count: openTaskCount,
+            content: () => (
+              <CaseTasksPanel caseId={caseDetail.id} tasks={caseDetail.tasks} />
+            ),
+          },
+          {
+            key: 'timeline',
+            label: 'Timeline',
+            count: caseDetail.events.length,
+            content: () => (
+              <CaseTimelinePanel
+                caseId={caseDetail.id}
+                events={caseDetail.events}
+              />
+            ),
+          },
+        ]}
+      />
     </div>
-  );
-}
-
-function TabBtn({
-  current,
-  value,
-  onClick,
-  children,
-}: {
-  current: Tab;
-  value: Tab;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  const active = current === value;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 -mb-px border-b-2 text-sm transition ${
-        active
-          ? 'border-accent text-white'
-          : 'border-transparent text-text-secondary hover:text-white'
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 

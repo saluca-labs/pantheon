@@ -1,18 +1,28 @@
 /**
  * CyberSec OS — Top vulnerable assets table.
  *
+ * Wave C-2a: ad-hoc empty `<p>` replaced with the `EmptyState` primitive.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
 import Link from 'next/link';
+import { Server } from 'lucide-react';
 import type { TrendsPayload } from '@/lib/agentic-os/cyber/repo';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export function TopVulnerableAssetsTable({ rows }: { rows: TrendsPayload['topVulnerableAssets'] }) {
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-        No assets have open exposures yet.
-      </p>
+      <EmptyState
+        icon={<Server className="h-6 w-6" />}
+        title="No assets have open exposures yet"
+        description="Once vulnerabilities are linked to assets, the most-exposed assets rank here."
+        primaryCta={{
+          label: 'Go to exposures',
+          href: '/dashboard/os/cyber/exposures',
+        }}
+      />
     );
   }
   return (

@@ -4,12 +4,16 @@
  * Server component. Active runs first, then recent terminal runs. Each row
  * links to /dashboard/os/cyber/playbooks/[playbookId]/run/[runId].
  *
+ * Wave C-2a: ad-hoc empty `<p>` states replaced with the `EmptyState`
+ * primitive.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
 import Link from 'next/link';
-import { Play, CheckCircle2, XCircle } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, ListChecks } from 'lucide-react';
 import type { PlaybookRun, PlaybookRunStatus } from '@/lib/agentic-os/cyber/playbooks';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 type RunWithPlaybook = PlaybookRun & { playbookName: string };
 
@@ -25,8 +29,18 @@ export function RunsListPanel({ runs }: { runs: RunWithPlaybook[] }) {
 
   return (
     <div className="space-y-6">
-      <Section title="Active runs" runs={active} emptyText="No active runs." />
-      <Section title="Recent runs" runs={terminal} emptyText="No completed runs yet." />
+      <Section
+        title="Active runs"
+        runs={active}
+        emptyTitle="No active runs"
+        emptyDescription="Start a playbook from the playbooks page to track its execution here."
+      />
+      <Section
+        title="Recent runs"
+        runs={terminal}
+        emptyTitle="No completed runs yet"
+        emptyDescription="Completed and abandoned playbook runs will be listed here."
+      />
     </div>
   );
 }
@@ -34,19 +48,28 @@ export function RunsListPanel({ runs }: { runs: RunWithPlaybook[] }) {
 function Section({
   title,
   runs,
-  emptyText,
+  emptyTitle,
+  emptyDescription,
 }: {
   title: string;
   runs: RunWithPlaybook[];
-  emptyText: string;
+  emptyTitle: string;
+  emptyDescription: string;
 }) {
   return (
     <section>
       <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-2">{title}</h2>
       {runs.length === 0 ? (
-        <p className="text-sm text-text-secondary p-4 rounded-xl border border-dashed border-border-subtle">
-          {emptyText}
-        </p>
+        <EmptyState
+          variant="card"
+          icon={<ListChecks className="h-6 w-6" />}
+          title={emptyTitle}
+          description={emptyDescription}
+          primaryCta={{
+            label: 'Browse playbooks',
+            href: '/dashboard/os/cyber/playbooks',
+          }}
+        />
       ) : (
         <ul className="space-y-2">
           {runs.map((run) => {

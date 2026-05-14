@@ -3,6 +3,10 @@
 /**
  * CyberSec OS — Case timeline (chronological events) + Add note form.
  *
+ * Wave C-2a: the ad-hoc event `<ol>` is replaced with the shared
+ * `ActivityFeed` primitive (day-grouped, tone-dotted). The "Add note" form
+ * above it is unchanged — same API call, same behavior.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
@@ -20,6 +24,11 @@ import {
   Send,
 } from 'lucide-react';
 import type { CaseEvent, CaseEventKind } from '@/lib/agentic-os/cyber/cases';
+import {
+  ActivityFeed,
+  type ActivityEvent,
+  type ActivityTone,
+} from '@/components/agentic-os/_shared/views';
 
 const EVENT_ICONS: Record<CaseEventKind, typeof MessageSquare> = {
   note: MessageSquare,
@@ -34,6 +43,22 @@ const EVENT_ICONS: Record<CaseEventKind, typeof MessageSquare> = {
   assignment_change: UserCheck,
   severity_change: TrendingUp,
   priority_change: Flag,
+};
+
+/** Event kind → ActivityFeed tone — keeps the timeline semantically colored. */
+const EVENT_TONE: Record<CaseEventKind, ActivityTone> = {
+  note: 'neutral',
+  status_change: 'accent',
+  alert_attached: 'attention',
+  alert_detached: 'neutral',
+  evidence_added: 'positive',
+  evidence_removed: 'neutral',
+  task_added: 'accent',
+  task_completed: 'positive',
+  task_reopened: 'warning',
+  assignment_change: 'accent',
+  severity_change: 'warning',
+  priority_change: 'warning',
 };
 
 const inputCls =
@@ -76,6 +101,18 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
     }
   }
 
+  const feedEvents: ActivityEvent[] = events.map((ev) => {
+    const Icon = EVENT_ICONS[ev.kind] ?? MessageSquare;
+    return {
+      id: ev.id,
+      occurredAt: ev.createdAt,
+      actor: ev.kind.replace(/_/g, ' '),
+      summary: ev.body ?? null,
+      tone: EVENT_TONE[ev.kind] ?? 'neutral',
+      icon: <Icon className="h-4 w-4 text-accent" aria-hidden="true" />,
+    };
+  });
+
   return (
     <div className="space-y-4">
       <form
@@ -99,7 +136,7 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
           <button
             type="submit"
             disabled={saving || !noteBody.trim()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
           >
             <Send className="w-4 h-4" />
             {saving ? 'Posting…' : 'Post'}
@@ -108,47 +145,17 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
         </div>
       </form>
 
-      {events.length === 0 ? (
-        <p className="text-sm text-text-secondary p-6 rounded-xl border border-dashed border-border-subtle">
-          No events recorded yet.
-        </p>
-      ) : (
-        <ol className="space-y-2">
-          {events.map((ev) => {
-            const Icon = EVENT_ICONS[ev.kind] ?? MessageSquare;
-            return (
-              <li
-                key={ev.id}
-                className="rounded-xl border border-border-subtle bg-surface-2 p-3"
-              >
-                <div className="flex items-start gap-2">
-                  <Icon className="w-4 h-4 text-accent mt-0.5 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-text-primary">
-                        {ev.kind.replace(/_/g, ' ')}
-                      </span>
-                      {ev.author && (
-                        <span className="text-[11px] text-text-secondary">
-                          · {ev.author}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-text-secondary ml-auto">
-                        {new Date(ev.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    {ev.body && (
-                      <p className="text-sm text-white mt-1 whitespace-pre-wrap break-words">
-                        {ev.body}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-2">
+        <ActivityFeed
+          events={feedEvents}
+          grouping="day"
+          emptyState={{
+            title: 'No events recorded yet',
+            description:
+              'Notes, status changes, and linked alerts will appear here as the case progresses.',
+          }}
+        />
+      </div>
     </div>
   );
 }

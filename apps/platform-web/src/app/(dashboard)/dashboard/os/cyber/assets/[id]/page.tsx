@@ -2,8 +2,12 @@
  * CyberSec OS — Asset detail page.
  *
  * Header (name + kind icon + criticality + environment), metadata block,
- * alerts-on-this-asset panel, groups panel, edit/decommission/delete
- * actions.
+ * and a `CrossEntityTabs` related-entity surface (alerts-on-this-asset as an
+ * `ActivityFeed` + groups), edit/decommission/delete actions.
+ *
+ * Wave C-2a: the two stacked ad-hoc related-entity `<section>`s are replaced
+ * by the `AssetDetailTabs` client island composing `CrossEntityTabs` +
+ * `ActivityFeed`.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
@@ -19,6 +23,7 @@ import {
 } from '@/lib/agentic-os/cyber/repo';
 import { ASSET_KINDS } from '@/lib/agentic-os/cyber/assets';
 import { AssetDetailActions } from '@/components/agentic-os/cyber/AssetDetailActions';
+import { AssetDetailTabs } from '@/components/agentic-os/cyber/AssetDetailTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,14 +32,6 @@ const CRIT_STYLE: Record<string, string> = {
   high:     'text-orange-300 bg-orange-500/10 border-orange-500/30',
   medium:   'text-amber-300 bg-amber-500/10 border-amber-500/30',
   low:      'text-slate-300 bg-slate-500/10 border-slate-500/30',
-};
-
-const SEVERITY_BADGE: Record<string, string> = {
-  critical: 'text-red-200 bg-red-600/20 border-red-500/50',
-  high:     'text-orange-300 bg-orange-500/10 border-orange-500/30',
-  medium:   'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  low:      'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  info:     'text-slate-300 bg-slate-500/10 border-slate-500/30',
 };
 
 export default async function AssetDetailPage({
@@ -117,60 +114,7 @@ export default async function AssetDetailPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-        <h2 className="text-base font-semibold text-white mb-3">
-          Alerts on this asset ({alertsOnAsset.length})
-        </h2>
-        {alertsOnAsset.length === 0 ? (
-          <p className="text-sm text-text-secondary">
-            No alerts have been linked to this asset yet.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {alertsOnAsset.map((a) => (
-              <li key={a.id} className="flex items-start gap-2">
-                <span
-                  className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border shrink-0 ${
-                    SEVERITY_BADGE[a.severity] ?? ''
-                  }`}
-                >
-                  {a.severity}
-                </span>
-                <span className="text-sm text-white">{a.title}</span>
-                <span className="text-xs text-text-secondary ml-auto">
-                  {new Date(a.occurredAt).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-base font-semibold text-white">Groups</h2>
-          <Link
-            href="/dashboard/os/cyber/asset-groups"
-            className="text-xs text-text-secondary hover:text-white transition"
-          >
-            Manage groups →
-          </Link>
-        </div>
-        {groups.length === 0 ? (
-          <p className="text-sm text-text-secondary">No groups defined yet.</p>
-        ) : (
-          <p className="text-sm text-text-secondary">
-            Add this asset to a group on the{' '}
-            <Link
-              href="/dashboard/os/cyber/asset-groups"
-              className="text-accent hover:underline"
-            >
-              groups page
-            </Link>
-            .
-          </p>
-        )}
-      </section>
+      <AssetDetailTabs alertsOnAsset={alertsOnAsset} groups={groups} />
     </div>
   );
 }
