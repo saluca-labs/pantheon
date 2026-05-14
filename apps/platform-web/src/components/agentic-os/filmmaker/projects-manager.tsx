@@ -3,9 +3,17 @@
 /**
  * Filmmaker OS — ProjectsManager client component.
  *
- * Card-style project list with filter (status, format) and sort (name,
- * created, target completion). Clicking a card opens the Project Hub.
- * A "New project" button opens a drawer with the full create form.
+ * Card-style project list with name search, filters (status, format) and
+ * sort (name, created, target completion). Clicking a card opens the Project
+ * Hub. A "New project" button opens a drawer with the full create form.
+ *
+ * Wave C-5 (UI Depth Wave): the ad-hoc filter row is now the shared
+ * `FilmmakerListControls` rail (EntitySearch + SavedViews); the ad-hoc
+ * "No projects…" `<p>` is the shared `EmptyState` primitive. The native
+ * status / format / sort `<select>`s are kept (EntitySearch has no
+ * declarative filter-chip API — see PR notes), now living in the rail's
+ * `filterControls` slot. Behavior-preserving: same filtering / sorting /
+ * create flow, same routes.
  *
  * @license MIT — Tiresias Filmmaker OS (internal).
  */
@@ -22,7 +30,12 @@ import {
   type ProjectFormat,
   type ProjectStatus,
 } from '@/lib/agentic-os/filmmaker/projects';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { PhaseProgressMini } from './phase-progress-editor';
+import {
+  FilmmakerListControls,
+  type FilmmakerQuery,
+} from './filmmaker-list-controls';
 
 const API = '/api/tiresias/agentic-os/filmmaker/projects';
 
@@ -54,11 +67,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function applyProjectFilters(
   projects: FilmmakerProject[],
-  opts: { status: StatusFilter; format: FormatFilter; sort: SortKey },
+  opts: { status: StatusFilter; format: FormatFilter; sort: SortKey; search?: string },
 ): FilmmakerProject[] {
   let filtered = projects;
   if (opts.status !== 'all') filtered = filtered.filter((p) => p.status === opts.status);
   if (opts.format !== 'all') filtered = filtered.filter((p) => p.format === opts.format);
+  const q = (opts.search ?? '').trim().toLowerCase();
+  if (q) {
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.logline?.toLowerCase().includes(q) ?? false) ||
+        (p.description?.toLowerCase().includes(q) ?? false),
+    );
+  }
 
   const sorted = [...filtered];
   if (opts.sort === 'name') {
@@ -321,14 +343,21 @@ function ProjectCard({ project }: { project: FilmmakerProject }) {
 
 export function ProjectsManager({ initialProjects }: { initialProjects: FilmmakerProject[] }) {
   const [projects, setProjects] = useState<FilmmakerProject[]>(initialProjects);
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [formatFilter, setFormatFilter] = useState<FormatFilter>('all');
   const [sort, setSort] = useState<SortKey>('created');
   const [creating, setCreating] = useState(false);
 
   const visible = useMemo(
-    () => applyProjectFilters(projects, { status: statusFilter, format: formatFilter, sort }),
-    [projects, statusFilter, formatFilter, sort],
+    () =>
+      applyProjectFilters(projects, {
+        status: statusFilter,
+        format: formatFilter,
+        sort,
+        search,
+      }),
+    [projects, statusFilter, formatFilter, sort, search],
   );
 
   function onCreated(p: FilmmakerProject) {
@@ -336,66 +365,98 @@ export function ProjectsManager({ initialProjects }: { initialProjects: Filmmake
     setCreating(false);
   }
 
+  // SavedViews persists the full query (search + selects). Applying a saved
+  // view restores every control; an empty query is the "All" reset.
+  function applyQuery(query: FilmmakerQuery) {
+    setSearch(query.search ?? '');
+    setStatusFilter((query.status as StatusFilter) || 'all');
+    setFormatFilter((query.format as FormatFilter) || 'all');
+    setSort((query.sort as SortKey) || 'created');
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-          <Field label="Status">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className={inputCls}
-            >
-              <option value="all">All</option>
-              {PROJECT_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {PROJECT_STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Format">
-            <select
-              value={formatFilter}
-              onChange={(e) => setFormatFilter(e.target.value as FormatFilter)}
-              className={inputCls}
-            >
-              <option value="all">All</option>
-              {FORMATS.map((f) => (
-                <option key={f} value={f}>
-                  {FORMAT_LABELS[f]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Sort by">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className={inputCls}
-            >
-              <option value="created">Recently created</option>
-              <option value="name">Name</option>
-              <option value="target">Target completion</option>
-            </select>
-          </Field>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
-        >
-          <Plus className="w-4 h-4" />
-          New project
-        </button>
-      </div>
+      <FilmmakerListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search projects by name, logline, or description…"
+        filters={{ status: statusFilter, format: formatFilter, sort }}
+        onApplyQuery={applyQuery}
+        savedViewKey="projects"
+        filterControls={
+          <>
+            <Field label="Status">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                className={inputCls}
+              >
+                <option value="all">All</option>
+                {PROJECT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {PROJECT_STATUS_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Format">
+              <select
+                value={formatFilter}
+                onChange={(e) => setFormatFilter(e.target.value as FormatFilter)}
+                className={inputCls}
+              >
+                <option value="all">All</option>
+                {FORMATS.map((f) => (
+                  <option key={f} value={f}>
+                    {FORMAT_LABELS[f]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Sort by">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className={inputCls}
+              >
+                <option value="created">Recently created</option>
+                <option value="name">Name</option>
+                <option value="target">Target completion</option>
+              </select>
+            </Field>
+          </>
+        }
+        actions={
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+          >
+            <Plus className="w-4 h-4" />
+            New project
+          </button>
+        }
+      />
 
       {visible.length === 0 ? (
-        <p className="text-sm text-text-secondary">
-          {projects.length === 0
-            ? 'No projects yet. Create your first project above.'
-            : 'No projects match the current filters.'}
-        </p>
+        projects.length === 0 ? (
+          <EmptyState
+            icon={<Clapperboard className="h-6 w-6" />}
+            title="No projects yet"
+            description="Create your first project to start breaking down a script — phases, shots, characters, schedule, and storyboards all attach to it."
+            primaryCta={{
+              label: 'New project',
+              onClick: () => setCreating(true),
+              icon: <Plus className="h-4 w-4" />,
+            }}
+          />
+        ) : (
+          <EmptyState
+            variant="bare"
+            title="No projects match the current filters"
+            description="Try a different search or clear the status / format filters above."
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {visible.map((p) => (
