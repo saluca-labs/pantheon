@@ -1,21 +1,24 @@
 'use client';
 
 /**
- * Business OS Phase 1 — hub landing.  Renders three cards:
- *   - People        (count of non-archived people)
- *   - Organizations (count of non-archived orgs)
- *   - Recent activity (last 10 interactions)
+ * Business OS hub landing.
  *
- * Future phases add Deals / Projects / Quotes & Invoices / Expenses /
- * Documents / Coach cards as those phases ship.
+ * Wave C (UI Depth Wave) adoption: the ad-hoc card grid is replaced with
+ * shared `DashboardWidget` containers, recent activity now renders through
+ * the shared `ActivityFeed` primitive, and the zero-activity case uses the
+ * shared `EmptyState`. Same data, same routes, same counts — presentation
+ * layer only.
  *
- * @license MIT — Tiresias Business OS Phase 1 (internal).
+ * @license MIT — Tiresias Business OS (internal).
  */
 
-import Link from 'next/link';
 import { Users, Building2, Activity, DollarSign } from 'lucide-react';
 import type { Interaction, Person, Organization } from '@/lib/agentic-os/business/crm';
-import { InteractionTypePill } from './interaction-type-pill';
+import {
+  ActivityFeed,
+  DashboardWidget,
+  type ActivityEvent,
+} from '@/components/agentic-os/_shared/views';
 
 function fmtCents(cents: number): string {
   const usd = (cents / 100).toFixed(0);
@@ -46,88 +49,97 @@ export function BusinessHub({
   const personById = new Map(recentPeople.map((p) => [p.id, p]));
   const orgById = new Map(recentOrgs.map((o) => [o.id, o]));
 
+  const activityEvents: ActivityEvent[] = recentInteractions.slice(0, 10).map((i) => {
+    const who = i.personId ? personById.get(i.personId) : null;
+    const org = i.organizationId ? orgById.get(i.organizationId) : null;
+    const label = who ? `${who.firstName} ${who.lastName}` : org ? org.name : '—';
+    return {
+      id: i.id,
+      occurredAt: i.occurredAt,
+      actor: label,
+      summary: i.summary,
+      tone: 'accent',
+    };
+  });
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <Link
+      <DashboardWidget
+        title="Deals"
+        icon={<DollarSign className="h-4 w-4" />}
+        osSlug="business"
         href="/dashboard/os/business/deals"
-        className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent transition"
+        data-testid="business-hub-deals"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <DollarSign className="w-5 h-5 text-teal-300" />
-          <h2 className="text-sm font-semibold text-white">Deals</h2>
-        </div>
-        <p className="text-3xl font-semibold text-white mb-1">{dealsCount}</p>
-        <p className="text-xs text-text-secondary">
+        <p className="text-3xl font-semibold text-text-primary tabular-nums">
+          {dealsCount}
+        </p>
+        <p className="mt-1 text-xs text-text-secondary">
           Open deals
           {pipelineValueCents > 0 && (
             <span>
-              {' '}&middot; {fmtCents(pipelineValueCents)} pipeline
+              {' '}&middot;{' '}
+              <span className="tabular-nums">{fmtCents(pipelineValueCents)}</span> pipeline
               {pipelineWeightedCents !== pipelineValueCents && (
-                <span> ({fmtCents(pipelineWeightedCents)} weighted)</span>
+                <span>
+                  {' '}(
+                  <span className="tabular-nums">{fmtCents(pipelineWeightedCents)}</span>{' '}
+                  weighted)
+                </span>
               )}
             </span>
           )}
           . Click to open kanban.
         </p>
-      </Link>
+      </DashboardWidget>
 
-      <Link
+      <DashboardWidget
+        title="People"
+        icon={<Users className="h-4 w-4" />}
+        osSlug="business"
         href="/dashboard/os/business/people"
-        className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent transition"
+        data-testid="business-hub-people"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Users className="w-5 h-5 text-teal-300" />
-          <h2 className="text-sm font-semibold text-white">People</h2>
-        </div>
-        <p className="text-3xl font-semibold text-white mb-1">{peopleCount}</p>
-        <p className="text-xs text-text-secondary">Active contacts. Click to browse.</p>
-      </Link>
+        <p className="text-3xl font-semibold text-text-primary tabular-nums">
+          {peopleCount}
+        </p>
+        <p className="mt-1 text-xs text-text-secondary">
+          Active contacts. Click to browse.
+        </p>
+      </DashboardWidget>
 
-      <Link
+      <DashboardWidget
+        title="Organizations"
+        icon={<Building2 className="h-4 w-4" />}
+        osSlug="business"
         href="/dashboard/os/business/organizations"
-        className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent transition"
+        data-testid="business-hub-organizations"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Building2 className="w-5 h-5 text-teal-300" />
-          <h2 className="text-sm font-semibold text-white">Organizations</h2>
-        </div>
-        <p className="text-3xl font-semibold text-white mb-1">{orgsCount}</p>
-        <p className="text-xs text-text-secondary">Active companies + partners.</p>
-      </Link>
+        <p className="text-3xl font-semibold text-text-primary tabular-nums">
+          {orgsCount}
+        </p>
+        <p className="mt-1 text-xs text-text-secondary">
+          Active companies + partners.
+        </p>
+      </DashboardWidget>
 
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="w-5 h-5 text-teal-300" />
-          <h2 className="text-sm font-semibold text-white">Recent activity</h2>
-        </div>
-        {recentInteractions.length === 0 ? (
-          <p className="text-xs text-text-secondary">No interactions logged yet.</p>
-        ) : (
-          <ul className="space-y-2.5">
-            {recentInteractions.slice(0, 10).map((i) => {
-              const who = i.personId ? personById.get(i.personId) : null;
-              const org = i.organizationId ? orgById.get(i.organizationId) : null;
-              const label =
-                who ? `${who.firstName} ${who.lastName}` : org ? org.name : '—';
-              return (
-                <li key={i.id} className="flex items-start gap-2 text-xs">
-                  <InteractionTypePill type={i.interactionType} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white truncate">
-                      <span className="font-medium">{label}</span>
-                      {' — '}
-                      <span className="text-text-secondary">{i.summary}</span>
-                    </p>
-                    <p className="text-[10px] text-text-secondary/70">
-                      {new Date(i.occurredAt).toLocaleString()}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      <DashboardWidget
+        title="Recent activity"
+        icon={<Activity className="h-4 w-4" />}
+        osSlug="business"
+        className="lg:col-span-3"
+        data-testid="business-hub-activity"
+      >
+        <ActivityFeed
+          events={activityEvents}
+          grouping="none"
+          emptyState={{
+            title: 'No activity yet',
+            description:
+              'Log an interaction with a contact or organization to start the feed.',
+          }}
+        />
+      </DashboardWidget>
     </div>
   );
 }

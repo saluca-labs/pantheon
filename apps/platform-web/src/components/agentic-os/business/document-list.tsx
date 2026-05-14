@@ -1,7 +1,11 @@
 /**
- * Business OS Phase 6 — document list / table.
+ * Business OS — document list / table.
  *
- * @license MIT — Tiresias Business OS Phase 6 (internal).
+ * Wave C (UI Depth Wave) adoption: the ad-hoc empty-state div is replaced
+ * with the shared `EmptyState` primitive. The filter chips + table render
+ * are unchanged.
+ *
+ * @license MIT — Tiresias Business OS (internal).
  */
 
 'use client';
@@ -10,6 +14,7 @@ import { FileText } from 'lucide-react';
 import DocumentRow from './document-row';
 import type { BusinessDocument, DocumentStatus } from '@/lib/agentic-os/business/documents';
 import { DOCUMENT_STATUSES } from '@/lib/agentic-os/business/documents';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   documents: BusinessDocument[];
@@ -80,12 +85,11 @@ export default function DocumentList({
           </table>
         </div>
       ) : (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-          <p className="text-text-secondary text-sm">
-            No documents yet. Create your first document to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={<FileText className="h-6 w-6" />}
+          title="No documents yet"
+          description="Create your first document to get started."
+        />
       )}
     </div>
   );
