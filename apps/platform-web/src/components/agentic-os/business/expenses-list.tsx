@@ -1,7 +1,10 @@
 /**
- * Business OS Phase 5 — expenses list table.
+ * Business OS — expenses list table.
  *
- * @license MIT — Tiresias Business OS Phase 5 (internal).
+ * Wave C (UI Depth Wave) adoption: the ad-hoc empty-state div is replaced
+ * with the shared `EmptyState` primitive. The table render is unchanged.
+ *
+ * @license MIT — Tiresias Business OS (internal).
  */
 
 'use client';
@@ -9,6 +12,7 @@
 import { Wallet } from 'lucide-react';
 import ExpenseRow from './expense-row';
 import type { Expense } from '@/lib/agentic-os/business/expenses';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   expenses: Expense[];
@@ -21,10 +25,12 @@ export default function ExpensesList({
 }: Props) {
   if (expenses.length === 0) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-        <Wallet className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
-        <p className="text-text-secondary text-sm">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        icon={<Wallet className="h-6 w-6" />}
+        title="No expenses yet"
+        description={emptyMessage}
+        primaryCta={{ label: 'New expense', href: '?new=1' }}
+      />
     );
   }
 

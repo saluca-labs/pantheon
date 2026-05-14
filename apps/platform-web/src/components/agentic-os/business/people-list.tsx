@@ -1,14 +1,31 @@
 'use client';
 
 /**
- * Business OS Phase 1 — people list with filter chips.
+ * Business OS — people list with search + saved views.
  *
- * @license MIT — Tiresias Business OS Phase 1 (internal).
+ * Wave C (UI Depth Wave) adoption:
+ *  - The ad-hoc search `<input>` is replaced with the shared `EntitySearch`
+ *    primitive (debounced; wired to the same `q` filter state).
+ *  - `SavedViews` is added — the filter combination (search / tag / org /
+ *    archived) can be saved + restored, persisted to `localStorage` (Wave E
+ *    schema-backs it).
+ *  - The empty-list state uses the shared `EmptyState` primitive.
+ *  - The tag / organization / archived controls are kept as ad-hoc inputs:
+ *    `EntitySearch` only models the free-text query, so dropping them would
+ *    drop functionality. They feed the same `personMatchesFilter` call.
+ *
+ * @license MIT — Tiresias Business OS (internal).
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Organization, Person } from '@/lib/agentic-os/business/crm';
 import { personMatchesFilter } from '@/lib/agentic-os/business/people';
+import {
+  EmptyState,
+  EntitySearch,
+  SavedViews,
+  type SavedView,
+} from '@/components/agentic-os/_shared/views';
 import { PersonRow } from './person-row';
 
 interface Props {
@@ -16,8 +33,28 @@ interface Props {
   organizations: Pick<Organization, 'id' | 'name'>[];
 }
 
+/** The persisted filter shape for a saved view. */
+interface PeopleQuery {
+  q: string;
+  tag: string;
+  orgId: string;
+  showArchived: boolean;
+}
+
+const STORAGE_KEY = 'business.people.saved-views';
+
 const inputCls =
-  'w-full sm:w-auto rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
+  'w-full sm:w-auto rounded-md border border-border-subtle bg-surface-1 px-3 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none';
+
+function loadViews(): SavedView<PeopleQuery>[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SavedView<PeopleQuery>[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 export function PeopleList({ initialPeople, organizations }: Props) {
   const [people] = useState<Person[]>(initialPeople);
@@ -25,6 +62,40 @@ export function PeopleList({ initialPeople, organizations }: Props) {
   const [tagFilter, setTagFilter] = useState('');
   const [orgFilter, setOrgFilter] = useState('');
   const [q, setQ] = useState('');
+
+  const [views, setViews] = useState<SavedView<PeopleQuery>[]>([]);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+  // Hydrate saved views from localStorage on mount.
+  useEffect(() => {
+    setViews(loadViews());
+  }, []);
+
+  const persistViews = (next: SavedView<PeopleQuery>[]) => {
+    setViews(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* localStorage unavailable — views stay in-memory for the session. */
+    }
+  };
+
+  const currentQuery: PeopleQuery = useMemo(
+    () => ({ q, tag: tagFilter, orgId: orgFilter, showArchived }),
+    [q, tagFilter, orgFilter, showArchived],
+  );
+
+  const activeView = views.find((v) => v.id === activeViewId) ?? null;
+  const isDirty =
+    activeView != null &&
+    JSON.stringify(activeView.query) !== JSON.stringify(currentQuery);
+
+  const applyQuery = (query: PeopleQuery) => {
+    setQ(query.q);
+    setTagFilter(query.tag);
+    setOrgFilter(query.orgId);
+    setShowArchived(query.showArchived);
+  };
 
   const orgMap = useMemo(
     () => new Map(organizations.map((o) => [o.id, o.name])),
@@ -44,22 +115,31 @@ export function PeopleList({ initialPeople, organizations }: Props) {
 
   return (
     <div className="space-y-4">
+      <EntitySearch
+        placeholder="Search name / email / role"
+        defaultValue={q}
+        onQueryChange={(next) => {
+          setQ(next);
+          setActiveViewId((id) => (id ? null : id));
+        }}
+      />
+
       <div className="flex flex-wrap items-center gap-2">
         <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search name / email / role"
-          className={inputCls}
-        />
-        <input
           value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
+          onChange={(e) => {
+            setTagFilter(e.target.value);
+            setActiveViewId(null);
+          }}
           placeholder="Filter by tag"
           className={inputCls}
         />
         <select
           value={orgFilter}
-          onChange={(e) => setOrgFilter(e.target.value)}
+          onChange={(e) => {
+            setOrgFilter(e.target.value);
+            setActiveViewId(null);
+          }}
           className={inputCls}
         >
           <option value="">All organizations</option>
@@ -71,17 +151,57 @@ export function PeopleList({ initialPeople, organizations }: Props) {
           <input
             type="checkbox"
             checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
+            onChange={(e) => {
+              setShowArchived(e.target.checked);
+              setActiveViewId(null);
+            }}
           />
           Show archived
         </label>
-        <span className="text-xs text-text-secondary ml-auto">
+        <span className="text-xs text-text-secondary ml-auto tabular-nums">
           {filtered.length} of {people.length}
         </span>
       </div>
 
+      <SavedViews<PeopleQuery>
+        views={views}
+        activeViewId={activeViewId}
+        currentQuery={currentQuery}
+        isDirty={isDirty}
+        slug="business"
+        allViewsLabel="All people"
+        onClearView={() => {
+          setActiveViewId(null);
+          applyQuery({ q: '', tag: '', orgId: '', showArchived: false });
+        }}
+        onSelectView={(view) => {
+          setActiveViewId(view.id);
+          applyQuery(view.query);
+        }}
+        onSaveView={(name, query) => {
+          const view: SavedView<PeopleQuery> = {
+            id: `view-${Date.now()}`,
+            name,
+            query,
+          };
+          persistViews([...views, view]);
+          setActiveViewId(view.id);
+        }}
+        onDeleteView={(id) => {
+          persistViews(views.filter((v) => v.id !== id));
+          setActiveViewId((current) => (current === id ? null : current));
+        }}
+      />
+
       {filtered.length === 0 ? (
-        <p className="text-sm text-text-secondary italic">No people match the current filters.</p>
+        <EmptyState
+          title="No people match the current filters"
+          description="Clear the filters above, or add a contact to get started."
+          primaryCta={{
+            label: 'Add person',
+            href: '/dashboard/os/business/people?new=1',
+          }}
+        />
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {filtered.map((p) => (
