@@ -1,6 +1,11 @@
 /**
  * Business OS Phase 4 — quote form (create + edit).
  *
+ * Wave D (UI Depth Wave) polish: migrated the hand-spelled hex / `text-white`
+ * / `border-red-800` literals onto the visual-language tokens (surface ladder,
+ * text hierarchy, `danger` status token, `accent`). Same fields, same submit
+ * payload, same routes — presentation only.
+ *
  * @license MIT — Tiresias Business OS Phase 4 (internal).
  */
 
@@ -129,21 +134,21 @@ export default function QuoteForm({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+    'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent focus:outline-none transition';
   const selectClass = inputClass;
   const labelClass = 'block text-xs text-text-secondary mb-1';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {!compact && (
-        <h2 className="text-lg font-medium text-white">
+        <h2 className="text-lg font-medium text-text-primary">
           {isEdit ? 'Edit Quote' : 'New Quote'}
         </h2>
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/5 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -244,7 +249,7 @@ export default function QuoteForm({
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition"
       >
         {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Quote'}
       </button>
