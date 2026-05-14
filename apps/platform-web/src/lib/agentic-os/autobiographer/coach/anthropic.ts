@@ -1,22 +1,17 @@
 /**
- * Anthropic provider wrapper for the Autobiographer coach.
+ * Coach LLM wrapper — Autobiographer OS.
  *
- * Streaming chat client — distinct from the Phase 3
- * ``autobiographer/voice/anthropic.ts`` which does non-streaming
- * JSON-extraction for the voice profile builder. The coach surface
- * needs a different client shape: token-level deltas pumped over the
- * U+001E wire format the Maker / Filmmaker / Cyber coaches share.
+ * Backed by `@platform/llm` (Wave 0). Streaming deferred — see header
+ * comment on `health/coach/anthropic.ts` for the contract notes.
  *
- * `ANTHROPIC_API_KEY` is optional in this codebase — when it's absent
- * the coach gracefully degrades to a 503 with `coach_not_configured`
- * so the UI can render an admin-action banner instead of crashing.
- * Mirrors the Maker / Health / Filmmaker / Cyber coaches.
- *
- * @license MIT — Tiresias Autobiographer OS Phase 7 (internal).
+ * Distinct from the Phase 3 ``autobiographer/voice/anthropic.ts`` which
+ * does non-streaming JSON-schema generation for the voice profile
+ * builder. That sibling also routes through `@platform/llm` now via
+ * `jsonMode` + a zod schema.
  */
 
 import 'server-only';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { callLlm, type AgenticOsSlug } from '@platform/llm';
 
 export const DEFAULT_COACH_MODEL = 'claude-sonnet-4-6';
 
@@ -28,10 +23,32 @@ export function getCoachModelId(): string {
   return process.env['COACH_MODEL'] || DEFAULT_COACH_MODEL;
 }
 
-export function getAnthropicProvider() {
-  const apiKey = process.env['ANTHROPIC_API_KEY'];
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not set; coach is not configured.');
-  }
-  return createAnthropic({ apiKey });
+export interface CoachLlmResult {
+  text: string;
+  model: string;
+  latencyMs: number;
+}
+
+export async function callCoachLlm(input: {
+  system: string;
+  user: string;
+  tenantId: string;
+  osSlug?: AgenticOsSlug;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<CoachLlmResult> {
+  const model = input.model ?? getCoachModelId();
+  const t0 = Date.now();
+  const text = await callLlm({
+    system: input.system,
+    user: input.user,
+    tenantId: input.tenantId,
+    osSlug: input.osSlug ?? 'autobiographer',
+    provider: 'anthropic',
+    model,
+    temperature: input.temperature,
+    maxTokens: input.maxTokens,
+  });
+  return { text, model, latencyMs: Date.now() - t0 };
 }

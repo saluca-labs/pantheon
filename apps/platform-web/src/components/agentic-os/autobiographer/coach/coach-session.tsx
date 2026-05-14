@@ -23,7 +23,6 @@ import {
 import { CoachCitationPanel } from './coach-citation-panel';
 import { CommitToChapterButton } from './commit-to-chapter-button';
 
-const RECORD_SEPARATOR = String.fromCharCode(0x1e);
 
 export interface CoachUiMessage {
   role: 'user' | 'assistant' | 'system';
@@ -105,39 +104,9 @@ export function CoachSession({
           failBody.message || failBody.error || `HTTP ${r.status}`,
         );
       }
-      if (!r.body) throw new Error('No response body');
-      const reader = r.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let assistantText = '';
-      let trailerSeen = false;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value: chunk } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(chunk, { stream: true });
-        const sepIdx = buffer.indexOf(RECORD_SEPARATOR);
-        if (sepIdx >= 0 && !trailerSeen) {
-          trailerSeen = true;
-          assistantText += buffer.slice(0, sepIdx);
-          buffer = '';
-        } else if (!trailerSeen) {
-          assistantText += buffer;
-          buffer = '';
-        } else {
-          buffer = '';
-        }
-        if (!trailerSeen) {
-          setMessages((m) => {
-            const copy = m.slice();
-            copy[copy.length - 1] = {
-              role: 'assistant',
-              content: assistantText,
-            };
-            return copy;
-          });
-        }
-      }
+      // Wave-0: JSON response (streaming deferred).
+      const resBody = (await r.json()) as { text?: string };
+      const assistantText = resBody.text ?? '';
       setMessages((m) => {
         const copy = m.slice();
         copy[copy.length - 1] = { role: 'assistant', content: assistantText };

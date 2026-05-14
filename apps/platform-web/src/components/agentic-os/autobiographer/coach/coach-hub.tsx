@@ -89,14 +89,8 @@ export function CoachHub({ bookId, initialMode, sessions }: Props) {
         const body = await chatRes.json().catch(() => ({}));
         throw new Error(body.message || body.error || `HTTP ${chatRes.status}`);
       }
-      if (chatRes.body) {
-        const reader = chatRes.body.getReader();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-      }
+      // Wave-0: JSON response now; drain to complete persistence.
+      await chatRes.json().catch(() => null);
       router.push(`/dashboard/os/autobiographer/coach/${session.id}`);
     } catch (err) {
       setError((err as Error).message);

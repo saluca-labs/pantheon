@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { generateObject } from 'ai';
+import { callLlm } from '@platform/llm';
 import { getCurrentHealthUser } from '@/lib/agentic-os/health/session';
 import { recordAudit } from '@/lib/agentic-os/health/repo';
 import { buildCoachContext } from '@/lib/agentic-os/health/coach/context';
 import { buildSystemPrompt } from '@/lib/agentic-os/health/coach/system-prompt';
 import {
-  getAnthropicProvider,
   getCoachModelId,
   isCoachConfigured,
 } from '@/lib/agentic-os/health/coach/anthropic';
@@ -60,15 +59,27 @@ export async function POST(_request: NextRequest) {
     userId: user.userId,
   });
   const systemPrompt = buildSystemPrompt(context);
-  const provider = getAnthropicProvider();
   const modelId = getCoachModelId();
 
-  const result = await generateObject({
-    model: provider(modelId),
-    schema: PlanSchema,
-    system: systemPrompt,
-    prompt: PLAN_INSTRUCTION,
-  });
+  let plan: z.infer<typeof PlanSchema>;
+  try {
+    plan = await callLlm<z.infer<typeof PlanSchema>>({
+      system: systemPrompt,
+      user: PLAN_INSTRUCTION,
+      tenantId: user.tenantId,
+      osSlug: 'health',
+      provider: 'anthropic',
+      model: modelId,
+      jsonMode: true,
+      schema: PlanSchema,
+    });
+  } catch (err) {
+    console.error('[health.coach.plan] llm error', err);
+    return NextResponse.json(
+      { error: 'llm_failed', message: (err as Error).message || 'LLM call failed' },
+      { status: 502 },
+    );
+  }
 
   await recordAudit({
     actorId: user.userId,
@@ -76,5 +87,5 @@ export async function POST(_request: NextRequest) {
     payload: { model: modelId },
   });
 
-  return NextResponse.json({ plan: result.object });
+  return NextResponse.json({ plan });
 }
