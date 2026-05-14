@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CrossEntityTabs, type CrossEntityTab } from './CrossEntityTabs';
+import { CrossEntityTabs, type CrossEntityTab } from './cross-entity-tabs';
 
 function mkTabs(spies?: {
   quotes?: () => void;

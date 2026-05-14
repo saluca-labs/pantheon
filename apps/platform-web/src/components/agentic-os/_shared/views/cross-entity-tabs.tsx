@@ -26,6 +26,7 @@
 
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { OsSlug } from '@/lib/agentic-os/registry';
 
 export interface CrossEntityTab {
   /** Stable key — used for selection, React keys, and test ids. */
@@ -50,7 +51,7 @@ export interface CrossEntityTabsProps {
   /** Fires when the active tab changes. Required for controlled mode. */
   onTabChange?: (key: string) => void;
   /** Per-OS accent slug (matches registry.ts) for the active-tab tint. */
-  slug?: string;
+  slug?: OsSlug;
   /** className passthrough on the wrapper. */
   className?: string;
 }
