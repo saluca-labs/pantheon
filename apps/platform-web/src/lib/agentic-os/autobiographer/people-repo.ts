@@ -145,6 +145,22 @@ export async function listPeople(
   return r.rows.map(rowToPerson);
 }
 
+/**
+ * Workshop-wide people count for a user. Cheap aggregate used by the
+ * hub dashboard widgets (Wave C-3b) so the tile reports a true total
+ * rather than a list-cap-limited length.
+ */
+export async function countPeopleForUser(userId: string): Promise<number> {
+  const pool = getAutobiographerPool();
+  const r = await pool.query(
+    `SELECT COUNT(*)::int AS n
+       FROM agos_autobiographer_people
+      WHERE user_id = $1`,
+    [userId],
+  );
+  return Number(r.rows[0]?.n ?? 0);
+}
+
 export async function getPerson(
   id: string,
   userId: string,

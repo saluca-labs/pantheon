@@ -10,7 +10,9 @@
  */
 
 import { useState, useMemo } from 'react';
+import { FileText } from 'lucide-react';
 import { ChapterCard, type ChapterCardData } from './chapter-card';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 export interface BookFilterOption {
   id: string;
@@ -46,9 +48,11 @@ export function ChapterList({
 
   if (initial.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center text-sm text-text-secondary">
-        No chapters yet. Open a book and create one from the book detail page.
-      </div>
+      <EmptyState
+        icon={<FileText className="h-6 w-6" />}
+        title="No chapters yet"
+        description="Open a book and create one from the book detail page."
+      />
     );
   }
 
@@ -88,9 +92,12 @@ export function ChapterList({
       ) : null}
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-5 text-sm text-text-secondary text-center">
-          No chapters match this filter.
-        </div>
+        <EmptyState
+          variant="bare"
+          icon={<FileText className="h-6 w-6" />}
+          title="No chapters match this filter"
+          description="Pick a different book chip to see more."
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map((c) => (

@@ -29,6 +29,7 @@ import {
 import { PrivacyPeoplePanel } from '@/components/agentic-os/autobiographer/privacy-people-panel';
 import { PseudonymMapPanel } from '@/components/agentic-os/autobiographer/pseudonym-map-panel';
 import { ReviewChecklistPanel } from '@/components/agentic-os/autobiographer/review-checklist-panel';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import type { ConsentState } from '@/lib/agentic-os/autobiographer/people';
 
 export const dynamic = 'force-dynamic';
@@ -130,9 +131,16 @@ export default async function PrivacyHubPage({ searchParams }: Props) {
         <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
           <h2 className="text-sm font-semibold text-white">Pick a book</h2>
           {books.length === 0 ? (
-            <p className="text-xs text-[#64748b] italic">
-              No books yet — create one on the Autobiographer hub.
-            </p>
+            <EmptyState
+              variant="bare"
+              icon={<BookOpenText className="h-6 w-6" />}
+              title="No books yet"
+              description="Create a book on the Autobiographer hub to run a privacy review against it."
+              primaryCta={{
+                label: 'Go to the hub',
+                href: '/dashboard/os/autobiographer',
+              }}
+            />
           ) : (
             <ul className="space-y-1.5">
               {books.map((b) => (
