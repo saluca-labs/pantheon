@@ -1,3 +1,5 @@
+import { BrainCircuit } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import type { ScreenerRow } from '@/lib/agentic-os/health/repo';
 
 interface Props {
@@ -23,10 +25,12 @@ const SEVERITY_CLASS: Record<string, string> = {
 export function ScreenerHistory({ items }: Props) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-text-secondary">
-        No screeners submitted yet. Take a PHQ-9 or GAD-7 above to start your
-        timeline.
-      </p>
+      <EmptyState
+        variant="bare"
+        icon={<BrainCircuit className="h-6 w-6" />}
+        title="No screeners submitted yet"
+        description="Take a PHQ-9 or GAD-7 above to start your timeline."
+      />
     );
   }
   return (
