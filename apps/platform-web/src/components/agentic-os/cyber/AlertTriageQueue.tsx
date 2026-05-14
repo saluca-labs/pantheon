@@ -1,27 +1,43 @@
 'use client';
 
 /**
- * CyberSec OS — AlertTriageQueue client component.
+ * CyberSec OS — AlertTriageQueue: the OS's flagship triage workspace.
  *
- * Displays the alert queue with severity sorting. Allows analysts to
- * assign alerts, close/resolve them, and (Phase 1) enrich each alert
- * with asset + log source + MITRE tactic/technique + tags.
+ * The alert queue is Cyber's centerpiece surface — what an analyst lands on
+ * to answer "what needs me, right now?". Wave D promotes it from a flat list
+ * into a prioritized, scannable triage workspace:
  *
- * Wave C-2a: in-queue search + saved-view presets via `CyberListControls`
- * (composing the Wave B `EntitySearch` + `SavedViews` primitives); ad-hoc
- * empty `<p>` replaced with the `EmptyState` primitive. The summary row,
- * the expand/enrich card, and all triage actions are unchanged.
+ *  - A triage rail at the top: per-status counts framed as a `DashboardWidget`
+ *    grid, with the critical / open counts emphasized (danger / attention
+ *    variants) so the worst is unmissable in the first 300 vertical pixels.
+ *  - Severity-banded queue: alerts grouped under collapsible severity bands
+ *    (Critical → Info), each band labelled with its count. A "flat" toggle
+ *    keeps the old single-stream view for analysts who prefer it.
+ *  - Everything from Wave C-2a is preserved: in-queue search + saved-view
+ *    presets via `CyberListControls`, the expand / enrich card, all triage
+ *    actions (status, assignee, notes, asset / log-source / MITRE enrichment),
+ *    and the `EmptyState` primitive. No API routes or queries changed.
  *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import type { Alert, AlertSeverity, AlertStatus } from '@/lib/agentic-os/cyber/triage';
-import { sortAlerts, activeAlerts, countByStatus, ALERT_STATUSES } from '@/lib/agentic-os/cyber/triage';
+import {
+  sortAlerts,
+  activeAlerts,
+  countByStatus,
+  ALERT_STATUSES,
+  ALERT_SEVERITIES,
+  SEVERITY_ORDER,
+} from '@/lib/agentic-os/cyber/triage';
 import type { Asset } from '@/lib/agentic-os/cyber/assets';
 import type { LogSource } from '@/lib/agentic-os/cyber/log-sources';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  DashboardWidget,
+  EmptyState,
+} from '@/components/agentic-os/_shared/views';
 import {
   CyberListControls,
   type CyberQuery,
@@ -36,6 +52,15 @@ const SEVERITY_STYLE: Record<AlertSeverity, { badge: string; border: string }> =
   medium:   { badge: 'text-amber-300 bg-amber-500/10 border-amber-500/30',    border: 'border-l-amber-400' },
   low:      { badge: 'text-blue-300 bg-blue-500/10 border-blue-500/30',       border: 'border-l-blue-400' },
   info:     { badge: 'text-slate-300 bg-slate-500/10 border-slate-500/30',    border: 'border-l-slate-400' },
+};
+
+/** Severity-band header accent — drives the band label dot + count pill. */
+const SEVERITY_BAND: Record<AlertSeverity, string> = {
+  critical: 'text-red-300',
+  high:     'text-orange-300',
+  medium:   'text-amber-300',
+  low:      'text-blue-300',
+  info:     'text-slate-400',
 };
 
 const STATUS_STYLE: Record<AlertStatus, string> = {
@@ -211,6 +236,65 @@ function AlertCard({
   );
 }
 
+/** One collapsible severity band in the grouped triage view. */
+function SeverityBand({
+  severity,
+  alerts,
+  assets,
+  logSources,
+  onUpdated,
+}: {
+  severity: AlertSeverity;
+  alerts: Alert[];
+  assets: Asset[];
+  logSources: LogSource[];
+  onUpdated: (a: Alert) => void;
+}) {
+  // Critical + high bands open by default — that's where triage starts.
+  const [open, setOpen] = useState(severity === 'critical' || severity === 'high');
+  const label =
+    ALERT_SEVERITIES.find((s) => s.value === severity)?.label ?? severity;
+
+  if (alerts.length === 0) return null;
+
+  return (
+    <section data-testid={`alert-band-${severity}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 px-1 py-1.5 text-left"
+        aria-expanded={open}
+      >
+        <span className={`text-xs ${SEVERITY_BAND[severity]}`}>
+          {open ? '▾' : '▸'}
+        </span>
+        <span className={`text-sm font-semibold uppercase tracking-wide ${SEVERITY_BAND[severity]}`}>
+          {label}
+        </span>
+        <span
+          data-testid={`alert-band-count-${severity}`}
+          className="text-[11px] tabular-nums rounded-full bg-surface-3 text-text-secondary px-2 py-0.5"
+        >
+          {alerts.length}
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-3 mt-1.5">
+          {alerts.map((a) => (
+            <AlertCard
+              key={a.id}
+              alert={a}
+              assets={assets}
+              logSources={logSources}
+              onUpdated={onUpdated}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ─── Main component ─────────────────────────────────────────────────────────
 
 export function AlertTriageQueue({
@@ -225,6 +309,8 @@ export function AlertTriageQueue({
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [showAll, setShowAll] = useState(false);
   const [search, setSearch] = useState('');
+  // Grouped (severity-banded) is the flagship default; flat keeps the old view.
+  const [grouped, setGrouped] = useState(true);
 
   function onUpdated(updated: Alert) {
     setAlerts((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
@@ -254,8 +340,71 @@ export function AlertTriageQueue({
 
   const hasFilters = search.trim().length > 0 || showAll;
 
+  // Bucket the displayed alerts by severity for the banded view. `displayed`
+  // is already severity-sorted, so each bucket preserves intra-severity order.
+  const bySeverity = useMemo(() => {
+    const buckets: Record<AlertSeverity, Alert[]> = {
+      critical: [],
+      high: [],
+      medium: [],
+      low: [],
+      info: [],
+    };
+    for (const a of displayed) buckets[a.severity].push(a);
+    return buckets;
+  }, [displayed]);
+
+  const severityOrder = (Object.keys(SEVERITY_ORDER) as AlertSeverity[]).sort(
+    (a, b) => SEVERITY_ORDER[a] - SEVERITY_ORDER[b],
+  );
+
   return (
     <div className="space-y-6">
+      {/* Triage rail — what needs me, right now. */}
+      <div
+        data-testid="alert-triage-rail"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+      >
+        <DashboardWidget
+          title="Open"
+          osSlug="cyber"
+          variant={counts.open > 0 ? 'danger' : 'default'}
+          data-testid="alert-rail-open"
+        >
+          <p className="text-3xl font-semibold tabular-nums text-text-primary">
+            {counts.open}
+          </p>
+        </DashboardWidget>
+        <DashboardWidget
+          title="Investigating"
+          osSlug="cyber"
+          variant={counts.investigating > 0 ? 'warning' : 'default'}
+          data-testid="alert-rail-investigating"
+        >
+          <p className="text-3xl font-semibold tabular-nums text-text-primary">
+            {counts.investigating}
+          </p>
+        </DashboardWidget>
+        <DashboardWidget
+          title="Resolved"
+          osSlug="cyber"
+          data-testid="alert-rail-resolved"
+        >
+          <p className="text-3xl font-semibold tabular-nums text-text-primary">
+            {counts.resolved}
+          </p>
+        </DashboardWidget>
+        <DashboardWidget
+          title="False positive"
+          osSlug="cyber"
+          data-testid="alert-rail-false-positive"
+        >
+          <p className="text-3xl font-semibold tabular-nums text-text-primary">
+            {counts.false_positive}
+          </p>
+        </DashboardWidget>
+      </div>
+
       <CyberListControls
         search={search}
         onSearchChange={setSearch}
@@ -264,35 +413,30 @@ export function AlertTriageQueue({
         onApplyQuery={applyQuery}
         savedViewKey="alerts"
         filterControls={
-          <label className="flex items-center gap-2 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              checked={showAll}
-              onChange={(e) => setShowAll(e.target.checked)}
-              className="accent-accent"
-            />
-            Show resolved / closed
-          </label>
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={showAll}
+                onChange={(e) => setShowAll(e.target.checked)}
+                className="accent-accent"
+              />
+              Show resolved / closed
+            </label>
+            <label className="flex items-center gap-2 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={grouped}
+                onChange={(e) => setGrouped(e.target.checked)}
+                className="accent-accent"
+              />
+              Group by severity
+            </label>
+          </div>
         }
       />
 
-      {/* Summary row */}
-      <div className="flex flex-wrap gap-4 rounded-xl border border-border-subtle bg-surface-2 p-4">
-        <div className="flex gap-4 text-sm">
-          <span className="text-red-300">{counts.open} Open</span>
-          <span className="text-amber-300">{counts.investigating} Investigating</span>
-          <span className="text-emerald-300">{counts.resolved} Resolved</span>
-          <span className="text-text-secondary">{counts.false_positive} False Positive</span>
-        </div>
-        <button
-          onClick={() => setShowAll((s) => !s)}
-          className="ml-auto text-xs px-3 py-1 rounded border border-border-subtle bg-surface-0 text-text-secondary hover:text-white transition"
-        >
-          {showAll ? 'Show active only' : 'Show all'}
-        </button>
-      </div>
-
-      {/* Alert list */}
+      {/* Alert queue — severity-banded (default) or flat. */}
       {displayed.length === 0 ? (
         <EmptyState
           icon={<ShieldAlert className="h-6 w-6" />}
@@ -307,8 +451,21 @@ export function AlertTriageQueue({
               : 'New alerts from your log sources will show up here, sorted by severity.'
           }
         />
+      ) : grouped ? (
+        <div className="space-y-5" data-testid="alert-queue-grouped">
+          {severityOrder.map((sev) => (
+            <SeverityBand
+              key={sev}
+              severity={sev}
+              alerts={bySeverity[sev]}
+              assets={assets}
+              logSources={logSources}
+              onUpdated={onUpdated}
+            />
+          ))}
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" data-testid="alert-queue-flat">
           {displayed.map((a) => (
             <AlertCard
               key={a.id}
