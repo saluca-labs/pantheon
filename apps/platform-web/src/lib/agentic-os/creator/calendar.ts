@@ -119,9 +119,17 @@ export function groupByWeek(posts: CalendarPost[]): Map<string, CalendarPost[]> 
 /**
  * Return the ISO 8601 week string "YYYY-WXX" for a given Date.
  * Algorithm follows ISO 8601 § 4.3.2 (first week contains January 4th).
+ *
+ * Timezone contract: the Y/M/D used to compute the ISO week is read from the
+ * supplied Date in **UTC** (not the runner's local zone). This keeps the
+ * function deterministic regardless of the host timezone — e.g.
+ * `new Date('2024-01-01')` parses to UTC midnight and must always map to
+ * 2024-W01, whether the host is UTC, UTC-7, or UTC+9.
  */
 export function isoWeek(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
   const dayNum = d.getUTCDay() || 7; // ISO: Mon=1…Sun=7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
