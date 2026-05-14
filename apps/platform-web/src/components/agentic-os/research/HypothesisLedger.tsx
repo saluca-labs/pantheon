@@ -1,12 +1,25 @@
 'use client';
 
 /**
- * Research OS — HypothesisLedger client component.
+ * Research OS — HypothesisLedger workspace component.
  *
- * Renders the hypothesis tracker: create new hypotheses in "If…then…because"
- * form, view the ledger, update status, and (Phase 3) toggle between
- * active + archived views with an archive affordance per row. Each row
- * deep-links to the per-hypothesis detail page.
+ * Wave D specialization: the ledger stops being a flat card list and
+ * becomes a status-aware *workspace*:
+ *
+ *  - A header summary strip ("open work" count + total).
+ *  - A status-filter chip rail (built alongside `EntitySearch` — the
+ *    primitive has no filter-chip API, known `_shared/views` gap #1) plus
+ *    the existing `EntitySearch` text query.
+ *  - `SavedViews` for named filter presets, persisted via the
+ *    localStorage-mock store (`SavedViews` has no persistence yet — known
+ *    gap #2; Wave E schema-backs it).
+ *  - Hypotheses grouped into lifecycle lanes (active → testing → draft →
+ *    resolved → archived) instead of one undifferentiated list.
+ *  - Each card makes the If / Then / Because structure explicit with
+ *    labelled clause rows rather than a single italic run-on sentence.
+ *
+ * Data, deep-linking, and the create/update/archive API surface are
+ * unchanged — this is a surface upgrade, not a capability change.
  *
  * @license MIT — Tiresias Research OS (internal).
  */
@@ -22,13 +35,30 @@ import type {
 import {
   HYPOTHESIS_STATUSES,
   CONFIDENCE_LEVELS,
-  renderHypothesisStatement,
   validateHypothesis,
 } from '@/lib/agentic-os/research/hypotheses';
-import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  filterHypotheses,
+  groupHypothesesByStatus,
+  countHypothesesByStatus,
+  isOpenHypothesis,
+  type HypothesisStatusFilter,
+} from '@/lib/agentic-os/research/hypothesis-workspace';
+import { useSavedViews } from '@/lib/agentic-os/research/saved-views-store';
+import { EntitySearch, EmptyState, SavedViews } from '@/components/agentic-os/_shared/views';
 import { HypothesisArchiveButton } from './hypothesis-archive-button';
+import { HypothesisStatusFilterChips } from './hypothesis-status-filter-chips';
 
 const API = '/api/tiresias/agentic-os/research/hypotheses';
+
+/** localStorage key for this surface's saved views. */
+const SAVED_VIEWS_KEY = 'hypotheses';
+
+/** The opaque filter-state a saved view restores. */
+interface HypothesisQuery {
+  status: HypothesisStatusFilter;
+  query: string;
+}
 
 const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
@@ -201,6 +231,19 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
   );
 }
 
+// ─── Clause row — makes the If / Then / Because structure explicit ──────────
+
+function ClauseRow({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="flex gap-2 text-sm leading-relaxed" data-testid={`clause-${label.toLowerCase()}`}>
+      <span className="shrink-0 w-16 text-[10px] font-semibold uppercase tracking-wide text-text-tertiary pt-0.5">
+        {label}
+      </span>
+      <span className="min-w-0 text-text-primary">{text}</span>
+    </div>
+  );
+}
+
 // ─── Hypothesis Card ────────────────────────────────────────────────────────
 
 function HypothesisCard({
@@ -235,10 +278,11 @@ function HypothesisCard({
     }
   }
 
-  const statement = renderHypothesisStatement(hyp);
-
   return (
-    <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3">
+    <div
+      className="rounded-xl border border-border-subtle bg-surface-2 p-5 space-y-3"
+      data-testid={`hypothesis-card-${hyp.id}`}
+    >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <Link
@@ -248,7 +292,6 @@ function HypothesisCard({
             <span className="truncate">{hyp.title}</span>
             <ExternalLink className="w-3 h-3 shrink-0" />
           </Link>
-          <p className="text-sm text-text-secondary mt-1 italic leading-relaxed">{statement}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <span
@@ -265,6 +308,13 @@ function HypothesisCard({
             </span>
           )}
         </div>
+      </div>
+
+      {/* If / Then / Because — explicit labelled structure */}
+      <div className="space-y-1.5 rounded-lg border border-border-subtle bg-surface-0 p-3">
+        <ClauseRow label="If" text={hyp.ifClause} />
+        <ClauseRow label="Then" text={hyp.thenClause} />
+        <ClauseRow label="Because" text={hyp.becauseClause} />
       </div>
 
       {hyp.tags.length > 0 && (
@@ -318,18 +368,36 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
   const [showArchived, setShowArchived] = useState(false);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<HypothesisStatusFilter>('all');
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return hypotheses;
-    return hypotheses.filter(
-      (h) =>
-        h.title.toLowerCase().includes(q) ||
-        h.ifClause.toLowerCase().includes(q) ||
-        h.thenClause.toLowerCase().includes(q) ||
-        h.tags.some((t) => t.toLowerCase().includes(q)),
-    );
-  }, [hypotheses, query]);
+  // Saved views — localStorage-mock until Wave E schema-backs SavedViews.
+  const { views, saveView, deleteView } = useSavedViews<HypothesisQuery>(SAVED_VIEWS_KEY);
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+  const currentQuery: HypothesisQuery = useMemo(
+    () => ({ status: statusFilter, query }),
+    [statusFilter, query],
+  );
+
+  // Counts are computed over the full (unfiltered) list so chip badges are
+  // stable as the user narrows the view.
+  const counts = useMemo(() => countHypothesesByStatus(hypotheses), [hypotheses]);
+  const openCount = useMemo(
+    () => hypotheses.filter(isOpenHypothesis).length,
+    [hypotheses],
+  );
+
+  const visible = useMemo(
+    () => filterHypotheses(hypotheses, statusFilter, query),
+    [hypotheses, statusFilter, query],
+  );
+  const groups = useMemo(() => groupHypothesesByStatus(visible), [visible]);
+
+  // The active saved view is "dirty" when the live query no longer matches it.
+  const activeView = views.find((v) => v.id === activeViewId) ?? null;
+  const isDirty =
+    activeView != null &&
+    (activeView.query.status !== statusFilter || activeView.query.query !== query);
 
   // When the toggle flips, refetch from the API with the matching scope.
   useEffect(() => {
@@ -361,7 +429,6 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
   }
 
   function onArchived(h: Hypothesis) {
-    // If we're showing active only, drop it; otherwise patch in place.
     if (!showArchived) {
       setHypotheses((prev) => prev.filter((x) => x.id !== h.id));
     } else {
@@ -377,14 +444,35 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
     }
   }
 
+  function applyView(view: { id: string; query: HypothesisQuery }) {
+    setStatusFilter(view.query.status);
+    setQuery(view.query.query);
+    setActiveViewId(view.id);
+  }
+
+  function clearView() {
+    setStatusFilter('all');
+    setQuery('');
+    setActiveViewId(null);
+  }
+
   return (
     <div className="space-y-6">
       {!showArchived && <NewHypothesisForm onCreated={onCreated} />}
 
+      {/* Workspace header — open-work summary + archived toggle */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-          {showArchived ? 'Archived hypotheses' : 'Active hypotheses'}
-        </h2>
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
+            {showArchived ? 'Archived hypotheses' : 'Hypothesis workspace'}
+          </h2>
+          {!showArchived && (
+            <span className="text-xs text-text-secondary" data-testid="hypothesis-open-summary">
+              <span className="tabular-nums text-text-primary">{openCount}</span> open ·{' '}
+              <span className="tabular-nums text-text-primary">{hypotheses.length}</span> total
+            </span>
+          )}
+        </div>
         <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
           <input
             type="checkbox"
@@ -396,11 +484,45 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
         </label>
       </div>
 
-      <EntitySearch
-        placeholder="Search hypotheses by title, clause, or tag"
-        debounceMs={0}
-        onQueryChange={setQuery}
-      />
+      {/* Search + status-filter chips (chips built alongside EntitySearch — */}
+      {/* the primitive has no filter-chip API, known _shared/views gap #1). */}
+      <div className="space-y-3">
+        <EntitySearch
+          placeholder="Search hypotheses by title, clause, or tag"
+          debounceMs={0}
+          onQueryChange={(q) => {
+            setQuery(q);
+            setActiveViewId(null);
+          }}
+        />
+        <HypothesisStatusFilterChips
+          active={statusFilter}
+          counts={counts}
+          total={hypotheses.length}
+          onChange={(next) => {
+            setStatusFilter(next);
+            setActiveViewId(null);
+          }}
+        />
+        <SavedViews<HypothesisQuery>
+          views={views}
+          activeViewId={activeViewId}
+          currentQuery={currentQuery}
+          isDirty={isDirty}
+          slug="research"
+          allViewsLabel="All hypotheses"
+          onClearView={clearView}
+          onSelectView={applyView}
+          onSaveView={(name, q) => {
+            const view = saveView(name, q);
+            setActiveViewId(view.id);
+          }}
+          onDeleteView={(id) => {
+            deleteView(id);
+            if (activeViewId === id) setActiveViewId(null);
+          }}
+        />
+      </div>
 
       {loading ? (
         <p className="text-sm text-text-secondary">Loading…</p>
@@ -420,19 +542,33 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
             variant="bare"
             icon={<Lightbulb className="h-6 w-6" />}
             title="No hypotheses match"
-            description="Try a different search term."
+            description="Try a different search term or status filter."
           />
         )
       ) : (
-        <div className="space-y-4">
-          {visible.map((h) => (
-            <HypothesisCard
-              key={h.id}
-              hyp={h}
-              onUpdated={onUpdated}
-              onArchived={onArchived}
-              onRestored={onRestored}
-            />
+        <div className="space-y-6" data-testid="hypothesis-workspace-lanes">
+          {groups.map((group) => (
+            <section key={group.status} data-testid={`hypothesis-lane-${group.status}`}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                  {group.label}
+                </h3>
+                <span className="text-[10px] tabular-nums rounded-full bg-surface-2 px-1.5 py-0.5 text-text-tertiary">
+                  {group.hypotheses.length}
+                </span>
+              </div>
+              <div className="space-y-4">
+                {group.hypotheses.map((h) => (
+                  <HypothesisCard
+                    key={h.id}
+                    hyp={h}
+                    onUpdated={onUpdated}
+                    onArchived={onArchived}
+                    onRestored={onRestored}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}
