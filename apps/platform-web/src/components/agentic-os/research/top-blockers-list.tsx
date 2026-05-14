@@ -1,10 +1,18 @@
 'use client';
 
 /**
- * Research OS Phase 6 — full workshop blockers list.
+ * Research OS Phase 6 + Wave D — full workshop blockers list.
+ *
+ * Wave D specialization: the surface keeps its kind / severity filter
+ * chips, and gains `SavedViews` with a built-in **Top blockers** default
+ * view (high-severity only) that is applied on first load — the list
+ * opens on "what's on fire" instead of the full feed, then the reset pill
+ * widens to everything. User-saved views are persisted via the
+ * localStorage-mock store (`SavedViews` has no persistence yet — known
+ * `_shared/views` gap #2; Wave E schema-backs it).
  *
  * Filter chips for kind (milestone / dependency) + severity (high /
- * medium). Groups by experiment for easier scanning.
+ * medium); groups by experiment for easier scanning.
  *
  * @license MIT — Tiresias Research OS Phase 6 (internal).
  */
@@ -12,18 +20,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import { EmptyState, SavedViews } from '@/components/agentic-os/_shared/views';
 import { BlockerRow } from './blocker-row';
 import {
   BLOCKER_ITEM_KINDS,
   BLOCKER_SEVERITIES,
   BLOCKER_SEVERITY_LABELS,
   type BlockerItem,
-  type BlockerItemKind,
-  type BlockerSeverity,
 } from '@/lib/agentic-os/research/blockers';
+import {
+  filterBlockers,
+  groupBlockersByExperiment,
+  blockerQueryEquals,
+  ALL_BLOCKERS_QUERY,
+  TOP_BLOCKERS_DEFAULT_VIEW,
+  TOP_BLOCKERS_VIEW_ID,
+  type BlockerQuery,
+} from '@/lib/agentic-os/research/blockers-view';
+import { useSavedViews } from '@/lib/agentic-os/research/saved-views-store';
 
 const API_BASE = '/api/tiresias/agentic-os/research';
+
+/** localStorage key for this surface's user-saved views. */
+const SAVED_VIEWS_KEY = 'blockers';
 
 interface Props {
   initial?: BlockerItem[];
@@ -32,8 +51,21 @@ interface Props {
 export function TopBlockersList({ initial = [] }: Props) {
   const [items, setItems] = useState<BlockerItem[]>(initial);
   const [loaded, setLoaded] = useState(initial.length > 0);
-  const [kindFilter, setKindFilter] = useState<BlockerItemKind | 'all'>('all');
-  const [severityFilter, setSeverityFilter] = useState<BlockerSeverity | 'all'>('all');
+
+  // Open on the built-in "Top blockers" default view (high-severity only).
+  const [query, setQuery] = useState<BlockerQuery>(TOP_BLOCKERS_DEFAULT_VIEW.query);
+  const [activeViewId, setActiveViewId] = useState<string | null>(
+    TOP_BLOCKERS_VIEW_ID,
+  );
+
+  // User-saved views — localStorage-mock until Wave E schema-backs SavedViews.
+  // The built-in "Top blockers" view is prepended so it's always available.
+  const { views: userViews, saveView, deleteView } =
+    useSavedViews<BlockerQuery>(SAVED_VIEWS_KEY);
+  const allViews = useMemo(
+    () => [TOP_BLOCKERS_DEFAULT_VIEW, ...userViews],
+    [userViews],
+  );
 
   const refresh = useCallback(async () => {
     const r = await fetch(`${API_BASE}/blockers?limit=100`);
@@ -48,51 +80,65 @@ export function TopBlockersList({ initial = [] }: Props) {
     void refresh();
   }, [refresh]);
 
-  const filtered = useMemo(
-    () =>
-      items.filter(
-        (i) =>
-          (kindFilter === 'all' || i.kind === kindFilter) &&
-          (severityFilter === 'all' || i.severity === severityFilter),
-      ),
-    [items, kindFilter, severityFilter],
+  const filtered = useMemo(() => filterBlockers(items, query), [items, query]);
+  const grouped = useMemo(
+    () => groupBlockersByExperiment(filtered),
+    [filtered],
   );
 
-  const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      { experimentId: string; experimentName: string; items: BlockerItem[] }
-    >();
-    for (const item of filtered) {
-      const entry = map.get(item.experimentId);
-      if (entry) {
-        entry.items.push(item);
-      } else {
-        map.set(item.experimentId, {
-          experimentId: item.experimentId,
-          experimentName: item.experimentName,
-          items: [item],
-        });
-      }
-    }
-    return Array.from(map.values());
-  }, [filtered]);
+  // "Dirty" when the live query no longer matches the active view's query.
+  const activeView = allViews.find((v) => v.id === activeViewId) ?? null;
+  const isDirty =
+    activeView != null && !blockerQueryEquals(activeView.query, query);
+
+  function patchQuery(patch: Partial<BlockerQuery>) {
+    setQuery((prev) => ({ ...prev, ...patch }));
+    setActiveViewId(null);
+  }
 
   return (
     <div className="space-y-4" data-testid="top-blockers-list">
+      {/* Saved views — built-in "Top blockers" default + user presets. */}
+      <SavedViews<BlockerQuery>
+        views={allViews}
+        activeViewId={activeViewId}
+        currentQuery={query}
+        isDirty={isDirty}
+        slug="research"
+        allViewsLabel="All blockers"
+        onClearView={() => {
+          setQuery(ALL_BLOCKERS_QUERY);
+          setActiveViewId(null);
+        }}
+        onSelectView={(view) => {
+          setQuery(view.query);
+          setActiveViewId(view.id);
+        }}
+        onSaveView={(name, q) => {
+          const view = saveView(name, q);
+          setActiveViewId(view.id);
+        }}
+        onDeleteView={(id) => {
+          // The built-in default is not user-deletable.
+          if (id === TOP_BLOCKERS_VIEW_ID) return;
+          deleteView(id);
+          if (activeViewId === id) setActiveViewId(null);
+        }}
+      />
+
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</span>
         <Chip
-          active={kindFilter === 'all'}
-          onClick={() => setKindFilter('all')}
+          active={query.kind === 'all'}
+          onClick={() => patchQuery({ kind: 'all' })}
           label="All"
           testId="kind-chip-all"
         />
         {BLOCKER_ITEM_KINDS.map((k) => (
           <Chip
             key={k}
-            active={kindFilter === k}
-            onClick={() => setKindFilter(k)}
+            active={query.kind === k}
+            onClick={() => patchQuery({ kind: k })}
             label={k === 'milestone' ? 'Milestone' : 'Dependency'}
             testId={`kind-chip-${k}`}
           />
@@ -101,16 +147,16 @@ export function TopBlockersList({ initial = [] }: Props) {
           Severity
         </span>
         <Chip
-          active={severityFilter === 'all'}
-          onClick={() => setSeverityFilter('all')}
+          active={query.severity === 'all'}
+          onClick={() => patchQuery({ severity: 'all' })}
           label="All"
           testId="severity-chip-all"
         />
         {BLOCKER_SEVERITIES.map((s) => (
           <Chip
             key={s}
-            active={severityFilter === s}
-            onClick={() => setSeverityFilter(s)}
+            active={query.severity === s}
+            onClick={() => patchQuery({ severity: s })}
             label={BLOCKER_SEVERITY_LABELS[s]}
             testId={`severity-chip-${s}`}
           />
@@ -123,7 +169,11 @@ export function TopBlockersList({ initial = [] }: Props) {
           <EmptyState
             icon={<ShieldAlert className="h-6 w-6" />}
             title="All clear"
-            description="No active blockers across your experiments — no overdue milestones, no open blocking dependencies."
+            description={
+              activeViewId === TOP_BLOCKERS_VIEW_ID
+                ? 'No high-severity blockers across your experiments. Switch to "All blockers" to see medium-severity items.'
+                : 'No active blockers across your experiments — no overdue milestones, no open blocking dependencies.'
+            }
           />
         </div>
       )}
