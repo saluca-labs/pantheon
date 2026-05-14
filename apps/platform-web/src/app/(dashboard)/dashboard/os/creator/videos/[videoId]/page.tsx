@@ -50,7 +50,16 @@ export default async function CreatorVideoDetailPage({ params }: Props) {
       </a>
 
       {/* Player */}
-      <VideoPlayer src={video.url} title={video.title} />
+      <VideoPlayer
+        src={video.url}
+        title={video.title}
+        subtitle={
+          [
+            `Duration: ${formatDuration(video.durationSeconds)}`,
+            `Status: ${video.status}`,
+          ].join(' · ')
+        }
+      />
 
       {/* Metadata */}
       <div className="rounded-lg border border-border-subtle bg-surface-2 p-6">
