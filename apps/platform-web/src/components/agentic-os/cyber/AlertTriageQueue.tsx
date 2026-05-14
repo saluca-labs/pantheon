@@ -7,14 +7,25 @@
  * assign alerts, close/resolve them, and (Phase 1) enrich each alert
  * with asset + log source + MITRE tactic/technique + tags.
  *
+ * Wave C-2a: in-queue search + saved-view presets via `CyberListControls`
+ * (composing the Wave B `EntitySearch` + `SavedViews` primitives); ad-hoc
+ * empty `<p>` replaced with the `EmptyState` primitive. The summary row,
+ * the expand/enrich card, and all triage actions are unchanged.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
 import { useState } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import type { Alert, AlertSeverity, AlertStatus } from '@/lib/agentic-os/cyber/triage';
 import { sortAlerts, activeAlerts, countByStatus, ALERT_STATUSES } from '@/lib/agentic-os/cyber/triage';
 import type { Asset } from '@/lib/agentic-os/cyber/assets';
 import type { LogSource } from '@/lib/agentic-os/cyber/log-sources';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  CyberListControls,
+  type CyberQuery,
+} from '@/components/agentic-os/cyber/CyberListControls';
 import { AlertEnrichmentForm } from './AlertEnrichmentForm';
 
 const API = '/api/tiresias/agentic-os/cyber/alerts';
@@ -213,18 +224,58 @@ export function AlertTriageQueue({
 }) {
   const [alerts, setAlerts] = useState<Alert[]>(initialAlerts);
   const [showAll, setShowAll] = useState(false);
+  const [search, setSearch] = useState('');
 
   function onUpdated(updated: Alert) {
     setAlerts((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
   }
 
+  function applyQuery(q: CyberQuery) {
+    setSearch(q.search ?? '');
+    setShowAll(q.showAll === 'true');
+  }
+
   const sorted = sortAlerts(alerts);
   const active = activeAlerts(sorted);
   const counts = countByStatus(alerts);
-  const displayed = showAll ? sorted : active;
+  const scoped = showAll ? sorted : active;
+  const displayed = search.trim()
+    ? scoped.filter((a) => {
+        const q = search.trim().toLowerCase();
+        return (
+          a.title.toLowerCase().includes(q) ||
+          a.description.toLowerCase().includes(q) ||
+          a.source.toLowerCase().includes(q) ||
+          (a.assignedTo?.toLowerCase().includes(q) ?? false) ||
+          a.tags.some((t) => t.toLowerCase().includes(q))
+        );
+      })
+    : scoped;
+
+  const hasFilters = search.trim().length > 0 || showAll;
 
   return (
     <div className="space-y-6">
+      <CyberListControls
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Title, description, source, assignee, tag…"
+        filters={{ showAll: showAll ? 'true' : '' }}
+        onApplyQuery={applyQuery}
+        savedViewKey="alerts"
+        filterControls={
+          <label className="flex items-center gap-2 text-xs text-text-secondary">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => setShowAll(e.target.checked)}
+              className="accent-accent"
+            />
+            Show resolved / closed
+          </label>
+        }
+      />
+
       {/* Summary row */}
       <div className="flex flex-wrap gap-4 rounded-xl border border-border-subtle bg-surface-2 p-4">
         <div className="flex gap-4 text-sm">
@@ -243,7 +294,19 @@ export function AlertTriageQueue({
 
       {/* Alert list */}
       {displayed.length === 0 ? (
-        <p className="text-sm text-text-secondary">{showAll ? 'No alerts.' : 'No active alerts. All clear!'}</p>
+        <EmptyState
+          icon={<ShieldAlert className="h-6 w-6" />}
+          title={
+            hasFilters
+              ? 'No alerts match the queue filters'
+              : 'No active alerts — all clear'
+          }
+          description={
+            hasFilters
+              ? 'Try a broader search, or toggle "Show resolved / closed" to widen the queue.'
+              : 'New alerts from your log sources will show up here, sorted by severity.'
+          }
+        />
       ) : (
         <div className="space-y-3">
           {displayed.map((a) => (
