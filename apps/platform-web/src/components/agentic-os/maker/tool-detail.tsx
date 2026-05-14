@@ -7,11 +7,19 @@
  * embedded ConsumableTracker, embedded MaintenanceLog, and a list of
  * projects that link to this tool.
  *
+ * Wave C-3a: the three stacked related-entity sections (consumables,
+ * maintenance, projects-using) are now a `CrossEntityTabs` strip with count
+ * badges — behavior-preserving (this view was already a client component
+ * with no route-based deep-linking, so the swap changes nothing the user
+ * can bookmark). The ad-hoc "not linked to any project" `<p>` becomes the
+ * `EmptyState` primitive.
+ *
  * @license MIT — Tiresias Maker OS Phase 4 (internal).
  */
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { Wrench } from 'lucide-react';
 import {
   TOOL_KIND_LABELS,
   TOOL_STATUS_LABELS,
@@ -22,6 +30,10 @@ import {
 import type { ToolConsumable } from '@/lib/agentic-os/maker/consumables';
 import type { MaintenanceEvent } from '@/lib/agentic-os/maker/maintenance';
 import type { ToolProjectUsage } from '@/lib/agentic-os/maker/repo';
+import {
+  CrossEntityTabs,
+  EmptyState,
+} from '@/components/agentic-os/_shared/views';
 import { ConsumableTracker } from './consumable-tracker';
 import { MaintenanceLog } from './maintenance-log';
 
@@ -169,61 +181,85 @@ export function ToolDetail({
         </div>
       </div>
 
-      {/* Consumables + Maintenance side-by-side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-          <ConsumableTracker
-            toolId={tool.id}
-            initialConsumables={initialConsumables}
-          />
-        </div>
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-          <MaintenanceLog
-            toolId={tool.id}
-            initialEvents={initialMaintenance}
-          />
-        </div>
-      </div>
-
-      {/* Projects using this tool */}
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-        <h3 className="text-sm font-semibold text-white uppercase tracking-wide mb-3">
-          Projects using this tool
-        </h3>
-        {projectsUsing.length === 0 ? (
-          <p className="text-xs text-text-secondary">
-            Not linked to any project yet. Open a project and use the Tools tab to
-            attach it.
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {projectsUsing.map((p) => (
-              <li key={p.projectId} className="flex items-center justify-between gap-3">
-                <Link
-                  href={`/dashboard/os/maker/projects/${p.projectId}?tab=tools`}
-                  className="text-sm text-text-primary hover:text-accent transition"
-                >
-                  {p.projectName}
-                </Link>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-text-secondary">
-                    {p.projectStatus}
-                  </span>
-                  <span
-                    className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
-                      p.required
-                        ? 'border-red-500/50 text-red-300'
-                        : 'border-border-subtle text-text-secondary'
-                    }`}
-                  >
-                    {p.required ? 'Required' : 'Optional'}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {/* Related entities — consumables / maintenance / projects-using */}
+      <CrossEntityTabs
+        slug="maker"
+        tabs={[
+          {
+            key: 'consumables',
+            label: 'Consumables',
+            count: initialConsumables.length,
+            content: () => (
+              <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+                <ConsumableTracker
+                  toolId={tool.id}
+                  initialConsumables={initialConsumables}
+                />
+              </div>
+            ),
+          },
+          {
+            key: 'maintenance',
+            label: 'Maintenance',
+            count: initialMaintenance.length,
+            content: () => (
+              <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+                <MaintenanceLog
+                  toolId={tool.id}
+                  initialEvents={initialMaintenance}
+                />
+              </div>
+            ),
+          },
+          {
+            key: 'projects',
+            label: 'Projects using',
+            count: projectsUsing.length,
+            content: () => (
+              <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+                {projectsUsing.length === 0 ? (
+                  <EmptyState
+                    variant="bare"
+                    icon={<Wrench className="h-6 w-6" />}
+                    title="Not linked to any project yet"
+                    description="Open a project and use its Tools tab to attach this tool to a build."
+                  />
+                ) : (
+                  <ul className="space-y-1.5">
+                    {projectsUsing.map((p) => (
+                      <li
+                        key={p.projectId}
+                        className="flex items-center justify-between gap-3"
+                      >
+                        <Link
+                          href={`/dashboard/os/maker/projects/${p.projectId}?tab=tools`}
+                          className="text-sm text-text-primary hover:text-accent transition"
+                        >
+                          {p.projectName}
+                        </Link>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-text-secondary">
+                            {p.projectStatus}
+                          </span>
+                          <span
+                            className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
+                              p.required
+                                ? 'border-red-500/50 text-red-300'
+                                : 'border-border-subtle text-text-secondary'
+                            }`}
+                          >
+                            {p.required ? 'Required' : 'Optional'}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
