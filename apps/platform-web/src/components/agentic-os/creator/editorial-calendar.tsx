@@ -9,15 +9,24 @@
  * Updated for Phase 2: channel and content_format dropped;
  * uses the new PostStatus and CreatorPost types from posts.ts.
  *
+ * Wave C-4a (UI Depth Wave): this is a depth-winning surface — the
+ * bespoke plan-a-post form, inline status-picker dropdowns, and ISO-week
+ * grouping are deliberately preserved (the `CalendarView` primitive is a
+ * month/week grid with different behavior). Only the ad-hoc empty state
+ * is swapped for the shared `EmptyState`; full `CalendarView` adoption is
+ * deferred to Wave D per the adoption-matrix judgment call.
+ *
  * @license MIT — original work for Tiresias platform
  */
 
 import { useState, useMemo } from 'react';
+import { CalendarDays } from 'lucide-react';
 import {
   POST_STATUSES,
 } from '@/lib/agentic-os/creator/posts';
 import type { CreatorPost, PostStatus } from '@/lib/agentic-os/creator/posts';
 import { validatePost, isoWeek } from '@/lib/agentic-os/creator/calendar';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   initial: CreatorPost[];
@@ -190,7 +199,7 @@ export function EditorialCalendar({ initial }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Adding…' : 'Add to calendar'}
           </button>
@@ -200,9 +209,11 @@ export function EditorialCalendar({ initial }: Props) {
 
       {/* Calendar view grouped by week */}
       {posts.length === 0 ? (
-        <div className="rounded-xl border border-border-subtle bg-surface-2 px-5 py-10 text-center">
-          <p className="text-sm text-text-secondary">No posts yet. Plan your first piece above.</p>
-        </div>
+        <EmptyState
+          icon={<CalendarDays className="h-6 w-6" />}
+          title="No posts on the calendar yet"
+          description="Plan your first piece with the form above to start mapping out your publishing cadence."
+        />
       ) : (
         <div className="space-y-4">
           {sortedWeeks.map((week) => {
