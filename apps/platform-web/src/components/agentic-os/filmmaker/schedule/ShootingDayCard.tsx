@@ -93,15 +93,15 @@ export function ShootingDayCard({ day, allDays }: Props) {
   const eighths = totalEighths(day);
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
       <div className="p-3 flex items-start justify-between gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-mono text-[#94a3b8]">
+            <span className="text-xs font-mono text-text-secondary">
               Day {day.dayNumber}
             </span>
             {day.unit !== 'main' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#2a2d3e] text-[#94a3b8]">
+              <span className="text-[10px] px-1.5 py-0.5 rounded border border-border-subtle text-text-secondary">
                 {day.unit.replace('_', ' ')}
               </span>
             )}
@@ -116,10 +116,10 @@ export function ShootingDayCard({ day, allDays }: Props) {
           <p className="text-sm text-white mt-0.5">
             {day.label ?? 'Untitled'}
             {day.shootDate && (
-              <span className="text-[#94a3b8] ml-2">{day.shootDate}</span>
+              <span className="text-text-secondary ml-2">{day.shootDate}</span>
             )}
           </p>
-          <p className="text-[11px] text-[#94a3b8] mt-0.5">
+          <p className="text-[11px] text-text-secondary mt-0.5">
             {day.callTime ? `Call ${day.callTime}` : 'No call set'}
             {day.wrapTime ? ` · Wrap ${day.wrapTime}` : ''}
             {day.strips.length > 0 && (
@@ -137,7 +137,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
             href={`/api/tiresias/agentic-os/filmmaker/shooting-days/${day.id}/exports/call-sheet.pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#94a3b8] hover:text-white p-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide"
+            className="text-text-secondary hover:text-white p-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide"
             title="Call sheet PDF"
           >
             <Download className="w-3.5 h-3.5" />
@@ -146,7 +146,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
           <button
             type="button"
             onClick={() => setEditing((v) => !v)}
-            className="text-[#94a3b8] hover:text-white p-1"
+            className="text-text-secondary hover:text-white p-1"
             title="Edit"
           >
             <Pencil className="w-3.5 h-3.5" />
@@ -155,7 +155,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
             type="button"
             onClick={deleteDay}
             disabled={busy}
-            className="text-[#94a3b8] hover:text-red-300 p-1"
+            className="text-text-secondary hover:text-red-300 p-1"
             title="Delete day"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -164,41 +164,41 @@ export function ShootingDayCard({ day, allDays }: Props) {
       </div>
 
       {editing && (
-        <div className="px-3 pb-3 space-y-2 border-t border-[#2a2d3e] pt-3">
+        <div className="px-3 pb-3 space-y-2 border-t border-border-subtle pt-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <input
               type="text"
               placeholder="Label"
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             />
             <input
               type="date"
               value={form.shootDate}
               onChange={(e) => setForm({ ...form, shootDate: e.target.value })}
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             />
             <input
               type="time"
               placeholder="Call"
               value={form.callTime}
               onChange={(e) => setForm({ ...form, callTime: e.target.value })}
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             />
             <input
               type="time"
               placeholder="Wrap"
               value={form.wrapTime}
               onChange={(e) => setForm({ ...form, wrapTime: e.target.value })}
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             />
             <select
               value={form.unit}
               onChange={(e) =>
                 setForm({ ...form, unit: e.target.value as ShootingUnit })
               }
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             >
               {SHOOTING_UNITS.map((u) => (
                 <option key={u.unit} value={u.unit}>
@@ -211,7 +211,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
               onChange={(e) =>
                 setForm({ ...form, status: e.target.value as ShootingDayStatus })
               }
-              className="text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+              className="text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
             >
               {SHOOTING_DAY_STATUSES.map((s) => (
                 <option key={s.status} value={s.status}>
@@ -225,13 +225,13 @@ export function ShootingDayCard({ day, allDays }: Props) {
             placeholder="Notes"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full text-xs bg-[#0f1117] border border-[#2a2d3e] rounded px-2 py-1.5 text-white"
+            className="w-full text-xs bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-white"
           />
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white"
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border-subtle text-text-secondary hover:text-white"
             >
               <X className="w-3 h-3" /> Cancel
             </button>
@@ -239,7 +239,7 @@ export function ShootingDayCard({ day, allDays }: Props) {
               type="button"
               onClick={save}
               disabled={busy}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded bg-[#4361EE] text-white disabled:opacity-40"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded bg-accent text-white disabled:opacity-40"
             >
               <Save className="w-3 h-3" /> Save
             </button>

@@ -62,7 +62,7 @@ export function ExperimentList({
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           New experiment
@@ -70,7 +70,7 @@ export function ExperimentList({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-[#94a3b8]">
+        <p className="text-sm text-text-secondary">
           {experiments.length === 0
             ? 'No experiments yet. Create your first experiment above.'
             : showArchived

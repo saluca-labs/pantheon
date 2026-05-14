@@ -51,14 +51,14 @@ export function ExperimentHypothesesTab({ experimentId, initialLinked, candidate
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           Hypotheses are workshop-global. The same hypothesis can be linked across
           experiments with different roles.
         </p>
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white transition"
           >
             <Plus className="w-3.5 h-3.5" />
             Add hypothesis
@@ -76,7 +76,7 @@ export function ExperimentHypothesesTab({ experimentId, initialLinked, candidate
       )}
 
       {linked.length === 0 && !adding ? (
-        <p className="text-sm text-[#94a3b8] italic">No hypotheses linked yet.</p>
+        <p className="text-sm text-text-secondary italic">No hypotheses linked yet.</p>
       ) : (
         <div className="space-y-2">
           {linked.map((l) => (

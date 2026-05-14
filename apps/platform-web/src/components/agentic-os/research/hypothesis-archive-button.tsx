@@ -59,7 +59,7 @@ export function HypothesisArchiveButton({ hypothesis, onArchived, onRestored }: 
     <button
       onClick={handle}
       disabled={busy}
-      className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-white disabled:opacity-50 transition"
+      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white disabled:opacity-50 transition"
       aria-label={`${label} hypothesis`}
     >
       <Icon className="w-3.5 h-3.5" />

@@ -20,6 +20,8 @@ import { TrendChart, type TrendSeries } from '@/components/agentic-os/_shared/tr
 import { TagHeatmap } from '@/components/agentic-os/_shared/tag-heatmap';
 import { StatCard } from '@/components/agentic-os/_shared/stat-card';
 import { ActivitySuggestionCard } from '@/components/agentic-os/health/activity/activity-suggestion-card';
+import { ACCENT, POSITIVE, WARNING } from '@/lib/design/chart-tokens';
+const SERIES_VIOLET = '#a78bfa'; // secure-dev OS accent — reused here for cross-OS palette consistency
 
 export type TrendWindow = '7d' | '30d' | '90d';
 
@@ -66,25 +68,25 @@ function buildMoodSeries(rows: TrendsPayload['mood_series']): TrendSeries[] {
     {
       key: 'mood',
       label: 'Mood',
-      color: '#10b981',
+      color: POSITIVE,
       data: rows.map((r) => ({ date: r.date, value: r.mood })),
     },
     {
       key: 'energy',
       label: 'Energy',
-      color: '#4361EE',
+      color: ACCENT,
       data: rows.map((r) => ({ date: r.date, value: r.energy })),
     },
     {
       key: 'anxiety',
       label: 'Anxiety',
-      color: '#f59e0b',
+      color: WARNING,
       data: rows.map((r) => ({ date: r.date, value: r.anxiety })),
     },
     {
       key: 'sleep',
       label: 'Sleep (1-4)',
-      color: '#a855f7',
+      color: SERIES_VIOLET,
       data: rows.map((r) => ({ date: r.date, value: r.sleep })),
     },
   ];
@@ -97,25 +99,25 @@ function buildNutritionSeries(
     {
       key: 'kcal',
       label: 'kcal',
-      color: '#10b981',
+      color: POSITIVE,
       data: rows.map((r) => ({ date: r.date, value: r.kcal })),
     },
     {
       key: 'protein_g',
       label: 'Protein g',
-      color: '#4361EE',
+      color: ACCENT,
       data: rows.map((r) => ({ date: r.date, value: r.protein_g })),
     },
     {
       key: 'carbs_g',
       label: 'Carbs g',
-      color: '#f59e0b',
+      color: WARNING,
       data: rows.map((r) => ({ date: r.date, value: r.carbs_g })),
     },
     {
       key: 'fat_g',
       label: 'Fat g',
-      color: '#a855f7',
+      color: SERIES_VIOLET,
       data: rows.map((r) => ({ date: r.date, value: r.fat_g })),
     },
   ];
@@ -197,7 +199,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-1">
+        <div className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-0 p-1">
           {WINDOWS.map((w) => {
             const active = w === window;
             return (
@@ -208,8 +210,8 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
                 disabled={loading}
                 className={`text-xs font-medium px-3 py-1.5 rounded-md transition ${
                   active
-                    ? 'bg-[#4361EE] text-white'
-                    : 'text-[#94a3b8] hover:text-white'
+                    ? 'bg-accent text-white'
+                    : 'text-text-secondary hover:text-white'
                 }`}
               >
                 {w}
@@ -218,7 +220,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
           })}
         </div>
         {loading && (
-          <span className="text-xs text-[#94a3b8]">Updating…</span>
+          <span className="text-xs text-text-secondary">Updating…</span>
         )}
         {error && <span className="text-xs text-red-300">{error}</span>}
       </div>
@@ -270,9 +272,9 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         />
       </div>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <ActivitySquare className="w-4 h-4 text-[#4361EE]" />
+          <ActivitySquare className="w-4 h-4 text-accent" />
           <h2 className="text-sm font-semibold text-white">
             Mood, energy, anxiety, sleep
           </h2>
@@ -283,13 +285,13 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         />
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Brain className="w-4 h-4 text-[#4361EE]" />
+            <Brain className="w-4 h-4 text-accent" />
             <h2 className="text-sm font-semibold text-white">Screener scores</h2>
           </div>
-          <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+          <span className="text-[10px] uppercase tracking-wide text-text-secondary">
             PHQ-9 trend:{' '}
             <span
               className={
@@ -297,7 +299,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
                   ? 'text-amber-300'
                   : trendDirection === 'down'
                     ? 'text-emerald-300'
-                    : 'text-[#cbd5e1]'
+                    : 'text-text-primary'
               }
             >
               {trendDirection === 'up'
@@ -314,9 +316,9 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         />
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Utensils className="w-4 h-4 text-[#4361EE]" />
+          <Utensils className="w-4 h-4 text-accent" />
           <h2 className="text-sm font-semibold text-white">Nutrition</h2>
         </div>
         <TrendChart
@@ -325,9 +327,9 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         />
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Activity className="w-4 h-4 text-[#4361EE]" />
+          <Activity className="w-4 h-4 text-accent" />
           <h2 className="text-sm font-semibold text-white">Activity</h2>
         </div>
         <TrendChart
@@ -336,7 +338,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         />
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <h2 className="text-sm font-semibold text-white mb-3">
           Mood tag × weekday
         </h2>

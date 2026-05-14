@@ -61,13 +61,13 @@ export default async function AssetDetailPage({
     <div className="max-w-4xl space-y-6">
       <Link
         href="/dashboard/os/cyber/assets"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to assets
       </Link>
 
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-3 mb-1">
@@ -80,7 +80,7 @@ export default async function AssetDetailPage({
                 {asset.criticality}
               </span>
             </div>
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               {kindLabel}
               {asset.environment && ` · ${asset.environment}`}
               {asset.decommissionedAt && ' · Decommissioned'}
@@ -90,7 +90,7 @@ export default async function AssetDetailPage({
         </div>
       </header>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <h2 className="text-base font-semibold text-white mb-3">Metadata</h2>
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <Row label="Hostname" value={asset.hostname} />
@@ -102,12 +102,12 @@ export default async function AssetDetailPage({
         </dl>
         {asset.tags.length > 0 && (
           <div className="mt-3">
-            <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Tags</span>
+            <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tags</span>
             <div className="flex flex-wrap gap-1">
               {asset.tags.map((t) => (
                 <span
                   key={t}
-                  className="text-xs px-2 py-0.5 rounded border border-[#2a2d3e] text-[#cbd5e1]"
+                  className="text-xs px-2 py-0.5 rounded border border-border-subtle text-text-primary"
                 >
                   {t}
                 </span>
@@ -117,12 +117,12 @@ export default async function AssetDetailPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <h2 className="text-base font-semibold text-white mb-3">
           Alerts on this asset ({alertsOnAsset.length})
         </h2>
         {alertsOnAsset.length === 0 ? (
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             No alerts have been linked to this asset yet.
           </p>
         ) : (
@@ -137,7 +137,7 @@ export default async function AssetDetailPage({
                   {a.severity}
                 </span>
                 <span className="text-sm text-white">{a.title}</span>
-                <span className="text-xs text-[#94a3b8] ml-auto">
+                <span className="text-xs text-text-secondary ml-auto">
                   {new Date(a.occurredAt).toLocaleString()}
                 </span>
               </li>
@@ -146,24 +146,24 @@ export default async function AssetDetailPage({
         )}
       </section>
 
-      <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+      <section className="rounded-xl border border-border-subtle bg-surface-2 p-5">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">Groups</h2>
           <Link
             href="/dashboard/os/cyber/asset-groups"
-            className="text-xs text-[#94a3b8] hover:text-white transition"
+            className="text-xs text-text-secondary hover:text-white transition"
           >
             Manage groups →
           </Link>
         </div>
         {groups.length === 0 ? (
-          <p className="text-sm text-[#94a3b8]">No groups defined yet.</p>
+          <p className="text-sm text-text-secondary">No groups defined yet.</p>
         ) : (
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             Add this asset to a group on the{' '}
             <Link
               href="/dashboard/os/cyber/asset-groups"
-              className="text-[#4361EE] hover:underline"
+              className="text-accent hover:underline"
             >
               groups page
             </Link>
@@ -186,7 +186,7 @@ function Row({
 }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-[#94a3b8] mb-0.5">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-text-secondary mb-0.5">{label}</dt>
       <dd className={`text-white ${mono ? 'font-mono' : ''}`}>{value ?? '—'}</dd>
     </div>
   );

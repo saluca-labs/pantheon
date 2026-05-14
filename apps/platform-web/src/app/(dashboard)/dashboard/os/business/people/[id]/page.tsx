@@ -72,14 +72,14 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/people"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to People
       </Link>
 
       {/* Tab navigation */}
-      <div className="flex items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const icons: Record<Tab, React.ReactNode> = {
             overview: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
@@ -92,8 +92,8 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               href={tab === 'overview' ? '?' : `?tab=${tab}`}
               className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white hover:border-[#2a2d3e]'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white hover:border-border-subtle'
               }`}
             >
               {icons[tab]}
@@ -121,7 +121,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
       {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
       {activeTab === 'quotes' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {quotes.length} quote{quotes.length !== 1 ? 's' : ''} for this contact
           </p>
           {quotes.length > 0 ? (
@@ -129,7 +129,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               <Link
                 key={q.id}
                 href={`/dashboard/os/business/quotes/${q.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -154,7 +154,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
       {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
         <div className="space-y-3">
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             {invoices.length} invoice{invoices.length !== 1 ? 's' : ''} for this contact
           </p>
           {invoices.length > 0 ? (
@@ -162,7 +162,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               <Link
                 key={inv.id}
                 href={`/dashboard/os/business/invoices/${inv.id}`}
-                className="block rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30 px-4 py-3 transition-colors"
+                className="block rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/30 px-4 py-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>

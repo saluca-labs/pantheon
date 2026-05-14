@@ -30,7 +30,7 @@ const SEVERITY_STYLE: Record<BlockerSeverity, string> = {
   blocked: 'border-red-500/50 text-red-300 bg-red-500/5',
   overdue: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
   at_risk: 'border-yellow-500/50 text-yellow-300 bg-yellow-500/5',
-  open_dependency: 'border-[#4361EE]/50 text-[#cbd5e1] bg-[#4361EE]/5',
+  open_dependency: 'border-accent/50 text-text-primary bg-accent/5',
 };
 
 interface Props {
@@ -72,7 +72,7 @@ export function BlockersWidget({ initial = [], limit = 5 }: Props) {
   }, [lastFetch, refresh]);
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-center justify-between mb-3 gap-2">
         <h2 className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2">
           <ShieldAlert className="w-4 h-4" />
@@ -80,14 +80,14 @@ export function BlockersWidget({ initial = [], limit = 5 }: Props) {
         </h2>
         <Link
           href="/dashboard/os/maker/blockers"
-          className="text-[10px] uppercase tracking-wide text-[#4361EE] hover:underline"
+          className="text-[10px] uppercase tracking-wide text-accent hover:underline"
         >
           View all
         </Link>
       </div>
-      {!loaded && <p className="text-xs text-[#94a3b8]">Loading…</p>}
+      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && items.length === 0 && (
-        <p className="text-xs text-[#94a3b8]">All clear.</p>
+        <p className="text-xs text-text-secondary">All clear.</p>
       )}
       <ul className="space-y-2">
         {items.slice(0, limit).map((item) => (
@@ -98,20 +98,20 @@ export function BlockersWidget({ initial = [], limit = 5 }: Props) {
                   ? `/dashboard/os/maker/projects/${item.projectId}?tab=milestones`
                   : `/dashboard/os/maker/projects/${item.projectId}?tab=dependencies`
               }
-              className={`block rounded-md border px-2.5 py-2 hover:bg-[#0f1117] transition ${SEVERITY_STYLE[item.severity]}`}
+              className={`block rounded-md border px-2.5 py-2 hover:bg-surface-0 transition ${SEVERITY_STYLE[item.severity]}`}
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[10px] uppercase tracking-wide font-medium">
                   {BLOCKER_SEVERITY_LABELS[item.severity]}
                 </span>
-                <span className="text-[10px] text-[#94a3b8] truncate max-w-[40%]">
+                <span className="text-[10px] text-text-secondary truncate max-w-[40%]">
                   {item.projectName}
                 </span>
               </div>
               <p className="mt-1 text-xs font-medium text-white line-clamp-2">
                 {item.title}
               </p>
-              <div className="mt-1 flex items-center gap-3 text-[10px] text-[#94a3b8]">
+              <div className="mt-1 flex items-center gap-3 text-[10px] text-text-secondary">
                 {item.dueAt && (
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3" />

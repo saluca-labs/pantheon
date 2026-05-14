@@ -124,7 +124,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/invoices"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Invoices
@@ -156,7 +156,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <form action={sendInvoiceAction.bind(null, invoice.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
               >
                 <Send className="w-4 h-4" />
                 Send
@@ -167,7 +167,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <form action={voidInvoiceAction.bind(null, invoice.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-red-900/50 bg-[#1a1d27] hover:bg-red-900/20 text-red-400 text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-red-900/50 bg-surface-2 hover:bg-red-900/20 text-red-400 text-sm font-medium px-4 py-2 transition"
               >
                 <Ban className="w-4 h-4" />
                 Void
@@ -177,7 +177,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <Link
             href={`/api/tiresias/agentic-os/business/invoices/${invoice.id}/export.pdf`}
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
           >
             Export PDF
           </Link>
@@ -186,23 +186,23 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Meta Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Invoice Number</p>
           <p className="text-sm text-white font-mono">{invoice.invoiceNumber}</p>
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Dates</p>
-          <p className="text-xs text-[#94a3b8]">Date: {invoice.invoiceDate}</p>
-          <p className="text-xs text-[#94a3b8]">Due: {invoice.dueOn}</p>
+          <p className="text-xs text-text-secondary">Date: {invoice.invoiceDate}</p>
+          <p className="text-xs text-text-secondary">Due: {invoice.dueOn}</p>
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Terms</p>
           <p className="text-sm text-white">{invoice.terms || 'None'}</p>
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Totals</p>
           <p className="text-sm text-white font-bold">{fmtCents(invoice.totalCents)}</p>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             {fmtCents(invoice.paidCents)} paid
             {outstanding > 0 && ` / ${fmtCents(outstanding)} due`}
           </p>
@@ -211,43 +211,43 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Linked entities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Contact</p>
           {contact ? (
             <Link href={`/dashboard/os/business/people/${contact.id}`} className="text-sm text-teal-300 hover:underline">
               {contact.firstName} {contact.lastName}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Deal</p>
           {deal ? (
             <Link href={`/dashboard/os/business/deals/${deal.id}`} className="text-sm text-teal-300 hover:underline">
               {deal.title}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <p className="text-xs text-[#64748b] mb-1">Project</p>
           {project ? (
             <Link href={`/dashboard/os/business/projects/${project.id}`} className="text-sm text-teal-300 hover:underline">
               {project.title}
             </Link>
           ) : (
-            <p className="text-sm text-[#94a3b8]">None</p>
+            <p className="text-sm text-text-secondary">None</p>
           )}
         </div>
       </div>
 
       {/* Description */}
       {invoice.descriptionMd && (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
           <p className="text-xs text-[#64748b] mb-2">Description</p>
-          <div className="text-sm text-[#94a3b8] whitespace-pre-wrap leading-relaxed">
+          <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
             {invoice.descriptionMd}
           </div>
         </div>
@@ -261,7 +261,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
               <Clock className="w-5 h-5 text-amber-400" />
               <div>
                 <p className="text-sm text-white font-medium">Unbilled time available</p>
-                <p className="text-xs text-[#94a3b8]">
+                <p className="text-xs text-text-secondary">
                   This project has unbilled time entries. Roll them into line items.
                 </p>
               </div>
@@ -280,7 +280,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       )}
 
       {/* Line Items */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-white">
             Line Items ({lineItems.length})
@@ -298,7 +298,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             {lineItems.map((item) => (
               <div
                 key={item.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-3 flex items-center justify-between"
+                className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-3 flex items-center justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-white">{item.description}</p>
@@ -317,7 +317,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
                     {fmtCents(item.lineTotalCents)}
                   </p>
                   {item.lineTaxCents > 0 && (
-                    <p className="text-[10px] text-[#94a3b8]">
+                    <p className="text-[10px] text-text-secondary">
                       +{fmtCents(item.lineTaxCents)} tax
                     </p>
                   )}
@@ -326,12 +326,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#94a3b8] text-center py-4">No line items yet.</p>
+          <p className="text-sm text-text-secondary text-center py-4">No line items yet.</p>
         )}
       </div>
 
       {/* Payments */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-white">
             Payments ({payments.length})
@@ -349,7 +349,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             {payments.map((p) => (
               <div
                 key={p.id}
-                className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-4 py-3 flex items-center justify-between"
+                className="rounded-lg border border-border-subtle bg-surface-0 px-4 py-3 flex items-center justify-between"
               >
                 <div className="min-w-0">
                   <p className="text-sm text-white">
@@ -374,16 +374,16 @@ export default async function InvoiceDetailPage({ params }: Props) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#94a3b8] text-center py-4">No payments recorded.</p>
+          <p className="text-sm text-text-secondary text-center py-4">No payments recorded.</p>
         )}
       </div>
 
       {/* Outstanding footer */}
       {outstanding > 0 && invoice.totalCents > 0 && (
-        <div className="rounded-xl border border-amber-800/50 bg-[#1a1d27] p-5 flex items-center justify-between">
+        <div className="rounded-xl border border-amber-800/50 bg-surface-2 p-5 flex items-center justify-between">
           <div>
             <p className="text-sm text-white font-medium">Outstanding Balance</p>
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               {fmtCents(invoice.totalCents)} total - {fmtCents(invoice.paidCents)} paid
             </p>
           </div>

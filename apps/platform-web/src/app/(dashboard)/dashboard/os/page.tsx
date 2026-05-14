@@ -85,11 +85,11 @@ function CardSkeleton({ mod }: { mod: AgenticOsModule }) {
   const Icon = mod.icon;
   const badge = STATUS_BADGE[mod.status] ?? STATUS_BADGE['planned']!;
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e]">
-            <Icon className="w-5 h-5 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2 border border-border-subtle">
+            <Icon className="w-5 h-5 text-accent" />
           </div>
           <h2 className="text-white font-semibold">{mod.label}</h2>
         </div>
@@ -99,10 +99,10 @@ function CardSkeleton({ mod }: { mod: AgenticOsModule }) {
           {badge.label}
         </span>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-3">{mod.tagline}</p>
+      <p className="text-sm text-text-secondary mb-3">{mod.tagline}</p>
       <div className="flex items-center gap-2">
-        <div className="h-5 w-16 rounded-full bg-[#2a2d3e] animate-pulse" />
-        <div className="h-4 w-20 rounded bg-[#2a2d3e] animate-pulse" />
+        <div className="h-5 w-16 rounded-full bg-border-subtle animate-pulse" />
+        <div className="h-4 w-20 rounded bg-border-subtle animate-pulse" />
       </div>
     </div>
   );
@@ -126,14 +126,14 @@ function OsCard({
   return (
     <Link
       href={`/dashboard/os/${mod.slug}`}
-      className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 transition hover:border-[#4361EE]/60 hover:bg-[#1f2230] block"
+      className="group rounded-xl border border-border-subtle bg-surface-2 p-5 transition hover:border-accent/60 hover:bg-surface-3 block"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-[#0f1117] p-2 border border-[#2a2d3e]">
-            <Icon className="w-5 h-5 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2 border border-border-subtle">
+            <Icon className="w-5 h-5 text-accent" />
           </div>
-          <h2 className="text-white font-semibold group-hover:text-[#4361EE] transition">
+          <h2 className="text-white font-semibold group-hover:text-accent transition">
             {mod.label}
           </h2>
         </div>
@@ -144,14 +144,14 @@ function OsCard({
         </span>
       </div>
 
-      <p className="text-sm text-[#94a3b8] mb-3">{mod.tagline}</p>
+      <p className="text-sm text-text-secondary mb-3">{mod.tagline}</p>
 
       <div className="flex items-center gap-2 flex-wrap">
         <span
           className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
             hasError
               ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-              : 'bg-[#4361EE]/10 text-[#4361EE] border-[#4361EE]/20'
+              : 'bg-accent/10 text-accent border-accent/20'
           }`}
           title={hasError ? `Query error: ${entry?.error}` : undefined}
         >
@@ -160,7 +160,7 @@ function OsCard({
         </span>
 
         {lastText && (
-          <span className="text-xs text-[#94a3b8]/70">{lastText}</span>
+          <span className="text-xs text-text-secondary/70">{lastText}</span>
         )}
       </div>
     </Link>
@@ -198,10 +198,10 @@ export default function AgenticOsIndexPage() {
   return (
     <div className="max-w-6xl">
       <div className="flex items-center gap-3 mb-2">
-        <Cpu className="w-6 h-6 text-[#4361EE]" />
+        <Cpu className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Agentic OS</h1>
       </div>
-      <p className="text-[#94a3b8] mb-8">
+      <p className="text-text-secondary mb-8">
         Vertical operating systems for life and work — each with its own data
         model, plan generator, and citation-backed agent loop.
       </p>

@@ -24,7 +24,7 @@ import {
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 interface Props {
   projectId: string;
@@ -102,7 +102,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
       {/* Compose form */}
       <form
         onSubmit={submit}
-        className="space-y-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4"
+        className="space-y-2 rounded-lg border border-border-subtle bg-surface-2 p-4"
       >
         <h3 className="text-sm font-semibold text-white">New log entry</h3>
         <textarea
@@ -123,7 +123,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
           className={`${inputCls} resize-y font-mono text-xs`}
         />
         {previewUrls.length > 0 && (
-          <div className="text-xs text-[#94a3b8]">
+          <div className="text-xs text-text-secondary">
             Will attach {previewUrls.length} URL{previewUrls.length === 1 ? '' : 's'}:{' '}
             {previewUrls.map((u, i) => (
               <span key={i} className="mr-2">
@@ -141,7 +141,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
           <button
             type="submit"
             disabled={adding || !body.trim()}
-            className="rounded-md bg-[#4361EE] px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-[#4361EE]"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Posting…' : 'Post entry'}
           </button>
@@ -151,7 +151,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
       {/* Feed */}
       <ul className="space-y-3">
         {entries.length === 0 && (
-          <li className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#1a1d27]/30 p-6 text-center text-sm text-[#94a3b8]">
+          <li className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-6 text-center text-sm text-text-secondary">
             No log entries yet. Capture your first build note above.
           </li>
         )}
@@ -174,14 +174,14 @@ function LogEntryRow({
   const others = entry.attachedUrls.filter((u) => u.kind !== 'photo');
   const dt = new Date(entry.createdAt);
   return (
-    <li className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4">
+    <li className="rounded-lg border border-border-subtle bg-surface-2 p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs text-[#94a3b8]">{dt.toLocaleString()}</div>
+        <div className="text-xs text-text-secondary">{dt.toLocaleString()}</div>
         <button
           type="button"
           onClick={() => onDelete(entry)}
           aria-label="Delete entry"
-          className="rounded p-1 text-[#94a3b8] hover:bg-red-500/10 hover:text-red-300"
+          className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -195,7 +195,7 @@ function LogEntryRow({
               href={p.url}
               target="_blank"
               rel="noreferrer"
-              className="block overflow-hidden rounded-md border border-[#2a2d3e]"
+              className="block overflow-hidden rounded-md border border-border-subtle"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -218,7 +218,7 @@ function LogEntryRow({
                   href={u.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-[#4361EE] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {u.label ?? u.url}

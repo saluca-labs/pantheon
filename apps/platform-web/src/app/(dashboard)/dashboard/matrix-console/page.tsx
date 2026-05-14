@@ -34,10 +34,10 @@ export default function MatrixConsolePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessagesSquare className="w-6 h-6 text-[#4361EE]" />
+          <MessagesSquare className="w-6 h-6 text-accent" />
           <div>
             <h1 className="text-2xl font-bold text-white">Matrix Console</h1>
-            <p className="text-sm text-[#94a3b8]">
+            <p className="text-sm text-text-secondary">
               Element Web embed — primary-human rooms only.
             </p>
           </div>
@@ -63,11 +63,11 @@ interface MatrixConsoleFrameProps {
 
 function MatrixConsoleFrame({ consoleUrl }: MatrixConsoleFrameProps) {
   return (
-    <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg overflow-hidden">
-      <div className="px-4 py-2 border-b border-[#2a2d3e] flex items-center justify-between text-xs text-[#94a3b8]">
+    <div className="bg-surface-2 border border-border-subtle rounded-lg overflow-hidden">
+      <div className="px-4 py-2 border-b border-border-subtle flex items-center justify-between text-xs text-text-secondary">
         <span>
           Pinned to internal homeserver{' '}
-          <code className="text-[#4361EE]">tiresias.local</code> · federation
+          <code className="text-accent">tiresias.local</code> · federation
           disabled
         </span>
         <a
@@ -92,7 +92,7 @@ function MatrixConsoleFrame({ consoleUrl }: MatrixConsoleFrameProps) {
         // 100vh minus dashboard chrome (topbar + container padding).
         // Tuned to the same-origin embed; if you mount Element under a
         // different ingress you may need to adjust.
-        className="w-full h-[calc(100vh-12rem)] bg-[#0f1117] border-0"
+        className="w-full h-[calc(100vh-12rem)] bg-surface-0 border-0"
       />
     </div>
   );
@@ -102,14 +102,14 @@ function MatrixConsoleRestricted() {
   return (
     <div
       data-testid="matrix-console-restricted"
-      className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-8 flex items-start gap-4"
+      className="bg-surface-2 border border-border-subtle rounded-lg p-8 flex items-start gap-4"
     >
       <ShieldAlert className="w-8 h-8 text-amber-400 shrink-0" />
       <div className="space-y-2">
         <h2 className="text-lg font-semibold text-white">
           Restricted to primary humans
         </h2>
-        <p className="text-sm text-[#94a3b8] max-w-2xl">
+        <p className="text-sm text-text-secondary max-w-2xl">
           The Matrix console is reserved for the primary human in this
           tenant — typically the org admin. Sub-users and viewers cannot
           load Element Web from inside the dashboard. If you believe you
@@ -117,15 +117,15 @@ function MatrixConsoleRestricted() {
           via{' '}
           <a
             href="/dashboard/settings/members"
-            className="text-[#4361EE] hover:underline"
+            className="text-accent hover:underline"
           >
             Settings → Members
           </a>
           .
         </p>
-        <p className="text-xs text-[#94a3b8]/70">
+        <p className="text-xs text-text-secondary/70">
           See{' '}
-          <code className="text-[#94a3b8]">
+          <code className="text-text-secondary">
             apps/platform-app-proxy/policies/cedar/matrix.cedar
           </code>{' '}
           for the underlying primary-only access policy (matrix-003).

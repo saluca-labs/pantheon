@@ -263,9 +263,9 @@ export function ScreenplayWorkspace({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
-          <FileText className="w-4 h-4 text-[#94a3b8]" />
+          <FileText className="w-4 h-4 text-text-secondary" />
           <input
             type="text"
             value={meta.title}
@@ -276,7 +276,7 @@ export function ScreenplayWorkspace({
               }
             }}
             disabled={savingMeta}
-            className="flex-1 min-w-[200px] bg-transparent text-lg font-semibold text-white border-b border-transparent hover:border-[#2a2d3e] focus:border-[#4361EE] outline-none"
+            className="flex-1 min-w-[200px] bg-transparent text-lg font-semibold text-white border-b border-transparent hover:border-border-subtle focus:border-accent outline-none"
           />
           <select
             value={meta.format}
@@ -286,7 +286,7 @@ export function ScreenplayWorkspace({
               void updateMeta({ format: next });
             }}
             disabled={savingMeta}
-            className="text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1]"
+            className="text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary"
           >
             {SCREENPLAY_FORMATS.map((f) => (
               <option key={f.format} value={f.format}>
@@ -302,7 +302,7 @@ export function ScreenplayWorkspace({
               void updateMeta({ status: next });
             }}
             disabled={savingMeta}
-            className="text-xs px-2 py-1 rounded border border-[#2a2d3e] bg-[#0f1117] text-[#cbd5e1]"
+            className="text-xs px-2 py-1 rounded border border-border-subtle bg-surface-0 text-text-primary"
           >
             {SCREENPLAY_STATUSES.map((s) => (
               <option key={s.status} value={s.status}>
@@ -321,13 +321,13 @@ export function ScreenplayWorkspace({
             type="button"
             onClick={saveDraft}
             disabled={saving || !dirty}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#4361EE]/60 bg-[#4361EE]/20 text-white hover:bg-[#4361EE]/30 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/60 bg-accent/20 text-white hover:bg-accent/30 disabled:opacity-50 transition"
           >
             <Save className="w-3.5 h-3.5" />
             {saving ? 'Saving…' : 'Save draft'}
           </button>
         </div>
-        <div className="flex items-center gap-4 text-[11px] text-[#94a3b8]">
+        <div className="flex items-center gap-4 text-[11px] text-text-secondary">
           <span>
             v{headVersion?.versionNumber ?? 1}
             {dirty && (

@@ -32,7 +32,7 @@ export default async function MealPlanPage({ searchParams }: PageProps) {
       <div className="max-w-3xl">
         <Link
           href="/dashboard/os/health"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
@@ -88,17 +88,17 @@ export default async function MealPlanPage({ searchParams }: PageProps) {
     <div className="max-w-6xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
-        <CalendarRange className="w-6 h-6 text-[#4361EE]" />
+        <CalendarRange className="w-6 h-6 text-accent" />
         <h1 className="text-2xl font-semibold text-white">Meal plan</h1>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-5">
+      <p className="text-sm text-text-secondary mb-5">
         Plan the week — recipes, single foods, or freeform notes. Use "I ate
         this" to log a planned slot into the meal log on the matching day.
       </p>

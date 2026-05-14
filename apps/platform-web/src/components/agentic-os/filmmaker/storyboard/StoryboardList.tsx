@@ -64,7 +64,7 @@ export function StoryboardList({ projectId, initial }: Props) {
           type="button"
           onClick={createStoryboard}
           disabled={busy}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           <FilePlus className="w-4 h-4" />
           New storyboard
@@ -72,16 +72,16 @@ export function StoryboardList({ projectId, initial }: Props) {
       </div>
 
       {initial.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
-          <Layers className="w-8 h-8 text-[#4361EE]/60 mx-auto mb-3" />
-          <p className="text-sm text-[#94a3b8] mb-4">
+        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center">
+          <Layers className="w-8 h-8 text-accent/60 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary mb-4">
             No storyboards yet. Start with the first beat.
           </p>
           <button
             type="button"
             onClick={createStoryboard}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             <FilePlus className="w-4 h-4" />
             Create first storyboard
@@ -93,11 +93,11 @@ export function StoryboardList({ projectId, initial }: Props) {
             <li key={sb.id}>
               <Link
                 href={`/dashboard/os/filmmaker/projects/${projectId}/storyboards/${sb.id}`}
-                className="flex items-center justify-between rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#4361EE]/60 transition group"
+                className="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-accent/60 transition group"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <p className="text-sm font-medium text-white group-hover:text-[#4361EE] transition truncate">
+                    <p className="text-sm font-medium text-white group-hover:text-accent transition truncate">
                       {sb.name}
                     </p>
                     <span
@@ -106,12 +106,12 @@ export function StoryboardList({ projectId, initial }: Props) {
                       {STATUS_LABEL[sb.status]}
                     </span>
                   </div>
-                  <p className="text-xs text-[#94a3b8]">
+                  <p className="text-xs text-text-secondary">
                     {sb.panelCount} panel{sb.panelCount === 1 ? '' : 's'}
                     {sb.sceneId ? ' · scene linked' : ''}
                   </p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] transition" />
+                <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent transition" />
               </Link>
             </li>
           ))}

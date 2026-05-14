@@ -43,8 +43,8 @@ export function BreakdownAggregate({ summary }: Props) {
         hint={`${summary.scenesWithBreakdown} / ${summary.totalScenes}`}
       />
       {summary.byCategory.length > 0 && (
-        <div className="col-span-2 md:col-span-4 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
-          <h3 className="text-[11px] uppercase tracking-wide text-[#94a3b8] mb-2">
+        <div className="col-span-2 md:col-span-4 rounded-xl border border-border-subtle bg-surface-2 p-4">
+          <h3 className="text-[11px] uppercase tracking-wide text-text-secondary mb-2">
             Elements by category
           </h3>
           <div className="flex flex-wrap gap-1.5">
@@ -79,8 +79,8 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
-      <p className="text-[10px] uppercase tracking-wide text-[#94a3b8]">{label}</p>
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+      <p className="text-[10px] uppercase tracking-wide text-text-secondary">{label}</p>
       <p className="text-xl font-semibold text-white mt-1">{value}</p>
       {hint && <p className="text-[10px] text-[#64748b] mt-0.5">{hint}</p>}
     </div>

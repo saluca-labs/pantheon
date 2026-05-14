@@ -21,7 +21,7 @@ export interface VoiceProfileListProps {
 export function VoiceProfileList({ initial }: VoiceProfileListProps) {
   if (initial.length === 0) {
     return (
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 text-center text-sm text-[#94a3b8]">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 text-center text-sm text-text-secondary">
         No voice profiles built yet. Build one from your active samples to
         unlock the Phase 7 chapter drafter.
       </div>

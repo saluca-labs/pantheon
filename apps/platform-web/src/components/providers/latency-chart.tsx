@@ -11,6 +11,16 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { LatencyResponse } from '@/lib/api/schemas/latency';
+import {
+  ACCENT,
+  CHART_AXIS_STROKE,
+  CHART_GRID_STROKE,
+  CHART_LEGEND_STYLE,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+  DANGER,
+  WARNING,
+} from '@/lib/design/chart-tokens';
 
 interface LatencyChartProps {
   data: LatencyResponse | undefined;
@@ -20,82 +30,77 @@ interface LatencyChartProps {
 export function LatencyChart({ data, isLoading }: LatencyChartProps) {
   if (isLoading) {
     return (
-      <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
-        <div className="h-64 animate-pulse bg-[#2a2d3e] rounded-lg" />
+      <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
+        <div className="h-64 animate-pulse bg-border-subtle rounded-lg" />
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
+      <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
         <h3 className="text-white font-medium text-sm mb-2">
           Latency Percentiles (ms)
         </h3>
         <div className="h-64 flex items-center justify-center">
-          <p className="text-[#94a3b8]">No latency data available</p>
+          <p className="text-text-secondary">No latency data available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4">
+    <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
       <h3 className="text-white font-medium text-sm mb-2">
         Latency Percentiles (ms)
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid stroke="#2a2d3e" strokeDasharray="3 3" />
+          <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
           <XAxis
             dataKey="provider"
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            axisLine={{ stroke: '#2a2d3e' }}
+            tick={{ fill: CHART_AXIS_STROKE, fontSize: 12 }}
+            axisLine={{ stroke: CHART_GRID_STROKE }}
           />
           <YAxis
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
-            axisLine={{ stroke: '#2a2d3e' }}
+            tick={{ fill: CHART_AXIS_STROKE, fontSize: 12 }}
+            axisLine={{ stroke: CHART_GRID_STROKE }}
             label={{
               value: 'ms',
               angle: -90,
               position: 'insideLeft',
-              fill: '#94a3b8',
+              fill: CHART_AXIS_STROKE,
               fontSize: 12,
             }}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: '#1a1d27',
-              border: '1px solid #2a2d3e',
-              borderRadius: '8px',
-              color: '#fff',
-            }}
-            labelStyle={{ color: '#94a3b8' }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
           />
-          <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+          <Legend wrapperStyle={CHART_LEGEND_STYLE} />
           <Line
             type="monotone"
             dataKey="p50_ms"
             name="P50"
-            stroke="#4361EE"
+            stroke={ACCENT}
             strokeWidth={2}
-            dot={{ r: 4, fill: '#4361EE' }}
+            dot={{ r: 4, fill: ACCENT }}
           />
           <Line
             type="monotone"
             dataKey="p95_ms"
             name="P95"
-            stroke="#FDCB6E"
+            stroke={WARNING}
             strokeWidth={2}
-            dot={{ r: 4, fill: '#FDCB6E' }}
+            dot={{ r: 4, fill: WARNING }}
           />
           <Line
             type="monotone"
             dataKey="p99_ms"
             name="P99"
-            stroke="#E17055"
+            stroke={DANGER}
             strokeWidth={2}
-            dot={{ r: 4, fill: '#E17055' }}
+            dot={{ r: 4, fill: DANGER }}
           />
         </LineChart>
       </ResponsiveContainer>

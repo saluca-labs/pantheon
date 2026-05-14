@@ -53,7 +53,7 @@ export function TipTapEditor({
       Link.configure({
         openOnClick: true,
         HTMLAttributes: {
-          class: 'text-[#4361EE] underline cursor-pointer hover:text-[#5a7bff]',
+          class: 'text-accent underline cursor-pointer hover:text-[#5a7bff]',
         },
       }),
       Image.configure({
@@ -94,16 +94,16 @@ export function TipTapEditor({
 
   if (!editor) {
     return (
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] min-h-[300px] flex items-center justify-center">
-        <p className="text-sm text-[#94a3b8]">Loading editor…</p>
+      <div className="rounded-lg border border-border-subtle bg-surface-0 min-h-[300px] flex items-center justify-center">
+        <p className="text-sm text-text-secondary">Loading editor…</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] overflow-hidden">
+    <div className="rounded-lg border border-border-subtle bg-surface-0 overflow-hidden">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-[#2a2d3e] bg-[#1a1d27]">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-border-subtle bg-surface-2">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive('bold')}
@@ -133,7 +133,7 @@ export function TipTapEditor({
           <s>S</s>
         </ToolbarButton>
 
-        <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -157,7 +157,7 @@ export function TipTapEditor({
           H3
         </ToolbarButton>
 
-        <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -181,7 +181,7 @@ export function TipTapEditor({
           &#x2611; Tasks
         </ToolbarButton>
 
-        <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -198,7 +198,7 @@ export function TipTapEditor({
           &lt;/&gt; Code
         </ToolbarButton>
 
-        <div className="w-px h-5 bg-[#2a2d3e] mx-1" />
+        <div className="w-px h-5 bg-border-subtle mx-1" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
@@ -232,8 +232,8 @@ function ToolbarButton({
       title={label}
       className={`px-2 py-1 rounded text-xs font-medium transition ${
         active
-          ? 'bg-[#4361EE]/20 text-[#4361EE]'
-          : 'text-[#94a3b8] hover:text-white hover:bg-[#2a2d3e]'
+          ? 'bg-accent/20 text-accent'
+          : 'text-text-secondary hover:text-white hover:bg-border-subtle'
       }`}
     >
       {children}

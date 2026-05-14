@@ -67,13 +67,13 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
     <div>
       {/* Toggle */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="flex rounded-lg border border-[#2a2d3e] overflow-hidden">
+        <div className="flex rounded-lg border border-border-subtle overflow-hidden">
           <button
             onClick={() => setViewMode('board')}
             className={`px-3 py-1.5 text-xs font-medium transition ${
               viewMode === 'board'
-                ? 'bg-[#4361EE] text-white'
-                : 'bg-[#1a1d27] text-[#94a3b8] hover:text-white'
+                ? 'bg-accent text-white'
+                : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
             Board
@@ -82,8 +82,8 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
             onClick={() => setViewMode('list')}
             className={`px-3 py-1.5 text-xs font-medium transition ${
               viewMode === 'list'
-                ? 'bg-[#4361EE] text-white'
-                : 'bg-[#1a1d27] text-[#94a3b8] hover:text-white'
+                ? 'bg-accent text-white'
+                : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
             List
@@ -93,7 +93,7 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
         {viewMode === 'board' && (
           <button
             onClick={() => setShowClosed((v) => !v)}
-            className="text-xs text-[#94a3b8] hover:text-white transition"
+            className="text-xs text-text-secondary hover:text-white transition"
           >
             {showClosed ? 'Hide closed' : 'Show closed'}
           </button>
@@ -114,17 +114,17 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
             return (
               <div
                 key={stage}
-                className="flex-shrink-0 w-[300px] rounded-xl border border-[#2a2d3e] bg-[#1a1d27] flex flex-col max-h-[70vh]"
+                className="flex-shrink-0 w-[300px] rounded-xl border border-border-subtle bg-surface-2 flex flex-col max-h-[70vh]"
               >
                 {/* Column header */}
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#2a2d3e]">
+                <div className="flex items-center justify-between px-3 py-2.5 border-b border-border-subtle">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${colors.bg}`} />
                     <span className={`text-xs font-semibold ${colors.text}`}>{colors.label}</span>
-                    <span className="text-xs text-[#94a3b8]">{stageDeals.length}</span>
+                    <span className="text-xs text-text-secondary">{stageDeals.length}</span>
                   </div>
                   {closed && stageDeals.length > 0 && !showClosed && (
-                    <span className="text-[10px] text-[#94a3b8]">collapsed</span>
+                    <span className="text-[10px] text-text-secondary">collapsed</span>
                   )}
                 </div>
 
@@ -141,7 +141,7 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
                     />
                   ))}
                   {visible.length === 0 && (
-                    <p className="text-xs text-[#94a3b8]/60 text-center py-6">
+                    <p className="text-xs text-text-secondary/60 text-center py-6">
                       {closed && !showClosed
                         ? `${stageDeals.length} deal${stageDeals.length !== 1 ? 's' : ''}`
                         : `No ${colors.label.toLowerCase()} deals`}
@@ -154,21 +154,21 @@ export default function DealKanban({ deals, contacts, orgs }: DealKanbanProps) {
         </div>
       ) : (
         /* LIST / TABLE VIEW */
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#2a2d3e] text-left">
-                <th className="px-4 py-2.5 text-xs font-semibold text-[#94a3b8]">Title</th>
-                <th className="px-4 py-2.5 text-xs font-semibold text-[#94a3b8]">Contact</th>
-                <th className="px-4 py-2.5 text-xs font-semibold text-[#94a3b8]">Value</th>
-                <th className="px-4 py-2.5 text-xs font-semibold text-[#94a3b8]">Stage</th>
-                <th className="px-4 py-2.5 text-xs font-semibold text-[#94a3b8]">Close Date</th>
+              <tr className="border-b border-border-subtle text-left">
+                <th className="px-4 py-2.5 text-xs font-semibold text-text-secondary">Title</th>
+                <th className="px-4 py-2.5 text-xs font-semibold text-text-secondary">Contact</th>
+                <th className="px-4 py-2.5 text-xs font-semibold text-text-secondary">Value</th>
+                <th className="px-4 py-2.5 text-xs font-semibold text-text-secondary">Stage</th>
+                <th className="px-4 py-2.5 text-xs font-semibold text-text-secondary">Close Date</th>
               </tr>
             </thead>
             <tbody>
               {deals.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-xs text-[#94a3b8]/60">
+                  <td colSpan={5} className="px-4 py-10 text-center text-xs text-text-secondary/60">
                     No deals yet.
                   </td>
                 </tr>

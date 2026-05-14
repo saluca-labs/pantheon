@@ -29,7 +29,7 @@ export default async function MeditatePage() {
       <div className="max-w-3xl">
         <Link
           href="/dashboard/os/health"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
@@ -63,7 +63,7 @@ export default async function MeditatePage() {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/health"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Health OS
@@ -71,12 +71,12 @@ export default async function MeditatePage() {
 
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Brain className="w-6 h-6 text-[#4361EE]" />
+          <Brain className="w-6 h-6 text-accent" />
           <h1 className="text-2xl font-semibold text-white">Meditate</h1>
         </div>
         <Link
           href="/dashboard/os/health/meditate/log"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-2 transition"
         >
           <Plus className="w-4 h-4" />
           Log a session
@@ -87,7 +87,7 @@ export default async function MeditatePage() {
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,360px)] gap-4">
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
             <MeditationCatalogBrowser
               catalog={MEDITATION_CATALOG}
               source="static"
@@ -99,7 +99,7 @@ export default async function MeditatePage() {
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard/os/health/meditate/plan"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/50 text-white text-xs px-3 py-1.5 transition"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 hover:border-accent/50 text-white text-xs px-3 py-1.5 transition"
             >
               View weekly plan
             </Link>
@@ -109,7 +109,7 @@ export default async function MeditatePage() {
 
       <section className="mt-8 space-y-3">
         <h2 className="text-base font-semibold text-white">Recent sessions</h2>
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
           <DataTable
             rows={sessions}
             empty="No meditation sessions logged yet."

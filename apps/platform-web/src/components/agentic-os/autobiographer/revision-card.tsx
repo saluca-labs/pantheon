@@ -38,8 +38,8 @@ export function RevisionCard({ revision, isActive, onSelect }: Props) {
       onClick={() => onSelect(revision.id)}
       className={`w-full text-left rounded-md border p-3 transition ${
         isActive
-          ? 'border-[#4361EE] bg-[#4361EE]/10'
-          : 'border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/40'
+          ? 'border-accent bg-accent/10'
+          : 'border-border-subtle bg-surface-0 hover:border-accent/40'
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -59,12 +59,12 @@ export function RevisionCard({ revision, isActive, onSelect }: Props) {
           </span>
         </div>
         {isActive ? (
-          <span className="text-[10px] uppercase tracking-wide text-[#4361EE] font-medium">
+          <span className="text-[10px] uppercase tracking-wide text-accent font-medium">
             Viewing
           </span>
         ) : null}
       </div>
-      <div className="flex items-center justify-between text-[11px] text-[#94a3b8]">
+      <div className="flex items-center justify-between text-[11px] text-text-secondary">
         <span>{revision.wordCount.toLocaleString()} words</span>
         <span className="font-mono">{formatStamp(revision.createdAt)}</span>
       </div>

@@ -69,8 +69,8 @@ export function VoiceSampleList({ initial }: VoiceSampleListProps) {
               onClick={() => setFilter(m)}
               className={`text-xs px-2.5 py-1 rounded border transition ${
                 filter === m
-                  ? 'border-[#4361EE]/60 bg-[#4361EE]/15 text-white'
-                  : 'border-[#2a2d3e] bg-[#0f1117] text-[#94a3b8] hover:text-white'
+                  ? 'border-accent/60 bg-accent/15 text-white'
+                  : 'border-border-subtle bg-surface-0 text-text-secondary hover:text-white'
               }`}
             >
               {FILTER_LABELS[m]}{' '}
@@ -83,12 +83,12 @@ export function VoiceSampleList({ initial }: VoiceSampleListProps) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search samples…"
-          className="bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-[#4361EE] w-64"
+          className="bg-surface-0 border border-border-subtle rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:border-accent w-64"
         />
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6 text-center text-sm text-[#94a3b8]">
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-6 text-center text-sm text-text-secondary">
           {initial.length === 0
             ? 'No voice samples yet. Add a paragraph or page of your own writing — backed by an existing memory, or freshly typed.'
             : 'No samples match these filters.'}

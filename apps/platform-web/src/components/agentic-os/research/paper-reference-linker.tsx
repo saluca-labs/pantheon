@@ -128,7 +128,7 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
       {/* Linked list */}
       {references.length === 0 ? (
         <p
-          className="text-sm text-[#94a3b8] italic py-4 text-center"
+          className="text-sm text-text-secondary italic py-4 text-center"
           data-testid="paper-reference-linker-empty"
         >
           No papers linked yet. Search the library below to add one.
@@ -138,7 +138,7 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
           {references.map((r) => (
             <li
               key={r.link.id}
-              className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-3"
+              className="rounded-lg border border-border-subtle bg-surface-2 p-3"
               data-testid={`paper-reference-row-${r.link.id}`}
             >
               <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -151,23 +151,23 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
                       {r.paper.title}
                     </Link>
                     <PaperKindPill kind={r.paper.kind} />
-                    <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-[#4361EE]/40 bg-[#4361EE]/15 text-[#cbd5e1]">
+                    <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-accent/40 bg-accent/15 text-text-primary">
                       {REFERENCE_RELEVANCE_LABELS[r.link.relevance]}
                     </span>
                   </div>
                   {r.paper.authorsText && (
-                    <p className="text-[10px] text-[#94a3b8] mt-1 truncate">
+                    <p className="text-[10px] text-text-secondary mt-1 truncate">
                       {r.paper.authorsText}
                     </p>
                   )}
                   {r.link.notes && (
-                    <p className="text-xs text-[#cbd5e1] mt-2">{r.link.notes}</p>
+                    <p className="text-xs text-text-primary mt-2">{r.link.notes}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={() => handleUnlink(r.paper.id, r.link.relevance)}
-                  className="text-[#94a3b8] hover:text-rose-300"
+                  className="text-text-secondary hover:text-rose-300"
                   aria-label="Unlink"
                   data-testid={`paper-reference-unlink-${r.link.id}`}
                 >
@@ -180,26 +180,26 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
       )}
 
       {/* Picker */}
-      <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-3" data-testid="paper-reference-picker">
+      <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-3" data-testid="paper-reference-picker">
         <p className="text-xs font-semibold text-white uppercase tracking-wide">
           Add reference
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div className="md:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search the library by title or authors"
-              className="w-full pl-10 pr-3 py-2 rounded-lg bg-[#1a1d27] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+              className="w-full pl-10 pr-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
               data-testid="paper-reference-search"
             />
           </div>
           <select
             value={relevance}
             onChange={(e) => setRelevance(e.target.value as ReferenceRelevance)}
-            className="px-3 py-2 rounded-lg bg-[#1a1d27] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+            className="px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
             data-testid="paper-reference-relevance-select"
           >
             {REFERENCE_RELEVANCES.map((r) => (
@@ -215,32 +215,32 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Notes (optional)"
-          className="w-full px-3 py-2 rounded-lg bg-[#1a1d27] border border-[#2a2d3e] text-sm text-white focus:border-[#4361EE]/60 outline-none"
+          className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border-subtle text-sm text-white focus:border-accent/60 outline-none"
           data-testid="paper-reference-notes"
         />
 
         {loading && (
-          <p className="text-xs text-[#94a3b8]" data-testid="paper-reference-loading">
+          <p className="text-xs text-text-secondary" data-testid="paper-reference-loading">
             Searching…
           </p>
         )}
 
         {results.length > 0 && (
-          <ul className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden divide-y divide-[#2a2d3e] max-h-60 overflow-y-auto" data-testid="paper-reference-results">
+          <ul className="rounded-lg border border-border-subtle bg-surface-2 overflow-hidden divide-y divide-border-subtle max-h-60 overflow-y-auto" data-testid="paper-reference-results">
             {results.map((p) => (
               <li
                 key={p.id}
-                className="px-3 py-2 hover:bg-[#0f1117] cursor-pointer flex items-center justify-between"
+                className="px-3 py-2 hover:bg-surface-0 cursor-pointer flex items-center justify-between"
                 onClick={() => handleLink(p)}
                 data-testid={`paper-reference-result-${p.id}`}
               >
                 <div className="min-w-0">
                   <p className="text-sm text-white truncate">{p.title}</p>
-                  <p className="text-[10px] text-[#94a3b8] truncate">
+                  <p className="text-[10px] text-text-secondary truncate">
                     {p.authorsText || p.venue || p.year}
                   </p>
                 </div>
-                <span className="text-[10px] text-[#4361EE] inline-flex items-center gap-1 shrink-0">
+                <span className="text-[10px] text-accent inline-flex items-center gap-1 shrink-0">
                   <LinkIcon className="w-3 h-3" />
                   Link
                 </span>
@@ -250,13 +250,13 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
         )}
 
         {/* Create-new fallback */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#2a2d3e]">
-          <p className="text-[10px] text-[#94a3b8]">
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-border-subtle">
+          <p className="text-[10px] text-text-secondary">
             Don&apos;t see it?
           </p>
           <Link
             href="/dashboard/os/research/library?new=1"
-            className="inline-flex items-center gap-1 text-xs text-[#4361EE] hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
             data-testid="paper-reference-new"
           >
             <Plus className="w-3 h-3" />
@@ -270,7 +270,7 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
           </p>
         )}
         {submitting && (
-          <p className="text-xs text-[#94a3b8]" data-testid="paper-reference-submitting">
+          <p className="text-xs text-text-secondary" data-testid="paper-reference-submitting">
             Linking…
           </p>
         )}

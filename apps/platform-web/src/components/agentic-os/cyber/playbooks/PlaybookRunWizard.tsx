@@ -33,7 +33,7 @@ import {
 import { PlaybookRunStepCard } from './PlaybookRunStepCard';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const API_RUN = '/api/tiresias/agentic-os/cyber/playbook-runs';
 
@@ -103,11 +103,11 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
 
   return (
     <div className="space-y-5">
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-4">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
           <div>
             <h1 className="text-xl font-semibold text-white">{run.playbookName}</h1>
-            <p className="text-xs text-[#94a3b8] mt-0.5">
+            <p className="text-xs text-text-secondary mt-0.5">
               Run started {new Date(run.startedAt).toLocaleString()} ·{' '}
               <span className="uppercase tracking-wide">{run.status.replace('_', ' ')}</span>
             </p>
@@ -134,13 +134,13 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
             </div>
           )}
         </div>
-        <div className="h-1.5 rounded-full bg-[#0f1117] overflow-hidden">
+        <div className="h-1.5 rounded-full bg-surface-0 overflow-hidden">
           <div
-            className="h-full bg-[#4361EE] transition-all"
+            className="h-full bg-accent transition-all"
             style={{ width: `${Math.round(progress * 100)}%` }}
           />
         </div>
-        <p className="text-[11px] text-[#94a3b8] mt-1.5">
+        <p className="text-[11px] text-text-secondary mt-1.5">
           {run.stepRuns.filter((s) => s.status === 'completed' || s.status === 'skipped').length} /{' '}
           {run.stepRuns.length} step{run.stepRuns.length === 1 ? '' : 's'} resolved
         </p>
@@ -165,7 +165,7 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
       )}
 
       <section>
-        <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-2">All steps</h2>
+        <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-2">All steps</h2>
         <ol className="space-y-2">
           {run.stepRuns.map((sr) => (
             <PlaybookRunStepCard key={sr.id} stepRun={sr} />
@@ -198,13 +198,13 @@ function CurrentStepEditor({
   }
 
   return (
-    <section className="rounded-xl border-2 border-[#4361EE]/50 bg-[#1a1d27] p-5 space-y-4">
+    <section className="rounded-xl border-2 border-accent/50 bg-surface-2 p-5 space-y-4">
       <header>
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#4361EE]/40 text-[#4361EE]">
+          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-accent/40 text-accent">
             current — step {stepRun.stepIndex + 1}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-[#2a2d3e] text-[#94a3b8]">
+          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border border-border-subtle text-text-secondary">
             {step.kind}
           </span>
         </div>
@@ -212,7 +212,7 @@ function CurrentStepEditor({
       </header>
 
       {step.instructions && (
-        <pre className="text-[12px] text-[#cbd5e1] whitespace-pre-wrap bg-[#0f1117] border border-[#2a2d3e] rounded p-3 leading-relaxed">
+        <pre className="text-[12px] text-text-primary whitespace-pre-wrap bg-surface-0 border border-border-subtle rounded p-3 leading-relaxed">
           {step.instructions}
         </pre>
       )}
@@ -220,12 +220,12 @@ function CurrentStepEditor({
       {step.kind === 'checklist' && (
         <div className="space-y-2">
           {(step.fields ?? []).map((field) => (
-            <label key={field.name} className="flex items-center gap-2 text-sm text-[#cbd5e1]">
+            <label key={field.name} className="flex items-center gap-2 text-sm text-text-primary">
               <input
                 type="checkbox"
                 checked={Boolean(input[field.name])}
                 onChange={(e) => setField(field.name, e.target.checked)}
-                className="accent-[#4361EE]"
+                className="accent-accent"
               />
               {field.label}
             </label>
@@ -247,11 +247,11 @@ function CurrentStepEditor({
       )}
 
       {step.kind === 'runbook_step' && (
-        <p className="text-xs text-[#94a3b8]">Execute the instruction above, then mark complete below.</p>
+        <p className="text-xs text-text-secondary">Execute the instruction above, then mark complete below.</p>
       )}
 
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Notes</span>
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Notes</span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -275,7 +275,7 @@ function CurrentStepEditor({
           type="button"
           onClick={() => onSkip(notes)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] text-[#cbd5e1] hover:text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-text-primary hover:text-white px-3 py-1.5 text-sm transition"
         >
           <SkipForward className="w-4 h-4" />
           Skip
@@ -305,12 +305,12 @@ function FieldInput({
 }) {
   if (field.type === 'checkbox') {
     return (
-      <label className="flex items-center gap-2 text-sm text-[#cbd5e1]">
+      <label className="flex items-center gap-2 text-sm text-text-primary">
         <input
           type="checkbox"
           checked={Boolean(value)}
           onChange={(e) => onChange(e.target.checked)}
-          className="accent-[#4361EE]"
+          className="accent-accent"
         />
         {field.label}{field.required ? ' *' : ''}
       </label>
@@ -319,7 +319,7 @@ function FieldInput({
   if (field.type === 'select') {
     return (
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           {field.label}{field.required ? ' *' : ''}
         </span>
         <select
@@ -338,7 +338,7 @@ function FieldInput({
   if (field.type === 'textarea') {
     return (
       <label className="block">
-        <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           {field.label}{field.required ? ' *' : ''}
         </span>
         <textarea
@@ -352,7 +352,7 @@ function FieldInput({
   }
   return (
     <label className="block">
-      <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
         {field.label}{field.required ? ' *' : ''}
       </span>
       <input

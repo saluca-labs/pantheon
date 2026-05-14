@@ -20,7 +20,7 @@ interface Props {
 export function CoachSessionList({ sessions }: Props) {
   if (sessions.length === 0) {
     return (
-      <p className="text-xs text-[#94a3b8]">
+      <p className="text-xs text-text-secondary">
         No sessions yet. Pick a mode and start one.
       </p>
     );

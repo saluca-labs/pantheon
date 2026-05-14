@@ -56,10 +56,10 @@ export function EvidencePanel({ hypothesisId, initialEvidence }: Props) {
             id="evidence-heading"
             className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
           >
-            <Scale className="w-4 h-4 text-[#4361EE]" />
+            <Scale className="w-4 h-4 text-accent" />
             Evidence
           </h2>
-          <p className="text-xs text-[#94a3b8]">
+          <p className="text-xs text-text-secondary">
             Supporting and refuting sources. Notebook entries, papers, datasets,
             external URLs, or free text.
           </p>
@@ -67,7 +67,7 @@ export function EvidencePanel({ hypothesisId, initialEvidence }: Props) {
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-[#94a3b8] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-text-secondary hover:text-white transition"
           >
             <Plus className="w-3.5 h-3.5" />
             Add evidence
@@ -91,7 +91,7 @@ export function EvidencePanel({ hypothesisId, initialEvidence }: Props) {
             <div key={p} className="space-y-2">
               <div className="flex items-center gap-2">
                 <EvidencePolarityPill polarity={p} />
-                <span className="text-xs text-[#94a3b8]">
+                <span className="text-xs text-text-secondary">
                   {rows.length} {rows.length === 1 ? 'row' : 'rows'}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function EvidencePanel({ hypothesisId, initialEvidence }: Props) {
         })}
 
         {evidence.length === 0 && !adding && (
-          <p className="text-sm text-[#94a3b8] italic">No evidence linked yet.</p>
+          <p className="text-sm text-text-secondary italic">No evidence linked yet.</p>
         )}
       </div>
     </section>

@@ -181,7 +181,7 @@ export function ReviewCheckRow({
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] p-3 space-y-2">
+    <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 space-y-2">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="min-w-0">
           <div className="inline-flex items-center gap-2 flex-wrap">
@@ -195,7 +195,7 @@ export function ReviewCheckRow({
               </span>
             )}
           </div>
-          <p className="text-xs text-[#94a3b8] mt-0.5">
+          <p className="text-xs text-text-secondary mt-0.5">
             {REVIEW_CHECK_KIND_DESCRIPTIONS[kind]}
           </p>
         </div>
@@ -228,7 +228,7 @@ export function ReviewCheckRow({
         placeholder="Notes (optional — who reviewed, when, with what evidence)"
         rows={2}
         disabled={busy}
-        className="w-full bg-[#1a1d27] border border-[#2a2d3e] rounded px-2 py-1 text-xs text-[#cbd5e1] focus:outline-none focus:border-[#4361EE]"
+        className="w-full bg-surface-2 border border-border-subtle rounded px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent"
       />
 
       {notesDirty && (
@@ -236,7 +236,7 @@ export function ReviewCheckRow({
           type="button"
           onClick={() => void persistNotes()}
           disabled={busy}
-          className="inline-flex items-center gap-1 text-[10px] text-[#94a3b8] hover:text-white"
+          className="inline-flex items-center gap-1 text-[10px] text-text-secondary hover:text-white"
         >
           <Save className="w-3 h-3" />
           Save notes

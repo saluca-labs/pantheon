@@ -66,7 +66,7 @@ export function ScreenplayVersionView({
             type="button"
             onClick={restore}
             disabled={restoring}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-[#4361EE]/60 bg-[#4361EE]/20 text-white hover:bg-[#4361EE]/30 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-accent/60 bg-accent/20 text-white hover:bg-accent/30 disabled:opacity-50 transition"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {restoring ? 'Restoring…' : 'Restore as new head'}

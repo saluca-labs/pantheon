@@ -51,7 +51,7 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
             <Sparkles className="w-7 h-7 text-[#d946ef]" />
             <h1 className="text-2xl font-semibold text-white">Creator Hub</h1>
           </div>
-          <p className="text-sm text-[#94a3b8]">
+          <p className="text-sm text-text-secondary">
             Write, plan, and organize your content. Jump into your notes or
             start something new.
           </p>
@@ -72,7 +72,7 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Pin className="w-4 h-4 text-[#d946ef]" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#94a3b8]">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
               Pinned
             </h2>
           </div>
@@ -81,11 +81,11 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
               <Link
                 key={note.id}
                 href={`/dashboard/os/creator/notes/${note.id}`}
-                className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 hover:border-[#d946ef]/50 transition"
+                className="group rounded-xl border border-border-subtle bg-surface-2 p-4 hover:border-[#d946ef]/50 transition"
               >
                 <div className="flex items-start gap-3">
                   <span className="text-xl flex-shrink-0">
-                    {note.icon || <FileText className="w-5 h-5 text-[#94a3b8]/60" />}
+                    {note.icon || <FileText className="w-5 h-5 text-text-secondary/60" />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-medium text-white truncate group-hover:text-[#d946ef] transition">
@@ -102,7 +102,7 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
                           </span>
                         ))}
                         {note.tags.length > 3 && (
-                          <span className="text-[10px] text-[#94a3b8]">
+                          <span className="text-[10px] text-text-secondary">
                             +{note.tags.length - 3}
                           </span>
                         )}
@@ -119,20 +119,20 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
       {/* Recent notes */}
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <Clock className="w-4 h-4 text-[#94a3b8]" />
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#94a3b8]">
+          <Clock className="w-4 h-4 text-text-secondary" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
             Recent Notes
           </h2>
         </div>
         {recentNotes.length === 0 ? (
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-8 text-center">
-            <FileText className="w-8 h-8 text-[#94a3b8]/40 mx-auto mb-3" />
-            <p className="text-sm text-[#94a3b8]">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
+            <FileText className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
+            <p className="text-sm text-text-secondary">
               No notes yet. Create your first note to get started.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] divide-y divide-[#2a2d3e]">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 divide-y divide-border-subtle">
             {recentNotes.map((note) => (
               <Link
                 key={note.id}
@@ -140,13 +140,13 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
                 className="flex items-center gap-3 px-4 py-3 hover:bg-[#222633] transition group"
               >
                 <span className="text-lg flex-shrink-0">
-                  {note.icon || <FileText className="w-4 h-4 text-[#94a3b8]/60" />}
+                  {note.icon || <FileText className="w-4 h-4 text-text-secondary/60" />}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white truncate group-hover:text-[#d946ef] transition">
                     {note.title || 'Untitled'}
                   </p>
-                  <p className="text-xs text-[#94a3b8]/70">
+                  <p className="text-xs text-text-secondary/70">
                     Updated {new Date(note.updatedAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export function CreatorHub({ pinnedNotes, recentNotes }: CreatorHubProps) {
                     {note.tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag}
-                        className="px-1.5 py-0.5 rounded text-[10px] bg-[#2a2d3e] text-[#94a3b8]"
+                        className="px-1.5 py-0.5 rounded text-[10px] bg-border-subtle text-text-secondary"
                       >
                         {tag}
                       </span>

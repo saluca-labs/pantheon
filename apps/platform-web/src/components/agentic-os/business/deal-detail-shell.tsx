@@ -104,8 +104,8 @@ export default function DealDetailShell({
     setInteractions((prev) => [interaction, ...prev]);
   }
 
-  const cardClass = 'rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5';
-  const labelClass = 'block text-xs font-medium text-[#94a3b8] mb-1';
+  const cardClass = 'rounded-xl border border-border-subtle bg-surface-2 p-5';
+  const labelClass = 'block text-xs font-medium text-text-secondary mb-1';
   const valueClass = 'text-sm text-white';
 
   return (
@@ -148,7 +148,7 @@ export default function DealDetailShell({
               <span className={labelClass}>Contact</span>
               <Link
                 href={`/dashboard/os/business/people/${contact.id}`}
-                className={`${valueClass} text-[#4361EE] hover:underline`}
+                className={`${valueClass} text-accent hover:underline`}
               >
                 {fullName(contact)}
               </Link>
@@ -159,7 +159,7 @@ export default function DealDetailShell({
               <span className={labelClass}>Organization</span>
               <Link
                 href={`/dashboard/os/business/orgs/${organization.id}`}
-                className={`${valueClass} text-[#4361EE] hover:underline`}
+                className={`${valueClass} text-accent hover:underline`}
               >
                 {organization.name}
               </Link>
@@ -184,18 +184,18 @@ export default function DealDetailShell({
 
         {/* Stage transition dropdown */}
         {!isTerminal && (
-          <div className="mt-4 pt-4 border-t border-[#2a2d3e]">
+          <div className="mt-4 pt-4 border-t border-border-subtle">
             <label className={`${labelClass} mb-2`}>Move to...</label>
             <select
               value=""
               onChange={(e) => {
                 if (e.target.value) handleStageChange(e.target.value as DealStage);
               }}
-              className="rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-xs text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none"
+              className="rounded-md border border-border-subtle bg-surface-0 px-3 py-1.5 text-xs text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
             >
-              <option value="" disabled className="bg-[#1a1d27] text-[#94a3b8]">Select stage...</option>
+              <option value="" disabled className="bg-surface-2 text-text-secondary">Select stage...</option>
               {DEAL_STAGES.filter((s) => s !== deal.stage).map((s) => (
-                <option key={s} value={s} className="bg-[#1a1d27] text-white">
+                <option key={s} value={s} className="bg-surface-2 text-white">
                   {s.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                 </option>
               ))}
@@ -212,7 +212,7 @@ export default function DealDetailShell({
             {deal.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center rounded-md bg-[#0f1117] border border-[#2a2d3e] px-2 py-0.5 text-xs text-teal-300"
+                className="inline-flex items-center rounded-md bg-surface-0 border border-border-subtle px-2 py-0.5 text-xs text-teal-300"
               >
                 {tag}
               </span>
@@ -233,7 +233,7 @@ export default function DealDetailShell({
       {deal.descriptionMd && (
         <div className={cardClass}>
           <span className={labelClass}>Description</span>
-          <div className="prose prose-invert prose-sm mt-2 max-w-none text-[#cbd5e1]">
+          <div className="prose prose-invert prose-sm mt-2 max-w-none text-text-primary">
             <ReactMarkdown>{deal.descriptionMd}</ReactMarkdown>
           </div>
         </div>

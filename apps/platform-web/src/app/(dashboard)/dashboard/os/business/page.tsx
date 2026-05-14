@@ -55,13 +55,13 @@ export default async function BusinessHubPage() {
         </div>
         <Link
           href="/dashboard/os/business/settings"
-          className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white transition"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white transition"
         >
           <SettingsIcon className="w-4 h-4" />
           Settings
         </Link>
       </div>
-      <p className="text-sm text-[#94a3b8] mb-6">
+      <p className="text-sm text-text-secondary mb-6">
         Solo to enterprise without re-architecting. Phase 2 adds the sales
         pipeline with deal tracking, kanban board, and pipeline forecasting.
       </p>

@@ -44,7 +44,7 @@ export default async function FilmmakerStoryboardEditorPage({ params }: Props) {
     <div className="max-w-6xl">
       <Link
         href={`/dashboard/os/filmmaker/projects/${id}/storyboards`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to storyboards
@@ -52,8 +52,8 @@ export default async function FilmmakerStoryboardEditorPage({ params }: Props) {
 
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-          <Layers className="w-6 h-6 text-[#4361EE]" />
-          <p className="text-xs uppercase tracking-wide text-[#94a3b8]">Storyboard</p>
+          <Layers className="w-6 h-6 text-accent" />
+          <p className="text-xs uppercase tracking-wide text-text-secondary">Storyboard</p>
         </div>
         <h1 className="text-2xl font-semibold text-white">{project.name}</h1>
       </div>

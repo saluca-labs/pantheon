@@ -221,24 +221,24 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os/maker/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to projects
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] overflow-hidden mb-6">
+      <div className="rounded-xl border border-border-subtle bg-surface-2 overflow-hidden mb-6">
         {project.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={project.coverImageUrl}
             alt={project.name}
-            className="w-full h-48 object-cover border-b border-[#2a2d3e]"
+            className="w-full h-48 object-cover border-b border-border-subtle"
           />
         ) : (
-          <div className="w-full h-32 bg-gradient-to-br from-[#4361EE]/20 to-[#1a1d27] border-b border-[#2a2d3e] flex items-center justify-center">
-            <Wrench className="w-10 h-10 text-[#4361EE]/50" />
+          <div className="w-full h-32 bg-gradient-to-br from-accent/20 to-surface-2 border-b border-border-subtle flex items-center justify-center">
+            <Wrench className="w-10 h-10 text-accent/50" />
           </div>
         )}
 
@@ -253,14 +253,14 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
               </span>
             </div>
             {project.description && (
-              <p className="text-sm text-[#94a3b8]">{project.description}</p>
+              <p className="text-sm text-text-secondary">{project.description}</p>
             )}
             {project.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1">
                 {project.tags.map((t) => (
                   <span
                     key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-[#94a3b8]"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-surface-0 border border-border-subtle text-text-secondary"
                   >
                     {t}
                   </span>
@@ -276,7 +276,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
       </div>
 
       {/* Tab strip */}
-      <div className="flex flex-wrap items-center gap-1 mb-6 border-b border-[#2a2d3e]">
+      <div className="flex flex-wrap items-center gap-1 mb-6 border-b border-border-subtle">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -286,14 +286,14 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
               href={`/dashboard/os/maker/projects/${project.id}${tab.key === 'overview' ? '' : `?tab=${tab.key}`}`}
               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm transition border-b-2 -mb-px ${
                 isActive
-                  ? 'border-[#4361EE] text-white'
-                  : 'border-transparent text-[#94a3b8] hover:text-white'
+                  ? 'border-accent text-white'
+                  : 'border-transparent text-text-secondary hover:text-white'
               }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.phase && (
-                <span className="text-[9px] uppercase tracking-wide text-[#94a3b8] ml-1">
+                <span className="text-[9px] uppercase tracking-wide text-text-secondary ml-1">
                   ({tab.phase})
                 </span>
               )}
@@ -314,7 +314,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
 
           {/* Stats */}
           <div className="space-y-4">
-            <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+            <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
               <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
                 Stats
               </h2>
@@ -353,11 +353,11 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Bill of materials
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Each line picks a workshop catalog row. Need a part that isn&apos;t in the catalog?{' '}
             <Link
               href="/dashboard/os/maker/catalog"
-              className="text-[#4361EE] hover:underline"
+              className="text-accent hover:underline"
             >
               Add it to the catalog
             </Link>
@@ -376,7 +376,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Build steps
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Ordered checklist of what needs to happen. Tick each step as you go, jot
             blocker notes, and use the up/down arrows to re-sequence.
           </p>
@@ -389,7 +389,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Build log
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Timestamped feed of build notes, photos, and reference links. Photos and
             files are URL-only — paste links from your phone, cloud drive, or any
             external host.
@@ -403,7 +403,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Milestones
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Named beats in the project timeline. Set a due date to surface overdue and
             due-soon warnings; tick the box when each beat lands.
           </p>
@@ -419,12 +419,12 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Tools &amp; jigs
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Workshop tools this build depends on. Mark which ones are required vs
             nice-to-have. Need a tool that isn&apos;t in your workshop yet?{' '}
             <Link
               href="/dashboard/os/maker/tools"
-              className="text-[#4361EE] hover:underline"
+              className="text-accent hover:underline"
             >
               Add it to the workshop
             </Link>
@@ -442,7 +442,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Spec sheets
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Datasheets, drawings, manuals, and compliance certificates for this build
             — directly attached to the project, or pulled in from parts on the BOM
             and tools linked to the project. URL-only — link to your cloud drive,
@@ -459,12 +459,12 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             References
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Papers, tutorials, standards, articles, videos, books, and bare links
             attached to this build. Pull existing entries from your workshop-global{' '}
             <Link
               href="/dashboard/os/maker/references"
-              className="text-[#4361EE] hover:underline"
+              className="text-accent hover:underline"
             >
               references library
             </Link>{' '}
@@ -482,11 +482,11 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             Cross-project dependencies
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Wire up which other Maker projects this build depends on (upstream) and
             which builds depend on this one (downstream). Open{' '}
-            <code className="text-[#cbd5e1]">blocks</code> edges feed the workshop-wide{' '}
-            <Link href="/dashboard/os/maker/blockers" className="text-[#4361EE] hover:underline">
+            <code className="text-text-primary">blocks</code> edges feed the workshop-wide{' '}
+            <Link href="/dashboard/os/maker/blockers" className="text-accent hover:underline">
               Top Blockers
             </Link>{' '}
             list.
@@ -503,7 +503,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           <h2 className="text-sm font-semibold text-white uppercase tracking-wide mb-4">
             AI coach
           </h2>
-          <p className="text-xs text-[#94a3b8] mb-4">
+          <p className="text-xs text-text-secondary mb-4">
             Project-scoped AI advisor across procurement, build planning,
             and shop safety. Pick a mode and start a session — the coach
             reads this project&apos;s BOM, build steps, milestones, tools,
@@ -533,7 +533,7 @@ function StatRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <span className="inline-flex items-center gap-2 text-[#94a3b8]">
+      <span className="inline-flex items-center gap-2 text-text-secondary">
         {icon}
         {label}
       </span>

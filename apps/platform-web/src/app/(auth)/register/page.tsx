@@ -79,11 +79,11 @@ export default async function RegisterPage({
   const errorMsg = params.error ? errorMap[params.error] : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f1117]">
-      <div className="w-full max-w-md p-8 rounded-xl bg-[#1a1d27] border border-[#2a2d3e] shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-surface-0">
+      <div className="w-full max-w-md p-8 rounded-xl bg-surface-2 border border-border-subtle shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">Create account</h1>
-          <p className="text-sm text-[#94a3b8]">Pantheon — Governance-First AI-Security&#8482;</p>
+          <p className="text-sm text-text-secondary">Pantheon — Governance-First AI-Security&#8482;</p>
         </div>
 
         {errorMsg && (
@@ -94,7 +94,7 @@ export default async function RegisterPage({
 
         <form action={registerAction} className="space-y-4">
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-[#94a3b8] mb-1">
+            <label htmlFor="displayName" className="block text-sm font-medium text-text-secondary mb-1">
               Name <span className="text-[#4a4d5e]">(optional)</span>
             </label>
             <input
@@ -102,13 +102,13 @@ export default async function RegisterPage({
               name="displayName"
               type="text"
               autoComplete="name"
-              className="w-full h-10 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-white px-3 text-sm focus:outline-none focus:border-[#4361EE] placeholder-[#4a4d5e]"
+              className="w-full h-10 rounded-lg bg-surface-0 border border-border-subtle text-white px-3 text-sm focus:outline-none focus:border-accent placeholder-[#4a4d5e]"
               placeholder="Your name"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-[#94a3b8] mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1">
               Email
             </label>
             <input
@@ -117,13 +117,13 @@ export default async function RegisterPage({
               type="email"
               autoComplete="email"
               required
-              className="w-full h-10 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-white px-3 text-sm focus:outline-none focus:border-[#4361EE] placeholder-[#4a4d5e]"
+              className="w-full h-10 rounded-lg bg-surface-0 border border-border-subtle text-white px-3 text-sm focus:outline-none focus:border-accent placeholder-[#4a4d5e]"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-[#94a3b8] mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1">
               Password <span className="text-[#4a4d5e]">(min 8 chars)</span>
             </label>
             <input
@@ -133,25 +133,25 @@ export default async function RegisterPage({
               autoComplete="new-password"
               required
               minLength={8}
-              className="w-full h-10 rounded-lg bg-[#0f1117] border border-[#2a2d3e] text-white px-3 text-sm focus:outline-none focus:border-[#4361EE] placeholder-[#4a4d5e]"
+              className="w-full h-10 rounded-lg bg-surface-0 border border-border-subtle text-white px-3 text-sm focus:outline-none focus:border-accent placeholder-[#4a4d5e]"
               placeholder="••••••••"
             />
           </div>
 
           <button
             type="submit"
-            className="flex items-center justify-center w-full h-12 rounded-lg bg-[#4361EE] text-white font-medium hover:bg-[#3651DE] transition-colors"
+            className="flex items-center justify-center w-full h-12 rounded-lg bg-accent text-white font-medium hover:bg-[#3651DE] transition-colors"
           >
             Create account
           </button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-[#94a3b8]">
+        <p className="mt-4 text-center text-xs text-text-secondary">
           Already have an account?{' '}
-          <a href="/login" className="text-[#4361EE] hover:underline">Sign in</a>
+          <a href="/login" className="text-accent hover:underline">Sign in</a>
         </p>
 
-        <p className="mt-6 text-center text-xs text-[#94a3b8]">
+        <p className="mt-6 text-center text-xs text-text-secondary">
           &copy; {new Date().getFullYear()} Saluca LLC. All rights reserved.
         </p>
       </div>

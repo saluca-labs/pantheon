@@ -52,14 +52,14 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
   return (
     <div className="space-y-3" data-testid="milestone-list">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-[#94a3b8]">
+        <p className="text-xs text-text-secondary">
           {total} milestone{total === 1 ? '' : 's'} · {done} done · {overdue} overdue
         </p>
         {!showAdd && !editingId && (
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-[#2a2d3e] text-sm text-white px-2 py-1 hover:bg-[#1a1d27]"
+            className="inline-flex items-center gap-1.5 rounded border border-border-subtle text-sm text-white px-2 py-1 hover:bg-surface-2"
             data-testid="milestone-add-button"
           >
             <Plus className="w-4 h-4" />
@@ -81,7 +81,7 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
 
       {sorted.length === 0 && !showAdd ? (
         <p
-          className="text-sm text-[#94a3b8] italic py-6 text-center"
+          className="text-sm text-text-secondary italic py-6 text-center"
           data-testid="milestone-list-empty"
         >
           No milestones yet.
@@ -109,7 +109,7 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
                     <button
                       type="button"
                       onClick={() => setEditingId(m.id)}
-                      className="rounded border border-[#2a2d3e] bg-[#0f1117] p-1 text-[#94a3b8] hover:text-white"
+                      className="rounded border border-border-subtle bg-surface-0 p-1 text-text-secondary hover:text-white"
                       title="Edit"
                       data-testid={`milestone-edit-${m.id}`}
                     >
@@ -118,7 +118,7 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
                     <button
                       type="button"
                       onClick={() => handleDelete(m.id)}
-                      className="rounded border border-red-500/40 bg-[#0f1117] p-1 text-red-300 hover:bg-red-500/10"
+                      className="rounded border border-red-500/40 bg-surface-0 p-1 text-red-300 hover:bg-red-500/10"
                       title="Delete"
                       data-testid={`milestone-delete-${m.id}`}
                     >

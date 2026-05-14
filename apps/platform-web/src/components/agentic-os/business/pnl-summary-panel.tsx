@@ -68,12 +68,12 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+    <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-medium text-white">P&L Summary</h2>
         <button
           onClick={handleExportPdf}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a2d3e] bg-[#0f1117] hover:bg-[#2a2d3e] text-[#94a3b8] hover:text-white text-xs font-medium px-3 py-1.5 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-0 hover:bg-border-subtle text-text-secondary hover:text-white text-xs font-medium px-3 py-1.5 transition-colors"
         >
           <Download className="w-3.5 h-3.5" />
           Export PDF
@@ -88,7 +88,7 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
             type="date"
             value={periodStart}
             onChange={(e) => setPeriodStart(e.target.value)}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+            className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
           />
         </div>
         <div>
@@ -97,14 +97,14 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
             type="date"
             value={periodEnd}
             onChange={(e) => setPeriodEnd(e.target.value)}
-            className="rounded-lg border border-[#2a2d3e] bg-[#0f1117] px-3 py-1.5 text-sm text-white focus:border-[#4361EE] focus:outline-none"
+            className="rounded-lg border border-border-subtle bg-surface-0 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
           />
         </div>
         <div className="pt-5">
           <button
             onClick={fetchSummary}
             disabled={loading}
-            className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
+            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition-colors"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -122,7 +122,7 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {summary.map((s) => (
             <React.Fragment key={s.currency}>
-              <div className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                   <span className="text-[10px] text-[#64748b] uppercase tracking-wider">
@@ -131,7 +131,7 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
                 </div>
                 <p className="text-xl font-bold text-white">{fmtCents(s.revenueCents)}</p>
               </div>
-              <div className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingDown className="w-4 h-4 text-red-400" />
                   <span className="text-[10px] text-[#64748b] uppercase tracking-wider">
@@ -140,7 +140,7 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
                 </div>
                 <p className="text-xl font-bold text-white">{fmtCents(s.expenseCents)}</p>
               </div>
-              <div className="rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-0 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className={`w-4 h-4 ${s.marginCents >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
                   <span className="text-[10px] text-[#64748b] uppercase tracking-wider">

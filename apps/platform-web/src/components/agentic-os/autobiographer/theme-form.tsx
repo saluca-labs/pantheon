@@ -81,15 +81,15 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
 
   return (
     <div className="fixed inset-0 z-40 bg-black/40 flex items-start justify-center p-6">
-      <div className="w-full max-w-md rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-border-subtle bg-surface-2 p-5 shadow-xl">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm uppercase tracking-wide text-[#94a3b8]">
+          <h3 className="text-sm uppercase tracking-wide text-text-secondary">
             New theme
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94a3b8] hover:text-white"
+            className="text-text-secondary hover:text-white"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -104,7 +104,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
 
         <div className="space-y-3">
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Name
             </span>
             <input
@@ -113,11 +113,11 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
               onChange={(e) => setName(e.target.value)}
               maxLength={120}
               placeholder="e.g. immigration, loss, music"
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Slug (optional — derived from name)
             </span>
             <input
@@ -126,11 +126,11 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
               maxLength={120}
               pattern="[a-z0-9-]+"
               placeholder="kebab-case"
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
           <label className="block">
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Description (optional)
             </span>
             <textarea
@@ -138,18 +138,18 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               maxLength={4000}
-              className="mt-1 w-full bg-[#0f1117] border border-[#2a2d3e] rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4361EE]"
+              className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
             />
           </label>
           <div>
-            <span className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
               Color
             </span>
             <div className="flex flex-wrap gap-1.5 mt-1">
               <button
                 type="button"
                 onClick={() => setColor('')}
-                className={`text-[10px] px-2 py-0.5 rounded-full border ${color === '' ? 'border-white text-white' : 'border-[#2a2d3e] text-[#94a3b8]'}`}
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${color === '' ? 'border-white text-white' : 'border-border-subtle text-text-secondary'}`}
               >
                 neutral
               </button>
@@ -158,7 +158,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
-                  className={`text-[10px] px-2 py-0.5 rounded-full border ${color === c ? 'border-white text-white' : 'border-[#2a2d3e] text-[#94a3b8]'}`}
+                  className={`text-[10px] px-2 py-0.5 rounded-full border ${color === c ? 'border-white text-white' : 'border-border-subtle text-text-secondary'}`}
                 >
                   {c}
                 </button>
@@ -170,7 +170,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
             <button
               type="button"
               onClick={onClose}
-              className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white"
+              className="text-xs px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white"
             >
               Cancel
             </button>
@@ -178,7 +178,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
               type="button"
               onClick={submit}
               disabled={busy || name.trim().length === 0}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
             >
               <Plus className="w-3.5 h-3.5" />
               Create

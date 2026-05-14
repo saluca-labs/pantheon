@@ -9,7 +9,7 @@
 export function CoachStreamingIndicator() {
   return (
     <div className="flex items-center gap-1.5 text-xs text-[#64748b] italic">
-      <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#4361EE]/60 animate-pulse" />
+      <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent/60 animate-pulse" />
       <span>Coach is typing…</span>
     </div>
   );

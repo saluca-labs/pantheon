@@ -64,26 +64,26 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-[#2a2d3e] bg-[#0f1117]/60 p-4 space-y-2">
+    <div className="rounded-lg border border-border-subtle bg-surface-0/60 p-4 space-y-2">
       <div className="flex items-start gap-2">
         <AlertOctagon className="w-4 h-4 text-rose-300 mt-0.5 shrink-0" />
         <p className="text-sm text-white leading-relaxed">{falsifier.text}</p>
       </div>
       {falsifier.criterionMd && (
-        <div className="ml-6 text-xs text-[#94a3b8] prose prose-invert prose-sm max-w-none">
+        <div className="ml-6 text-xs text-text-secondary prose prose-invert prose-sm max-w-none">
           <ReactMarkdown>{falsifier.criterionMd}</ReactMarkdown>
         </div>
       )}
       <div className="flex items-center justify-end gap-3 pt-1">
         <button
           onClick={() => setEditing(true)}
-          className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-white transition"
+          className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-white transition"
         >
           <Pencil className="w-3 h-3" /> Edit
         </button>
         {confirmingDelete ? (
           <span className="inline-flex items-center gap-1.5 text-xs">
-            <span className="text-[#94a3b8]">Delete?</span>
+            <span className="text-text-secondary">Delete?</span>
             <button
               onClick={handleDelete}
               disabled={busy}
@@ -93,7 +93,7 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
             </button>
             <button
               onClick={() => setConfirmingDelete(false)}
-              className="text-[#94a3b8] hover:text-white"
+              className="text-text-secondary hover:text-white"
             >
               No
             </button>
@@ -101,7 +101,7 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
         ) : (
           <button
             onClick={() => setConfirmingDelete(true)}
-            className="inline-flex items-center gap-1 text-xs text-[#94a3b8] hover:text-red-300 transition"
+            className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
           >
             <Trash2 className="w-3 h-3" /> Delete
           </button>

@@ -55,25 +55,25 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3"
+      className="rounded-lg border border-border-subtle bg-surface-2 p-4 space-y-3"
       data-testid="protocol-version-bump-form"
     >
       <h3 className="text-sm font-semibold text-white">Bump version</h3>
-      <p className="text-xs text-[#94a3b8]">
+      <p className="text-xs text-text-secondary">
         Creates a new revision chained off this protocol's root. Existing
         pins to the old version remain untouched.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           From version
           <input
             type="text"
             value={source.version}
             disabled
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-[#64748b]"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-[#64748b]"
           />
         </label>
-        <label className="text-xs text-[#94a3b8] space-y-1">
+        <label className="text-xs text-text-secondary space-y-1">
           New version
           <input
             type="text"
@@ -82,29 +82,29 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
             required
             maxLength={60}
             placeholder="e.g. 2.0"
-            className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
             data-testid="protocol-version-bump-form-version"
           />
         </label>
       </div>
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Body (markdown)
         <textarea
           value={bodyMd}
           onChange={(e) => setBodyMd(e.target.value)}
           rows={10}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white font-mono outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white font-mono outline-none focus:border-accent/60"
           data-testid="protocol-version-bump-form-body"
         />
       </label>
-      <label className="block text-xs text-[#94a3b8] space-y-1">
+      <label className="block text-xs text-text-secondary space-y-1">
         Notes (what changed)
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           maxLength={2000}
-          className="w-full px-2.5 py-1.5 rounded bg-[#0f1117] border border-[#2a2d3e] text-sm text-white outline-none focus:border-[#4361EE]/60"
+          className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
         />
       </label>
       {err && <p className="text-xs text-rose-400">{err}</p>}
@@ -112,14 +112,14 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="text-xs px-3 py-1.5 rounded border border-[#2a2d3e] text-[#94a3b8] hover:text-white transition"
+          className="text-xs px-3 py-1.5 rounded border border-border-subtle text-text-secondary hover:text-white transition"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-[#4361EE] text-white hover:bg-[#4361EE]/80 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="protocol-version-bump-form-submit"
         >
           {busy && <Loader2 className="w-3 h-3 animate-spin" />}

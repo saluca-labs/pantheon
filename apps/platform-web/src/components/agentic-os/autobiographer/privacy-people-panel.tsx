@@ -28,10 +28,10 @@ export interface PrivacyPeoplePanelProps {
 
 export function PrivacyPeoplePanel({ people }: PrivacyPeoplePanelProps) {
   return (
-    <section className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4 space-y-3">
+    <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">People in this book</h2>
-        <span className="text-xs text-[#94a3b8]">
+        <span className="text-xs text-text-secondary">
           {people.length} {people.length === 1 ? 'person' : 'people'}
         </span>
       </div>
@@ -44,13 +44,13 @@ export function PrivacyPeoplePanel({ people }: PrivacyPeoplePanelProps) {
           {people.map((p) => (
             <li
               key={p.personId}
-              className="flex items-center justify-between gap-2 px-2 py-1.5 rounded border border-[#2a2d3e] bg-[#0f1117]"
+              className="flex items-center justify-between gap-2 px-2 py-1.5 rounded border border-border-subtle bg-surface-0"
             >
               <Link
                 href={`/dashboard/os/autobiographer/people/${p.personId}`}
-                className="inline-flex items-center gap-2 text-sm text-white hover:text-[#4361EE] transition min-w-0"
+                className="inline-flex items-center gap-2 text-sm text-white hover:text-accent transition min-w-0"
               >
-                <UserCircle2 className="w-4 h-4 text-[#94a3b8] shrink-0" />
+                <UserCircle2 className="w-4 h-4 text-text-secondary shrink-0" />
                 <span className="truncate">{p.canonicalName}</span>
                 <ExternalLink className="w-3 h-3 text-[#64748b] shrink-0" />
               </Link>

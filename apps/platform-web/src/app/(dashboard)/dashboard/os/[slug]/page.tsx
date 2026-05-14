@@ -55,17 +55,17 @@ export default async function AgenticOsModulePage({ params }: Props) {
     <div className="max-w-5xl">
       <Link
         href="/dashboard/os"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition"
       >
         <ArrowLeft className="w-4 h-4" />
         All Agentic OS modules
       </Link>
 
       {/* Compact metadata header — icon, name, status, tagline, description. */}
-      <header className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 mb-5">
+      <header className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-5">
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-[#0f1117] p-2.5 border border-[#2a2d3e]">
-            <Icon className="w-6 h-6 text-[#4361EE]" />
+          <div className="rounded-lg bg-surface-0 p-2.5 border border-border-subtle">
+            <Icon className="w-6 h-6 text-accent" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-3 mb-1">
@@ -76,8 +76,8 @@ export default async function AgenticOsModulePage({ params }: Props) {
                 {badge.label}
               </span>
             </div>
-            <p className="text-[#94a3b8] text-sm">{mod.tagline}</p>
-            <p className="text-sm text-[#cbd5e1]/80 mt-2 leading-relaxed">
+            <p className="text-text-secondary text-sm">{mod.tagline}</p>
+            <p className="text-sm text-text-primary/80 mt-2 leading-relaxed">
               {mod.description}
             </p>
           </div>
@@ -89,7 +89,7 @@ export default async function AgenticOsModulePage({ params }: Props) {
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-base font-semibold text-white">Features</h2>
           {hasFeatures && (
-            <span className="text-xs text-[#94a3b8]">
+            <span className="text-xs text-text-secondary">
               {mod.features.length}{' '}
               {mod.features.length === 1 ? 'feature' : 'features'} available
             </span>
@@ -102,24 +102,24 @@ export default async function AgenticOsModulePage({ params }: Props) {
               <Link
                 key={feature.href}
                 href={feature.href}
-                className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5 hover:border-[#4361EE]/60 hover:bg-[#1f2230] transition flex items-start justify-between gap-3"
+                className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent/60 hover:bg-surface-3 transition flex items-start justify-between gap-3"
               >
                 <div className="min-w-0">
                   <div className="text-base font-semibold text-white mb-1">
                     {feature.label}
                   </div>
-                  <p className="text-sm text-[#94a3b8] leading-relaxed">
+                  <p className="text-sm text-text-secondary leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[#94a3b8] group-hover:text-[#4361EE] mt-1 shrink-0 transition" />
+                <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent mt-1 shrink-0 transition" />
               </Link>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-[#2a2d3e] bg-[#1a1d27]/50 p-6 text-center">
+          <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center">
             <p className="text-sm font-medium text-white mb-1">Coming soon</p>
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-text-secondary">
               {mod.status === 'preview'
                 ? 'Schema and plan are live. Feature pages roll out in the parallel rollout phase.'
                 : 'Feature pages for this module have not shipped yet.'}{' '}
@@ -130,19 +130,19 @@ export default async function AgenticOsModulePage({ params }: Props) {
       </section>
 
       {/* Secondary content: collapsed execution roadmap. */}
-      <details className="group rounded-xl border border-[#2a2d3e] bg-[#1a1d27]">
-        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-[#cbd5e1] hover:text-white transition">
+      <details className="group rounded-xl border border-border-subtle bg-surface-2">
+        <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-text-primary hover:text-white transition">
           <span className="flex items-center gap-2">
-            <ChevronDown className="w-4 h-4 text-[#94a3b8] transition group-open:rotate-180" />
+            <ChevronDown className="w-4 h-4 text-text-secondary transition group-open:rotate-180" />
             <span className="font-medium">View execution roadmap</span>
-            <span className="text-xs text-[#94a3b8]">(full plan markdown)</span>
+            <span className="text-xs text-text-secondary">(full plan markdown)</span>
           </span>
         </summary>
-        <div className="px-6 pb-6 pt-2 border-t border-[#2a2d3e]">
+        <div className="px-6 pb-6 pt-2 border-t border-border-subtle">
           {plan ? (
             <PlanViewer markdown={plan} />
           ) : (
-            <p className="text-[#94a3b8] text-sm">
+            <p className="text-text-secondary text-sm">
               Execution plan not available for this module yet.
             </p>
           )}

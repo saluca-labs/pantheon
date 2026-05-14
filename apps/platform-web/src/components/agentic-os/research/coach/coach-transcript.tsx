@@ -28,7 +28,7 @@ export const CoachTranscript = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
-        className="flex-1 overflow-y-auto rounded-xl border border-[#2a2d3e] bg-[#0f1117] p-4 space-y-4"
+        className="flex-1 overflow-y-auto rounded-xl border border-border-subtle bg-surface-0 p-4 space-y-4"
       >
         {empty && !streaming && <CoachEmptyState mode={mode} />}
         {messages.map((m, i) => (

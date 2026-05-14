@@ -21,7 +21,7 @@ function BumpVersionButton({ id }: { id: string }) {
   return (
     <Link
       href={`/api/tiresias/agentic-os/business/templates/${id}/versions`}
-      className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition-colors"
+      className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
     >
       <GitBranch className="w-4 h-4" />
       Bump version
@@ -51,7 +51,7 @@ export default async function TemplateDetailPage({ params }: Props) {
     <div className="max-w-4xl">
       <Link
         href="/dashboard/os/business/templates"
-        className="inline-flex items-center gap-1.5 text-sm text-[#94a3b8] hover:text-white mb-4 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-white mb-4 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Templates
@@ -71,7 +71,7 @@ export default async function TemplateDetailPage({ params }: Props) {
           >
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#2a2d3e] bg-[#1a1d27] hover:bg-[#252836] text-[#94a3b8] hover:text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <GitBranch className="w-4 h-4" />
               Bump version
@@ -82,7 +82,7 @@ export default async function TemplateDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-6">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
             <TemplateForm
               initialValues={{
                 id: template.id,
@@ -98,7 +98,7 @@ export default async function TemplateDetailPage({ params }: Props) {
 
         {/* Version history sidebar */}
         <div className="space-y-4">
-          <div className="rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-5">
+          <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
             <h3 className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
               Version History
             </h3>
@@ -110,8 +110,8 @@ export default async function TemplateDetailPage({ params }: Props) {
                     href={`/dashboard/os/business/templates/${v.id}`}
                     className={`block rounded-lg border px-3 py-2 text-xs transition-colors ${
                       v.id === id
-                        ? 'border-[#4361EE] bg-[#4361EE]/10'
-                        : 'border-[#2a2d3e] bg-[#0f1117] hover:border-[#4361EE]/30'
+                        ? 'border-accent bg-accent/10'
+                        : 'border-border-subtle bg-surface-0 hover:border-accent/30'
                     }`}
                   >
                     <div className="flex items-center justify-between">

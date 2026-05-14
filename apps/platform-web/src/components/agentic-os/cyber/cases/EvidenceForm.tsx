@@ -12,7 +12,7 @@ import type { Evidence, EvidenceKind } from '@/lib/agentic-os/cyber/cases';
 import { EVIDENCE_KINDS } from '@/lib/agentic-os/cyber/cases';
 
 const inputCls =
-  'w-full rounded-md border border-[#2a2d3e] bg-[#0f1117] px-3 py-2 text-sm text-white placeholder:text-[#94a3b8]/60 focus:border-[#4361EE] focus:outline-none';
+  'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 export interface EvidenceFormProps {
   caseId: string;
@@ -80,11 +80,11 @@ export function EvidenceForm({
         e.preventDefault();
         void save();
       }}
-      className="space-y-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-4"
+      className="space-y-3 rounded-xl border border-border-subtle bg-surface-2 p-4"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Kind</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Kind</span>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as EvidenceKind)}
@@ -96,7 +96,7 @@ export function EvidenceForm({
           </select>
         </label>
         <label className="block">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Collected by</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Collected by</span>
           <input
             value={collectedBy}
             onChange={(e) => setCollectedBy(e.target.value)}
@@ -105,7 +105,7 @@ export function EvidenceForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Title</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Title</span>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -115,7 +115,7 @@ export function EvidenceForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Description</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Description</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -125,7 +125,7 @@ export function EvidenceForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">URL (optional)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">URL (optional)</span>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -134,7 +134,7 @@ export function EvidenceForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Content (optional)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Content (optional)</span>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -144,7 +144,7 @@ export function EvidenceForm({
           />
         </label>
         <label className="block sm:col-span-2">
-          <span className="block text-xs uppercase tracking-wide text-[#94a3b8] mb-1.5">Tags (comma-separated)</span>
+          <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tags (comma-separated)</span>
           <input
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
@@ -157,7 +157,7 @@ export function EvidenceForm({
         <button
           type="submit"
           disabled={saving || !title.trim()}
-          className="rounded-lg bg-[#4361EE] hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add evidence'}
         </button>
@@ -165,7 +165,7 @@ export function EvidenceForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[#2a2d3e] text-[#94a3b8] hover:text-white px-3 py-1.5 text-sm transition"
+            className="rounded-lg border border-border-subtle text-text-secondary hover:text-white px-3 py-1.5 text-sm transition"
           >
             Cancel
           </button>

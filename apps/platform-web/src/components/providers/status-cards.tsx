@@ -22,7 +22,7 @@ function SkeletonCards() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="animate-pulse bg-[#2a2d3e] rounded-lg h-24"
+          className="animate-pulse bg-border-subtle rounded-lg h-24"
           aria-hidden="true"
         />
       ))}
@@ -43,12 +43,12 @@ export function StatusCards({
 
   if (isError) {
     return (
-      <div className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-6 text-center">
+      <div className="bg-surface-2 border border-border-subtle rounded-lg p-6 text-center">
         <p className="text-[#FDCB6E]">
           Backend unreachable, standing by to provide response. Retrying...
         </p>
         {error?.message && (
-          <p className="text-[#94a3b8] text-sm mt-2">{error.message}</p>
+          <p className="text-text-secondary text-sm mt-2">{error.message}</p>
         )}
       </div>
     );
@@ -60,14 +60,14 @@ export function StatusCards({
     <div>
       {/* D-10: Cascade order display (admin-togglable) */}
       {showCascade && data.cascade.length > 0 && (
-        <div className="mb-4 p-3 bg-[#1a1d27] border border-[#2a2d3e] rounded-lg">
-          <span className="text-sm text-[#94a3b8]">Cascade Order: </span>
+        <div className="mb-4 p-3 bg-surface-2 border border-border-subtle rounded-lg">
+          <span className="text-sm text-text-secondary">Cascade Order: </span>
           {data.cascade.map((provider, index) => (
             <span key={provider} className="text-sm">
-              <span className="text-[#94a3b8]">{index + 1}. </span>
+              <span className="text-text-secondary">{index + 1}. </span>
               <span className="text-white">{provider}</span>
               {index < data.cascade.length - 1 && (
-                <span className="text-[#94a3b8] mx-2">&middot;</span>
+                <span className="text-text-secondary mx-2">&middot;</span>
               )}
             </span>
           ))}
@@ -80,7 +80,7 @@ export function StatusCards({
           return (
             <div
               key={provider.name}
-              className="bg-[#1a1d27] border border-[#2a2d3e] rounded-lg p-4"
+              className="bg-surface-2 border border-border-subtle rounded-lg p-4"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-white font-medium capitalize">
@@ -97,7 +97,7 @@ export function StatusCards({
                 </div>
               </div>
               {provider.consecutive_errors > 0 && (
-                <p className="text-[#94a3b8] text-sm">
+                <p className="text-text-secondary text-sm">
                   {provider.consecutive_errors} consecutive error
                   {provider.consecutive_errors !== 1 ? 's' : ''}
                 </p>

@@ -42,9 +42,9 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="text-sm uppercase tracking-wide text-[#94a3b8] mb-2">{title}</h2>
+      <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-2">{title}</h2>
       {runs.length === 0 ? (
-        <p className="text-sm text-[#94a3b8] p-4 rounded-xl border border-dashed border-[#2a2d3e]">
+        <p className="text-sm text-text-secondary p-4 rounded-xl border border-dashed border-border-subtle">
           {emptyText}
         </p>
       ) : (
@@ -55,12 +55,12 @@ function Section({
               <li key={run.id}>
                 <Link
                   href={`/dashboard/os/cyber/playbooks/${run.playbookId}/run/${run.id}`}
-                  className="flex items-center gap-3 rounded-xl border border-[#2a2d3e] bg-[#1a1d27] p-3 transition hover:border-[#4361EE]/60 hover:bg-[#1f2230]"
+                  className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-2 p-3 transition hover:border-accent/60 hover:bg-surface-3"
                 >
-                  <Icon className="w-4 h-4 text-[#4361EE] shrink-0" />
+                  <Icon className="w-4 h-4 text-accent shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{run.playbookName}</p>
-                    <p className="text-[11px] text-[#94a3b8]">
+                    <p className="text-[11px] text-text-secondary">
                       started {new Date(run.startedAt).toLocaleString()}
                       {run.completedAt && ` · completed ${new Date(run.completedAt).toLocaleString()}`}
                     </p>

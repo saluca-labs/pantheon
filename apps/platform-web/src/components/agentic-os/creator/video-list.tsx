@@ -40,10 +40,10 @@ function VideoCard({ video }: { video: CreatorVideoAsset }) {
     <button
       type="button"
       onClick={() => router.push(`/dashboard/os/creator/videos/${video.id}`)}
-      className="group relative rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-0 text-left hover:border-[#4361EE]/50 hover:bg-[#1a1d2e] transition-colors overflow-hidden"
+      className="group relative rounded-lg border border-border-subtle bg-surface-2 p-0 text-left hover:border-accent/50 hover:bg-[#1a1d2e] transition-colors overflow-hidden"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-[#0f1117] flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video bg-surface-0 flex items-center justify-center overflow-hidden">
         {video.thumbnailUrl ? (
           <img
             src={video.thumbnailUrl}
@@ -51,7 +51,7 @@ function VideoCard({ video }: { video: CreatorVideoAsset }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <Video className="w-10 h-10 text-[#2a2d3e]" />
+          <Video className="w-10 h-10 text-text-tertiary" />
         )}
 
         {/* Duration badge */}
@@ -102,7 +102,7 @@ export function VideoList({ videos }: VideoListProps) {
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4361EE] text-white text-sm font-medium hover:bg-[#3651de] transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-[#3651de] transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Video
@@ -111,7 +111,7 @@ export function VideoList({ videos }: VideoListProps) {
 
       {/* Inline form */}
       {showForm && (
-        <div className="relative rounded-lg border border-[#2a2d3e] bg-[#1a1d27] p-6">
+        <div className="relative rounded-lg border border-border-subtle bg-surface-2 p-6">
           <button
             type="button"
             onClick={() => setShowForm(false)}
@@ -132,8 +132,8 @@ export function VideoList({ videos }: VideoListProps) {
 
       {/* Video grid */}
       {videos.length === 0 && !showForm ? (
-        <div className="rounded-lg border border-dashed border-[#2a2d3e] bg-[#0f1117] p-12 text-center">
-          <Video className="w-12 h-12 text-[#2a2d3e] mx-auto mb-3" />
+        <div className="rounded-lg border border-dashed border-border-subtle bg-surface-0 p-12 text-center">
+          <Video className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
           <p className="text-[#64748b]">
             No videos yet. Add your first video by providing an HLS manifest URL.
           </p>
