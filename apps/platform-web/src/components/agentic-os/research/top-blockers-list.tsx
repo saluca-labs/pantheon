@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { BlockerRow } from './blocker-row';
 import {
   BLOCKER_ITEM_KINDS,
@@ -118,15 +119,12 @@ export function TopBlockersList({ initial = [] }: Props) {
 
       {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
       {loaded && grouped.length === 0 && (
-        <div
-          className="rounded-lg border border-dashed border-border-subtle bg-surface-2/30 p-8 text-center"
-          data-testid="top-blockers-list-empty"
-        >
-          <ShieldAlert className="w-6 h-6 text-accent mx-auto mb-2" />
-          <p className="text-sm text-white">All clear.</p>
-          <p className="text-xs text-text-secondary mt-1">
-            No active blockers across your experiments.
-          </p>
+        <div data-testid="top-blockers-list-empty">
+          <EmptyState
+            icon={<ShieldAlert className="h-6 w-6" />}
+            title="All clear"
+            description="No active blockers across your experiments — no overdue milestones, no open blocking dependencies."
+          />
         </div>
       )}
 

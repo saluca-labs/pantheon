@@ -12,10 +12,12 @@ import Link from 'next/link';
 import { FlaskConical, BookOpen } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
-import { listExperimentsForUser } from '@/lib/agentic-os/research/repo';
+import { listExperimentsForUser, listHypotheses } from '@/lib/agentic-os/research/repo';
+import { listPapers } from '@/lib/agentic-os/research/papers-repo';
 import { listTopBlockers } from '@/lib/agentic-os/research/blockers-repo';
 import { ExperimentList } from '@/components/agentic-os/research/experiment-list';
 import { TopBlockersWidget } from '@/components/agentic-os/research/top-blockers-widget';
+import { ResearchHubWidgets } from '@/components/agentic-os/research/research-hub-widgets';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +27,13 @@ export default async function ResearchHubPage() {
 
   // Load both active and archived in one shot so the client-side toggle
   // can switch without a round-trip. 200-row cap mirrors the API ceiling.
-  const [active, archived, initialBlockers] = await Promise.all([
+  // Hypotheses + papers are loaded for the hub aggregate widgets only.
+  const [active, archived, initialBlockers, hypotheses, papers] = await Promise.all([
     listExperimentsForUser(user.userId, { archived: false, limit: 200 }),
     listExperimentsForUser(user.userId, { archived: true, limit: 200 }),
     listTopBlockers(user.userId, { limit: 5 }),
+    listHypotheses(user.userId, { archived: false }),
+    listPapers(user.userId, { limit: 200 }),
   ]);
   const experiments = [...active, ...archived];
 
@@ -44,6 +49,15 @@ export default async function ResearchHubPage() {
         for solo PhDs and small labs. Each experiment is a top-level project with its own
         lifecycle (planning → running → analysis → write-up → published).
       </p>
+
+      <div className="mb-6">
+        <ResearchHubWidgets
+          experiments={experiments}
+          blockers={initialBlockers}
+          hypothesisCount={hypotheses.length}
+          literatureCount={papers.length}
+        />
+      </div>
 
       <div className="mb-6">
         <TopBlockersWidget initial={initialBlockers} />

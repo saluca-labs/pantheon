@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import type { NotebookEntry } from '@/lib/agentic-os/research/notebook-entries';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { NotebookEntryComposer } from './notebook-entry-composer';
 import {
   NotebookEntryFilterChips,
@@ -109,19 +110,16 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
           Loading…
         </p>
       ) : entries.length === 0 ? (
-        <div
-          className="rounded-xl border border-dashed border-border-subtle bg-surface-0 p-8 text-center"
-          data-testid="notebook-timeline-empty"
-        >
-          <BookOpen className="w-8 h-8 text-accent/40 mx-auto mb-2" />
-          <p className="text-sm text-white mb-1">
-            {archived ? 'No archived entries' : 'No entries yet'}
-          </p>
-          <p className="text-xs text-text-secondary">
-            {archived
-              ? 'Archived entries will appear here when you archive them.'
-              : 'Add your first note, observation, result, or to-do above.'}
-          </p>
+        <div data-testid="notebook-timeline-empty">
+          <EmptyState
+            icon={<BookOpen className="h-6 w-6" />}
+            title={archived ? 'No archived entries' : 'No entries yet'}
+            description={
+              archived
+                ? 'Archived entries will appear here when you archive them.'
+                : 'Add your first note, observation, result, decision, question, or to-do above.'
+            }
+          />
         </div>
       ) : (
         <div className="space-y-3">
