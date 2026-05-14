@@ -3,6 +3,11 @@
 /**
  * CyberSec OS — Trends dashboard composition.
  *
+ * Wave C-2a: the alert-volume and open-vulns surfaces are now self-framing
+ * `ChartCard` primitives (see their components), so the ad-hoc section
+ * headers + card wrappers around them are gone. MTTR + IOC-hit stats stay
+ * as `StatCard`s — they are single scalars, not distributions.
+ *
  * @license MIT — Tiresias CyberSec OS (internal).
  */
 
@@ -26,7 +31,7 @@ export function TrendsDashboard({ trends }: { trends: TrendsPayload }) {
         </p>
         <a
           href="/api/tiresias/agentic-os/cyber/exports/exposure-report.pdf"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium px-3 py-2 text-sm transition"
         >
           <Download className="w-4 h-4" />
           Export exposure report PDF
@@ -42,17 +47,9 @@ export function TrendsDashboard({ trends }: { trends: TrendsPayload }) {
         />
       </section>
 
-      <section>
-        <h2 className="text-sm font-semibold text-white mb-3">Open vulnerabilities by severity</h2>
-        <OpenVulnsChart openVulnsBySeverity={trends.openVulnsBySeverity} />
-      </section>
+      <OpenVulnsChart openVulnsBySeverity={trends.openVulnsBySeverity} />
 
-      <section>
-        <h2 className="text-sm font-semibold text-white mb-3">Alert volume (30d)</h2>
-        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-          <AlertVolumeChart alertsByDay={trends.alertsByDay} />
-        </div>
-      </section>
+      <AlertVolumeChart alertsByDay={trends.alertsByDay} />
 
       <section>
         <h2 className="text-sm font-semibold text-white mb-3">IOC hits</h2>
