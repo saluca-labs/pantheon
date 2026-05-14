@@ -78,6 +78,8 @@ export interface ActivityFeedProps<TEvent extends ActivityEvent = ActivityEvent>
   loadingMore?: boolean;
   /** Extra classes on the root element. */
   className?: string;
+  /** Optional test id override applied to the feed's root element. */
+  'data-testid'?: string;
 }
 
 const TONE_DOT: Record<ActivityTone, string> = {
@@ -206,6 +208,7 @@ export function ActivityFeed<TEvent extends ActivityEvent = ActivityEvent>({
   onLoadMore,
   loadingMore = false,
   className,
+  'data-testid': testId = 'activity-feed',
 }: ActivityFeedProps<TEvent>) {
   const sorted = [...events].sort(
     (a, b) => toDate(b.occurredAt).getTime() - toDate(a.occurredAt).getTime(),
@@ -241,7 +244,7 @@ export function ActivityFeed<TEvent extends ActivityEvent = ActivityEvent>({
   }
 
   return (
-    <div data-testid="activity-feed" className={clsx('flex flex-col', className)}>
+    <div data-testid={testId} className={clsx('flex flex-col', className)}>
       {groups.map((group) => (
         <section key={group.key} data-testid={`activity-group-${group.key}`}>
           {grouping === 'day' ? (
