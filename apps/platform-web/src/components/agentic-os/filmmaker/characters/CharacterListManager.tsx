@@ -7,18 +7,25 @@
  * and "Add character" drawer. Loads the initial list from the server
  * and re-fetches on filter changes.
  *
+ * Wave C-5 (UI Depth Wave): the ad-hoc `<input>` + `Search`-icon search box
+ * is now the shared `EntitySearch` primitive, and the ad-hoc empty `<div>`
+ * is the shared `EmptyState` primitive. Behavior-preserving: the same
+ * server-side `?q=` re-fetch loop drives the list — `EntitySearch` debounces
+ * the keystrokes and emits the settled query into the existing `q` state.
+ *
  * @license MIT — Tiresias Filmmaker OS (internal).
  */
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import {
   CHARACTER_ROLES,
   type Character,
   type CharacterRole,
   type CharacterUpsert,
 } from '@/lib/agentic-os/filmmaker/characters';
+import { EmptyState, EntitySearch } from '@/components/agentic-os/_shared/views';
 import { CharacterCard } from './CharacterCard';
 import { CharacterForm } from './CharacterForm';
 
@@ -92,13 +99,11 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+        <div className="flex-1 min-w-[200px]">
+          <EntitySearch
             placeholder="Search by name…"
-            className="w-full rounded-md border border-border-subtle bg-surface-0 pl-8 pr-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none"
+            defaultValue={q}
+            onQueryChange={setQ}
           />
         </div>
         <select
@@ -124,20 +129,16 @@ export function CharacterListManager({ projectId, initialCharacters }: Props) {
       </div>
 
       {characters.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/40 p-10 text-center">
-          <p className="text-sm text-white">No characters yet.</p>
-          <p className="text-xs text-text-secondary mt-1">
-            Add your first character to start building the cast.
-          </p>
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-md border border-border-subtle bg-accent/80 hover:bg-accent text-white transition"
-          >
-            <Plus className="w-4 h-4" />
-            Add character
-          </button>
-        </div>
+        <EmptyState
+          icon={<Users className="h-6 w-6" />}
+          title="No characters yet"
+          description="Add your first character to start building the cast — identity, psychology, voice, and relationships all live on the character sheet."
+          primaryCta={{
+            label: 'Add character',
+            onClick: () => setAdding(true),
+            icon: <Plus className="h-4 w-4" />,
+          }}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {characters.map((c) => (

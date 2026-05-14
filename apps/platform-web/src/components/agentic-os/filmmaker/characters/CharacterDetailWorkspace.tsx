@@ -7,6 +7,13 @@
  * name, role/archetype chips, logline), CharacterForm in edit mode, and
  * the relationships panel.
  *
+ * Wave C-5 (UI Depth Wave): the read-only Identity / Psychology / Voice
+ * sections + the linked Relationships panel are now the shared
+ * `CrossEntityTabs` primitive — a related-entity tab strip with a count
+ * badge on Relationships — replacing the ad-hoc 3-col grid + stacked panel.
+ * Behavior-preserving: same data in every panel, same edit / delete flow;
+ * the edit form still replaces the tab strip inline when editing.
+ *
  * @license MIT — Tiresias Filmmaker OS (internal).
  */
 
@@ -20,6 +27,7 @@ import {
   type CharacterUpsert,
   type CharacterRole,
 } from '@/lib/agentic-os/filmmaker/characters';
+import { CrossEntityTabs } from '@/components/agentic-os/_shared/views';
 import { CharacterForm } from './CharacterForm';
 import { RelationshipList } from './RelationshipList';
 
@@ -181,35 +189,66 @@ export function CharacterDetailWorkspace({
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <ReadOnlySection title="Identity">
-            <FieldRow label="Pronouns" value={current.pronouns} />
-            <FieldRow label="Gender" value={current.gender} />
-            <FieldRow label="Occupation" value={current.occupation} />
-            <FieldRow label="Physical" value={current.physicalDescription} block />
-          </ReadOnlySection>
-          <ReadOnlySection title="Psychology">
-            <FieldRow label="Backstory" value={current.backstory} block />
-            <FieldRow label="Goals" value={current.goals} block />
-            <FieldRow label="Needs" value={current.needs} block />
-            <FieldRow label="Fears" value={current.fears} block />
-            <FieldRow label="Wounds" value={current.wounds} block />
-            <FieldRow label="Arc" value={current.arc} block />
-          </ReadOnlySection>
-          <ReadOnlySection title="Voice">
-            <FieldRow label="Voice notes" value={current.voiceNotes} block />
-          </ReadOnlySection>
+        <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
+          <CrossEntityTabs
+            slug="filmmaker"
+            tabs={[
+              {
+                key: 'identity',
+                label: 'Identity',
+                content: () => (
+                  <div className="space-y-3">
+                    <FieldRow label="Pronouns" value={current.pronouns} />
+                    <FieldRow label="Gender" value={current.gender} />
+                    <FieldRow label="Occupation" value={current.occupation} />
+                    <FieldRow
+                      label="Physical"
+                      value={current.physicalDescription}
+                      block
+                    />
+                  </div>
+                ),
+              },
+              {
+                key: 'psychology',
+                label: 'Psychology',
+                content: () => (
+                  <div className="space-y-3">
+                    <FieldRow label="Backstory" value={current.backstory} block />
+                    <FieldRow label="Goals" value={current.goals} block />
+                    <FieldRow label="Needs" value={current.needs} block />
+                    <FieldRow label="Fears" value={current.fears} block />
+                    <FieldRow label="Wounds" value={current.wounds} block />
+                    <FieldRow label="Arc" value={current.arc} block />
+                  </div>
+                ),
+              },
+              {
+                key: 'voice',
+                label: 'Voice',
+                content: () => (
+                  <div className="space-y-3">
+                    <FieldRow label="Voice notes" value={current.voiceNotes} block />
+                  </div>
+                ),
+              },
+              {
+                key: 'relationships',
+                label: 'Relationships',
+                count: relationships.length,
+                content: () => (
+                  <RelationshipList
+                    projectId={projectId}
+                    characters={allCharacters}
+                    initialRelationships={relationships}
+                    anchorCharacterId={current.id}
+                  />
+                ),
+              },
+            ]}
+          />
         </div>
       )}
-
-      <div className="rounded-xl border border-border-subtle bg-surface-2 p-4">
-        <RelationshipList
-          projectId={projectId}
-          characters={allCharacters}
-          initialRelationships={relationships}
-          anchorCharacterId={current.id}
-        />
-      </div>
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -241,23 +280,6 @@ export function CharacterDetailWorkspace({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function ReadOnlySection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-white uppercase tracking-wide">
-        {title}
-      </h2>
-      <div className="space-y-3">{children}</div>
     </div>
   );
 }

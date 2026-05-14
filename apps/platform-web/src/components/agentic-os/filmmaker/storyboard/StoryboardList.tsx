@@ -17,6 +17,7 @@ import type {
   StoryboardStatus,
 } from '@/lib/agentic-os/filmmaker/storyboards';
 import { STORYBOARD_STATUSES } from '@/lib/agentic-os/filmmaker/storyboards';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   projectId: string;
@@ -72,21 +73,16 @@ export function StoryboardList({ projectId, initial }: Props) {
       </div>
 
       {initial.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2 p-8 text-center">
-          <Layers className="w-8 h-8 text-accent/60 mx-auto mb-3" />
-          <p className="text-sm text-text-secondary mb-4">
-            No storyboards yet. Start with the first beat.
-          </p>
-          <button
-            type="button"
-            onClick={createStoryboard}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
-          >
-            <FilePlus className="w-4 h-4" />
-            Create first storyboard
-          </button>
-        </div>
+        <EmptyState
+          icon={<Layers className="h-6 w-6" />}
+          title="No storyboards yet"
+          description="Start with the first beat — visual boards hold ordered panels with camera angle, move, and shot size."
+          primaryCta={{
+            label: 'Create first storyboard',
+            onClick: createStoryboard,
+            icon: <FilePlus className="h-4 w-4" />,
+          }}
+        />
       ) : (
         <ul className="space-y-3">
           {initial.map((sb) => (

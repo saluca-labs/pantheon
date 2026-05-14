@@ -15,8 +15,10 @@
  */
 
 import { useState } from 'react';
+import { Film } from 'lucide-react';
 import { SHOT_TYPES, CAMERA_MOVES, validateShot, formatShotLabel } from '@/lib/agentic-os/filmmaker/shots';
 import type { ShotListEntry, ShotType, CameraMove } from '@/lib/agentic-os/filmmaker/shots';
+import { EmptyState } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   projectId: string;
@@ -223,9 +225,12 @@ export function ShotListBuilder({ projectId, initial }: Props) {
         </div>
 
         {shots.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-text-secondary text-center">
-            No shots yet. Add your first shot above.
-          </p>
+          <EmptyState
+            variant="bare"
+            icon={<Film className="h-6 w-6" />}
+            title="No shots yet"
+            description="Add your first shot above — scene, framing, coverage, and camera move for each setup of the shoot."
+          />
         ) : (
           <table className="w-full text-sm">
             <thead>
