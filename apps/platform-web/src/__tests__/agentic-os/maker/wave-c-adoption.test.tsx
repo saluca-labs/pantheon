@@ -84,7 +84,7 @@ function mkTool(overrides: Partial<Tool> = {}): Tool {
     id: 'tool-1',
     userId: 'u-1',
     name: 'Bridgeport mill',
-    kind: 'machine',
+    kind: 'cnc',
     manufacturer: 'Bridgeport',
     model: 'Series 1',
     serial: null,
