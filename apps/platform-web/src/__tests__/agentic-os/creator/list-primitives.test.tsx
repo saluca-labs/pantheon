@@ -7,7 +7,9 @@
  *  - BookList         → EntitySearch + EmptyState
  *  - VideoList        → EntitySearch + EmptyState
  *  - EpisodeList      → EntitySearch + EmptyState (incl. no-podcast door)
- *  - EditorialCalendar→ EmptyState (CalendarView adoption deferred to Wave D)
+ *  - EditorialCalendar→ EmptyState; Wave D-4b adopts CalendarView for the
+ *                       calendar display (additive — the bespoke plan-a-post
+ *                       form + inline status picker + ISO-week list are kept).
  *
  * Behaviour-preserving: with data present the rows still render and the
  * empty state stays out of the tree.
@@ -16,7 +18,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 // List components reach for the App Router; a benign stub keeps the
 // shells renderable in isolation.
@@ -272,7 +274,7 @@ describe('EpisodeList — primitive adoption', () => {
   });
 });
 
-describe('EditorialCalendar — primitive adoption', () => {
+describe('EditorialCalendar — CalendarView adoption (Wave D-4b)', () => {
   it('renders the EmptyState when there are no posts on the calendar', () => {
     render(<EditorialCalendar initial={[]} />);
     const empty = screen.getByTestId('empty-state');
@@ -280,13 +282,50 @@ describe('EditorialCalendar — primitive adoption', () => {
     expect(empty.textContent).toContain('No posts on the calendar yet');
   });
 
-  it('still renders the bespoke week grouping when there is data', () => {
+  it('renders the shared CalendarView grid by default when there is data', () => {
     render(
       <EditorialCalendar
-        initial={[mkPost({ title: 'Scheduled piece' })]}
+        initial={[
+          mkPost({ title: 'Scheduled piece', scheduledAt: '2026-05-13T09:00:00Z' }),
+        ]}
       />,
     );
+    // CalendarView primitive is mounted and the post chip lands on the grid.
+    expect(screen.getByTestId('calendar-view')).toBeInTheDocument();
     expect(screen.getByText('Scheduled piece')).toBeInTheDocument();
     expect(screen.queryByTestId('empty-state')).toBeNull();
+  });
+
+  it('keeps the inline status picker on each post chip', () => {
+    render(
+      <EditorialCalendar
+        initial={[
+          mkPost({ title: 'Scheduled piece', scheduledAt: '2026-05-13T09:00:00Z' }),
+        ]}
+      />,
+    );
+    expect(
+      screen.getByLabelText('Status for Scheduled piece'),
+    ).toBeInTheDocument();
+  });
+
+  it('preserves the bespoke ISO-week list behind the Week list toggle', () => {
+    render(
+      <EditorialCalendar
+        initial={[
+          mkPost({ title: 'Scheduled piece', scheduledAt: '2026-05-13T09:00:00Z' }),
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByText('Week list'));
+    // The bespoke ISO-week grouping still renders the post.
+    expect(screen.getByText('Scheduled piece')).toBeInTheDocument();
+    expect(screen.queryByTestId('calendar-view')).toBeNull();
+  });
+
+  it('keeps the bespoke Plan a post form', () => {
+    render(<EditorialCalendar initial={[]} />);
+    expect(screen.getByText('Plan a post')).toBeInTheDocument();
+    expect(screen.getByText('Add to calendar')).toBeInTheDocument();
   });
 });
