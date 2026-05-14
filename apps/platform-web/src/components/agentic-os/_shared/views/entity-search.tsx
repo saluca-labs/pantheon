@@ -33,6 +33,46 @@ export interface EntitySearchResult {
   id: string;
 }
 
+/** A single selectable option within a declarative filter. */
+export interface FilterOption {
+  /** Stable value emitted on `onFilterChange`. */
+  value: string;
+  /** Human-readable option label. */
+  label: string;
+}
+
+/**
+ * Declarative filter definition (plan §2.2 `filterDefs`). Each filter is a
+ * labelled select over a fixed option set; EntitySearch renders the chips and
+ * emits the active value map upstream. Parent owns applying the filter.
+ */
+export interface FilterDef {
+  /** Stable key — identifies this filter in the emitted value map. */
+  key: string;
+  /** Human-readable filter label (shown before the options). */
+  label: string;
+  /** The selectable options. */
+  options: FilterOption[];
+}
+
+/** A single declarative sort option (plan §2.2 `sortOptions`). */
+export interface SortOption {
+  /** Stable value emitted on `onSortChange`. */
+  value: string;
+  /** Human-readable sort label. */
+  label: string;
+}
+
+/** A view-toggle mode (plan §2.2 `viewToggle`) — e.g. list / grid / kanban. */
+export interface ViewModeOption {
+  /** Stable value emitted on `onViewModeChange`. */
+  value: string;
+  /** Human-readable mode label. */
+  label: string;
+  /** Optional leading icon for the toggle button. */
+  icon?: React.ReactNode;
+}
+
 export interface EntitySearchProps<TResult extends EntitySearchResult> {
   /** Placeholder copy for the input. Friendly + plainspoken (tokens.md §10). */
   placeholder?: string;
@@ -60,6 +100,38 @@ export interface EntitySearchProps<TResult extends EntitySearchResult> {
   disabled?: boolean;
   /** Copy shown when the input is non-empty but `results` is empty. */
   noResultsLabel?: string;
+  /**
+   * Declarative filter definitions (plan §2.2). When provided, EntitySearch
+   * renders a labelled select per definition above/beside the input. Omit to
+   * render no filter surface — existing call sites are untouched.
+   */
+  filterDefs?: FilterDef[];
+  /** Initial active filter values, keyed by `FilterDef.key`. */
+  defaultFilterValues?: Record<string, string>;
+  /**
+   * Fires with the full active filter-value map whenever any filter changes.
+   * Parent owns applying the filters to its query.
+   */
+  onFilterChange?: (values: Record<string, string>) => void;
+  /**
+   * Declarative sort options (plan §2.2). When provided, EntitySearch renders
+   * a sort select. Omit to render no sort surface.
+   */
+  sortOptions?: SortOption[];
+  /** Initial active sort value. Defaults to the first `sortOptions` entry. */
+  defaultSortValue?: string;
+  /** Fires with the chosen sort value whenever the sort selection changes. */
+  onSortChange?: (value: string) => void;
+  /**
+   * Declarative view-toggle modes (plan §2.2) — e.g. list / grid / kanban /
+   * calendar. When provided (2+ modes), EntitySearch renders a segmented
+   * toggle. Omit to render no view toggle.
+   */
+  viewToggle?: ViewModeOption[];
+  /** Initial active view mode. Defaults to the first `viewToggle` entry. */
+  defaultViewMode?: string;
+  /** Fires with the chosen view-mode value whenever the toggle changes. */
+  onViewModeChange?: (value: string) => void;
   /** className passthrough on the wrapper. */
   className?: string;
 }
@@ -75,6 +147,15 @@ export function EntitySearch<TResult extends EntitySearchResult>({
   loading = false,
   disabled = false,
   noResultsLabel = 'No matches — try a different search.',
+  filterDefs,
+  defaultFilterValues,
+  onFilterChange,
+  sortOptions,
+  defaultSortValue,
+  onSortChange,
+  viewToggle,
+  defaultViewMode,
+  onViewModeChange,
   className,
 }: EntitySearchProps<TResult>) {
   const [value, setValue] = useState(defaultValue);
@@ -85,6 +166,48 @@ export function EntitySearch<TResult extends EntitySearchResult>({
   const listboxId = useId();
 
   const hasResultsSurface = results !== undefined && renderResult !== undefined;
+  const hasFilters = filterDefs !== undefined && filterDefs.length > 0;
+  const hasSort = sortOptions !== undefined && sortOptions.length > 0;
+  const hasViewToggle = viewToggle !== undefined && viewToggle.length > 1;
+  const hasControls = hasFilters || hasSort || hasViewToggle;
+
+  // Declarative-filter state: a value map keyed by FilterDef.key.
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(
+    () => defaultFilterValues ?? {},
+  );
+  const [sortValue, setSortValue] = useState<string>(
+    () => defaultSortValue ?? sortOptions?.[0]?.value ?? '',
+  );
+  const [viewMode, setViewMode] = useState<string>(
+    () => defaultViewMode ?? viewToggle?.[0]?.value ?? '',
+  );
+
+  const handleFilterChange = useCallback(
+    (key: string, next: string) => {
+      setFilterValues((prev) => {
+        const merged = { ...prev, [key]: next };
+        onFilterChange?.(merged);
+        return merged;
+      });
+    },
+    [onFilterChange],
+  );
+
+  const handleSortChange = useCallback(
+    (next: string) => {
+      setSortValue(next);
+      onSortChange?.(next);
+    },
+    [onSortChange],
+  );
+
+  const handleViewModeChange = useCallback(
+    (next: string) => {
+      setViewMode(next);
+      onViewModeChange?.(next);
+    },
+    [onViewModeChange],
+  );
 
   // Debounced query emit. The timer is reset on every keystroke; the parent
   // only ever sees the settled value.
@@ -217,6 +340,102 @@ export function EntitySearch<TResult extends EntitySearchResult>({
           </button>
         )}
       </div>
+
+      {hasControls && (
+        <div
+          data-testid="entity-search-controls"
+          className="mt-2 flex flex-wrap items-center gap-2"
+        >
+          {hasFilters &&
+            filterDefs!.map((def) => (
+              <label
+                key={def.key}
+                data-testid={`entity-search-filter-${def.key}`}
+                className="flex items-center gap-1.5 text-xs text-text-tertiary"
+              >
+                <span>{def.label}</span>
+                <select
+                  value={filterValues[def.key] ?? ''}
+                  disabled={disabled}
+                  onChange={(e) => handleFilterChange(def.key, e.target.value)}
+                  aria-label={def.label}
+                  className={cn(
+                    'rounded-md border border-border-subtle bg-surface-1 px-2 py-1 text-xs text-text-primary',
+                    'focus:border-accent focus:outline-none',
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+                  )}
+                >
+                  <option value="">All</option>
+                  {def.options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+
+          {hasSort && (
+            <label
+              data-testid="entity-search-sort"
+              className="flex items-center gap-1.5 text-xs text-text-tertiary"
+            >
+              <span>Sort</span>
+              <select
+                value={sortValue}
+                disabled={disabled}
+                onChange={(e) => handleSortChange(e.target.value)}
+                aria-label="Sort"
+                className={cn(
+                  'rounded-md border border-border-subtle bg-surface-1 px-2 py-1 text-xs text-text-primary',
+                  'focus:border-accent focus:outline-none',
+                  'disabled:cursor-not-allowed disabled:opacity-50',
+                )}
+              >
+                {sortOptions!.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {hasViewToggle && (
+            <div
+              role="group"
+              aria-label="View mode"
+              data-testid="entity-search-view-toggle"
+              className="ml-auto flex items-center gap-0.5 rounded-md border border-border-subtle bg-surface-1 p-0.5"
+            >
+              {viewToggle!.map((mode) => {
+                const isActive = mode.value === viewMode;
+                return (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    disabled={disabled}
+                    aria-pressed={isActive}
+                    aria-label={mode.label}
+                    data-testid={`entity-search-view-${mode.value}`}
+                    onClick={() => handleViewModeChange(mode.value)}
+                    className={cn(
+                      'flex items-center gap-1 rounded px-2 py-1 text-xs transition',
+                      'disabled:cursor-not-allowed disabled:opacity-50',
+                      isActive
+                        ? 'bg-surface-3 text-text-primary'
+                        : 'text-text-tertiary hover:text-text-secondary',
+                    )}
+                  >
+                    {mode.icon}
+                    {mode.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {showDropdown && (
         <div

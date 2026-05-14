@@ -70,6 +70,37 @@ describe('CrossEntityTabs — render', () => {
     render(<CrossEntityTabs tabs={[]} />);
     expect(screen.getByTestId('cross-entity-tabs-empty')).toBeInTheDocument();
   });
+
+  it('renders a tab icon before the label when icon is supplied', () => {
+    const tabs: CrossEntityTab[] = [
+      {
+        key: 'quotes',
+        label: 'Quotes',
+        icon: <svg data-testid="quotes-icon" />,
+        content: () => <div>quotes body</div>,
+      },
+      {
+        key: 'invoices',
+        label: 'Invoices',
+        content: () => <div>invoices body</div>,
+      },
+    ];
+    render(<CrossEntityTabs tabs={tabs} />);
+    const iconWrap = screen.getByTestId('cross-entity-tab-icon-quotes');
+    expect(iconWrap).toBeInTheDocument();
+    expect(screen.getByTestId('quotes-icon')).toBeInTheDocument();
+    // icon lives inside the tab button, ahead of the label text
+    const button = screen.getByTestId('cross-entity-tab-quotes');
+    expect(button).toContainElement(iconWrap);
+    expect(button).toHaveTextContent('Quotes');
+  });
+
+  it('omits the icon wrapper for a tab with no icon', () => {
+    render(<CrossEntityTabs tabs={mkTabs()} />);
+    expect(
+      screen.queryByTestId('cross-entity-tab-icon-quotes'),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('CrossEntityTabs — default tab', () => {
