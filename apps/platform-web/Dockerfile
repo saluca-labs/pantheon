@@ -5,6 +5,7 @@ RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY packages/auth/package.json ./packages/auth/
 COPY packages/blob-store/package.json ./packages/blob-store/
+COPY packages/llm/package.json ./packages/llm/
 COPY packages/config/package.json ./packages/config/
 COPY packages/types/package.json ./packages/types/
 COPY packages/memory/package.json ./packages/memory/
@@ -31,6 +32,7 @@ RUN pnpm --filter "@platform/types" \
          --filter "@platform/config" \
          --filter "@platform/auth" \
          --filter "@platform/blob-store" \
+         --filter "@platform/llm" \
          run build
 RUN pnpm --filter platform-web build
 
