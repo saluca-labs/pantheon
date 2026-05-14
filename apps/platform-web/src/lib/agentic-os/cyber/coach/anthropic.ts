@@ -1,14 +1,12 @@
 /**
- * Anthropic provider wrapper for the Cyber coach.
+ * Coach LLM wrapper — Cyber OS.
  *
- * `ANTHROPIC_API_KEY` is optional — when it's absent the coach gracefully
- * degrades to a 503 with `coach_not_configured` so the UI can render an
- * admin-action banner instead of crashing. Mirrors the Filmmaker Phase 7
- * pattern.
+ * Backed by `@platform/llm` (Wave 0). Streaming deferred — see header
+ * comment on `health/coach/anthropic.ts` for the contract notes.
  */
 
 import 'server-only';
-import { createAnthropic } from '@ai-sdk/anthropic';
+import { callLlm, type AgenticOsSlug } from '@platform/llm';
 
 export const DEFAULT_COACH_MODEL = 'claude-sonnet-4-6';
 
@@ -20,10 +18,32 @@ export function getCoachModelId(): string {
   return process.env['COACH_MODEL'] || DEFAULT_COACH_MODEL;
 }
 
-export function getAnthropicProvider() {
-  const apiKey = process.env['ANTHROPIC_API_KEY'];
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not set; coach is not configured.');
-  }
-  return createAnthropic({ apiKey });
+export interface CoachLlmResult {
+  text: string;
+  model: string;
+  latencyMs: number;
+}
+
+export async function callCoachLlm(input: {
+  system: string;
+  user: string;
+  tenantId: string;
+  osSlug?: AgenticOsSlug;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<CoachLlmResult> {
+  const model = input.model ?? getCoachModelId();
+  const t0 = Date.now();
+  const text = await callLlm({
+    system: input.system,
+    user: input.user,
+    tenantId: input.tenantId,
+    osSlug: input.osSlug ?? 'cyber',
+    provider: 'anthropic',
+    model,
+    temperature: input.temperature,
+    maxTokens: input.maxTokens,
+  });
+  return { text, model, latencyMs: Date.now() - t0 };
 }

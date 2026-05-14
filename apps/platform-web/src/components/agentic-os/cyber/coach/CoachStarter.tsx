@@ -62,15 +62,8 @@ export function CoachStarter({
         const body = await chatRes.json().catch(() => ({}));
         throw new Error(body.message || body.error || `HTTP ${chatRes.status}`);
       }
-      // Drain so the assistant turn persists before navigating.
-      if (chatRes.body) {
-        const reader = chatRes.body.getReader();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-      }
+      // Wave-0: JSON response now; drain to complete persistence.
+      await chatRes.json().catch(() => null);
       router.push(`/dashboard/os/cyber/coach/${conversation.id}`);
     } catch (err) {
       setError((err as Error).message);

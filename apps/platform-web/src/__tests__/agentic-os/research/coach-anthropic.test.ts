@@ -58,21 +58,9 @@ describe('research coach Anthropic client', () => {
     expect(getCoachModelId()).toBe('claude-test-override');
   });
 
-  it('getAnthropicProvider throws when ANTHROPIC_API_KEY is unset', async () => {
-    const { getAnthropicProvider } = await import(
-      '@/lib/agentic-os/research/coach/anthropic'
-    );
-    expect(() => getAnthropicProvider()).toThrow(/ANTHROPIC_API_KEY/);
-  });
-
-  it('getAnthropicProvider returns a provider when ANTHROPIC_API_KEY is set', async () => {
-    process.env['ANTHROPIC_API_KEY'] = 'sk-test';
-    const { getAnthropicProvider } = await import(
-      '@/lib/agentic-os/research/coach/anthropic'
-    );
-    const provider = getAnthropicProvider();
-    expect(provider).toBeDefined();
-    expect(typeof provider).toBe('function');
+  it('callCoachLlm is exported (replaces legacy getAnthropicProvider seam)', async () => {
+    const mod = await import('@/lib/agentic-os/research/coach/anthropic');
+    expect(typeof mod.callCoachLlm).toBe('function');
   });
 
   it('DEFAULT_COACH_MODEL matches the platform-wide default', async () => {

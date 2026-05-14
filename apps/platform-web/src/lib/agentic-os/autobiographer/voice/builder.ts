@@ -30,7 +30,6 @@
 
 import 'server-only';
 import { z } from 'zod';
-import { generateObject } from 'ai';
 import type { VoiceSampleBuilderInput } from '../voice-samples-repo';
 import {
   EXAMPLE_OPENINGS_MAX,
@@ -41,8 +40,7 @@ import {
   normalizeStyleRules,
 } from '../voice-profiles';
 import {
-  getVoiceBuilderModelId,
-  getVoiceBuilderProvider,
+  callVoiceBuilderJson,
   isVoiceBuilderConfigured,
 } from './anthropic';
 
@@ -124,25 +122,26 @@ export interface BuilderClient {
 }
 
 /**
- * Default builder client backed by Anthropic via `@ai-sdk/anthropic`.
- * Uses `generateObject` for both stages so we get schema-validated
- * JSON without parsing string output ourselves.
+ * Default builder client backed by Anthropic via `@platform/llm`.
+ * Uses `callLlm` with `jsonMode: true` and a zod schema for both stages
+ * so we get schema-validated JSON without parsing string output ourselves.
+ *
+ * `tenantId` is required by `@platform/llm` for per-tenant per-OS rate
+ * limiting; the route layer threads its authenticated user's tenantId
+ * through `buildVoiceProfile`.
  */
-export function makeAnthropicBuilderClient(): BuilderClient {
-  const provider = getVoiceBuilderProvider();
-  const modelId = getVoiceBuilderModelId();
+export function makeAnthropicBuilderClient(tenantId: string): BuilderClient {
   return {
     async analyzeSample({ body, title }) {
-      const prompt = title
+      const userPrompt = title
         ? `Title: ${title}\n\nSample:\n${body}`
         : `Sample:\n${body}`;
-      const result = await generateObject({
-        model: provider(modelId),
-        schema: SampleAnalysisSchema,
+      return callVoiceBuilderJson({
         system: ANALYZE_SYSTEM_PROMPT,
-        prompt,
+        user: userPrompt,
+        schema: SampleAnalysisSchema,
+        tenantId,
       });
-      return result.object;
     },
     async aggregate({ analyses, rawSamples }) {
       const analysesBlock = analyses
@@ -163,16 +162,15 @@ export function makeAnthropicBuilderClient(): BuilderClient {
       const openingsBlock = rawSamples
         .map((s, i) => `--- Opening ${i + 1} ---\n${s.body.slice(0, 600)}`)
         .join('\n\n');
-      const prompt =
+      const userPrompt =
         `Per-sample analyses:\n\n${analysesBlock}\n\n` +
         `Raw sample openings (for verbatim example_openings selection):\n\n${openingsBlock}`;
-      const result = await generateObject({
-        model: provider(modelId),
-        schema: ProfileAggregateSchema,
+      return callVoiceBuilderJson({
         system: AGGREGATE_SYSTEM_PROMPT,
-        prompt,
+        user: userPrompt,
+        schema: ProfileAggregateSchema,
+        tenantId,
       });
-      return result.object;
     },
   };
 }
@@ -183,6 +181,9 @@ export interface BuildVoiceProfileInput {
   samples: VoiceSampleBuilderInput[];
   /** Free-form attribution string written to `builder` column. */
   builderAttribution: string;
+  /** Required by `@platform/llm` for per-tenant rate limiting + usage roll-up.
+   *  Optional only when `client` is supplied (tests). */
+  tenantId?: string;
   /** Optional override; otherwise the default Anthropic client is used. */
   client?: BuilderClient;
 }
@@ -236,7 +237,13 @@ export async function buildVoiceProfile(
         'Voice builder is not yet configured — admin needs to set ANTHROPIC_API_KEY.',
       );
     }
-    client = makeAnthropicBuilderClient();
+    if (!input.tenantId) {
+      throw new VoiceBuilderError(
+        'tenant_required',
+        'tenantId is required when buildVoiceProfile constructs its own LLM client.',
+      );
+    }
+    client = makeAnthropicBuilderClient(input.tenantId);
   }
 
   // Stage 1 — per-sample analyses. Run in parallel so a 5-sample build
