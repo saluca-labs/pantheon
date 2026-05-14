@@ -96,7 +96,20 @@ export default async function CreatorEpisodeDetailPage({ params }: Props) {
 
       {/* Audio Player */}
       {episode.audioFileUrl && (
-        <AudioPlayer audioUrl={episode.audioFileUrl} title={episode.title} />
+        <AudioPlayer
+          audioUrl={episode.audioFileUrl}
+          title={episode.title}
+          subtitle={
+            [
+              podcast?.title,
+              episode.durationSeconds != null
+                ? `${Math.floor(episode.durationSeconds / 60)}m ${episode.durationSeconds % 60}s`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+        />
       )}
 
       {/* Description */}
