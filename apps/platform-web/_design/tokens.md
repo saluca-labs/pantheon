@@ -168,9 +168,53 @@ Decision 5.3 locked: **no motion library.** CSS transitions + the View Transitio
 
 **Default transition:** `transition` Tailwind utility = `150ms cubic-bezier(0.4, 0, 0.2, 1)`. This is what most hover states want.
 
-**Slow transition:** `transition-slow` custom utility (added in this wave) = `220ms cubic-bezier(0.4, 0, 0.2, 1)`. Use for: card hover lift, color swap on stage change, sidebar collapse.
+**Slow transition:** `transition-slow` custom utility = `220ms cubic-bezier(0.4, 0, 0.2, 1)`. Use for: card hover lift, color swap on stage change, sidebar collapse.
 
 **No springs.** No `framer-motion`. If a future primitive _really_ needs choreographed motion (e.g. kanban drag-drop), reach for the View Transitions API or roll a `requestAnimationFrame` loop — but check with Cristian first.
+
+### CSS variables (W-E.3)
+
+The durations + easing above are now formalized as CSS variables in the `@theme` block — both custom utilities (`transition-slow`, `hover-lift`) consume them via `var(...)`. Use these directly in any new utility / inline transition; do not re-hardcode the millisecond values or the bezier.
+
+| Variable           | Value                          | Use for                                          |
+|--------------------|--------------------------------|--------------------------------------------------|
+| `--duration-fast`  | `150ms`                        | Default hovers, color swaps, focus rings         |
+| `--duration-slow`  | `220ms`                        | Hover lifts, stage swaps, sidebar collapse       |
+| `--ease-standard`  | `cubic-bezier(0.4, 0, 0.2, 1)` | The one easing curve. No alternatives.           |
+
+### Loading primitives (W-E.3)
+
+Skeleton + spinner shimmer states are now first-class primitives under `_shared/views`. Use them instead of inlining `bg-surface-3 animate-pulse` divs. Both consume the loading-contract from `_design/visual-language.md` ("Loading / empty / error states").
+
+`Skeleton` — six named variants with sensible default dimensions. Always `bg-surface-3 animate-pulse rounded-…`. `className` is the only outlier escape hatch; do not introduce width/height props.
+
+| Variant      | Default dimensions     | Use for                                          |
+|--------------|------------------------|--------------------------------------------------|
+| `text-line`  | `h-4 w-32`             | Single line of placeholder text                  |
+| `avatar`     | `h-10 w-10 rounded-full` | Profile avatars, OS-icon tiles                 |
+| `card`       | `h-32 w-full rounded-xl` | A `DashboardWidget`-shaped card                |
+| `list-row`   | `h-12 w-full rounded-md` | One row in a list / `ActivityFeed`             |
+| `widget`     | `h-24 w-full rounded-xl` | A short `DashboardWidget` (kpi tile)           |
+| `block`      | `h-full w-full rounded-lg` | Generic block — chart bodies, image slots    |
+
+`SkeletonGroup` composes children inside `<div className="space-y-3">` and hoists `role="status" aria-busy="true"` to the wrapper so screen readers announce the group once, not per child.
+
+`Spinner` — thin wrapper around `lucide-react`'s `Loader2`. Use inline inside buttons + small loading affordances. Spinner is NOT a skeleton replacement; use it only when there's no shape to skeletonize (button labels, inline indicators).
+
+| Size       | Class             | Use for                                              |
+|------------|-------------------|------------------------------------------------------|
+| `xs`       | `w-3 h-3`         | Inside buttons next to label (`Load more`)           |
+| `sm`       | `w-3.5 h-3.5`     | Default — small affordances, status pills            |
+| `md`       | `w-4 h-4`         | Standalone inline indicators                         |
+| `inline`   | `w-[1em] h-[1em]` | Inherits the surrounding `font-size`                 |
+
+`label` prop sets a screen-reader-only span and flips `aria-hidden` off on the icon — supply it whenever the spinner stands alone (no neighboring text describes the loading).
+
+### View transitions (W-E.3)
+
+`useViewTransition()` — client hook that wraps `document.startViewTransition`. Returns a callable; invoke it with the navigation callback. Falls back to a synchronous call when the browser doesn't support the API. Wired into `DashboardHub`'s feature-grid links for v0.1.79; broader rollout is W-E.5.
+
+Cross-document transitions are enabled globally via the `@view-transition { navigation: auto; }` rule in `globals.css` and `experimental.viewTransition: true` in `next.config.ts`. Both are required.
 
 ---
 
