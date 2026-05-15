@@ -10,7 +10,7 @@
  * @license MIT — Tiresias Autobiographer OS Phase 3 (internal).
  */
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import {
@@ -44,6 +44,9 @@ export function VoiceSampleForm({
 
   const wordCount = useMemo(() => countVoiceSampleWords(bodyText), [bodyText]);
   const tooShort = wordCount < VOICE_SAMPLE_MIN_WORDS;
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   if (!open) return null;
   const isEdit = Boolean(initial?.id);
@@ -104,24 +107,31 @@ export function VoiceSampleForm({
           </div>
         )}
 
-        <label className="block">
-          <span className="text-xs uppercase tracking-wide text-text-secondary">
+        <div className="block">
+          <label
+            htmlFor={fid('title')}
+            className="text-xs uppercase tracking-wide text-text-secondary"
+          >
             Title (optional)
-          </span>
+          </label>
           <input
+            id={fid('title')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={500}
             placeholder="What does this sample capture?"
             className="mt-1 w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent"
           />
-        </label>
+        </div>
 
-        <label className="block">
+        <div className="block">
           <div className="flex items-baseline justify-between mb-1">
-            <span className="text-xs uppercase tracking-wide text-text-secondary">
+            <label
+              htmlFor={fid('body-text')}
+              className="text-xs uppercase tracking-wide text-text-secondary"
+            >
               Sample text
-            </span>
+            </label>
             <span
               className={`text-xs ${
                 tooShort ? 'text-amber-300' : 'text-[#64748b]'
@@ -134,6 +144,7 @@ export function VoiceSampleForm({
             </span>
           </div>
           <textarea
+            id={fid('body-text')}
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
             rows={14}
@@ -142,7 +153,7 @@ export function VoiceSampleForm({
             placeholder="Paste a paragraph or page of your own writing — the more representative of your voice, the better the profile will be."
             className="w-full bg-surface-0 border border-border-subtle rounded px-3 py-2 text-sm text-white font-sans leading-relaxed focus:outline-none focus:border-accent"
           />
-        </label>
+        </div>
 
         <div className="flex items-center justify-end gap-2 pt-2">
           <button

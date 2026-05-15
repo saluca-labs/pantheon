@@ -294,17 +294,38 @@ export function EntitySearch<TResult extends EntitySearchResult>({
   const showDropdown = hasResultsSurface && open && value.trim().length > 0;
   const list = results ?? [];
 
+  // Stable per-option DOM id so the input can drive selection via
+  // aria-activedescendant (WAI APG combobox-on-wrapper pattern). The listbox
+  // id is the prefix so collisions across multiple EntitySearch instances are
+  // impossible.
+  const optionDomId = (id: string) => `${listboxId}-option-${id}`;
+  const activeDescendantId =
+    showDropdown && list[highlight] ? optionDomId(list[highlight].id) : undefined;
+
+  // WAI APG combobox-on-wrapper pattern: the wrapping <div> carries the
+  // combobox role + aria-expanded/-controls/-haspopup; the input itself only
+  // signals the autocomplete style and the active option. This keeps
+  // role-supports-aria-props happy and gives AT users the standard listbox
+  // semantics on the popup target. The wrapper variant is the documented
+  // ARIA 1.2 pattern; see _design/a11y.md §2.
   return (
     <div ref={rootRef} className={cn('relative', className)}>
-      <div className="relative">
+      <div
+        className="relative"
+        role={hasResultsSurface ? 'combobox' : undefined}
+        aria-haspopup={hasResultsSurface ? 'listbox' : undefined}
+        aria-expanded={hasResultsSurface ? showDropdown : undefined}
+        aria-controls={hasResultsSurface ? listboxId : undefined}
+      >
         <Search
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
           aria-hidden="true"
         />
-        {/* eslint-disable-next-line jsx-a11y/role-supports-aria-props -- W-E.4 carve-out: aria-expanded is invalid on role="searchbox" but moving to the WAI APG combobox pattern (role="combobox" on a wrapper) is a Sub B refactor — preserving current ARIA semantics here. */}
         <input
-          type="text"
-          role="searchbox"
+          // type="search" gives the input its implicit role="searchbox" (no
+          // explicit role attribute needed; that previously violated
+          // role-supports-aria-props once aria-expanded was on the input).
+          type="search"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => hasResultsSurface && setOpen(true)}
@@ -313,8 +334,8 @@ export function EntitySearch<TResult extends EntitySearchResult>({
           disabled={disabled}
           autoComplete="off"
           aria-label={placeholder}
-          aria-expanded={hasResultsSurface ? showDropdown : undefined}
-          aria-controls={hasResultsSurface ? listboxId : undefined}
+          aria-autocomplete={hasResultsSurface ? 'list' : undefined}
+          aria-activedescendant={activeDescendantId}
           className={cn(
             'w-full rounded-md border border-border-subtle bg-surface-1 py-2 pl-9 pr-9 text-sm text-text-primary',
             'placeholder:text-text-tertiary transition',
@@ -455,9 +476,10 @@ export function EntitySearch<TResult extends EntitySearchResult>({
             </div>
           ) : (
             list.map((result, i) => (
-              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- W-E.4 carve-out: option uses div+onMouseDown intentionally to avoid stealing focus from the input (combobox pattern); keyboard nav is handled by the input's ArrowUp/Down/Enter/Esc listeners above. Sub B will refactor to a proper combobox-on-wrapper pattern with focusable listbox options.
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- WAI APG combobox-on-wrapper pattern: focus remains on the combobox input; selection is driven via aria-activedescendant pointing at this option's id. The role="option" element therefore intentionally is not focusable and does not need its own key handler — the input owns the keyboard contract.
               <div
                 key={result.id}
+                id={optionDomId(result.id)}
                 role="option"
                 aria-selected={i === highlight}
                 data-testid={`entity-search-result-${result.id}`}

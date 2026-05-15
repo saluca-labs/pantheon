@@ -364,6 +364,67 @@ describe('EntitySearch — declarative sort', () => {
   });
 });
 
+describe('EntitySearch — combobox-on-wrapper contract (W-E.5)', () => {
+  const renderResult = (p: Person) => <span>{p.name}</span>;
+
+  it('places role="combobox" + aria-haspopup="listbox" on the wrapper, not the input', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        results={PEOPLE}
+        renderResult={renderResult}
+      />,
+    );
+    const combobox = screen.getByRole('combobox');
+    expect(combobox).toBeInTheDocument();
+    expect(combobox).toHaveAttribute('aria-haspopup', 'listbox');
+    // The input retains its implicit searchbox role and is a child of the wrapper.
+    const input = screen.getByRole('searchbox');
+    expect(combobox).toContainElement(input);
+    // The input itself should NOT carry role="combobox" or the popup-affordance ARIA.
+    expect(input).not.toHaveAttribute('role', 'combobox');
+    expect(input).not.toHaveAttribute('aria-haspopup');
+  });
+
+  it('aria-expanded on the wrapper toggles in sync with the dropdown open state', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        results={PEOPLE}
+        renderResult={renderResult}
+      />,
+    );
+    const combobox = screen.getByRole('combobox');
+    // Closed by default — input is empty.
+    expect(combobox).toHaveAttribute('aria-expanded', 'false');
+    // Typing opens the dropdown; aria-expanded follows.
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'a' } });
+    expect(combobox).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    // Escape closes; aria-expanded follows back.
+    fireEvent.keyDown(screen.getByRole('searchbox'), { key: 'Escape' });
+    expect(combobox).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('input drives selection via aria-activedescendant pointing at the highlighted option id', () => {
+    render(
+      <EntitySearch
+        placeholder="Find"
+        onQueryChange={vi.fn()}
+        results={PEOPLE}
+        renderResult={renderResult}
+      />,
+    );
+    const input = screen.getByRole('searchbox');
+    fireEvent.change(input, { target: { value: 'a' } });
+    // First option is highlighted by default; aria-activedescendant must match its id.
+    const firstOption = screen.getByTestId('entity-search-result-p1');
+    expect(input.getAttribute('aria-activedescendant')).toBe(firstOption.id);
+  });
+});
+
 describe('EntitySearch — view toggle', () => {
   const viewToggle = [
     { value: 'list', label: 'List' },

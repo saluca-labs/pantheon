@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
 import type { JournalPrompt } from '@/lib/agentic-os/health/repo';
@@ -23,6 +23,9 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
   const [body, setBody] = useState<string>(initial?.body ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const titleId = useId();
+  const bodyId = useId();
 
   async function onSubmit() {
     if (body.trim().length === 0) return;
@@ -96,10 +99,11 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
       )}
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={titleId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Title (optional)
         </label>
         <input
+          id={titleId}
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -109,10 +113,11 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={bodyId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Entry
         </label>
         <textarea
+          id={bodyId}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={14}

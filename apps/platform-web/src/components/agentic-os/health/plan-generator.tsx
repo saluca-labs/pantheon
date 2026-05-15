@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Activity, Apple, Moon, Brain, Shield } from 'lucide-react';
 import { CrisisBanner } from './crisis-banner';
 
@@ -45,6 +45,7 @@ export function PlanGenerator() {
   const [plan, setPlan] = useState<HealthPlan | null>(null);
   const [blocked, setBlocked] = useState<BlockedResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const freeTextId = useId();
 
   async function onGenerate() {
     setLoading(true);
@@ -74,10 +75,11 @@ export function PlanGenerator() {
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={freeTextId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           What’s on your mind today? (optional)
         </label>
         <textarea
+          id={freeTextId}
           value={freeText}
           onChange={(e) => setFreeText(e.target.value)}
           rows={3}

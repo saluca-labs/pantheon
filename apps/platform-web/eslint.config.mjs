@@ -12,16 +12,23 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
  * list is owned by the plugin (we deliberately do not pin specific rules here
  * so plugin updates land automatically).
  *
- * Why scoped instead of repo-wide: the recommended preset surfaces 240+
- * latent violations across the broader codebase (mostly `<div onClick>`
- * patterns and form-label nesting issues) that are destined for separate
- * fix-it subs in Wave E.4+. Scoping enforcement to the W-E.4 touch zone
- * keeps the gate green where the wave actually ships, without theatre.
- * Subsequent waves will broaden the scope as the latent backlog drains.
+ * W-E.5 broadens enforcement on `jsx-a11y/label-has-associated-control` to
+ * the entire repo (not just the touch zone). The drained-and-fixed surface
+ * area is the OS-feature forms; the rule stays repo-wide so any new form
+ * label without an associated control bounces at lint.
+ *
+ * Why the rest of the preset remains scoped: the recommended preset surfaces
+ * 240+ latent violations across the broader codebase (mostly `<div onClick>`
+ * patterns and other form-nesting issues) that are destined for separate
+ * fix-it subs in subsequent waves. Scoping the remaining rules to the W-E.4
+ * touch zone keeps the gate green where the waves have actually shipped,
+ * without theatre. Subsequent waves will broaden the scope as the latent
+ * backlog drains.
  *
  * `eslint-config-next` already wires the jsx-a11y plugin with a handful of
  * rules at `warn` level. The block below layers the full recommended preset
- * at `error` on top, restricted to the touch-zone glob.
+ * at `error` on top, restricted to the touch-zone glob; a separate block
+ * pins `label-has-associated-control` at `error` repo-wide.
  *
  * Carve-outs are inline at the violation site via
  * `// eslint-disable-next-line jsx-a11y/<rule> -- <reason>`. No global rule
@@ -63,6 +70,14 @@ const eslintConfig = defineConfig([
   {
     files: A11Y_TOUCH_ZONE,
     rules: jsxA11yErrorRules,
+  },
+  // W-E.5 — `label-has-associated-control` lifted to error level repo-wide
+  // (after the OS-form drain). Every <label> in the codebase must now pair
+  // with its control via htmlFor+id or the wrapping pattern.
+  {
+    rules: {
+      "jsx-a11y/label-has-associated-control": "error",
+    },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([

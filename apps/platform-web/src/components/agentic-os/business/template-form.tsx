@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DOC_TEMPLATE_KINDS } from '@/lib/agentic-os/business/doc-templates';
 import type { DocTemplateKind } from '@/lib/agentic-os/business/doc-templates';
@@ -39,6 +39,9 @@ export default function TemplateForm({
   const [tagsStr, setTagsStr] = useState((initialValues?.tags ?? []).join(', '));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -109,8 +112,9 @@ export default function TemplateForm({
 
       <div className={compact ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         <div>
-          <label className={labelClass}>Kind</label>
+          <label htmlFor={fid('kind')} className={labelClass}>Kind</label>
           <select
+            id={fid('kind')}
             className={selectClass}
             value={kind}
             onChange={(e) => setKind(e.target.value as DocTemplateKind)}
@@ -123,8 +127,9 @@ export default function TemplateForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Title *</label>
+          <label htmlFor={fid('title')} className={labelClass}>Title *</label>
           <input
+            id={fid('title')}
             className={inputClass}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -134,8 +139,9 @@ export default function TemplateForm({
         </div>
         {!compact && (
           <div className="md:col-span-2">
-            <label className={labelClass}>Body (Markdown)</label>
+            <label htmlFor={fid('body-md')} className={labelClass}>Body (Markdown)</label>
             <textarea
+              id={fid('body-md')}
               className={inputClass}
               value={bodyMd}
               onChange={(e) => setBodyMd(e.target.value)}
@@ -145,8 +151,9 @@ export default function TemplateForm({
           </div>
         )}
         <div>
-          <label className={labelClass}>Version</label>
+          <label htmlFor={fid('version')} className={labelClass}>Version</label>
           <input
+            id={fid('version')}
             className={inputClass}
             value={version}
             onChange={(e) => setVersion(e.target.value)}
@@ -154,8 +161,9 @@ export default function TemplateForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Tags</label>
+          <label htmlFor={fid('tags')} className={labelClass}>Tags</label>
           <input
+            id={fid('tags')}
             className={inputClass}
             value={tagsStr}
             onChange={(e) => setTagsStr(e.target.value)}
@@ -166,8 +174,9 @@ export default function TemplateForm({
 
       {compact && (
         <div>
-          <label className={labelClass}>Body (Markdown)</label>
+          <label htmlFor={fid('body-md-compact')} className={labelClass}>Body (Markdown)</label>
           <textarea
+            id={fid('body-md-compact')}
             className={inputClass}
             value={bodyMd}
             onChange={(e) => setBodyMd(e.target.value)}

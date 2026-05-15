@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 const METHOD_OPTIONS = [
@@ -37,6 +37,9 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -94,8 +97,9 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Amount (cents) *</label>
+          <label htmlFor={fid('amount')} className={labelClass}>Amount (cents) *</label>
           <input
+            id={fid('amount')}
             className={inputClass}
             type="number"
             min={1}
@@ -111,8 +115,8 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
           )}
         </div>
         <div>
-          <label className={labelClass}>Method</label>
-          <select className={selectClass} value={method} onChange={(e) => setMethod(e.target.value)}>
+          <label htmlFor={fid('method')} className={labelClass}>Method</label>
+          <select id={fid('method')} className={selectClass} value={method} onChange={(e) => setMethod(e.target.value)}>
             {METHOD_OPTIONS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
@@ -121,8 +125,9 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
           </select>
         </div>
         <div>
-          <label className={labelClass}>Received On</label>
+          <label htmlFor={fid('received-on')} className={labelClass}>Received On</label>
           <input
+            id={fid('received-on')}
             className={inputClass}
             type="date"
             value={receivedOn}
@@ -130,8 +135,9 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
           />
         </div>
         <div>
-          <label className={labelClass}>Reference</label>
+          <label htmlFor={fid('reference')} className={labelClass}>Reference</label>
           <input
+            id={fid('reference')}
             className={inputClass}
             value={reference}
             onChange={(e) => setReference(e.target.value)}
@@ -141,8 +147,9 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
       </div>
 
       <div>
-        <label className={labelClass}>Notes</label>
+        <label htmlFor={fid('notes')} className={labelClass}>Notes</label>
         <textarea
+          id={fid('notes')}
           className={inputClass}
           rows={2}
           value={notes}

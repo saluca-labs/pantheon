@@ -41,7 +41,7 @@ export function StatCard({
   const trendColor = (() => {
     if (!trend || trend === 'flat') return 'text-text-secondary';
     const isGood = trend === 'up' ? !trendDownIsGood : trendDownIsGood;
-    return isGood ? 'text-emerald-300' : 'text-amber-300';
+    return isGood ? 'text-positive' : 'text-danger';
   })();
 
   return (

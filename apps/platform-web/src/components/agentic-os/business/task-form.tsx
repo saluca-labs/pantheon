@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import {
   TASK_STATUSES,
   TASK_PRIORITIES,
@@ -48,6 +48,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -118,8 +121,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
 
       {/* Title */}
       <div>
-        <label className={labelClass}>Title *</label>
+        <label htmlFor={fid('title')} className={labelClass}>Title *</label>
         <input
+          id={fid('title')}
           className={inputClass}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -131,8 +135,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
       {/* Status + Priority */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Status</label>
+          <label htmlFor={fid('status')} className={labelClass}>Status</label>
           <select
+            id={fid('status')}
             className={inputClass}
             value={status}
             onChange={(e) => setStatus(e.target.value as TaskStatus)}
@@ -145,8 +150,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
           </select>
         </div>
         <div>
-          <label className={labelClass}>Priority</label>
+          <label htmlFor={fid('priority')} className={labelClass}>Priority</label>
           <select
+            id={fid('priority')}
             className={inputClass}
             value={priority}
             onChange={(e) => setPriority(e.target.value as TaskPriority)}
@@ -163,8 +169,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
       {/* Assignee + Due Date */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Assignee</label>
+          <label htmlFor={fid('assignee')} className={labelClass}>Assignee</label>
           <input
+            id={fid('assignee')}
             className={inputClass}
             value={assigneeText}
             onChange={(e) => setAssigneeText(e.target.value)}
@@ -172,8 +179,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
           />
         </div>
         <div>
-          <label className={labelClass}>Due Date</label>
+          <label htmlFor={fid('due-date')} className={labelClass}>Due Date</label>
           <input
+            id={fid('due-date')}
             className={inputClass}
             type="date"
             value={dueOn}
@@ -185,8 +193,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
       {/* Rate + Billable */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Billing Rate (cents)</label>
+          <label htmlFor={fid('billing-rate')} className={labelClass}>Billing Rate (cents)</label>
           <input
+            id={fid('billing-rate')}
             className={inputClass}
             type="number"
             value={billingRateCents}
@@ -210,8 +219,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
 
       {/* Tags */}
       <div>
-        <label className={labelClass}>Tags (comma-separated)</label>
+        <label htmlFor={fid('tags')} className={labelClass}>Tags (comma-separated)</label>
         <input
+          id={fid('tags')}
           className={inputClass}
           value={tags}
           onChange={(e) => setTags(e.target.value)}
@@ -221,8 +231,9 @@ export default function TaskForm({ projectId, initial, onCreated }: TaskFormProp
 
       {/* Description */}
       <div>
-        <label className={labelClass}>Description (Markdown)</label>
+        <label htmlFor={fid('description')} className={labelClass}>Description (Markdown)</label>
         <textarea
+          id={fid('description')}
           className={inputClass}
           rows={3}
           value={descriptionMd}

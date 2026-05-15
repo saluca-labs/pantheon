@@ -9,7 +9,7 @@
  * @license MIT — Tiresias Research OS Phase 6 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
   DEPENDENCY_KIND_VALUES,
   DEPENDENCY_KIND_LABELS,
@@ -42,6 +42,9 @@ export function DependencyForm({
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,10 +94,11 @@ export function DependencyForm({
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('peer')} className="text-xs uppercase tracking-wide text-text-secondary">
             Peer experiment
           </label>
           <select
+            id={fid('peer')}
             value={toExperimentId}
             onChange={(e) => setToExperimentId(e.target.value)}
             required
@@ -108,8 +112,9 @@ export function DependencyForm({
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">Kind</label>
+          <label htmlFor={fid('kind')} className="text-xs uppercase tracking-wide text-text-secondary">Kind</label>
           <select
+            id={fid('kind')}
             value={kind}
             onChange={(e) => setKind(e.target.value as DependencyKind)}
             className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
@@ -123,8 +128,9 @@ export function DependencyForm({
         </div>
       </div>
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-text-secondary">Notes</label>
+        <label htmlFor={fid('notes')} className="text-xs uppercase tracking-wide text-text-secondary">Notes</label>
         <textarea
+          id={fid('notes')}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
