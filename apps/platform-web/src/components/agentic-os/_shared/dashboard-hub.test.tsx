@@ -33,6 +33,22 @@ vi.mock('recharts', async () => {
   };
 });
 
+// W-E.3 — the feature grid is now a client component that calls
+// `useRouter()` so its <Link>s can run through `useViewTransition`.
+// Tests need a benign router stub.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => '/dashboard/os',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 import { DashboardHub } from './dashboard-hub';
 import type {
   DashboardWidgetSpec,
