@@ -8,10 +8,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, Trash2, Loader2 } from 'lucide-react';
+import { ExternalLink, Trash2 } from 'lucide-react';
 import type { Dataset } from '@/lib/agentic-os/research/datasets';
 import { DatasetKindPill } from './dataset-kind-pill';
 import { DatasetArchivedToggle } from './dataset-archived-toggle';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   dataset: Dataset;
@@ -110,7 +111,7 @@ export function DatasetCard({ dataset }: Props) {
             data-testid={`dataset-card-delete-${dataset.id}`}
           >
             {deleting ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Spinner size="xs" />
             ) : (
               <Trash2 className="w-3 h-3" />
             )}

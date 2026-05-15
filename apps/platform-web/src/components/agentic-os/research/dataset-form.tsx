@@ -11,12 +11,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import {
   DATASET_KINDS,
   DATASET_KIND_LABELS,
   type DatasetKind,
 } from '@/lib/agentic-os/research/dataset-kinds';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   experimentId: string;
@@ -217,7 +217,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="dataset-form-submit"
         >
-          {busy && <Loader2 className="w-3 h-3 animate-spin" />}
+          {busy && <Spinner size="xs" />}
           Save dataset
         </button>
       </div>

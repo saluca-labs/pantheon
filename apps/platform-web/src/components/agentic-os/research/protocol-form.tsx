@@ -8,12 +8,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import {
   PROTOCOL_KINDS,
   PROTOCOL_KIND_LABELS,
   type ProtocolKind,
 } from '@/lib/agentic-os/research/protocol-kinds';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   onClose?: () => void;
@@ -144,7 +144,7 @@ export function ProtocolForm({ onClose }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="protocol-form-submit"
         >
-          {busy && <Loader2 className="w-3 h-3 animate-spin" />}
+          {busy && <Spinner size="xs" />}
           Create protocol
         </button>
       </div>

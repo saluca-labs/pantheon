@@ -9,9 +9,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, X, Loader2 } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
 import type { LinkedProtocolPin } from '@/lib/agentic-os/research/experiment-protocols';
 import { ProtocolKindPill } from './protocol-kind-pill';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   experimentId: string;
@@ -88,7 +89,7 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
           className="inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50"
           data-testid={`experiment-protocol-pinned-unpin-${pin.link.id}`}
         >
-          {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+          {busy ? <Spinner size="xs" /> : <X className="w-3 h-3" />}
           Unpin
         </button>
       </div>

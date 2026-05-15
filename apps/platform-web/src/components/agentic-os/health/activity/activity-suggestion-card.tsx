@@ -7,7 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 type Intensity = 'light' | 'moderate' | 'vigorous' | 'rest';
 
@@ -70,7 +71,7 @@ export function ActivitySuggestionCard({
   if (loading) {
     return (
       <div className="rounded-xl border border-border-subtle bg-surface-2 p-4 flex items-center gap-2 text-xs text-text-secondary">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <Spinner size="sm" />
         Loading today&rsquo;s suggestion…
       </div>
     );
