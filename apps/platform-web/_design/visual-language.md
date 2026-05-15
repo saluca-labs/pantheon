@@ -114,4 +114,18 @@ Wave B's `EmptyState` primitive is the canonical empty-state. Wave A doesn't shi
 
 ---
 
+## Accessibility
+
+Authoritative contract lives in `_design/a11y.md` (Wave E.4). Headlines:
+
+- WCAG 2.2 **AAA** target for primary + secondary text and UI components / interactive contrast. Tertiary text is a documented AA Normal carve-out (preserves the 3-tier hierarchy).
+- ARIA recipes follow the WAI APG (combobox, listbox, tabs, dialog, etc.). Reuse the `_shared/` primitives — every one of them is the canonical implementation of its pattern.
+- `eslint-plugin-jsx-a11y`'s recommended preset is enforced at **error** level. Targeted inline disables (with `-- <reason>`) are the only escape hatch.
+- `prefers-reduced-motion` collapses transitions + disables `animate-pulse` globally. Primitives that roll their own motion outside `transition` / `transition-slow` are out of contract.
+- vitest-axe gates every primitive in `src/__tests__/a11y/primitives.test.tsx`.
+
+If your primitive can't satisfy the a11y contract, fix the primitive — don't loosen the contract.
+
+---
+
 *End of contract. If something in Wave B's spec contradicts this, fix the contract before fixing Wave B.*
