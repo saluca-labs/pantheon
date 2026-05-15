@@ -49,9 +49,9 @@ interface SubscriberTableProps {
 }
 
 const STATUS_COLORS: Record<SubscriberStatus, string> = {
-  active: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  unsubscribed: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-  bounced: 'bg-red-500/15 text-red-300 border-red-500/30',
+  active: 'bg-positive/15 text-positive border-positive/30',
+  unsubscribed: 'bg-text-secondary/15 text-text-secondary border-text-secondary/30',
+  bounced: 'bg-danger/15 text-danger border-danger/30',
 };
 
 const STATUS_ICONS: Record<SubscriberStatus, React.ReactNode> = {
@@ -262,7 +262,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
           <p className="text-sm text-text-secondary">
             Manage your email subscriber list.
             {activeCount > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-300">
+              <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-positive/10 border border-positive/20 text-[10px] text-positive">
                 <UserCheck className="w-3 h-3" />
                 {activeCount} active
               </span>
@@ -316,7 +316,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
             {adding ? 'Adding…' : 'Add'}
           </button>
         </div>
-        {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
       </form>
 
       {/* Search + status filter */}
@@ -442,7 +442,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                         onClick={() =>
                           handleStatusChange(sub.id, 'unsubscribed')
                         }
-                        className="p-1 rounded hover:bg-slate-500/10 text-text-secondary hover:text-white transition"
+                        className="p-1 rounded hover:bg-text-secondary/10 text-text-secondary hover:text-white transition"
                         title="Mark unsubscribed"
                       >
                         <UserX className="w-3.5 h-3.5" />
@@ -454,7 +454,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                         onClick={() =>
                           handleStatusChange(sub.id, 'active')
                         }
-                        className="p-1 rounded hover:bg-emerald-500/10 text-text-secondary hover:text-emerald-300 transition"
+                        className="p-1 rounded hover:bg-positive/10 text-text-secondary hover:text-positive transition"
                         title="Re-activate"
                       >
                         <UserCheck className="w-3.5 h-3.5" />
@@ -463,7 +463,7 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
                     <button
                       type="button"
                       onClick={() => handleDelete(sub.id)}
-                      className="p-1 rounded hover:bg-red-500/10 text-text-secondary hover:text-red-400 transition"
+                      className="p-1 rounded hover:bg-danger/10 text-text-secondary hover:text-danger transition"
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

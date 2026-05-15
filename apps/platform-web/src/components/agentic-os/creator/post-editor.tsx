@@ -34,15 +34,15 @@ interface PostEditorProps {
 }
 
 const STATUS_OPTIONS: { value: PostStatus; label: string; color: string }[] = [
-  { value: 'idea', label: 'Idea', color: 'text-slate-300' },
-  { value: 'draft', label: 'Draft', color: 'text-blue-300' },
-  { value: 'scheduled', label: 'Scheduled', color: 'text-amber-300' },
-  { value: 'published', label: 'Published', color: 'text-emerald-300' },
-  { value: 'archived', label: 'Archived', color: 'text-neutral-400' },
+  { value: 'idea', label: 'Idea', color: 'text-text-secondary' },
+  { value: 'draft', label: 'Draft', color: 'text-accent' },
+  { value: 'scheduled', label: 'Scheduled', color: 'text-warning' },
+  { value: 'published', label: 'Published', color: 'text-positive' },
+  { value: 'archived', label: 'Archived', color: 'text-text-secondary' },
 ];
 
 const inputCls =
-  'w-full rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-[#d946ef] outline-none';
+  'w-full rounded-lg border border-border-subtle bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-secondary/40 focus:border-os-creator outline-none';
 
 const labelCls = 'block text-xs uppercase tracking-wide text-text-secondary mb-1.5';
 
@@ -217,7 +217,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               setPost((prev) => ({ ...prev, status: newStatus }));
               debouncedSave({ status: newStatus });
             }}
-            className="text-xs font-semibold uppercase tracking-wide px-2 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-white cursor-pointer hover:border-[#d946ef]/50 transition"
+            className="text-xs font-semibold uppercase tracking-wide px-2 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-white cursor-pointer hover:border-os-creator/50 transition"
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>
@@ -237,7 +237,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               />
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-amber-300 hover:border-amber-500/50 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-warning hover:border-warning/50 transition"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 Schedule
@@ -251,7 +251,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               type="button"
               onClick={handlePublish}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive hover:bg-positive/90 text-white text-xs font-medium disabled:opacity-50 transition"
             >
               <Send className="w-3.5 h-3.5" />
               Publish
@@ -264,7 +264,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
               type="button"
               onClick={handleArchive}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-text-secondary hover:text-white hover:border-neutral-500/50 disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-2 text-xs text-text-secondary hover:text-white hover:border-border-strong disabled:opacity-50 transition"
               title="Archive"
             >
               <Archive className="w-3.5 h-3.5" />
@@ -276,7 +276,7 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
             type="button"
             onClick={handleDelete}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/5 text-xs text-red-400 hover:bg-red-500/15 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/20 bg-danger/5 text-xs text-danger hover:bg-danger/15 disabled:opacity-50 transition"
             title="Delete permanently"
           >
             <Trash2 className="w-3.5 h-3.5" />

@@ -70,8 +70,8 @@ export function PaperArchiveButton({ paper, onChanged }: Props) {
         onClick={() => setConfirming(true)}
         className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border transition ${
           isArchived
-            ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
-            : 'border-border-subtle bg-surface-0 text-text-secondary hover:text-rose-300 hover:border-rose-500/40'
+            ? 'border-positive/40 bg-positive/15 text-positive hover:bg-positive/25'
+            : 'border-border-subtle bg-surface-0 text-text-secondary hover:text-danger hover:border-danger/40'
         }`}
         data-testid={`paper-archive-${isArchived ? 'restore' : 'archive'}-${paper.id}`}
       >
@@ -108,15 +108,15 @@ export function PaperArchiveButton({ paper, onChanged }: Props) {
         disabled={submitting}
         className={`text-xs px-2 py-1 rounded border ${
           isArchived
-            ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
-            : 'border-rose-500/40 bg-rose-500/15 text-rose-300'
+            ? 'border-positive/40 bg-positive/15 text-positive'
+            : 'border-danger/40 bg-danger/15 text-danger'
         }`}
         data-testid="paper-archive-confirm-yes"
       >
         {submitting ? '…' : isArchived ? 'Restore' : 'Archive'}
       </button>
       {error && (
-        <span className="text-xs text-rose-300 ml-2" data-testid="paper-archive-error">
+        <span className="text-xs text-danger ml-2" data-testid="paper-archive-error">
           {error}
         </span>
       )}

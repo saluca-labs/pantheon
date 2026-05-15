@@ -324,7 +324,7 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
       </Field>
 
       {error && (
-        <p className="text-sm text-rose-300" data-testid="paper-form-error">
+        <p className="text-sm text-danger" data-testid="paper-form-error">
           {error}
         </p>
       )}

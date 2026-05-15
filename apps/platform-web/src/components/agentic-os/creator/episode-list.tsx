@@ -28,9 +28,9 @@ interface EpisodeListProps {
 }
 
 const STATUS_COLORS: Record<EpisodeStatus, string> = {
-  draft: 'bg-gray-500/20 text-gray-300',
-  published: 'bg-emerald-500/20 text-emerald-300',
-  archived: 'bg-amber-500/20 text-amber-300',
+  draft: 'bg-text-secondary/20 text-text-secondary',
+  published: 'bg-positive/20 text-positive',
+  archived: 'bg-warning/20 text-warning',
 };
 
 function formatDuration(seconds: number | null): string {
@@ -69,9 +69,9 @@ export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">{podcast.title}</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{podcast.title}</h1>
           {podcast.author && (
-            <p className="text-sm text-zinc-400 mt-1">by {podcast.author}</p>
+            <p className="text-sm text-text-secondary mt-1">by {podcast.author}</p>
           )}
         </div>
         <button
@@ -120,11 +120,11 @@ export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
               onClick={() =>
                 router.push(`/dashboard/os/creator/podcast/episodes/${ep.id}`)
               }
-              className="flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900/60 px-5 py-4 text-left hover:border-zinc-700 hover:bg-zinc-900/80 transition-colors"
+              className="flex items-center gap-4 rounded-xl border border-border-subtle bg-surface-1/60 px-5 py-4 text-left hover:border-border-strong hover:bg-surface-1/80 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-medium text-zinc-100 truncate">
+                  <h3 className="text-sm font-medium text-text-primary truncate">
                     {ep.title}
                   </h3>
                   <span
@@ -135,7 +135,7 @@ export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
                     {ep.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                <div className="flex items-center gap-3 mt-1 text-xs text-text-tertiary">
                   {ep.seasonNumber != null && (
                     <span>S{ep.seasonNumber}</span>
                   )}
@@ -148,7 +148,7 @@ export function EpisodeList({ episodes, podcast }: EpisodeListProps) {
                   <span className="capitalize">{ep.episodeType}</span>
                 </div>
               </div>
-              <svg className="h-4 w-4 text-zinc-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4 text-text-tertiary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>

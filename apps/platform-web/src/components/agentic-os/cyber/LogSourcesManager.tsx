@@ -37,10 +37,10 @@ const selectCls =
 const API = '/api/tiresias/agentic-os/cyber/log-sources';
 
 const STATUS_STYLE: Record<LogSourceStatus, string> = {
-  active:         'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  paused:         'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  misconfigured:  'text-red-300 bg-red-500/10 border-red-500/30',
-  decommissioned: 'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  active:         'text-positive bg-positive/10 border-positive/30',
+  paused:         'text-warning bg-warning/10 border-warning/30',
+  misconfigured:  'text-danger bg-danger/10 border-danger/30',
+  decommissioned: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export function LogSourcesManager({ initialSources }: { initialSources: LogSource[] }) {
@@ -235,7 +235,7 @@ export function LogSourcesManager({ initialSources }: { initialSources: LogSourc
                   type="button"
                   onClick={() => void remove(s)}
                   disabled={busy === s.id}
-                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-danger hover:text-danger/80 disabled:opacity-60 px-2 py-1 text-xs transition"
                 >
                   <Trash2 className="w-3 h-3" />
                   Delete

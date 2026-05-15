@@ -132,7 +132,7 @@ export function ReproducibilityItemRow({
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded border border-red-500/40 p-1 text-red-300 hover:bg-red-500/10"
+            className="rounded border border-danger/40 p-1 text-danger hover:bg-danger/10"
             title="Delete item"
             data-testid={`repro-item-delete-${item.itemKey}`}
           >

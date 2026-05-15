@@ -173,7 +173,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
         <button
           type="submit"
           disabled={saving || !name.trim()}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create playbook'}
         </button>
@@ -186,7 +186,7 @@ export function PlaybookForm({ playbook, onSaved, onCancel }: PlaybookFormProps)
             Cancel
           </button>
         )}
-        {error && <span className="text-sm text-red-300">{error}</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </form>
   );

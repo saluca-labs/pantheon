@@ -10,11 +10,11 @@ import type { ExposureWithRefs } from '@/lib/agentic-os/cyber/exposures';
 import { ExposureStatusBadge } from './ExposureStatusBadge';
 
 const PRIORITY_STYLE: Record<string, string> = {
-  p1: 'text-red-200 bg-red-600/20 border-red-500/50',
-  p2: 'text-orange-300 bg-orange-500/10 border-orange-500/30',
-  p3: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  p4: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  p5: 'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  p1: 'text-danger bg-danger/20 border-danger/50',
+  p2: 'text-attention bg-attention/10 border-attention/30',
+  p3: 'text-warning bg-warning/10 border-warning/30',
+  p4: 'text-accent bg-accent/10 border-accent/30',
+  p5: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export function ExposureCard({ exposure }: { exposure: ExposureWithRefs }) {
@@ -43,7 +43,7 @@ export function ExposureCard({ exposure }: { exposure: ExposureWithRefs }) {
         <span>Detected {exposure.detectedAt.slice(0, 10)}</span>
         {exposure.assignedTo && <span>→ {exposure.assignedTo}</span>}
         {exposure.remediatedAt && (
-          <span className="text-emerald-300">Remediated {exposure.remediatedAt.slice(0, 10)}</span>
+          <span className="text-positive">Remediated {exposure.remediatedAt.slice(0, 10)}</span>
         )}
       </div>
     </Link>

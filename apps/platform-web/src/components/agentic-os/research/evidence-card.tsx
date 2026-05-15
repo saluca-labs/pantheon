@@ -131,7 +131,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
               <button
                 onClick={handleDelete}
                 disabled={busy}
-                className="text-red-300 hover:text-red-200 disabled:opacity-50"
+                className="text-danger hover:text-danger/80 disabled:opacity-50"
               >
                 Yes
               </button>
@@ -145,7 +145,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
           ) : (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
+              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-danger transition"
               aria-label="Unlink evidence"
             >
               <Trash2 className="w-3 h-3" />
@@ -157,7 +157,7 @@ export function EvidenceCard({ evidence, onDeleted }: Props) {
         <p className="text-xs text-white/80 leading-relaxed pl-5">{evidence.notes}</p>
       )}
       {error && (
-        <p className="text-xs text-red-300" role="alert">
+        <p className="text-xs text-danger" role="alert">
           {error}
         </p>
       )}

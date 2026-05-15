@@ -16,19 +16,19 @@ import type {
 } from '@/lib/agentic-os/cyber/detections';
 
 const SEV_STYLE: Record<DetectionSeverity, string> = {
-  critical: 'text-red-200 bg-red-600/20 border-red-500/50',
-  high:     'text-orange-300 bg-orange-500/10 border-orange-500/30',
-  medium:   'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  low:      'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  info:     'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  critical: 'text-danger bg-danger/20 border-danger/50',
+  high:     'text-attention bg-attention/10 border-attention/30',
+  medium:   'text-warning bg-warning/10 border-warning/30',
+  low:      'text-accent bg-accent/10 border-accent/30',
+  info:     'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 const LIFECYCLE_STYLE: Record<DetectionLifecycle, string> = {
-  draft:      'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  testing:    'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  active:     'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  deprecated: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  archived:   'text-slate-400 bg-slate-500/10 border-slate-500/30',
+  draft:      'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  testing:    'text-accent bg-accent/10 border-accent/30',
+  active:     'text-positive bg-positive/10 border-positive/30',
+  deprecated: 'text-warning bg-warning/10 border-warning/30',
+  archived:   'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export function DetectionRuleCard({ rule }: { rule: DetectionRule }) {

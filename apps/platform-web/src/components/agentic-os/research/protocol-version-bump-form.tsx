@@ -70,7 +70,7 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
             type="text"
             value={source.version}
             disabled
-            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-[#64748b]"
+            className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-text-tertiary"
           />
         </label>
         <label className="text-xs text-text-secondary space-y-1">
@@ -107,7 +107,7 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
           className="w-full px-2.5 py-1.5 rounded bg-surface-0 border border-border-subtle text-sm text-white outline-none focus:border-accent/60"
         />
       </label>
-      {err && <p className="text-xs text-rose-400">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
       <div className="flex justify-end gap-2">
         <button
           type="button"

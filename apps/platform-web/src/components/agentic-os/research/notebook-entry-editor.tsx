@@ -260,7 +260,7 @@ export function NotebookEntryEditor({
                 <button
                   type="button"
                   onClick={() => removeUrl(idx)}
-                  className="text-text-secondary hover:text-rose-300"
+                  className="text-text-secondary hover:text-danger"
                   aria-label={`Remove ${u}`}
                   data-testid={`editor-url-remove-${idx}`}
                 >
@@ -315,7 +315,7 @@ export function NotebookEntryEditor({
                 <button
                   type="button"
                   onClick={() => removeTag(idx)}
-                  className="text-text-secondary hover:text-rose-300"
+                  className="text-text-secondary hover:text-danger"
                   aria-label={`Remove tag ${t}`}
                   data-testid={`editor-tag-remove-${idx}`}
                 >
@@ -349,7 +349,7 @@ export function NotebookEntryEditor({
       </div>
 
       {error && (
-        <p className="text-xs text-rose-300" data-testid="editor-error">
+        <p className="text-xs text-danger" data-testid="editor-error">
           {error}
         </p>
       )}

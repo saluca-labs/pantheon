@@ -46,7 +46,7 @@ export function DeleteVideoButton({ videoId }: DeleteVideoButtonProps) {
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 rounded-lg bg-danger text-white text-xs font-medium hover:bg-danger/90 disabled:opacity-50 transition-colors"
         >
           {deleting ? 'Deleting…' : 'Confirm Delete'}
         </button>
@@ -66,7 +66,7 @@ export function DeleteVideoButton({ videoId }: DeleteVideoButtonProps) {
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs font-medium hover:bg-red-500/10 transition-colors"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-danger/30 text-danger text-xs font-medium hover:bg-danger/10 transition-colors"
     >
       <Trash2 className="w-3.5 h-3.5" />
       Delete
