@@ -22,7 +22,7 @@ import {
 } from '@/lib/agentic-os/maker/coach/modes';
 import { isCoachConfigured } from '@/lib/agentic-os/maker/coach/anthropic';
 import { CoachHub } from '@/components/agentic-os/maker/coach/coach-hub';
-import { CoachEmptyState } from '@/components/agentic-os/maker/coach/coach-empty-state';
+import { CoachNotConfigured } from '@/components/agentic-os/_shared/coach/coach-not-configured';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +73,7 @@ export default async function MakerCoachHubPage({ searchParams }: Props) {
       </p>
 
       {!configured ? (
-        <CoachEmptyState />
+        <CoachNotConfigured osLabel="Maker" />
       ) : (
         <CoachHub
           projectId={projectId}

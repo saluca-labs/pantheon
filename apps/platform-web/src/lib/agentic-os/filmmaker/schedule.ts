@@ -55,11 +55,16 @@ export interface ShootingDayStatusInfo {
   color: string;
 }
 
+// Status chip classes use semantic design tokens (see `_design/tokens.md` §4).
+// `planned` maps to the muted-surface treatment matching DashboardHub's
+// "planned" badge precedent (status is neutral; no positive/warning/danger
+// fits). `in_progress` → `warning` (focus needed), `completed` → `positive`,
+// `cancelled` → most muted text + canvas surface.
 export const SHOOTING_DAY_STATUSES: ShootingDayStatusInfo[] = [
-  { status: 'planned', label: 'Planned', color: 'text-blue-300 bg-blue-500/10 border-blue-500/30' },
-  { status: 'in_progress', label: 'In Progress', color: 'text-amber-300 bg-amber-500/10 border-amber-500/30' },
-  { status: 'completed', label: 'Completed', color: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' },
-  { status: 'cancelled', label: 'Cancelled', color: 'text-[#64748b] bg-surface-0 border-border-subtle' },
+  { status: 'planned', label: 'Planned', color: 'text-text-secondary bg-surface-2 border-border-subtle' },
+  { status: 'in_progress', label: 'In Progress', color: 'text-warning bg-warning/10 border-warning/30' },
+  { status: 'completed', label: 'Completed', color: 'text-positive bg-positive/10 border-positive/30' },
+  { status: 'cancelled', label: 'Cancelled', color: 'text-text-tertiary bg-surface-0 border-border-subtle' },
 ];
 
 export const SHOOTING_DAY_STATUS_LABEL: Record<ShootingDayStatus, string> =
