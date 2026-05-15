@@ -191,7 +191,10 @@ export function CoachSession({
         <CoachTranscript ref={scrollRef} mode={mode} messages={messages} streaming={streaming} />
 
         {error && (
-          <div className="mt-2 rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200">
+          <div
+            role="alert"
+            className="mt-2 rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+          >
             {error}
           </div>
         )}

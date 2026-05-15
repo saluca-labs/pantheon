@@ -179,8 +179,16 @@ export function ThreatModelWalkthrough() {
               </div>
             )}
             <div className="ml-auto flex items-center gap-2">
-              {error && <span className="text-sm text-red-300">{error}</span>}
-              {saved && <span className="text-sm text-emerald-300">Saved!</span>}
+              <span role="alert" className="text-sm text-red-300">
+                {error ?? ''}
+              </span>
+              <span
+                role="status"
+                aria-live="polite"
+                className="text-sm text-emerald-300"
+              >
+                {saved ? 'Saved!' : ''}
+              </span>
               <button
                 onClick={save}
                 disabled={saving || saved}

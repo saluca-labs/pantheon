@@ -98,7 +98,7 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
           className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2 py-1 text-xs font-medium text-white hover:bg-fuchsia-500 disabled:opacity-50 transition-colors"
         >
           {creating ? (
-            <Spinner size="xs" />
+            <Spinner label="Creating" size="xs" />
           ) : (
             <Plus className="h-3 w-3" />
           )}
@@ -159,7 +159,7 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
                     className="p-1 rounded text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     {deleting === conv.id ? (
-                      <Spinner size="sm" />
+                      <Spinner label="Deleting" size="sm" />
                     ) : (
                       <Trash2 className="h-3.5 w-3.5" />
                     )}
