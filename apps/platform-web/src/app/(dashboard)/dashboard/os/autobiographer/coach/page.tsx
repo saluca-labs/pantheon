@@ -22,7 +22,7 @@ import {
 } from '@/lib/agentic-os/autobiographer/coach/modes';
 import { isCoachConfigured } from '@/lib/agentic-os/autobiographer/coach/anthropic';
 import { CoachHub } from '@/components/agentic-os/autobiographer/coach/coach-hub';
-import { CoachNotConfiguredBanner } from '@/components/agentic-os/autobiographer/coach/coach-not-configured-banner';
+import { CoachNotConfigured } from '@/components/agentic-os/_shared/coach/coach-not-configured';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,7 +76,7 @@ export default async function AutobiographerCoachHubPage({
       </p>
 
       {!configured ? (
-        <CoachNotConfiguredBanner />
+        <CoachNotConfigured osLabel="Autobiographer" />
       ) : (
         <CoachHub
           bookId={bookId}
