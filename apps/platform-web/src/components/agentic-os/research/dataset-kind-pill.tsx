@@ -12,11 +12,11 @@ import {
 } from '@/lib/agentic-os/research/dataset-kinds';
 
 const COLOR: Record<DatasetKind, string> = {
-  tabular: 'border-sky-500/40 text-sky-300 bg-sky-500/10',
-  image: 'border-rose-500/40 text-rose-300 bg-rose-500/10',
-  timeseries: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
-  sequence: 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10',
-  sim: 'border-violet-500/40 text-violet-300 bg-violet-500/10',
+  tabular: 'border-os-research/40 text-os-research bg-os-research/10',
+  image: 'border-danger/40 text-danger bg-danger/10',
+  timeseries: 'border-warning/40 text-warning bg-warning/10',
+  sequence: 'border-positive/40 text-positive bg-positive/10',
+  sim: 'border-accent/40 text-accent bg-accent/10',
   other: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 

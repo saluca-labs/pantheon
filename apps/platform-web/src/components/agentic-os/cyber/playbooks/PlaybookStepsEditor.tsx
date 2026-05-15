@@ -169,7 +169,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
                     <ArrowDown className="w-3.5 h-3.5" />
                   </IconBtn>
                   <IconBtn onClick={() => remove(idx)} label="Remove step">
-                    <Trash2 className="w-3.5 h-3.5 text-red-300" />
+                    <Trash2 className="w-3.5 h-3.5 text-danger" />
                   </IconBtn>
                 </div>
               </div>
@@ -201,7 +201,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
                   <button
                     type="button"
                     onClick={() => addField(idx)}
-                    className="text-[11px] text-accent hover:text-[#5d7aff] transition"
+                    className="text-[11px] text-accent hover:text-accent/80 transition"
                   >
                     + Add field
                   </button>
@@ -246,7 +246,7 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
                     <button
                       type="button"
                       onClick={() => removeField(idx, fidx)}
-                      className="col-span-1 text-red-300 hover:text-red-200 text-[11px]"
+                      className="col-span-1 text-danger hover:text-danger/80 text-[11px]"
                     >
                       ×
                     </button>
@@ -263,11 +263,11 @@ export function PlaybookStepsEditor({ playbook, onSaved }: PlaybookStepsEditorPr
           type="button"
           onClick={() => void save()}
           disabled={saving || !dirty}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : dirty ? 'Save steps' : 'Saved'}
         </button>
-        {error && <span className="text-sm text-red-300">{error}</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </div>
   );

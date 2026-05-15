@@ -20,11 +20,11 @@ import {
 } from '@/lib/agentic-os/research/experiments';
 
 export const STATUS_COLOR: Record<ExperimentStatus, string> = {
-  planning: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  running: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  analysis: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  writeup: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  published: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  planning: 'text-accent bg-accent/10 border-accent/30',
+  running: 'text-warning bg-warning/10 border-warning/30',
+  analysis: 'text-accent bg-accent/10 border-accent/30',
+  writeup: 'text-os-research bg-os-research/10 border-os-research/30',
+  published: 'text-positive bg-positive/10 border-positive/30',
   archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 

@@ -47,27 +47,27 @@ import { AlertEnrichmentForm } from './AlertEnrichmentForm';
 const API = '/api/tiresias/agentic-os/cyber/alerts';
 
 const SEVERITY_STYLE: Record<AlertSeverity, { badge: string; border: string }> = {
-  critical: { badge: 'text-red-200 bg-red-600/20 border-red-500/50',    border: 'border-l-red-500' },
-  high:     { badge: 'text-orange-300 bg-orange-500/10 border-orange-500/30', border: 'border-l-orange-400' },
-  medium:   { badge: 'text-amber-300 bg-amber-500/10 border-amber-500/30',    border: 'border-l-amber-400' },
-  low:      { badge: 'text-blue-300 bg-blue-500/10 border-blue-500/30',       border: 'border-l-blue-400' },
-  info:     { badge: 'text-slate-300 bg-slate-500/10 border-slate-500/30',    border: 'border-l-slate-400' },
+  critical: { badge: 'text-danger bg-danger/20 border-danger/50',    border: 'border-l-danger' },
+  high:     { badge: 'text-attention bg-attention/10 border-attention/30', border: 'border-l-attention' },
+  medium:   { badge: 'text-warning bg-warning/10 border-warning/30',    border: 'border-l-warning' },
+  low:      { badge: 'text-accent bg-accent/10 border-accent/30',       border: 'border-l-accent' },
+  info:     { badge: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',    border: 'border-l-text-secondary' },
 };
 
 /** Severity-band header accent — drives the band label dot + count pill. */
 const SEVERITY_BAND: Record<AlertSeverity, string> = {
-  critical: 'text-red-300',
-  high:     'text-orange-300',
-  medium:   'text-amber-300',
-  low:      'text-blue-300',
-  info:     'text-slate-400',
+  critical: 'text-danger',
+  high:     'text-attention',
+  medium:   'text-warning',
+  low:      'text-accent',
+  info:     'text-text-secondary',
 };
 
 const STATUS_STYLE: Record<AlertStatus, string> = {
-  open:          'text-red-300 bg-red-500/10 border-red-500/30',
-  investigating: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  resolved:      'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  false_positive:'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  open:          'text-danger bg-danger/10 border-danger/30',
+  investigating: 'text-warning bg-warning/10 border-warning/30',
+  resolved:      'text-positive bg-positive/10 border-positive/30',
+  false_positive:'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 const inputCls =
@@ -217,11 +217,11 @@ function AlertCard({
             <button
               onClick={save}
               disabled={saving}
-              className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+              className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
             >
               {saving ? 'Saving…' : 'Update'}
             </button>
-            {saveError && <span className="text-sm text-red-300">{saveError}</span>}
+            {saveError && <span className="text-sm text-danger">{saveError}</span>}
           </div>
 
           <AlertEnrichmentForm

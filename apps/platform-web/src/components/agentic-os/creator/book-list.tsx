@@ -27,7 +27,7 @@ interface BookListProps {
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-border-subtle text-text-secondary',
   writing: 'bg-accent/20 text-accent',
-  complete: 'bg-emerald-500/20 text-emerald-400',
+  complete: 'bg-positive/20 text-positive',
   published: 'bg-os-creator/20 text-os-creator',
 };
 

@@ -623,7 +623,7 @@ export default async function ResearchExperimentDetailPage({ params, searchParam
           <Link
             href={`/dashboard/os/research/coach?experiment_id=${experiment.id}&mode=methods_advisor`}
             data-testid="coach-tab-cta"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition"
           >
             <Sparkles className="w-4 h-4" />
             Open experiment coach

@@ -27,7 +27,7 @@ export function CoachQuickPrompts({ mode, onPick, disabled }: Props) {
           type="button"
           disabled={disabled}
           onClick={() => onPick(s)}
-          className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
+          className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-border-strong hover:bg-surface-1 transition px-3 py-2 disabled:opacity-50"
         >
           {s}
         </button>

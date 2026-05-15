@@ -17,11 +17,11 @@ import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { AttachAlertDialog } from './AttachAlertDialog';
 
 const SEVERITY_BADGE: Record<string, string> = {
-  critical: 'text-red-200 bg-red-600/20 border-red-500/50',
-  high:     'text-orange-300 bg-orange-500/10 border-orange-500/30',
-  medium:   'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  low:      'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  info:     'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  critical: 'text-danger bg-danger/20 border-danger/50',
+  high:     'text-attention bg-attention/10 border-attention/30',
+  medium:   'text-warning bg-warning/10 border-warning/30',
+  low:      'text-accent bg-accent/10 border-accent/30',
+  info:     'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export interface CaseAlertsPanelProps {
@@ -67,7 +67,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
         <button
           type="button"
           onClick={() => setShowAttach(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           Attach alert
@@ -111,7 +111,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
                 type="button"
                 onClick={() => detach(a.id)}
                 disabled={busy === a.id}
-                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
+                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-danger hover:border-danger/50 disabled:opacity-60 px-2 py-1 text-xs transition"
                 aria-label="Detach alert"
               >
                 <Link2Off className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ export function CaseAlertsPanel({ caseId, linkedAlerts }: CaseAlertsPanelProps) 
         </ul>
       )}
 
-      {error && <p className="text-sm text-red-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {showAttach && (
         <AttachAlertDialog

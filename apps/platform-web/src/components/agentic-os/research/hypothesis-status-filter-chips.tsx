@@ -25,12 +25,12 @@ import type { HypothesisStatus } from '@/lib/agentic-os/research/hypotheses';
 
 /** Per-status chip tint when active — mirrors HypothesisLedger STATUS_COLOR. */
 const STATUS_CHIP_ACTIVE: Record<HypothesisStatus, string> = {
-  draft: 'text-slate-300 bg-slate-500/15 border-slate-500/40',
-  active: 'text-blue-300 bg-blue-500/15 border-blue-500/40',
-  testing: 'text-amber-300 bg-amber-500/15 border-amber-500/40',
-  supported: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/40',
-  refuted: 'text-red-300 bg-red-500/15 border-red-500/40',
-  inconclusive: 'text-violet-300 bg-violet-500/15 border-violet-500/40',
+  draft: 'text-text-secondary bg-text-secondary/15 border-text-secondary/40',
+  active: 'text-accent bg-accent/15 border-accent/40',
+  testing: 'text-warning bg-warning/15 border-warning/40',
+  supported: 'text-positive bg-positive/15 border-positive/40',
+  refuted: 'text-danger bg-danger/15 border-danger/40',
+  inconclusive: 'text-accent bg-accent/15 border-accent/40',
   archived: 'text-text-secondary bg-surface-3 border-border-strong',
 };
 

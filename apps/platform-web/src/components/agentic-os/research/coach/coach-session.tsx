@@ -173,7 +173,7 @@ export function CoachSession({
               {COACH_MODE_LABELS[mode]}
             </span>
             {experimentId && (
-              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 shrink-0">
+              <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-positive/30 bg-positive/10 text-positive shrink-0">
                 experiment-scoped
               </span>
             )}
@@ -181,7 +181,7 @@ export function CoachSession({
           <button
             type="button"
             onClick={deleteSession}
-            className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-red-300 transition"
+            className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-danger transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Delete
@@ -193,7 +193,7 @@ export function CoachSession({
         {error && (
           <div
             role="alert"
-            className="mt-2 rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+            className="mt-2 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
           >
             {error}
           </div>
@@ -219,12 +219,12 @@ export function CoachSession({
                   void send();
                 }
               }}
-              className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
+              className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-tertiary px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={streaming || !text.trim()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               Send

@@ -167,7 +167,7 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
                 <button
                   type="button"
                   onClick={() => handleUnlink(r.paper.id, r.link.relevance)}
-                  className="text-text-secondary hover:text-rose-300"
+                  className="text-text-secondary hover:text-danger"
                   aria-label="Unlink"
                   data-testid={`paper-reference-unlink-${r.link.id}`}
                 >
@@ -265,7 +265,7 @@ export function PaperReferenceLinker({ experimentId, initialReferences }: Props)
         </div>
 
         {error && (
-          <p className="text-xs text-rose-300" data-testid="paper-reference-error">
+          <p className="text-xs text-danger" data-testid="paper-reference-error">
             {error}
           </p>
         )}

@@ -10,11 +10,11 @@ import { CheckCircle2, Circle, XCircle, AlertCircle, Loader2 } from 'lucide-reac
 import type { PlaybookStepRun, PlaybookStepRunStatus } from '@/lib/agentic-os/cyber/playbooks';
 
 const STATUS_STYLE: Record<PlaybookStepRunStatus, { cls: string; Icon: typeof CheckCircle2 }> = {
-  pending:     { cls: 'text-slate-300 bg-slate-500/10 border-slate-500/30', Icon: Circle },
-  in_progress: { cls: 'text-amber-300 bg-amber-500/10 border-amber-500/30', Icon: Loader2 },
-  completed:   { cls: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30', Icon: CheckCircle2 },
-  skipped:     { cls: 'text-slate-400 bg-slate-500/10 border-slate-500/30', Icon: XCircle },
-  blocked:     { cls: 'text-red-300 bg-red-500/10 border-red-500/30', Icon: AlertCircle },
+  pending:     { cls: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30', Icon: Circle },
+  in_progress: { cls: 'text-warning bg-warning/10 border-warning/30', Icon: Loader2 },
+  completed:   { cls: 'text-positive bg-positive/10 border-positive/30', Icon: CheckCircle2 },
+  skipped:     { cls: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30', Icon: XCircle },
+  blocked:     { cls: 'text-danger bg-danger/10 border-danger/30', Icon: AlertCircle },
 };
 
 export function PlaybookRunStepCard({ stepRun }: { stepRun: PlaybookStepRun }) {

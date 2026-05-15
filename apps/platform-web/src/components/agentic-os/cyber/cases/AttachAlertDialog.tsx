@@ -166,7 +166,7 @@ export function AttachAlertDialog({
                     type="button"
                     onClick={() => attach(a.id)}
                     disabled={busy === a.id}
-                    className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white px-2.5 py-1 text-xs transition"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-60 text-white px-2.5 py-1 text-xs transition"
                   >
                     {busy === a.id ? 'Attaching…' : 'Attach'}
                   </button>
@@ -174,7 +174,7 @@ export function AttachAlertDialog({
               ))}
             </ul>
           )}
-          {error && <p className="text-sm text-red-300 mt-3">{error}</p>}
+          {error && <p className="text-sm text-danger mt-3">{error}</p>}
         </div>
       </div>
     </div>

@@ -60,7 +60,7 @@ export default async function ProtocolDetailPage({ params }: Props) {
                 v{protocol.version}
               </span>
               {protocol.parentProtocolId == null && (
-                <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-emerald-500/40 text-emerald-300 bg-emerald-500/10">
+                <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-positive/40 text-positive bg-positive/10">
                   Root
                 </span>
               )}

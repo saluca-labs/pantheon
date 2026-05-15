@@ -11,11 +11,11 @@ import { BookText, ListChecks, Hash } from 'lucide-react';
 import type { Playbook, PlaybookLifecycle } from '@/lib/agentic-os/cyber/playbooks';
 
 const LIFECYCLE_STYLE: Record<PlaybookLifecycle, string> = {
-  draft:      'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  testing:    'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  active:     'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  deprecated: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  archived:   'text-slate-400 bg-slate-500/10 border-slate-500/30',
+  draft:      'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  testing:    'text-accent bg-accent/10 border-accent/30',
+  active:     'text-positive bg-positive/10 border-positive/30',
+  deprecated: 'text-warning bg-warning/10 border-warning/30',
+  archived:   'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export function PlaybookCard({ playbook }: { playbook: Playbook }) {

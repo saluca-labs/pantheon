@@ -47,9 +47,9 @@ export function ChatLayout({ conversation, conversations }: ChatLayoutProps) {
       {/* Right: Chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header controls */}
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-zinc-800 bg-zinc-900/70">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-border-subtle bg-surface-1/70">
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-zinc-100 truncate">
+            <h1 className="text-sm font-semibold text-text-primary truncate">
               {conversation.title}
             </h1>
           </div>
@@ -60,7 +60,7 @@ export function ChatLayout({ conversation, conversations }: ChatLayoutProps) {
         </div>
 
         {/* System prompt editor */}
-        <div className="bg-zinc-900/50">
+        <div className="bg-surface-1/50">
           <SystemPromptEditor
             value={conversation.systemPrompt}
             onChange={handleSystemPromptChange}

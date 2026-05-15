@@ -58,7 +58,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'Add evidence'}
@@ -155,7 +155,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
                       type="button"
                       onClick={() => remove(ev.id)}
                       disabled={busy === ev.id}
-                      className="inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 px-2 py-1 text-xs transition"
+                      className="inline-flex items-center gap-1 rounded-md border border-border-subtle text-text-secondary hover:text-danger hover:border-danger/50 disabled:opacity-60 px-2 py-1 text-xs transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       Delete
@@ -178,7 +178,7 @@ export function CaseEvidencePanel({ caseId, evidence }: CaseEvidencePanelProps) 
         </ul>
       )}
 
-      {error && <p className="text-sm text-red-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

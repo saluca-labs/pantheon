@@ -75,14 +75,14 @@ function computeWordCount(content: Record<string, unknown>): number {
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-border-subtle text-text-secondary',
   writing: 'bg-accent/20 text-accent',
-  complete: 'bg-emerald-500/20 text-emerald-400',
-  published: 'bg-fuchsia-500/20 text-fuchsia-400',
+  complete: 'bg-positive/20 text-positive',
+  published: 'bg-os-creator/20 text-os-creator',
 };
 
 const CHAPTER_STATUS_COLORS: Record<string, string> = {
-  draft: 'text-[#64748b]',
-  revised: 'text-amber-400',
-  final: 'text-emerald-400',
+  draft: 'text-text-tertiary',
+  revised: 'text-warning',
+  final: 'text-positive',
 };
 
 // ─── Sortable Chapter Row ───────────────────────────────────────────────────
@@ -124,7 +124,7 @@ function SortableChapterRow({
       <button
         type="button"
         aria-label={`Drag to reorder ${chapter.title || 'chapter'}`}
-        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-text-tertiary hover:text-[#64748b] transition-opacity shrink-0"
+        className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-text-tertiary hover:text-text-secondary transition-opacity shrink-0"
         {...attributes}
         {...listeners}
       >
@@ -312,7 +312,7 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
           <button
             type="button"
             onClick={() => router.push('/dashboard/os/creator/books')}
-            className="inline-flex items-center gap-1 text-xs text-[#64748b] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-xs text-text-tertiary hover:text-white transition-colors"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Books
@@ -338,11 +338,11 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
           </select>
 
           {/* Stats */}
-          <div className="flex items-center justify-between text-[10px] text-[#64748b]">
+          <div className="flex items-center justify-between text-[10px] text-text-tertiary">
             <span>{chapterList.length} chapter{chapterList.length !== 1 ? 's' : ''}</span>
             <span>{totalWordCount.toLocaleString()} words</span>
           </div>
-          <div className="text-[10px] text-[#64748b]">
+          <div className="text-[10px] text-text-tertiary">
             ~{readingTimeMin} min reading time
           </div>
 
@@ -352,14 +352,14 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
 
         {/* Chapter list header */}
         <div className="flex items-center justify-between px-4 py-2">
-          <span className="text-xs font-medium text-[#64748b] uppercase tracking-wider">
+          <span className="text-xs font-medium text-text-tertiary uppercase tracking-wider">
             Chapters
           </span>
           <button
             type="button"
             onClick={handleCreateChapter}
             disabled={creatingChapter}
-            className="text-accent hover:text-[#5a7bff] disabled:opacity-50 transition-colors"
+            className="text-accent hover:text-accent/80 disabled:opacity-50 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -410,10 +410,10 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
                 className="flex-1 bg-transparent text-white font-medium text-sm border border-transparent hover:border-border-subtle focus:border-accent rounded px-2 py-1 outline-none transition-colors"
               />
 
-              <span className="text-xs text-[#64748b] shrink-0">
+              <span className="text-xs text-text-tertiary shrink-0">
                 {selectedChapter.wordCount.toLocaleString()} words
               </span>
-              <span className="text-xs text-[#64748b] shrink-0">
+              <span className="text-xs text-text-tertiary shrink-0">
                 ~{Math.max(1, Math.ceil(selectedChapter.wordCount / 238))} min
               </span>
             </div>
@@ -430,7 +430,7 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <p className="text-[#64748b] text-sm">
+              <p className="text-text-tertiary text-sm">
                 {chapterList.length === 0
                   ? 'Add a chapter to start writing.'
                   : 'Select a chapter from the left panel.'}

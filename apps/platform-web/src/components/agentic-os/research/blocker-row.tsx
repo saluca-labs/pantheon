@@ -19,8 +19,8 @@ import {
 } from '@/lib/agentic-os/research/blockers';
 
 const SEVERITY_STYLE: Record<BlockerSeverity, string> = {
-  high: 'border-red-500/60 text-red-300 bg-red-500/10',
-  medium: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
+  high: 'border-danger/60 text-danger bg-danger/10',
+  medium: 'border-warning/50 text-warning bg-warning/5',
 };
 
 interface Props {

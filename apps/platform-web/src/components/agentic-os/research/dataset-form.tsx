@@ -199,7 +199,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
         Raw data archived externally (Zenodo, institutional repo, etc.)
       </label>
 
-      {err && <p className="text-xs text-rose-400">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
 
       <div className="flex justify-end gap-2">
         {onClose && (

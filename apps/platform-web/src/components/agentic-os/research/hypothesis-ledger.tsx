@@ -70,12 +70,12 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_COLOR: Record<HypothesisStatus, string> = {
-  draft:        'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  active:       'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  testing:      'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  supported:    'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  refuted:      'text-red-300 bg-red-500/10 border-red-500/30',
-  inconclusive: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
+  draft:        'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  active:       'text-accent bg-accent/10 border-accent/30',
+  testing:      'text-warning bg-warning/10 border-warning/30',
+  supported:    'text-positive bg-positive/10 border-positive/30',
+  refuted:      'text-danger bg-danger/10 border-danger/30',
+  inconclusive: 'text-accent bg-accent/10 border-accent/30',
   archived:     'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
@@ -220,7 +220,7 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
         </Field>
       </div>
       {errors.length > 0 && (
-        <ul className="text-sm text-red-300 space-y-0.5">
+        <ul className="text-sm text-danger space-y-0.5">
           {errors.map((e, i) => (
             <li key={i}>{e}</li>
           ))}
@@ -229,7 +229,7 @@ function NewHypothesisForm({ onCreated }: { onCreated: (h: Hypothesis) => void }
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
       >
         {saving ? 'Adding…' : 'Add hypothesis'}
       </button>

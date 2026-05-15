@@ -13,11 +13,11 @@ import {
 
 const STATUS_STYLE: Record<MilestoneStatus, string> = {
   pending: 'border-border-subtle bg-surface-0 text-text-secondary',
-  at_risk: 'border-yellow-500/50 bg-yellow-500/5 text-yellow-300',
-  blocked: 'border-red-500/50 bg-red-500/5 text-red-300',
-  on_track: 'border-emerald-500/50 bg-emerald-500/5 text-emerald-300',
+  at_risk: 'border-warning/50 bg-warning/5 text-warning',
+  blocked: 'border-danger/50 bg-danger/5 text-danger',
+  on_track: 'border-positive/50 bg-positive/5 text-positive',
   done: 'border-accent/50 bg-accent/10 text-white',
-  missed: 'border-red-600/60 bg-red-500/10 text-red-300',
+  missed: 'border-danger/60 bg-danger/10 text-danger',
 };
 
 interface Props {

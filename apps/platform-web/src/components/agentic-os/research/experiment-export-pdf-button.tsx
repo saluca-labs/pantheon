@@ -75,7 +75,7 @@ export function ExperimentExportPdfButton({ experimentId }: Props) {
         Export PDF
       </button>
       {err && (
-        <span className="text-xs text-rose-400" data-testid="experiment-export-pdf-error">
+        <span className="text-xs text-danger" data-testid="experiment-export-pdf-error">
           {err}
         </span>
       )}

@@ -53,19 +53,19 @@ export function CloseExposureDialog({ exposureId }: { exposureId: string }) {
       </label>
       <div className="flex gap-2 flex-wrap">
         <button type="button" disabled={busy} onClick={() => close('mitigated')}
-          className="inline-flex items-center gap-1.5 rounded-md border border-blue-500/30 bg-blue-500/10 text-blue-300 px-3 py-2 text-sm hover:bg-blue-500/20 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-md border border-accent/30 bg-accent/10 text-accent px-3 py-2 text-sm hover:bg-accent/20 disabled:opacity-50">
           <ShieldCheck className="w-4 h-4" /> Mitigated
         </button>
         <button type="button" disabled={busy} onClick={() => close('resolved')}
-          className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 px-3 py-2 text-sm hover:bg-emerald-500/20 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-md border border-positive/30 bg-positive/10 text-positive px-3 py-2 text-sm hover:bg-positive/20 disabled:opacity-50">
           <Check className="w-4 h-4" /> Resolved
         </button>
         <button type="button" disabled={busy} onClick={() => close('false_positive')}
-          className="inline-flex items-center gap-1.5 rounded-md border border-slate-500/30 bg-slate-500/10 text-slate-300 px-3 py-2 text-sm hover:bg-slate-500/20 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-md border border-text-secondary/30 bg-text-secondary/10 text-text-secondary px-3 py-2 text-sm hover:bg-text-secondary/20 disabled:opacity-50">
           <X className="w-4 h-4" /> False positive
         </button>
       </div>
-      {err && <p className="text-xs text-red-300">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
     </div>
   );
 }

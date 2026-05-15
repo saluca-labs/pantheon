@@ -125,7 +125,7 @@ export function MilestoneList({ experimentId, initialMilestones }: Props) {
                     <button
                       type="button"
                       onClick={() => handleDelete(m.id)}
-                      className="rounded border border-red-500/40 bg-surface-0 p-1 text-red-300 hover:bg-red-500/10"
+                      className="rounded border border-danger/40 bg-surface-0 p-1 text-danger hover:bg-danger/10"
                       title="Delete"
                       data-testid={`milestone-delete-${m.id}`}
                     >

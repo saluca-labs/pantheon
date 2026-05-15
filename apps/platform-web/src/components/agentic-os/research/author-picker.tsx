@@ -177,7 +177,7 @@ export function AuthorPicker({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => removeAt(i)}
-                className="text-text-secondary hover:text-rose-300"
+                className="text-text-secondary hover:text-danger"
                 aria-label="Remove"
                 data-testid={`author-picker-remove-${i}`}
               >
@@ -285,7 +285,7 @@ export function AuthorPicker({ value, onChange }: Props) {
             />
           </div>
           {error && (
-            <p className="text-xs text-rose-300" data-testid="author-picker-create-error">
+            <p className="text-xs text-danger" data-testid="author-picker-create-error">
               {error}
             </p>
           )}

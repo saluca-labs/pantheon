@@ -28,14 +28,14 @@ function MessageBubble({
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? 'bg-fuchsia-600 text-white rounded-br-md'
-            : 'bg-zinc-800 text-zinc-100 rounded-bl-md border border-zinc-700/50'
+            ? 'bg-os-creator text-white rounded-br-md'
+            : 'bg-surface-2 text-text-primary rounded-bl-md border border-border-strong/50'
         }`}
       >
         {isUser ? (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         ) : (
-          <div className="prose prose-invert prose-sm max-w-none [&_pre]:bg-zinc-900 [&_pre]:border [&_pre]:border-zinc-700 [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-zinc-600 [&_blockquote]:pl-3 [&_blockquote]:text-zinc-400 [&_table]:text-xs [&_th]:border [&_th]:border-zinc-700 [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:border-zinc-700 [&_td]:px-2 [&_td]:py-1">
+          <div className="prose prose-invert prose-sm max-w-none [&_pre]:bg-surface-1 [&_pre]:border [&_pre]:border-border-strong [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:overflow-x-auto [&_code]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-text-tertiary [&_blockquote]:pl-3 [&_blockquote]:text-text-secondary [&_table]:text-xs [&_th]:border [&_th]:border-border-strong [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:border-border-strong [&_td]:px-2 [&_td]:py-1">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
@@ -216,13 +216,13 @@ export function ChatWindow({
         {displayMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="h-12 w-12 rounded-full bg-fuchsia-600/20 flex items-center justify-center mx-auto mb-3">
-                <Send className="h-6 w-6 text-fuchsia-400" />
+              <div className="h-12 w-12 rounded-full bg-os-creator/20 flex items-center justify-center mx-auto mb-3">
+                <Send className="h-6 w-6 text-os-creator" />
               </div>
-              <h3 className="text-sm font-medium text-zinc-300 mb-1">
+              <h3 className="text-sm font-medium text-text-secondary mb-1">
                 Start a conversation
               </h3>
-              <p className="text-xs text-zinc-500 max-w-xs">
+              <p className="text-xs text-text-tertiary max-w-xs">
                 Send a message to begin. You can switch models and set a system
                 prompt from the header controls.
               </p>
@@ -248,7 +248,7 @@ export function ChatWindow({
       </div>
 
       {/* Input area */}
-      <div className="border-t border-zinc-800 bg-zinc-900/70 px-4 py-3">
+      <div className="border-t border-border-subtle bg-surface-1/70 px-4 py-3">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -261,14 +261,14 @@ export function ChatWindow({
             placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
             rows={1}
             disabled={streaming}
-            className="flex-1 resize-none rounded-xl border border-zinc-700 bg-zinc-800 text-zinc-100 text-sm px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 placeholder:text-zinc-500 disabled:opacity-50"
+            className="flex-1 resize-none rounded-xl border border-border-strong bg-surface-2 text-text-primary text-sm px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-os-creator/50 placeholder:text-text-tertiary disabled:opacity-50"
           />
 
           {streaming ? (
             <button
               type="button"
               onClick={handleStop}
-              className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-red-600/80 text-white hover:bg-red-500 transition-colors"
+              className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-danger/80 text-white hover:bg-danger transition-colors"
               title="Stop generating"
             >
               <div className="h-3 w-3 rounded-sm bg-white" />
@@ -278,7 +278,7 @@ export function ChatWindow({
               type="button"
               onClick={handleSend}
               disabled={!input.trim()}
-              className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-fuchsia-600 text-white hover:bg-fuchsia-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-os-creator text-white hover:bg-os-creator/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="h-4 w-4" />
             </button>

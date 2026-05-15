@@ -24,12 +24,12 @@ export function IocCard({ ioc }: { ioc: Ioc }) {
             {ioc.kind}
           </span>
           {ioc.threatType && (
-            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-red-500/30 text-red-300">
+            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-danger/30 text-danger">
               {ioc.threatType}
             </span>
           )}
           {expired && (
-            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-amber-500/30 text-amber-300">
+            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full border border-warning/30 text-warning">
               expired
             </span>
           )}

@@ -15,10 +15,10 @@ interface Props {
 
 function styleForScore(score: number | null): string {
   if (score == null) return 'border-border-subtle bg-surface-0 text-text-secondary';
-  if (score >= 0.8) return 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300';
-  if (score >= 0.5) return 'border-sky-500/50 bg-sky-500/10 text-sky-300';
-  if (score >= 0.25) return 'border-amber-500/50 bg-amber-500/10 text-amber-300';
-  return 'border-red-500/50 bg-red-500/10 text-red-300';
+  if (score >= 0.8) return 'border-positive/50 bg-positive/10 text-positive';
+  if (score >= 0.5) return 'border-os-research/50 bg-os-research/10 text-os-research';
+  if (score >= 0.25) return 'border-warning/50 bg-warning/10 text-warning';
+  return 'border-danger/50 bg-danger/10 text-danger';
 }
 
 export function ReproducibilityScoreBadge({ score, size = 'sm' }: Props) {

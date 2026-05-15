@@ -27,9 +27,9 @@ interface VideoListProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  processing: 'bg-amber-500/20 text-amber-400',
-  ready: 'bg-emerald-500/20 text-emerald-400',
-  failed: 'bg-red-500/20 text-red-400',
+  processing: 'bg-warning/20 text-warning',
+  ready: 'bg-positive/20 text-positive',
+  failed: 'bg-danger/20 text-danger',
 };
 
 function formatDuration(seconds: number | null): string {

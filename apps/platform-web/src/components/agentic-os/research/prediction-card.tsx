@@ -15,16 +15,16 @@ import {
 } from '@/lib/agentic-os/research/predictions';
 
 const KIND_COLOR: Record<string, string> = {
-  positive:  'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  negative:  'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  magnitude: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  direction: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
+  positive:  'text-positive bg-positive/10 border-positive/30',
+  negative:  'text-danger bg-danger/10 border-danger/30',
+  magnitude: 'text-warning bg-warning/10 border-warning/30',
+  direction: 'text-accent bg-accent/10 border-accent/30',
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
   low:    'text-text-secondary bg-surface-0 border-border-subtle',
-  medium: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  high:   'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  medium: 'text-warning bg-warning/10 border-warning/30',
+  high:   'text-positive bg-positive/10 border-positive/30',
 };
 
 interface Props {
@@ -103,7 +103,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
               <button
                 onClick={handleDelete}
                 disabled={busy}
-                className="text-red-300 hover:text-red-200 disabled:opacity-50"
+                className="text-danger hover:text-danger/80 disabled:opacity-50"
               >
                 Yes
               </button>
@@ -117,7 +117,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
           ) : (
             <button
               onClick={() => setConfirmingDelete(true)}
-              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
+              className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-danger transition"
             >
               <Trash2 className="w-3 h-3" /> Delete
             </button>
@@ -125,7 +125,7 @@ export function PredictionCard({ prediction, onUpdated, onDeleted }: Props) {
         </div>
       </div>
       {error && (
-        <p className="text-xs text-red-300" role="alert">
+        <p className="text-xs text-danger" role="alert">
           {error}
         </p>
       )}

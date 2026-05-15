@@ -18,9 +18,9 @@ import { EmptyState } from '@/components/agentic-os/_shared/views';
 type RunWithPlaybook = PlaybookRun & { playbookName: string };
 
 const STATUS_STYLE: Record<PlaybookRunStatus, { cls: string; Icon: typeof Play }> = {
-  in_progress: { cls: 'text-amber-300 bg-amber-500/10 border-amber-500/30', Icon: Play },
-  completed:   { cls: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30', Icon: CheckCircle2 },
-  abandoned:   { cls: 'text-slate-400 bg-slate-500/10 border-slate-500/30', Icon: XCircle },
+  in_progress: { cls: 'text-warning bg-warning/10 border-warning/30', Icon: Play },
+  completed:   { cls: 'text-positive bg-positive/10 border-positive/30', Icon: CheckCircle2 },
+  abandoned:   { cls: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30', Icon: XCircle },
 };
 
 export function RunsListPanel({ runs }: { runs: RunWithPlaybook[] }) {

@@ -40,7 +40,7 @@ export function FalsifierList({ hypothesisId, initialFalsifiers }: Props) {
             id="falsifiers-heading"
             className="text-sm font-semibold text-white uppercase tracking-wide inline-flex items-center gap-2"
           >
-            <AlertOctagon className="w-4 h-4 text-rose-300" />
+            <AlertOctagon className="w-4 h-4 text-danger" />
             Falsifiers
           </h2>
           <p className="text-xs text-text-secondary">

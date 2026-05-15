@@ -67,20 +67,20 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-text-primary">
           {podcast ? 'Podcast Settings' : 'Create Your Podcast'}
         </h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white hover:bg-fuchsia-400 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center rounded-lg bg-os-creator px-4 py-2 text-sm font-semibold text-white hover:bg-os-creator/90 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -88,7 +88,7 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -96,8 +96,8 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label htmlFor={fid('title')} className="block text-sm font-medium text-zinc-400 mb-1.5">
-            Show Title <span className="text-red-400">*</span>
+          <label htmlFor={fid('title')} className="block text-sm font-medium text-text-secondary mb-1.5">
+            Show Title <span className="text-danger">*</span>
           </label>
           <input
             id={fid('title')}
@@ -105,13 +105,13 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="My Awesome Podcast"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
         </div>
 
         {/* Author */}
         <div>
-          <label htmlFor={fid('author')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('author')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Author
           </label>
           <input
@@ -120,13 +120,13 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             placeholder="Your name"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label htmlFor={fid('description')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('description')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Description
           </label>
           <textarea
@@ -135,13 +135,13 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is your podcast about?"
             rows={4}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500 resize-y"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator resize-y"
           />
         </div>
 
         {/* Cover Image URL */}
         <div>
-          <label htmlFor={fid('cover-image')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('cover-image')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Cover Image URL
           </label>
           <input
@@ -150,15 +150,15 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             value={coverImageUrl}
             onChange={(e) => setCoverImageUrl(e.target.value)}
             placeholder="https://storage.example.com/cover.jpg"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
-          <p className="mt-1 text-xs text-zinc-600">iTunes recommends 1400x1400 minimum. URL-only — no upload.</p>
+          <p className="mt-1 text-xs text-text-tertiary">iTunes recommends 1400x1400 minimum. URL-only — no upload.</p>
         </div>
 
         {/* Row: Language + Category */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor={fid('language')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('language')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Language
             </label>
             <input
@@ -167,11 +167,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               placeholder="en"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
           <div>
-            <label htmlFor={fid('category')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('category')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Apple Podcasts Category
             </label>
             <input
@@ -180,14 +180,14 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="Technology"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
         </div>
 
         {/* Website URL */}
         <div>
-          <label htmlFor={fid('website')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('website')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Website URL
           </label>
           <input
@@ -196,7 +196,7 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
             placeholder="https://mywebsite.com/podcast"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
         </div>
 
@@ -207,9 +207,9 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             id="explicit"
             checked={explicit}
             onChange={(e) => setExplicit(e.target.checked)}
-            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-fuchsia-500 focus:ring-fuchsia-500"
+            className="h-4 w-4 rounded border-border-strong bg-surface-1 text-os-creator focus:ring-os-creator"
           />
-          <label htmlFor="explicit" className="text-sm font-medium text-zinc-400">
+          <label htmlFor="explicit" className="text-sm font-medium text-text-secondary">
             Explicit content
           </label>
         </div>

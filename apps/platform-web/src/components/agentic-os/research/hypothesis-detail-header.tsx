@@ -22,19 +22,19 @@ import {
 } from '@/lib/agentic-os/research/hypotheses';
 
 const STATUS_COLOR: Record<HypothesisStatus, string> = {
-  draft:        'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  active:       'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  testing:      'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  supported:    'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  refuted:      'text-red-300 bg-red-500/10 border-red-500/30',
-  inconclusive: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
+  draft:        'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  active:       'text-accent bg-accent/10 border-accent/30',
+  testing:      'text-warning bg-warning/10 border-warning/30',
+  supported:    'text-positive bg-positive/10 border-positive/30',
+  refuted:      'text-danger bg-danger/10 border-danger/30',
+  inconclusive: 'text-accent bg-accent/10 border-accent/30',
   archived:     'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  low:    'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  medium: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  high:   'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  low:    'text-danger bg-danger/10 border-danger/30',
+  medium: 'text-warning bg-warning/10 border-warning/30',
+  high:   'text-positive bg-positive/10 border-positive/30',
 };
 
 function statusLabel(status: HypothesisStatus): string {
@@ -161,7 +161,7 @@ export function HypothesisDetailHeader({ hypothesis }: Props) {
       )}
 
       {error && (
-        <p className="text-xs text-red-300 mt-3" role="alert">
+        <p className="text-xs text-danger mt-3" role="alert">
           {error}
         </p>
       )}

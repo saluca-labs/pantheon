@@ -98,7 +98,7 @@ export function IocForm({ onSaved, onCancel }: { onSaved?: () => void; onCancel?
         <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Value</span>
         <input value={value} onChange={(e) => setValue(e.target.value)} className={`${inputCls} font-mono text-xs`} />
         {value && !validation.ok && (
-          <p className="text-[11px] text-amber-300 mt-1">{validation.error}</p>
+          <p className="text-[11px] text-warning mt-1">{validation.error}</p>
         )}
       </label>
       <label className="block">
@@ -127,7 +127,7 @@ export function IocForm({ onSaved, onCancel }: { onSaved?: () => void; onCancel?
         <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Tags (comma-sep)</span>
         <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} className={inputCls} />
       </label>
-      {error && <p className="text-xs text-red-300">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex justify-end gap-2">
         {onCancel && (
           <button type="button" onClick={onCancel} className="px-3 py-2 text-sm rounded-md border border-border-subtle text-text-secondary hover:text-white">Cancel</button>
@@ -136,7 +136,7 @@ export function IocForm({ onSaved, onCancel }: { onSaved?: () => void; onCancel?
           type="button"
           onClick={save}
           disabled={saving || !value.trim() || !validation.ok}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium px-3 py-2 text-sm disabled:opacity-50 transition"
         >
           {saving ? 'Saving…' : 'Create IOC'}
         </button>

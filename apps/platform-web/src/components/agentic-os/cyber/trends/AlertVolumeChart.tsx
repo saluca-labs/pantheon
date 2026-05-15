@@ -36,13 +36,13 @@ export function AlertVolumeChart({
         {
           key: 'critical',
           label: 'Critical',
-          color: '#ef4444',
+          color: 'var(--danger)',
           data: alertsByDay.map((d) => ({ x: d.date, y: d.critical })),
         },
         {
           key: 'high',
           label: 'High',
-          color: '#f59e0b',
+          color: 'var(--warning)',
           data: alertsByDay.map((d) => ({ x: d.date, y: d.high })),
         },
       ]}

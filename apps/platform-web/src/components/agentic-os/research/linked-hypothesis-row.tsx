@@ -22,9 +22,9 @@ import {
 } from '@/lib/agentic-os/research/experiment-hypotheses';
 
 const ROLE_COLOR: Record<LinkRole, string> = {
-  tests:     'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  motivates: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  related:   'text-blue-300 bg-blue-500/10 border-blue-500/30',
+  tests:     'text-positive bg-positive/10 border-positive/30',
+  motivates: 'text-warning bg-warning/10 border-warning/30',
+  related:   'text-accent bg-accent/10 border-accent/30',
 };
 
 interface Props {
@@ -97,14 +97,14 @@ export function LinkedHypothesisRow({
       <button
         onClick={handleUnlink}
         disabled={busy}
-        className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 disabled:opacity-50 transition"
+        className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-danger disabled:opacity-50 transition"
         aria-label="Unlink hypothesis"
       >
         <X className="w-3 h-3" />
         {busy ? '…' : 'Unlink'}
       </button>
       {error && (
-        <p className="w-full text-xs text-red-300" role="alert">
+        <p className="w-full text-xs text-danger" role="alert">
           {error}
         </p>
       )}

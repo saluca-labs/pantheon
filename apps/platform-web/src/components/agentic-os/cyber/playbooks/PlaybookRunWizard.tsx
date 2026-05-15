@@ -118,7 +118,7 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
                 type="button"
                 onClick={() => void completeRun('completed')}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-positive/80 hover:bg-positive disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
               >
                 <Flag className="w-4 h-4" />
                 Complete run
@@ -127,7 +127,7 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
                 type="button"
                 onClick={() => void completeRun('abandoned')}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-danger/40 text-danger hover:bg-danger/10 disabled:opacity-60 px-3 py-1.5 text-sm transition"
               >
                 Abandon
               </button>
@@ -147,7 +147,7 @@ export function PlaybookRunWizard({ run: initialRun }: { run: PlaybookRunDetail 
       </header>
 
       {error && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/5 text-red-200 text-sm p-3">
+        <div className="rounded-xl border border-danger/40 bg-danger/5 text-danger text-sm p-3">
           {error}
         </div>
       )}
@@ -266,7 +266,7 @@ function CurrentStepEditor({
           type="button"
           onClick={() => onComplete(input, notes)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-positive/80 hover:bg-positive disabled:opacity-60 text-white font-medium px-3 py-1.5 text-sm transition"
         >
           <CheckCircle2 className="w-4 h-4" />
           Mark complete
@@ -284,7 +284,7 @@ function CurrentStepEditor({
           type="button"
           onClick={() => onBlock(notes)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 text-red-300 hover:bg-red-500/10 px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-danger/40 text-danger hover:bg-danger/10 px-3 py-1.5 text-sm transition"
         >
           <AlertOctagon className="w-4 h-4" />
           Block

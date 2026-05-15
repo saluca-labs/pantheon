@@ -107,7 +107,7 @@ export function ReproducibilityItemForm({
         </button>
       )}
       {error && (
-        <p className="basis-full text-xs text-red-300" data-testid="repro-item-form-error">
+        <p className="basis-full text-xs text-danger" data-testid="repro-item-form-error">
           {error}
         </p>
       )}

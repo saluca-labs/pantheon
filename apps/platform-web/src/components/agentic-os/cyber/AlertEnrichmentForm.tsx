@@ -180,11 +180,11 @@ export function AlertEnrichmentForm({
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {saving ? 'Saving…' : 'Save enrichment'}
         </button>
-        {error && <span className="text-sm text-red-300">{error}</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </div>
   );

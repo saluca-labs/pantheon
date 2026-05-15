@@ -50,11 +50,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const STATUS_COLORS: Record<PostStatus, string> = {
-  idea: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-  draft: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  scheduled: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  published: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  archived: 'bg-neutral-500/15 text-neutral-400 border-neutral-500/30',
+  idea: 'bg-text-secondary/15 text-text-secondary border-text-secondary/30',
+  draft: 'bg-accent/15 text-accent border-accent/30',
+  scheduled: 'bg-warning/15 text-warning border-warning/30',
+  published: 'bg-positive/15 text-positive border-positive/30',
+  archived: 'bg-text-secondary/15 text-text-secondary border-text-secondary/30',
 };
 
 /** The date a post is anchored to on the calendar — schedule wins, then publish. */
@@ -265,7 +265,7 @@ export function EditorialCalendar({ initial }: Props) {
           >
             {saving ? 'Adding…' : 'Add to calendar'}
           </button>
-          {error && <span className="text-sm text-red-300">{error}</span>}
+          {error && <span className="text-sm text-danger">{error}</span>}
         </div>
       </form>
 

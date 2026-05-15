@@ -126,7 +126,7 @@ export function ProtocolForm({ onClose }: Props) {
         />
       </label>
 
-      {err && <p className="text-xs text-rose-400">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
 
       <div className="flex justify-end gap-2">
         {onClose && (

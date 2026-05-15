@@ -236,16 +236,17 @@ const sigmaHighlightPlugin = ViewPlugin.fromClass(
   { decorations: (v) => v.decorations },
 );
 
-// Colors are literals here because CodeMirror theme objects don't accept CSS
-// vars. They mirror the design tokens: accent (#4361EE-ish brightened),
-// cyan keys, and per-type literal colors used elsewhere in the dark theme.
+// Colors map to design tokens via CSS vars (CodeMirror v6 accepts var() in
+// theme strings). Sigma syntax mapping: key/objkey → accent shades for
+// structure, string → positive, number → warning, bool → creator accent,
+// punct → tertiary text.
 const sigmaTheme = EditorView.theme({
-  '.cm-sigma-key': { color: '#818cf8', fontWeight: '700' },
-  '.cm-sigma-objkey': { color: '#67e8f9' },
-  '.cm-sigma-string': { color: '#86efac' },
-  '.cm-sigma-number': { color: '#fbbf24' },
-  '.cm-sigma-bool': { color: '#f472b6', fontWeight: '600' },
-  '.cm-sigma-punct': { color: '#64748b' },
+  '.cm-sigma-key': { color: 'var(--accent-base)', fontWeight: '700' },
+  '.cm-sigma-objkey': { color: 'var(--os-research)' },
+  '.cm-sigma-string': { color: 'var(--positive)' },
+  '.cm-sigma-number': { color: 'var(--warning)' },
+  '.cm-sigma-bool': { color: 'var(--os-creator)', fontWeight: '600' },
+  '.cm-sigma-punct': { color: 'var(--text-tertiary)' },
   '&': { fontSize: '12px' },
   '.cm-content': {
     fontFamily: '"JetBrains Mono", "Courier New", monospace',

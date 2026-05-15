@@ -126,20 +126,20 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-text-primary">
           {isNew ? 'New Episode' : 'Edit Episode'}
         </h1>
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-2 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center rounded-lg bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white hover:bg-fuchsia-400 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center rounded-lg bg-os-creator px-4 py-2 text-sm font-semibold text-white hover:bg-os-creator/90 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -147,7 +147,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             <button
               onClick={handlePublish}
               disabled={saving}
-              className="inline-flex items-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center rounded-lg bg-positive px-4 py-2 text-sm font-semibold text-white hover:bg-positive/90 disabled:opacity-50 transition-colors"
             >
               Publish
             </button>
@@ -156,7 +156,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}
@@ -164,8 +164,8 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label htmlFor={fid('title')} className="block text-sm font-medium text-zinc-400 mb-1.5">
-            Title <span className="text-red-400">*</span>
+          <label htmlFor={fid('title')} className="block text-sm font-medium text-text-secondary mb-1.5">
+            Title <span className="text-danger">*</span>
           </label>
           <input
             id={fid('title')}
@@ -173,13 +173,13 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Episode title"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label htmlFor={fid('description')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('description')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Description
           </label>
           <textarea
@@ -188,13 +188,13 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Episode description..."
             rows={3}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500 resize-y"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator resize-y"
           />
         </div>
 
         {/* Audio file URL */}
         <div>
-          <label htmlFor={fid('audio-url')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('audio-url')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Audio File URL
           </label>
           <input
@@ -203,14 +203,14 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             value={audioFileUrl}
             onChange={(e) => setAudioFileUrl(e.target.value)}
             placeholder="https://storage.example.com/episodes/ep1.mp3"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
           />
         </div>
 
         {/* Metadata row */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor={fid('duration')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('duration')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Duration (seconds)
             </label>
             <input
@@ -219,11 +219,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
               value={durationSeconds}
               onChange={(e) => setDurationSeconds(e.target.value)}
               placeholder="3600"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
           <div>
-            <label htmlFor={fid('file-size')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('file-size')} className="block text-sm font-medium text-text-secondary mb-1.5">
               File Size (bytes)
             </label>
             <input
@@ -232,11 +232,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
               value={fileSizeBytes}
               onChange={(e) => setFileSizeBytes(e.target.value)}
               placeholder="50000000"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
           <div>
-            <label htmlFor={fid('mime-type')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('mime-type')} className="block text-sm font-medium text-text-secondary mb-1.5">
               MIME Type
             </label>
             <input
@@ -245,7 +245,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
               value={mimeType}
               onChange={(e) => setMimeType(e.target.value)}
               placeholder="audio/mpeg"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
         </div>
@@ -253,7 +253,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
         {/* Season / Episode row */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor={fid('season')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('season')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Season
             </label>
             <input
@@ -262,11 +262,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
               value={seasonNumber}
               onChange={(e) => setSeasonNumber(e.target.value)}
               placeholder="1"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
           <div>
-            <label htmlFor={fid('episode-num')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('episode-num')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Episode #
             </label>
             <input
@@ -275,18 +275,18 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
               value={episodeNumber}
               onChange={(e) => setEpisodeNumber(e.target.value)}
               placeholder="auto"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             />
           </div>
           <div>
-            <label htmlFor={fid('episode-type')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('episode-type')} className="block text-sm font-medium text-text-secondary mb-1.5">
               Type
             </label>
             <select
               id={fid('episode-type')}
               value={episodeType}
               onChange={(e) => setEpisodeType(e.target.value as EpisodeType)}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
+              className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator"
             >
               <option value="full">Full</option>
               <option value="trailer">Trailer</option>
@@ -297,7 +297,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
 
         {/* Show notes */}
         <div>
-          <label htmlFor={fid('notes')} className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('notes')} className="block text-sm font-medium text-text-secondary mb-1.5">
             Show Notes (Markdown)
           </label>
           <textarea
@@ -306,7 +306,7 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             onChange={(e) => setNotesMd(e.target.value)}
             placeholder="## Show Notes&#10;&#10;- Topic 1&#10;- Topic 2"
             rows={8}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500 font-mono resize-y"
+            className="w-full rounded-lg border border-border-strong bg-surface-1 px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-os-creator focus:outline-none focus:ring-1 focus:ring-os-creator font-mono resize-y"
           />
         </div>
       </div>

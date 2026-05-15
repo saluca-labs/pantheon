@@ -38,7 +38,7 @@ export default async function CyberCoachLobbyPage() {
       </Link>
 
       <div className="flex items-center gap-3 mb-6">
-        <ShieldAlert className="w-6 h-6 text-red-400" />
+        <ShieldAlert className="w-6 h-6 text-os-cyber" />
         <h1 className="text-2xl font-semibold text-white">AI coach</h1>
       </div>
 
@@ -63,16 +63,16 @@ export default async function CyberCoachLobbyPage() {
                       className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
                     >
                       <div className="flex items-center gap-2">
-                        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
+                        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
                         <span className="truncate">
                           {c.title ?? 'Untitled conversation'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] uppercase tracking-wide text-red-400">
+                        <span className="text-[10px] uppercase tracking-wide text-os-cyber">
                           {COACH_MODE_LABELS[c.mode]}
                         </span>
-                        <span className="text-[10px] text-[#64748b]">
+                        <span className="text-[10px] text-text-tertiary">
                           {new Date(c.updatedAt).toLocaleDateString()}
                         </span>
                       </div>

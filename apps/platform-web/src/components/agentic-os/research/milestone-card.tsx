@@ -26,7 +26,7 @@ export function MilestoneCard({ milestone, today }: Props) {
   return (
     <div
       className={`rounded-lg border p-3 bg-surface-2 ${
-        overdue ? 'border-red-500/40' : 'border-border-subtle'
+        overdue ? 'border-danger/40' : 'border-border-subtle'
       }`}
       data-testid={`milestone-card-${milestone.id}`}
     >
@@ -39,7 +39,7 @@ export function MilestoneCard({ milestone, today }: Props) {
           <MilestonePriorityPill priority={milestone.priority} />
           {milestone.isBlocker && (
             <span
-              className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-red-500/60 bg-red-500/10 text-red-300"
+              className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-danger/60 bg-danger/10 text-danger"
               data-testid="milestone-blocker-flag"
             >
               <ShieldAlert className="w-3 h-3" />
@@ -51,7 +51,7 @@ export function MilestoneCard({ milestone, today }: Props) {
       <div className="mt-2 flex items-center gap-3 text-[11px] text-text-secondary flex-wrap">
         {milestone.dueAt && (
           <span
-            className={`inline-flex items-center gap-1 ${overdue ? 'text-red-300' : ''}`}
+            className={`inline-flex items-center gap-1 ${overdue ? 'text-danger' : ''}`}
           >
             <Calendar className="w-3 h-3" />
             Due {milestone.dueAt}
@@ -59,7 +59,7 @@ export function MilestoneCard({ milestone, today }: Props) {
           </span>
         )}
         {milestone.completedAt && (
-          <span className="inline-flex items-center gap-1 text-emerald-300">
+          <span className="inline-flex items-center gap-1 text-positive">
             <CheckCircle2 className="w-3 h-3" />
             Completed
           </span>

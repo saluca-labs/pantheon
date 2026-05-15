@@ -59,7 +59,7 @@ export function DatasetArchivedToggle({ datasetId, archived }: Props) {
         <Archive className="w-3.5 h-3.5" />
       )}
       {archived ? 'Mark active' : 'Mark archived'}
-      {err && <span className="text-rose-400 ml-1">({err})</span>}
+      {err && <span className="text-danger ml-1">({err})</span>}
     </button>
   );
 }

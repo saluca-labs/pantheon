@@ -11,9 +11,9 @@ import {
 
 const PRIORITY_STYLE: Record<MilestonePriority, string> = {
   low: 'border-border-subtle bg-surface-0 text-text-secondary',
-  medium: 'border-sky-500/40 bg-sky-500/5 text-sky-300',
-  high: 'border-amber-500/50 bg-amber-500/5 text-amber-300',
-  critical: 'border-red-500/60 bg-red-500/10 text-red-300',
+  medium: 'border-os-research/40 bg-os-research/5 text-os-research',
+  high: 'border-warning/50 bg-warning/5 text-warning',
+  critical: 'border-danger/60 bg-danger/10 text-danger',
 };
 
 interface Props {
