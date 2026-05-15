@@ -1,6 +1,7 @@
 'use client';
 
 import type { ProviderHealthResponse } from '@/lib/api/schemas/provider-health';
+import { Skeleton } from '@/components/agentic-os/_shared/views';
 
 interface StatusCardsProps {
   data: ProviderHealthResponse | undefined;
@@ -20,11 +21,7 @@ function SkeletonCards() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="animate-pulse bg-border-subtle rounded-lg h-24"
-          aria-hidden="true"
-        />
+        <Skeleton key={i} variant="widget" />
       ))}
     </div>
   );

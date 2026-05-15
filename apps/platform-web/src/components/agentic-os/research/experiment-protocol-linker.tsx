@@ -11,9 +11,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { Protocol } from '@/lib/agentic-os/research/protocols';
 import { PROTOCOL_KIND_LABELS } from '@/lib/agentic-os/research/protocol-kinds';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   experimentId: string;
@@ -174,7 +175,7 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="experiment-protocol-linker-submit"
         >
-          {busy && <Loader2 className="w-3 h-3 animate-spin" />}
+          {busy && <Spinner size="xs" />}
           Pin
         </button>
       </div>

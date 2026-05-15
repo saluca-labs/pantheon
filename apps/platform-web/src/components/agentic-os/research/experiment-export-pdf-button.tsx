@@ -10,7 +10,8 @@
  */
 
 import { useState } from 'react';
-import { FileDown, Loader2 } from 'lucide-react';
+import { FileDown } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   experimentId: string;
@@ -67,7 +68,7 @@ export function ExperimentExportPdfButton({ experimentId }: Props) {
         data-testid="experiment-export-pdf-button"
       >
         {busy ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <Spinner size="sm" />
         ) : (
           <FileDown className="w-3.5 h-3.5" />
         )}
