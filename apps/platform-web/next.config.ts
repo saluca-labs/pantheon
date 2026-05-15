@@ -39,6 +39,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: monorepoRoot,
   },
+  // W-E.3 — enable Next 16's experimental View Transitions integration so
+  // `document.startViewTransition` calls from the new `useViewTransition`
+  // hook drive RSC navigation animations on supported browsers. CSS-only
+  // cross-document transitions are configured separately in `globals.css`
+  // (`@view-transition { navigation: auto; }`).
+  experimental: {
+    viewTransition: true,
+  },
   async rewrites() {
     return {
       // beforeFiles runs before Next.js's internal /_next/* static handler,
