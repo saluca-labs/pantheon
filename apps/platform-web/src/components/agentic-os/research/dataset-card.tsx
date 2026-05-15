@@ -63,7 +63,7 @@ export function DatasetCard({ dataset }: Props) {
             <h3 className="text-sm font-semibold text-white truncate">{dataset.name}</h3>
             <DatasetKindPill kind={dataset.kind} />
             {dataset.archived && (
-              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded-full border border-amber-500/40 text-amber-300 bg-amber-500/10">
+              <span className="text-[10px] uppercase px-1.5 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10">
                 Archived raw
               </span>
             )}
@@ -107,7 +107,7 @@ export function DatasetCard({ dataset }: Props) {
             type="button"
             onClick={onDelete}
             disabled={deleting}
-            className="inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-xs text-danger hover:text-danger/80 disabled:opacity-50"
             data-testid={`dataset-card-delete-${dataset.id}`}
           >
             {deleting ? (
@@ -119,7 +119,7 @@ export function DatasetCard({ dataset }: Props) {
           </button>
         </div>
       </div>
-      {err && <p className="text-xs text-rose-400">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
     </div>
   );
 }

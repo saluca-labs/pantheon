@@ -59,12 +59,12 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
               {pin.protocol.title}
             </Link>
             <ProtocolKindPill kind={pin.resolved.kind} />
-            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-emerald-500/40 text-emerald-300 bg-emerald-500/10">
+            <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-positive/40 text-positive bg-positive/10">
               Pinned v{pin.link.pinnedVersion}
             </span>
             {!resolvedExact && (
               <span
-                className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-amber-500/40 text-amber-300 bg-amber-500/10"
+                className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-warning/40 text-warning bg-warning/10"
                 title="pinned_version not found in this protocol's tree — showing root content"
               >
                 fallback → root
@@ -86,14 +86,14 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
           type="button"
           onClick={onUnpin}
           disabled={busy}
-          className="inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50"
+          className="inline-flex items-center gap-1 text-xs text-danger hover:text-danger/80 disabled:opacity-50"
           data-testid={`experiment-protocol-pinned-unpin-${pin.link.id}`}
         >
           {busy ? <Spinner label="Unpinning" size="xs" /> : <X className="w-3 h-3" />}
           Unpin
         </button>
       </div>
-      {err && <p className="text-xs text-rose-400">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
     </div>
   );
 }

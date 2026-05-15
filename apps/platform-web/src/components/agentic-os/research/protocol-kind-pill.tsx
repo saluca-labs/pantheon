@@ -12,10 +12,10 @@ import {
 } from '@/lib/agentic-os/research/protocol-kinds';
 
 const COLOR: Record<ProtocolKind, string> = {
-  method: 'border-sky-500/40 text-sky-300 bg-sky-500/10',
-  sop: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
-  analysis: 'border-violet-500/40 text-violet-300 bg-violet-500/10',
-  code_pipeline: 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10',
+  method: 'border-os-research/40 text-os-research bg-os-research/10',
+  sop: 'border-warning/40 text-warning bg-warning/10',
+  analysis: 'border-accent/40 text-accent bg-accent/10',
+  code_pipeline: 'border-positive/40 text-positive bg-positive/10',
   other: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 

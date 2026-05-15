@@ -85,17 +85,17 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-72 border-r border-zinc-800 bg-zinc-900/50">
+    <div className="flex flex-col h-full w-72 border-r border-border-subtle bg-surface-1/50">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-zinc-800">
-        <h2 className="text-sm font-semibold text-zinc-100 tracking-tight">
+      <div className="flex items-center justify-between px-3 py-3 border-b border-border-subtle">
+        <h2 className="text-sm font-semibold text-text-primary tracking-tight">
           Conversations
         </h2>
         <button
           type="button"
           onClick={handleNew}
           disabled={creating}
-          className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2 py-1 text-xs font-medium text-white hover:bg-fuchsia-500 disabled:opacity-50 transition-colors"
+          className="inline-flex items-center gap-1 rounded-md bg-os-creator px-2 py-1 text-xs font-medium text-white hover:bg-os-creator/90 disabled:opacity-50 transition-colors"
         >
           {creating ? (
             <Spinner label="Creating" size="xs" />
@@ -110,12 +110,12 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
       <div className="flex-1 overflow-y-auto py-1">
         {conversations.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <MessageSquare className="h-8 w-8 text-zinc-600 mx-auto mb-2" />
-            <p className="text-sm text-zinc-500">No conversations yet</p>
+            <MessageSquare className="h-8 w-8 text-text-tertiary mx-auto mb-2" />
+            <p className="text-sm text-text-tertiary">No conversations yet</p>
             <button
               type="button"
               onClick={handleNew}
-              className="mt-3 text-xs text-fuchsia-400 hover:text-fuchsia-300 transition-colors"
+              className="mt-3 text-xs text-os-creator hover:text-os-creator/80 transition-colors"
             >
               Start your first chat
             </button>
@@ -126,8 +126,8 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
               key={conv.id}
               className={`group relative flex items-center gap-2 px-3 py-2 mx-1 rounded-md transition-colors ${
                 activeId === conv.id
-                  ? 'bg-zinc-800 text-zinc-100'
-                  : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                  ? 'bg-surface-2 text-text-primary'
+                  : 'text-text-secondary hover:bg-surface-2/50 hover:text-text-primary'
               }`}
             >
               <Link
@@ -140,10 +140,10 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] px-1 py-0.5 rounded bg-zinc-700/50 text-zinc-400 font-mono">
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-surface-3/50 text-text-secondary font-mono">
                     {modelLabel(conv.model)}
                   </span>
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-text-tertiary">
                     {formatDate(conv.updatedAt)}
                   </span>
                 </div>
@@ -156,7 +156,7 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
                     type="button"
                     onClick={() => handleDelete(conv.id)}
                     disabled={deleting === conv.id}
-                    className="p-1 rounded text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="p-1 rounded text-danger hover:bg-danger/10 transition-colors"
                   >
                     {deleting === conv.id ? (
                       <Spinner label="Deleting" size="sm" />
@@ -167,7 +167,7 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(null)}
-                    className="p-1 rounded text-zinc-500 hover:text-zinc-300 transition-colors"
+                    className="p-1 rounded text-text-tertiary hover:text-text-secondary transition-colors"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -176,7 +176,7 @@ export function ChatSidebar({ conversations, activeId }: ChatSidebarProps) {
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(conv.id)}
-                  className="p-1 rounded text-zinc-600 opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all"
+                  className="p-1 rounded text-text-tertiary opacity-0 group-hover:opacity-100 hover:text-danger transition-all"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

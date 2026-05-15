@@ -160,7 +160,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
           <button
             type="button"
             onClick={() => setConfirmingArchive((v) => !v)}
-            className="p-1.5 rounded text-text-secondary hover:text-rose-300 hover:bg-surface-0"
+            className="p-1.5 rounded text-text-secondary hover:text-danger hover:bg-surface-0"
             aria-label="Archive entry"
             data-testid={`card-archive-${entry.id}`}
           >
@@ -235,7 +235,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
               type="button"
               onClick={handleArchive}
               disabled={submitting}
-              className="text-xs px-2 py-1 rounded bg-rose-500/15 border border-rose-500/40 text-rose-300 hover:bg-rose-500/25"
+              className="text-xs px-2 py-1 rounded bg-danger/15 border border-danger/40 text-danger hover:bg-danger/25"
               data-testid={`card-archive-confirm-yes-${entry.id}`}
             >
               {submitting ? 'Archiving…' : 'Archive'}
@@ -245,7 +245,7 @@ export function NotebookEntryCard({ entry, onUpdated, onArchived }: Props) {
       )}
 
       {error && (
-        <p className="mt-2 text-xs text-rose-300" data-testid={`card-error-${entry.id}`}>
+        <p className="mt-2 text-xs text-danger" data-testid={`card-error-${entry.id}`}>
           {error}
         </p>
       )}

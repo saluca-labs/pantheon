@@ -269,7 +269,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
       )}
 
       {error && (
-        <p className="text-xs text-red-300" role="alert">
+        <p className="text-xs text-danger" role="alert">
           {error}
         </p>
       )}
@@ -277,7 +277,7 @@ export function EvidenceLinkPicker({ hypothesisId, onLinked, onCancel }: Props) 
         <button
           type="submit"
           disabled={saving || !canSubmit()}
-          className="rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
+          className="rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
         >
           {saving ? 'Linking…' : 'Link evidence'}
         </button>

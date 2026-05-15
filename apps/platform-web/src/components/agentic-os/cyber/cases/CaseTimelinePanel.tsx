@@ -141,7 +141,7 @@ export function CaseTimelinePanel({ caseId, events }: CaseTimelinePanelProps) {
             <Send className="w-4 h-4" />
             {saving ? 'Posting…' : 'Post'}
           </button>
-          {error && <span className="text-sm text-red-300">{error}</span>}
+          {error && <span className="text-sm text-danger">{error}</span>}
         </div>
       </form>
 

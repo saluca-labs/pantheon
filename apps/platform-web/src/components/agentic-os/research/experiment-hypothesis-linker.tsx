@@ -179,7 +179,7 @@ export function ExperimentHypothesisLinker({
       )}
 
       {error && (
-        <p className="text-xs text-red-300" role="alert">
+        <p className="text-xs text-danger" role="alert">
           {error}
         </p>
       )}
@@ -188,7 +188,7 @@ export function ExperimentHypothesisLinker({
         <button
           onClick={submit}
           disabled={saving || !picked}
-          className="inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-[#3a56d4] disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 px-3 py-1.5 text-sm text-white transition"
         >
           <Plus className="w-3.5 h-3.5" />
           {saving ? 'Linking…' : 'Link hypothesis'}

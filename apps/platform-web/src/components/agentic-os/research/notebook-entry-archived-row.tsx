@@ -77,7 +77,7 @@ export function NotebookEntryArchivedRow({ entry, onRestored }: Props) {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {error && (
-          <span className="text-[10px] text-rose-300" data-testid={`archived-row-error-${entry.id}`}>
+          <span className="text-[10px] text-danger" data-testid={`archived-row-error-${entry.id}`}>
             {error}
           </span>
         )}

@@ -59,7 +59,7 @@ function ListPanel({
         </h3>
       </div>
       {ids.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic">No citations yet.</p>
+        <p className="text-xs text-text-tertiary italic">No citations yet.</p>
       ) : (
         <ul className="space-y-1">
           {ids.map((id) => (

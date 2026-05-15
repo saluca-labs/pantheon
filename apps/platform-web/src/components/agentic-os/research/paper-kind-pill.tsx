@@ -37,15 +37,15 @@ const ICONS: Record<PaperKind, LucideIcon> = {
 };
 
 const COLORS: Record<PaperKind, string> = {
-  paper: 'bg-blue-500/15 border-blue-500/40 text-blue-300',
-  preprint: 'bg-amber-500/15 border-amber-500/40 text-amber-300',
-  thesis: 'bg-purple-500/15 border-purple-500/40 text-purple-300',
-  book: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
-  chapter: 'bg-teal-500/15 border-teal-500/40 text-teal-300',
-  dataset_paper: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300',
-  report: 'bg-orange-500/15 border-orange-500/40 text-orange-300',
-  blog: 'bg-pink-500/15 border-pink-500/40 text-pink-300',
-  other: 'bg-slate-500/15 border-slate-500/40 text-slate-300',
+  paper: 'bg-accent/15 border-accent/40 text-accent',
+  preprint: 'bg-warning/15 border-warning/40 text-warning',
+  thesis: 'bg-os-creator/15 border-os-creator/40 text-os-creator',
+  book: 'bg-positive/15 border-positive/40 text-positive',
+  chapter: 'bg-os-research/15 border-os-research/40 text-os-research',
+  dataset_paper: 'bg-os-research/15 border-os-research/40 text-os-research',
+  report: 'bg-attention/15 border-attention/40 text-attention',
+  blog: 'bg-os-creator/15 border-os-creator/40 text-os-creator',
+  other: 'bg-text-secondary/15 border-text-secondary/40 text-text-secondary',
 };
 
 interface Props {

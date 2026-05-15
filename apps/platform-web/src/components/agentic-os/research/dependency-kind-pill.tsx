@@ -10,10 +10,10 @@ import {
 } from '@/lib/agentic-os/research/dependencies';
 
 const KIND_STYLE: Record<DependencyKind, string> = {
-  feeds: 'border-sky-500/50 bg-sky-500/5 text-sky-300',
-  blocks: 'border-red-500/50 bg-red-500/5 text-red-300',
+  feeds: 'border-os-research/50 bg-os-research/5 text-os-research',
+  blocks: 'border-danger/50 bg-danger/5 text-danger',
   informs: 'border-border-subtle bg-surface-0 text-text-secondary',
-  replicates: 'border-emerald-500/50 bg-emerald-500/5 text-emerald-300',
+  replicates: 'border-positive/50 bg-positive/5 text-positive',
 };
 
 interface Props {

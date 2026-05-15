@@ -143,7 +143,7 @@ export function ExposureForm({ exposure, vulnerability, assets = [], onSaved, on
         <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">Notes</span>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className={inputCls} />
       </label>
-      {error && <p className="text-xs text-red-300">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex justify-end gap-2">
         {onCancel && (
           <button type="button" onClick={onCancel} className="px-3 py-2 text-sm rounded-md border border-border-subtle text-text-secondary hover:text-white">Cancel</button>
@@ -152,7 +152,7 @@ export function ExposureForm({ exposure, vulnerability, assets = [], onSaved, on
           type="button"
           onClick={save}
           disabled={saving || (!isEdit && !assetId)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-3 py-2 text-sm disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium px-3 py-2 text-sm disabled:opacity-50 transition"
         >
           {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create exposure'}
         </button>
