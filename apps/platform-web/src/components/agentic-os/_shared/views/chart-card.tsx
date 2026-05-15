@@ -76,6 +76,13 @@ export interface ChartRange {
 export interface ChartCardProps {
   /** Card title — forwarded to the composed `DashboardWidget`. */
   title: ReactNode;
+  /**
+   * W-E.4: optional screen-reader-only description of what the chart
+   * conveys (e.g. "Login attempts trending up 12% over the last 30 days").
+   * Rendered as a hidden span inside the chart body so SR users get a
+   * textual fallback for the canvas. Visible title remains the label.
+   */
+  summary?: string;
   /** Optional leading icon (Lucide element). */
   icon?: ReactNode;
   /** Series to plot. */
@@ -268,6 +275,7 @@ function ChartBody({
 
 export function ChartCard({
   title,
+  summary,
   icon,
   series,
   kind = 'line',
@@ -365,6 +373,11 @@ export function ChartCard({
       className={className}
       data-testid="chart-card"
     >
+      {summary ? (
+        <span className="sr-only" data-testid="chart-card-summary">
+          {summary}
+        </span>
+      ) : null}
       {body}
     </DashboardWidget>
   );

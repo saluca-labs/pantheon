@@ -181,6 +181,10 @@ function EventRow<TEvent extends ActivityEvent>({
   );
 
   if (event.href) {
+    // W-E.4: `<a>` is interactive, so no `role="article"` here — assigning
+    // a non-interactive role to an interactive element is a jsx-a11y
+    // violation and confuses screen readers. The link's default `role="link"`
+    // composes fine inside `role="feed"` per WAI APG.
     return (
       <a
         href={event.href}
@@ -193,6 +197,7 @@ function EventRow<TEvent extends ActivityEvent>({
   }
   return (
     <div
+      role="article"
       data-testid={`activity-event-${event.id}`}
       className="flex gap-3 px-2 py-2"
     >
@@ -245,7 +250,12 @@ export function ActivityFeed<TEvent extends ActivityEvent = ActivityEvent>({
   }
 
   return (
-    <div data-testid={testId} className={clsx('flex flex-col', className)}>
+    <div
+      role="region"
+      aria-label="Activity"
+      data-testid={testId}
+      className={clsx('flex flex-col', className)}
+    >
       {groups.map((group) => (
         <section key={group.key} data-testid={`activity-group-${group.key}`}>
           {grouping === 'day' ? (
