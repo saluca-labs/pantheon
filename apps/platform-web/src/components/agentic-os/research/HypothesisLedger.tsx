@@ -45,7 +45,13 @@ import {
   type HypothesisStatusFilter,
 } from '@/lib/agentic-os/research/hypothesis-workspace';
 import { useSavedViews } from '@/lib/agentic-os/research/saved-views-store';
-import { EntitySearch, EmptyState, SavedViews } from '@/components/agentic-os/_shared/views';
+import {
+  EntitySearch,
+  EmptyState,
+  SavedViews,
+  SkeletonGroup,
+  Skeleton,
+} from '@/components/agentic-os/_shared/views';
 import { HypothesisArchiveButton } from './hypothesis-archive-button';
 import { HypothesisStatusFilterChips } from './hypothesis-status-filter-chips';
 
@@ -525,7 +531,11 @@ export function HypothesisLedger({ initialHypotheses }: { initialHypotheses: Hyp
       </div>
 
       {loading ? (
-        <p className="text-sm text-text-secondary">Loading…</p>
+        <SkeletonGroup>
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+          <Skeleton variant="card" />
+        </SkeletonGroup>
       ) : visible.length === 0 ? (
         hypotheses.length === 0 ? (
           <EmptyState

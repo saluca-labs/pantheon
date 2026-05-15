@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 import { EmptyState } from './empty-state';
 import type { EmptyStateProps } from './empty-state';
+import { Spinner } from './spinner';
 
 /** Status accent for an event dot — maps to the semantic status tokens. */
 export type ActivityTone =
@@ -269,9 +270,10 @@ export function ActivityFeed<TEvent extends ActivityEvent = ActivityEvent>({
           onClick={onLoadMore}
           disabled={loadingMore}
           data-testid="activity-feed-load-more"
-          className="mt-2 self-center rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 inline-flex items-center gap-1.5 self-center rounded-md px-3 py-1.5 text-sm font-medium text-text-secondary transition hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loadingMore ? 'Loading…' : 'Load more'}
+          {loadingMore && <Spinner size="xs" />}
+          Load more
         </button>
       ) : null}
     </div>

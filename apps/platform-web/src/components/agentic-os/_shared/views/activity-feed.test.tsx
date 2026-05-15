@@ -186,7 +186,7 @@ describe('ActivityFeed — interactions', () => {
     expect(onLoadMore).toHaveBeenCalledOnce();
   });
 
-  it('disables the load-more button while loadingMore', () => {
+  it('disables the load-more button and shows a spinner while loadingMore', () => {
     render(
       <ActivityFeed
         events={baseEvents}
@@ -196,7 +196,9 @@ describe('ActivityFeed — interactions', () => {
     );
     const btn = screen.getByTestId('activity-feed-load-more');
     expect(btn).toBeDisabled();
-    expect(btn).toHaveTextContent('Loading');
+    expect(btn).toHaveTextContent('Load more');
+    // While loading, the button prepends the shared <Spinner> primitive.
+    expect(btn.querySelector('[data-testid="spinner"]')).not.toBeNull();
   });
 
   it('omits the load-more button when no handler is supplied', () => {

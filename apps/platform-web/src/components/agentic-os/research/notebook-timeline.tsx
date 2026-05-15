@@ -29,7 +29,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BookOpen, List, GanttChartSquare } from 'lucide-react';
 import type { NotebookEntry } from '@/lib/agentic-os/research/notebook-entries';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  EmptyState,
+  SkeletonGroup,
+  Skeleton,
+} from '@/components/agentic-os/_shared/views';
 import { NotebookEntryComposer } from './notebook-entry-composer';
 import {
   NotebookEntryFilterChips,
@@ -163,9 +167,11 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
       )}
 
       {loading && entries.length === 0 ? (
-        <p className="text-xs text-text-secondary" data-testid="notebook-timeline-loading">
-          Loading…
-        </p>
+        <SkeletonGroup data-testid="notebook-timeline-loading">
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
       ) : entries.length === 0 ? (
         <div data-testid="notebook-timeline-empty">
           <EmptyState

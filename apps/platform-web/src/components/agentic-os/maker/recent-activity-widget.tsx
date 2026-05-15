@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Hammer, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import type { RecentLogEntry } from '@/lib/agentic-os/maker/log';
+import { SkeletonGroup, Skeleton } from '@/components/agentic-os/_shared/views';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
@@ -52,7 +53,13 @@ export function RecentActivityWidget({ limit = 5 }: Props) {
         <Hammer className="w-4 h-4" />
         Recent activity
       </h2>
-      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
+      {!loaded && (
+        <SkeletonGroup>
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
+      )}
       {loaded && entries.length === 0 && (
         <p className="text-xs text-text-secondary">
           No build-log entries yet. Activity from any project will appear here.

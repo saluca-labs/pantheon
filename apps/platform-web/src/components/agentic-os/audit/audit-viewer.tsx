@@ -15,6 +15,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AGENTIC_OS_MODULES } from '@/lib/agentic-os/registry';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface AuditEntry {
   id: string;
@@ -152,9 +153,10 @@ export function AuditViewer() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a52d4] disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a52d4] disabled:opacity-60"
           >
-            {loading ? 'Loading…' : 'Apply filters'}
+            {loading && <Spinner size="xs" />}
+            Apply filters
           </button>
         </div>
       </form>
@@ -213,9 +215,10 @@ export function AuditViewer() {
             type="button"
             disabled={loading}
             onClick={() => void fetchPage(false)}
-            className="rounded-md border border-border-subtle bg-surface-2 px-4 py-2 text-sm text-white hover:bg-border-subtle disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-2 px-4 py-2 text-sm text-white hover:bg-border-subtle disabled:opacity-60"
           >
-            {loading ? 'Loading…' : 'Load more'}
+            {loading && <Spinner size="xs" />}
+            Load more
           </button>
         )}
       </div>

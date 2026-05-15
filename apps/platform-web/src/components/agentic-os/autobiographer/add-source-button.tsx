@@ -14,6 +14,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, Search } from 'lucide-react';
+import { SkeletonGroup, Skeleton } from '@/components/agentic-os/_shared/views';
 
 interface MemoryOption {
   id: string;
@@ -144,7 +145,11 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
             ) : null}
             <div className="max-h-80 overflow-auto rounded-md border border-border-subtle bg-surface-0">
               {loading ? (
-                <p className="p-3 text-xs text-text-secondary">Loading…</p>
+                <SkeletonGroup className="p-3">
+                  <Skeleton variant="list-row" />
+                  <Skeleton variant="list-row" />
+                  <Skeleton variant="list-row" />
+                </SkeletonGroup>
               ) : filtered.length === 0 ? (
                 <p className="p-3 text-xs text-text-secondary">
                   No memories match. Capture more in the Memory Captures

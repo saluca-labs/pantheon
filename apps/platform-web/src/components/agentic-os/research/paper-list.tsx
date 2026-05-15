@@ -19,7 +19,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { X, BookOpenText } from 'lucide-react';
 import type { Paper } from '@/lib/agentic-os/research/papers';
 import { PAPER_KINDS, PAPER_KIND_LABELS, type PaperKind } from '@/lib/agentic-os/research/paper-kinds';
-import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  EntitySearch,
+  EmptyState,
+  SkeletonGroup,
+  Skeleton,
+} from '@/components/agentic-os/_shared/views';
 import { PaperCard } from './paper-card';
 
 interface Props {
@@ -186,9 +191,11 @@ export function PaperList({ initialPapers }: Props) {
 
       {/* Status row */}
       {loading && (
-        <p className="text-xs text-text-secondary" data-testid="paper-list-loading">
-          Loading…
-        </p>
+        <SkeletonGroup data-testid="paper-list-loading">
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
       )}
       {error && (
         <p className="text-xs text-rose-300" data-testid="paper-list-error">
