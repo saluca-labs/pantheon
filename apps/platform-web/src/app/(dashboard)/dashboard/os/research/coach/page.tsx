@@ -23,7 +23,7 @@ import {
 } from '@/lib/agentic-os/research/coach/modes';
 import { isCoachConfigured } from '@/lib/agentic-os/research/coach/anthropic';
 import { CoachHub } from '@/components/agentic-os/research/coach/coach-hub';
-import { CoachNotConfiguredBanner } from '@/components/agentic-os/research/coach/coach-not-configured-banner';
+import { CoachNotConfigured } from '@/components/agentic-os/_shared/coach/coach-not-configured';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +77,10 @@ export default async function ResearchCoachHubPage({ searchParams }: Props) {
       </p>
 
       {!configured ? (
-        <CoachNotConfiguredBanner />
+        <CoachNotConfigured
+          osLabel="Research"
+          extra="The coach covers literature synthesis, hypothesis critique, and methods design — with regulated-advice referral for clinical / IRB / IACUC / EHS topics."
+        />
       ) : (
         <CoachHub
           experimentId={experimentId}
