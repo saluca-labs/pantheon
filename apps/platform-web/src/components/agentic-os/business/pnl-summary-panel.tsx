@@ -19,6 +19,7 @@ import {
   ChartCard,
   DashboardWidget,
   EmptyState,
+  Spinner,
   type ChartSeries,
 } from '@/components/agentic-os/_shared/views';
 
@@ -124,9 +125,10 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
           <button
             onClick={fetchSummary}
             disabled={loading}
-            className="rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition"
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent hover:bg-accent/90 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 transition"
           >
-            {loading ? 'Loading...' : 'Refresh'}
+            {loading && <Spinner size="xs" />}
+            {loading ? 'Refreshing' : 'Refresh'}
           </button>
         </div>
       </div>

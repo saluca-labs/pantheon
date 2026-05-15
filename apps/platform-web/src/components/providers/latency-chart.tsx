@@ -21,6 +21,7 @@ import {
   DANGER,
   WARNING,
 } from '@/lib/design/chart-tokens';
+import { Skeleton } from '@/components/agentic-os/_shared/views';
 
 interface LatencyChartProps {
   data: LatencyResponse | undefined;
@@ -31,7 +32,7 @@ export function LatencyChart({ data, isLoading }: LatencyChartProps) {
   if (isLoading) {
     return (
       <div className="bg-surface-2 border border-border-subtle rounded-lg p-4">
-        <div className="h-64 animate-pulse bg-border-subtle rounded-lg" />
+        <Skeleton className="h-64" />
       </div>
     );
   }

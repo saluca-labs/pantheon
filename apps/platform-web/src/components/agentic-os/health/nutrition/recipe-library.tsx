@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 export interface RecipeLibraryItem {
   id: string;
@@ -64,7 +65,12 @@ export function RecipeLibrary({ initialRecipes }: RecipeLibraryProps) {
           <Plus className="h-4 w-4" />
           Create recipe
         </Link>
-        {loading && <span className="text-xs text-text-secondary">Loading…</span>}
+        {loading && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+            <Spinner size="xs" />
+            Loading…
+          </span>
+        )}
       </div>
 
       {recipes.length === 0 ? (
