@@ -33,7 +33,10 @@ import {
   type BlockerItemKind,
   type BlockerSeverity,
 } from '@/lib/agentic-os/maker/blockers';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  EmptyState,
+  KindFilterChips,
+} from '@/components/agentic-os/_shared/views';
 import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
@@ -138,39 +141,37 @@ export function BlockersList({ initial = [] }: Props) {
         onApplyQuery={applyQuery}
         savedViewKey="blockers"
         filterControls={
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wide text-text-secondary">
-              Kind
-            </span>
-            <Chip
-              active={kindFilter === 'all'}
-              onClick={() => setKindFilter('all')}
-              label="All"
-            />
-            {BLOCKER_ITEM_KINDS.map((k) => (
-              <Chip
-                key={k}
-                active={kindFilter === k}
-                onClick={() => setKindFilter(k)}
-                label={k === 'milestone' ? 'Milestone' : 'Dependency'}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wide text-text-secondary">
+                Kind
+              </span>
+              <KindFilterChips<BlockerItemKind>
+                value={kindFilter === 'all' ? null : kindFilter}
+                onChange={(next) => setKindFilter(next ?? 'all')}
+                options={BLOCKER_ITEM_KINDS.map((k) => ({
+                  value: k,
+                  label: k === 'milestone' ? 'Milestone' : 'Dependency',
+                }))}
+                testIdPrefix="blockers-list-kind"
+                ariaLabel="Filter blockers by kind"
               />
-            ))}
-            <span className="ml-3 text-[10px] uppercase tracking-wide text-text-secondary">
-              Severity
-            </span>
-            <Chip
-              active={severityFilter === 'all'}
-              onClick={() => setSeverityFilter('all')}
-              label="All"
-            />
-            {BLOCKER_SEVERITIES.map((s) => (
-              <Chip
-                key={s}
-                active={severityFilter === s}
-                onClick={() => setSeverityFilter(s)}
-                label={BLOCKER_SEVERITY_LABELS[s]}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wide text-text-secondary">
+                Severity
+              </span>
+              <KindFilterChips<BlockerSeverity>
+                value={severityFilter === 'all' ? null : severityFilter}
+                onChange={(next) => setSeverityFilter(next ?? 'all')}
+                options={BLOCKER_SEVERITIES.map((s) => ({
+                  value: s,
+                  label: BLOCKER_SEVERITY_LABELS[s],
+                }))}
+                testIdPrefix="blockers-list-severity"
+                ariaLabel="Filter blockers by severity"
               />
-            ))}
+            </div>
           </div>
         }
       />
@@ -253,26 +254,3 @@ export function BlockersList({ initial = [] }: Props) {
   );
 }
 
-function Chip({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-wide transition ${
-        active
-          ? 'border-accent bg-accent/10 text-white'
-          : 'border-border-subtle text-text-secondary hover:text-white'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
