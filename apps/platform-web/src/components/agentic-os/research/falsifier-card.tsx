@@ -66,7 +66,7 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
   return (
     <div className="rounded-lg border border-border-subtle bg-surface-0/60 p-4 space-y-2">
       <div className="flex items-start gap-2">
-        <AlertOctagon className="w-4 h-4 text-rose-300 mt-0.5 shrink-0" />
+        <AlertOctagon className="w-4 h-4 text-danger mt-0.5 shrink-0" />
         <p className="text-sm text-white leading-relaxed">{falsifier.text}</p>
       </div>
       {falsifier.criterionMd && (
@@ -87,7 +87,7 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
             <button
               onClick={handleDelete}
               disabled={busy}
-              className="text-red-300 hover:text-red-200 disabled:opacity-50"
+              className="text-danger hover:text-danger/80 disabled:opacity-50"
             >
               Yes
             </button>
@@ -101,14 +101,14 @@ export function FalsifierCard({ falsifier, onUpdated, onDeleted }: Props) {
         ) : (
           <button
             onClick={() => setConfirmingDelete(true)}
-            className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
+            className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-danger transition"
           >
             <Trash2 className="w-3 h-3" /> Delete
           </button>
         )}
       </div>
       {error && (
-        <p className="text-xs text-red-300" role="alert">
+        <p className="text-xs text-danger" role="alert">
           {error}
         </p>
       )}

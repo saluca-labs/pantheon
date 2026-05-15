@@ -159,7 +159,7 @@ export function NotebookTimeline({ experimentId, initialEntries }: Props) {
 
       {error && (
         <div
-          className="rounded border border-rose-500/40 bg-rose-500/10 text-rose-300 text-xs px-3 py-2 mb-3"
+          className="rounded border border-danger/40 bg-danger/10 text-danger text-xs px-3 py-2 mb-3"
           data-testid="notebook-timeline-error"
         >
           {error}

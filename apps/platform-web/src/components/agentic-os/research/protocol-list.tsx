@@ -136,7 +136,7 @@ export function ProtocolList({ initialProtocols }: Props) {
             <button
               type="button"
               onClick={() => setTag(null)}
-              className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/25"
+              className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded border bg-danger/15 border-danger/40 text-danger hover:bg-danger/25"
               data-testid="protocol-tag-clear"
             >
               <X className="w-3 h-3" />
@@ -156,7 +156,7 @@ export function ProtocolList({ initialProtocols }: Props) {
         </SkeletonGroup>
       )}
       {error && (
-        <p className="text-xs text-rose-300" data-testid="protocol-list-error">
+        <p className="text-xs text-danger" data-testid="protocol-list-error">
           {error}
         </p>
       )}

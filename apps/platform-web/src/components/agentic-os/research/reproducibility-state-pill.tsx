@@ -11,10 +11,10 @@ import {
 
 const STATE_STYLE: Record<ReproState, string> = {
   pending: 'border-border-subtle bg-surface-0 text-text-secondary',
-  in_progress: 'border-sky-500/50 bg-sky-500/5 text-sky-300',
-  done: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300',
+  in_progress: 'border-os-research/50 bg-os-research/5 text-os-research',
+  done: 'border-positive/50 bg-positive/10 text-positive',
   not_applicable: 'border-border-subtle bg-surface-0 text-text-secondary opacity-60',
-  waived: 'border-amber-500/50 bg-amber-500/5 text-amber-300',
+  waived: 'border-warning/50 bg-warning/5 text-warning',
 };
 
 interface Props {

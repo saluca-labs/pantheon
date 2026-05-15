@@ -47,8 +47,8 @@ export function DependencyStatusToggle({ dependencyId, status, onChanged }: Prop
       disabled={busy}
       className={`inline-flex items-center text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full border transition disabled:opacity-50 ${
         current === 'open'
-          ? 'border-amber-500/50 bg-amber-500/5 text-amber-300 hover:bg-amber-500/10'
-          : 'border-emerald-500/50 bg-emerald-500/5 text-emerald-300 hover:bg-emerald-500/10'
+          ? 'border-warning/50 bg-warning/5 text-warning hover:bg-warning/10'
+          : 'border-positive/50 bg-positive/5 text-positive hover:bg-positive/10'
       }`}
       data-testid={`dependency-status-toggle-${dependencyId}`}
     >

@@ -13,9 +13,9 @@ import {
 } from '@/lib/agentic-os/research/evidence';
 
 const POLARITY_COLOR: Record<EvidencePolarity, string> = {
-  supports: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  refutes:  'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  mixed:    'text-amber-300 bg-amber-500/10 border-amber-500/30',
+  supports: 'text-positive bg-positive/10 border-positive/30',
+  refutes:  'text-danger bg-danger/10 border-danger/30',
+  mixed:    'text-warning bg-warning/10 border-warning/30',
 };
 
 export function EvidencePolarityPill({ polarity }: { polarity: EvidencePolarity }) {
