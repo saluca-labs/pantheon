@@ -12,7 +12,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Archive, ArchiveRestore, Loader2 } from 'lucide-react';
+import { Archive, ArchiveRestore } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   datasetId: string;
@@ -51,7 +52,7 @@ export function DatasetArchivedToggle({ datasetId, archived }: Props) {
       data-testid={`dataset-archived-toggle-${datasetId}`}
     >
       {busy ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <Spinner size="sm" />
       ) : archived ? (
         <ArchiveRestore className="w-3.5 h-3.5" />
       ) : (

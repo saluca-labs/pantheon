@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Search, Copy } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 export interface WorkoutLibraryItem {
   id: string;
@@ -131,7 +132,12 @@ export function WorkoutLibrary({
           <Plus className="h-4 w-4" />
           Create workout
         </Link>
-        {loading && <span className="text-xs text-text-secondary">Loading…</span>}
+        {loading && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+            <Spinner size="xs" />
+            Loading…
+          </span>
+        )}
       </div>
 
       {templates.length === 0 ? (
