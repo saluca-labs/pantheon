@@ -205,8 +205,12 @@ export function BusinessSettingsForm({ initial }: Props) {
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
-        {msg && <span className="text-sm text-emerald-300">{msg}</span>}
-        {err && <span className="text-sm text-red-300">{err}</span>}
+        <span role="status" aria-live="polite" className="text-sm text-emerald-300">
+          {msg ?? ''}
+        </span>
+        <span role="alert" className="text-sm text-red-300">
+          {err ?? ''}
+        </span>
       </div>
     </form>
   );

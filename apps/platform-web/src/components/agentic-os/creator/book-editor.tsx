@@ -115,15 +115,15 @@ function SortableChapterRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2 px-3 py-2 cursor-pointer rounded-md text-sm transition-colors ${
+      className={`group flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
         isActive
           ? 'bg-accent/15 text-white border border-accent/30'
           : 'text-text-secondary hover:bg-surface-2 hover:text-white border border-transparent'
       }`}
-      onClick={onClick}
     >
       <button
         type="button"
+        aria-label={`Drag to reorder ${chapter.title || 'chapter'}`}
         className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-text-tertiary hover:text-[#64748b] transition-opacity shrink-0"
         {...attributes}
         {...listeners}
@@ -131,13 +131,20 @@ function SortableChapterRow({
         <GripVertical className="w-3.5 h-3.5" />
       </button>
 
-      <span className="flex-1 truncate text-xs">{chapter.title}</span>
-
-      <span
-        className={`text-[10px] font-medium shrink-0 ${CHAPTER_STATUS_COLORS[chapter.status] ?? ''}`}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={isActive}
+        className="flex-1 flex items-center gap-2 min-w-0 text-left"
       >
-        {chapter.status}
-      </span>
+        <span className="flex-1 truncate text-xs">{chapter.title}</span>
+
+        <span
+          className={`text-[10px] font-medium shrink-0 ${CHAPTER_STATUS_COLORS[chapter.status] ?? ''}`}
+        >
+          {chapter.status}
+        </span>
+      </button>
     </div>
   );
 }

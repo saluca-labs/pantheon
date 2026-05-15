@@ -109,7 +109,11 @@ export function RevisionEditor({
       />
 
       <div className="flex items-center justify-between">
-        <div className="text-[11px] text-text-secondary">
+        <div
+          role="status"
+          aria-live="polite"
+          className="text-[11px] text-text-secondary"
+        >
           {error ? (
             <span className="text-red-400">{error}</span>
           ) : saved ? (

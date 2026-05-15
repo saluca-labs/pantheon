@@ -89,7 +89,7 @@ export function ExperimentProtocolPinnedRow({ experimentId, pin }: Props) {
           className="inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 disabled:opacity-50"
           data-testid={`experiment-protocol-pinned-unpin-${pin.link.id}`}
         >
-          {busy ? <Spinner size="xs" /> : <X className="w-3 h-3" />}
+          {busy ? <Spinner label="Unpinning" size="xs" /> : <X className="w-3 h-3" />}
           Unpin
         </button>
       </div>
