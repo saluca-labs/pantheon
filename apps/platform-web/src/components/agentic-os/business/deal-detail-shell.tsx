@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import { DEAL_STAGES, type Deal, type DealStage } from '@/lib/agentic-os/business/deals';
@@ -74,6 +74,7 @@ export default function DealDetailShell({
   const [deal, setDeal] = useState<Deal>(initialDeal);
   const [interactions, setInteractions] = useState<Interaction[]>(initialInteractions);
   const [stageError, setStageError] = useState<string | null>(null);
+  const stageSelectId = useId();
 
   const isArchived = !!deal.archivedAt;
   const isTerminal = deal.stage === 'won' || deal.stage === 'lost' || isArchived;
@@ -185,8 +186,9 @@ export default function DealDetailShell({
         {/* Stage transition dropdown */}
         {!isTerminal && (
           <div className="mt-4 pt-4 border-t border-border-subtle">
-            <label className={`${labelClass} mb-2`}>Move to...</label>
+            <label htmlFor={stageSelectId} className={`${labelClass} mb-2`}>Move to...</label>
             <select
+              id={stageSelectId}
               value=""
               onChange={(e) => {
                 if (e.target.value) handleStageChange(e.target.value as DealStage);

@@ -12,7 +12,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useId, useState, useCallback, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Download, BarChart3 } from 'lucide-react';
 import type { PnlSummaryCurrency } from '@/lib/agentic-os/business/pnl-snapshots';
 import {
@@ -44,6 +44,9 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
   const [summary, setSummary] = useState<PnlSummaryCurrency[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const fromId = useId();
+  const toId = useId();
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
@@ -104,8 +107,9 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
       {/* Date range inputs */}
       <div className="flex items-center gap-3 flex-wrap">
         <div>
-          <label className="block text-2xs text-text-tertiary mb-1">From</label>
+          <label htmlFor={fromId} className="block text-2xs text-text-tertiary mb-1">From</label>
           <input
+            id={fromId}
             type="date"
             value={periodStart}
             onChange={(e) => setPeriodStart(e.target.value)}
@@ -113,8 +117,9 @@ export default function PnlSummaryPanel({ userId: _userId }: Props) {
           />
         </div>
         <div>
-          <label className="block text-2xs text-text-tertiary mb-1">To</label>
+          <label htmlFor={toId} className="block text-2xs text-text-tertiary mb-1">To</label>
           <input
+            id={toId}
             type="date"
             value={periodEnd}
             onChange={(e) => setPeriodEnd(e.target.value)}

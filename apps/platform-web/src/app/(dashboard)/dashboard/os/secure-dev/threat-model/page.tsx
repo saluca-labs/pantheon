@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentSecureDevUser } from '@/lib/agentic-os/secure-dev/session';
-import { ThreatModelWalkthrough } from '@/components/agentic-os/secure-dev/ThreatModelWalkthrough';
+import { ThreatModelWalkthrough } from '@/components/agentic-os/secure-dev/threat-model-walkthrough';
 
 export const dynamic = 'force-dynamic';
 

@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { EXPENSE_CATEGORIES } from '@/lib/agentic-os/business/expenses';
 import type { ExpenseCategory } from '@/lib/agentic-os/business/expenses';
@@ -63,6 +63,9 @@ export default function ExpenseForm({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -150,8 +153,8 @@ export default function ExpenseForm({
 
       <div className={compact ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         <div>
-          <label className={labelClass}>Category</label>
-          <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
+          <label htmlFor={fid('category')} className={labelClass}>Category</label>
+          <select id={fid('category')} className={selectClass} value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c.replace('_', ' ')}
@@ -160,8 +163,9 @@ export default function ExpenseForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Vendor</label>
+          <label htmlFor={fid('vendor')} className={labelClass}>Vendor</label>
           <input
+            id={fid('vendor')}
             className={inputClass}
             value={vendor}
             onChange={(e) => setVendor(e.target.value)}
@@ -169,8 +173,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Description</label>
+          <label htmlFor={fid('description')} className={labelClass}>Description</label>
           <input
+            id={fid('description')}
             className={inputClass}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -178,8 +183,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Amount (USD) *</label>
+          <label htmlFor={fid('amount')} className={labelClass}>Amount (USD) *</label>
           <input
+            id={fid('amount')}
             className={inputClass}
             type="number"
             step="0.01"
@@ -191,8 +197,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Currency</label>
+          <label htmlFor={fid('currency')} className={labelClass}>Currency</label>
           <input
+            id={fid('currency')}
             className={inputClass}
             value={currency}
             onChange={(e) => setCurrency(e.target.value.toUpperCase())}
@@ -200,8 +207,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Incurred On *</label>
+          <label htmlFor={fid('incurred-on')} className={labelClass}>Incurred On *</label>
           <input
+            id={fid('incurred-on')}
             className={inputClass}
             type="date"
             value={incurredOn}
@@ -210,8 +218,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Paid On</label>
+          <label htmlFor={fid('paid-on')} className={labelClass}>Paid On</label>
           <input
+            id={fid('paid-on')}
             className={inputClass}
             type="date"
             value={paidOn}
@@ -219,8 +228,9 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Receipt URL</label>
+          <label htmlFor={fid('receipt')} className={labelClass}>Receipt URL</label>
           <input
+            id={fid('receipt')}
             className={inputClass}
             value={receiptUrl}
             onChange={(e) => setReceiptUrl(e.target.value)}
@@ -228,8 +238,8 @@ export default function ExpenseForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Project</label>
-          <select className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <label htmlFor={fid('project')} className={labelClass}>Project</label>
+          <select id={fid('project')} className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">-- None --</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -239,8 +249,9 @@ export default function ExpenseForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Tags</label>
+          <label htmlFor={fid('tags')} className={labelClass}>Tags</label>
           <input
+            id={fid('tags')}
             className={inputClass}
             value={tagsStr}
             onChange={(e) => setTagsStr(e.target.value)}

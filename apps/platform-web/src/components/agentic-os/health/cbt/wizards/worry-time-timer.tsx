@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw, Timer } from 'lucide-react';
 import {
   SubmitBar,
@@ -24,6 +24,7 @@ export function WorryTimeTimer({ exerciseId }: Props) {
   const [durationMin, setDurationMin] = useState(15);
   const [worries, setWorries] = useState<string[]>(['']);
   const [reflection, setReflection] = useState('');
+  const durationId = useId();
 
   // Countdown state
   const [running, setRunning] = useState(false);
@@ -96,10 +97,11 @@ export function WorryTimeTimer({ exerciseId }: Props) {
         placeholder="e.g. Today 6:00 PM, tomorrow morning"
       />
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={durationId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Duration (minutes)
         </label>
         <input
+          id={durationId}
           type="number"
           min={1}
           max={120}
@@ -114,9 +116,9 @@ export function WorryTimeTimer({ exerciseId }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Worries to address
-        </label>
+        </span>
         <ul className="space-y-2">
           {worries.map((w, idx) => (
             <li key={idx} className="flex items-start gap-2">

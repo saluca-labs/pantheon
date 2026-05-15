@@ -10,7 +10,7 @@
  * @license MIT — Tiresias Research OS Phase 6 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
   MILESTONE_STATUS_VALUES,
   MILESTONE_PRIORITY_VALUES,
@@ -40,6 +40,9 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
   const [notesMd, setNotesMd] = useState(initial?.notesMd ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,8 +88,9 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
       data-testid="milestone-form"
     >
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-text-secondary">Title</label>
+        <label htmlFor={fid('title')} className="text-xs uppercase tracking-wide text-text-secondary">Title</label>
         <input
+          id={fid('title')}
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -97,10 +101,11 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('due-date')} className="text-xs uppercase tracking-wide text-text-secondary">
             Due date
           </label>
           <input
+            id={fid('due-date')}
             type="date"
             value={dueAt ?? ''}
             onChange={(e) => setDueAt(e.target.value)}
@@ -108,8 +113,9 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">Status</label>
+          <label htmlFor={fid('status')} className="text-xs uppercase tracking-wide text-text-secondary">Status</label>
           <select
+            id={fid('status')}
             value={status}
             onChange={(e) => setStatus(e.target.value as MilestoneStatus)}
             className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
@@ -122,10 +128,11 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
           </select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('priority')} className="text-xs uppercase tracking-wide text-text-secondary">
             Priority
           </label>
           <select
+            id={fid('priority')}
             value={priority}
             onChange={(e) => setPriority(e.target.value as MilestonePriority)}
             className="w-full bg-surface-0 border border-border-subtle rounded px-2 py-1.5 text-sm text-white"
@@ -148,10 +155,11 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
       </label>
       {(isBlocker || status === 'blocked' || status === 'at_risk' || status === 'missed') && (
         <div className="space-y-1">
-          <label className="text-xs uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('blocked-reason')} className="text-xs uppercase tracking-wide text-text-secondary">
             Blocked reason
           </label>
           <textarea
+            id={fid('blocked-reason')}
             value={blockedReason ?? ''}
             onChange={(e) => setBlockedReason(e.target.value)}
             rows={2}
@@ -161,10 +169,11 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
         </div>
       )}
       <div className="space-y-1">
-        <label className="text-xs uppercase tracking-wide text-text-secondary">
+        <label htmlFor={fid('notes')} className="text-xs uppercase tracking-wide text-text-secondary">
           Notes (markdown)
         </label>
         <textarea
+          id={fid('notes')}
           value={notesMd ?? ''}
           onChange={(e) => setNotesMd(e.target.value)}
           rows={3}

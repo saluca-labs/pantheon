@@ -12,7 +12,7 @@
  * → met-state out — and is needed in more than one OS.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 export interface ChecklistItem {
   /** Stable identifier for the item — `met` map keys on this. */
@@ -58,6 +58,7 @@ export function Checklist({
 
   const [met, setMet] = useState<Record<string, boolean>>(initial);
   const [notes, setNotes] = useState<string>(defaultNotes);
+  const notesId = useId();
 
   function emit(next: Record<string, boolean>, nextNotes: string): void {
     if (!onChange) return;
@@ -108,11 +109,14 @@ export function Checklist({
       </ul>
       {withNotes && (
         <div>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- W-E.4 carve-out: label is paired with the textarea below but jsx-a11y can't follow the sibling-element pattern. Sub B will wire htmlFor + id. */}
-          <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+          <label
+            htmlFor={notesId}
+            className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5"
+          >
             Notes (optional)
           </label>
           <textarea
+            id={notesId}
             value={notes}
             onChange={(e) => setNotesValue(e.target.value)}
             rows={3}
