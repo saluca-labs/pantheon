@@ -49,6 +49,7 @@ import { DashboardWidget } from './dashboard-widget';
 import type { DashboardWidgetProps } from './dashboard-widget';
 import { EmptyState } from './empty-state';
 import type { EmptyStateProps } from './empty-state';
+import { Skeleton } from './skeleton';
 
 export type ChartKind = 'line' | 'bar' | 'area';
 
@@ -164,17 +165,6 @@ function RangeToggle({
         </button>
       ))}
     </div>
-  );
-}
-
-function ChartSkeleton({ height }: { height: number }) {
-  return (
-    <div
-      data-testid="chart-card-skeleton"
-      className="animate-pulse rounded-lg bg-surface-3"
-      style={{ height }}
-      aria-hidden="true"
-    />
   );
 }
 
@@ -324,7 +314,11 @@ export function ChartCard({
 
   let body: ReactNode;
   if (loading) {
-    body = <ChartSkeleton height={height} />;
+    body = (
+      <div style={{ height }}>
+        <Skeleton variant="block" data-testid="chart-card-skeleton" />
+      </div>
+    );
   } else if (!hasData) {
     if (emptyState === false) {
       body = (
