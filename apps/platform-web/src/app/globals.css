@@ -169,6 +169,25 @@
   /* Fonts (mapped to Geist via next/font in app/layout.tsx) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Motion (W-E.3 — formalize the durations + easing the custom utilities below
+   * already used inline). Documented in `_design/tokens.md` §9 Motion.
+   *  - --duration-fast (150ms): hover, color swap, default transition
+   *  - --duration-slow (220ms): card hover lift, stage swap, sidebar collapse
+   *  - --ease-standard:         the one easing curve we use everywhere
+   * No spring tokens — decision 5.3 (no motion library). */
+  --duration-fast: 150ms;
+  --duration-slow: 220ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cross-document view-transitions opt-in (W-E.3). The hub navigation hook
+ * (`useViewTransition`) drives same-document transitions via the JS API; this
+ * block enables the browser-default cross-document path for MPA navigations
+ * that don't go through the SPA Link layer. Each surface that wants a named
+ * effect adds its own `::view-transition-{old,new}(name)` rules. */
+@view-transition {
+  navigation: auto;
 }
 
 /* Comfortable-density rhythm: nudge body to slightly more relaxed line-height
@@ -181,19 +200,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom utility: 220ms transition for hover lifts and stage swaps. */
+/* Custom utility: 220ms transition for hover lifts and stage swaps.
+ * Consumes the W-E.3 motion tokens (`--duration-slow`, `--ease-standard`). */
 @utility transition-slow {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 220ms;
+  transition-timing-function: var(--ease-standard);
+  transition-duration: var(--duration-slow);
 }
 
 /* Custom utility: subtle elevated card hover lift used by Wave B hub widgets.
- * Pure CSS, no motion library per decision 5.3. */
+ * Pure CSS, no motion library per decision 5.3. Consumes the W-E.3 motion
+ * tokens (`--duration-fast`, `--duration-slow`, `--ease-standard`). */
 @utility hover-lift {
-  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-slow) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              background-color var(--duration-fast) var(--ease-standard);
 }
 .hover-lift:hover {
   transform: translateY(-1px);
