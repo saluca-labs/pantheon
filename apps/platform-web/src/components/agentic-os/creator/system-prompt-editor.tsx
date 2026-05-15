@@ -23,11 +23,11 @@ export function SystemPromptEditor({ value, onChange }: SystemPromptEditorProps)
   };
 
   return (
-    <div className="border-b border-zinc-800">
+    <div className="border-b border-border-subtle">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 w-full px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
+        className="flex items-center gap-1.5 w-full px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-surface-2/50 transition-colors"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         System Prompt {value ? '(set)' : ''}
@@ -40,13 +40,13 @@ export function SystemPromptEditor({ value, onChange }: SystemPromptEditorProps)
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Set a custom system prompt for this conversation..."
             rows={4}
-            className="w-full rounded-md border border-zinc-700 bg-zinc-900 text-zinc-100 text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 placeholder:text-zinc-500"
+            className="w-full rounded-md border border-border-strong bg-surface-1 text-text-primary text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-os-creator/50 placeholder:text-text-tertiary"
           />
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={handleSave}
-              className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-fuchsia-500 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md bg-os-creator px-2.5 py-1 text-xs font-medium text-white hover:bg-os-creator/90 transition-colors"
             >
               <Check className="h-3 w-3" />
               Save
@@ -54,7 +54,7 @@ export function SystemPromptEditor({ value, onChange }: SystemPromptEditorProps)
             <button
               type="button"
               onClick={handleCancel}
-              className="inline-flex items-center gap-1 rounded-md bg-zinc-700 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-600 transition-colors"
+              className="inline-flex items-center gap-1 rounded-md bg-surface-3 px-2.5 py-1 text-xs font-medium text-text-secondary hover:bg-border-strong transition-colors"
             >
               <X className="h-3 w-3" />
               Cancel
