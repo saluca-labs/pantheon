@@ -25,6 +25,7 @@ import type { AgenticOsModule } from '@/lib/agentic-os/registry';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
 import { getOsSummary } from '@/app/api/tiresias/agentic-os/summary/route';
 import type { OsSummaryEntry } from '@/app/api/tiresias/agentic-os/summary/route';
+import { Skeleton } from '@/components/agentic-os/_shared/views';
 
 // ─── Relative time formatter ──────────────────────────────────────────────────
 
@@ -101,8 +102,8 @@ function CardSkeleton({ mod }: { mod: AgenticOsModule }) {
       </div>
       <p className="text-sm text-text-secondary mb-3">{mod.tagline}</p>
       <div className="flex items-center gap-2">
-        <div className="h-5 w-16 rounded-full bg-border-subtle animate-pulse" />
-        <div className="h-4 w-20 rounded bg-border-subtle animate-pulse" />
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-4 w-20 rounded" />
       </div>
     </div>
   );
