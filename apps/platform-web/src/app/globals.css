@@ -61,14 +61,23 @@
   --border-subtle: #23263a;
   --border-strong: #363b54;
 
-  /* Text hierarchy (3 weights) */
+  /* Text hierarchy (3 weights). Tertiary remapped W-E.4: `#6c7589 → #8b93a7`
+   * lifts contrast on `surface-2` from 4.0:1 (sub-AA Normal) to 5.2:1 (AA
+   * Normal), and stays AAA Large across the surface ladder. The tertiary
+   * tier is the single documented carve-out from the AAA-everywhere
+   * contrast contract — see `_design/a11y.md` §1. */
   --text-primary: #f1f3f9;
   --text-secondary: #a4acbf;
-  --text-tertiary: #6c7589;
+  --text-tertiary: #8b93a7;
 
   /* System accent */
   --accent-base: #5b6cff;
   --accent-soft: #3a4699;
+
+  /* Focus-ring alias (W-E.4). `*:focus-visible` already outlines via
+   * `var(--accent-base)`; `--ring` is the named alias surfaced for primitives
+   * that want to compose ring color via a single variable. */
+  --ring: var(--accent-base);
 
   /* Semantic status */
   --positive: #34d399;
@@ -230,4 +239,42 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--accent-base) 30%, transparent);
   color: var(--text-primary);
+}
+
+/* Screen-reader-only utility safeguard. Tailwind 4 ships `.sr-only`; this
+ * fallback declaration guarantees the rule exists even if the upstream utility
+ * is removed or fails to compile. Hides content visually while keeping it in
+ * the a11y tree. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reduced-motion contract (W-E.4). Honored as a hard contract per
+ * `_design/a11y.md` §3:
+ *  - `animation-duration` collapses to 0.01ms, `animation-iteration-count` to 1
+ *  - `transition-duration` collapses to 0.01ms
+ *  - `scroll-behavior` falls back to auto
+ *  - `animate-pulse` (used by `Skeleton`) is fully disabled
+ *  - The `@view-transition` flow is implicitly disabled because cross-document
+ *    transitions use `transition-duration`, which collapses to instant here. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse {
+    animation: none !important;
+  }
 }
