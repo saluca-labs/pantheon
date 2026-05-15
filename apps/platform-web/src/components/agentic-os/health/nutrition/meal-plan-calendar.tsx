@@ -26,6 +26,7 @@ import {
   FoodCombobox,
   type FoodPickerItem,
 } from '@/components/agentic-os/health/nutrition/food-combobox';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -314,7 +315,12 @@ export function MealPlanCalendar({
               Copy week →
             </button>
           )}
-          {loading && <span className="text-xs text-text-secondary">Loading…</span>}
+          {loading && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+              <Spinner size="xs" />
+              Loading…
+            </span>
+          )}
         </div>
       </div>
 
