@@ -14,7 +14,10 @@ import {
   DATASET_KIND_LABELS,
   type DatasetKind,
 } from '@/lib/agentic-os/research/dataset-kinds';
-import { EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  EmptyState,
+  KindFilterChips,
+} from '@/components/agentic-os/_shared/views';
 import { DatasetCard } from './dataset-card';
 import { DatasetForm } from './dataset-form';
 
@@ -37,34 +40,17 @@ export function DatasetList({ experimentId, initialDatasets }: Props) {
   return (
     <div className="space-y-3" data-testid="dataset-list">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex flex-wrap gap-1">
-          <button
-            type="button"
-            onClick={() => setKindFilter('all')}
-            className={`text-xs px-2 py-1 rounded-full border transition ${
-              kindFilter === 'all'
-                ? 'bg-accent/20 border-accent/60 text-white'
-                : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
-            }`}
-          >
-            All kinds
-          </button>
-          {DATASET_KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setKindFilter(kindFilter === k ? 'all' : k)}
-              className={`text-xs px-2 py-1 rounded-full border transition ${
-                kindFilter === k
-                  ? 'bg-accent/20 border-accent/60 text-white'
-                  : 'bg-surface-0 border-border-subtle text-text-secondary hover:border-accent/40'
-              }`}
-              data-testid={`dataset-list-kind-chip-${k}`}
-            >
-              {DATASET_KIND_LABELS[k]}
-            </button>
-          ))}
-        </div>
+        <KindFilterChips<DatasetKind>
+          value={kindFilter === 'all' ? null : kindFilter}
+          onChange={(next) => setKindFilter(next ?? 'all')}
+          options={DATASET_KINDS.map((k) => ({
+            value: k,
+            label: DATASET_KIND_LABELS[k],
+            testId: `dataset-list-kind-chip-${k}`,
+          }))}
+          allLabel="All kinds"
+          ariaLabel="Filter datasets by kind"
+        />
         <div className="flex items-center gap-3">
           <label className="inline-flex items-center gap-2 text-xs text-text-secondary cursor-pointer">
             <input

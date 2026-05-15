@@ -7,6 +7,12 @@
  * kinds), an inline tag-input, and a "Show archived" toggle. Pure
  * controlled component — the parent owns the filter state.
  *
+ * Wave E.2b coherence: the kind-chip row delegates to the shared
+ * `KindFilterChips` primitive. The tag input and the archived toggle
+ * remain composed here — neither is a closed-set kind filter, so they
+ * sit alongside the chip rail as siblings (the same composition pattern
+ * the other research / maker consumers use).
+ *
  * @license MIT — Tiresias Research OS Phase 2 (internal).
  */
 
@@ -17,6 +23,7 @@ import {
   ENTRY_KIND_COLOR,
   type EntryKind,
 } from '@/lib/agentic-os/research/entry-kinds';
+import { KindFilterChips } from '@/components/agentic-os/_shared/views';
 
 export type EntryKindFilter = EntryKind | 'all';
 
@@ -42,35 +49,26 @@ export function NotebookEntryFilterChips({
       className="flex flex-wrap items-center gap-2 mb-4"
       data-testid="notebook-filter-chips"
     >
-      {/* Kind chips */}
-      <button
-        type="button"
-        onClick={() => onKindChange('all')}
-        className={`text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border transition ${
-          kind === 'all'
-            ? 'text-white bg-accent/20 border-accent/60'
-            : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
-        }`}
-        data-testid="filter-kind-all"
-      >
-        All kinds
-      </button>
-      {ENTRY_KINDS.map((k) => {
-        const active = kind === k;
-        return (
-          <button
-            key={k}
-            type="button"
-            onClick={() => onKindChange(k)}
-            className={`text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border transition ${
-              active ? ENTRY_KIND_COLOR[k] : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
-            }`}
-            data-testid={`filter-kind-${k}`}
-          >
-            {ENTRY_KIND_LABELS[k]}
-          </button>
-        );
-      })}
+      {/* Kind chips — shared primitive */}
+      <KindFilterChips<EntryKind>
+        value={kind === 'all' ? null : kind}
+        onChange={(next) => onKindChange(next ?? 'all')}
+        options={ENTRY_KINDS.map((k) => ({
+          value: k,
+          label: ENTRY_KIND_LABELS[k],
+          // Per-kind accent: preserves the existing notebook palette
+          // (note/observation/result/…) on the active chip. The raw-palette
+          // colors that live in `ENTRY_KIND_COLOR` are pre-existing tech
+          // debt — they're the *same* color tokens the kind pill + the
+          // timeline-point dot already use, so tokenizing them is a
+          // research-OS-wide migration tracked separately.
+          activeColor: ENTRY_KIND_COLOR[k],
+          testId: `filter-kind-${k}`,
+        }))}
+        allLabel="All kinds"
+        ariaLabel="Filter notebook entries by kind"
+        testIdPrefix="filter-kind"
+      />
 
       <span className="mx-1 text-text-tertiary" aria-hidden>
         |
@@ -83,14 +81,14 @@ export function NotebookEntryFilterChips({
           value={tag}
           onChange={(e) => onTagChange(e.target.value)}
           placeholder="Filter by tag…"
-          className="text-xs px-2 py-1 pr-7 rounded-full bg-surface-0 border border-border-subtle text-white placeholder:text-text-secondary focus:outline-none focus:border-accent/60 w-44"
+          className="text-xs px-2 py-1 pr-7 rounded-full bg-surface-0 border border-border-subtle text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 w-44"
           data-testid="filter-tag-input"
         />
         {tag && (
           <button
             type="button"
             onClick={() => onTagChange('')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
             aria-label="Clear tag filter"
             data-testid="filter-tag-clear"
           >
@@ -103,8 +101,8 @@ export function NotebookEntryFilterChips({
       <label
         className={`inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide px-2 py-1 rounded-full border cursor-pointer transition ${
           archived
-            ? 'text-amber-300 bg-amber-500/10 border-amber-500/40'
-            : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-white'
+            ? 'text-warning bg-warning/10 border-warning/40'
+            : 'text-text-secondary bg-surface-0 border-border-subtle hover:text-text-primary'
         }`}
         data-testid="filter-archived-toggle"
       >
