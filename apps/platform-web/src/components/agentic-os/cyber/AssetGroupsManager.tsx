@@ -187,7 +187,7 @@ export function AssetGroupsManager({
                   type="button"
                   onClick={() => void remove(g)}
                   disabled={busy === g.id}
-                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-red-300 hover:text-red-200 disabled:opacity-60 px-2 py-1 text-xs transition"
+                  className="inline-flex items-center gap-1 rounded border border-border-subtle text-danger hover:text-danger/80 disabled:opacity-60 px-2 py-1 text-xs transition"
                 >
                   <Trash2 className="w-3 h-3" />
                   Delete

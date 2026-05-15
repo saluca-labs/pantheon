@@ -25,10 +25,10 @@ import { EmptyState } from '@/components/agentic-os/_shared/views';
 import { TaskForm } from './TaskForm';
 
 const PRIORITY_STYLE: Record<string, string> = {
-  urgent: 'text-red-300 bg-red-500/10',
-  high:   'text-orange-300 bg-orange-500/10',
-  medium: 'text-amber-300 bg-amber-500/10',
-  low:    'text-slate-300 bg-slate-500/10',
+  urgent: 'text-danger bg-danger/10',
+  high:   'text-attention bg-attention/10',
+  medium: 'text-warning bg-warning/10',
+  low:    'text-text-secondary bg-text-secondary/10',
 };
 
 export interface CaseTasksPanelProps {
@@ -144,7 +144,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
         <button
           type="button"
           onClick={() => setCreating((c) => !c)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white px-3 py-1.5 text-sm transition"
         >
           <Plus className="w-4 h-4" />
           {creating ? 'Close' : 'Add task'}
@@ -263,7 +263,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
                       type="button"
                       onClick={() => remove(t.id)}
                       disabled={busy === t.id}
-                      className="rounded border border-border-subtle text-text-secondary hover:text-red-300 hover:border-red-500/50 disabled:opacity-60 p-1 transition"
+                      className="rounded border border-border-subtle text-text-secondary hover:text-danger hover:border-danger/50 disabled:opacity-60 p-1 transition"
                       aria-label="Delete task"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -286,7 +286,7 @@ export function CaseTasksPanel({ caseId, tasks }: CaseTasksPanelProps) {
         </ul>
       )}
 
-      {error && <p className="text-sm text-red-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

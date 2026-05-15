@@ -51,7 +51,7 @@ export default async function PlaybookDetailPage({
         <StartRunButton playbookId={playbook.id} disabled={!canStart} />
       </div>
       {!canStart && (
-        <p className="text-xs text-amber-300">
+        <p className="text-xs text-warning">
           Add at least one step below before starting a run.
         </p>
       )}

@@ -75,7 +75,7 @@ export function AssetDetailActions({ asset }: { asset: Asset }) {
             type="button"
             onClick={decommission}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-amber-300 hover:text-amber-200 hover:border-amber-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-warning hover:text-warning/80 hover:border-warning/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
           >
             <ArchiveX className="w-4 h-4" />
             Decommission
@@ -85,13 +85,13 @@ export function AssetDetailActions({ asset }: { asset: Asset }) {
           type="button"
           onClick={remove}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-red-300 hover:text-red-200 hover:border-red-500/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle text-danger hover:text-danger/80 hover:border-danger/60 disabled:opacity-60 px-3 py-1.5 text-sm transition"
         >
           <Trash2 className="w-4 h-4" />
           Delete
         </button>
       </div>
-      {error && <p className="text-sm text-red-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       {editing && (
         <AssetForm
           asset={asset}

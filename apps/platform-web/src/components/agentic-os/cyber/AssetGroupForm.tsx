@@ -144,7 +144,7 @@ export function AssetGroupForm({ group, candidates = [], onCancel }: AssetGroupF
           <button
             type="submit"
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
           >
             {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create group'}
           </button>
@@ -157,7 +157,7 @@ export function AssetGroupForm({ group, candidates = [], onCancel }: AssetGroupF
               Cancel
             </button>
           )}
-          {error && <span className="text-sm text-red-300">{error}</span>}
+          {error && <span className="text-sm text-danger">{error}</span>}
         </div>
       </form>
 
@@ -180,7 +180,7 @@ export function AssetGroupForm({ group, candidates = [], onCancel }: AssetGroupF
                   <button
                     type="button"
                     onClick={() => void removeMember(m.id)}
-                    className="text-xs text-text-secondary hover:text-red-300 transition"
+                    className="text-xs text-text-secondary hover:text-danger transition"
                   >
                     Remove
                   </button>
@@ -211,7 +211,7 @@ export function AssetGroupForm({ group, candidates = [], onCancel }: AssetGroupF
                     <button
                       type="button"
                       onClick={() => void addMember(c)}
-                      className="text-xs text-accent hover:text-[#5a7aff] transition"
+                      className="text-xs text-accent hover:text-accent/80 transition"
                     >
                       Add
                     </button>
