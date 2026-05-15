@@ -11,7 +11,7 @@
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { listSessions } from '@/lib/agentic-os/business/coach/sessions-repo';
 import { isCoachConfigured } from '@/lib/agentic-os/business/coach/anthropic';
-import { CoachEmptyState } from '@/components/agentic-os/business/coach/coach-empty-state';
+import { CoachNotConfigured } from '@/components/agentic-os/_shared/coach/coach-not-configured';
 import { CoachHub } from '@/components/agentic-os/business/coach/coach-hub';
 import type { CoachMode } from '@/lib/agentic-os/business/coach/modes';
 
@@ -28,11 +28,11 @@ interface PageProps {
 export default async function BusinessCoachPage({ searchParams }: PageProps) {
   const user = await getCurrentBusinessUser();
   if (!user) {
-    return <CoachEmptyState />;
+    return <CoachNotConfigured osLabel="Business" />;
   }
 
   if (!isCoachConfigured()) {
-    return <CoachEmptyState />;
+    return <CoachNotConfigured osLabel="Business" />;
   }
 
   const sp = await searchParams;
