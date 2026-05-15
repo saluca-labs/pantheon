@@ -52,6 +52,12 @@ export type {
 export { SavedViews } from './saved-views';
 export type { SavedViewsProps, SavedView } from './saved-views';
 
+export { KindFilterChips } from './kind-filter-chips';
+export type {
+  KindFilterChipsProps,
+  KindFilterChipOption,
+} from './kind-filter-chips';
+
 export { BulkActionsBar } from './bulk-actions-bar';
 export type { BulkActionsBarProps, BulkAction } from './bulk-actions-bar';
 
