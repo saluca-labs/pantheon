@@ -19,7 +19,12 @@ import {
   PROTOCOL_KIND_LABELS,
   type ProtocolKind,
 } from '@/lib/agentic-os/research/protocol-kinds';
-import { EntitySearch, EmptyState } from '@/components/agentic-os/_shared/views';
+import {
+  EntitySearch,
+  EmptyState,
+  SkeletonGroup,
+  Skeleton,
+} from '@/components/agentic-os/_shared/views';
 import { ProtocolCard } from './protocol-card';
 import { ProtocolForm } from './protocol-form';
 
@@ -144,9 +149,11 @@ export function ProtocolList({ initialProtocols }: Props) {
       {formOpen && <ProtocolForm onClose={() => setFormOpen(false)} />}
 
       {loading && (
-        <p className="text-xs text-text-secondary" data-testid="protocol-list-loading">
-          Loading…
-        </p>
+        <SkeletonGroup data-testid="protocol-list-loading">
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
       )}
       {error && (
         <p className="text-xs text-rose-300" data-testid="protocol-list-error">

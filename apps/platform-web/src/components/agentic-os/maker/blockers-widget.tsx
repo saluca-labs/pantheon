@@ -21,6 +21,7 @@ import {
   type BlockerItem,
   type BlockerSeverity,
 } from '@/lib/agentic-os/maker/blockers';
+import { SkeletonGroup, Skeleton } from '@/components/agentic-os/_shared/views';
 
 const API_BASE = '/api/tiresias/agentic-os/maker';
 const STALE_MS = 5 * 60 * 1000;
@@ -85,7 +86,13 @@ export function BlockersWidget({ initial = [], limit = 5 }: Props) {
           View all
         </Link>
       </div>
-      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
+      {!loaded && (
+        <SkeletonGroup>
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
+      )}
       {loaded && items.length === 0 && (
         <p className="text-xs text-text-secondary">All clear.</p>
       )}

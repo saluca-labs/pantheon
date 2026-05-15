@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import { BlockerRow } from './blocker-row';
 import type { BlockerItem } from '@/lib/agentic-os/research/blockers';
+import { SkeletonGroup, Skeleton } from '@/components/agentic-os/_shared/views';
 
 const API_BASE = '/api/tiresias/agentic-os/research';
 const STALE_MS = 5 * 60 * 1000;
@@ -72,7 +73,13 @@ export function TopBlockersWidget({ initial = [], limit = 5 }: Props) {
           View all
         </Link>
       </div>
-      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
+      {!loaded && (
+        <SkeletonGroup>
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
+      )}
       {loaded && items.length === 0 && (
         <p className="text-xs text-text-secondary" data-testid="top-blockers-widget-empty">
           All clear.

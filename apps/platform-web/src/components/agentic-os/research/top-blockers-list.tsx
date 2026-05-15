@@ -20,7 +20,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
-import { EmptyState, SavedViews } from '@/components/agentic-os/_shared/views';
+import {
+  EmptyState,
+  SavedViews,
+  SkeletonGroup,
+  Skeleton,
+} from '@/components/agentic-os/_shared/views';
 import { BlockerRow } from './blocker-row';
 import {
   BLOCKER_ITEM_KINDS,
@@ -163,7 +168,13 @@ export function TopBlockersList({ initial = [] }: Props) {
         ))}
       </div>
 
-      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
+      {!loaded && (
+        <SkeletonGroup>
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
+      )}
       {loaded && grouped.length === 0 && (
         <div data-testid="top-blockers-list-empty">
           <EmptyState

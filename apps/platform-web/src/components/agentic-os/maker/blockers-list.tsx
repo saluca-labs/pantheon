@@ -36,6 +36,8 @@ import {
 import {
   EmptyState,
   KindFilterChips,
+  SkeletonGroup,
+  Skeleton,
 } from '@/components/agentic-os/_shared/views';
 import { MakerListControls, type MakerQuery } from './maker-list-controls';
 
@@ -176,7 +178,13 @@ export function BlockersList({ initial = [] }: Props) {
         }
       />
 
-      {!loaded && <p className="text-xs text-text-secondary">Loading…</p>}
+      {!loaded && (
+        <SkeletonGroup>
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+          <Skeleton variant="list-row" />
+        </SkeletonGroup>
+      )}
       {loaded && grouped.length === 0 && (
         <EmptyState
           icon={<ShieldAlert className="h-6 w-6" />}

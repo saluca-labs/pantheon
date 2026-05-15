@@ -23,6 +23,7 @@ import {
   X,
   Dumbbell,
 } from 'lucide-react';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 type Intensity = 'light' | 'moderate' | 'vigorous';
 
@@ -318,7 +319,12 @@ export function ActivityPlanCalendar({
               Copy week →
             </button>
           )}
-          {loading && <span className="text-xs text-text-secondary">Loading…</span>}
+          {loading && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+              <Spinner size="xs" />
+              Loading…
+            </span>
+          )}
         </div>
       </div>
 
