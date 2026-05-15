@@ -16,9 +16,20 @@
  *  - `allowFreeText` (default true) keeps the typed string as-is when
  *    the user blurs without picking — useful for "type a new item" flows.
  *  - Keyboard: ArrowDown / ArrowUp / Enter / Escape.
+ *
+ * Accessibility (W-E.4): implements the WAI-ARIA APG combobox-pattern.
+ *  - Wrapping `<div>` carries `role="combobox" aria-expanded aria-controls
+ *    aria-haspopup="listbox" aria-autocomplete="list"`.
+ *  - The text input drives `aria-activedescendant` over the rendered
+ *    `role="option"` rows in the listbox.
+ *  - Options render as `<div role="option" id="..." aria-selected="...">`
+ *    inside a `<div role="listbox" id="...">`. We keep `<div>` rather than
+ *    `<li>` so the surrounding listbox container can stay a `<div>` — the
+ *    existing dropdown surface has bg/border/shadow styling that would need
+ *    redesigning if it became a `<ul>`.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 export interface ComboboxOption<T> {
   /** Unique id used as React key. */
@@ -29,6 +40,8 @@ export interface ComboboxOption<T> {
   sublabel?: string;
   /** Caller-defined payload — handed back via `onSelect`. */
   data: T;
+  /** Optional disabled flag — option still renders but cannot be selected. */
+  disabled?: boolean;
 }
 
 export interface ComboboxProps<T> {
@@ -44,6 +57,11 @@ export interface ComboboxProps<T> {
   disabled?: boolean;
   /** Empty-state copy when there are no matches. */
   emptyLabel?: string;
+  /**
+   * Accessible label for the input — required when no surrounding `<label>`
+   * names the field. Falls back to the placeholder for backward compat.
+   */
+  ariaLabel?: string;
   /** className passthrough on the wrapper. */
   className?: string;
 }
@@ -58,11 +76,16 @@ export function Combobox<T>({
   loading,
   disabled,
   emptyLabel = 'No matches',
+  ariaLabel,
   className,
 }: ComboboxProps<T>) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
+  // Per-instance prefix so option ids are stable but unique across multiple
+  // combobox instances on the same page.
+  const optionIdPrefix = useId();
 
   useEffect(() => {
     setHighlight(0);
@@ -81,6 +104,7 @@ export function Combobox<T>({
 
   const handleSelect = useCallback(
     (opt: ComboboxOption<T>) => {
+      if (opt.disabled) return;
       onChange(opt.label);
       onSelect(opt);
       setOpen(false);
@@ -106,8 +130,24 @@ export function Combobox<T>({
     }
   };
 
+  const showListbox = open && (value.length > 0 || options.length > 0);
+  const activeOption = open && options[highlight] ? options[highlight] : null;
+  const activeDescendantId = activeOption
+    ? `${optionIdPrefix}-${activeOption.id}`
+    : undefined;
+
+  // WAI APG combobox pattern: the wrapping element carries the combobox role
+  // and surfaces the expanded/controls/haspopup/autocomplete attributes.
   return (
-    <div ref={rootRef} className={`relative ${className ?? ''}`}>
+    <div
+      ref={rootRef}
+      role="combobox"
+      aria-expanded={showListbox}
+      aria-controls={showListbox ? listboxId : undefined}
+      aria-haspopup="listbox"
+      aria-owns={showListbox ? listboxId : undefined}
+      className={`relative ${className ?? ''}`}
+    >
       <div className="relative">
         <input
           type="text"
@@ -122,6 +162,10 @@ export function Combobox<T>({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
+          aria-autocomplete="list"
+          aria-controls={showListbox ? listboxId : undefined}
+          aria-activedescendant={activeDescendantId}
+          aria-label={ariaLabel ?? placeholder}
           className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none disabled:opacity-50"
         />
         {loading && (
@@ -131,34 +175,55 @@ export function Combobox<T>({
         )}
       </div>
 
-      {open && (value.length > 0 || options.length > 0) && (
-        <div className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border-subtle bg-surface-0 shadow-lg">
+      {showListbox && (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border-subtle bg-surface-0 shadow-lg"
+        >
           {options.length === 0 ? (
             <div className="px-3 py-2 text-xs text-text-secondary">
               {emptyLabel}
             </div>
           ) : (
-            options.map((opt, i) => (
-              <button
-                key={opt.id}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSelect(opt)}
-                onMouseEnter={() => setHighlight(i)}
-                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
-                  i === highlight
-                    ? 'bg-accent/15 text-white'
-                    : 'text-text-primary hover:bg-surface-2'
-                }`}
-              >
-                <span className="truncate">{opt.label}</span>
-                {opt.sublabel && (
-                  <span className="truncate text-xs text-text-secondary">
-                    {opt.sublabel}
-                  </span>
-                )}
-              </button>
-            ))
+            options.map((opt, i) => {
+              const optionId = `${optionIdPrefix}-${opt.id}`;
+              const isHighlighted = i === highlight;
+              return (
+                // WAI APG combobox pattern: options are NOT individually
+                // focusable. Focus stays on the input and the active option
+                // is announced via `aria-activedescendant` on the input.
+                // Keyboard handling (ArrowUp / Down / Enter / Esc) lives on
+                // the input's `onKeyDown` (see `onKey` above), so the option
+                // row deliberately has no `onKeyDown` of its own — the lint
+                // rules below assume each interactive element owns its
+                // keyboard handling, which is incorrect for APG combobox.
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- APG combobox: options are not focusable; the input owns keyboard via aria-activedescendant.
+                <div
+                  key={opt.id}
+                  id={optionId}
+                  role="option"
+                  aria-selected={isHighlighted}
+                  aria-disabled={opt.disabled || undefined}
+                  data-testid={`combobox-option-${opt.id}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSelect(opt)}
+                  onMouseEnter={() => setHighlight(i)}
+                  className={`flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                    isHighlighted
+                      ? 'bg-accent/15 text-white'
+                      : 'text-text-primary hover:bg-surface-2'
+                  } ${opt.disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {opt.sublabel && (
+                    <span className="truncate text-xs text-text-secondary">
+                      {opt.sublabel}
+                    </span>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       )}

@@ -263,4 +263,22 @@ When migrating inline hex, the lookups are:
 
 ---
 
+## 12. Accessibility tokens
+
+Wave E.4 formalizes the a11y-adjacent tokens. Full contract lives in `_design/a11y.md`.
+
+| Variable           | Value                  | Purpose                                                                 |
+|--------------------|------------------------|-------------------------------------------------------------------------|
+| `--ring`           | `var(--accent-base)`   | Alias for the focus-ring stroke. `*:focus-visible` outlines use this so a global ring re-tint is one variable away. |
+
+**Contrast contract (WCAG 2.2):**
+- Primary text + secondary text + UI components + interactive contrast: **AAA**.
+- Tertiary text: **AA Normal (5.2:1) / AAA Large (4.5:1)** — the single documented carve-out (collapsing the 3-tier text hierarchy at AAA Normal would hurt scannability more than the contrast win). See `a11y.md` §1 for the rationale.
+- The W-E.4 tertiary remap (`#6c7589` → `#8b93a7`) is the recalibration that puts tertiary text safely at AA Normal across the surface ladder.
+
+**Reduced motion declaration:**
+`@media (prefers-reduced-motion: reduce)` in `globals.css` collapses `animation-duration` / `transition-duration` to `0.01ms`, disables `animate-pulse`, and (via the inherited transition collapse) effectively disables the `@view-transition` flow. Primitives that roll their own motion outside `transition` / `transition-slow` are out of contract.
+
+---
+
 *End of tokens.md. Wave B reads from this. If a primitive needs a new token, add it here, in `globals.css`, then build.*
