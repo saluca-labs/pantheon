@@ -44,8 +44,13 @@ export function DashboardHubFeatureGrid({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {features.map((feature) => (
+        // Key on `label` (unique per OS) rather than `href`: some OSes (e.g.
+        // filmmaker) intentionally point multiple feature cards at the same
+        // route. The previous inline server render emitted the same
+        // duplicate-key warning, but React 19 in client components promotes
+        // it to a console.error and fails tests.
         <Link
-          key={feature.href}
+          key={feature.label}
           href={feature.href}
           className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent/60 hover:bg-surface-3 transition flex items-start justify-between gap-3"
           onClick={(event) => {
