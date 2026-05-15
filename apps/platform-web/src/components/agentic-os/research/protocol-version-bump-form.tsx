@@ -10,8 +10,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import type { Protocol } from '@/lib/agentic-os/research/protocols';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface Props {
   source: Protocol;
@@ -122,7 +122,7 @@ export function ProtocolVersionBumpForm({ source, onClose }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="protocol-version-bump-form-submit"
         >
-          {busy && <Loader2 className="w-3 h-3 animate-spin" />}
+          {busy && <Spinner size="xs" />}
           Save new version
         </button>
       </div>
