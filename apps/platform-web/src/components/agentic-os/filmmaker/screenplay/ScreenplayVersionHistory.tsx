@@ -57,7 +57,7 @@ export function ScreenplayVersionHistory({
                       <p className="text-sm text-white">
                         v{v.versionNumber}
                         {v.isHead ? (
-                          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-positive/15 border border-positive/30 text-positive">
                             head
                           </span>
                         ) : null}

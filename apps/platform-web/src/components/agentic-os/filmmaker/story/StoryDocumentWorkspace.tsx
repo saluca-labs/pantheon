@@ -164,7 +164,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
             {STORY_DOCUMENT_KIND_LABEL[doc.kind]} · v{doc.version}
           </p>
           {lastSavedAt && (
-            <p className="text-[11px] text-[#64748b]">
+            <p className="text-[11px] text-text-tertiary">
               Last saved {new Date(lastSavedAt).toLocaleTimeString()}
             </p>
           )}
@@ -191,7 +191,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
             type="button"
             onClick={deleteDocument}
             disabled={deleting}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 disabled:opacity-50 transition"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20 disabled:opacity-50 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             {deleting ? 'Deleting…' : 'Delete'}
@@ -246,7 +246,7 @@ export function StoryDocumentWorkspace({ document, projectId, initialVersions }:
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-300">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
           {error}
         </div>
       )}

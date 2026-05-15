@@ -192,7 +192,7 @@ export const StoryDocumentEditor = forwardRef<StoryDocumentEditorHandle, Props>(
             {savingState === 'saved' && 'Saved'}
             {savingState === 'idle' && ' '}
             {savingState === 'error' && (
-              <span className="text-red-300">Save failed: {errorMsg}</span>
+              <span className="text-danger">Save failed: {errorMsg}</span>
             )}
           </span>
         </div>

@@ -323,7 +323,7 @@ export function CharacterForm({
       )}
 
       <div className="flex items-center justify-end gap-2 pt-2">
-        {error && <span className="text-sm text-red-300 mr-auto">{error}</span>}
+        {error && <span className="text-sm text-danger mr-auto">{error}</span>}
         {onCancel && (
           <button
             type="button"
@@ -337,7 +337,7 @@ export function CharacterForm({
         <button
           type="submit"
           disabled={busy || !form.name.trim()}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           {busy ? 'Saving…' : submitLabel}
         </button>

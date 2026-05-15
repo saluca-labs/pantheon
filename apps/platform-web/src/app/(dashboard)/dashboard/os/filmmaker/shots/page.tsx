@@ -125,7 +125,7 @@ async function ProjectSelector({ userId }: { userId: string }) {
           <p className="text-sm text-text-secondary mb-4">No projects yet.</p>
           <Link
             href="/dashboard/os/filmmaker/projects"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium px-4 py-2 text-sm transition"
           >
             <FolderOpen className="w-4 h-4" />
             Create your first project
