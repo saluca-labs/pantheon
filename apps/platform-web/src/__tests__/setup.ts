@@ -1,5 +1,15 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
+import * as axeMatchers from 'vitest-axe/matchers';
+// Type augmentation: extends Vitest's `Assertion` interface with
+// `toHaveNoViolations` so the runtime registration below is type-safe.
+import 'vitest-axe/extend-expect';
+
+// W-E.4 — register the vitest-axe `toHaveNoViolations` matcher globally so
+// every primitive a11y test can do `expect(await axe(container)).toHaveNoViolations()`
+// without re-registering per file. The matcher is the gate the primitive
+// suite at `src/__tests__/a11y/primitives.test.tsx` runs against.
+expect.extend(axeMatchers);
 
 // Wave E.3 — `DashboardHub`'s feature grid was extracted into a client
 // component that calls `useRouter()` to drive view-transition-wrapped
