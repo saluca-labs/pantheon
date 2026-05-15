@@ -49,17 +49,18 @@ export const ENTRY_KIND_DESCRIPTIONS: Record<EntryKind, string> = {
 };
 
 /**
- * Tailwind accent tokens for the per-kind pill / filter chip. Keys match
- * the dashboard palette used by the Phase 1 status pill (`STATUS_COLOR`
- * on the experiment card).
+ * Tailwind accent tokens for the per-kind pill / filter chip. Reads from
+ * the per-kind tokens defined in `globals.css` (W-E.5) so the palette is
+ * documented (`tokens.md` §11) and theme-aware rather than raw Tailwind
+ * palette literals.
  */
 export const ENTRY_KIND_COLOR: Record<EntryKind, string> = {
-  note: 'text-text-secondary bg-surface-0 border-border-subtle',
-  observation: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  result: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  decision: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  question: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  todo: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
+  note: 'text-text-secondary bg-surface-2 border-border-subtle',
+  observation: 'text-kind-observation bg-kind-observation/10 border-kind-observation/30',
+  result: 'text-kind-result bg-kind-result/10 border-kind-result/30',
+  decision: 'text-kind-decision bg-kind-decision/10 border-kind-decision/30',
+  question: 'text-kind-question bg-kind-question/10 border-kind-question/30',
+  todo: 'text-kind-todo bg-kind-todo/10 border-kind-todo/30',
 };
 
 /**

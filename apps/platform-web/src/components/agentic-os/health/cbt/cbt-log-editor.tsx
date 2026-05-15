@@ -11,7 +11,7 @@
  * field shapes loose enough that a mid-edit state isn't rejected.
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
 import { MoodScale, TextInput } from './wizards/_shared';
@@ -168,6 +168,7 @@ function strArr(data: Record<string, unknown>, key: string): string[] {
 }
 
 function KindFields({ kind, data, onPatch }: KindFieldsProps) {
+  const durationMinId = useId();
   switch (kind) {
     case 'thought-record':
       return (
@@ -254,10 +255,11 @@ function KindFields({ kind, data, onPatch }: KindFieldsProps) {
               onChange={(v) => onPatch({ scheduled_at: v })}
             />
             <div>
-              <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+              <label htmlFor={durationMinId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
                 Duration (min)
               </label>
               <input
+                id={durationMinId}
                 type="number"
                 min={1}
                 max={120}
@@ -499,9 +501,9 @@ function ValuesEditor({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs uppercase tracking-wide text-text-secondary">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary">
         Values
-      </label>
+      </span>
       <ul className="space-y-3">
         {rows.map((r, i) => (
           <li
@@ -616,9 +618,9 @@ function ChecklistEditor({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs uppercase tracking-wide text-text-secondary">
+      <span className="block text-xs uppercase tracking-wide text-text-secondary">
         Checklist
-      </label>
+      </span>
       <ul className="space-y-2">
         {rows.map((r, i) => (
           <li

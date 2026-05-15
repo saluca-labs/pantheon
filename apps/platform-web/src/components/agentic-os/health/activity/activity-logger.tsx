@@ -11,7 +11,7 @@
  * still type anything (the BFF falls back to MET=4.0 for unknowns).
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Activity, Pencil, Plus, Trash2, X } from 'lucide-react';
 import {
   Combobox,
@@ -255,6 +255,9 @@ function ActivityDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
+
   const options = useMemo<ComboboxOption<ActivityOption>[]>(() => {
     const q = activityType.trim().toLowerCase();
     return activityTypeSuggestions
@@ -325,15 +328,16 @@ function ActivityDrawer({
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-text-secondary">
+            <span className="mb-1 block text-xs text-text-secondary" aria-hidden="true">
               Activity type
-            </label>
+            </span>
             <Combobox<ActivityOption>
               value={activityType}
               onChange={setActivityType}
               onSelect={(opt) => setActivityType(opt.data.name)}
               options={options}
               placeholder="walk, run, yoga, weights, …"
+              ariaLabel="Activity type"
               emptyLabel="Type any activity (unknowns default to MET 4.0)"
             />
           </div>
@@ -383,8 +387,9 @@ function ActivityDrawer({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-text-secondary">Notes</label>
+            <label htmlFor={fid('notes')} className="mb-1 block text-xs text-text-secondary">Notes</label>
             <textarea
+              id={fid('notes')}
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

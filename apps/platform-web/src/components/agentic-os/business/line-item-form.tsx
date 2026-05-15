@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useId, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 type ParentType = 'quote' | 'invoice';
@@ -46,6 +46,9 @@ export default function LineItemForm({
   const [taxRateBp, setTaxRateBp] = useState(initialValues?.taxRateBp ?? 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const lineTotal = useMemo(() => Math.round(quantity * unitPriceCents), [quantity, unitPriceCents]);
   const lineTax = useMemo(() => Math.round((lineTotal * taxRateBp) / 10000), [lineTotal, taxRateBp]);
@@ -113,8 +116,9 @@ export default function LineItemForm({
 
       <div className="flex flex-wrap gap-2 items-start">
         <div className="flex-1 min-w-[120px]">
-          <label className={labelClass}>Description *</label>
+          <label htmlFor={fid('description')} className={labelClass}>Description *</label>
           <input
+            id={fid('description')}
             className={inputClass + ' w-full'}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -123,8 +127,9 @@ export default function LineItemForm({
           />
         </div>
         <div className="w-16">
-          <label className={labelClass}>Qty</label>
+          <label htmlFor={fid('qty')} className={labelClass}>Qty</label>
           <input
+            id={fid('qty')}
             className={inputClass + ' w-full text-center'}
             type="number"
             min={0.01}
@@ -134,8 +139,9 @@ export default function LineItemForm({
           />
         </div>
         <div className="w-20">
-          <label className={labelClass}>Unit</label>
+          <label htmlFor={fid('unit')} className={labelClass}>Unit</label>
           <input
+            id={fid('unit')}
             className={inputClass + ' w-full'}
             value={unitLabel}
             onChange={(e) => setUnitLabel(e.target.value)}
@@ -143,8 +149,9 @@ export default function LineItemForm({
           />
         </div>
         <div className="w-28">
-          <label className={labelClass}>Price (cents)</label>
+          <label htmlFor={fid('price')} className={labelClass}>Price (cents)</label>
           <input
+            id={fid('price')}
             className={inputClass + ' w-full text-right'}
             type="number"
             min={0}
@@ -153,8 +160,9 @@ export default function LineItemForm({
           />
         </div>
         <div className="w-20">
-          <label className={labelClass}>Tax (bp)</label>
+          <label htmlFor={fid('tax')} className={labelClass}>Tax (bp)</label>
           <input
+            id={fid('tax')}
             className={inputClass + ' w-full text-right'}
             type="number"
             min={0}

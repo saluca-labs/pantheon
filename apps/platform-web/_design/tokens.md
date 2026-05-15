@@ -212,9 +212,10 @@ Skeleton + spinner shimmer states are now first-class primitives under `_shared/
 
 ### View transitions (W-E.3)
 
-`useViewTransition()` — client hook that wraps `document.startViewTransition`. Returns a callable; invoke it with the navigation callback. Falls back to a synchronous call when the browser doesn't support the API. Wired into `DashboardHub`'s feature-grid links for v0.1.79; broader rollout is W-E.5.
+There are **two** view-transition paths and they cover different cases:
 
-Cross-document transitions are enabled globally via the `@view-transition { navigation: auto; }` rule in `globals.css` and `experimental.viewTransition: true` in `next.config.ts`. Both are required.
+- **Cross-document (browser default)** — the `@view-transition { navigation: auto; }` rule in `globals.css` paired with `experimental.viewTransition: true` in `next.config.ts` gives every cross-document MPA navigation an opt-in default browser fade. Nothing else has to wire it; the rule itself is the contract.
+- **Same-document (JS-driven opt-in)** — `useViewTransition()` is a client hook that wraps `document.startViewTransition`, falling back to a synchronous call when the browser doesn't support the API. Today only `DashboardHub`'s feature-grid links invoke it; broader same-document rollout, and paired-element wiring via `view-transition-name` CSS, is deferred to a future motion-polish PR.
 
 ---
 
@@ -239,7 +240,26 @@ Decision 5.9 locked: **friendly + plainspoken.** Informs copy in Wave B primitiv
 
 ---
 
-## 11. Quick reference — common replacements
+## 11. Per-kind colors
+
+Wave E.5 introduces a 6-token palette for Research-OS entry kinds (and any future kind-coded surface). Consumed by `lib/agentic-os/research/entry-kinds.ts` `ENTRY_KIND_COLOR` so the kind palette is token-driven rather than raw Tailwind palette literals.
+
+| Token              | Resolves to                | Tailwind utility           | Use                                                          |
+|--------------------|----------------------------|----------------------------|--------------------------------------------------------------|
+| `kind-note`        | `var(--text-secondary)`    | `text-kind-note`           | Notes — neutral, no chroma. Reads as default body hierarchy. |
+| `kind-observation` | `#7dd3fc` (sky-300)        | `text-kind-observation`    | Observations / bench-time data. Calmer than `os-research`.   |
+| `kind-result`      | `var(--positive)`          | `text-kind-result`         | Results / final outputs. Success-tinted.                     |
+| `kind-decision`    | `#c4b5fd` (violet-300)     | `text-kind-decision`       | Decision logs. Mirrors the filmmaker decision-log accent.    |
+| `kind-question`    | `var(--warning)`           | `text-kind-question`       | Open questions. Warning-tinted (non-blocking concern).       |
+| `kind-todo`        | `var(--attention)`         | `text-kind-todo`           | TODO items. Attention-tinted (needs looking at).             |
+
+**Tailwind utilities:** every kind token is aliased to `--color-kind-<slug>` in the `@theme` block, so `bg-kind-<slug>/10` / `text-kind-<slug>` / `border-kind-<slug>/30` JIT-compile.
+
+**Why a separate palette:** kind colors overlap conceptually with `accent` + status, but conflating them collapses meaning (`result` is not "success on a button"; it's "this entry is the result of an experiment"). A dedicated tier keeps the entry kind a first-class semantic dimension.
+
+---
+
+## 12. Quick reference — common replacements
 
 When migrating inline hex, the lookups are:
 
@@ -263,7 +283,7 @@ When migrating inline hex, the lookups are:
 
 ---
 
-## 12. Accessibility tokens
+## 13. Accessibility tokens
 
 Wave E.4 formalizes the a11y-adjacent tokens. Full contract lives in `_design/a11y.md`.
 

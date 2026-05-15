@@ -8,7 +8,7 @@
  * @license MIT — Tiresias Research OS Phase 6 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { ReproCheck } from '@/lib/agentic-os/research/reproducibility';
 
 interface Props {
@@ -27,6 +27,8 @@ export function ReproducibilityItemForm({
   const [itemKey, setItemKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const itemKeyId = useId();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,10 +77,11 @@ export function ReproducibilityItemForm({
       data-testid="repro-item-form"
     >
       <div className="space-y-1 flex-1 min-w-0">
-        <label className="text-xs uppercase tracking-wide text-text-secondary">
+        <label htmlFor={itemKeyId} className="text-xs uppercase tracking-wide text-text-secondary">
           New item_key
         </label>
         <input
+          id={itemKeyId}
           type="text"
           value={itemKey}
           onChange={(e) => setItemKey(e.target.value)}

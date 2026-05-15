@@ -18,7 +18,7 @@
  * @license MIT — Tiresias Maker OS Phase 6 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Flag, ShieldAlert } from 'lucide-react';
 import {
   MILESTONE_PRIORITY_VALUES,
@@ -59,6 +59,7 @@ interface Props {
 
 export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Props) {
   const [saving, setSaving] = useState(false);
+  const blockedReasonId = useId();
   const [error, setError] = useState<string | null>(null);
 
   async function patch(payload: Record<string, unknown>) {
@@ -150,11 +151,15 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
         milestone.status === 'at_risk' ||
         milestone.status === 'missed') && (
         <div className="space-y-1">
-          <label className="text-[10px] uppercase tracking-wide text-text-secondary inline-flex items-center gap-1">
+          <label
+            htmlFor={blockedReasonId}
+            className="text-[10px] uppercase tracking-wide text-text-secondary inline-flex items-center gap-1"
+          >
             <Flag className="w-3 h-3" />
             Blocked reason
           </label>
           <textarea
+            id={blockedReasonId}
             rows={2}
             maxLength={4000}
             defaultValue={milestone.blockedReason ?? ''}
