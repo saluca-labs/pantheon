@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { AgenticOsModule } from '@/lib/agentic-os/registry';
 import { PlanViewer } from '@/components/agentic-os/plan-viewer';
@@ -14,6 +14,7 @@ import type {
   ChartCardProps,
   DashboardWidgetProps,
 } from '@/components/agentic-os/_shared/views';
+import { DashboardHubFeatureGrid } from './dashboard-hub-feature-grid';
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   live: {
@@ -260,25 +261,10 @@ export function DashboardHub({
         </div>
 
         {hasFeatures ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {module.features.map((feature) => (
-              <Link
-                key={feature.href}
-                href={feature.href}
-                className="group rounded-xl border border-border-subtle bg-surface-2 p-5 hover:border-accent/60 hover:bg-surface-3 transition flex items-start justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <div className="text-base font-semibold text-white mb-1">
-                    {feature.label}
-                  </div>
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-text-secondary group-hover:text-accent mt-1 shrink-0 transition" />
-              </Link>
-            ))}
-          </div>
+          // W-E.3 — feature-grid extracted into a client component so its
+          // <Link> clicks can run through `useViewTransition`. Visuals
+          // unchanged; only the navigation path is wrapped.
+          <DashboardHubFeatureGrid features={module.features} />
         ) : (
           <div className="rounded-xl border border-dashed border-border-subtle bg-surface-2/50 p-6 text-center">
             <p className="text-sm font-medium text-white mb-1">Coming soon</p>

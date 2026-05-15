@@ -1,15 +1,18 @@
 /**
- * Agentic OS shared-view primitives — barrel (Wave B, UI Depth Wave).
+ * Agentic OS shared-view primitives — barrel (Waves B + E.3).
  *
- * Re-exports all 11 shared-view primitives and their public prop / data
+ * Re-exports the shared-view primitives and their public prop / data
  * types so consumers can `import { KanbanBoard, EmptyState } from
  * '@/components/agentic-os/_shared/views'` instead of reaching into
- * individual files. Wave C wires these into the OS hubs + list pages.
+ * individual files. Wave C wired these into the OS hubs + list pages;
+ * Wave E.3 adds the Skeleton + Spinner loading primitives so the
+ * shimmer divs scattered across the OSes can converge.
  *
  * Primitive sets:
  *  - B.1 dashboards : DashboardWidget, ActivityFeed, EmptyState, ChartCard
- *  - B.2 data views : EntitySearch, SavedViews, BulkActionsBar, CrossEntityTabs
+ *  - B.2 data views : EntitySearch, SavedViews, KindFilterChips, BulkActionsBar, CrossEntityTabs
  *  - B.3 board views: KanbanBoard, TimelineView, CalendarView
+ *  - E.3 loading    : Skeleton, SkeletonGroup, Spinner
  */
 
 // ─── B.1 — dashboard primitives ─────────────────────────────────────────────
@@ -111,3 +114,14 @@ export {
   WEEKDAY_LABELS,
 } from './calendar-view.utils';
 export type { CalendarCell } from './calendar-view.utils';
+
+// ─── E.3 — loading primitives ───────────────────────────────────────────────
+export { Skeleton, SkeletonGroup } from './skeleton';
+export type {
+  SkeletonProps,
+  SkeletonGroupProps,
+  SkeletonVariant,
+} from './skeleton';
+
+export { Spinner } from './spinner';
+export type { SpinnerProps, SpinnerSize } from './spinner';
