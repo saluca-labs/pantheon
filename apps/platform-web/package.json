@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run --reporter=verbose",
@@ -75,9 +75,13 @@
     "@types/react-dom": "^19",
     "@types/video.js": "^7.3.58",
     "@vitejs/plugin-react": "^4.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.0.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "vitest-axe": "^0.1.0"
   }
 }

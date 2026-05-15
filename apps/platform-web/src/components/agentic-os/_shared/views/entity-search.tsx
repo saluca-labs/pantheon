@@ -301,6 +301,7 @@ export function EntitySearch<TResult extends EntitySearchResult>({
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary"
           aria-hidden="true"
         />
+        {/* eslint-disable-next-line jsx-a11y/role-supports-aria-props -- W-E.4 carve-out: aria-expanded is invalid on role="searchbox" but moving to the WAI APG combobox pattern (role="combobox" on a wrapper) is a Sub B refactor — preserving current ARIA semantics here. */}
         <input
           type="text"
           role="searchbox"
@@ -454,6 +455,7 @@ export function EntitySearch<TResult extends EntitySearchResult>({
             </div>
           ) : (
             list.map((result, i) => (
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- W-E.4 carve-out: option uses div+onMouseDown intentionally to avoid stealing focus from the input (combobox pattern); keyboard nav is handled by the input's ArrowUp/Down/Enter/Esc listeners above. Sub B will refactor to a proper combobox-on-wrapper pattern with focusable listbox options.
               <div
                 key={result.id}
                 role="option"
