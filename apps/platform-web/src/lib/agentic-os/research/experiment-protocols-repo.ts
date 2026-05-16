@@ -218,8 +218,10 @@ export async function pinProtocolToExperiment(
        VALUES ($1, $2, $3, $4, $5)`,
       [id, experimentId, data.protocolId, pinnedVersion, data.notes ?? null],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') return { kind: 'duplicate' };
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') return { kind: 'duplicate' };
     throw err;
   }
   const link = await getExperimentProtocolLinkById(id, userId);

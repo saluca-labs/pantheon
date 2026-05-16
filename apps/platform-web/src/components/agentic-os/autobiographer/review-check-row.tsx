@@ -127,8 +127,9 @@ export function ReviewCheckRow({
       }
       setStatus(next);
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to update check');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to update check');
     } finally {
       setBusy(false);
     }
@@ -173,8 +174,9 @@ export function ReviewCheckRow({
         }
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save notes');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save notes');
     } finally {
       setBusy(false);
     }

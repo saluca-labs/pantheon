@@ -71,8 +71,9 @@ export function DependencyForm({
       const { dependency } = await r.json();
       onCreated?.(dependency);
       setNotes('');
-    } catch (err: any) {
-      setError(err?.message ?? 'Network error');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr?.message ?? 'Network error');
     } finally {
       setSubmitting(false);
     }

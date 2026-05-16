@@ -78,8 +78,9 @@ export function ThemePicker({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to attach theme');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to attach theme');
     } finally {
       setBusy(false);
     }
@@ -98,8 +99,9 @@ export function ThemePicker({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to detach theme');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to detach theme');
     } finally {
       setBusy(false);
     }

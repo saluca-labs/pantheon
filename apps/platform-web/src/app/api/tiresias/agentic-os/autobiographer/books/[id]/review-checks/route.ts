@@ -107,8 +107,10 @@ export async function POST(request: NextRequest, { params }: Props) {
       projectId: bookId,
     });
     return NextResponse.json({ check }, { status: 201 });
-  } catch (err: any) {
-    if (err?.code === 'duplicate') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'duplicate') {
       return NextResponse.json(
         { error: 'A review check of that kind already exists for this scope.' },
         { status: 409 },

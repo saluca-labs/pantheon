@@ -57,8 +57,9 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
       }
 
       router.push('/dashboard/os/creator/podcast');
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to save');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr.message ?? 'Failed to save');
     } finally {
       setSaving(false);
     }

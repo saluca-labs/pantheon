@@ -121,8 +121,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ memory }, { status: 201 });
-  } catch (err: any) {
-    if (err?.code === 'book_not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'book_not_found') {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
     throw err;

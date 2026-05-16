@@ -105,8 +105,10 @@ export async function POST(request: NextRequest, { params }: Props) {
     });
 
     return NextResponse.json({ source }, { status: 201 });
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       return NextResponse.json(
         { error: 'this memory is already linked to this chapter' },
         { status: 409 },

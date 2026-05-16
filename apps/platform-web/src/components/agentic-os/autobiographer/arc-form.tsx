@@ -86,8 +86,9 @@ export function ArcForm({
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save arc');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save arc');
     } finally {
       setBusy(false);
     }
@@ -112,8 +113,9 @@ export function ArcForm({
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to delete arc');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to delete arc');
     } finally {
       setBusy(false);
     }
