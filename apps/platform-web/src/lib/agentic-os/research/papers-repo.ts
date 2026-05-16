@@ -186,9 +186,11 @@ export async function createPaper(
         JSON.stringify(data.metadata ?? {}),
       ],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
-      const constraint: string = err.constraint ?? '';
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
+      const constraint: string = errErr.constraint ?? '';
       if (constraint.includes('arxiv')) return { kind: 'duplicate', field: 'arxiv_id' };
       if (constraint.includes('doi')) return { kind: 'duplicate', field: 'doi' };
       // Fall through to a generic duplicate signal if the constraint
@@ -295,9 +297,11 @@ export async function updatePaper(
     if ((r.rowCount ?? 0) === 0) {
       return { kind: 'not_found' };
     }
-  } catch (err: any) {
-    if (err?.code === '23505') {
-      const constraint: string = err.constraint ?? '';
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
+      const constraint: string = errErr.constraint ?? '';
       if (constraint.includes('arxiv')) return { kind: 'duplicate', field: 'arxiv_id' };
       if (constraint.includes('doi')) return { kind: 'duplicate', field: 'doi' };
       return { kind: 'duplicate', field: 'doi' };

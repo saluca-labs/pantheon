@@ -82,8 +82,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     });
 
     return NextResponse.json({ person });
-  } catch (err: any) {
-    if (err?.code === 'duplicate_name') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'duplicate_name') {
       return NextResponse.json(
         { error: 'A person with that canonical name already exists.' },
         { status: 409 },

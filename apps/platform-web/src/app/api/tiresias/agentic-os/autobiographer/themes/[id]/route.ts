@@ -77,8 +77,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       projectId: null,
     });
     return NextResponse.json({ theme: updated });
-  } catch (err: any) {
-    if (err?.code === 'duplicate') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'duplicate') {
       return NextResponse.json(
         { error: 'A theme with that slug or name already exists.' },
         { status: 409 },

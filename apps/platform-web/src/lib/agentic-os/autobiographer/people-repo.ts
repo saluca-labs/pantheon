@@ -246,8 +246,10 @@ export async function createPerson(
         JSON.stringify(data.metadata ?? {}),
       ],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       const dup = new Error('duplicate_name');
       (dup as any).code = 'duplicate_name';
       throw dup;
@@ -308,8 +310,10 @@ export async function updatePerson(
         patch.metadata ? JSON.stringify(patch.metadata) : null,
       ],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       const dup = new Error('duplicate_name');
       (dup as any).code = 'duplicate_name';
       throw dup;

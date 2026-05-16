@@ -142,8 +142,9 @@ export function MemoryForm({
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save memory');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save memory');
     } finally {
       setSubmitting(false);
     }

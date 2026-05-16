@@ -229,9 +229,11 @@ export async function createLink(
         data.notes ?? null,
       ],
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
     // Postgres unique-violation SQLSTATE = '23505'
-    if (err?.code === '23505') {
+    if (errErr?.code === '23505') {
       return { kind: 'duplicate' };
     }
     throw err;

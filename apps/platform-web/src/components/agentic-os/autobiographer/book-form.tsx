@@ -94,8 +94,9 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save book');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save book');
     } finally {
       setSubmitting(false);
     }

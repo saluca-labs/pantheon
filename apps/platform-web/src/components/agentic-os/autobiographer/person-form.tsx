@@ -102,8 +102,9 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save person');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save person');
     } finally {
       setSubmitting(false);
     }
