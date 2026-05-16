@@ -130,7 +130,7 @@ export function CbtLogEditor({ log }: Props) {
           type="button"
           onClick={() => void onSave()}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting ? 'Saving…' : 'Save changes'}
@@ -139,11 +139,11 @@ export function CbtLogEditor({ log }: Props) {
           type="button"
           onClick={() => void onDelete()}
           disabled={submitting}
-          className="rounded-lg border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 disabled:opacity-60 text-red-200 text-xs px-3 py-2 transition"
+          className="rounded-lg border border-danger/30 bg-danger/5 hover:bg-danger/10 disabled:opacity-60 text-danger text-xs px-3 py-2 transition"
         >
           Delete
         </button>
-        {error && <span className="text-xs text-red-300">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
     </div>
   );
@@ -401,7 +401,7 @@ function StringListEditor({
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-text-secondary hover:text-red-300 px-2"
+                className="text-xs text-text-secondary hover:text-danger px-2"
               >
                 remove
               </button>
@@ -412,7 +412,7 @@ function StringListEditor({
       <button
         type="button"
         onClick={add}
-        className="mt-2 text-xs text-accent hover:text-[#5d7aff] transition"
+        className="mt-2 text-xs text-accent hover:text-accent/80 transition"
       >
         + Add
       </button>
@@ -522,7 +522,7 @@ function ValuesEditor({
                 <button
                   type="button"
                   onClick={() => remove(i)}
-                  className="text-xs text-text-secondary hover:text-red-300 px-2"
+                  className="text-xs text-text-secondary hover:text-danger px-2"
                 >
                   remove
                 </button>
@@ -575,7 +575,7 @@ function ValuesEditor({
       <button
         type="button"
         onClick={add}
-        className="text-xs text-accent hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-accent/80 transition"
       >
         + Add domain
       </button>
@@ -644,7 +644,7 @@ function ChecklistEditor({
               <button
                 type="button"
                 onClick={() => remove(i)}
-                className="text-xs text-text-secondary hover:text-red-300 px-2"
+                className="text-xs text-text-secondary hover:text-danger px-2"
               >
                 remove
               </button>
@@ -655,7 +655,7 @@ function ChecklistEditor({
       <button
         type="button"
         onClick={add}
-        className="text-xs text-accent hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-accent/80 transition"
       >
         + Add item
       </button>

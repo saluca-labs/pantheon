@@ -135,7 +135,7 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting || body.trim().length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting
@@ -149,12 +149,12 @@ export function JournalEditor({ prompt, editingId, initial }: Props) {
             type="button"
             onClick={() => void onDelete()}
             disabled={submitting}
-            className="rounded-lg border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 disabled:opacity-60 text-red-200 text-xs px-3 py-2 transition"
+            className="rounded-lg border border-danger/30 bg-danger/5 hover:bg-danger/10 disabled:opacity-60 text-danger text-xs px-3 py-2 transition"
           >
             Delete
           </button>
         )}
-        {error && <span className="text-xs text-red-300">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
     </div>
   );

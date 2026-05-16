@@ -20,8 +20,15 @@ import { TrendChart, type TrendSeries } from '@/components/agentic-os/_shared/tr
 import { TagHeatmap } from '@/components/agentic-os/_shared/tag-heatmap';
 import { StatCard } from '@/components/agentic-os/_shared/stat-card';
 import { ActivitySuggestionCard } from '@/components/agentic-os/health/activity/activity-suggestion-card';
-import { ACCENT, POSITIVE, WARNING } from '@/lib/design/chart-tokens';
-const SERIES_VIOLET = '#a78bfa'; // secure-dev OS accent — reused here for cross-OS palette consistency
+import {
+  ACCENT,
+  ACCENT_INFO,
+  DANGER,
+  OS_ACCENT,
+  POSITIVE,
+  WARNING,
+} from '@/lib/design/chart-tokens';
+const SERIES_VIOLET = OS_ACCENT['secure-dev']!; // secure-dev OS accent — reused here for cross-OS palette consistency
 
 export type TrendWindow = '7d' | '30d' | '90d';
 
@@ -130,13 +137,13 @@ function buildActivitySeries(
     {
       key: 'duration_min',
       label: 'Duration (min)',
-      color: '#10b981',
+      color: POSITIVE,
       data: rows.map((r) => ({ date: r.date, value: r.duration_min })),
     },
     {
       key: 'kcal_burned',
       label: 'kcal burned',
-      color: '#f59e0b',
+      color: WARNING,
       data: rows.map((r) => ({ date: r.date, value: r.kcal_burned })),
     },
   ];
@@ -146,9 +153,9 @@ function buildScreenerSeries(
   rows: TrendsPayload['screener_series'],
 ): TrendSeries[] {
   const kinds: Record<string, { label: string; color: string }> = {
-    phq9: { label: 'PHQ-9', color: '#ef4444' },
-    gad7: { label: 'GAD-7', color: '#f59e0b' },
-    pss: { label: 'PSS-10', color: '#06b6d4' },
+    phq9: { label: 'PHQ-9', color: DANGER },
+    gad7: { label: 'GAD-7', color: WARNING },
+    pss: { label: 'PSS-10', color: ACCENT_INFO },
   };
   return Object.entries(kinds).map(([key, meta]) => ({
     key,
@@ -222,7 +229,7 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
         {loading && (
           <span className="text-xs text-text-secondary">Updating…</span>
         )}
-        {error && <span className="text-xs text-red-300">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
 
       <ActivitySuggestionCard />
@@ -296,9 +303,9 @@ export function TrendsDashboard({ initial }: { initial: TrendsPayload }) {
             <span
               className={
                 trendDirection === 'up'
-                  ? 'text-amber-300'
+                  ? 'text-warning'
                   : trendDirection === 'down'
-                    ? 'text-emerald-300'
+                    ? 'text-positive'
                     : 'text-text-primary'
               }
             >

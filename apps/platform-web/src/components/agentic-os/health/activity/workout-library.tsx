@@ -22,9 +22,9 @@ const CATEGORIES = ['all', 'cardio', 'strength', 'mobility', 'mixed'] as const;
 const SOURCES = ['all', 'system', 'custom'] as const;
 
 const INTENSITY_COLOR: Record<string, string> = {
-  light: 'text-emerald-300',
+  light: 'text-positive',
   moderate: 'text-accent',
-  vigorous: 'text-amber-300',
+  vigorous: 'text-warning',
 };
 
 export function WorkoutLibrary({
@@ -92,7 +92,7 @@ export function WorkoutLibrary({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search workouts"
-            className="w-full rounded-lg border border-border-subtle bg-surface-0 py-2 pl-9 pr-3 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
+            className="w-full rounded-lg border border-border-subtle bg-surface-0 py-2 pl-9 pr-3 text-sm text-white placeholder:text-text-tertiary focus:border-accent focus:outline-none"
           />
         </label>
         <select
@@ -127,7 +127,7 @@ export function WorkoutLibrary({
         </select>
         <Link
           href="/dashboard/os/health/workouts/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent/90"
         >
           <Plus className="h-4 w-4" />
           Create workout

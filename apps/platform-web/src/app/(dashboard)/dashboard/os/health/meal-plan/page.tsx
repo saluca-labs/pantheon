@@ -37,8 +37,8 @@ export default async function MealPlanPage({ searchParams }: PageProps) {
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
         </Link>
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
-          <h1 className="text-lg font-semibold text-amber-50 mb-2">
+        <div className="rounded-xl border border-warning/30 bg-warning/5 p-6 text-sm text-warning/90">
+          <h1 className="text-lg font-semibold text-warning mb-2">
             Mental-health consent required
           </h1>
         </div>
