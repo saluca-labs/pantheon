@@ -254,8 +254,10 @@ export async function createReference(
        VALUES ($1, $2, $3, $4, $5)`,
       [id, experimentId, data.paperId, relevance, data.notes ?? null],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') return { kind: 'duplicate' };
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') return { kind: 'duplicate' };
     throw err;
   }
   const link = await getReferenceByPair(experimentId, data.paperId, userId, relevance);
@@ -313,8 +315,10 @@ export async function updateReference(
       params,
     );
     if ((r.rowCount ?? 0) === 0) return null;
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       // Caller asked to switch relevance to a value that already
       // exists for this pair. Surface as null (the route then returns
       // 409 via getReferenceByPair short-circuit) — simpler than

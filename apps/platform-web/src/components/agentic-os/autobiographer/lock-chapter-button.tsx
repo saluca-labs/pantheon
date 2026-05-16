@@ -70,8 +70,9 @@ export function LockChapterButton({
         return;
       }
       throw new Error(data.error ?? `${res.status} ${res.statusText}`);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to update lock state');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to update lock state');
     } finally {
       setBusy(false);
     }

@@ -109,9 +109,11 @@ export async function POST(request: NextRequest, { params }: Props) {
       projectId: bookId,
     });
     return NextResponse.json({ chapter }, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
     // Slug collision (when caller supplied a slug): unique violation.
-    if (err?.code === '23505') {
+    if (errErr?.code === '23505') {
       return NextResponse.json(
         { error: 'slug already in use within this book' },
         { status: 409 },

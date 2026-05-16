@@ -69,8 +69,9 @@ export function ArcChapterRow({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to reorder');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to reorder');
     } finally {
       setBusy(false);
     }
@@ -96,8 +97,9 @@ export function ArcChapterRow({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to remove');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to remove');
     } finally {
       setBusy(false);
     }

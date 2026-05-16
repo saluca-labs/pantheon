@@ -34,8 +34,10 @@ export async function DELETE(_request: NextRequest, { params }: Props) {
       projectId: chapter?.bookId ?? null,
     });
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    if (err?.code === 'not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'not_found') {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
     throw err;

@@ -170,9 +170,11 @@ export async function createSnapshot(
         data.notes ?? null,
       ],
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
     // PostgreSQL unique violation code
-    if (err.code === '23505') {
+    if (errErr.code === '23505') {
       // Fetch the existing snapshot to return it
       const r = await pool.query(
         `SELECT ${SNAPSHOT_COLUMNS}

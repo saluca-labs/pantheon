@@ -134,8 +134,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     });
 
     return NextResponse.json({ chapter });
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       return NextResponse.json(
         { error: 'slug already in use within this book' },
         { status: 409 },

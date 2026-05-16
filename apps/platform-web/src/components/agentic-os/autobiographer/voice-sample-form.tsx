@@ -74,8 +74,9 @@ export function VoiceSampleForm({
       }
       onClose();
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save sample');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save sample');
     } finally {
       setSubmitting(false);
     }

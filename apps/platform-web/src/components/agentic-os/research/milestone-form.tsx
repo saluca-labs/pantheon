@@ -74,8 +74,9 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
       }
       const { milestone } = await r.json();
       onSaved?.(milestone);
-    } catch (err: any) {
-      setError(err?.message ?? 'Network error');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr?.message ?? 'Network error');
     } finally {
       setSubmitting(false);
     }

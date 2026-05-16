@@ -111,8 +111,10 @@ export async function getOrCreateSettings(
         JSON.stringify(seed.metadata),
       ],
     );
-  } catch (err: any) {
-    if (err?.code !== '23505') throw err;
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code !== '23505') throw err;
     // Race: another caller created the row first.  Re-read.
     const after = await getSettings(userId);
     if (!after) throw err;
