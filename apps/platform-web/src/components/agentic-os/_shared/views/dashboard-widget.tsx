@@ -15,7 +15,7 @@
  *  - _design/tokens.md §1, §4, §5
  */
 
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { clsx } from 'clsx';
 import type { OsSlug } from '@/lib/agentic-os/registry';
 
@@ -108,6 +108,10 @@ export function DashboardWidget({
   'data-testid': testId = 'dashboard-widget',
 }: DashboardWidgetProps) {
   const iconTint = osSlug ? OS_ICON_TINT[osSlug] : 'bg-accent/15 text-accent';
+  // W-E.4: link the widget body to the title via `aria-labelledby` so screen
+  // readers announce the title as the body's name. Generated per-render via
+  // `useId` (stable across re-renders, unique per instance).
+  const titleId = useId();
 
   const root = clsx(
     'flex flex-col rounded-xl border p-5',
@@ -132,7 +136,10 @@ export function DashboardWidget({
               {icon}
             </span>
           ) : null}
-          <h3 className="truncate text-sm font-semibold text-text-primary">
+          <h3
+            id={titleId}
+            className="truncate text-sm font-semibold text-text-primary"
+          >
             {title}
           </h3>
         </div>
@@ -143,7 +150,11 @@ export function DashboardWidget({
         ) : null}
       </div>
 
-      <div className="min-w-0 flex-1" data-testid="dashboard-widget-body">
+      <div
+        className="min-w-0 flex-1"
+        data-testid="dashboard-widget-body"
+        aria-labelledby={titleId}
+      >
         {children}
       </div>
 
