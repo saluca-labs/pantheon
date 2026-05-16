@@ -122,16 +122,16 @@ export function CoachHub({ projectId, initialMode, sessions }: Props) {
                   className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
                 >
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
+                    <MessageCircle className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
                     <span className="truncate">
                       {s.title || 'Untitled session'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] uppercase tracking-wide text-amber-300">
+                    <span className="text-[10px] uppercase tracking-wide text-os-maker">
                       {COACH_MODE_LABELS[s.mode]}
                     </span>
-                    <span className="text-[10px] text-[#64748b]">
+                    <span className="text-[10px] text-text-tertiary">
                       {new Date(s.updatedAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -144,7 +144,7 @@ export function CoachHub({ projectId, initialMode, sessions }: Props) {
 
       <section className="rounded-xl border border-border-subtle bg-surface-2 p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-300" />
+          <Sparkles className="w-5 h-5 text-os-maker" />
           <h2 className="text-base font-semibold text-white">
             Start a session
           </h2>
@@ -162,7 +162,7 @@ export function CoachHub({ projectId, initialMode, sessions }: Props) {
         </div>
 
         {!canStart && (
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          <div className="rounded-lg border border-os-maker/40 bg-os-maker/10 px-3 py-2 text-xs text-os-maker">
             <strong>{COACH_MODE_LABELS[mode]}</strong> mode reads a specific
             project. Open a project hub and pick this mode from the Coach
             tab to scope the session.
@@ -193,12 +193,12 @@ export function CoachHub({ projectId, initialMode, sessions }: Props) {
             disabled={submitting || !canStart}
             placeholder="Or type your own…"
             rows={2}
-            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-amber-400 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-tertiary px-3 py-2 focus:outline-none focus:border-os-maker disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={submitting || !text.trim() || !canStart}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-sm font-medium px-3 py-2 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-os-maker hover:bg-os-maker/90 text-black text-sm font-medium px-3 py-2 disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             Send
@@ -208,7 +208,7 @@ export function CoachHub({ projectId, initialMode, sessions }: Props) {
         {error && (
           <div
             role="alert"
-            className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+            className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
           >
             {error}
           </div>

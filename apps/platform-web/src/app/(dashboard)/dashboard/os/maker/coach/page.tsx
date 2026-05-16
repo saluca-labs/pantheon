@@ -61,7 +61,7 @@ export default async function MakerCoachHubPage({ searchParams }: Props) {
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
-        <Sparkles className="w-6 h-6 text-amber-300" />
+        <Sparkles className="w-6 h-6 text-os-maker" />
         <h1 className="text-2xl font-semibold text-white">Maker Coach</h1>
       </div>
       <p className="text-sm text-text-secondary mb-6 leading-relaxed">

@@ -37,8 +37,8 @@ const inputCls =
 
 const STATUS_COLOR: Record<'pending' | 'blocked' | 'done', string> = {
   pending: 'border-border-subtle text-text-secondary',
-  blocked: 'border-amber-500/50 text-amber-300',
-  done: 'border-emerald-500/50 text-emerald-300',
+  blocked: 'border-warning/50 text-warning',
+  done: 'border-positive/50 text-positive',
 };
 
 export function StepListEditor({ projectId, initialSteps }: Props) {
@@ -167,7 +167,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
           <span className="text-white font-medium">{stats.done}</span> / {stats.total} done
         </span>
         {stats.blocked > 0 && (
-          <span className="inline-flex items-center gap-1 text-amber-300">
+          <span className="inline-flex items-center gap-1 text-warning">
             <AlertTriangle className="w-3 h-3" />
             {stats.blocked} blocked
           </span>
@@ -181,7 +181,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+        <div className="rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger">
           {error}
         </div>
       )}
@@ -200,7 +200,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
             <li
               key={step.id}
               className={`flex items-start gap-3 rounded-lg border bg-surface-2 px-3 py-3 ${
-                done ? 'border-emerald-500/30' : 'border-border-subtle'
+                done ? 'border-positive/30' : 'border-border-subtle'
               }`}
             >
               <button
@@ -209,7 +209,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                 aria-label={done ? 'Mark step pending' : 'Mark step done'}
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition ${
                   done
-                    ? 'border-emerald-500 bg-emerald-500/30 text-emerald-200'
+                    ? 'border-positive bg-positive/30 text-positive'
                     : 'border-border-subtle hover:border-accent'
                 }`}
               >
@@ -243,7 +243,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                   </p>
                 )}
                 {step.blockerText && (
-                  <p className="mt-1 inline-flex items-start gap-1 text-xs text-amber-300">
+                  <p className="mt-1 inline-flex items-start gap-1 text-xs text-warning">
                     <AlertTriangle className="w-3 h-3 mt-0.5" />
                     {step.blockerText}
                   </p>
@@ -272,7 +272,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
                   type="button"
                   onClick={() => deleteStep(step)}
                   aria-label="Delete step"
-                  className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
+                  className="rounded p-1 text-text-secondary hover:bg-danger/10 hover:text-danger"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -317,7 +317,7 @@ export function StepListEditor({ projectId, initialSteps }: Props) {
           <button
             type="submit"
             disabled={adding || !newStep.title.trim()}
-            className="ml-auto rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
+            className="ml-auto rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Adding…' : 'Add step'}
           </button>

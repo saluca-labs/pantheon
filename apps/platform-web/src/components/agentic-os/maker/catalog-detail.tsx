@@ -248,7 +248,7 @@ export function CatalogDetail({
             {savingHeader && (
               <p className="text-xs text-text-secondary">Saving…</p>
             )}
-            {headerError && <p className="text-xs text-red-300">{headerError}</p>}
+            {headerError && <p className="text-xs text-danger">{headerError}</p>}
           </div>
         </div>
         <div className="text-xs text-text-secondary flex flex-wrap items-center gap-4">
@@ -338,7 +338,7 @@ export function CatalogDetail({
                         <button
                           type="button"
                           onClick={() => void removeLink(l.id)}
-                          className="text-xs text-text-secondary hover:text-red-300 transition"
+                          className="text-xs text-text-secondary hover:text-danger transition"
                           aria-label="Remove supplier link"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -447,7 +447,7 @@ function AddLinkForm({
       <button
         type="submit"
         disabled={busy || !supplierId}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
       >
         {busy ? 'Adding…' : 'Add link'}
       </button>

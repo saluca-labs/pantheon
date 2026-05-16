@@ -182,7 +182,7 @@ export function MaintenanceLog({ toolId, initialEvents }: Props) {
         </div>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {showAdd && (
         <form
@@ -309,9 +309,9 @@ function MaintenanceEventBody({
                   <span
                     className={`ml-1 ${
                       daysOut < 0
-                        ? 'text-red-300'
+                        ? 'text-danger'
                         : daysOut <= 7
-                          ? 'text-amber-300'
+                          ? 'text-warning'
                           : 'text-text-primary'
                     }`}
                   >
@@ -335,7 +335,7 @@ function MaintenanceEventBody({
         <button
           type="button"
           onClick={() => onDelete(ev)}
-          className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+          className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-danger hover:bg-danger/10 inline-flex items-center gap-1 transition"
         >
           <Trash2 className="w-3 h-3" />
         </button>

@@ -98,7 +98,7 @@ export function DependenciesTab({ projectId, initial, candidateProjects }: Props
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3651D9]"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent/90"
         >
           <Plus className="w-4 h-4" />
           Add dependency
@@ -106,7 +106,7 @@ export function DependenciesTab({ projectId, initial, candidateProjects }: Props
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+        <div className="rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger">
           {error}
         </div>
       )}
@@ -204,8 +204,8 @@ function EdgeList({
                     <span
                       className={`rounded-full border px-2 py-0.5 ${
                         edge.status === 'open'
-                          ? 'border-amber-500/40 text-amber-300'
-                          : 'border-emerald-500/40 text-emerald-300'
+                          ? 'border-warning/40 text-warning'
+                          : 'border-positive/40 text-positive'
                       }`}
                     >
                       {edge.status === 'open' ? 'Open' : 'Cleared'}
@@ -224,7 +224,7 @@ function EdgeList({
                       <button
                         type="button"
                         onClick={() => onClear(edge)}
-                        className="text-[10px] uppercase tracking-wide text-emerald-300 hover:underline"
+                        className="text-[10px] uppercase tracking-wide text-positive hover:underline"
                       >
                         Clear
                       </button>
@@ -232,7 +232,7 @@ function EdgeList({
                       <button
                         type="button"
                         onClick={() => onReopen(edge)}
-                        className="text-[10px] uppercase tracking-wide text-amber-300 hover:underline"
+                        className="text-[10px] uppercase tracking-wide text-warning hover:underline"
                       >
                         Reopen
                       </button>
@@ -241,7 +241,7 @@ function EdgeList({
                     <button
                       type="button"
                       onClick={() => onRemove(edge)}
-                      className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
+                      className="rounded p-1 text-text-secondary hover:bg-danger/10 hover:text-danger"
                       aria-label="Remove dependency"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

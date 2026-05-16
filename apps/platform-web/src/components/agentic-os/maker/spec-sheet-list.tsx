@@ -156,7 +156,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
         </div>
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {showAdd && !readOnly && (
         <SpecSheetForm
@@ -235,7 +235,7 @@ export function SpecSheetList({ scope, initialSheets, readOnly = false }: Props)
                         <button
                           type="button"
                           onClick={() => handleDelete(s.id)}
-                          className="text-xs text-text-secondary hover:text-red-400 transition"
+                          className="text-xs text-text-secondary hover:text-danger transition"
                         >
                           Delete
                         </button>

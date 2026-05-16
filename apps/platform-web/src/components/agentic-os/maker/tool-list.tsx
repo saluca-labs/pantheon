@@ -42,8 +42,8 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_BADGE: Record<ToolStatus, string> = {
-  active: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/5',
-  down: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
+  active: 'border-positive/50 text-positive bg-positive/5',
+  down: 'border-warning/50 text-warning bg-warning/5',
   retired: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
@@ -177,9 +177,9 @@ export function ToolList({ initialTools }: Props) {
           {stats.total === 1 ? '' : 's'}
         </span>
         <span>·</span>
-        <span className="text-emerald-300">{stats.active} active</span>
+        <span className="text-positive">{stats.active} active</span>
         <span>·</span>
-        <span className="text-amber-300">{stats.down} down</span>
+        <span className="text-warning">{stats.down} down</span>
         <span>·</span>
         <span className="text-text-secondary">{stats.retired} retired</span>
       </div>
@@ -294,7 +294,7 @@ export function ToolList({ initialTools }: Props) {
             />
           </div>
           {addError && (
-            <p className="text-xs text-red-400">{addError}</p>
+            <p className="text-xs text-danger">{addError}</p>
           )}
           <button
             type="submit"

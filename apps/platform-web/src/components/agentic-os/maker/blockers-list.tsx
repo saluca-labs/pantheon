@@ -44,10 +44,10 @@ import { MakerListControls, type MakerQuery } from './maker-list-controls';
 const API_BASE = '/api/tiresias/agentic-os/maker';
 
 const SEVERITY_STYLE: Record<BlockerSeverity, string> = {
-  missed: 'border-red-600/60 text-red-300 bg-red-500/10',
-  blocked: 'border-red-500/50 text-red-300 bg-red-500/5',
-  overdue: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
-  at_risk: 'border-yellow-500/50 text-yellow-300 bg-yellow-500/5',
+  missed: 'border-danger/60 text-danger bg-danger/10',
+  blocked: 'border-danger/50 text-danger bg-danger/5',
+  overdue: 'border-warning/50 text-warning bg-warning/5',
+  at_risk: 'border-warning/50 text-warning bg-warning/5',
   open_dependency: 'border-accent/50 text-text-primary bg-accent/5',
 };
 

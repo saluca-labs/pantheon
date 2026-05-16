@@ -118,7 +118,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
                     <button
                       type="button"
                       onClick={() => void removeVariant(v)}
-                      className="text-xs text-text-secondary hover:text-red-300 transition"
+                      className="text-xs text-text-secondary hover:text-danger transition"
                       aria-label="Remove variant"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -154,7 +154,7 @@ export function VariantEditor({ catalogId, initialVariants, onChange }: Props) {
         <button
           type="submit"
           disabled={busy || !newLabel.trim()}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {busy ? 'Adding…' : 'Add variant'}
         </button>

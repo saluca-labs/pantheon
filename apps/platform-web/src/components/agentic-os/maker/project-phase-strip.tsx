@@ -39,7 +39,7 @@ interface Props {
 
 /** Fill tint for a phase segment by completion band. */
 function fillClass(pct: number): string {
-  if (pct >= 100) return 'bg-emerald-500';
+  if (pct >= 100) return 'bg-positive';
   if (pct >= 50) return 'bg-accent';
   if (pct > 0) return 'bg-accent/60';
   return 'bg-surface-0';

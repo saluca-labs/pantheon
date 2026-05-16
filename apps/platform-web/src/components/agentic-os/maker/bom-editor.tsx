@@ -84,17 +84,17 @@ const STATUS_META: Record<
 > = {
   in_stock: {
     label: 'In stock',
-    pill: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/5',
+    pill: 'border-positive/50 text-positive bg-positive/5',
     Icon: PackageCheck,
   },
   short: {
     label: 'Short',
-    pill: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
+    pill: 'border-warning/50 text-warning bg-warning/5',
     Icon: AlertTriangle,
   },
   critical: {
     label: 'Critical short',
-    pill: 'border-red-500/50 text-red-300 bg-red-500/5',
+    pill: 'border-danger/50 text-danger bg-danger/5',
     Icon: PackageX,
   },
   no_data: {
@@ -295,7 +295,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
                   <button
                     type="button"
                     onClick={() => void removeLine(row.line)}
-                    className="rounded p-1 text-text-secondary transition hover:bg-red-500/10 hover:text-red-300"
+                    className="rounded p-1 text-text-secondary transition hover:bg-danger/10 hover:text-danger"
                     aria-label="Remove BOM line"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -447,7 +447,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
               <button
                 type="submit"
                 disabled={adding || !newLine.partCatalogId}
-                className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+                className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
               >
                 {adding ? 'Adding…' : 'Add line'}
               </button>
@@ -458,7 +458,7 @@ export function BomEditor({ projectId, initialSummary, catalogRows }: Props) {
               >
                 Refresh catalog
               </button>
-              {addError && <span className="text-sm text-red-300">{addError}</span>}
+              {addError && <span className="text-sm text-danger">{addError}</span>}
             </div>
           </>
         )}
@@ -479,11 +479,11 @@ function TotalCell({
 }) {
   const valueTone =
     tone === 'warning'
-      ? 'text-amber-300'
+      ? 'text-warning'
       : tone === 'danger'
-        ? 'text-red-300'
+        ? 'text-danger'
         : tone === 'ok'
-          ? 'text-emerald-300'
+          ? 'text-positive'
           : 'text-white';
   return (
     <div className="rounded-lg border border-border-subtle bg-surface-2 p-3">
@@ -509,9 +509,9 @@ function Fact({
 }) {
   const valueTone =
     tone === 'warning'
-      ? 'text-amber-300'
+      ? 'text-warning'
       : tone === 'ok'
-        ? 'text-emerald-300'
+        ? 'text-positive'
         : 'text-white';
   return (
     <div className="flex flex-col justify-end">

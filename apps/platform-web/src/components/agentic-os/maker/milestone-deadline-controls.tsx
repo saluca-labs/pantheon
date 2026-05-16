@@ -38,17 +38,17 @@ const inputCls =
 const PRIORITY_STYLE: Record<MilestonePriority, string> = {
   low: 'border-border-subtle text-text-secondary',
   medium: 'border-accent/50 text-text-primary',
-  high: 'border-amber-500/50 text-amber-300',
-  critical: 'border-red-500/50 text-red-300',
+  high: 'border-warning/50 text-warning',
+  critical: 'border-danger/50 text-danger',
 };
 
 const STATUS_STYLE: Record<MilestoneStoredStatus, string> = {
   pending: 'border-border-subtle text-text-secondary',
-  at_risk: 'border-yellow-500/50 text-yellow-300',
-  blocked: 'border-red-500/50 text-red-300',
-  on_track: 'border-emerald-500/50 text-emerald-300',
-  done: 'border-emerald-600/50 text-emerald-200',
-  missed: 'border-red-600/60 text-red-300',
+  at_risk: 'border-warning/50 text-warning',
+  blocked: 'border-danger/50 text-danger',
+  on_track: 'border-positive/50 text-positive',
+  done: 'border-positive/50 text-positive',
+  missed: 'border-danger/60 text-danger',
 };
 
 interface Props {
@@ -139,7 +139,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
             checked={milestone.isBlocker}
             disabled={saving}
             onChange={(e) => void patch({ isBlocker: e.target.checked })}
-            className="accent-red-400"
+            className="accent-danger"
           />
           <ShieldAlert className="w-3 h-3" />
           Blocker
@@ -174,7 +174,7 @@ export function MilestoneDeadlineControls({ projectId, milestone, onChange }: Pr
       )}
 
       {error && (
-        <p className="text-xs text-red-300">{error}</p>
+        <p className="text-xs text-danger">{error}</p>
       )}
     </div>
   );

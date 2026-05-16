@@ -31,8 +31,8 @@ export function CoachModePicker({ value, onChange, disabled }: Props) {
             onClick={() => onChange(m)}
             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition disabled:opacity-50 ${
               active
-                ? 'bg-amber-500 text-black border-amber-500'
-                : 'bg-surface-0 text-text-primary border-border-subtle hover:border-[#3b4252] hover:text-white'
+                ? 'bg-os-maker text-black border-os-maker'
+                : 'bg-surface-0 text-text-primary border-border-subtle hover:border-border-strong hover:text-white'
             }`}
           >
             {COACH_MODE_LABELS[m]}
