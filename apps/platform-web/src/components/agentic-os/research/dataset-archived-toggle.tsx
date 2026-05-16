@@ -52,7 +52,7 @@ export function DatasetArchivedToggle({ datasetId, archived }: Props) {
       data-testid={`dataset-archived-toggle-${datasetId}`}
     >
       {busy ? (
-        <Spinner size="sm" />
+        <Spinner label="Updating" size="sm" />
       ) : archived ? (
         <ArchiveRestore className="w-3.5 h-3.5" />
       ) : (

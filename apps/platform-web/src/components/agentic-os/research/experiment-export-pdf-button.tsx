@@ -68,7 +68,7 @@ export function ExperimentExportPdfButton({ experimentId }: Props) {
         data-testid="experiment-export-pdf-button"
       >
         {busy ? (
-          <Spinner size="sm" />
+          <Spinner label="Exporting PDF" size="sm" />
         ) : (
           <FileDown className="w-3.5 h-3.5" />
         )}
