@@ -48,6 +48,21 @@ describe('ENTRY_KINDS taxonomy', () => {
     }
   });
 
+  it('non-note kinds source the W-E.5 per-kind tokens (text-kind-<slug> utility prefix)', () => {
+    // `note` is the neutral baseline (no chroma); it intentionally reuses
+    // the text-secondary + surface-2 + border-subtle tokens. Every other
+    // kind should consume its dedicated `kind-<slug>` token family so the
+    // palette stays documented in `tokens.md` §11.
+    for (const k of ENTRY_KINDS) {
+      if (k === 'note') continue;
+      expect(ENTRY_KIND_COLOR[k]).toContain(`text-kind-${k}`);
+      expect(ENTRY_KIND_COLOR[k]).toContain(`bg-kind-${k}/`);
+      expect(ENTRY_KIND_COLOR[k]).toContain(`border-kind-${k}/`);
+    }
+    // `note` is the documented exception — its className uses neutral tokens.
+    expect(ENTRY_KIND_COLOR.note).toContain('text-text-secondary');
+  });
+
   it('has an icon name for every kind', () => {
     for (const k of ENTRY_KINDS) {
       expect(typeof ENTRY_KIND_ICON[k]).toBe('string');
