@@ -155,7 +155,7 @@ export function AuditViewer() {
             disabled={loading}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a52d4] disabled:opacity-60"
           >
-            {loading && <Spinner size="xs" />}
+            {loading && <Spinner label="Applying filters" size="xs" />}
             Apply filters
           </button>
         </div>
@@ -217,7 +217,7 @@ export function AuditViewer() {
             onClick={() => void fetchPage(false)}
             className="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-2 px-4 py-2 text-sm text-white hover:bg-border-subtle disabled:opacity-60"
           >
-            {loading && <Spinner size="xs" />}
+            {loading && <Spinner label="Loading more" size="xs" />}
             Load more
           </button>
         )}

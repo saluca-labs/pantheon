@@ -175,7 +175,7 @@ export function ExperimentProtocolLinker({ experimentId }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="experiment-protocol-linker-submit"
         >
-          {busy && <Spinner size="xs" />}
+          {busy && <Spinner label="Pinning" size="xs" />}
           Pin
         </button>
       </div>
