@@ -12,7 +12,7 @@
  */
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
-import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import { EditorContent, useEditor, type Editor, type JSONContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
@@ -85,7 +85,7 @@ export const StoryDocumentEditor = forwardRef<StoryDocumentEditorHandle, Props>(
           HTMLAttributes: { class: 'text-accent underline underline-offset-2' },
         }),
       ],
-      content: initialContentJson as any,
+      content: initialContentJson as unknown as JSONContent,
       editorProps: {
         attributes: {
           class:
