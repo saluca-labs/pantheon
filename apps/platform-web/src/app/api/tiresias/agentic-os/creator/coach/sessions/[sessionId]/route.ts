@@ -20,7 +20,7 @@ import {
   getSession,
   updateSession,
 } from '@/lib/agentic-os/creator/coach/sessions-repo';
-import { COACH_MODE_VALUES } from '@/lib/agentic-os/creator/coach/modes';
+import { COACH_MODE_VALUES, type CoachMode } from '@/lib/agentic-os/creator/coach/modes';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
   const updated = await updateSession(sessionId, user.userId, {
     title: parsed.data.title,
-    mode: parsed.data.mode as any,
+    mode: parsed.data.mode as CoachMode | undefined,
   });
   if (!updated) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
