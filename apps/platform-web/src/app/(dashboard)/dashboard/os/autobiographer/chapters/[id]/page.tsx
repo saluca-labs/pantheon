@@ -96,7 +96,7 @@ export default async function ChapterDetailPage({ params }: Props) {
         <div className="flex items-center gap-2 text-xs text-text-secondary">
           <span className="font-mono">{positionLabel}</span>
           {chapter.slug ? (
-            <span className="font-mono text-[#64748b]">· {chapter.slug}</span>
+            <span className="font-mono text-text-tertiary">· {chapter.slug}</span>
           ) : null}
         </div>
         <div className="flex items-center gap-2 flex-wrap">

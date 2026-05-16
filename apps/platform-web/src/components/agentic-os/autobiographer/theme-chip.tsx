@@ -11,16 +11,16 @@
 import { Tag } from 'lucide-react';
 
 const COLOR_CLASS: Record<string, string> = {
-  indigo: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30',
-  teal: 'text-teal-300 bg-teal-500/10 border-teal-500/30',
-  rose: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  amber: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  emerald: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  sky: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  violet: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  fuchsia: 'text-fuchsia-300 bg-fuchsia-500/10 border-fuchsia-500/30',
-  slate: 'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  orange: 'text-orange-300 bg-orange-500/10 border-orange-500/30',
+  indigo: 'text-os-autobiographer bg-os-autobiographer/10 border-os-autobiographer/30',
+  teal: 'text-os-business bg-os-business/10 border-os-business/30',
+  rose: 'text-os-filmmaker bg-os-filmmaker/10 border-os-filmmaker/30',
+  amber: 'text-warning bg-warning/10 border-warning/30',
+  emerald: 'text-positive bg-positive/10 border-positive/30',
+  sky: 'text-os-research bg-os-research/10 border-os-research/30',
+  violet: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
+  fuchsia: 'text-os-creator bg-os-creator/10 border-os-creator/30',
+  slate: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  orange: 'text-attention bg-attention/10 border-attention/30',
 };
 const DEFAULT_CLASS = 'text-text-primary bg-surface-2 border-border-subtle';
 

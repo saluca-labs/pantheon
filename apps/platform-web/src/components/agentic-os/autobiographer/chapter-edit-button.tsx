@@ -32,7 +32,7 @@ export function ChapterEditButton({
   const baseCls =
     'inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border transition';
   const primaryCls =
-    'bg-accent text-white border-accent hover:bg-[#3a52d8]';
+    'bg-accent text-white border-accent hover:bg-accent/90';
   const ghostCls =
     'bg-surface-0 text-text-primary border-border-subtle hover:border-accent/40';
 

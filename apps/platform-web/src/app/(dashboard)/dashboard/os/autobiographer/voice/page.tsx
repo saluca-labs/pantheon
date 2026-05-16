@@ -88,7 +88,7 @@ export default async function VoiceStudioPage() {
               voice profile the Phase 7 chapter drafter will consume. Samples
               can be backed by an existing memory or freshly typed.
             </p>
-            <p className="text-xs text-[#64748b] mt-2">
+            <p className="text-xs text-text-tertiary mt-2">
               {samples.length}{' '}
               {samples.length === 1 ? 'sample' : 'samples'} on file
               {' • '}
@@ -122,7 +122,7 @@ export default async function VoiceStudioPage() {
           <h2 className="text-base font-semibold text-white">Voice profile</h2>
           <VoiceBuildProfileButton activeSampleCount={activeSampleCount} />
         </div>
-        <p className="text-xs text-[#64748b]">
+        <p className="text-xs text-text-tertiary">
           Building a profile runs a two-stage analysis over every active
           sample. Stage 1 extracts per-sample style markers; stage 2 merges
           them into a versioned profile (style_summary + style_rules +

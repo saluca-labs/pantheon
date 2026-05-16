@@ -61,7 +61,7 @@ export function ChapterCard({ chapter }: { chapter: ChapterCardData }) {
             </h3>
             <ChapterStatusPill status={chapter.status} />
             {chapter.slug ? (
-              <span className="text-[10px] font-mono text-[#64748b] truncate">
+              <span className="text-[10px] font-mono text-text-tertiary truncate">
                 {chapter.slug}
               </span>
             ) : null}

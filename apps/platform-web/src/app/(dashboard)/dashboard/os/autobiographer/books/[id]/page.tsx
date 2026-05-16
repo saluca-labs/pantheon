@@ -194,7 +194,7 @@ export default async function BookDetailPage({ params }: Props) {
 
             {book.tags.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 pt-1">
-                <TagIcon className="w-3 h-3 text-[#64748b]" />
+                <TagIcon className="w-3 h-3 text-text-tertiary" />
                 {book.tags.map((t) => (
                   <span
                     key={t}
