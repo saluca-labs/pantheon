@@ -19,15 +19,15 @@ import { DashboardHubFeatureGrid } from './dashboard-hub-feature-grid';
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   live: {
     label: 'Live',
-    className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    className: 'bg-positive/15 text-positive border-positive/30',
   },
   preview: {
     label: 'Preview',
-    className: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    className: 'bg-warning/15 text-warning border-warning/30',
   },
   planned: {
     label: 'Planned',
-    className: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+    className: 'bg-surface-3 text-text-secondary border-border-subtle',
   },
 };
 
