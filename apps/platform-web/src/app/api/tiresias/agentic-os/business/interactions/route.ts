@@ -26,7 +26,7 @@ import {
   listInteractions,
   createInteraction,
 } from '@/lib/agentic-os/business/interactions-repo';
-import { INTERACTION_TYPES } from '@/lib/agentic-os/business/crm';
+import { INTERACTION_TYPES, type InteractionType } from '@/lib/agentic-os/business/crm';
 
 const CreateBody = z.object({
   person_id: z.string().uuid().nullable().optional(),
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
     personId: personIdParam ?? undefined,
     organizationId: orgIdParam ?? undefined,
     dealId: dealIdParam ?? undefined,
-    interactionType: (typeParam ?? undefined) as any,
+    interactionType: (typeParam ?? undefined) as InteractionType | undefined,
     from: fromParam ?? undefined,
     to: toParam ?? undefined,
     limit,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     personId: d.person_id,
     organizationId: d.organization_id,
     dealId: d.deal_id,
-    interactionType: d.interaction_type as any,
+    interactionType: d.interaction_type as InteractionType,
     summary: d.summary,
     occurredAt: d.occurred_at,
   });

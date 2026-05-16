@@ -16,7 +16,7 @@ import {
   listDocuments,
   createDocument,
 } from '@/lib/agentic-os/business/documents-repo';
-import { DOCUMENT_STATUSES } from '@/lib/agentic-os/business/documents';
+import { DOCUMENT_STATUSES, type DocumentStatus } from '@/lib/agentic-os/business/documents';
 
 const CreateBody = z.object({
   title: z.string().min(1).max(300),
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   }
 
   const documents = await listDocuments(user.userId, {
-    status: statusParam as any,
+    status: (statusParam as DocumentStatus | null) ?? undefined,
     kind: kindParam ?? undefined,
     projectId: projectIdParam ?? undefined,
     dealId: dealIdParam ?? undefined,
