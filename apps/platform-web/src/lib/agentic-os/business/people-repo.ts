@@ -34,7 +34,27 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToPerson(row: any): Person {
+interface RawPersonRow {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  organization_id: string | null;
+  stage: string | null;
+  tags: string[] | null;
+  notes: string | null;
+  description_md: string | null;
+  address: string | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPerson(row: RawPersonRow): Person {
   return {
     id: row.id,
     userId: row.user_id,
@@ -63,7 +83,7 @@ export async function listPeople(
   opts: PeopleListOpts = {},
 ): Promise<Person[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.archived === true) {
@@ -173,7 +193,7 @@ export async function updatePerson(
 ): Promise<UpdatePersonOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.firstName !== undefined) {

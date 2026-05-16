@@ -25,7 +25,19 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToInteraction(row: any): Interaction {
+interface RawInteractionRow {
+  id: string;
+  user_id: string;
+  person_id: string | null;
+  organization_id: string | null;
+  deal_id: string | null;
+  interaction_type: string;
+  summary: string;
+  occurred_at: Date | string;
+  created_at: Date | string;
+}
+
+function rowToInteraction(row: RawInteractionRow): Interaction {
   return {
     id: row.id,
     userId: row.user_id,
@@ -46,7 +58,7 @@ export async function listInteractions(
   opts: InteractionsListOpts = {},
 ): Promise<Interaction[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.personId) {
@@ -163,7 +175,7 @@ export async function updateInteraction(
   }
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.personId !== undefined) {

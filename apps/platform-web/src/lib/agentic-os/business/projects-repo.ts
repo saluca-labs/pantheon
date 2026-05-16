@@ -46,7 +46,30 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToProject(row: any): Project {
+interface RawProjectRow {
+  id: string;
+  user_id: string;
+  contact_id: string | null;
+  deal_id: string | null;
+  title: string;
+  slug: string;
+  description_md: string | null;
+  status: string;
+  billing_model: string;
+  default_rate_cents: number | string | null;
+  budget_cents: number | string | null;
+  currency: string | null;
+  start_date: Date | string | null;
+  target_completion_date: Date | string | null;
+  cover_image_url: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToProject(row: RawProjectRow): Project {
   return {
     id: row.id,
     userId: row.user_id,
@@ -79,7 +102,7 @@ export async function listProjects(
   opts: ProjectsListOpts = {},
 ): Promise<Project[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.archived === true) {
@@ -234,7 +257,7 @@ export async function updateProject(
 ): Promise<UpdateProjectOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

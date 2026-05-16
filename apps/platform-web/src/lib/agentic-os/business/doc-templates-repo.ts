@@ -31,7 +31,21 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToTemplate(row: any): DocTemplate {
+interface RawDocTemplateRow {
+  id: string;
+  user_id: string;
+  title: string | null;
+  kind: string;
+  body_md: string | null;
+  version: string | null;
+  parent_template_id: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToTemplate(row: RawDocTemplateRow): DocTemplate {
   return {
     id: row.id,
     userId: row.user_id,
@@ -55,7 +69,7 @@ export async function listTemplates(
 ): Promise<DocTemplate[]> {
   const pool = getBusinessPool();
   const clauses: string[] = ['user_id = $1'];
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   let idx = 2;
 
   if (opts.kind) {
@@ -143,7 +157,7 @@ export async function updateTemplate(
   if (!existing) return { kind: 'not_found' };
 
   const setClauses: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] =[];
   let idx = 1;
 
   if (patch.title !== undefined) {

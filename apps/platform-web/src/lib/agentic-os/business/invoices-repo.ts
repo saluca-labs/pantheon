@@ -49,7 +49,32 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToInvoice(row: any): Invoice {
+interface RawInvoiceRow {
+  id: string;
+  user_id: string;
+  deal_id: string | null;
+  contact_id: string | null;
+  project_id: string | null;
+  quote_id: string | null;
+  invoice_number: string;
+  title: string;
+  description_md: string | null;
+  status: string;
+  invoice_date: Date | string | null;
+  due_on: Date | string | null;
+  terms: string | null;
+  subtotal_cents: number | string | null;
+  tax_cents: number | string | null;
+  total_cents: number | string | null;
+  paid_cents: number | string | null;
+  currency: string | null;
+  pdf_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToInvoice(row: RawInvoiceRow): Invoice {
   return {
     id: row.id,
     userId: row.user_id,
@@ -83,7 +108,7 @@ export async function listInvoices(
   opts: InvoicesListOpts = {},
 ): Promise<Invoice[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.status) {
@@ -246,7 +271,7 @@ export async function updateInvoice(
 ): Promise<UpdateInvoiceOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {
