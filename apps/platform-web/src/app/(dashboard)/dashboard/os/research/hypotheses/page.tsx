@@ -12,7 +12,7 @@ import { ArrowLeft, FlaskConical } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { listHypotheses } from '@/lib/agentic-os/research/repo';
-import { HypothesisLedger } from '@/components/agentic-os/research/HypothesisLedger';
+import { HypothesisLedger } from '@/components/agentic-os/research/hypothesis-ledger';
 
 export const dynamic = 'force-dynamic';
 

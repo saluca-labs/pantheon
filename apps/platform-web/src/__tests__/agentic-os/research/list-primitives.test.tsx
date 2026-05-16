@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ExperimentList } from '@/components/agentic-os/research/experiment-list';
-import { HypothesisLedger } from '@/components/agentic-os/research/HypothesisLedger';
+import { HypothesisLedger } from '@/components/agentic-os/research/hypothesis-ledger';
 import { TopBlockersList } from '@/components/agentic-os/research/top-blockers-list';
 import type { ResearchExperiment } from '@/lib/agentic-os/research/repo';
 import type { Hypothesis } from '@/lib/agentic-os/research/hypotheses';
