@@ -28,10 +28,10 @@ interface Props {
 }
 
 const STATUS_COLOR: Record<ProjectStatus, string> = {
-  pre_production: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  production: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  post_production: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  wrapped: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  pre_production: 'text-accent bg-accent/10 border-accent/30',
+  production: 'text-warning bg-warning/10 border-warning/30',
+  post_production: 'text-os-filmmaker bg-os-filmmaker/10 border-os-filmmaker/30',
+  wrapped: 'text-positive bg-positive/10 border-positive/30',
   archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 

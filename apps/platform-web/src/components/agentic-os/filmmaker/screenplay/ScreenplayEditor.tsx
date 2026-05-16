@@ -130,28 +130,31 @@ const fountainHighlightPlugin = ViewPlugin.fromClass(
   { decorations: (v) => v.decorations },
 );
 
+// Colors map to design tokens via CSS vars (CodeMirror v6 accepts var() in
+// theme strings). Fountain syntax mapping: scene → warning (amber heading),
+// character → os-research (cyan name), parenthetical → text-secondary,
+// transition → os-creator (pink). The scene backgroundColor stays as an rgba
+// literal because there's no token for an alpha-modulated warning fill.
 const fountainTheme = EditorView.theme({
   '.cm-fountain-scene': {
     fontWeight: '700',
     fontSize: '1.05em',
-    color: '#fbbf24',
+    color: 'var(--warning)',
     backgroundColor: 'rgba(251,191,36,0.05)',
   },
   '.cm-fountain-character': {
     fontWeight: '700',
-    color: '#67e8f9',
+    color: 'var(--os-research)',
     paddingLeft: '4em',
   },
   '.cm-fountain-parenthetical': {
     fontStyle: 'italic',
-    // Matches text-secondary token (lib/design/chart-tokens.ts → TEXT_SECONDARY).
-    // Kept as a literal here because CodeMirror theme objects don't accept CSS vars.
-    color: '#a4acbf',
+    color: 'var(--text-secondary)',
     paddingLeft: '3em',
   },
   '.cm-fountain-transition': {
     fontWeight: '600',
-    color: '#f472b6',
+    color: 'var(--os-creator)',
     textAlign: 'right',
     textTransform: 'uppercase',
   },

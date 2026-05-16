@@ -207,11 +207,11 @@ export function ShotListBuilder({ projectId, initial }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Adding…' : 'Add shot'}
           </button>
-          {error && <span className="text-sm text-red-300">{error}</span>}
+          {error && <span className="text-sm text-danger">{error}</span>}
         </div>
       </form>
 
@@ -259,7 +259,7 @@ export function ShotListBuilder({ projectId, initial }: Props) {
                       onClick={() => handleToggle(s.id)}
                       className={`w-5 h-5 rounded border text-xs font-bold transition ${
                         s.completed
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
+                          ? 'bg-positive border-positive text-white'
                           : 'border-border-subtle text-transparent hover:border-accent'
                       }`}
                       aria-label={s.completed ? 'Mark incomplete' : 'Mark complete'}

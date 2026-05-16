@@ -23,18 +23,18 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const CATEGORY_COLORS: Record<StrideCategory, string> = {
-  Spoofing:                'border-l-blue-400',
-  Tampering:               'border-l-amber-400',
-  Repudiation:             'border-l-orange-400',
-  'Information Disclosure':'border-l-violet-400',
-  'Denial of Service':     'border-l-red-400',
-  'Elevation of Privilege':'border-l-rose-400',
+  Spoofing:                'border-l-accent',
+  Tampering:               'border-l-warning',
+  Repudiation:             'border-l-attention',
+  'Information Disclosure':'border-l-os-secure-dev',
+  'Denial of Service':     'border-l-danger',
+  'Elevation of Privilege':'border-l-danger',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  high:   'text-red-300 bg-red-500/10 border-red-500/30',
-  medium: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  low:    'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  high:   'text-danger bg-danger/10 border-danger/30',
+  medium: 'text-warning bg-warning/10 border-warning/30',
+  low:    'text-positive bg-positive/10 border-positive/30',
 };
 
 function ThreatCard({ threat }: { threat: StrideThreat }) {
@@ -66,7 +66,7 @@ function ThreatCard({ threat }: { threat: StrideThreat }) {
             <ul className="space-y-1">
               {threat.mitigations.map((m, i) => (
                 <li key={i} className="text-sm text-white flex gap-2">
-                  <span className="text-emerald-400 shrink-0">✓</span>
+                  <span className="text-positive shrink-0">✓</span>
                   {m}
                 </li>
               ))}
@@ -159,7 +159,7 @@ export function ThreatModelWalkthrough() {
         <button
           type="submit"
           disabled={!description.trim()}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 text-sm transition"
         >
           Generate STRIDE checklist
         </button>
@@ -173,19 +173,19 @@ export function ThreatModelWalkthrough() {
             <p className="text-sm text-white font-medium">{triggeredCount} threats detected in your description</p>
             {summary && (
               <div className="flex gap-3">
-                <span className="text-sm text-red-300">{summary.high} High</span>
-                <span className="text-sm text-amber-300">{summary.medium} Medium</span>
-                <span className="text-sm text-emerald-300">{summary.low} Low</span>
+                <span className="text-sm text-danger">{summary.high} High</span>
+                <span className="text-sm text-warning">{summary.medium} Medium</span>
+                <span className="text-sm text-positive">{summary.low} Low</span>
               </div>
             )}
             <div className="ml-auto flex items-center gap-2">
-              <span role="alert" className="text-sm text-red-300">
+              <span role="alert" className="text-sm text-danger">
                 {error ?? ''}
               </span>
               <span
                 role="status"
                 aria-live="polite"
-                className="text-sm text-emerald-300"
+                className="text-sm text-positive"
               >
                 {saved ? 'Saved!' : ''}
               </span>

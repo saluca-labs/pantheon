@@ -167,7 +167,7 @@ export function StoryboardPanelForm({ initial, onCancel, onSubmit }: Props) {
         />
       </Field>
 
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
 
       <div className="flex justify-end gap-2 pt-2">
         <button
