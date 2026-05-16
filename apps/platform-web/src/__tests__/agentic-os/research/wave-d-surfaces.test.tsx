@@ -20,7 +20,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { HypothesisLedger } from '@/components/agentic-os/research/HypothesisLedger';
+import { HypothesisLedger } from '@/components/agentic-os/research/hypothesis-ledger';
 import { NotebookEntryTimeline } from '@/components/agentic-os/research/notebook-entry-timeline';
 import { NotebookTimeline } from '@/components/agentic-os/research/notebook-timeline';
 import { ReproducibilityChecklist } from '@/components/agentic-os/research/reproducibility-checklist';

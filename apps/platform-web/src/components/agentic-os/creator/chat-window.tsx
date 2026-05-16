@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import type { ChatMessage } from '@/lib/agentic-os/creator/chat';
+import { Spinner } from '@/components/agentic-os/_shared/views';
 
 interface ChatWindowProps {
   conversationId: string;
@@ -48,12 +49,21 @@ function MessageBubble({
   );
 }
 
-function LoadingDots() {
+/**
+ * Inline assistant-thinking indicator. Uses the shared `Spinner` primitive
+ * (W-E.3 visual-language contract) inside a `role="status"` live region so
+ * AT users get the "Thinking…" announcement; replaces the previous custom
+ * 3-dot bounce animation (off-contract per `_design/visual-language.md`).
+ */
+function ThinkingIndicator() {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-3">
-      <span className="h-2 w-2 rounded-full bg-zinc-500 animate-bounce [animation-delay:0s]" />
-      <span className="h-2 w-2 rounded-full bg-zinc-500 animate-bounce [animation-delay:0.15s]" />
-      <span className="h-2 w-2 rounded-full bg-zinc-500 animate-bounce [animation-delay:0.3s]" />
+    <div
+      className="flex items-center gap-2 px-4 py-3 text-text-secondary text-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <Spinner size="xs" />
+      <span>Thinking…</span>
     </div>
   );
 }
@@ -227,13 +237,13 @@ export function ChatWindow({
             return (
               <div key={i}>
                 <MessageBubble message={msg} />
-                {isStreaming && <LoadingDots />}
+                {isStreaming && <ThinkingIndicator />}
               </div>
             );
           })
         )}
 
-        {streaming && !streamContent && <LoadingDots />}
+        {streaming && !streamContent && <ThinkingIndicator />}
         <div ref={bottomRef} />
       </div>
 
