@@ -232,13 +232,13 @@ describe('SCREENPLAY_STATUSES', () => {
 // ─── Repo plumbing (mocked pg) ───────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
-const txCalls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
+const txCalls: { sql: string; params: unknown[] }[] = [];
 let released = 0;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -247,7 +247,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 function makeClient() {
   return {
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       txCalls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -259,7 +259,7 @@ function makeClient() {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -287,7 +287,7 @@ beforeEach(() => {
   released = 0;
 });
 
-function projectRow(overrides: Record<string, any> = {}): any {
+function projectRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -314,7 +314,7 @@ function projectRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function screenplayRow(overrides: Record<string, any> = {}): any {
+function screenplayRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 's-1',
     project_id: 'p-1',
@@ -329,7 +329,7 @@ function screenplayRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function versionRow(overrides: Record<string, any> = {}): any {
+function versionRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'v-1',
     screenplay_id: 's-1',
@@ -449,7 +449,7 @@ describe('updateScreenplayMeta', () => {
       updateScreenplayMeta({
         id: 's-1',
         userId: 'u-1',
-        patch: { format: 'novel' as any },
+        patch: { format: 'novel' as never },
       }),
     ).rejects.toThrow(/Invalid screenplay format/);
   });
@@ -460,7 +460,7 @@ describe('updateScreenplayMeta', () => {
       updateScreenplayMeta({
         id: 's-1',
         userId: 'u-1',
-        patch: { status: 'finalized' as any },
+        patch: { status: 'finalized' as never },
       }),
     ).rejects.toThrow(/Invalid screenplay status/);
   });

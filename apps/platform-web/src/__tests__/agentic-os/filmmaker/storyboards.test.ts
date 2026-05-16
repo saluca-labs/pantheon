@@ -25,13 +25,13 @@ describe('STORYBOARD_STATUS_VALUES', () => {
 // ─── Repo plumbing (mocked pg) ─────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
-const txCalls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
+const txCalls: { sql: string; params: unknown[] }[] = [];
 let released = 0;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -40,7 +40,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 function makeClient() {
   return {
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       txCalls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -52,7 +52,7 @@ function makeClient() {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -80,7 +80,7 @@ beforeEach(() => {
   released = 0;
 });
 
-function projectRow(): any {
+function projectRow(): unknown {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -106,7 +106,7 @@ function projectRow(): any {
   };
 }
 
-function storyboardRow(overrides: Record<string, any> = {}): any {
+function storyboardRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'sb-1',
     project_id: 'p-1',
@@ -121,7 +121,7 @@ function storyboardRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function panelRow(overrides: Record<string, any> = {}): any {
+function panelRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'pa-1',
     storyboard_id: 'sb-1',
@@ -424,7 +424,7 @@ describe('updateStoryboard', () => {
       updateStoryboard({
         id: 'sb-1',
         userId: 'u-1',
-        patch: { status: 'invalid' as any },
+        patch: { status: 'invalid' as never },
       }),
     ).rejects.toThrow(/Invalid storyboard status/);
   });

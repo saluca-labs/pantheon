@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-interface PgResult { rows: any[]; rowCount: number }
+interface PgResult { rows: unknown[]; rowCount: number }
 const queue: PgResult[] = [];
 
 function pushResult(r: Partial<PgResult>): void {

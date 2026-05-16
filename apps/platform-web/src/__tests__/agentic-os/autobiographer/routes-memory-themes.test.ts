@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -40,7 +40,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -52,8 +52,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(memRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(memThemesMocks)) (m as any).mockReset();
+  for (const m of Object.values(memRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(memThemesMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -80,7 +80,7 @@ describe('GET /memories/[id]/themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(401);
@@ -92,7 +92,7 @@ describe('GET /memories/[id]/themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-x' }),
     });
     expect(res.status).toBe(404);
@@ -105,7 +105,7 @@ describe('GET /memories/[id]/themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(200);
@@ -120,7 +120,7 @@ describe('POST /memories/[id]/themes', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(400);
@@ -128,14 +128,14 @@ describe('POST /memories/[id]/themes', () => {
 
   it('404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('nf');
+    const nf = new Error('nf') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     memThemesMocks.linkThemeToMemory.mockRejectedValue(nf);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(404);
@@ -143,14 +143,14 @@ describe('POST /memories/[id]/themes', () => {
 
   it('409 on duplicate', async () => {
     authedUser();
-    const dup: any = new Error('dup');
+    const dup = new Error('dup') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     memThemesMocks.linkThemeToMemory.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(409);
@@ -168,7 +168,7 @@ describe('POST /memories/[id]/themes', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(201);
@@ -188,7 +188,7 @@ describe('DELETE /memories/[id]/themes/[themeId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/[themeId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', themeId: THEME_UUID }),
     });
     expect(res.status).toBe(404);
@@ -196,13 +196,13 @@ describe('DELETE /memories/[id]/themes/[themeId]', () => {
 
   it('404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('nf');
+    const nf = new Error('nf') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     memThemesMocks.unlinkThemeFromMemory.mockRejectedValue(nf);
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/[themeId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', themeId: THEME_UUID }),
     });
     expect(res.status).toBe(404);
@@ -215,7 +215,7 @@ describe('DELETE /memories/[id]/themes/[themeId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/themes/[themeId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', themeId: THEME_UUID }),
     });
     expect(res.status).toBe(200);

@@ -16,14 +16,14 @@ describe('Sign Out Route', () => {
 
     // Simulate the signout logic
     const token = 'mock-token';
-    await invalidateSession(token, {} as any);
+    await invalidateSession(token, {} as never);
 
     expect(invalidateSession).toHaveBeenCalledWith('mock-token', expect.anything());
   });
 
   it('should not throw when no session token is present', async () => {
     const { invalidateSession } = await import('@platform/auth');
-    (invalidateSession as any).mockResolvedValue(undefined);
+    (invalidateSession as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
     // With no token, signout should still succeed gracefully
     const token: string | null = null;

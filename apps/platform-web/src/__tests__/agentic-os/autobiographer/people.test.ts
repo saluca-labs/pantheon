@@ -199,7 +199,7 @@ describe('normalizeAliases', () => {
   });
 
   it('drops non-string entries', () => {
-    expect(normalizeAliases(['Mom', 42 as any, null as any])).toEqual(['Mom']);
+    expect(normalizeAliases(['Mom', 42 as never, null as never])).toEqual(['Mom']);
   });
 
   it('handles empty input', () => {

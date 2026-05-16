@@ -17,12 +17,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -30,7 +30,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -81,7 +81,7 @@ beforeEach(() => {
 
 // ─── Predictions repo ───────────────────────────────────────────────────────
 
-function predictionRow(o: Record<string, any> = {}) {
+function predictionRow(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     hypothesis_id: 'h-1',
@@ -174,7 +174,7 @@ describe('predictions-repo — createPrediction()', () => {
     pushResult({});
     pushResult({ rows: [predictionRow()] });
     await createPrediction('h-1', 'u-1', { text: 'x', metadata: { z: 1 } });
-    expect(JSON.parse(calls[0].params[6])).toEqual({ z: 1 });
+    expect(JSON.parse(calls[0].params[6] as string)).toEqual({ z: 1 });
   });
 
   it('honors supplied kind + confidence', async () => {
@@ -191,14 +191,14 @@ describe('predictions-repo — createPrediction()', () => {
 
   it('throws on invalid kind BEFORE issuing SQL', async () => {
     await expect(
-      createPrediction('h-1', 'u-1', { text: 'x', kind: 'bogus' as any }),
+      createPrediction('h-1', 'u-1', { text: 'x', kind: 'bogus' as never }),
     ).rejects.toThrow(/Invalid prediction kind/);
     expect(calls.length).toBe(0);
   });
 
   it('throws on invalid confidence BEFORE issuing SQL', async () => {
     await expect(
-      createPrediction('h-1', 'u-1', { text: 'x', confidence: 'huge' as any }),
+      createPrediction('h-1', 'u-1', { text: 'x', confidence: 'huge' as never }),
     ).rejects.toThrow(/Invalid prediction confidence/);
     expect(calls.length).toBe(0);
   });
@@ -223,7 +223,7 @@ describe('predictions-repo — updatePrediction()', () => {
 
   it('throws on invalid kind in patch', async () => {
     await expect(
-      updatePrediction('p-1', 'u-1', { kind: 'bad' as any }),
+      updatePrediction('p-1', 'u-1', { kind: 'bad' as never }),
     ).rejects.toThrow(/Invalid prediction kind/);
     expect(calls.length).toBe(0);
   });
@@ -245,7 +245,7 @@ describe('predictions-repo — deletePrediction()', () => {
 
 // ─── Falsifiers repo ────────────────────────────────────────────────────────
 
-function falsifierRow(o: Record<string, any> = {}) {
+function falsifierRow(o: Record<string, unknown> = {}) {
   return {
     id: 'f-1',
     hypothesis_id: 'h-1',
@@ -326,7 +326,7 @@ describe('falsifiers-repo — list/get/create/update/delete', () => {
 
 // ─── Evidence repo ──────────────────────────────────────────────────────────
 
-function evidenceRow(o: Record<string, any> = {}) {
+function evidenceRow(o: Record<string, unknown> = {}) {
   return {
     id: 'e-1',
     hypothesis_id: 'h-1',
@@ -392,7 +392,7 @@ describe('evidence-repo — createEvidence()', () => {
   it('throws on invalid polarity', async () => {
     await expect(
       createEvidence('h-1', 'u-1', {
-        polarity: 'strong' as any,
+        polarity: 'strong' as never,
         sourceKind: 'free_text',
       }),
     ).rejects.toThrow(/Invalid evidence polarity/);
@@ -403,7 +403,7 @@ describe('evidence-repo — createEvidence()', () => {
     await expect(
       createEvidence('h-1', 'u-1', {
         polarity: 'supports',
-        sourceKind: 'image' as any,
+        sourceKind: 'image' as never,
       }),
     ).rejects.toThrow(/Invalid evidence source_kind/);
     expect(calls.length).toBe(0);
@@ -418,7 +418,7 @@ describe('evidence-repo — createEvidence()', () => {
       notes: 'x',
       metadata: { k: 1 },
     });
-    expect(JSON.parse(calls[0].params[8])).toEqual({ k: 1 });
+    expect(JSON.parse(calls[0].params[8] as string)).toEqual({ k: 1 });
   });
 });
 
@@ -438,7 +438,7 @@ describe('evidence-repo — deleteEvidence()', () => {
 
 // ─── Experiment-hypotheses repo ─────────────────────────────────────────────
 
-function linkRow(o: Record<string, any> = {}) {
+function linkRow(o: Record<string, unknown> = {}) {
   return {
     id: 'lk-1',
     experiment_id: 'exp-1',
@@ -450,7 +450,7 @@ function linkRow(o: Record<string, any> = {}) {
   };
 }
 
-function joinedRow(o: Record<string, any> = {}) {
+function joinedRow(o: Record<string, unknown> = {}) {
   return {
     id: 'lk-1',
     experiment_id: 'exp-1',
@@ -561,7 +561,7 @@ describe('experiment-hypotheses-repo — createLink()', () => {
     const { getResearchPool } = await import('@/lib/agentic-os/research/session');
     const pool = getResearchPool();
     const spy = vi.spyOn(pool, 'query').mockImplementationOnce(() => {
-      const err: any = new Error('duplicate key value violates unique constraint');
+      const err = new Error('duplicate key value violates unique constraint') as Error & { code?: string; constraint?: string };
       err.code = '23505';
       return Promise.reject(err);
     });
@@ -577,7 +577,7 @@ describe('experiment-hypotheses-repo — createLink()', () => {
 
   it('throws on invalid role', async () => {
     await expect(
-      createLink('exp-1', 'u-1', { hypothesisId: 'h-1', role: 'owns' as any }),
+      createLink('exp-1', 'u-1', { hypothesisId: 'h-1', role: 'owns' as never }),
     ).rejects.toThrow(/Invalid role/);
   });
 
@@ -612,7 +612,7 @@ describe('experiment-hypotheses-repo — updateLink()', () => {
 
   it('throws on invalid role in patch', async () => {
     await expect(
-      updateLink('exp-1', 'h-1', 'u-1', { role: 'bogus' as any }),
+      updateLink('exp-1', 'h-1', 'u-1', { role: 'bogus' as never }),
     ).rejects.toThrow(/Invalid role/);
     expect(calls.length).toBe(0);
   });
@@ -635,7 +635,7 @@ describe('experiment-hypotheses-repo — deleteLink()', () => {
 
 // ─── Hypothesis archive/restore extension (repo.ts) ─────────────────────────
 
-function hypoRow(o: Record<string, any> = {}) {
+function hypoRow(o: Record<string, unknown> = {}) {
   return {
     id: 'h-1',
     user_id: 'u-1',

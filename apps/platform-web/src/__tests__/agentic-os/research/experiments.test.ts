@@ -44,8 +44,8 @@ describe('EXPERIMENT_STATUSES', () => {
   });
 
   it('does not contain the legacy planned/done values', () => {
-    expect(EXPERIMENT_STATUSES).not.toContain('planned' as any);
-    expect(EXPERIMENT_STATUSES).not.toContain('done' as any);
+    expect(EXPERIMENT_STATUSES).not.toContain('planned' as never);
+    expect(EXPERIMENT_STATUSES).not.toContain('done' as never);
   });
 
   it('has a label for every status', () => {
@@ -93,7 +93,7 @@ describe('validateExperimentStatus', () => {
 describe('EXPERIMENT_PHASES', () => {
   it('contains the 5 non-archived phases', () => {
     expect(EXPERIMENT_PHASES).toHaveLength(5);
-    expect(EXPERIMENT_PHASES).not.toContain('archived' as any);
+    expect(EXPERIMENT_PHASES).not.toContain('archived' as never);
     for (const k of ['planning', 'running', 'analysis', 'writeup', 'published']) {
       expect(EXPERIMENT_PHASES).toContain(k as ExperimentPhase);
     }
@@ -137,7 +137,7 @@ describe('coercePhaseProgress', () => {
   });
 
   it('ignores non-numeric values', () => {
-    const p = coercePhaseProgress({ analysis: 'high' as any, writeup: NaN });
+    const p = coercePhaseProgress({ analysis: 'high' as never, writeup: NaN });
     expect(p.analysis).toBe(0);
     expect(p.writeup).toBe(0);
   });
@@ -161,9 +161,9 @@ describe('coercePhaseProgress', () => {
   });
 
   it('ignores unknown keys silently', () => {
-    const p = coercePhaseProgress({ planning: 10, archived: 99 } as any);
+    const p = coercePhaseProgress({ planning: 10, archived: 99 } as never);
     expect(p.planning).toBe(10);
-    expect((p as any).archived).toBeUndefined();
+    expect((p as unknown as Record<string, unknown>).archived).toBeUndefined();
   });
 });
 

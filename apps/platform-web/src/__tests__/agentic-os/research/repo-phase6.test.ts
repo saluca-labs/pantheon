@@ -38,12 +38,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -51,14 +51,14 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       const next = queue.shift();
       if (!next) return { rows: [], rowCount: 0 };
       // Simulate pg-error code prop when queued as such.
-      if ((next as any).errorCode) {
-        const err: any = new Error('simulated pg error');
-        err.code = (next as any).errorCode;
+      if ((next as unknown as Record<string, unknown>).errorCode) {
+        const err = new Error('simulated pg error') as Error & { code?: string; constraint?: string };
+        err.code = (next as unknown as Record<string, string>).errorCode;
         throw err;
       }
       return next;
@@ -101,7 +101,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function milestoneRow(overrides: Record<string, any> = {}): any {
+function milestoneRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     experiment_id: 'exp-1',
@@ -152,7 +152,7 @@ describe('milestones repo — listMilestonesForExperiment()', () => {
 
   it('rejects invalid status filter', async () => {
     await expect(
-      listMilestonesForExperiment('exp-1', 'u-1', { status: 'lol' as any }),
+      listMilestonesForExperiment('exp-1', 'u-1', { status: 'lol' as never }),
     ).rejects.toThrow(/Invalid status filter/);
   });
 });
@@ -178,7 +178,7 @@ describe('milestones repo — createMilestone()', () => {
 
   it('rejects invalid status', async () => {
     await expect(
-      createMilestone('exp-1', 'u-1', { title: 'x', status: 'lol' as any }),
+      createMilestone('exp-1', 'u-1', { title: 'x', status: 'lol' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 });
@@ -256,7 +256,7 @@ describe('dependencies repo — createDependency()', () => {
   it('maps Postgres 23505 to DependencyDuplicateError (409)', async () => {
     pushResult({ rows: [{ '?column?': 1 }], rowCount: 1 }); // from owned
     pushResult({ rows: [{ '?column?': 1 }], rowCount: 1 }); // to owned
-    queue.push({ rows: [], rowCount: 0, errorCode: '23505' } as any);
+    queue.push({ rows: [], rowCount: 0, errorCode: '23505' } as never);
     await expect(
       createDependency('exp-1', 'u-1', { toExperimentId: 'exp-2' }),
     ).rejects.toBeInstanceOf(DependencyDuplicateError);
@@ -370,7 +370,7 @@ describe('reproducibility repo — listReproChecksForExperiment()', () => {
 
 describe('reproducibility repo — createReproCheck()', () => {
   it('maps 23505 to ReproDuplicateError', async () => {
-    queue.push({ rows: [], rowCount: 0, errorCode: '23505' } as any);
+    queue.push({ rows: [], rowCount: 0, errorCode: '23505' } as never);
     await expect(
       createReproCheck('exp-1', 'u-1', { itemKey: 'raw_data_archived' }),
     ).rejects.toBeInstanceOf(ReproDuplicateError);

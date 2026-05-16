@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -29,7 +29,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(themesRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(themesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -66,7 +66,7 @@ describe('GET /themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -76,7 +76,7 @@ describe('GET /themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x?q=loss&limit=50', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x?q=loss&limit=50', 'GET') as never);
     expect(res.status).toBe(200);
     expect(themesRepoMocks.listThemes).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'u-1', search: 'loss', limit: 50 }),
@@ -90,7 +90,7 @@ describe('POST /themes', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -103,21 +103,21 @@ describe('POST /themes', () => {
       jsonReq('http://t/x', 'POST', {
         name: 'Loss',
         sensitivity: 'public', // Phase 6 — rejected today
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(400);
   });
 
   it('409 when repo throws duplicate', async () => {
     authedUser();
-    const dup: any = new Error('duplicate');
+    const dup = new Error('duplicate') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     themesRepoMocks.createTheme.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { name: 'Loss' }) as any,
+      jsonReq('http://t/x', 'POST', { name: 'Loss' }) as never,
     );
     expect(res.status).toBe(409);
   });
@@ -132,7 +132,7 @@ describe('POST /themes', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { name: 'Loss', color: 'rose' }) as any,
+      jsonReq('http://t/x', 'POST', { name: 'Loss', color: 'rose' }) as never,
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -151,7 +151,7 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 't-x' }),
     });
     expect(res.status).toBe(404);
@@ -163,7 +163,7 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitivity: 'public' }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitivity: 'public' }) as never,
       { params: Promise.resolve({ id: 't-1' }) },
     );
     expect(res.status).toBe(400);
@@ -171,14 +171,14 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
 
   it('PATCH 409 on duplicate slug', async () => {
     authedUser();
-    const dup: any = new Error('duplicate');
+    const dup = new Error('duplicate') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     themesRepoMocks.updateTheme.mockRejectedValue(dup);
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { slug: 'taken' }) as any,
+      jsonReq('http://t/x', 'PATCH', { slug: 'taken' }) as never,
       { params: Promise.resolve({ id: 't-1' }) },
     );
     expect(res.status).toBe(409);
@@ -191,7 +191,7 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { name: 'New' }) as any,
+      jsonReq('http://t/x', 'PATCH', { name: 'New' }) as never,
       { params: Promise.resolve({ id: 't-1' }) },
     );
     expect(res.status).toBe(200);
@@ -208,7 +208,7 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 't-x' }),
     });
     expect(res.status).toBe(404);
@@ -220,7 +220,7 @@ describe('GET / PATCH / DELETE /themes/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/themes/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 't-1' }),
     });
     expect(res.status).toBe(200);

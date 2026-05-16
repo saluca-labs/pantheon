@@ -108,7 +108,7 @@ describe('validateCharacter', () => {
   });
 
   it('rejects unknown role', () => {
-    const errs = validateCharacter({ name: 'Sara', role: 'antihero' as any });
+    const errs = validateCharacter({ name: 'Sara', role: 'antihero' as never });
     expect(errs.some((e) => e.field === 'role')).toBe(true);
   });
 });
@@ -223,12 +223,12 @@ describe('summarizeCharacter', () => {
 // ─── Repo plumbing (mocked pg) ───────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -236,7 +236,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -261,7 +261,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function characterRow(overrides: Record<string, any> = {}): any {
+function characterRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'c-1',
     project_id: 'p-1',
@@ -290,7 +290,7 @@ function characterRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function projectRow(overrides: Record<string, any> = {}): any {
+function projectRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -317,7 +317,7 @@ function projectRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function relationshipRow(overrides: Record<string, any> = {}): any {
+function relationshipRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'r-1',
     project_id: 'p-1',
@@ -384,7 +384,7 @@ describe('createCharacter', () => {
         projectId: 'p-1',
         tenantId: 't-1',
         userId: 'u-1',
-        data: { name: 'Sara', role: 'antihero' as any },
+        data: { name: 'Sara', role: 'antihero' as never },
       }),
     ).rejects.toThrow(/Invalid character role/);
   });
@@ -537,7 +537,7 @@ describe('createCharacterRelationship', () => {
       createCharacterRelationship({
         tenantId: 't-1',
         userId: 'u-1',
-        data: { fromId: 'c-1', toId: 'c-2', kind: 'frenemy' as any },
+        data: { fromId: 'c-1', toId: 'c-2', kind: 'frenemy' as never },
       }),
     ).rejects.toThrow(/Invalid relationship kind/);
   });

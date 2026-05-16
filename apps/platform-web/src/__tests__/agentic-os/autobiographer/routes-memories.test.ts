@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -47,7 +47,7 @@ vi.mock('@/lib/agentic-os/autobiographer/books-repo', () => booksRepoMocks);
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -59,8 +59,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(memRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(booksRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(memRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(booksRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -87,7 +87,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -99,7 +99,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.memories).toHaveLength(1);
@@ -111,7 +111,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/route'
     );
-    await GET(jsonReq('http://t/x?book_id=b-1', 'GET') as any);
+    await GET(jsonReq('http://t/x?book_id=b-1', 'GET') as never);
     expect(memRepoMocks.listMemories).toHaveBeenCalledWith(
       expect.objectContaining({ bookId: 'b-1' }),
     );
@@ -123,7 +123,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/route'
     );
-    await GET(jsonReq('http://t/x?book_id=null', 'GET') as any);
+    await GET(jsonReq('http://t/x?book_id=null', 'GET') as never);
     expect(memRepoMocks.listMemories).toHaveBeenCalledWith(
       expect.objectContaining({ bookId: null }),
     );
@@ -139,7 +139,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories', () => {
       jsonReq(
         'http://t/x?content_tag=family&emotion_tag=grief&era_after=1990-01-01&era_before=2000-01-01&is_sensitive=true',
         'GET',
-      ) as any,
+      ) as never,
     );
     expect(memRepoMocks.listMemories).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -165,7 +165,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
       jsonReq('http://t/x', 'POST', {
         title: 'T',
         bodyMarkdown: 'B',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -176,7 +176,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/memories/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { title: 'T' }) as any,
+      jsonReq('http://t/x', 'POST', { title: 'T' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -195,7 +195,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
       jsonReq('http://t/x', 'POST', {
         title: 'T',
         bodyMarkdown: 'B',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -208,7 +208,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
 
   it('returns 404 when repo throws book_not_found', async () => {
     authedUser();
-    const err: any = new Error('book_not_found');
+    const err = new Error('book_not_found') as Error & { code?: string; constraint?: string };
     err.code = 'book_not_found';
     memRepoMocks.createMemory.mockRejectedValue(err);
     const { POST } = await import(
@@ -219,7 +219,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
         title: 'T',
         bodyMarkdown: 'B',
         bookId: '00000000-0000-0000-0000-000000000001',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -239,7 +239,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories', () => {
         title: 'T',
         bodyMarkdown: 'B',
         bookId: '00000000-0000-0000-0000-000000000001',
-      }) as any,
+      }) as never,
     );
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: 'b-1' }),
@@ -256,7 +256,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-other' }),
     });
     expect(res.status).toBe(404);
@@ -268,7 +268,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(200);
@@ -280,7 +280,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
 describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
   it('returns 404 when repo throws book_not_found', async () => {
     authedUser();
-    const err: any = new Error('book_not_found');
+    const err = new Error('book_not_found') as Error & { code?: string; constraint?: string };
     err.code = 'book_not_found';
     memRepoMocks.updateMemory.mockRejectedValue(err);
     const { PATCH } = await import(
@@ -289,7 +289,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const res = await PATCH(
       jsonReq('http://t/x', 'PATCH', {
         bookId: '00000000-0000-0000-0000-000000000002',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(404);
@@ -306,7 +306,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'Renamed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'Renamed' }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(200);
@@ -333,7 +333,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const res = await PATCH(
       jsonReq('http://t/x', 'PATCH', {
         sensitiveKinds: ['death', 'legal'],
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(200);
@@ -350,7 +350,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(400);
@@ -369,7 +369,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     await PATCH(
       jsonReq('http://t/x', 'PATCH', {
         sensitiveKinds: ['mental_health'],
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -389,7 +389,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-other' }),
     });
     expect(res.status).toBe(404);
@@ -406,7 +406,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/memories/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(200);
@@ -428,7 +428,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books/[id]/memories', () =
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/memories/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-other' }),
     });
     expect(res.status).toBe(404);
@@ -443,7 +443,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books/[id]/memories', () =
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/memories/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -458,7 +458,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books/[id]/memories', () 
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/memories/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
       { params: Promise.resolve({ id: 'b-other' }) },
     );
     expect(res.status).toBe(404);
@@ -470,7 +470,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books/[id]/memories', () 
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/memories/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(400);
@@ -490,7 +490,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books/[id]/memories', () 
       jsonReq('http://t/x', 'POST', {
         title: 'T',
         bodyMarkdown: 'B',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(201);

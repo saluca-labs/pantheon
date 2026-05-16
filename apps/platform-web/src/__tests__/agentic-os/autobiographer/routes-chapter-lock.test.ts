@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -49,7 +49,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -61,8 +61,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(chaptersRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(reviewRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(chaptersRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(reviewRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -83,7 +83,7 @@ describe('POST /chapters/[id]/lock — auth & cross-tenant', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(401);
@@ -95,7 +95,7 @@ describe('POST /chapters/[id]/lock — auth & cross-tenant', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(404);
@@ -115,7 +115,7 @@ describe('POST /chapters/[id]/lock — required-check computation', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     const body = await res.json();
@@ -152,7 +152,7 @@ describe('POST /chapters/[id]/lock — required-check computation', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(200);
@@ -183,7 +183,7 @@ describe('POST /chapters/[id]/lock — required-check computation', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     const body = await res.json();
@@ -210,7 +210,7 @@ describe('POST /chapters/[id]/lock — required-check computation', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     const body = await res.json();
@@ -241,7 +241,7 @@ describe('POST /chapters/[id]/lock — required-check computation', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x') as any, {
+    const res = await POST(reqOf('http://t/x') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(200);
@@ -264,7 +264,7 @@ describe('POST /chapters/[id]/lock?unlock=true', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    const res = await POST(reqOf('http://t/x?unlock=true') as any, {
+    const res = await POST(reqOf('http://t/x?unlock=true') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(200);
@@ -295,7 +295,7 @@ describe('POST /chapters/[id]/lock?unlock=true', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/lock/route'
     );
-    await POST(reqOf('http://t/x?unlock=true') as any, {
+    await POST(reqOf('http://t/x?unlock=true') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(chaptersRepoMocks.chapterHasSensitiveContent).not.toHaveBeenCalled();

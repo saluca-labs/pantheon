@@ -10,11 +10,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return { rows: [], rowCount: 0 };
     }),
@@ -42,7 +42,7 @@ describe('autobiographer recordAudit', () => {
     await recordAudit({ actorId: 'u-1', action: 'autobiographer.x' });
     // The first param is the generated id
     expect(typeof calls[0]!.params[0]).toBe('string');
-    expect(calls[0]!.params[0].length).toBeGreaterThan(20);
+    expect((calls[0]!.params[0] as string).length).toBeGreaterThan(20);
   });
 
   it('passes projectId through to the project_id column (book-scoped)', async () => {
@@ -77,7 +77,7 @@ describe('autobiographer recordAudit', () => {
       payload: { fields: ['title'] },
       projectId: 'b-1',
     });
-    const payloadArg = calls[0]!.params.at(-1);
+    const payloadArg = calls[0]!.params.at(-1) as string;
     expect(typeof payloadArg).toBe('string');
     expect(() => JSON.parse(payloadArg)).not.toThrow();
     expect(JSON.parse(payloadArg)).toEqual({ fields: ['title'] });
@@ -85,6 +85,6 @@ describe('autobiographer recordAudit', () => {
 
   it('defaults payload to empty object when omitted', async () => {
     await recordAudit({ actorId: 'u-1', action: 'autobiographer.x' });
-    expect(JSON.parse(calls[0]!.params.at(-1))).toEqual({});
+    expect(JSON.parse(calls[0]!.params.at(-1) as string)).toEqual({});
   });
 });

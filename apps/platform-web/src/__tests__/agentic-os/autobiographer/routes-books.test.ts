@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -34,7 +34,7 @@ vi.mock('@/lib/agentic-os/autobiographer/books-repo', () => booksRepoMocks);
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(booksRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(booksRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -73,7 +73,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -83,7 +83,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.books).toHaveLength(1);
@@ -95,7 +95,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
-    await GET(jsonReq('http://t/x?status=drafting', 'GET') as any);
+    await GET(jsonReq('http://t/x?status=drafting', 'GET') as never);
     expect(booksRepoMocks.listBooks).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'drafting' }),
     );
@@ -106,7 +106,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
-    const res = await GET(jsonReq('http://t/x?status=invalid', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x?status=invalid', 'GET') as never);
     expect(res.status).toBe(400);
   });
 });
@@ -120,7 +120,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { title: 'T' }) as any,
+      jsonReq('http://t/x', 'POST', { title: 'T' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -130,7 +130,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -144,7 +144,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/books', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { title: 'My Story' }) as any,
+      jsonReq('http://t/x', 'POST', { title: 'My Story' }) as never,
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -165,7 +165,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(401);
@@ -177,7 +177,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-other' }),
     });
     expect(res.status).toBe(404);
@@ -192,7 +192,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -210,7 +210,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'nope' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'nope' }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(400);
@@ -223,7 +223,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'X' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'X' }) as never,
       { params: Promise.resolve({ id: 'missing' }) },
     );
     expect(res.status).toBe(404);
@@ -239,7 +239,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'Renamed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'Renamed' }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(200);
@@ -261,7 +261,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -281,7 +281,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x?hard=true', 'DELETE') as any,
+      jsonReq('http://t/x?hard=true', 'DELETE') as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(200);
@@ -300,7 +300,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/books/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'missing' }),
     });
     expect(res.status).toBe(404);

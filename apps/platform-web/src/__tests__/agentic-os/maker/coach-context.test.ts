@@ -43,10 +43,10 @@ import {
 } from '@/lib/agentic-os/maker/coach/context';
 
 beforeEach(() => {
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
-function makeProject(over: Record<string, any> = {}): any {
+function makeProject(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     userId: 'u-1',
@@ -433,7 +433,7 @@ describe('enforceContextSizeCap', () => {
       padding: 'x'.repeat(50),
     }));
     const payload = { bom_lines: big };
-    const out = enforceContextSizeCap(payload) as any;
+    const out = enforceContextSizeCap(payload) as unknown as { bom_lines: { _truncated: boolean; _kept: number } };
     expect(JSON.stringify(out).length).toBeLessThanOrEqual(MAX_CONTEXT_BYTES);
     // The container is wrapped with the truncated shim.
     expect(out.bom_lines._truncated).toBe(true);

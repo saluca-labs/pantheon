@@ -106,12 +106,12 @@ describe('pagesLabel', () => {
 // ─── Repo plumbing (mocked pg) ───────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -119,7 +119,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -146,7 +146,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function sceneRow(overrides: Record<string, any> = {}): any {
+function sceneRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'sc-1',
     screenplay_id: 's-1',
@@ -166,7 +166,7 @@ function sceneRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function elementRow(overrides: Record<string, any> = {}): any {
+function elementRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'e-1',
     screenplay_id: 's-1',
@@ -184,7 +184,7 @@ function elementRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function metaRow(overrides: Record<string, any> = {}): any {
+function metaRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     scene_id: 'sc-1',
@@ -225,7 +225,7 @@ describe('addBreakdownElement', () => {
       addBreakdownElement({
         sceneId: 'sc-1',
         userId: 'u-1',
-        data: { category: 'bogus' as any, name: 'X' },
+        data: { category: 'bogus' as never, name: 'X' },
       }),
     ).rejects.toThrow(/Invalid breakdown category/);
   });
@@ -285,7 +285,7 @@ describe('updateBreakdownElement', () => {
       updateBreakdownElement({
         id: 'e-1',
         userId: 'u-1',
-        patch: { category: 'bogus' as any },
+        patch: { category: 'bogus' as never },
       }),
     ).rejects.toThrow(/Invalid breakdown category/);
   });
@@ -356,7 +356,7 @@ describe('updateSceneBreakdownMeta', () => {
       updateSceneBreakdownMeta({
         sceneId: 'sc-1',
         userId: 'u-1',
-        patch: { complexity: 'nuclear' as any },
+        patch: { complexity: 'nuclear' as never },
       }),
     ).rejects.toThrow(/Invalid scene complexity/);
   });
@@ -367,7 +367,7 @@ describe('updateSceneBreakdownMeta', () => {
       updateSceneBreakdownMeta({
         sceneId: 'sc-1',
         userId: 'u-1',
-        patch: { status: 'finalized' as any },
+        patch: { status: 'finalized' as never },
       }),
     ).rejects.toThrow(/Invalid scene status/);
   });

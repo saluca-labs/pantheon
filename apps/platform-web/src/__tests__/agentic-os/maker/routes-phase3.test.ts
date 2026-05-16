@@ -19,7 +19,7 @@ import { NextRequest } from 'next/server';
 const getCurrentMakerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
-  getCurrentMakerUser: (...args: any[]) => getCurrentMakerUser(...args),
+  getCurrentMakerUser: (...args: unknown[]) => getCurrentMakerUser(...args),
   getMakerPool: () => ({ query: vi.fn() }),
 }));
 
@@ -50,7 +50,7 @@ vi.mock('@/lib/agentic-os/maker/repo', () => repoMocks);
 
 beforeEach(() => {
   getCurrentMakerUser.mockReset();
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authed() {
@@ -81,7 +81,7 @@ describe('GET /projects/[id]/steps', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ id: 'p-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ id: 'p-1' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -92,8 +92,8 @@ describe('GET /projects/[id]/steps', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
     const res = await GET(
-      jsonReq('http://t/x', 'GET') as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'GET') as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -108,8 +108,8 @@ describe('GET /projects/[id]/steps', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
     const res = await GET(
-      jsonReq('http://t/x', 'GET') as any,
-      paramsFor({ id: 'p-x' }) as any,
+      jsonReq('http://t/x', 'GET') as never,
+      paramsFor({ id: 'p-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -122,8 +122,8 @@ describe('POST /projects/[id]/steps', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { title: 'X' }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { title: 'X' }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -134,8 +134,8 @@ describe('POST /projects/[id]/steps', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -151,8 +151,8 @@ describe('POST /projects/[id]/steps', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { title: 'Polish', estMinutes: 30 }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { title: 'Polish', estMinutes: 30 }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -168,8 +168,8 @@ describe('PATCH /projects/[id]/steps/[stepId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/[stepId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x?undo=false', 'PATCH') as any,
-      paramsFor({ id: 'p-1', stepId: 's-1' }) as any,
+      jsonReq('http://t/x?undo=false', 'PATCH') as never,
+      paramsFor({ id: 'p-1', stepId: 's-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -181,8 +181,8 @@ describe('PATCH /projects/[id]/steps/[stepId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/[stepId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x?undo=true', 'PATCH') as any,
-      paramsFor({ id: 'p-1', stepId: 's-1' }) as any,
+      jsonReq('http://t/x?undo=true', 'PATCH') as never,
+      paramsFor({ id: 'p-1', stepId: 's-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.completeStep).toHaveBeenCalledWith('s-1', 'p-1', 'u-1', {
@@ -200,8 +200,8 @@ describe('PATCH /projects/[id]/steps/[stepId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/[stepId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH') as any,
-      paramsFor({ id: 'p-1', stepId: 's-1' }) as any,
+      jsonReq('http://t/x', 'PATCH') as never,
+      paramsFor({ id: 'p-1', stepId: 's-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.completeStep).toHaveBeenCalledWith('s-1', 'p-1', 'u-1', {
@@ -219,8 +219,8 @@ describe('PATCH /projects/[id]/steps/[stepId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/[stepId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH') as any,
-      paramsFor({ id: 'p-1', stepId: 's-x' }) as any,
+      jsonReq('http://t/x', 'PATCH') as never,
+      paramsFor({ id: 'p-1', stepId: 's-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -233,8 +233,8 @@ describe('PATCH /projects/[id]/steps/reorder', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/reorder/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { order: [] }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { order: [] }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -245,8 +245,8 @@ describe('PATCH /projects/[id]/steps/reorder', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/steps/reorder/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { wrong: true }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { wrong: true }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -264,8 +264,8 @@ describe('PATCH /projects/[id]/steps/reorder', () => {
     const res = await PATCH(
       jsonReq('http://t/x', 'PATCH', {
         order: stepIds.map((id, i) => ({ stepId: id, ordinal: i + 1 })),
-      }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.reorderBuildSteps).toHaveBeenCalledWith('p-1', 'u-1', stepIds);
@@ -281,8 +281,8 @@ describe('GET /projects/[id]/log', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/route'
     );
     const res = await GET(
-      jsonReq('http://t/x', 'GET') as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'GET') as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -294,8 +294,8 @@ describe('GET /projects/[id]/log', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/route'
     );
     await GET(
-      jsonReq('http://t/x?stepId=s-1&limit=10&before=2026-05-11T00:00:00Z', 'GET') as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x?stepId=s-1&limit=10&before=2026-05-11T00:00:00Z', 'GET') as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(repoMocks.listLogEntries).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -316,8 +316,8 @@ describe('POST /projects/[id]/log', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -331,8 +331,8 @@ describe('POST /projects/[id]/log', () => {
       jsonReq('http://t/x', 'POST', {
         body: 'note',
         attachedUrls: [{ url: 'https://x.com', kind: 'audio' }],
-      }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -351,8 +351,8 @@ describe('POST /projects/[id]/log', () => {
       jsonReq('http://t/x', 'POST', {
         body: 'note',
         attachedUrls: [{ url: 'https://x/1.jpg', kind: 'photo' }],
-      }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -368,8 +368,8 @@ describe('PATCH /projects/[id]/log/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { body: 'x' }) as any,
-      paramsFor({ id: 'p-1', entryId: 'e-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { body: 'x' }) as never,
+      paramsFor({ id: 'p-1', entryId: 'e-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -381,8 +381,8 @@ describe('PATCH /projects/[id]/log/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { body: 'x' }) as any,
-      paramsFor({ id: 'p-1', entryId: 'e-x' }) as any,
+      jsonReq('http://t/x', 'PATCH', { body: 'x' }) as never,
+      paramsFor({ id: 'p-1', entryId: 'e-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -394,8 +394,8 @@ describe('PATCH /projects/[id]/log/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/log/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { body: 'new' }) as any,
-      paramsFor({ id: 'p-1', entryId: 'e-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { body: 'new' }) as never,
+      paramsFor({ id: 'p-1', entryId: 'e-1' }) as never,
     );
     expect(res.status).toBe(200);
   });
@@ -410,8 +410,8 @@ describe('POST /projects/[id]/milestones', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -422,8 +422,8 @@ describe('POST /projects/[id]/milestones', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { label: 'OK', dueAt: '2026/12/31' }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { label: 'OK', dueAt: '2026/12/31' }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -435,8 +435,8 @@ describe('POST /projects/[id]/milestones', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { label: 'Hello' }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { label: 'Hello' }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -456,8 +456,8 @@ describe('PATCH /projects/[id]/milestones/[milestoneId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH') as any,
-      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as any,
+      jsonReq('http://t/x', 'PATCH') as never,
+      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -475,8 +475,8 @@ describe('PATCH /projects/[id]/milestones/[milestoneId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]/complete/route'
     );
     await PATCH(
-      jsonReq('http://t/x', 'PATCH') as any,
-      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as any,
+      jsonReq('http://t/x', 'PATCH') as never,
+      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as never,
     );
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'maker.milestone.uncompleted' }),
@@ -490,8 +490,8 @@ describe('PATCH /projects/[id]/milestones/[milestoneId]/complete', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]/complete/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH') as any,
-      paramsFor({ id: 'p-1', milestoneId: 'm-x' }) as any,
+      jsonReq('http://t/x', 'PATCH') as never,
+      paramsFor({ id: 'p-1', milestoneId: 'm-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -505,8 +505,8 @@ describe('DELETE /projects/[id]/milestones/[milestoneId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ id: 'p-1', milestoneId: 'm-x' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ id: 'p-1', milestoneId: 'm-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -518,8 +518,8 @@ describe('DELETE /projects/[id]/milestones/[milestoneId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/milestones/[milestoneId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ id: 'p-1', milestoneId: 'm-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -536,7 +536,7 @@ describe('GET /recent-activity', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/recent-activity/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -549,7 +549,7 @@ describe('GET /recent-activity', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/recent-activity/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.entries).toHaveLength(2);
@@ -562,7 +562,7 @@ describe('GET /recent-activity', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/recent-activity/route'
     );
-    await GET(jsonReq('http://t/x?limit=15', 'GET') as any);
+    await GET(jsonReq('http://t/x?limit=15', 'GET') as never);
     expect(repoMocks.listRecentLogEntries).toHaveBeenCalledWith('u-1', 15);
   });
 
@@ -572,7 +572,7 @@ describe('GET /recent-activity', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/recent-activity/route'
     );
-    await GET(jsonReq('http://t/x?limit=abc', 'GET') as any);
+    await GET(jsonReq('http://t/x?limit=abc', 'GET') as never);
     expect(repoMocks.listRecentLogEntries).toHaveBeenCalledWith('u-1', 5);
   });
 });

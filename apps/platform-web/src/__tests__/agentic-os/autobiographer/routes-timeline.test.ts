@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -28,8 +28,8 @@ vi.mock('@/lib/agentic-os/autobiographer/timeline', () => tlMocks);
 
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
-  for (const m of Object.values(bookRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(tlMocks)) (m as any).mockReset();
+  for (const m of Object.values(bookRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(tlMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -50,7 +50,7 @@ describe('GET /books/[bookId]/timeline', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/timeline/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(401);
@@ -62,7 +62,7 @@ describe('GET /books/[bookId]/timeline', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/timeline/route'
     );
-    const res = await GET(jsonReq('http://t/x?scope=book', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x?scope=book', 'GET') as never, {
       params: Promise.resolve({ id: 'b-x' }),
     });
     expect(res.status).toBe(404);
@@ -74,7 +74,7 @@ describe('GET /books/[bookId]/timeline', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/timeline/route'
     );
-    const res = await GET(jsonReq('http://t/x?scope=workshop', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x?scope=workshop', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -93,7 +93,7 @@ describe('GET /books/[bookId]/timeline', () => {
     );
     const url =
       'http://t/x?scope=book&theme_id=t1&theme_id=t2&decade=1990&content_tag=music&emotion_tag=joy&person_id=p1&sensitive=false&limit=50';
-    await GET(jsonReq(url, 'GET') as any, {
+    await GET(jsonReq(url, 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(tlMocks.listTimeline).toHaveBeenCalledWith(
@@ -119,7 +119,7 @@ describe('GET /books/[bookId]/timeline', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/timeline/route'
     );
-    await GET(jsonReq('http://t/x?scope=book&decade=bogus', 'GET') as any, {
+    await GET(jsonReq('http://t/x?scope=book&decade=bogus', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(tlMocks.listTimeline).toHaveBeenCalledWith(

@@ -84,7 +84,7 @@ describe('validateBookStatus', () => {
 describe('BOOK_PHASES', () => {
   it('contains 4 non-archived phases', () => {
     expect(BOOK_PHASES).toHaveLength(4);
-    expect(BOOK_PHASES).not.toContain('archived' as any);
+    expect(BOOK_PHASES).not.toContain('archived' as never);
     for (const k of ['drafting', 'revising', 'done', 'paused']) {
       expect(BOOK_PHASES).toContain(k as BookPhase);
     }
@@ -128,7 +128,7 @@ describe('coerceBookPhaseProgress', () => {
 
   it('ignores non-numeric values', () => {
     const p = coerceBookPhaseProgress({
-      drafting: 'high' as any,
+      drafting: 'high' as never,
       revising: NaN,
     });
     expect(p.drafting).toBe(0);
@@ -261,7 +261,7 @@ describe('normalizeBookTags', () => {
   });
 
   it('drops non-string entries', () => {
-    expect(normalizeBookTags(['family', 42 as any, null as any])).toEqual([
+    expect(normalizeBookTags(['family', 42 as never, null as never])).toEqual([
       'family',
     ]);
   });

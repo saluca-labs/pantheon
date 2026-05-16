@@ -7,12 +7,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -23,7 +23,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -46,7 +46,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function revisionRow(overrides: Record<string, any> = {}): any {
+function revisionRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'r-1',
     chapter_id: 'c-1',
@@ -156,7 +156,7 @@ describe('insertRevision', () => {
     const insertCall = calls.find((c) => /INSERT INTO agos_autobiographer_chapter_revisions/.test(c.sql));
     expect(insertCall).toBeTruthy();
     // citations is parameter at index 7 (0-indexed)
-    const citationsJson = insertCall!.params[7];
+    const citationsJson = insertCall!.params[7] as string;
     expect(typeof citationsJson).toBe('string');
     const parsed = JSON.parse(citationsJson);
     expect(parsed).toEqual([{ paragraphIndex: 1, memoryIds: ['m-1'] }]);
@@ -166,7 +166,7 @@ describe('insertRevision', () => {
     await expect(
       insertRevision('u-1', {
         chapterId: 'c-1',
-        author: 'admin' as any,
+        author: 'admin' as never,
         bodyText: '',
       }),
     ).rejects.toThrow(/Invalid author/);

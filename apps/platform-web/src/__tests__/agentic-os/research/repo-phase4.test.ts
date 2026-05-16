@@ -17,15 +17,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
-type QueueItem = PgResult | { __throw: any };
+type QueueItem = PgResult | { __throw: unknown };
 
 const queue: QueueItem[] = [];
-const calls: { sql: string; params: any[] }[] = [];
-const clientCalls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
+const clientCalls: { sql: string; params: unknown[] }[] = [];
 const clientQueue: QueueItem[] = [];
 const clientReleased = { count: 0 };
 
@@ -37,20 +37,20 @@ function pushClientResult(r: Partial<PgResult>): void {
   clientQueue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
 }
 
-function pushThrow(err: any): void {
+function pushThrow(err: unknown): void {
   queue.push({ __throw: err });
 }
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       const next = queue.shift();
       if (next && '__throw' in next) throw next.__throw;
       return next ?? { rows: [], rowCount: 0 };
     }),
     connect: vi.fn(async () => ({
-      query: vi.fn(async (sql: string, params: any[] = []) => {
+      query: vi.fn(async (sql: string, params: unknown[] = []) => {
         clientCalls.push({ sql, params });
         const next = clientQueue.shift();
         if (next && '__throw' in next) throw next.__throw;
@@ -110,7 +110,7 @@ beforeEach(() => {
   clientReleased.count = 0;
 });
 
-function paperRow(o: Record<string, any> = {}) {
+function paperRow(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -132,7 +132,7 @@ function paperRow(o: Record<string, any> = {}) {
   };
 }
 
-function authorRow(o: Record<string, any> = {}) {
+function authorRow(o: Record<string, unknown> = {}) {
   return {
     id: 'a-1',
     user_id: 'u-1',
@@ -211,7 +211,7 @@ describe('papers-repo — listPapers()', () => {
   });
 
   it('throws on invalid kind filter BEFORE issuing SQL', async () => {
-    await expect(listPapers('u-1', { kind: 'bogus' as any })).rejects.toThrow();
+    await expect(listPapers('u-1', { kind: 'bogus' as never })).rejects.toThrow();
     expect(calls.length).toBe(0);
   });
 
@@ -252,7 +252,7 @@ describe('papers-repo — createPaper()', () => {
   });
 
   it('translates SQLSTATE 23505 with doi constraint to duplicate doi', async () => {
-    const err: any = new Error('duplicate key');
+    const err = new Error('duplicate key') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_papers_user_doi_uniq';
     pushThrow(err);
@@ -262,7 +262,7 @@ describe('papers-repo — createPaper()', () => {
   });
 
   it('translates SQLSTATE 23505 with arxiv constraint to duplicate arxiv', async () => {
-    const err: any = new Error('duplicate key');
+    const err = new Error('duplicate key') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_papers_user_arxiv_uniq';
     pushThrow(err);
@@ -272,7 +272,7 @@ describe('papers-repo — createPaper()', () => {
   });
 
   it('throws on invalid kind BEFORE issuing SQL', async () => {
-    await expect(createPaper('u-1', { title: 'T', kind: 'bogus' as any })).rejects.toThrow();
+    await expect(createPaper('u-1', { title: 'T', kind: 'bogus' as never })).rejects.toThrow();
     expect(calls.length).toBe(0);
   });
 
@@ -302,7 +302,7 @@ describe('papers-repo — updatePaper()', () => {
   });
 
   it('translates 23505 on UPDATE to duplicate outcome', async () => {
-    const err: any = new Error('duplicate key');
+    const err = new Error('duplicate key') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_papers_user_doi_uniq';
     pushThrow(err);
@@ -393,7 +393,7 @@ describe('authors-repo — createAuthor', () => {
   });
 
   it('translates 23505 to duplicate orcid', async () => {
-    const err: any = new Error('dup');
+    const err = new Error('dup') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_authors_user_orcid_uniq';
     pushThrow(err);
@@ -496,7 +496,7 @@ describe('paper-authors-repo — linkExistingAuthor', () => {
   });
 
   it('translates 23505 author constraint to duplicate_author', async () => {
-    const err: any = new Error('dup');
+    const err = new Error('dup') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_paper_authors_paper_author_uniq';
     pushResult({ rows: [{ next: 1 }] }); // nextPosition probe
@@ -506,7 +506,7 @@ describe('paper-authors-repo — linkExistingAuthor', () => {
   });
 
   it('translates 23505 position constraint to duplicate_position', async () => {
-    const err: any = new Error('dup');
+    const err = new Error('dup') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     err.constraint = 'agos_research_paper_authors_paper_position_uniq';
     // position=2 supplied, so nextPosition probe NOT called
@@ -528,7 +528,7 @@ describe('paper-authors-repo — unlinkAuthor', () => {
 
 describe('paper-authors-repo — reorderPaperAuthor (transactional)', () => {
   it('rolls back invalid_position when not integer', async () => {
-    const out = await reorderPaperAuthor('p-1', 'a-1', 0.5 as any, 'u-1');
+    const out = await reorderPaperAuthor('p-1', 'a-1', 0.5 as never, 'u-1');
     expect(out.kind).toBe('invalid_position');
   });
 
@@ -660,7 +660,7 @@ describe('experiment-references-repo — createReference', () => {
   });
 
   it('translates 23505 to duplicate', async () => {
-    const err: any = new Error('dup');
+    const err = new Error('dup') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     pushThrow(err);
     const out = await createReference('e-1', 'u-1', { paperId: 'p-1', relevance: 'cites' });
@@ -669,7 +669,7 @@ describe('experiment-references-repo — createReference', () => {
 
   it('throws BEFORE issuing SQL on invalid relevance', async () => {
     await expect(
-      createReference('e-1', 'u-1', { paperId: 'p-1', relevance: 'bogus' as any }),
+      createReference('e-1', 'u-1', { paperId: 'p-1', relevance: 'bogus' as never }),
     ).rejects.toThrow();
     expect(calls.length).toBe(0);
   });
@@ -704,7 +704,7 @@ describe('experiment-references-repo — updateReference', () => {
 
   it('throws on invalid relevance BEFORE issuing SQL', async () => {
     await expect(
-      updateReference('e-1', 'p-1', 'u-1', { relevance: 'bogus' as any }),
+      updateReference('e-1', 'p-1', 'u-1', { relevance: 'bogus' as never }),
     ).rejects.toThrow();
     expect(calls.length).toBe(0);
   });

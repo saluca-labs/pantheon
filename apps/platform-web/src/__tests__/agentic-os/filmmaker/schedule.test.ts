@@ -58,7 +58,7 @@ describe('groupByUnit', () => {
     expect(groupByUnit([])).toEqual({ main: [], second_unit: [], splinter: [] });
   });
   it('groups days into their unit bucket', () => {
-    const day = (id: string, unit: any): ShootingDay => ({
+    const day = (id: string, unit: ShootingDay['unit']): ShootingDay => ({
       id,
       projectId: 'p',
       shootDate: null,
@@ -296,13 +296,13 @@ describe('buildScheduleTimelineItems / scheduleTimelineRange', () => {
 // ─── Repo plumbing (mocked pg) ──────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
-const txCalls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
+const txCalls: { sql: string; params: unknown[] }[] = [];
 let released = 0;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -311,7 +311,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 function makeClient() {
   return {
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       txCalls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -323,7 +323,7 @@ function makeClient() {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -349,7 +349,7 @@ beforeEach(() => {
   released = 0;
 });
 
-function projectRow(): any {
+function projectRow(): unknown {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -375,7 +375,7 @@ function projectRow(): any {
   };
 }
 
-function dayRow(overrides: Record<string, any> = {}): any {
+function dayRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'd-1',
     project_id: 'p-1',
@@ -394,7 +394,7 @@ function dayRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function sceneRow(overrides: Record<string, any> = {}): any {
+function sceneRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'sc-1',
     screenplay_id: 's-1',
@@ -414,7 +414,7 @@ function sceneRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function stripRow(overrides: Record<string, any> = {}): any {
+function stripRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'st-1',
     shooting_day_id: 'd-1',
@@ -440,7 +440,7 @@ describe('listShootingDays', () => {
 
   it('rejects invalid unit filter', async () => {
     await expect(
-      listShootingDays({ projectId: 'p-1', userId: 'u-1', unit: 'aerial' as any }),
+      listShootingDays({ projectId: 'p-1', userId: 'u-1', unit: 'aerial' as never }),
     ).rejects.toThrow(/Invalid shooting unit/);
   });
 });

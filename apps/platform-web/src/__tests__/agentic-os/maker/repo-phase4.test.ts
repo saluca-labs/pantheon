@@ -21,12 +21,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Pool mock ────────────────────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 let lastInsertedId: string | null = null;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -35,7 +35,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
   getMakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       if (/^INSERT INTO /m.test(sql) && typeof params[0] === 'string') {
         lastInsertedId = params[0];
@@ -75,7 +75,7 @@ beforeEach(() => {
   lastInsertedId = null;
 });
 
-function projectRow(over: Record<string, any> = {}): any {
+function projectRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -94,7 +94,7 @@ function projectRow(over: Record<string, any> = {}): any {
   };
 }
 
-function toolRow(over: Record<string, any> = {}): any {
+function toolRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 't-1',
     user_id: 'u-1',
@@ -118,7 +118,7 @@ function toolRow(over: Record<string, any> = {}): any {
   };
 }
 
-function consumableRow(over: Record<string, any> = {}): any {
+function consumableRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'c-1',
     tool_id: 't-1',
@@ -135,7 +135,7 @@ function consumableRow(over: Record<string, any> = {}): any {
   };
 }
 
-function maintenanceRow(over: Record<string, any> = {}): any {
+function maintenanceRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     tool_id: 't-1',
@@ -152,7 +152,7 @@ function maintenanceRow(over: Record<string, any> = {}): any {
   };
 }
 
-function projectToolRow(over: Record<string, any> = {}): any {
+function projectToolRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'pt-1',
     project_id: 'p-1',
@@ -191,13 +191,13 @@ describe('listTools', () => {
 
   it('rejects an invalid status filter at the application layer', async () => {
     await expect(
-      listTools({ userId: 'u-1', status: 'broken' as any }),
+      listTools({ userId: 'u-1', status: 'broken' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
   it('rejects an invalid kind filter at the application layer', async () => {
     await expect(
-      listTools({ userId: 'u-1', kind: 'drone' as any }),
+      listTools({ userId: 'u-1', kind: 'drone' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 });
@@ -221,14 +221,14 @@ describe('getTool', () => {
 describe('createTool', () => {
   it('rejects invalid kind before any SQL', async () => {
     await expect(
-      createTool('u-1', { name: 'X', kind: 'drone' as any }),
+      createTool('u-1', { name: 'X', kind: 'drone' as never }),
     ).rejects.toThrow(/Invalid kind/);
     expect(calls).toHaveLength(0);
   });
 
   it('rejects invalid status before any SQL', async () => {
     await expect(
-      createTool('u-1', { name: 'X', kind: 'cnc', status: 'broken' as any }),
+      createTool('u-1', { name: 'X', kind: 'cnc', status: 'broken' as never }),
     ).rejects.toThrow(/Invalid status/);
     expect(calls).toHaveLength(0);
   });
@@ -255,7 +255,7 @@ describe('updateTool', () => {
 
   it('rejects invalid status patch', async () => {
     await expect(
-      updateTool('t-1', 'u-1', { status: 'broken' as any }),
+      updateTool('t-1', 'u-1', { status: 'broken' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 });
@@ -363,7 +363,7 @@ describe('createMaintenanceEvent', () => {
   it('rejects invalid event_kind before any SQL', async () => {
     await expect(
       createMaintenanceEvent('t-1', 'u-1', {
-        eventKind: 'upgraded' as any,
+        eventKind: 'upgraded' as never,
       }),
     ).rejects.toThrow(/Invalid event_kind/);
     expect(calls).toHaveLength(0);

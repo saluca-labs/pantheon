@@ -64,7 +64,7 @@ describe('normalizeStyleAdjectives', () => {
 
   it('drops non-string entries', () => {
     expect(
-      normalizeStyleAdjectives(['warm', null as any, 5 as any, 'wry']),
+      normalizeStyleAdjectives(['warm', null as never, 5 as never, 'wry']),
     ).toEqual(['warm', 'wry']);
   });
 
@@ -84,7 +84,7 @@ describe('normalizeStyleAdjectives', () => {
 describe('normalizeStyleRules', () => {
   it('drops non-string + empty entries', () => {
     expect(
-      normalizeStyleRules(['Use short sentences', '', null as any, 12 as any]),
+      normalizeStyleRules(['Use short sentences', '', null as never, 12 as never]),
     ).toEqual(['Use short sentences']);
   });
 
@@ -116,7 +116,7 @@ describe('normalizeExampleOpenings', () => {
       normalizeExampleOpenings([
         'The kitchen smelled like rain.',
         '',
-        null as any,
+        null as never,
       ]),
     ).toEqual(['The kitchen smelled like rain.']);
   });

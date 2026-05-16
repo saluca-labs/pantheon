@@ -41,7 +41,7 @@ beforeEach(() => {
   poolMock.query.mockReset();
 });
 
-function fakeRow(over: Record<string, any> = {}): any {
+function fakeRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 's-1',
     user_id: 'u-1',
@@ -120,7 +120,7 @@ describe('createSession', () => {
     await expect(
       createSession({
         userId: 'u-1',
-        mode: 'narrative_critic' as any,
+        mode: 'narrative_critic' as never,
         title: 'X',
       }),
     ).rejects.toThrow(/Invalid coach mode/);
@@ -240,7 +240,7 @@ describe('listSessions', () => {
 
   it('rejects invalid modes', async () => {
     await expect(
-      listSessions({ userId: 'u-1', mode: 'nonsense' as any }),
+      listSessions({ userId: 'u-1', mode: 'nonsense' as never }),
     ).rejects.toThrow(/Invalid coach mode/);
   });
 
@@ -344,7 +344,7 @@ describe('appendMessages', () => {
   it('rejects messages with an invalid role', async () => {
     await expect(
       appendMessages('s-1', 'u-1', [
-        { role: 'invalid' as any, content: 'x', created_at: '2026-05-12T00:00:00Z' },
+        { role: 'invalid' as never, content: 'x', created_at: '2026-05-12T00:00:00Z' },
       ]),
     ).rejects.toThrow(/Invalid message role/);
   });
@@ -352,7 +352,7 @@ describe('appendMessages', () => {
   it('rejects messages with non-string content', async () => {
     await expect(
       appendMessages('s-1', 'u-1', [
-        { role: 'user', content: 42 as any, created_at: '2026-05-12T00:00:00Z' },
+        { role: 'user', content: 42 as never, created_at: '2026-05-12T00:00:00Z' },
       ]),
     ).rejects.toThrow(/content must be a string/);
   });

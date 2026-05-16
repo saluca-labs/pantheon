@@ -11,12 +11,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 const errorsToThrow: (Error | null)[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
@@ -34,7 +34,7 @@ function pushError(err: Error): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       const err = errorsToThrow.shift();
       const result = queue.shift() ?? { rows: [], rowCount: 0 };
@@ -60,7 +60,7 @@ beforeEach(() => {
   errorsToThrow.length = 0;
 });
 
-function personRow(overrides: Record<string, any> = {}): any {
+function personRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -102,7 +102,7 @@ describe('listPeople', () => {
 
   it('rejects invalid consent state', async () => {
     await expect(
-      listPeople({ userId: 'u-1', consentToPublish: 'nope' as any }),
+      listPeople({ userId: 'u-1', consentToPublish: 'nope' as never }),
     ).rejects.toThrow(/Invalid consent_to_publish/);
   });
 
@@ -222,15 +222,15 @@ describe('createPerson', () => {
     await expect(
       createPerson('u-1', {
         canonicalName: 'Maria',
-        consentToPublish: 'nope' as any,
+        consentToPublish: 'nope' as never,
       }),
     ).rejects.toThrow(/Invalid consent_to_publish/);
   });
 
   it('translates pg unique-violation (23505) into typed duplicate_name', async () => {
-    const dup: any = new Error(
+    const dup = new Error(
       'duplicate key value violates unique constraint',
-    );
+    ) as Error & { code?: string; constraint?: string };
     dup.code = '23505';
     pushError(dup);
     await expect(
@@ -239,7 +239,7 @@ describe('createPerson', () => {
   });
 
   it('rethrows non-unique-violation errors unchanged', async () => {
-    const fk: any = new Error('foreign key');
+    const fk = new Error('foreign key') as Error & { code?: string; constraint?: string };
     fk.code = '23503';
     pushError(fk);
     await expect(
@@ -269,12 +269,12 @@ describe('updatePerson', () => {
 
   it('rejects invalid consent state', async () => {
     await expect(
-      updatePerson('p-1', 'u-1', { consentToPublish: 'nope' as any }),
+      updatePerson('p-1', 'u-1', { consentToPublish: 'nope' as never }),
     ).rejects.toThrow(/Invalid consent_to_publish/);
   });
 
   it('translates 23505 into duplicate_name on rename collision', async () => {
-    const dup: any = new Error('uq');
+    const dup = new Error('uq') as Error & { code?: string; constraint?: string };
     dup.code = '23505';
     pushError(dup);
     await expect(
@@ -312,7 +312,7 @@ describe('recordConsent', () => {
 
   it('rejects invalid state', async () => {
     await expect(
-      recordConsent('p-1', 'u-1', 'nope' as any, null),
+      recordConsent('p-1', 'u-1', 'nope' as never, null),
     ).rejects.toThrow(/Invalid consent_to_publish/);
   });
 

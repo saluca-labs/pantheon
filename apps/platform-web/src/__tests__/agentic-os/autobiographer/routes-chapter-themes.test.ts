@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -35,7 +35,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -47,8 +47,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(chRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(chThemesMocks)) (m as any).mockReset();
+  for (const m of Object.values(chRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(chThemesMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -76,7 +76,7 @@ describe('GET / POST /chapters/[id]/themes', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-x' }),
     });
     expect(res.status).toBe(404);
@@ -84,14 +84,14 @@ describe('GET / POST /chapters/[id]/themes', () => {
 
   it('POST 404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('nf');
+    const nf = new Error('nf') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     chThemesMocks.linkThemeToChapter.mockRejectedValue(nf);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(404);
@@ -99,14 +99,14 @@ describe('GET / POST /chapters/[id]/themes', () => {
 
   it('POST 409 on duplicate', async () => {
     authedUser();
-    const dup: any = new Error('dup');
+    const dup = new Error('dup') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     chThemesMocks.linkThemeToChapter.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(409);
@@ -124,7 +124,7 @@ describe('GET / POST /chapters/[id]/themes', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { themeId: THEME_UUID }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(201);
@@ -144,7 +144,7 @@ describe('DELETE /chapters/[id]/themes/[themeId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/[themeId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'c-1', themeId: THEME_UUID }),
     });
     expect(res.status).toBe(404);
@@ -157,7 +157,7 @@ describe('DELETE /chapters/[id]/themes/[themeId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/themes/[themeId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'c-1', themeId: THEME_UUID }),
     });
     expect(res.status).toBe(200);

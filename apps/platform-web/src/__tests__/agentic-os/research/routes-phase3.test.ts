@@ -60,13 +60,13 @@ const joinRepo = {
 };
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...a: any[]) => getCurrentResearchUser(...a),
+  getCurrentResearchUser: (...a: unknown[]) => getCurrentResearchUser(...a),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 
 vi.mock('@/lib/agentic-os/research/repo', () => ({
   ...repoMocks,
-  recordAudit: (...a: any[]) => recordAudit(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
 }));
 
 vi.mock('@/lib/agentic-os/research/predictions-repo', () => predictionsRepo);
@@ -99,11 +99,11 @@ beforeEach(() => {
   recordAudit.mockReset();
   recordAudit.mockResolvedValue(undefined);
   for (const m of Object.values({ ...repoMocks, ...predictionsRepo, ...falsifiersRepo, ...evidenceRepo, ...joinRepo })) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
 });
 
-function makeHypothesis(o: Record<string, any> = {}) {
+function makeHypothesis(o: Record<string, unknown> = {}) {
   return {
     id: 'h-1',
     userId: 'u-1',
@@ -130,7 +130,7 @@ describe('GET /hypotheses (Phase 3 archived filter)', () => {
     authed();
     repoMocks.listHypotheses.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/route');
-    await GET(new Request('http://t/api/x') as any);
+    await GET(new Request('http://t/api/x') as never);
     expect(repoMocks.listHypotheses).toHaveBeenCalledWith('u-1', { archived: false });
   });
 
@@ -138,7 +138,7 @@ describe('GET /hypotheses (Phase 3 archived filter)', () => {
     authed();
     repoMocks.listHypotheses.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/route');
-    await GET(new Request('http://t/api/x?archived=true') as any);
+    await GET(new Request('http://t/api/x?archived=true') as never);
     expect(repoMocks.listHypotheses).toHaveBeenCalledWith('u-1', { archived: true });
   });
 
@@ -146,14 +146,14 @@ describe('GET /hypotheses (Phase 3 archived filter)', () => {
     authed();
     repoMocks.listHypotheses.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/route');
-    await GET(new Request('http://t/api/x?archived=all') as any);
+    await GET(new Request('http://t/api/x?archived=all') as never);
     expect(repoMocks.listHypotheses).toHaveBeenCalledWith('u-1', { archived: 'all' });
   });
 
   it('401 when unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/route');
-    const r = await GET(new Request('http://t/api/x') as any);
+    const r = await GET(new Request('http://t/api/x') as never);
     expect(r.status).toBe(401);
   });
 });
@@ -169,7 +169,7 @@ describe('POST /hypotheses accepts description_md', () => {
       thenClause: 'b',
       becauseClause: 'c',
       descriptionMd: 'long',
-    }) as any);
+    }) as never);
     expect(r.status).toBe(201);
     expect(repoMocks.createHypothesis).toHaveBeenCalledWith(
       'u-1',
@@ -186,7 +186,7 @@ describe('PATCH /hypotheses/[id]', () => {
     repoMocks.getHypothesis.mockResolvedValue(makeHypothesis());
     repoMocks.archiveHypothesis.mockResolvedValue(makeHypothesis({ archivedAt: '2026-05-12T11:00:00Z' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as any, params({ id: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
     expect(repoMocks.archiveHypothesis).toHaveBeenCalledWith('h-1', 'u-1');
     expect(recordAudit).toHaveBeenCalledWith(
@@ -199,7 +199,7 @@ describe('PATCH /hypotheses/[id]', () => {
   it('PATCH archived=false returns 400 (use POST /restore)', async () => {
     authed();
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as any, params({ id: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -208,7 +208,7 @@ describe('PATCH /hypotheses/[id]', () => {
     repoMocks.getHypothesis.mockResolvedValue(makeHypothesis({ status: 'draft' }));
     repoMocks.updateHypothesis.mockResolvedValue(makeHypothesis({ status: 'active' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { status: 'active' }) as any, params({ id: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { status: 'active' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
     const actions = recordAudit.mock.calls.map((c) => c[0].action);
     expect(actions).toContain('research.hypothesis.updated');
@@ -220,7 +220,7 @@ describe('PATCH /hypotheses/[id]', () => {
     repoMocks.getHypothesis.mockResolvedValue(makeHypothesis());
     repoMocks.updateHypothesis.mockResolvedValue(makeHypothesis({ title: 'New' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as any, params({ id: 'h-1' }));
+    await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as never, params({ id: 'h-1' }));
     const actions = recordAudit.mock.calls.map((c) => c[0].action);
     expect(actions).not.toContain('research.hypothesis.status_changed');
   });
@@ -230,7 +230,7 @@ describe('PATCH /hypotheses/[id]', () => {
     repoMocks.getHypothesis.mockResolvedValue(makeHypothesis());
     repoMocks.updateHypothesis.mockResolvedValue(makeHypothesis({ descriptionMd: 'long' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { descriptionMd: 'long' }) as any, params({ id: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { descriptionMd: 'long' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
     expect(repoMocks.updateHypothesis).toHaveBeenCalledWith(
       'h-1',
@@ -243,7 +243,7 @@ describe('PATCH /hypotheses/[id]', () => {
     authed();
     repoMocks.getHypothesis.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'new' }) as any, params({ id: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'new' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
   });
 });
@@ -254,7 +254,7 @@ describe('POST /hypotheses/[id]/restore', () => {
   it('401 when unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/restore/route');
-    const r = await POST(jsonReq(URL, 'POST') as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST') as never, params({ id: 'h-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -262,7 +262,7 @@ describe('POST /hypotheses/[id]/restore', () => {
     authed();
     repoMocks.restoreHypothesis.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/restore/route');
-    const r = await POST(jsonReq(URL, 'POST') as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST') as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -273,7 +273,7 @@ describe('POST /hypotheses/[id]/restore', () => {
       alreadyActive: true,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/restore/route');
-    const r = await POST(jsonReq(URL, 'POST') as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST') as never, params({ id: 'h-1' }));
     expect(r.status).toBe(400);
     expect(recordAudit).not.toHaveBeenCalled();
   });
@@ -285,7 +285,7 @@ describe('POST /hypotheses/[id]/restore', () => {
       alreadyActive: false,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/restore/route');
-    const r = await POST(jsonReq(URL, 'POST') as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST') as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.hypothesis.restored' }),
@@ -295,7 +295,7 @@ describe('POST /hypotheses/[id]/restore', () => {
 
 // ─── Predictions routes ─────────────────────────────────────────────────────
 
-function predRow(o: Record<string, any> = {}) {
+function predRow(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     hypothesisId: 'h-1',
@@ -316,7 +316,7 @@ describe('GET /hypotheses/[id]/predictions', () => {
   it('401 unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -324,7 +324,7 @@ describe('GET /hypotheses/[id]/predictions', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -333,7 +333,7 @@ describe('GET /hypotheses/[id]/predictions', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     predictionsRepo.listPredictionsForHypothesis.mockResolvedValue([predRow()]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.predictions).toHaveLength(1);
@@ -347,7 +347,7 @@ describe('POST /hypotheses/[id]/predictions', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await POST(jsonReq(URL, 'POST', {}) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', {}) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -355,7 +355,7 @@ describe('POST /hypotheses/[id]/predictions', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await POST(jsonReq(URL, 'POST', { text: 'x', kind: 'bogus' }) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { text: 'x', kind: 'bogus' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -364,7 +364,7 @@ describe('POST /hypotheses/[id]/predictions', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { text: 'x', confidence: 'huge' }) as any,
+      jsonReq(URL, 'POST', { text: 'x', confidence: 'huge' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -374,7 +374,7 @@ describe('POST /hypotheses/[id]/predictions', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
     expect(predictionsRepo.createPrediction).not.toHaveBeenCalled();
   });
@@ -384,7 +384,7 @@ describe('POST /hypotheses/[id]/predictions', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     predictionsRepo.createPrediction.mockResolvedValue(predRow({ id: 'p-new' }));
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
-    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -399,10 +399,10 @@ describe('POST /hypotheses/[id]/predictions', () => {
       authed();
       predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
       predictionsRepo.createPrediction.mockReset();
-      predictionsRepo.createPrediction.mockResolvedValue(predRow({ kind: kind as any }));
+      predictionsRepo.createPrediction.mockResolvedValue(predRow({ kind: kind as never }));
       const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/predictions/route');
       const r = await POST(
-        jsonReq(URL, 'POST', { text: 'x', kind }) as any,
+        jsonReq(URL, 'POST', { text: 'x', kind }) as never,
         params({ id: 'h-1' }),
       );
       expect(r.status).toBe(201);
@@ -417,7 +417,7 @@ describe('PATCH /predictions/[predId]', () => {
     authed();
     predictionsRepo.getPrediction.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/predictions/[predId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'x' }) as any, params({ predId: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'x' }) as never, params({ predId: 'p-1' }));
     expect(r.status).toBe(404);
     expect(predictionsRepo.updatePrediction).not.toHaveBeenCalled();
   });
@@ -426,7 +426,7 @@ describe('PATCH /predictions/[predId]', () => {
     authed();
     predictionsRepo.getPrediction.mockResolvedValue(predRow());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/predictions/[predId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { kind: 'bogus' }) as any, params({ predId: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { kind: 'bogus' }) as never, params({ predId: 'p-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -435,7 +435,7 @@ describe('PATCH /predictions/[predId]', () => {
     predictionsRepo.getPrediction.mockResolvedValue(predRow());
     predictionsRepo.updatePrediction.mockResolvedValue(predRow({ text: 'new' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/predictions/[predId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'new' }) as any, params({ predId: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'new' }) as never, params({ predId: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.prediction.updated' }),
@@ -450,7 +450,7 @@ describe('DELETE /predictions/[predId]', () => {
     authed();
     predictionsRepo.getPrediction.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/predictions/[predId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ predId: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ predId: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -459,7 +459,7 @@ describe('DELETE /predictions/[predId]', () => {
     predictionsRepo.getPrediction.mockResolvedValue(predRow());
     predictionsRepo.deletePrediction.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/predictions/[predId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ predId: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ predId: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.prediction.deleted' }),
@@ -469,7 +469,7 @@ describe('DELETE /predictions/[predId]', () => {
 
 // ─── Falsifiers routes ─────────────────────────────────────────────────────
 
-function falsRow(o: Record<string, any> = {}) {
+function falsRow(o: Record<string, unknown> = {}) {
   return {
     id: 'f-1',
     hypothesisId: 'h-1',
@@ -490,7 +490,7 @@ describe('GET + POST /hypotheses/[id]/falsifiers', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/falsifiers/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -499,7 +499,7 @@ describe('GET + POST /hypotheses/[id]/falsifiers', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     falsifiersRepo.listFalsifiersForHypothesis.mockResolvedValue([falsRow()]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/falsifiers/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
   });
 
@@ -507,7 +507,7 @@ describe('GET + POST /hypotheses/[id]/falsifiers', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/falsifiers/route');
-    const r = await POST(jsonReq(URL, 'POST', {}) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', {}) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -516,7 +516,7 @@ describe('GET + POST /hypotheses/[id]/falsifiers', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     falsifiersRepo.createFalsifier.mockResolvedValue(falsRow({ id: 'f-new' }));
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/falsifiers/route');
-    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { text: 'x' }) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.falsifier.created' }),
@@ -531,7 +531,7 @@ describe('PATCH + DELETE /falsifiers/[falsId]', () => {
     authed();
     falsifiersRepo.getFalsifier.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/falsifiers/[falsId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'x' }) as any, params({ falsId: 'f-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'x' }) as never, params({ falsId: 'f-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -540,7 +540,7 @@ describe('PATCH + DELETE /falsifiers/[falsId]', () => {
     falsifiersRepo.getFalsifier.mockResolvedValue(falsRow());
     falsifiersRepo.updateFalsifier.mockResolvedValue(falsRow({ text: 'new' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/falsifiers/[falsId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'new' }) as any, params({ falsId: 'f-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { text: 'new' }) as never, params({ falsId: 'f-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.falsifier.updated' }),
@@ -551,7 +551,7 @@ describe('PATCH + DELETE /falsifiers/[falsId]', () => {
     authed();
     falsifiersRepo.getFalsifier.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/falsifiers/[falsId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ falsId: 'f-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ falsId: 'f-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -560,7 +560,7 @@ describe('PATCH + DELETE /falsifiers/[falsId]', () => {
     falsifiersRepo.getFalsifier.mockResolvedValue(falsRow());
     falsifiersRepo.deleteFalsifier.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/falsifiers/[falsId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ falsId: 'f-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ falsId: 'f-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.falsifier.deleted' }),
@@ -570,7 +570,7 @@ describe('PATCH + DELETE /falsifiers/[falsId]', () => {
 
 // ─── Evidence routes ───────────────────────────────────────────────────────
 
-function evRow(o: Record<string, any> = {}) {
+function evRow(o: Record<string, unknown> = {}) {
   return {
     id: 'e-1',
     hypothesisId: 'h-1',
@@ -597,7 +597,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('401 when unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
-    const r = await POST(jsonReq(URL, 'POST', {}) as any, params({ id: 'h-1' }));
+    const r = await POST(jsonReq(URL, 'POST', {}) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -605,7 +605,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text', notes: 'x' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text', notes: 'x' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(404);
@@ -614,7 +614,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 on invalid polarity (Zod enum)', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'strong', sourceKind: 'free_text', notes: 'x' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'strong', sourceKind: 'free_text', notes: 'x' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -623,7 +623,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 on invalid source_kind (Zod enum)', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'image', notes: 'x' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'image', notes: 'x' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -632,7 +632,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 when external_url missing sourceUrl', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'external_url' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'external_url' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -641,7 +641,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 when notebook_entry missing sourceId', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'notebook_entry' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'notebook_entry' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -650,7 +650,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 when paper missing sourceId', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'mixed', sourceKind: 'paper' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'mixed', sourceKind: 'paper' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -659,7 +659,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 when dataset missing sourceId', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'refutes', sourceKind: 'dataset' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'refutes', sourceKind: 'dataset' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -668,7 +668,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
   it('400 when free_text missing notes', async () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(400);
@@ -678,7 +678,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
     evidenceRepo.createEvidence.mockResolvedValue(evRow({ id: 'e-new' }));
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text', notes: 'evidence' }) as any,
+      jsonReq(URL, 'POST', { polarity: 'supports', sourceKind: 'free_text', notes: 'evidence' }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(201);
@@ -700,7 +700,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
         polarity: 'supports',
         sourceKind: 'external_url',
         sourceUrl: 'https://example.com',
-      }) as any,
+      }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(201);
@@ -716,7 +716,7 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
         polarity: 'supports',
         sourceKind: 'notebook_entry',
         sourceId: '00000000-0000-0000-0000-000000000001',
-      }) as any,
+      }) as never,
       params({ id: 'h-1' }),
     );
     expect(r.status).toBe(201);
@@ -727,10 +727,10 @@ describe('POST /hypotheses/[id]/evidence — discriminator contract', () => {
       authed();
       predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
       evidenceRepo.createEvidence.mockReset();
-      evidenceRepo.createEvidence.mockResolvedValue(evRow({ id: `e-${polarity}`, polarity: polarity as any }));
+      evidenceRepo.createEvidence.mockResolvedValue(evRow({ id: `e-${polarity}`, polarity: polarity as never }));
       const { POST } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
       const r = await POST(
-        jsonReq(URL, 'POST', { polarity, sourceKind: 'free_text', notes: 'x' }) as any,
+        jsonReq(URL, 'POST', { polarity, sourceKind: 'free_text', notes: 'x' }) as never,
         params({ id: 'h-1' }),
       );
       expect(r.status).toBe(201);
@@ -744,7 +744,7 @@ describe('GET /hypotheses/[id]/evidence', () => {
   it('401 unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -752,7 +752,7 @@ describe('GET /hypotheses/[id]/evidence', () => {
     authed();
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -761,7 +761,7 @@ describe('GET /hypotheses/[id]/evidence', () => {
     predictionsRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     evidenceRepo.listEvidenceForHypothesis.mockResolvedValue([evRow()]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/hypotheses/[id]/evidence/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'h-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'h-1' }));
     expect(r.status).toBe(200);
   });
 });
@@ -773,7 +773,7 @@ describe('DELETE /evidence/[evId]', () => {
     authed();
     evidenceRepo.getEvidence.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/evidence/[evId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ evId: 'e-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ evId: 'e-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -782,7 +782,7 @@ describe('DELETE /evidence/[evId]', () => {
     evidenceRepo.getEvidence.mockResolvedValue(evRow());
     evidenceRepo.deleteEvidence.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/evidence/[evId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ evId: 'e-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ evId: 'e-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.evidence.unlinked' }),
@@ -792,7 +792,7 @@ describe('DELETE /evidence/[evId]', () => {
 
 // ─── Experiment-hypotheses N:M routes ──────────────────────────────────────
 
-function linkRow(o: Record<string, any> = {}) {
+function linkRow(o: Record<string, unknown> = {}) {
   return {
     id: 'lk-1',
     experimentId: 'exp-1',
@@ -810,7 +810,7 @@ describe('GET /experiments/[id]/hypotheses', () => {
   it('401 unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'exp-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'exp-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -818,7 +818,7 @@ describe('GET /experiments/[id]/hypotheses', () => {
     authed();
     joinRepo.isExperimentOwnedByUser.mockResolvedValue(false);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'exp-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'exp-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -827,7 +827,7 @@ describe('GET /experiments/[id]/hypotheses', () => {
     joinRepo.isExperimentOwnedByUser.mockResolvedValue(true);
     joinRepo.listLinkedHypothesesForExperiment.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'exp-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'exp-1' }));
     expect(r.status).toBe(200);
   });
 });
@@ -844,7 +844,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
     joinRepo.isExperimentOwnedByUser.mockResolvedValue(false);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as any,
+      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as never,
       params({ id: 'exp-1' }),
     );
     expect(r.status).toBe(404);
@@ -855,7 +855,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
     joinRepo.isHypothesisOwnedByUser.mockResolvedValue(false);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as any,
+      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as never,
       params({ id: 'exp-1' }),
     );
     expect(r.status).toBe(404);
@@ -865,7 +865,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
   it('400 on invalid body (missing hypothesis_id)', async () => {
     joinRepo.isExperimentOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
-    const r = await POST(jsonReq(URL, 'POST', {}) as any, params({ id: 'exp-1' }));
+    const r = await POST(jsonReq(URL, 'POST', {}) as never, params({ id: 'exp-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -874,7 +874,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
     joinRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID, role: 'owns' }) as any,
+      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID, role: 'owns' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(r.status).toBe(400);
@@ -886,7 +886,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
     joinRepo.createLink.mockResolvedValue({ kind: 'duplicate' });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as any,
+      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as never,
       params({ id: 'exp-1' }),
     );
     expect(r.status).toBe(409);
@@ -898,7 +898,7 @@ describe('POST /experiments/[id]/hypotheses', () => {
     joinRepo.createLink.mockResolvedValue({ kind: 'ok', link: linkRow() });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as any,
+      jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID }) as never,
       params({ id: 'exp-1' }),
     );
     expect(r.status).toBe(201);
@@ -917,10 +917,10 @@ describe('POST /experiments/[id]/hypotheses', () => {
       joinRepo.isExperimentOwnedByUser.mockResolvedValue(true);
       joinRepo.isHypothesisOwnedByUser.mockResolvedValue(true);
       joinRepo.createLink.mockReset();
-      joinRepo.createLink.mockResolvedValue({ kind: 'ok', link: linkRow({ role: role as any }) });
+      joinRepo.createLink.mockResolvedValue({ kind: 'ok', link: linkRow({ role: role as never }) });
       const { POST } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/route');
       const r = await POST(
-        jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID, role }) as any,
+        jsonReq(URL, 'POST', { hypothesis_id: VALID_HYP_UUID, role }) as never,
         params({ id: 'exp-1' }),
       );
       expect(r.status).toBe(201);
@@ -935,7 +935,7 @@ describe('PATCH + DELETE /experiments/[id]/hypotheses/[hypothesisId]', () => {
     authed();
     joinRepo.getLinkByPair.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/[hypothesisId]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { role: 'related' }) as any, params({ id: 'exp-1', hypothesisId: 'h-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { role: 'related' }) as never, params({ id: 'exp-1', hypothesisId: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -945,7 +945,7 @@ describe('PATCH + DELETE /experiments/[id]/hypotheses/[hypothesisId]', () => {
     joinRepo.updateLink.mockResolvedValue(linkRow({ role: 'motivates' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/[hypothesisId]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { role: 'motivates' }) as any,
+      jsonReq(URL, 'PATCH', { role: 'motivates' }) as never,
       params({ id: 'exp-1', hypothesisId: 'h-1' }),
     );
     expect(r.status).toBe(200);
@@ -962,7 +962,7 @@ describe('PATCH + DELETE /experiments/[id]/hypotheses/[hypothesisId]', () => {
     authed();
     joinRepo.getLinkByPair.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/[hypothesisId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'exp-1', hypothesisId: 'h-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'exp-1', hypothesisId: 'h-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -971,7 +971,7 @@ describe('PATCH + DELETE /experiments/[id]/hypotheses/[hypothesisId]', () => {
     joinRepo.getLinkByPair.mockResolvedValue(linkRow());
     joinRepo.deleteLink.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/experiments/[id]/hypotheses/[hypothesisId]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'exp-1', hypothesisId: 'h-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'exp-1', hypothesisId: 'h-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({

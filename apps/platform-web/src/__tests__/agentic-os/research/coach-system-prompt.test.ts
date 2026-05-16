@@ -63,7 +63,7 @@ describe('HARD_RULES', () => {
 
 // ─── Helpers to build fake contexts ────────────────────────────────────
 
-function litReviewerCtx(over: Partial<any> = {}): ResearchCoachContext {
+function litReviewerCtx(over: Partial<Record<string, unknown>> = {}): ResearchCoachContext {
   return {
     mode: 'lit_reviewer',
     data: {
@@ -76,7 +76,7 @@ function litReviewerCtx(over: Partial<any> = {}): ResearchCoachContext {
   };
 }
 
-function hypothesisCriticCtx(over: Partial<any> = {}): ResearchCoachContext {
+function hypothesisCriticCtx(over: Partial<Record<string, unknown>> = {}): ResearchCoachContext {
   return {
     mode: 'hypothesis_critic',
     data: {
@@ -88,7 +88,7 @@ function hypothesisCriticCtx(over: Partial<any> = {}): ResearchCoachContext {
   };
 }
 
-function methodsAdvisorCtx(over: Partial<any> = {}): ResearchCoachContext {
+function methodsAdvisorCtx(over: Partial<Record<string, unknown>> = {}): ResearchCoachContext {
   return {
     mode: 'methods_advisor',
     data: {
@@ -110,7 +110,7 @@ function methodsAdvisorCtx(over: Partial<any> = {}): ResearchCoachContext {
   };
 }
 
-function generalCtx(over: Partial<any> = {}): ResearchCoachContext {
+function generalCtx(over: Partial<Record<string, unknown>> = {}): ResearchCoachContext {
   return {
     mode: 'general',
     data: {

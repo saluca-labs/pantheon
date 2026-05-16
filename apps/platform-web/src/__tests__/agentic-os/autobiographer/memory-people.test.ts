@@ -20,7 +20,7 @@ import {
 describe('COMMON_MEMORY_PERSON_ROLES', () => {
   it('includes the four anchor roles from the plan', () => {
     for (const r of ['protagonist', 'witness', 'antagonist', 'mentioned']) {
-      expect(COMMON_MEMORY_PERSON_ROLES).toContain(r as any);
+      expect(COMMON_MEMORY_PERSON_ROLES).toContain(r as never);
     }
   });
 
@@ -90,9 +90,9 @@ describe('normalizeRole', () => {
   });
 
   it('returns null for non-string + nullish', () => {
-    expect(normalizeRole(null as any)).toBeNull();
-    expect(normalizeRole(undefined as any)).toBeNull();
-    expect(normalizeRole(42 as any)).toBeNull();
+    expect(normalizeRole(null as never)).toBeNull();
+    expect(normalizeRole(undefined as never)).toBeNull();
+    expect(normalizeRole(42 as never)).toBeNull();
   });
 
   it('preserves casing (roles are free-form, not normalized to lowercase)', () => {

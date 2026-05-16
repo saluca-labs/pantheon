@@ -132,12 +132,12 @@ describe('buildSystemPrompt', () => {
 // ─── Repo plumbing (mocked pg) ─────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -145,7 +145,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/cyber/session', () => ({
   getCyberPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -169,7 +169,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function convRow(overrides: Record<string, any> = {}): any {
+function convRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'cv-1',
     owner_id: 'u-1',
@@ -185,7 +185,7 @@ function convRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function messageRow(overrides: Record<string, any> = {}): any {
+function messageRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     conversation_id: 'cv-1',
@@ -377,7 +377,7 @@ describe('appendMessage', () => {
     //   0=id 1=conv 2=role 3=content 4=tool_calls 5=redacted 6=matches 7=metadata
     expect(calls[0].params[5]).toBe(true);
     expect(typeof calls[0].params[6]).toBe('string');
-    expect(JSON.parse(calls[0].params[6])).toHaveLength(1);
+    expect(JSON.parse(calls[0].params[6] as string)).toHaveLength(1);
   });
 
   it('defaults redacted=false and matches=[] when not supplied', async () => {
@@ -388,7 +388,7 @@ describe('appendMessage', () => {
       content: 'hello',
     });
     expect(calls[0].params[5]).toBe(false);
-    expect(JSON.parse(calls[0].params[6])).toEqual([]);
+    expect(JSON.parse(calls[0].params[6] as string)).toEqual([]);
   });
 });
 

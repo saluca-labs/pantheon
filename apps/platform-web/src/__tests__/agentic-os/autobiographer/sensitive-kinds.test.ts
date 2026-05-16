@@ -98,7 +98,7 @@ describe('validateSensitiveKindsStrict', () => {
   });
 
   it('throws on non-array input', () => {
-    expect(() => validateSensitiveKindsStrict(null as any)).toThrow(
+    expect(() => validateSensitiveKindsStrict(null as never)).toThrow(
       /must be an array/,
     );
   });

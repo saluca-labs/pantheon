@@ -63,8 +63,8 @@ describe('validateDependencyKind', () => {
     expect(validateDependencyKind('bogus')).toMatch(/kind must be one of/);
   });
   it('rejects non-string', () => {
-    expect(validateDependencyKind(0 as any)).toMatch(/kind must be one of/);
-    expect(validateDependencyKind(null as any)).toMatch(/kind must be one of/);
+    expect(validateDependencyKind(0 as never)).toMatch(/kind must be one of/);
+    expect(validateDependencyKind(null as never)).toMatch(/kind must be one of/);
   });
 });
 
@@ -88,7 +88,7 @@ describe('validateProjectUuid', () => {
     expect(validateProjectUuid('')).toMatch(/UUID/);
   });
   it('rejects non-string', () => {
-    expect(validateProjectUuid(0 as any)).toMatch(/string UUID/);
+    expect(validateProjectUuid(0 as never)).toMatch(/string UUID/);
   });
 });
 

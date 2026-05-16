@@ -11,12 +11,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -27,7 +27,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -49,7 +49,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function sampleRow(overrides: Record<string, any> = {}): any {
+function sampleRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 's-1',
     user_id: 'u-1',
@@ -100,7 +100,7 @@ describe('listVoiceSamples', () => {
     pushResult({ rows: [] });
     await listVoiceSamples({ userId: 'u-1', q: 'tuesday' });
     expect(calls[0]!.sql).toMatch(/lower\(body_text\) LIKE/);
-    expect(calls[0]!.params.some((p: any) => /tuesday/.test(String(p)))).toBe(
+    expect(calls[0]!.params.some((p: unknown) => /tuesday/.test(String(p)))).toBe(
       true,
     );
   });

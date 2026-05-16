@@ -12,12 +12,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -28,7 +28,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/_shared/session', () => ({
   getOsPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -47,7 +47,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function savedViewRow(o: Record<string, any> = {}): any {
+function savedViewRow(o: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'sv-1',
     user_id: 'u-1',
@@ -158,7 +158,7 @@ describe('saved-views-repo — createSavedView()', () => {
       name: 'x',
       query: { kind: 'all', severity: 'high' },
     });
-    expect(JSON.parse(calls[0].params[4])).toEqual({
+    expect(JSON.parse(calls[0].params[4] as string)).toEqual({
       kind: 'all',
       severity: 'high',
     });
@@ -182,7 +182,7 @@ describe('saved-views-repo — createSavedView()', () => {
       name: 'x',
       query: undefined,
     });
-    expect(JSON.parse(calls[0].params[4])).toEqual({});
+    expect(JSON.parse(calls[0].params[4] as string)).toEqual({});
   });
 
   it('returns the hydrated row from RETURNING', async () => {

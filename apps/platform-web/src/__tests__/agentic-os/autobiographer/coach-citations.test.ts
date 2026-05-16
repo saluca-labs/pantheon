@@ -30,9 +30,9 @@ describe('parseCitations: empty/invalid inputs', () => {
   });
 
   it('returns [] for non-string input', () => {
-    expect(parseCitations(undefined as any)).toEqual([]);
-    expect(parseCitations(null as any)).toEqual([]);
-    expect(parseCitations(42 as any)).toEqual([]);
+    expect(parseCitations(undefined as never)).toEqual([]);
+    expect(parseCitations(null as never)).toEqual([]);
+    expect(parseCitations(42 as never)).toEqual([]);
   });
 
   it('returns [] when no markers are present', () => {
@@ -132,7 +132,7 @@ describe('parseCitations: dedup + drop', () => {
 describe('countCitationMarkers', () => {
   it('returns 0 for empty / non-string', () => {
     expect(countCitationMarkers('')).toBe(0);
-    expect(countCitationMarkers(null as any)).toBe(0);
+    expect(countCitationMarkers(null as never)).toBe(0);
   });
 
   it('counts every marker, even malformed ones (no-UUID still counts)', () => {

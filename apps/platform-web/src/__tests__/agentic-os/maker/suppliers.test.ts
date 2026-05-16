@@ -57,7 +57,7 @@ describe('validateCurrency', () => {
     expect(validateCurrency('usd')).toMatch(/3-letter/);
     expect(validateCurrency('US')).toMatch(/3-letter/);
     expect(validateCurrency('USDX')).toMatch(/3-letter/);
-    expect(validateCurrency(123 as any)).toMatch(/3-letter/);
+    expect(validateCurrency(123 as never)).toMatch(/3-letter/);
   });
 });
 

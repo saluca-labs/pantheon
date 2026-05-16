@@ -17,26 +17,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
-type QueueItem = PgResult | { __throw: any };
+type QueueItem = PgResult | { __throw: unknown };
 
 const queue: QueueItem[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
 }
 
-function pushThrow(err: any): void {
+function pushThrow(err: unknown): void {
   queue.push({ __throw: err });
 }
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       const next = queue.shift();
       if (next && '__throw' in next) throw next.__throw;
@@ -80,7 +80,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function datasetRow(o: Record<string, any> = {}) {
+function datasetRow(o: Record<string, unknown> = {}) {
   return {
     id: 'd-1',
     user_id: 'u-1',
@@ -102,7 +102,7 @@ function datasetRow(o: Record<string, any> = {}) {
   };
 }
 
-function protocolRow(o: Record<string, any> = {}) {
+function protocolRow(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -150,7 +150,7 @@ describe('datasets-repo: list', () => {
 
   it('throws on invalid kind BEFORE issuing SQL', async () => {
     await expect(
-      listDatasetsForExperiment('e-1', 'u-1', { kind: 'xxx' as any }),
+      listDatasetsForExperiment('e-1', 'u-1', { kind: 'xxx' as never }),
     ).rejects.toThrow(/Invalid dataset kind/);
     expect(calls).toHaveLength(0);
   });
@@ -177,7 +177,7 @@ describe('datasets-repo: get / create / update / delete', () => {
 
   it('create throws on invalid kind BEFORE issuing SQL', async () => {
     await expect(
-      createDataset('e-1', 'u-1', { name: 'X', url: 'https://x', kind: 'xxx' as any }),
+      createDataset('e-1', 'u-1', { name: 'X', url: 'https://x', kind: 'xxx' as never }),
     ).rejects.toThrow(/Invalid dataset kind/);
     expect(calls).toHaveLength(0);
   });
@@ -392,7 +392,7 @@ describe('experiment-protocols-repo: pin / list / patch / unpin', () => {
   });
 
   it('pin returns duplicate on SQLSTATE 23505', async () => {
-    const err: any = new Error('duplicate');
+    const err = new Error('duplicate') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     pushThrow(err);
     const outcome = await pinProtocolToExperiment('e-1', 'u-1', {

@@ -174,7 +174,7 @@ describe('legacy validateChapter (single-chapter editor)', () => {
 
   it('flags invalid legacy status', () => {
     expect(
-      validateChapter({ title: 'ok', status: 'outline' as any }),
+      validateChapter({ title: 'ok', status: 'outline' as never }),
     ).toContain('Status "outline" is not valid.');
   });
 

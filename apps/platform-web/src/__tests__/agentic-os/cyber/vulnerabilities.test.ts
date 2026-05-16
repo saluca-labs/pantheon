@@ -7,19 +7,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
 }
 
 const mockClient = {
-  query: vi.fn(async (sql: string, params: any[] = []) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     calls.push({ sql, params });
     return queue.shift() ?? { rows: [], rowCount: 0 };
   }),
@@ -28,7 +28,7 @@ const mockClient = {
 
 vi.mock('@/lib/agentic-os/cyber/session', () => ({
   getCyberPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -59,7 +59,7 @@ beforeEach(() => {
   mockClient.query.mockClear();
 });
 
-function vulnRow(overrides: Record<string, any> = {}): any {
+function vulnRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'v-1',
     owner_id: 'u-1',
@@ -165,7 +165,7 @@ describe('vulnerability CRUD', () => {
 
 describe('bulkUpsertVulnerabilities dedup by cve_id', () => {
   it('updates existing rows with same cve_id, inserts new ones', async () => {
-    mockClient.query.mockImplementation(async (sql: string, params: any[] = []) => {
+    mockClient.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       // begin
       if (sql === 'BEGIN') return { rows: [], rowCount: 0 };

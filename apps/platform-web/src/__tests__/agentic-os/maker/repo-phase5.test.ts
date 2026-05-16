@@ -25,12 +25,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Pool mock ────────────────────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 let lastInsertedId: string | null = null;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -39,7 +39,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
   getMakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       if (/^INSERT INTO /m.test(sql) && typeof params[0] === 'string') {
         lastInsertedId = params[0];
@@ -77,7 +77,7 @@ beforeEach(() => {
   lastInsertedId = null;
 });
 
-function projectRow(over: Record<string, any> = {}): any {
+function projectRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -96,7 +96,7 @@ function projectRow(over: Record<string, any> = {}): any {
   };
 }
 
-function specSheetRow(over: Record<string, any> = {}): any {
+function specSheetRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 's-1',
     user_id: 'u-1',
@@ -117,7 +117,7 @@ function specSheetRow(over: Record<string, any> = {}): any {
   };
 }
 
-function partRow(over: Record<string, any> = {}): any {
+function partRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'pa-1',
     user_id: 'u-1',
@@ -139,7 +139,7 @@ function partRow(over: Record<string, any> = {}): any {
   };
 }
 
-function toolRow(over: Record<string, any> = {}): any {
+function toolRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 't-1',
     user_id: 'u-1',
@@ -163,7 +163,7 @@ function toolRow(over: Record<string, any> = {}): any {
   };
 }
 
-function referenceRow(over: Record<string, any> = {}): any {
+function referenceRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'r-1',
     user_id: 'u-1',
@@ -182,7 +182,7 @@ function referenceRow(over: Record<string, any> = {}): any {
   };
 }
 
-function projectReferenceJoinedRow(over: Record<string, any> = {}): any {
+function projectReferenceJoinedRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'pr-1',
     project_id: 'p-1',
@@ -247,7 +247,7 @@ describe('listSpecSheets', () => {
 
   it('rejects an invalid kind at the application layer', async () => {
     await expect(
-      listSpecSheets({ userId: 'u-1', kind: 'schematic' as any }),
+      listSpecSheets({ userId: 'u-1', kind: 'schematic' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 });
@@ -273,7 +273,7 @@ describe('createSpecSheet', () => {
       createSpecSheet('u-1', {
         title: 'X',
         url: 'http://x',
-        kind: 'schematic' as any,
+        kind: 'schematic' as never,
         partId: 'pa-1',
       }),
     ).rejects.toThrow(/Invalid kind/);
@@ -362,7 +362,7 @@ describe('updateSpecSheet', () => {
 
   it('rejects invalid kind patch', async () => {
     await expect(
-      updateSpecSheet('s-1', 'u-1', { kind: 'schematic' as any }),
+      updateSpecSheet('s-1', 'u-1', { kind: 'schematic' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 });
@@ -421,7 +421,7 @@ describe('listReferences', () => {
 
   it('rejects an invalid kind at the application layer', async () => {
     await expect(
-      listReferences({ userId: 'u-1', kind: 'zine' as any }),
+      listReferences({ userId: 'u-1', kind: 'zine' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 });
@@ -447,7 +447,7 @@ describe('createReference', () => {
       createReference('u-1', {
         title: 'X',
         url: 'http://x',
-        kind: 'zine' as any,
+        kind: 'zine' as never,
       }),
     ).rejects.toThrow(/Invalid kind/);
     expect(calls).toHaveLength(0);
@@ -477,7 +477,7 @@ describe('updateReference', () => {
 
   it('rejects invalid kind patch', async () => {
     await expect(
-      updateReference('r-1', 'u-1', { kind: 'zine' as any }),
+      updateReference('r-1', 'u-1', { kind: 'zine' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 });

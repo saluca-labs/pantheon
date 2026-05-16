@@ -31,12 +31,12 @@ describe('validatePost', () => {
   });
 
   it('rejects invalid status', () => {
-    const errors = validatePost({ title: 'T', status: 'live' as any });
+    const errors = validatePost({ title: 'T', status: 'live' as never });
     expect(errors.some((e) => e.includes('Status'))).toBe(true);
   });
 
   it('rejects unknown channel', () => {
-    const errors = validatePost({ title: 'T', channel: 'faxmachine' as any });
+    const errors = validatePost({ title: 'T', channel: 'faxmachine' as never });
     expect(errors.some((e) => e.includes('Channel'))).toBe(true);
   });
 

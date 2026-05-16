@@ -167,9 +167,9 @@ describe('detectRegulatedTopics — negatives', () => {
   });
 
   it('returns empty for non-string input', () => {
-    expect(detectRegulatedTopics(null as any)).toEqual([]);
-    expect(detectRegulatedTopics(undefined as any)).toEqual([]);
-    expect(detectRegulatedTopics(42 as any)).toEqual([]);
+    expect(detectRegulatedTopics(null as never)).toEqual([]);
+    expect(detectRegulatedTopics(undefined as never)).toEqual([]);
+    expect(detectRegulatedTopics(42 as never)).toEqual([]);
   });
 
   it('"scribble" does not trip "irb" (whole-word match)', () => {
@@ -228,8 +228,8 @@ describe('buildReferralFooter', () => {
   });
 
   it('returns null for non-array input', () => {
-    expect(buildReferralFooter(null as any)).toBeNull();
-    expect(buildReferralFooter(undefined as any)).toBeNull();
+    expect(buildReferralFooter(null as never)).toBeNull();
+    expect(buildReferralFooter(undefined as never)).toBeNull();
   });
 
   it('returns a footer for a single IRB topic mentioning the IRB body', () => {

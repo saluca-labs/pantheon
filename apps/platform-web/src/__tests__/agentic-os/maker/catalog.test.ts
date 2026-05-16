@@ -57,7 +57,7 @@ describe('validatePartCategory', () => {
     expect(validatePartCategory('weapon')).toMatch(/Category must be/);
   });
   it('rejects non-strings', () => {
-    expect(validatePartCategory(7 as any)).toMatch(/Category must be/);
+    expect(validatePartCategory(7 as never)).toMatch(/Category must be/);
     expect(validatePartCategory(null)).toMatch(/Category must be/);
   });
 });
@@ -73,7 +73,7 @@ describe('validateOnHand', () => {
   it('rejects negatives, NaN, and non-numbers', () => {
     expect(validateOnHand(-1)).toMatch(/non-negative/);
     expect(validateOnHand(Number.NaN)).toMatch(/non-negative/);
-    expect(validateOnHand('1' as any)).toMatch(/non-negative/);
+    expect(validateOnHand('1' as never)).toMatch(/non-negative/);
   });
 });
 
@@ -83,7 +83,7 @@ describe('validateTags', () => {
     expect(validateTags([])).toBeNull();
   });
   it('rejects non-arrays', () => {
-    expect(validateTags('cnc' as any)).toMatch(/array of strings/);
+    expect(validateTags('cnc' as never)).toMatch(/array of strings/);
   });
   it('rejects empty strings', () => {
     expect(validateTags(['cnc', ''])).toMatch(/non-empty/);

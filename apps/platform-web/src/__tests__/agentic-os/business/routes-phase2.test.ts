@@ -26,12 +26,12 @@ const dealsRepo = {
 };
 
 vi.mock('@/lib/agentic-os/business/session', () => ({
-  getCurrentBusinessUser: (...a: any[]) => getCurrentBusinessUser(...a),
+  getCurrentBusinessUser: (...a: unknown[]) => getCurrentBusinessUser(...a),
   getBusinessPool: () => ({ query: vi.fn() }),
 }));
 
 vi.mock('@/lib/agentic-os/business/repo', () => ({
-  recordAudit: (...a: any[]) => recordAudit(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
 }));
 
 vi.mock('@/lib/agentic-os/business/deals-repo', () => dealsRepo);
@@ -61,13 +61,13 @@ beforeEach(() => {
   recordAudit.mockReset();
   recordAudit.mockResolvedValue(undefined);
   for (const m of Object.values(dealsRepo)) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
 });
 
 const NOW = '2026-05-12T10:00:00.000Z';
 
-function makeDeal(o: Record<string, any> = {}) {
+function makeDeal(o: Record<string, unknown> = {}) {
   return {
     id: 'd-1', userId: 'u-1',
     contactId: null, organizationId: null,
@@ -91,7 +91,7 @@ describe('GET /deals', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
@@ -99,7 +99,7 @@ describe('GET /deals', () => {
     authed();
     dealsRepo.listDeals.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.deals).toEqual([]);
@@ -112,7 +112,7 @@ describe('GET /deals', () => {
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
     await GET(new Request(
       `${URL}?stage=lead,qualified&contact_id=${oid}&organization_id=${oid}&source=referral&tag=hot&open=true&q=acme`,
-    ) as any);
+    ) as never);
     expect(dealsRepo.listDeals).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({
@@ -133,7 +133,7 @@ describe('GET /deals', () => {
       makeDeal({ id: 'd-1', valueCents: 10000, probabilityPct: 50 }),
     ]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(`${URL}?include=forecast`) as any);
+    const r = await GET(new Request(`${URL}?include=forecast`) as never);
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.deals[0]).toHaveProperty('weightedValueCents');
@@ -144,28 +144,28 @@ describe('GET /deals', () => {
   it('400 on invalid contact_id (not a UUID)', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(`${URL}?contact_id=not-a-uuid`) as any);
+    const r = await GET(new Request(`${URL}?contact_id=not-a-uuid`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on invalid organization_id (not a UUID)', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(`${URL}?organization_id=not-a-uuid`) as any);
+    const r = await GET(new Request(`${URL}?organization_id=not-a-uuid`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on invalid stage value', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(`${URL}?stage=startup`) as any);
+    const r = await GET(new Request(`${URL}?stage=startup`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on out-of-range limit', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await GET(new Request(`${URL}?limit=9999`) as any);
+    const r = await GET(new Request(`${URL}?limit=9999`) as never);
     expect(r.status).toBe(400);
   });
 });
@@ -176,21 +176,21 @@ describe('POST /deals', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await POST(jsonReq(URL, 'POST', { title: 'X' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { title: 'X' }) as never);
     expect(r.status).toBe(401);
   });
 
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 when title is missing', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await POST(jsonReq(URL, 'POST', {}) as any);
+    const r = await POST(jsonReq(URL, 'POST', {}) as never);
     expect(r.status).toBe(400);
   });
 
@@ -198,7 +198,7 @@ describe('POST /deals', () => {
     authed();
     dealsRepo.createDeal.mockResolvedValue(makeDeal());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/route');
-    const r = await POST(jsonReq(URL, 'POST', { title: 'Acme deal' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { title: 'Acme deal' }) as never);
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.created' }),
@@ -217,7 +217,7 @@ describe('POST /deals', () => {
       value_cents: 50000,
       stage: 'qualified',
       tags: ['hot', 'urgent'],
-    }) as any);
+    }) as never);
     expect(r.status).toBe(201);
     expect(dealsRepo.createDeal).toHaveBeenCalledWith(
       'u-1',
@@ -241,7 +241,7 @@ describe('GET /deals/[id]', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'd-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -249,7 +249,7 @@ describe('GET /deals/[id]', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'd-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -257,7 +257,7 @@ describe('GET /deals/[id]', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(makeDeal());
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'd-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.deal.id).toBe('d-1');
@@ -270,7 +270,7 @@ describe('PATCH /deals/[id]', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'X' }) as any, params({ id: 'd-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'X' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -278,7 +278,7 @@ describe('PATCH /deals/[id]', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'X' }) as any, params({ id: 'd-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'X' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -289,7 +289,7 @@ describe('PATCH /deals/[id]', () => {
       makeDeal({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as any, params({ id: 'd-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.archived' }),
@@ -300,7 +300,7 @@ describe('PATCH /deals/[id]', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(makeDeal());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as any, params({ id: 'd-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(400);
     const body = await r.json();
     expect(body.restorePath).toContain('/deals/d-1/restore');
@@ -311,7 +311,7 @@ describe('PATCH /deals/[id]', () => {
     dealsRepo.getDeal.mockResolvedValue(makeDeal());
     dealsRepo.updateDeal.mockResolvedValue({ kind: 'ok', deal: makeDeal({ title: 'Updated' }) });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'Updated' }) as any, params({ id: 'd-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'Updated' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -326,7 +326,7 @@ describe('PATCH /deals/[id]', () => {
     dealsRepo.getDeal.mockResolvedValue(makeDeal());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { stray_unknown_key: 'x' }) as any,
+      jsonReq(URL, 'PATCH', { stray_unknown_key: 'x' }) as never,
       params({ id: 'd-1' }),
     );
     expect(r.status).toBe(400);
@@ -339,7 +339,7 @@ describe('DELETE /deals/[id]', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'd-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -347,7 +347,7 @@ describe('DELETE /deals/[id]', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'd-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -358,7 +358,7 @@ describe('DELETE /deals/[id]', () => {
       makeDeal({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'd-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.archived' }),
@@ -376,7 +376,7 @@ describe('POST /deals/[id]/restore', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'd-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -384,7 +384,7 @@ describe('POST /deals/[id]/restore', () => {
     authed();
     dealsRepo.restoreDeal.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'd-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -394,7 +394,7 @@ describe('POST /deals/[id]/restore', () => {
       deal: makeDeal(), alreadyActive: true,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'd-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -404,7 +404,7 @@ describe('POST /deals/[id]/restore', () => {
       deal: makeDeal(), alreadyActive: false,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'd-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.restored' }),
@@ -422,7 +422,7 @@ describe('POST /deals/[id]/stage', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as any, params({ id: 'd-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(401);
   });
 
@@ -430,7 +430,7 @@ describe('POST /deals/[id]/stage', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as any, params({ id: 'd-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -438,7 +438,7 @@ describe('POST /deals/[id]/stage', () => {
     authed();
     dealsRepo.getDeal.mockResolvedValue(makeDeal());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    const r = await POST(jsonReq(URL, 'POST', { stage: 'startup' }) as any, params({ id: 'd-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { stage: 'startup' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -449,10 +449,10 @@ describe('POST /deals/[id]/stage', () => {
       kind: 'ok', deal: makeDeal({ stage: 'qualified' }),
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as any, params({ id: 'd-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { stage: 'qualified' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(200);
     const stageChangeCall = recordAudit.mock.calls.find(
-      (c: any) => c[0].action === 'business.deal.stage_changed',
+      (c: unknown) => (c as Array<{ action: string }>)[0].action === 'business.deal.stage_changed',
     );
     expect(stageChangeCall).toBeDefined();
   });
@@ -464,7 +464,7 @@ describe('POST /deals/[id]/stage', () => {
       kind: 'ok', deal: makeDeal({ stage: 'won', closedAt: NOW }),
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    await POST(jsonReq(URL, 'POST', { stage: 'won' }) as any, params({ id: 'd-1' }));
+    await POST(jsonReq(URL, 'POST', { stage: 'won' }) as never, params({ id: 'd-1' }));
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.won' }),
     );
@@ -479,7 +479,7 @@ describe('POST /deals/[id]/stage', () => {
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
     await POST(jsonReq(URL, 'POST', {
       stage: 'lost', lost_reason: 'Went with competitor',
-    }) as any, params({ id: 'd-1' }));
+    }) as never, params({ id: 'd-1' }));
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'business.deal.lost',
@@ -495,7 +495,7 @@ describe('POST /deals/[id]/stage', () => {
       kind: 'ok', deal: makeDeal({ stage: 'lead', closedAt: null }),
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    await POST(jsonReq(URL, 'POST', { stage: 'lead' }) as any, params({ id: 'd-1' }));
+    await POST(jsonReq(URL, 'POST', { stage: 'lead' }) as never, params({ id: 'd-1' }));
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.deal.reopened' }),
     );
@@ -508,7 +508,7 @@ describe('POST /deals/[id]/stage', () => {
       kind: 'invalid_transition', reason: 'Already in stage',
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/deals/[id]/stage/route');
-    const r = await POST(jsonReq(URL, 'POST', { stage: 'lead' }) as any, params({ id: 'd-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { stage: 'lead' }) as never, params({ id: 'd-1' }));
     expect(r.status).toBe(400);
   });
 });

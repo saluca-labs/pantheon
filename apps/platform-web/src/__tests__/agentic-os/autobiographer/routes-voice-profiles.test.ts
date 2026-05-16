@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -57,13 +57,13 @@ class FakeVoiceBuilderError extends Error {
   }
 }
 vi.mock('@/lib/agentic-os/autobiographer/voice/builder', () => ({
-  buildVoiceProfile: (...args: any[]) => buildVoiceProfile(...args),
+  buildVoiceProfile: (...args: unknown[]) => buildVoiceProfile(...args),
   VoiceBuilderError: FakeVoiceBuilderError,
 }));
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -76,7 +76,7 @@ beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
   buildVoiceProfile.mockReset();
-  for (const m of Object.values(profileRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(profileRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
   sampleRepoMocks.listSamplesForBuilder.mockReset();
 });
 
@@ -104,7 +104,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -116,7 +116,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.profiles).toHaveLength(1);
@@ -128,7 +128,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    await GET(jsonReq('http://t/x?is_active=true', 'GET') as any);
+    await GET(jsonReq('http://t/x?is_active=true', 'GET') as never);
     expect(profileRepoMocks.listVoiceProfiles).toHaveBeenCalledWith(
       expect.objectContaining({ isActive: true }),
     );
@@ -143,7 +143,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(401);
   });
 
@@ -153,7 +153,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe('no_samples');
@@ -171,7 +171,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('coach_not_configured');
@@ -203,7 +203,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(201);
     expect(profileRepoMocks.insertVoiceProfile).toHaveBeenCalledWith(
       'u-1',
@@ -246,7 +246,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles', () => {
       jsonReq('http://t/x', 'POST', {
         builder: 'coach-session-xyz',
         setActive: true,
-      }) as any,
+      }) as never,
     );
     expect(buildVoiceProfile).toHaveBeenCalledWith(
       expect.objectContaining({ builderAttribution: 'coach-session-xyz' }),
@@ -267,7 +267,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', () =
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'pr-other' }),
     });
     expect(res.status).toBe(404);
@@ -282,7 +282,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', () =
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'pr-1' }),
     });
     expect(res.status).toBe(200);
@@ -300,7 +300,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', ()
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { styleSummary: 'x' }) as any,
+      jsonReq('http://t/x', 'PATCH', { styleSummary: 'x' }) as never,
       { params: Promise.resolve({ id: 'pr-1' }) },
     );
     expect(res.status).toBe(400);
@@ -316,7 +316,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', ()
       jsonReq('http://t/x', 'PATCH', {
         styleSummary:
           'this is a long enough style summary value to satisfy zod',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'missing' }) },
     );
     expect(res.status).toBe(404);
@@ -335,7 +335,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', ()
       jsonReq('http://t/x', 'PATCH', {
         styleSummary:
           'this is a long enough style summary value to satisfy zod',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'pr-1' }) },
     );
     expect(res.status).toBe(200);
@@ -356,7 +356,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', (
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'pr-other' }),
     });
     expect(res.status).toBe(404);
@@ -374,7 +374,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', (
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'pr-1' }),
     });
     expect(res.status).toBe(200);
@@ -399,7 +399,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]', (
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/route'
     );
-    await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'pr-1' }),
     });
     expect(profileRepoMocks.deactivateProfile).not.toHaveBeenCalled();
@@ -414,7 +414,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activ
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activate/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST') as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST') as never, {
       params: Promise.resolve({ id: 'pr-1' }),
     });
     expect(res.status).toBe(401);
@@ -426,7 +426,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activ
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activate/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST') as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST') as never, {
       params: Promise.resolve({ id: 'pr-other' }),
     });
     expect(res.status).toBe(404);
@@ -442,7 +442,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activ
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-profiles/[id]/activate/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST') as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST') as never, {
       params: Promise.resolve({ id: 'pr-1' }),
     });
     expect(res.status).toBe(200);

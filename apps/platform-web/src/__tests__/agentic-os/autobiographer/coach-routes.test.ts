@@ -32,7 +32,7 @@ const ORIGINAL_KEY = process.env['ANTHROPIC_API_KEY'];
 const getCurrentAutobiographerUser = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -89,14 +89,14 @@ const chapterMocks = vi.hoisted(() => ({
 vi.mock('@/lib/agentic-os/autobiographer/chapters-repo', () => chapterMocks);
 
 vi.mock('ai', () => ({
-  streamText: (_opts: any) => ({
+  streamText: (_opts: unknown) => ({
     textStream: (async function* () {
       yield 'assistant ';
       yield 'reply ';
       yield '[cites: 11111111-1111-4111-8111-111111111111]';
     })(),
   }),
-  convertToModelMessages: vi.fn(async (m: any) => m),
+  convertToModelMessages: vi.fn(async (m: unknown) => m),
   stepCountIs: vi.fn(() => null),
 }));
 
@@ -135,7 +135,7 @@ beforeEach(() => {
     'appendMessages',
     'patchMetadata',
   ]) {
-    (sessionsRepoMocks as any)[k].mockReset();
+    (sessionsRepoMocks as unknown as Record<string, ReturnType<typeof vi.fn>>)[k].mockReset();
   }
   repoMocks.recordAudit.mockReset();
   bookRepoMocks.getBook.mockReset();
@@ -167,7 +167,7 @@ describe('GET /coach/sessions', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
-    const res = await GET(jsonReq('http://t/coach/sessions', 'GET') as any);
+    const res = await GET(jsonReq('http://t/coach/sessions', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -177,7 +177,7 @@ describe('GET /coach/sessions', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
-    const res = await GET(jsonReq('http://t/coach/sessions', 'GET') as any);
+    const res = await GET(jsonReq('http://t/coach/sessions', 'GET') as never);
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.sessions.length).toBe(1);
@@ -189,7 +189,7 @@ describe('GET /coach/sessions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
     const res = await GET(
-      jsonReq('http://t/coach/sessions?mode=procurement_advisor', 'GET') as any,
+      jsonReq('http://t/coach/sessions?mode=procurement_advisor', 'GET') as never,
     );
     expect(res.status).toBe(400);
   });
@@ -204,7 +204,7 @@ describe('GET /coach/sessions', () => {
       jsonReq(
         `http://t/coach/sessions?mode=interviewer&book_id=${VALID_UUID}`,
         'GET',
-      ) as any,
+      ) as never,
     );
     expect(sessionsRepoMocks.listSessions).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -222,7 +222,7 @@ describe('GET /coach/sessions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
     await GET(
-      jsonReq('http://t/coach/sessions?scope=workshop', 'GET') as any,
+      jsonReq('http://t/coach/sessions?scope=workshop', 'GET') as never,
     );
     expect(sessionsRepoMocks.listSessions).toHaveBeenCalledWith(
       expect.objectContaining({ scope: 'workshop' }),
@@ -239,7 +239,7 @@ describe('POST /coach/sessions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
     const res = await POST(
-      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as any,
+      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -251,7 +251,7 @@ describe('POST /coach/sessions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
     const res = await POST(
-      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as any,
+      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as never,
     );
     expect(res.status).toBe(503);
     const data = await res.json();
@@ -266,7 +266,7 @@ describe('POST /coach/sessions', () => {
     const res = await POST(
       jsonReq('http://t/coach/sessions', 'POST', {
         mode: 'procurement_advisor',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -281,7 +281,7 @@ describe('POST /coach/sessions', () => {
       jsonReq('http://t/coach/sessions', 'POST', {
         mode: 'chapter_drafter',
         book_id: OTHER_UUID,
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -302,7 +302,7 @@ describe('POST /coach/sessions', () => {
         mode: 'chapter_drafter',
         book_id: VALID_UUID,
         initial_message: 'Draft the opener',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -324,7 +324,7 @@ describe('POST /coach/sessions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/route'
     );
     await POST(
-      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as any,
+      jsonReq('http://t/coach/sessions', 'POST', { mode: 'general' }) as never,
     );
     expect(sessionsRepoMocks.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -343,8 +343,8 @@ describe('GET /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     const res = await GET(
-      jsonReq('http://t/x', 'GET') as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'GET') as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -356,8 +356,8 @@ describe('GET /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     const res = await GET(
-      jsonReq('http://t/x', 'GET') as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'GET') as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -370,8 +370,8 @@ describe('PATCH /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', {}) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', {}) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -393,8 +393,8 @@ describe('PATCH /coach/sessions/[id]', () => {
       jsonReq('http://t/x', 'PATCH', {
         title: 'Renamed',
         mode: 'narrative_critic', // ignored
-      }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(sessionsRepoMocks.updateSession).toHaveBeenCalledWith(
       's-1',
@@ -414,8 +414,8 @@ describe('PATCH /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'New title' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'New title' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -433,8 +433,8 @@ describe('DELETE /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -450,8 +450,8 @@ describe('DELETE /coach/sessions/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -504,8 +504,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/messages/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { message: 'hi' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'POST', { message: 'hi' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(503);
   });
@@ -517,8 +517,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/messages/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { message: 'hi' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'POST', { message: 'hi' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -529,8 +529,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/messages/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { message: 'hi' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'POST', { message: 'hi' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.headers.get('content-type')).toMatch(/text\/plain/);
     expect(res.headers.get('x-coach-session-id')).toBe('s-1');
@@ -553,8 +553,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/messages/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { message: 'hi' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'POST', { message: 'hi' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     await readResponseText(res);
     expect(revisionMocks.insertRevision).not.toHaveBeenCalled();
@@ -571,8 +571,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
         message: 'hi',
         commit_to_chapter: true,
         chapter_id: CHAPTER_UUID,
-      }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     await readResponseText(res);
     expect(revisionMocks.insertRevision).not.toHaveBeenCalled();
@@ -608,8 +608,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
         message: 'draft it',
         commit_to_chapter: true,
         chapter_id: CHAPTER_UUID,
-      }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     const body = await readResponseText(res);
     expect(revisionMocks.insertRevision).toHaveBeenCalledWith(
@@ -654,8 +654,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
         message: 'hi',
         commit_to_chapter: true,
         chapter_id: CHAPTER_UUID,
-      }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -686,8 +686,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
         message: 'hi',
         commit_to_chapter: true,
         chapter_id: CHAPTER_UUID,
-      }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -698,8 +698,8 @@ describe.skip('POST /coach/sessions/[id]/messages', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/sessions/[sessionId]/messages/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { message: 'hi' }) as any,
-      paramsFor({ sessionId: 's-1' }) as any,
+      jsonReq('http://t/x', 'POST', { message: 'hi' }) as never,
+      paramsFor({ sessionId: 's-1' }) as never,
     );
     await readResponseText(res);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -720,7 +720,7 @@ describe.skip('POST /coach/quick', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/quick/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as any,
+      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -732,7 +732,7 @@ describe.skip('POST /coach/quick', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/quick/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as any,
+      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as never,
     );
     expect(res.status).toBe(503);
   });
@@ -746,7 +746,7 @@ describe.skip('POST /coach/quick', () => {
       jsonReq('http://t/x', 'POST', {
         mode: 'procurement_advisor',
         message: 'hi',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -757,7 +757,7 @@ describe.skip('POST /coach/quick', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/coach/quick/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as any,
+      jsonReq('http://t/x', 'POST', { mode: 'general', message: 'hi' }) as never,
     );
     expect(res.headers.get('content-type')).toMatch(/text\/plain/);
     expect(sessionsRepoMocks.createSession).not.toHaveBeenCalled();
@@ -773,11 +773,11 @@ describe('Autobiographer registry has the AI coach card', () => {
   it('includes the coach feature in the autobiographer module', async () => {
     const { AGENTIC_OS_MODULES } = await import('@/lib/agentic-os/registry');
     const mod = AGENTIC_OS_MODULES.find(
-      (m: any) => m.slug === 'autobiographer',
+      (m: { slug: string }) => m.slug === 'autobiographer',
     );
     expect(mod).toBeTruthy();
     const coach = mod!.features.find(
-      (f: any) => f.href === '/dashboard/os/autobiographer/coach',
+      (f: { href: string }) => f.href === '/dashboard/os/autobiographer/coach',
     );
     expect(coach).toBeTruthy();
     expect(coach!.label).toMatch(/AI coach/i);

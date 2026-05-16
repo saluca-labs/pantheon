@@ -171,7 +171,7 @@ describe('validateMaintenanceEventKind', () => {
 
   it('rejects unknown values', () => {
     expect(validateMaintenanceEventKind('upgraded')).toMatch(/one of/);
-    expect(validateMaintenanceEventKind(42 as any)).toMatch(/one of/);
+    expect(validateMaintenanceEventKind(42 as never)).toMatch(/one of/);
   });
 });
 
@@ -192,6 +192,6 @@ describe('validateCostCents', () => {
   });
 
   it('rejects non-numeric input', () => {
-    expect(validateCostCents('5' as any)).toMatch(/number/);
+    expect(validateCostCents('5' as never)).toMatch(/number/);
   });
 });

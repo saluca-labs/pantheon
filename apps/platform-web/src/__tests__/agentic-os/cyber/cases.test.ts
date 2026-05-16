@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
@@ -20,8 +20,8 @@ interface PgResult {
 const poolQueue: PgResult[] = [];
 const txQueue: PgResult[] = [];
 
-const poolCalls: { sql: string; params: any[] }[] = [];
-const txCalls: { sql: string; params: any[] }[] = [];
+const poolCalls: { sql: string; params: unknown[] }[] = [];
+const txCalls: { sql: string; params: unknown[] }[] = [];
 
 function pushPool(r: Partial<PgResult>): void {
   poolQueue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -32,7 +32,7 @@ function pushTx(r: Partial<PgResult>): void {
 
 function makeClient() {
   return {
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       txCalls.push({ sql, params });
       return txQueue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -42,7 +42,7 @@ function makeClient() {
 
 vi.mock('@/lib/agentic-os/cyber/session', () => ({
   getCyberPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       poolCalls.push({ sql, params });
       return poolQueue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -74,7 +74,7 @@ beforeEach(() => {
   txCalls.length = 0;
 });
 
-function caseRow(overrides: Record<string, any> = {}): any {
+function caseRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'c-1',
     owner_id: 'u-1',
@@ -95,7 +95,7 @@ function caseRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function taskRow(overrides: Record<string, any> = {}): any {
+function taskRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 't-1',
     case_id: 'c-1',

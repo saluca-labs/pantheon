@@ -26,12 +26,12 @@ import {
 // ─── Repo via mocked pool ─────────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -39,7 +39,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/health/session', () => ({
   getHealthPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -71,7 +71,7 @@ describe('MoodEntryBody schema', () => {
   });
 
   it('rejects unknown sleep_quality values', () => {
-    const r = MoodEntryBody.safeParse({ sleepQuality: 'amazing' as any });
+    const r = MoodEntryBody.safeParse({ sleepQuality: 'amazing' as never });
     expect(r.success).toBe(false);
   });
 

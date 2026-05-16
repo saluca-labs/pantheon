@@ -208,7 +208,7 @@ describe('validateMilestoneLabel', () => {
   });
 
   it('rejects non-string', () => {
-    expect(validateMilestoneLabel(0 as any)).toMatch(/string/);
+    expect(validateMilestoneLabel(0 as never)).toMatch(/string/);
   });
 });
 
@@ -219,7 +219,7 @@ describe('validateDueAt', () => {
   });
 
   it('rejects non-string', () => {
-    expect(validateDueAt(0 as any)).toMatch(/string/);
+    expect(validateDueAt(0 as never)).toMatch(/string/);
   });
 
   it('rejects malformed date', () => {
@@ -239,7 +239,7 @@ describe('validateSortOrder', () => {
 
   it('rejects non-integer / non-numeric', () => {
     expect(validateSortOrder(1.5)).toMatch(/integer/);
-    expect(validateSortOrder('1' as any)).toMatch(/number/);
+    expect(validateSortOrder('1' as never)).toMatch(/number/);
     expect(validateSortOrder(Number.NaN)).toMatch(/number/);
   });
 });
@@ -292,7 +292,7 @@ describe('validateMilestoneStatus', () => {
     expect(validateMilestoneStatus('bogus')).toMatch(/status must be one of/);
   });
   it('rejects non-string', () => {
-    expect(validateMilestoneStatus(0 as any)).toMatch(/status must be one of/);
+    expect(validateMilestoneStatus(0 as never)).toMatch(/status must be one of/);
   });
 });
 
@@ -306,7 +306,7 @@ describe('validateMilestonePriority', () => {
     expect(validateMilestonePriority('urgent')).toMatch(/priority must be one of/);
   });
   it('rejects non-string', () => {
-    expect(validateMilestonePriority(0 as any)).toMatch(/priority must be one of/);
+    expect(validateMilestonePriority(0 as never)).toMatch(/priority must be one of/);
   });
 });
 

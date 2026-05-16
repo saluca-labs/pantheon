@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -49,7 +49,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -61,8 +61,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(memRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(memPeopleRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(memRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(memPeopleRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -91,7 +91,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]/people', () 
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(401);
@@ -103,7 +103,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]/people', () 
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-other' }),
     });
     expect(res.status).toBe(404);
@@ -118,7 +118,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/memories/[id]/people', () 
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(200);
@@ -135,7 +135,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'm-1' }),
     });
     expect(res.status).toBe(400);
@@ -143,14 +143,14 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
 
   it('returns 404 when repo throws not_found (memory or person foreign)', async () => {
     authedUser();
-    const nf: any = new Error('not_found');
+    const nf = new Error('not_found') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     memPeopleRepoMocks.linkPersonToMemory.mockRejectedValue(nf);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(404);
@@ -158,14 +158,14 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
 
   it('returns 409 when repo throws duplicate (link already exists)', async () => {
     authedUser();
-    const dup: any = new Error('duplicate');
+    const dup = new Error('duplicate') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     memPeopleRepoMocks.linkPersonToMemory.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(409);
@@ -191,7 +191,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
       jsonReq('http://t/x', 'POST', {
         personId: PERSON_UUID,
         role: 'protagonist',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(res.status).toBe(201);
@@ -225,7 +225,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/route'
     );
     await POST(
-      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { personId: PERSON_UUID }) as never,
       { params: Promise.resolve({ id: 'm-1' }) },
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -239,14 +239,14 @@ describe('POST /api/tiresias/agentic-os/autobiographer/memories/[id]/people', ()
 describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]', () => {
   it('returns 404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('not_found');
+    const nf = new Error('not_found') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     memPeopleRepoMocks.updateLink.mockRejectedValue(nf);
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as any,
+      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as never,
       { params: Promise.resolve({ id: 'm-1', personId: 'p-other' }) },
     );
     expect(res.status).toBe(404);
@@ -269,7 +269,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[pe
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as any,
+      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as never,
       { params: Promise.resolve({ id: 'm-1', personId: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -292,7 +292,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[pe
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as any,
+      jsonReq('http://t/x', 'PATCH', { role: 'witness' }) as never,
       { params: Promise.resolve({ id: 'm-1', personId: 'p-1' }) },
     );
     expect(res.status).toBe(404);
@@ -304,13 +304,13 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[pe
 describe('DELETE /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]', () => {
   it('returns 404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('not_found');
+    const nf = new Error('not_found') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     memPeopleRepoMocks.deleteLink.mockRejectedValue(nf);
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', personId: 'p-other' }),
     });
     expect(res.status).toBe(404);
@@ -322,7 +322,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[p
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', personId: 'p-1' }),
     });
     expect(res.status).toBe(404);
@@ -339,7 +339,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/memories/[id]/people/[p
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/memories/[id]/people/[personId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'm-1', personId: 'p-1' }),
     });
     expect(res.status).toBe(200);

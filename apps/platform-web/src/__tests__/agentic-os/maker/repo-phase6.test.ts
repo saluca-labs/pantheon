@@ -24,12 +24,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Pool mock ────────────────────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 let lastInsertedId: string | null = null;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -38,7 +38,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
   getMakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       if (/^INSERT INTO /m.test(sql) && typeof params[0] === 'string') {
         lastInsertedId = params[0];
@@ -69,7 +69,7 @@ beforeEach(() => {
   lastInsertedId = null;
 });
 
-function projectRow(over: Record<string, any> = {}): any {
+function projectRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -88,7 +88,7 @@ function projectRow(over: Record<string, any> = {}): any {
   };
 }
 
-function milestoneRow(over: Record<string, any> = {}): any {
+function milestoneRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     project_id: 'p-1',
@@ -108,7 +108,7 @@ function milestoneRow(over: Record<string, any> = {}): any {
   };
 }
 
-function dependencyRow(over: Record<string, any> = {}): any {
+function dependencyRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'd-1',
     user_id: 'u-1',
@@ -173,7 +173,7 @@ describe('createMilestone with Phase 6 fields', () => {
     await expect(
       createMilestone('p-1', 'u-1', {
         label: 'x',
-        status: 'bogus' as any,
+        status: 'bogus' as never,
       }),
     ).rejects.toThrow(/Invalid status/);
   });
@@ -183,7 +183,7 @@ describe('createMilestone with Phase 6 fields', () => {
     await expect(
       createMilestone('p-1', 'u-1', {
         label: 'x',
-        priority: 'urgent' as any,
+        priority: 'urgent' as never,
       }),
     ).rejects.toThrow(/Invalid priority/);
   });
@@ -231,14 +231,14 @@ describe('updateMilestone keeps completed_at in sync with status=done', () => {
   it('rejects unknown status', async () => {
     pushResult({ rows: [projectRow()], rowCount: 1 });
     await expect(
-      updateMilestone('m-1', 'p-1', 'u-1', { status: 'bogus' as any }),
+      updateMilestone('m-1', 'p-1', 'u-1', { status: 'bogus' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
   it('rejects unknown priority', async () => {
     pushResult({ rows: [projectRow()], rowCount: 1 });
     await expect(
-      updateMilestone('m-1', 'p-1', 'u-1', { priority: 'urgent' as any }),
+      updateMilestone('m-1', 'p-1', 'u-1', { priority: 'urgent' as never }),
     ).rejects.toThrow(/Invalid priority/);
   });
 });
@@ -269,7 +269,7 @@ describe('createProjectDependency', () => {
     await expect(
       createProjectDependency('p-1', 'u-1', {
         toProjectId: 'p-2',
-        kind: 'bogus' as any,
+        kind: 'bogus' as never,
       }),
     ).rejects.toThrow(/Invalid kind/);
   });
@@ -308,14 +308,14 @@ describe('updateProjectDependency', () => {
   it('rejects unknown status', async () => {
     pushResult({ rows: [projectRow()], rowCount: 1 });
     await expect(
-      updateProjectDependency('d-1', 'p-1', 'u-1', { status: 'bogus' as any }),
+      updateProjectDependency('d-1', 'p-1', 'u-1', { status: 'bogus' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
   it('rejects unknown kind', async () => {
     pushResult({ rows: [projectRow()], rowCount: 1 });
     await expect(
-      updateProjectDependency('d-1', 'p-1', 'u-1', { kind: 'bogus' as any }),
+      updateProjectDependency('d-1', 'p-1', 'u-1', { kind: 'bogus' as never }),
     ).rejects.toThrow(/Invalid kind/);
   });
 

@@ -45,15 +45,15 @@ const settingsRepo = {
 };
 
 vi.mock('@/lib/agentic-os/business/session', () => ({
-  getCurrentBusinessUser: (...a: any[]) => getCurrentBusinessUser(...a),
+  getCurrentBusinessUser: (...a: unknown[]) => getCurrentBusinessUser(...a),
   getBusinessPool: () => ({ query: vi.fn() }),
 }));
 
 vi.mock('@/lib/agentic-os/business/repo', () => ({
-  recordAudit: (...a: any[]) => recordAudit(...a),
-  listPeople: (...a: any[]) => peopleRepo.listPeople(...a),
-  listOrganizations: (...a: any[]) => orgsRepo.listOrganizations(...a),
-  listInteractions: (...a: any[]) => interactionsRepo.listInteractions(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
+  listPeople: (...a: unknown[]) => peopleRepo.listPeople(...a),
+  listOrganizations: (...a: unknown[]) => orgsRepo.listOrganizations(...a),
+  listInteractions: (...a: unknown[]) => interactionsRepo.listInteractions(...a),
 }));
 
 vi.mock('@/lib/agentic-os/business/orgs-repo', () => orgsRepo);
@@ -88,13 +88,13 @@ beforeEach(() => {
   for (const m of Object.values({
     ...orgsRepo, ...peopleRepo, ...interactionsRepo, ...settingsRepo,
   })) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
 });
 
 const NOW = '2026-05-12T10:00:00.000Z';
 
-function makePerson(o: Record<string, any> = {}) {
+function makePerson(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1', userId: 'u-1',
     firstName: 'Jane', lastName: 'Smith',
@@ -107,7 +107,7 @@ function makePerson(o: Record<string, any> = {}) {
   };
 }
 
-function makeOrg(o: Record<string, any> = {}) {
+function makeOrg(o: Record<string, unknown> = {}) {
   return {
     id: 'o-1', userId: 'u-1', name: 'Acme', orgType: 'company',
     website: null, industry: null, notes: null,
@@ -118,7 +118,7 @@ function makeOrg(o: Record<string, any> = {}) {
   };
 }
 
-function makeInteraction(o: Record<string, any> = {}) {
+function makeInteraction(o: Record<string, unknown> = {}) {
   return {
     id: 'i-1', userId: 'u-1',
     personId: null, organizationId: null,
@@ -128,7 +128,7 @@ function makeInteraction(o: Record<string, any> = {}) {
   };
 }
 
-function makeSettings(o: Record<string, any> = {}) {
+function makeSettings(o: Record<string, unknown> = {}) {
   return {
     id: 's-1', userId: 'u-1',
     businessName: '', logoUrl: null, address: '',
@@ -151,7 +151,7 @@ describe('GET /people', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
@@ -159,7 +159,7 @@ describe('GET /people', () => {
     authed();
     peopleRepo.listPeople.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(200);
     expect(peopleRepo.listPeople).toHaveBeenCalledWith(
       'u-1',
@@ -171,7 +171,7 @@ describe('GET /people', () => {
     authed();
     peopleRepo.listPeople.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    await GET(new Request(`${URL}?archived=true`) as any);
+    await GET(new Request(`${URL}?archived=true`) as never);
     expect(peopleRepo.listPeople).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ archived: true }),
@@ -183,7 +183,7 @@ describe('GET /people', () => {
     peopleRepo.listPeople.mockResolvedValue([]);
     const orgId = '11111111-1111-1111-1111-111111111111';
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    await GET(new Request(`${URL}?tag=warm&organization_id=${orgId}&q=jane`) as any);
+    await GET(new Request(`${URL}?tag=warm&organization_id=${orgId}&q=jane`) as never);
     expect(peopleRepo.listPeople).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ tag: 'warm', organizationId: orgId, q: 'jane' }),
@@ -193,14 +193,14 @@ describe('GET /people', () => {
   it('400 on bogus organization_id', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    const r = await GET(new Request(`${URL}?organization_id=not-a-uuid`) as any);
+    const r = await GET(new Request(`${URL}?organization_id=not-a-uuid`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on out-of-range limit', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    const r = await GET(new Request(`${URL}?limit=9999`) as any);
+    const r = await GET(new Request(`${URL}?limit=9999`) as never);
     expect(r.status).toBe(400);
   });
 });
@@ -211,7 +211,7 @@ describe('POST /people', () => {
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -220,7 +220,7 @@ describe('POST /people', () => {
     peopleRepo.createPerson.mockResolvedValue(makePerson());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { first_name: 'Jane', last_name: 'Smith' }) as any,
+      jsonReq(URL, 'POST', { first_name: 'Jane', last_name: 'Smith' }) as never,
     );
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -232,8 +232,8 @@ describe('POST /people', () => {
     authed();
     peopleRepo.createPerson.mockResolvedValue(makePerson());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/route');
-    await POST(jsonReq(URL, 'POST', { first_name: 'J', last_name: 'S' }) as any);
-    const call = recordAudit.mock.calls[0]![0] as any;
+    await POST(jsonReq(URL, 'POST', { first_name: 'J', last_name: 'S' }) as never);
+    const call = recordAudit.mock.calls[0]![0] as { action: string; payload: unknown };
     expect(call.action).toMatch(/^business\./);
   });
 });
@@ -245,7 +245,7 @@ describe('GET /people/[id]', () => {
     authed();
     peopleRepo.getPerson.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -253,7 +253,7 @@ describe('GET /people/[id]', () => {
     authed();
     peopleRepo.getPerson.mockResolvedValue(makePerson());
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.person.id).toBe('p-1');
@@ -267,7 +267,7 @@ describe('PATCH /people/[id]', () => {
     authed();
     peopleRepo.getPerson.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { first_name: 'Z' }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { first_name: 'Z' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -278,7 +278,7 @@ describe('PATCH /people/[id]', () => {
       makePerson({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.person.archived' }),
@@ -289,7 +289,7 @@ describe('PATCH /people/[id]', () => {
     authed();
     peopleRepo.getPerson.mockResolvedValue(makePerson());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(400);
     const body = await r.json();
     expect(body.restorePath).toContain('/people/p-1/restore');
@@ -300,7 +300,7 @@ describe('PATCH /people/[id]', () => {
     peopleRepo.getPerson.mockResolvedValue(makePerson());
     peopleRepo.updatePerson.mockResolvedValue({ kind: 'ok', person: makePerson({ role: 'CEO' }) });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { role: 'CEO' }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { role: 'CEO' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -315,7 +315,7 @@ describe('PATCH /people/[id]', () => {
     peopleRepo.getPerson.mockResolvedValue(makePerson());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { stray_unknown_key: 'x' }) as any,
+      jsonReq(URL, 'PATCH', { stray_unknown_key: 'x' }) as never,
       params({ id: 'p-1' }),
     );
     expect(r.status).toBe(400);
@@ -329,7 +329,7 @@ describe('DELETE /people/[id]', () => {
     authed();
     peopleRepo.getPerson.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -340,7 +340,7 @@ describe('DELETE /people/[id]', () => {
       makePerson({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.person.archived' }),
@@ -355,7 +355,7 @@ describe('POST /people/[id]/restore', () => {
     authed();
     peopleRepo.restorePerson.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -366,7 +366,7 @@ describe('POST /people/[id]/restore', () => {
       alreadyActive: true,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -377,7 +377,7 @@ describe('POST /people/[id]/restore', () => {
       alreadyActive: false,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/people/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.person.restored' }),
@@ -395,14 +395,14 @@ describe('GET /organizations', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
   it('400 on invalid org_type filter', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
-    const r = await GET(new Request(`${URL}?org_type=startup`) as any);
+    const r = await GET(new Request(`${URL}?org_type=startup`) as never);
     expect(r.status).toBe(400);
   });
 
@@ -410,7 +410,7 @@ describe('GET /organizations', () => {
     authed();
     orgsRepo.listOrganizations.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
-    await GET(new Request(`${URL}?tag=enterprise&industry=saas&org_type=company&q=acme`) as any);
+    await GET(new Request(`${URL}?tag=enterprise&industry=saas&org_type=company&q=acme`) as never);
     expect(orgsRepo.listOrganizations).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({
@@ -426,7 +426,7 @@ describe('POST /organizations', () => {
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
-    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -434,7 +434,7 @@ describe('POST /organizations', () => {
     authed();
     orgsRepo.createOrganization.mockResolvedValue(makeOrg());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
-    const r = await POST(jsonReq(URL, 'POST', { name: 'Acme' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { name: 'Acme' }) as never);
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.org.created' }),
@@ -445,7 +445,7 @@ describe('POST /organizations', () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { name: 'Acme', org_type: 'startup' }) as any,
+      jsonReq(URL, 'POST', { name: 'Acme', org_type: 'startup' }) as never,
     );
     expect(r.status).toBe(400);
   });
@@ -458,7 +458,7 @@ describe('GET /organizations/[id]', () => {
     authed();
     orgsRepo.getOrganization.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'o-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -467,7 +467,7 @@ describe('GET /organizations/[id]', () => {
     orgsRepo.getOrganization.mockResolvedValue(makeOrg());
     orgsRepo.countActivePeopleForOrganization.mockResolvedValue(5);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'o-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.activePeopleCount).toBe(5);
@@ -484,7 +484,7 @@ describe('PATCH /organizations/[id]', () => {
       makeOrg({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as any, params({ id: 'o-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.org.archived' }),
@@ -495,7 +495,7 @@ describe('PATCH /organizations/[id]', () => {
     authed();
     orgsRepo.getOrganization.mockResolvedValue(makeOrg());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as any, params({ id: 'o-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -503,7 +503,7 @@ describe('PATCH /organizations/[id]', () => {
     authed();
     orgsRepo.getOrganization.mockResolvedValue(makeOrg());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { stray: 'x' }) as any, params({ id: 'o-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { stray: 'x' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -512,7 +512,7 @@ describe('PATCH /organizations/[id]', () => {
     orgsRepo.getOrganization.mockResolvedValue(makeOrg());
     orgsRepo.updateOrganization.mockResolvedValue({ kind: 'ok', org: makeOrg({ industry: 'fintech' }) });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { industry: 'fintech' }) as any, params({ id: 'o-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { industry: 'fintech' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.org.updated' }),
@@ -530,7 +530,7 @@ describe('DELETE /organizations/[id]', () => {
       makeOrg({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'o-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.org.archived' }),
@@ -545,7 +545,7 @@ describe('POST /organizations/[id]/restore', () => {
     authed();
     orgsRepo.restoreOrganization.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'o-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -555,7 +555,7 @@ describe('POST /organizations/[id]/restore', () => {
       org: makeOrg(), alreadyActive: true,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'o-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -565,7 +565,7 @@ describe('POST /organizations/[id]/restore', () => {
       org: makeOrg(), alreadyActive: false,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/organizations/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'o-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'o-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.org.restored' }),
@@ -583,7 +583,7 @@ describe('GET /interactions', () => {
   it('401 when unauthenticated', async () => {
     getCurrentBusinessUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
@@ -595,7 +595,7 @@ describe('GET /interactions', () => {
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
     await GET(new Request(
       `${URL}?person_id=${pid}&organization_id=${oid}&interaction_type=call&from=2026-05-01&to=2026-05-31`,
-    ) as any);
+    ) as never);
     expect(interactionsRepo.listInteractions).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({
@@ -608,14 +608,14 @@ describe('GET /interactions', () => {
   it('400 on bad interaction_type', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
-    const r = await GET(new Request(`${URL}?interaction_type=phonecall`) as any);
+    const r = await GET(new Request(`${URL}?interaction_type=phonecall`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on bad from date', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
-    const r = await GET(new Request(`${URL}?from=last-tuesday`) as any);
+    const r = await GET(new Request(`${URL}?from=last-tuesday`) as never);
     expect(r.status).toBe(400);
   });
 });
@@ -626,7 +626,7 @@ describe('POST /interactions', () => {
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
-    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -635,7 +635,7 @@ describe('POST /interactions', () => {
     interactionsRepo.createInteraction.mockResolvedValue(makeInteraction());
     const { POST } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { interaction_type: 'note', summary: 'hi' }) as any,
+      jsonReq(URL, 'POST', { interaction_type: 'note', summary: 'hi' }) as never,
     );
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -651,7 +651,7 @@ describe('GET / PATCH / DELETE /interactions/[id]', () => {
     authed();
     interactionsRepo.getInteraction.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/business/interactions/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'i-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'i-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -663,7 +663,7 @@ describe('GET / PATCH / DELETE /interactions/[id]', () => {
     });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/interactions/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { summary: 'updated' }) as any,
+      jsonReq(URL, 'PATCH', { summary: 'updated' }) as never,
       params({ id: 'i-1' }),
     );
     expect(r.status).toBe(200);
@@ -677,7 +677,7 @@ describe('GET / PATCH / DELETE /interactions/[id]', () => {
     interactionsRepo.getInteraction.mockResolvedValue(makeInteraction());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/interactions/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { stray: 'x' }) as any,
+      jsonReq(URL, 'PATCH', { stray: 'x' }) as never,
       params({ id: 'i-1' }),
     );
     expect(r.status).toBe(400);
@@ -688,7 +688,7 @@ describe('GET / PATCH / DELETE /interactions/[id]', () => {
     interactionsRepo.getInteraction.mockResolvedValue(makeInteraction());
     interactionsRepo.deleteInteraction.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/interactions/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'i-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'i-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.interaction.deleted' }),
@@ -699,7 +699,7 @@ describe('GET / PATCH / DELETE /interactions/[id]', () => {
     authed();
     interactionsRepo.getInteraction.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/business/interactions/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'i-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'i-1' }));
     expect(r.status).toBe(404);
   });
 });
@@ -764,14 +764,14 @@ describe('PATCH /settings', () => {
   it('400 on invalid body', async () => {
     authed();
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/settings/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { default_hourly_rate_cents: 'not-a-number' }) as any);
+    const r = await PATCH(jsonReq(URL, 'PATCH', { default_hourly_rate_cents: 'not-a-number' }) as never);
     expect(r.status).toBe(400);
   });
 
   it('rejects stray fields via .strict()', async () => {
     authed();
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/settings/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { stray_field: 'x' }) as any);
+    const r = await PATCH(jsonReq(URL, 'PATCH', { stray_field: 'x' }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -779,7 +779,7 @@ describe('PATCH /settings', () => {
     authed();
     settingsRepo.updateSettings.mockResolvedValue(makeSettings({ businessName: 'Acme' }));
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/business/settings/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { business_name: 'Acme' }) as any);
+    const r = await PATCH(jsonReq(URL, 'PATCH', { business_name: 'Acme' }) as never);
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'business.settings.updated' }),
@@ -841,14 +841,14 @@ describe('Audit namespace guard', () => {
     const { POST: PostInteraction } = await import('@/app/api/tiresias/agentic-os/business/interactions/route');
     const { PATCH: PatchSettings } = await import('@/app/api/tiresias/agentic-os/business/settings/route');
 
-    await PostPerson(jsonReq('http://t/api/tiresias/agentic-os/business/people', 'POST', { first_name: 'J', last_name: 'S' }) as any);
-    await PostOrg(jsonReq('http://t/api/tiresias/agentic-os/business/organizations', 'POST', { name: 'Acme' }) as any);
-    await PostInteraction(jsonReq('http://t/api/tiresias/agentic-os/business/interactions', 'POST', { interaction_type: 'note', summary: 'x' }) as any);
-    await PatchSettings(jsonReq('http://t/api/tiresias/agentic-os/business/settings', 'PATCH', { business_name: 'X' }) as any);
+    await PostPerson(jsonReq('http://t/api/tiresias/agentic-os/business/people', 'POST', { first_name: 'J', last_name: 'S' }) as never);
+    await PostOrg(jsonReq('http://t/api/tiresias/agentic-os/business/organizations', 'POST', { name: 'Acme' }) as never);
+    await PostInteraction(jsonReq('http://t/api/tiresias/agentic-os/business/interactions', 'POST', { interaction_type: 'note', summary: 'x' }) as never);
+    await PatchSettings(jsonReq('http://t/api/tiresias/agentic-os/business/settings', 'PATCH', { business_name: 'X' }) as never);
 
     expect(recordAudit).toHaveBeenCalledTimes(4);
     for (const call of recordAudit.mock.calls) {
-      expect((call[0] as any).action).toMatch(/^business\./);
+      expect((call[0] as unknown as Record<string, unknown>).action).toMatch(/^business\./);
     }
   });
 });
@@ -867,9 +867,9 @@ describe('Bridge PII guard', () => {
         'http://t/api/tiresias/agentic-os/business/people',
         'POST',
         { first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com', phone: '+1-555-0123' },
-      ) as any,
+      ) as never,
     );
-    const call = recordAudit.mock.calls[0]![0] as any;
+    const call = recordAudit.mock.calls[0]![0] as { action: string; payload: unknown };
     const payloadJson = JSON.stringify(call.payload);
     expect(payloadJson).not.toMatch(/jane@example\.com/);
     expect(payloadJson).not.toMatch(/\+1-555-0123/);
@@ -884,9 +884,9 @@ describe('Bridge PII guard', () => {
         'http://t/api/tiresias/agentic-os/business/settings',
         'PATCH',
         { tax_id: 'TOPSECRET-EIN-1234' },
-      ) as any,
+      ) as never,
     );
-    const call = recordAudit.mock.calls[0]![0] as any;
+    const call = recordAudit.mock.calls[0]![0] as { action: string; payload: unknown };
     const payloadJson = JSON.stringify(call.payload);
     expect(payloadJson).not.toMatch(/TOPSECRET-EIN-1234/);
     // But the field name should be echoed for change-tracking

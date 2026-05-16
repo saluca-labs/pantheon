@@ -21,12 +21,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -34,7 +34,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -57,7 +57,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function entryRow(overrides: Record<string, any> = {}): any {
+function entryRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'ne-1',
     user_id: 'u-1',
@@ -130,7 +130,7 @@ describe('listNotebookEntriesForExperiment()', () => {
 
   it('throws on unknown entryKind filter', async () => {
     await expect(
-      listNotebookEntriesForExperiment('exp-1', 'u-1', { entryKind: 'bad' as any }),
+      listNotebookEntriesForExperiment('exp-1', 'u-1', { entryKind: 'bad' as never }),
     ).rejects.toThrow(/Invalid entry_kind/);
   });
 
@@ -216,7 +216,7 @@ describe('createNotebookEntry()', () => {
       title: 'M',
       metadata: { sample: 'A' },
     });
-    const metaParam = calls[0].params[9];
+    const metaParam = calls[0].params[9] as string;
     expect(typeof metaParam).toBe('string');
     expect(JSON.parse(metaParam)).toEqual({ sample: 'A' });
   });
@@ -271,7 +271,7 @@ describe('createNotebookEntry()', () => {
     await expect(
       createNotebookEntry('exp-1', 'u-1', {
         title: 'T',
-        entryKind: 'bogus' as any,
+        entryKind: 'bogus' as never,
       }),
     ).rejects.toThrow(/Invalid entry_kind/);
     expect(calls.length).toBe(0);
@@ -331,12 +331,12 @@ describe('updateNotebookEntry()', () => {
     expect(calls[0].params[5]).toEqual(['https://a']); // attached_urls
     expect(calls[0].params[6]).toEqual(['enzyme']); // tags
     expect(calls[0].params[7]).toBe('2026-01-01T00:00:00.000Z'); // entry_at
-    expect(JSON.parse(calls[0].params[8])).toEqual({ x: 1 });
+    expect(JSON.parse(calls[0].params[8] as string)).toEqual({ x: 1 });
   });
 
   it('throws on invalid entry_kind in patch', async () => {
     await expect(
-      updateNotebookEntry('ne-1', 'u-1', { entryKind: 'bad' as any }),
+      updateNotebookEntry('ne-1', 'u-1', { entryKind: 'bad' as never }),
     ).rejects.toThrow(/Invalid entry_kind/);
     expect(calls.length).toBe(0);
   });

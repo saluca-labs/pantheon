@@ -141,7 +141,7 @@ describe('normalizeMemoryTags', () => {
   });
 
   it('drops non-string entries', () => {
-    expect(normalizeMemoryTags(['joy', 42 as any, null as any])).toEqual([
+    expect(normalizeMemoryTags(['joy', 42 as never, null as never])).toEqual([
       'joy',
     ]);
   });
@@ -179,7 +179,7 @@ describe('normalizePhotoUrls', () => {
 
   it('drops non-string entries', () => {
     expect(
-      normalizePhotoUrls(['https://x/a.jpg', 42 as any, null as any]),
+      normalizePhotoUrls(['https://x/a.jpg', 42 as never, null as never]),
     ).toEqual(['https://x/a.jpg']);
   });
 
