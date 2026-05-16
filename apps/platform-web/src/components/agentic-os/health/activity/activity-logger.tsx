@@ -294,13 +294,21 @@ function ActivityDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-black/60 sm:items-center"
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={editing ? 'Edit activity' : 'Log activity'}
+      className="fixed inset-0 z-30 flex items-end justify-center sm:items-center"
     >
-      <div
-        className="w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* Backdrop — rendered as a button so keyboard users can dismiss
+          via Enter / Space without an inline a11y disable. */}
+      <button
+        type="button"
+        aria-label="Close dialog"
+        tabIndex={-1}
+        onClick={onClose}
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60"
+      />
+      <div className="relative w-full max-w-lg rounded-t-2xl border border-border-subtle bg-surface-2 p-5 sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-white">
             {editing ? 'Edit activity' : 'Log activity'}
