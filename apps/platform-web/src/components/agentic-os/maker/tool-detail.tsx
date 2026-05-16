@@ -38,8 +38,8 @@ import { ConsumableTracker } from './consumable-tracker';
 import { MaintenanceLog } from './maintenance-log';
 
 const STATUS_BADGE: Record<ToolStatus, string> = {
-  active: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/5',
-  down: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
+  active: 'border-positive/50 text-positive bg-positive/5',
+  down: 'border-warning/50 text-warning bg-warning/5',
   retired: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
@@ -179,7 +179,7 @@ export function ToolDetail({
               </select>
             </div>
           </div>
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+          {error && <p className="mt-2 text-xs text-danger">{error}</p>}
         </div>
       </div>
 
@@ -246,7 +246,7 @@ export function ToolDetail({
                           <span
                             className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border ${
                               p.required
-                                ? 'border-red-500/50 text-red-300'
+                                ? 'border-danger/50 text-danger'
                                 : 'border-border-subtle text-text-secondary'
                             }`}
                           >

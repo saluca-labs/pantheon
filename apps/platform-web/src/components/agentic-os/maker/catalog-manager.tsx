@@ -142,7 +142,7 @@ export function CatalogManager({ initialRows }: Props) {
         <span
           className={`text-xs px-2 py-0.5 rounded border ${
             row.quantityOnHand > 0
-              ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+              ? 'text-positive bg-positive/10 border-positive/30'
               : 'text-text-secondary bg-surface-0 border-border-subtle'
           }`}
         >
@@ -308,11 +308,11 @@ export function CatalogManager({ initialRows }: Props) {
           <button
             type="submit"
             disabled={adding || !newRow.name.trim()}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
           >
             {adding ? 'Adding…' : 'Create catalog row'}
           </button>
-          {addError && <span className="text-sm text-red-300">{addError}</span>}
+          {addError && <span className="text-sm text-danger">{addError}</span>}
         </div>
       </form>
     </div>

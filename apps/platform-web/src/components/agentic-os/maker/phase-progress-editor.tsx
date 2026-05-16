@@ -127,7 +127,7 @@ export function PhaseProgressEditor({ projectId, initial }: Props) {
         <div className="text-xs text-text-secondary">
           Overall progress: <span className="text-white font-medium">{overallAvg}%</span>
           {saving && <span className="ml-3 text-accent">Saving…</span>}
-          {error && <span className="ml-3 text-red-300">{error}</span>}
+          {error && <span className="ml-3 text-danger">{error}</span>}
         </div>
         <button
           type="button"

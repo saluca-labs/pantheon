@@ -136,7 +136,7 @@ export function ProjectReferencesPicker({
         </button>
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {showCreate && (
         <ReferenceForm
@@ -242,7 +242,7 @@ export function ProjectReferencesPicker({
                     <button
                       type="button"
                       onClick={() => detach(l.referenceId)}
-                      className="text-xs text-text-secondary hover:text-red-400 transition"
+                      className="text-xs text-text-secondary hover:text-danger transition"
                     >
                       Unlink
                     </button>
