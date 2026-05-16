@@ -153,7 +153,7 @@ export function CoachSession({
                 }
               }}
               autoFocus
-              className="bg-transparent text-lg font-semibold text-white border-b border-amber-500 focus:outline-none px-1"
+              className="bg-transparent text-lg font-semibold text-white border-b border-os-business focus:outline-none px-1"
             />
           ) : (
             <h2
@@ -164,7 +164,7 @@ export function CoachSession({
               {title}
             </h2>
           )}
-          <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-100 shrink-0">
+          <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-os-business/30 bg-os-business/10 text-os-business shrink-0">
             {COACH_MODE_LABELS[mode]}
           </span>
           {projectId && (
@@ -173,7 +173,7 @@ export function CoachSession({
             </span>
           )}
           {dealId && (
-            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-100 shrink-0">
+            <span className="text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full border border-os-business/30 bg-os-business/10 text-os-business shrink-0">
               deal-scoped
             </span>
           )}
@@ -181,7 +181,7 @@ export function CoachSession({
         <button
           type="button"
           onClick={deleteSession}
-          className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-red-300 transition"
+          className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-danger transition"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Delete
@@ -193,7 +193,7 @@ export function CoachSession({
         className="flex-1 overflow-y-auto rounded-xl border border-border-subtle bg-surface-0 p-4 space-y-4"
       >
         {messages.length === 0 && (
-          <p className="text-xs text-[#64748b] italic">
+          <p className="text-xs text-text-tertiary italic">
             No messages yet. Send a message below to start.
           </p>
         )}
@@ -201,14 +201,14 @@ export function CoachSession({
           <CoachMessageBubble key={i} message={m} />
         ))}
         {streaming && messages[messages.length - 1]?.content === '' && (
-          <div className="text-xs text-[#64748b] italic">Coach is typing…</div>
+          <div className="text-xs text-text-tertiary italic">Coach is typing…</div>
         )}
       </div>
 
       {error && (
         <div
           role="alert"
-          className="mt-2 rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+          className="mt-2 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
         >
           {error}
         </div>
@@ -233,12 +233,12 @@ export function CoachSession({
               void send();
             }
           }}
-          className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-amber-400 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-2 text-sm text-white placeholder:text-text-tertiary px-3 py-2 focus:outline-none focus:border-os-business disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={streaming || !text.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-os-business hover:bg-os-business/90 text-black text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
           Send
@@ -256,7 +256,7 @@ function CoachMessageBubble({ message }: { message: CoachUiMessage }) {
       <div
         className={`max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? 'bg-amber-500 text-black'
+            ? 'bg-os-business text-black'
             : 'bg-surface-2 border border-border-subtle text-text-primary'
         }`}
       >

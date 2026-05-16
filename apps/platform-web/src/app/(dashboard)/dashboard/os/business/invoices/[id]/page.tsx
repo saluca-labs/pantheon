@@ -22,12 +22,12 @@ import PaymentForm from '@/components/agentic-os/business/payment-form';
 export const dynamic = 'force-dynamic';
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  partial: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  paid: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  overdue: 'bg-red-900/40 text-red-300 border-red-800',
-  voided: 'bg-slate-900/40 text-slate-500 border-slate-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  partial: 'bg-warning/15 text-warning border-warning/30',
+  paid: 'bg-positive/15 text-positive border-positive/30',
+  overdue: 'bg-danger/15 text-danger border-danger/30',
+  voided: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 const paymentMethodLabels: Record<string, string> = {
@@ -146,7 +146,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
           {invoice.projectId && (
             <Link
               href={`/dashboard/os/business/coach?project_id=${invoice.projectId}&mode=pricing_advisor`}
-              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-os-business hover:text-os-business/80 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               AI Coach
@@ -156,7 +156,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <form action={sendInvoiceAction.bind(null, invoice.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
               >
                 <Send className="w-4 h-4" />
                 Send
@@ -167,7 +167,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <form action={voidInvoiceAction.bind(null, invoice.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-red-900/50 bg-surface-2 hover:bg-red-900/20 text-red-400 text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-danger/30 bg-surface-2 hover:bg-danger/10 text-danger text-sm font-medium px-4 py-2 transition"
               >
                 <Ban className="w-4 h-4" />
                 Void
@@ -177,7 +177,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <Link
             href={`/api/tiresias/agentic-os/business/invoices/${invoice.id}/export.pdf`}
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
           >
             Export PDF
           </Link>
@@ -187,20 +187,20 @@ export default async function InvoiceDetailPage({ params }: Props) {
       {/* Meta Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Invoice Number</p>
+          <p className="text-xs text-text-tertiary mb-1">Invoice Number</p>
           <p className="text-sm text-white font-mono">{invoice.invoiceNumber}</p>
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Dates</p>
+          <p className="text-xs text-text-tertiary mb-1">Dates</p>
           <p className="text-xs text-text-secondary">Date: {invoice.invoiceDate}</p>
           <p className="text-xs text-text-secondary">Due: {invoice.dueOn}</p>
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Terms</p>
+          <p className="text-xs text-text-tertiary mb-1">Terms</p>
           <p className="text-sm text-white">{invoice.terms || 'None'}</p>
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Totals</p>
+          <p className="text-xs text-text-tertiary mb-1">Totals</p>
           <p className="text-sm text-white font-bold">{fmtCents(invoice.totalCents)}</p>
           <p className="text-xs text-text-secondary">
             {fmtCents(invoice.paidCents)} paid
@@ -212,9 +212,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
       {/* Linked entities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Contact</p>
+          <p className="text-xs text-text-tertiary mb-1">Contact</p>
           {contact ? (
-            <Link href={`/dashboard/os/business/people/${contact.id}`} className="text-sm text-teal-300 hover:underline">
+            <Link href={`/dashboard/os/business/people/${contact.id}`} className="text-sm text-os-business hover:underline">
               {contact.firstName} {contact.lastName}
             </Link>
           ) : (
@@ -222,9 +222,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
           )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Deal</p>
+          <p className="text-xs text-text-tertiary mb-1">Deal</p>
           {deal ? (
-            <Link href={`/dashboard/os/business/deals/${deal.id}`} className="text-sm text-teal-300 hover:underline">
+            <Link href={`/dashboard/os/business/deals/${deal.id}`} className="text-sm text-os-business hover:underline">
               {deal.title}
             </Link>
           ) : (
@@ -232,9 +232,9 @@ export default async function InvoiceDetailPage({ params }: Props) {
           )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Project</p>
+          <p className="text-xs text-text-tertiary mb-1">Project</p>
           {project ? (
-            <Link href={`/dashboard/os/business/projects/${project.id}`} className="text-sm text-teal-300 hover:underline">
+            <Link href={`/dashboard/os/business/projects/${project.id}`} className="text-sm text-os-business hover:underline">
               {project.title}
             </Link>
           ) : (
@@ -246,7 +246,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
       {/* Description */}
       {invoice.descriptionMd && (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
-          <p className="text-xs text-[#64748b] mb-2">Description</p>
+          <p className="text-xs text-text-tertiary mb-2">Description</p>
           <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
             {invoice.descriptionMd}
           </div>
@@ -255,10 +255,10 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Bill unbilled time CTA */}
       {unbilledCount > 0 && isDraft && (
-        <div className="rounded-xl border border-amber-800 bg-amber-900/10 p-4 mb-6">
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-amber-400" />
+              <Clock className="w-5 h-5 text-warning" />
               <div>
                 <p className="text-sm text-white font-medium">Unbilled time available</p>
                 <p className="text-xs text-text-secondary">
@@ -269,7 +269,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
             <form action={billTimeEntriesAction.bind(null, invoice.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-warning hover:bg-warning/90 text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Bill time
@@ -302,12 +302,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-white">{item.description}</p>
-                  <p className="text-[10px] text-[#64748b]">
+                  <p className="text-[10px] text-text-tertiary">
                     {item.quantity} x {item.unitLabel || 'unit'} @ {fmtCents(item.unitPriceCents)}
                     {item.taxRateBp > 0 && ` (${(item.taxRateBp / 100).toFixed(1)}% tax)`}
                   </p>
                   {item.timeEntryIds && item.timeEntryIds.length > 0 && (
-                    <p className="text-[10px] text-teal-600 mt-0.5">
+                    <p className="text-[10px] text-os-business mt-0.5">
                       {item.timeEntryIds.length} time entr{item.timeEntryIds.length === 1 ? 'y' : 'ies'}
                     </p>
                   )}
@@ -356,18 +356,18 @@ export default async function InvoiceDetailPage({ params }: Props) {
                     {paymentMethodLabels[p.method] ?? p.method}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <p className="text-[10px] text-[#64748b]">{p.receivedOn}</p>
+                    <p className="text-[10px] text-text-tertiary">{p.receivedOn}</p>
                     {p.reference && (
-                      <p className="text-[10px] text-[#64748b]">{p.reference}</p>
+                      <p className="text-[10px] text-text-tertiary">{p.reference}</p>
                     )}
                     {p.notes && (
-                      <p className="text-[10px] text-[#64748b] truncate max-w-[200px]">
+                      <p className="text-[10px] text-text-tertiary truncate max-w-[200px]">
                         {p.notes}
                       </p>
                     )}
                   </div>
                 </div>
-                <p className="text-sm font-mono font-bold text-teal-300">
+                <p className="text-sm font-mono font-bold text-os-business">
                   {fmtCents(p.amountCents)}
                 </p>
               </div>
@@ -380,14 +380,14 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
       {/* Outstanding footer */}
       {outstanding > 0 && invoice.totalCents > 0 && (
-        <div className="rounded-xl border border-amber-800/50 bg-surface-2 p-5 flex items-center justify-between">
+        <div className="rounded-xl border border-warning/40 bg-surface-2 p-5 flex items-center justify-between">
           <div>
             <p className="text-sm text-white font-medium">Outstanding Balance</p>
             <p className="text-xs text-text-secondary">
               {fmtCents(invoice.totalCents)} total - {fmtCents(invoice.paidCents)} paid
             </p>
           </div>
-          <p className="text-xl font-bold text-amber-400">{fmtCents(outstanding)}</p>
+          <p className="text-xl font-bold text-warning">{fmtCents(outstanding)}</p>
         </div>
       )}
     </div>

@@ -9,15 +9,15 @@
 import type { InteractionType } from '@/lib/agentic-os/business/crm';
 
 const STYLE: Record<InteractionType, string> = {
-  call: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  email: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  meeting: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  demo: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  proposal: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30',
-  follow_up: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-  note: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-  linkedin: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  other: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/30',
+  call: 'bg-os-research/15 text-os-research border-os-research/30',
+  email: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
+  meeting: 'bg-warning/15 text-warning border-warning/30',
+  demo: 'bg-positive/15 text-positive border-positive/30',
+  proposal: 'bg-os-creator/15 text-os-creator border-os-creator/30',
+  follow_up: 'bg-os-autobiographer/15 text-os-autobiographer border-os-autobiographer/30',
+  note: 'bg-surface-2 text-text-secondary border-border-subtle',
+  linkedin: 'bg-accent/15 text-accent border-accent/30',
+  other: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 const LABEL: Record<InteractionType, string> = {

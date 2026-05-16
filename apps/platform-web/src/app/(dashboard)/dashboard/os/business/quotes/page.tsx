@@ -20,12 +20,12 @@ export const dynamic = 'force-dynamic';
 const STATUSES = ['all', 'draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'] as const;
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  accepted: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  rejected: 'bg-red-900/40 text-red-300 border-red-800',
-  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  converted: 'bg-violet-900/40 text-violet-300 border-violet-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  accepted: 'bg-positive/15 text-positive border-positive/30',
+  rejected: 'bg-danger/15 text-danger border-danger/30',
+  expired: 'bg-warning/15 text-warning border-warning/30',
+  converted: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
 };
 
 function fmtCents(cents: number): string {
@@ -80,12 +80,12 @@ export default async function QuotesPage({ searchParams }: Props) {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <FileText className="w-6 h-6 text-teal-300" />
+          <FileText className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Quotes</h1>
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New quote
@@ -132,7 +132,7 @@ export default async function QuotesPage({ searchParams }: Props) {
                 className="rounded-xl border border-border-subtle bg-surface-2 hover:border-accent/30 p-5 transition-colors group"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] text-[#64748b] font-mono">
+                  <span className="text-[10px] text-text-tertiary font-mono">
                     {q.quoteNumber}
                   </span>
                   <span
@@ -143,7 +143,7 @@ export default async function QuotesPage({ searchParams }: Props) {
                     {q.status}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium text-white group-hover:text-teal-300 transition-colors mb-1 truncate">
+                <h3 className="text-sm font-medium text-white group-hover:text-os-business transition-colors mb-1 truncate">
                   {q.title}
                 </h3>
                 {contact && (
@@ -152,7 +152,7 @@ export default async function QuotesPage({ searchParams }: Props) {
                   </p>
                 )}
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-[#64748b]">{q.quoteDate}</p>
+                  <p className="text-xs text-text-tertiary">{q.quoteDate}</p>
                   <p className="text-sm font-mono font-bold text-white">
                     {fmtCents(q.totalCents)}
                   </p>
@@ -163,7 +163,7 @@ export default async function QuotesPage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+          <FileText className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary text-sm">
             {quotes.length === 0
               ? 'No quotes yet. Create your first quote to start estimating work.'

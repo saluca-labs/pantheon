@@ -64,8 +64,8 @@ export default function ArchiveProjectButton({ projectId }: ArchiveProjectButton
       disabled={loading}
       className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
         confirmed
-          ? 'bg-red-600 border-red-600 text-white hover:bg-red-500'
-          : 'border-red-900/50 text-red-400 hover:bg-red-900/20'
+          ? 'bg-danger border-danger text-white hover:bg-danger/90'
+          : 'border-danger/30 text-danger hover:bg-danger/10'
       }`}
     >
       <Archive className="w-4 h-4" />
