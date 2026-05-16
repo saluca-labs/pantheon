@@ -108,6 +108,7 @@ export function Checklist({
       </ul>
       {withNotes && (
         <div>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control -- W-E.4 carve-out: label is paired with the textarea below but jsx-a11y can't follow the sibling-element pattern. Sub B will wire htmlFor + id. */}
           <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
             Notes (optional)
           </label>
