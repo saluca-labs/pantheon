@@ -19,7 +19,7 @@ import { NextRequest } from 'next/server';
 const getCurrentMakerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
-  getCurrentMakerUser: (...args: any[]) => getCurrentMakerUser(...args),
+  getCurrentMakerUser: (...args: unknown[]) => getCurrentMakerUser(...args),
   getMakerPool: () => ({ query: vi.fn() }),
 }));
 
@@ -51,7 +51,7 @@ vi.mock('@/lib/agentic-os/maker/repo', () => repoMocks);
 
 beforeEach(() => {
   getCurrentMakerUser.mockReset();
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authed() {
@@ -88,7 +88,7 @@ describe('GET /tools', () => {
   it('401 unauthenticated', async () => {
     getCurrentMakerUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await GET(jsonReq('http://t/tools', 'GET') as any);
+    const res = await GET(jsonReq('http://t/tools', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -96,7 +96,7 @@ describe('GET /tools', () => {
     authed();
     repoMocks.listTools.mockResolvedValue([{ id: 't-1' }]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await GET(jsonReq('http://t/tools', 'GET') as any);
+    const res = await GET(jsonReq('http://t/tools', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.tools).toHaveLength(1);
@@ -108,7 +108,7 @@ describe('GET /tools', () => {
     repoMocks.listTools.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
     await GET(
-      jsonReq('http://t/tools?status=active&kind=cnc&tag=router', 'GET') as any,
+      jsonReq('http://t/tools?status=active&kind=cnc&tag=router', 'GET') as never,
     );
     expect(repoMocks.listTools).toHaveBeenCalledWith({
       userId: 'u-1',
@@ -121,14 +121,14 @@ describe('GET /tools', () => {
   it('400 invalid status filter', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await GET(jsonReq('http://t/tools?status=broken', 'GET') as any);
+    const res = await GET(jsonReq('http://t/tools?status=broken', 'GET') as never);
     expect(res.status).toBe(400);
   });
 
   it('400 invalid kind filter', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await GET(jsonReq('http://t/tools?kind=drone', 'GET') as any);
+    const res = await GET(jsonReq('http://t/tools?kind=drone', 'GET') as never);
     expect(res.status).toBe(400);
   });
 });
@@ -137,21 +137,21 @@ describe('POST /tools', () => {
   it('401 unauthenticated', async () => {
     getCurrentMakerUser.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await POST(jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'cnc' }) as any);
+    const res = await POST(jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'cnc' }) as never);
     expect(res.status).toBe(401);
   });
 
   it('400 invalid body (missing name)', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await POST(jsonReq('http://t/tools', 'POST', { kind: 'cnc' }) as any);
+    const res = await POST(jsonReq('http://t/tools', 'POST', { kind: 'cnc' }) as never);
     expect(res.status).toBe(400);
   });
 
   it('400 invalid kind enum', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
-    const res = await POST(jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'drone' }) as any);
+    const res = await POST(jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'drone' }) as never);
     expect(res.status).toBe(400);
   });
 
@@ -160,7 +160,7 @@ describe('POST /tools', () => {
     repoMocks.createTool.mockResolvedValue({ id: 't-new', name: 'X', kind: 'cnc' });
     const { POST } = await import('@/app/api/tiresias/agentic-os/maker/tools/route');
     const res = await POST(
-      jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'cnc' }) as any,
+      jsonReq('http://t/tools', 'POST', { name: 'X', kind: 'cnc' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -175,7 +175,7 @@ describe('GET /tools/[toolId]', () => {
   it('401 unauthenticated', async () => {
     getCurrentMakerUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -183,7 +183,7 @@ describe('GET /tools/[toolId]', () => {
     authed();
     repoMocks.getTool.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-x' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-x' }) as never);
     expect(res.status).toBe(404);
   });
 
@@ -191,7 +191,7 @@ describe('GET /tools/[toolId]', () => {
     authed();
     repoMocks.getTool.mockResolvedValue({ id: 't-1', kind: 'cnc' });
     const { GET } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(200);
   });
 });
@@ -202,8 +202,8 @@ describe('PATCH /tools/[toolId]', () => {
     repoMocks.updateTool.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'down' }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'down' }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -213,8 +213,8 @@ describe('PATCH /tools/[toolId]', () => {
     repoMocks.updateTool.mockResolvedValue({ id: 't-1', status: 'down' });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'down' }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'down' }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -226,8 +226,8 @@ describe('PATCH /tools/[toolId]', () => {
     authed();
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'broken' }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'broken' }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -238,7 +238,7 @@ describe('DELETE /tools/[toolId]', () => {
     authed();
     repoMocks.deleteTool.mockResolvedValue(true);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'maker.tool.deleted' }),
@@ -249,7 +249,7 @@ describe('DELETE /tools/[toolId]', () => {
     authed();
     repoMocks.deleteTool.mockResolvedValue(false);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/maker/tools/[toolId]/route');
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, paramsFor({ toolId: 't-x' }) as any);
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, paramsFor({ toolId: 't-x' }) as never);
     expect(res.status).toBe(404);
   });
 });
@@ -262,7 +262,7 @@ describe('GET /tools/[toolId]/consumables', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -274,7 +274,7 @@ describe('GET /tools/[toolId]/consumables', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-x' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-x' }) as never);
     expect(res.status).toBe(404);
   });
 
@@ -284,7 +284,7 @@ describe('GET /tools/[toolId]/consumables', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.consumables).toHaveLength(1);
@@ -298,8 +298,8 @@ describe('POST /tools/[toolId]/consumables', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -311,8 +311,8 @@ describe('POST /tools/[toolId]/consumables', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { name: 'Bit' }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'POST', { name: 'Bit' }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -329,8 +329,8 @@ describe('POST /tools/[toolId]/consumables', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { name: 'Bit' }) as any,
-      paramsFor({ toolId: 't-x' }) as any,
+      jsonReq('http://t/x', 'POST', { name: 'Bit' }) as never,
+      paramsFor({ toolId: 't-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -344,8 +344,8 @@ describe('PATCH /tools/[toolId]/consumables/[consumableId]', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/[consumableId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { hoursRemaining: 10 }) as any,
-      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { hoursRemaining: 10 }) as never,
+      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -357,8 +357,8 @@ describe('PATCH /tools/[toolId]/consumables/[consumableId]', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/[consumableId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { hoursRemaining: 10 }) as any,
-      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { hoursRemaining: 10 }) as never,
+      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -375,8 +375,8 @@ describe('DELETE /tools/[toolId]/consumables/[consumableId]', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/consumables/[consumableId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ toolId: 't-1', consumableId: 'c-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -393,7 +393,7 @@ describe('GET /tools/[toolId]/maintenance', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -403,7 +403,7 @@ describe('GET /tools/[toolId]/maintenance', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ toolId: 't-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ toolId: 't-1' }) as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.events).toHaveLength(1);
@@ -417,8 +417,8 @@ describe('POST /tools/[toolId]/maintenance', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { eventKind: 'upgraded' }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'POST', { eventKind: 'upgraded' }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -434,8 +434,8 @@ describe('POST /tools/[toolId]/maintenance', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { eventKind: 'cleaned', costCents: 1500 }) as any,
-      paramsFor({ toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'POST', { eventKind: 'cleaned', costCents: 1500 }) as never,
+      paramsFor({ toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -452,8 +452,8 @@ describe('DELETE /tools/[toolId]/maintenance/[eventId]', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/[eventId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ toolId: 't-1', eventId: 'm-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ toolId: 't-1', eventId: 'm-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -468,8 +468,8 @@ describe('DELETE /tools/[toolId]/maintenance/[eventId]', () => {
       '@/app/api/tiresias/agentic-os/maker/tools/[toolId]/maintenance/[eventId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ toolId: 't-1', eventId: 'm-x' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ toolId: 't-1', eventId: 'm-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -483,7 +483,7 @@ describe('GET /projects/[id]/tools', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ id: 'p-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ id: 'p-1' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -495,7 +495,7 @@ describe('GET /projects/[id]/tools', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ id: 'p-1' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ id: 'p-1' }) as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.tools).toHaveLength(1);
@@ -510,7 +510,7 @@ describe('GET /projects/[id]/tools', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, paramsFor({ id: 'p-x' }) as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, paramsFor({ id: 'p-x' }) as never);
     expect(res.status).toBe(404);
   });
 });
@@ -524,8 +524,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -536,8 +536,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', {}) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', {}) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -548,8 +548,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: 'not-a-uuid' }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: 'not-a-uuid' }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -565,8 +565,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid, required: true }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid, required: true }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.attachToolToProject).toHaveBeenCalledWith(
@@ -591,8 +591,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as any,
-      paramsFor({ id: 'p-1' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as never,
+      paramsFor({ id: 'p-1' }) as never,
     );
     expect(res.status).toBe(409);
   });
@@ -606,8 +606,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as any,
-      paramsFor({ id: 'p-A' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as never,
+      paramsFor({ id: 'p-A' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -621,8 +621,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as any,
-      paramsFor({ id: 'p-B' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as never,
+      paramsFor({ id: 'p-B' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -641,8 +641,8 @@ describe('POST /projects/[id]/tools', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as any,
-      paramsFor({ id: 'p-A' }) as any,
+      jsonReq('http://t/x', 'POST', { toolId: validUuid }) as never,
+      paramsFor({ id: 'p-A' }) as never,
     );
     expect(res.status).toBe(201);
   });
@@ -657,8 +657,8 @@ describe('PATCH /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { required: false }) as any,
-      paramsFor({ id: 'p-1', toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { required: false }) as never,
+      paramsFor({ id: 'p-1', toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -670,8 +670,8 @@ describe('PATCH /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { required: false }) as any,
-      paramsFor({ id: 'p-1', toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { required: false }) as never,
+      paramsFor({ id: 'p-1', toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -686,8 +686,8 @@ describe('PATCH /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { required: false }) as any,
-      paramsFor({ id: 'p-1', toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'PATCH', { required: false }) as never,
+      paramsFor({ id: 'p-1', toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -704,8 +704,8 @@ describe('DELETE /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ id: 'p-1', toolId: 't-1' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ id: 'p-1', toolId: 't-1' }) as never,
     );
     expect(res.status).toBe(200);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -720,8 +720,8 @@ describe('DELETE /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ id: 'p-1', toolId: 't-x' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ id: 'p-1', toolId: 't-x' }) as never,
     );
     expect(res.status).toBe(404);
   });
@@ -735,8 +735,8 @@ describe('DELETE /projects/[id]/tools/[toolId]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/tools/[toolId]/route'
     );
     const res = await DELETE(
-      jsonReq('http://t/x', 'DELETE') as any,
-      paramsFor({ id: 'p-A', toolId: 't-B' }) as any,
+      jsonReq('http://t/x', 'DELETE') as never,
+      paramsFor({ id: 'p-A', toolId: 't-B' }) as never,
     );
     expect(res.status).toBe(404);
   });

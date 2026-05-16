@@ -193,7 +193,7 @@ describe('validateHours', () => {
   });
 
   it('rejects non-numeric input', () => {
-    expect(validateHours('5' as any)).toMatch(/number/);
+    expect(validateHours('5' as never)).toMatch(/number/);
     expect(validateHours(Number.NaN)).toMatch(/number/);
   });
 });

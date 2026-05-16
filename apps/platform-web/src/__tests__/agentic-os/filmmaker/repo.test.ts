@@ -15,12 +15,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -28,7 +28,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -48,7 +48,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function projectRow(overrides: Record<string, any> = {}): any {
+function projectRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',

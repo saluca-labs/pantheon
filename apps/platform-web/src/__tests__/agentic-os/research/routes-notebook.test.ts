@@ -28,12 +28,12 @@ const getCurrentResearchUser = vi.fn();
 const recordAudit = vi.fn();
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...args: any[]) => getCurrentResearchUser(...args),
+  getCurrentResearchUser: (...args: unknown[]) => getCurrentResearchUser(...args),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 
 vi.mock('@/lib/agentic-os/research/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
 }));
 
 const repoMocks = {
@@ -52,7 +52,7 @@ beforeEach(() => {
   getCurrentResearchUser.mockReset();
   recordAudit.mockReset();
   recordAudit.mockResolvedValue(undefined);
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -63,7 +63,7 @@ function authedUser() {
   });
 }
 
-function entry(overrides: Record<string, any> = {}) {
+function entry(overrides: Record<string, unknown> = {}) {
   return {
     id: 'ne-1',
     userId: 'u-1',
@@ -107,7 +107,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
-    const res = await GET(new Request(URL_COLL) as any, params({ id: 'exp-1' }));
+    const res = await GET(new Request(URL_COLL) as never, params({ id: 'exp-1' }));
     expect(res.status).toBe(401);
   });
 
@@ -117,7 +117,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
-    const res = await GET(new Request(URL_COLL) as any, params({ id: 'exp-1' }));
+    const res = await GET(new Request(URL_COLL) as never, params({ id: 'exp-1' }));
     expect(res.status).toBe(404);
     expect(repoMocks.listNotebookEntriesForExperiment).not.toHaveBeenCalled();
   });
@@ -129,7 +129,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
-    const res = await GET(new Request(URL_COLL) as any, params({ id: 'exp-1' }));
+    const res = await GET(new Request(URL_COLL) as never, params({ id: 'exp-1' }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.entries).toHaveLength(1);
@@ -143,7 +143,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await GET(
-      new Request(`${URL_COLL}?entry_kind=idea`) as any,
+      new Request(`${URL_COLL}?entry_kind=idea`) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -157,7 +157,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await GET(
-      new Request(`${URL_COLL}?limit=99999`) as any,
+      new Request(`${URL_COLL}?limit=99999`) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -170,7 +170,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await GET(
-      new Request(`${URL_COLL}?offset=-5`) as any,
+      new Request(`${URL_COLL}?offset=-5`) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -184,7 +184,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     await GET(
-      new Request(`${URL_COLL}?archived=true`) as any,
+      new Request(`${URL_COLL}?archived=true`) as never,
       params({ id: 'exp-1' }),
     );
     const callArgs = repoMocks.listNotebookEntriesForExperiment.mock.calls[0];
@@ -198,7 +198,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
-    await GET(new Request(URL_COLL) as any, params({ id: 'exp-1' }));
+    await GET(new Request(URL_COLL) as never, params({ id: 'exp-1' }));
     const callArgs = repoMocks.listNotebookEntriesForExperiment.mock.calls[0];
     expect(callArgs[2]).toMatchObject({ archived: false });
   });
@@ -211,7 +211,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     await GET(
-      new Request(`${URL_COLL}?tag=enzyme`) as any,
+      new Request(`${URL_COLL}?tag=enzyme`) as never,
       params({ id: 'exp-1' }),
     );
     const callArgs = repoMocks.listNotebookEntriesForExperiment.mock.calls[0];
@@ -228,7 +228,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
         '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
       );
       const res = await GET(
-        new Request(`${URL_COLL}?entry_kind=${k}`) as any,
+        new Request(`${URL_COLL}?entry_kind=${k}`) as never,
         params({ id: 'exp-1' }),
       );
       expect(res.status).toBe(200);
@@ -245,7 +245,7 @@ describe('GET /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     await GET(
-      new Request(`${URL_COLL}?entry_kind=todo&tag=urgent`) as any,
+      new Request(`${URL_COLL}?entry_kind=todo&tag=urgent`) as never,
       params({ id: 'exp-1' }),
     );
     const callArgs = repoMocks.listNotebookEntriesForExperiment.mock.calls[0];
@@ -262,7 +262,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(401);
@@ -275,7 +275,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(404);
@@ -289,7 +289,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', {}) as any,
+      jsonReq(URL_COLL, 'POST', {}) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -302,7 +302,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi', entry_kind: 'idea' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi', entry_kind: 'idea' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -318,7 +318,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       jsonReq(URL_COLL, 'POST', {
         title: 'Hi',
         attached_urls: ['not-a-url'],
-      }) as any,
+      }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -331,7 +331,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: '' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: '' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -345,7 +345,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
     );
     const tags = Array.from({ length: 25 }, (_, i) => `t-${i}`);
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi', tags }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi', tags }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(400);
@@ -359,7 +359,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     const res = await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi', body_md: 'body' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi', body_md: 'body' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(201);
@@ -375,7 +375,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
     );
     await POST(
-      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as any,
+      jsonReq(URL_COLL, 'POST', { title: 'Hi' }) as never,
       params({ id: 'exp-1' }),
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -401,7 +401,7 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       jsonReq(URL_COLL, 'POST', {
         title: 'Hi',
         entry_at: '2024-06-01T10:00:00.000Z',
-      }) as any,
+      }) as never,
       params({ id: 'exp-1' }),
     );
     const callArgs = repoMocks.createNotebookEntry.mock.calls[0];
@@ -414,12 +414,12 @@ describe('POST /api/tiresias/.../experiments/[id]/notebook', () => {
       repoMocks.isExperimentOwnedByUser.mockResolvedValue(true);
       repoMocks.createNotebookEntry.mockReset();
       recordAudit.mockReset();
-      repoMocks.createNotebookEntry.mockResolvedValue(entry({ id: `ne-${k}`, entryKind: k as any }));
+      repoMocks.createNotebookEntry.mockResolvedValue(entry({ id: `ne-${k}`, entryKind: k as never }));
       const { POST } = await import(
         '@/app/api/tiresias/agentic-os/research/experiments/[id]/notebook/route'
       );
       const res = await POST(
-        jsonReq(URL_COLL, 'POST', { title: 'Hi', entry_kind: k }) as any,
+        jsonReq(URL_COLL, 'POST', { title: 'Hi', entry_kind: k }) as never,
         params({ id: 'exp-1' }),
       );
       expect(res.status).toBe(201);
@@ -435,7 +435,7 @@ describe('GET /api/tiresias/.../notebook/[entryId]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await GET(new Request(URL_ENTRY) as any, params({ entryId: 'ne-1' }));
+    const res = await GET(new Request(URL_ENTRY) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(401);
   });
 
@@ -445,7 +445,7 @@ describe('GET /api/tiresias/.../notebook/[entryId]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await GET(new Request(URL_ENTRY) as any, params({ entryId: 'ne-1' }));
+    const res = await GET(new Request(URL_ENTRY) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(404);
   });
 
@@ -455,7 +455,7 @@ describe('GET /api/tiresias/.../notebook/[entryId]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await GET(new Request(URL_ENTRY) as any, params({ entryId: 'ne-1' }));
+    const res = await GET(new Request(URL_ENTRY) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.entry.title).toBe('Found');
@@ -471,7 +471,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { title: 'X' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { title: 'X' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(401);
@@ -484,7 +484,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { title: 'X' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { title: 'X' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(404);
@@ -498,7 +498,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { entry_kind: 'idea' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { entry_kind: 'idea' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(400);
@@ -512,7 +512,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { title: 'New' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { title: 'New' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(200);
@@ -534,7 +534,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { entry_at: '2024-01-01T00:00:00.000Z' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { entry_at: '2024-01-01T00:00:00.000Z' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(200);
@@ -549,7 +549,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     const res = await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { entry_at: 'not-a-date' }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { entry_at: 'not-a-date' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(400);
@@ -563,7 +563,7 @@ describe('PATCH /api/tiresias/.../notebook/[entryId]', () => {
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
     await PATCH(
-      jsonReq(URL_ENTRY, 'PATCH', { title: 'New', tags: ['x'] }) as any,
+      jsonReq(URL_ENTRY, 'PATCH', { title: 'New', tags: ['x'] }) as never,
       params({ entryId: 'ne-1' }),
     );
     const call = recordAudit.mock.calls[0][0];
@@ -579,7 +579,7 @@ describe('DELETE /api/tiresias/.../notebook/[entryId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as any, params({ entryId: 'ne-1' }));
+    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(401);
   });
 
@@ -589,7 +589,7 @@ describe('DELETE /api/tiresias/.../notebook/[entryId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as any, params({ entryId: 'ne-1' }));
+    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(404);
     expect(repoMocks.archiveNotebookEntry).not.toHaveBeenCalled();
   });
@@ -603,7 +603,7 @@ describe('DELETE /api/tiresias/.../notebook/[entryId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as any, params({ entryId: 'ne-1' }));
+    const res = await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(200);
     expect(repoMocks.archiveNotebookEntry).toHaveBeenCalledWith('ne-1', 'u-1');
     const body = await res.json();
@@ -617,7 +617,7 @@ describe('DELETE /api/tiresias/.../notebook/[entryId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/route'
     );
-    await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as any, params({ entryId: 'ne-1' }));
+    await DELETE(new Request(URL_ENTRY, { method: 'DELETE' }) as never, params({ entryId: 'ne-1' }));
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'research.notebook.archived',
@@ -637,7 +637,7 @@ describe('DELETE /api/tiresias/.../notebook/[entryId]', () => {
     );
     // Even with ?hard=true the route still soft-archives.
     const res = await DELETE(
-      new Request(`${URL_ENTRY}?hard=true`, { method: 'DELETE' }) as any,
+      new Request(`${URL_ENTRY}?hard=true`, { method: 'DELETE' }) as never,
       params({ entryId: 'ne-1' }),
     );
     expect(res.status).toBe(200);
@@ -653,7 +653,7 @@ describe('POST /api/tiresias/.../notebook/[entryId]/restore', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/restore/route'
     );
-    const res = await POST(jsonReq(URL_RESTORE, 'POST') as any, params({ entryId: 'ne-1' }));
+    const res = await POST(jsonReq(URL_RESTORE, 'POST') as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(401);
   });
 
@@ -663,7 +663,7 @@ describe('POST /api/tiresias/.../notebook/[entryId]/restore', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/restore/route'
     );
-    const res = await POST(jsonReq(URL_RESTORE, 'POST') as any, params({ entryId: 'ne-1' }));
+    const res = await POST(jsonReq(URL_RESTORE, 'POST') as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(404);
   });
 
@@ -676,7 +676,7 @@ describe('POST /api/tiresias/.../notebook/[entryId]/restore', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/restore/route'
     );
-    const res = await POST(jsonReq(URL_RESTORE, 'POST') as any, params({ entryId: 'ne-1' }));
+    const res = await POST(jsonReq(URL_RESTORE, 'POST') as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(400);
     expect(recordAudit).not.toHaveBeenCalled();
   });
@@ -690,7 +690,7 @@ describe('POST /api/tiresias/.../notebook/[entryId]/restore', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/restore/route'
     );
-    const res = await POST(jsonReq(URL_RESTORE, 'POST') as any, params({ entryId: 'ne-1' }));
+    const res = await POST(jsonReq(URL_RESTORE, 'POST') as never, params({ entryId: 'ne-1' }));
     expect(res.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -709,7 +709,7 @@ describe('POST /api/tiresias/.../notebook/[entryId]/restore', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/notebook/[entryId]/restore/route'
     );
-    await POST(jsonReq(URL_RESTORE, 'POST') as any, params({ entryId: 'ne-1' }));
+    await POST(jsonReq(URL_RESTORE, 'POST') as never, params({ entryId: 'ne-1' }));
     expect(recordAudit.mock.calls[0][0]).toMatchObject({
       projectId: 'exp-other',
     });
@@ -740,7 +740,7 @@ describe('body_md raw-HTML escape vector', () => {
       jsonReq(URL_COLL, 'POST', {
         title: 'XSS attempt',
         body_md: '<script>alert("xss")</script>',
-      }) as any,
+      }) as never,
       params({ id: 'exp-1' }),
     );
     expect(res.status).toBe(201);

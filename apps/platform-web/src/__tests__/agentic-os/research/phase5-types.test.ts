@@ -203,7 +203,7 @@ describe('normalizeDatasetTags', () => {
   });
 
   it('returns empty array for non-array input', () => {
-    expect(normalizeDatasetTags('not array' as any)).toEqual([]);
+    expect(normalizeDatasetTags('not array' as never)).toEqual([]);
     expect(normalizeDatasetTags(null)).toEqual([]);
   });
 });
@@ -228,7 +228,7 @@ describe('normalizeAttachedUrls', () => {
   });
 
   it('returns empty for non-array', () => {
-    expect(normalizeAttachedUrls(undefined as any)).toEqual([]);
+    expect(normalizeAttachedUrls(undefined as never)).toEqual([]);
   });
 });
 
@@ -265,7 +265,7 @@ describe('validateDatasetName', () => {
     expect(validateDatasetName('Sample dataset')).toBeNull();
   });
   it('rejects non-string', () => {
-    expect(validateDatasetName(42 as any)).toBeTruthy();
+    expect(validateDatasetName(42 as never)).toBeTruthy();
   });
 });
 
@@ -432,7 +432,7 @@ describe('hasAnyExportContent', () => {
       datasets: 0,
       protocols: 0,
     };
-    (base as any)[key] = 1;
+    (base as unknown as Record<string, number>)[key] = 1;
     expect(hasAnyExportContent(base)).toBe(true);
   });
 });
@@ -452,7 +452,7 @@ describe('truncateForPdf', () => {
   });
 
   it('returns empty for non-string', () => {
-    expect(truncateForPdf(null as any, 100)).toBe('');
+    expect(truncateForPdf(null as never, 100)).toBe('');
   });
 });
 

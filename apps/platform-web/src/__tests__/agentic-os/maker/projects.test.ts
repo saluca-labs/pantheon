@@ -79,7 +79,7 @@ describe('validateProjectStatus', () => {
 describe('MAKER_PHASES', () => {
   it('contains the 7 non-archived phases', () => {
     expect(MAKER_PHASES).toHaveLength(7);
-    expect(MAKER_PHASES).not.toContain('archived' as any);
+    expect(MAKER_PHASES).not.toContain('archived' as never);
     for (const k of [
       'concept',
       'design',
@@ -131,7 +131,7 @@ describe('coercePhaseProgress', () => {
   });
 
   it('ignores non-numeric values', () => {
-    const p = coercePhaseProgress({ design: 'high' as any, fabrication: NaN });
+    const p = coercePhaseProgress({ design: 'high' as never, fabrication: NaN });
     expect(p.design).toBe(0);
     expect(p.fabrication).toBe(0);
   });

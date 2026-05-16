@@ -22,12 +22,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -35,7 +35,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
   getResearchPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -59,7 +59,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function expRow(overrides: Record<string, any> = {}): any {
+function expRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'exp-1',
     user_id: 'u-1',
@@ -122,7 +122,7 @@ describe('listExperimentsForUser', () => {
 
   it('rejects an invalid status filter', async () => {
     await expect(
-      listExperimentsForUser('u-1', { status: 'shipping' as any }),
+      listExperimentsForUser('u-1', { status: 'shipping' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
@@ -282,7 +282,7 @@ describe('createExperiment', () => {
 
   it('rejects an invalid status', async () => {
     await expect(
-      createExperiment('u-1', { name: 'X', status: 'shipping' as any }),
+      createExperiment('u-1', { name: 'X', status: 'shipping' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
@@ -329,7 +329,7 @@ describe('updateExperiment', () => {
 
   it('rejects an invalid status', async () => {
     await expect(
-      updateExperiment('exp-1', 'u-1', { status: 'shipping' as any }),
+      updateExperiment('exp-1', 'u-1', { status: 'shipping' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 

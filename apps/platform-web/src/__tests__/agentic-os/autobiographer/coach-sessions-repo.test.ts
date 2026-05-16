@@ -12,12 +12,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -28,7 +28,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -52,7 +52,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function sessionRow(over: Partial<Record<string, any>> = {}): any {
+function sessionRow(over: Partial<Record<string, unknown>> = {}): unknown {
   return {
     id: 'sess-1',
     user_id: 'u-1',
@@ -95,8 +95,8 @@ describe('autoTitle', () => {
   });
 
   it('returns "New conversation" for null/undefined input', () => {
-    expect(autoTitle(null as any)).toBe('New conversation');
-    expect(autoTitle(undefined as any)).toBe('New conversation');
+    expect(autoTitle(null as never)).toBe('New conversation');
+    expect(autoTitle(undefined as never)).toBe('New conversation');
   });
 });
 
@@ -107,7 +107,7 @@ describe('createSession', () => {
     await expect(
       createSession({
         userId: 'u-1',
-        mode: 'procurement_advisor' as any,
+        mode: 'procurement_advisor' as never,
         title: 'Hi',
       }),
     ).rejects.toThrow(/Invalid coach mode/);
@@ -135,8 +135,8 @@ describe('createSession', () => {
     expect(c.params[2]).toBe(null);
     expect(c.params[3]).toBe('general');
     expect(c.params[4]).toBe('A session');
-    expect(JSON.parse(c.params[5])[0].content).toBe('hello');
-    expect(JSON.parse(c.params[6]).system_prompt_version).toBe('v1');
+    expect(JSON.parse(c.params[5] as string)[0].content).toBe('hello');
+    expect(JSON.parse(c.params[6] as string).system_prompt_version).toBe('v1');
   });
 
   it('returns a hydrated CoachSession row', async () => {
@@ -244,7 +244,7 @@ describe('listSessions', () => {
 
   it('rejects an invalid mode filter', async () => {
     await expect(
-      listSessions({ userId: 'u-1', mode: 'shop_safety' as any }),
+      listSessions({ userId: 'u-1', mode: 'shop_safety' as never }),
     ).rejects.toThrow(/Invalid coach mode/);
   });
 
@@ -297,13 +297,13 @@ describe('appendMessages', () => {
       { role: 'assistant', content: 'reply', created_at: '2026-05-12T10:02:00Z' },
     ]);
     expect(calls[0].sql).toMatch(/messages\s*=\s*messages \|\| \$3::jsonb/);
-    expect(JSON.parse(calls[0].params[2])[0].role).toBe('assistant');
+    expect(JSON.parse(calls[0].params[2] as string)[0].role).toBe('assistant');
   });
 
   it('rejects an invalid role', async () => {
     await expect(
       appendMessages('sess-1', 'u-1', [
-        { role: 'narrator' as any, content: 'x', created_at: '' },
+        { role: 'narrator' as never, content: 'x', created_at: '' },
       ]),
     ).rejects.toThrow(/Invalid message role/);
   });
@@ -311,7 +311,7 @@ describe('appendMessages', () => {
   it('rejects a non-string content', async () => {
     await expect(
       appendMessages('sess-1', 'u-1', [
-        { role: 'user', content: 42 as any, created_at: '' },
+        { role: 'user', content: 42 as never, created_at: '' },
       ]),
     ).rejects.toThrow(/content must be a string/);
   });
@@ -324,7 +324,7 @@ describe('patchMetadata', () => {
     pushResult({ rows: [sessionRow()], rowCount: 1 });
     await patchMetadata('sess-1', 'u-1', { foo: 'bar' });
     expect(calls[0].sql).toMatch(/metadata\s*=\s*metadata \|\| \$3::jsonb/);
-    expect(JSON.parse(calls[0].params[2]).foo).toBe('bar');
+    expect(JSON.parse(calls[0].params[2] as string).foo).toBe('bar');
   });
 
   it('returns null when row missing', async () => {

@@ -21,7 +21,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentMakerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
-  getCurrentMakerUser: (...args: any[]) => getCurrentMakerUser(...args),
+  getCurrentMakerUser: (...args: unknown[]) => getCurrentMakerUser(...args),
   getMakerPool: () => ({ query: vi.fn() }),
 }));
 
@@ -39,7 +39,7 @@ vi.mock('@/lib/agentic-os/maker/repo', () => repoMocks);
 
 beforeEach(() => {
   getCurrentMakerUser.mockReset();
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -92,7 +92,7 @@ describe('POST /api/tiresias/agentic-os/maker/projects', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', { name: 'X' }) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', { name: 'X' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -101,7 +101,7 @@ describe('POST /api/tiresias/agentic-os/maker/projects', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -112,7 +112,7 @@ describe('POST /api/tiresias/agentic-os/maker/projects', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', { name: 'Foo' }) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', { name: 'Foo' }) as never);
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -132,7 +132,7 @@ describe('GET /api/tiresias/agentic-os/maker/projects/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(401);
@@ -144,7 +144,7 @@ describe('GET /api/tiresias/agentic-os/maker/projects/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'missing' }),
     });
     expect(res.status).toBe(404);
@@ -156,7 +156,7 @@ describe('GET /api/tiresias/agentic-os/maker/projects/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(200);
@@ -171,7 +171,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'planning' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'planning' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -184,7 +184,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { name: 'Foo' }) as any,
+      jsonReq('http://t/x', 'PATCH', { name: 'Foo' }) as never,
       { params: Promise.resolve({ id: 'missing' }) },
     );
     expect(res.status).toBe(404);
@@ -198,7 +198,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]', () => {
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { name: 'Renamed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { name: 'Renamed' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -215,7 +215,7 @@ describe('DELETE /api/tiresias/agentic-os/maker/projects/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
-    const res = await DELETE({} as any, {
+    const res = await DELETE({} as never, {
       params: Promise.resolve({ id: 'missing' }),
     });
     expect(res.status).toBe(404);
@@ -228,7 +228,7 @@ describe('DELETE /api/tiresias/agentic-os/maker/projects/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/route'
     );
-    const res = await DELETE({} as any, {
+    const res = await DELETE({} as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(200);
@@ -247,7 +247,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/phase-progress/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { concept: 10 }) as any,
+      jsonReq('http://t/x', 'PATCH', { concept: 10 }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(401);
@@ -259,7 +259,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/phase-progress/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { concept: 200 }) as any,
+      jsonReq('http://t/x', 'PATCH', { concept: 200 }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -271,7 +271,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/phase-progress/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { planning: 50 }) as any,
+      jsonReq('http://t/x', 'PATCH', { planning: 50 }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -284,7 +284,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/phase-progress/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { concept: 10 }) as any,
+      jsonReq('http://t/x', 'PATCH', { concept: 10 }) as never,
       { params: Promise.resolve({ id: 'missing' }) },
     );
     expect(res.status).toBe(404);
@@ -301,7 +301,7 @@ describe('PATCH /api/tiresias/agentic-os/maker/projects/[id]/phase-progress', ()
       '@/app/api/tiresias/agentic-os/maker/projects/[id]/phase-progress/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { concept: 30 }) as any,
+      jsonReq('http://t/x', 'PATCH', { concept: 30 }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);

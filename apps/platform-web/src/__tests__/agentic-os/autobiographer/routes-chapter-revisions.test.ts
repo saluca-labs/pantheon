@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -46,7 +46,7 @@ vi.mock('@/lib/agentic-os/autobiographer/chapter-revisions-repo', () => revRepoM
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -58,8 +58,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(chaptersRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(revRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(chaptersRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(revRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -88,7 +88,7 @@ describe('GET /chapters/[id]/revisions', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(401);
@@ -100,7 +100,7 @@ describe('GET /chapters/[id]/revisions', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-foreign' }),
     });
     expect(res.status).toBe(404);
@@ -115,7 +115,7 @@ describe('GET /chapters/[id]/revisions', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(200);
@@ -134,7 +134,7 @@ describe('POST /chapters/[id]/revisions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { author: 'user', bodyText: 'x' }) as any,
+      jsonReq('http://t/x', 'POST', { author: 'user', bodyText: 'x' }) as never,
       { params: Promise.resolve({ id: 'c-foreign' }) },
     );
     expect(res.status).toBe(404);
@@ -150,7 +150,7 @@ describe('POST /chapters/[id]/revisions', () => {
       jsonReq('http://t/x', 'POST', {
         author: 'coach',
         bodyText: 'draft from coach',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(400);
@@ -174,7 +174,7 @@ describe('POST /chapters/[id]/revisions', () => {
         author: 'coach',
         bodyText: 'draft from coach',
         coach_session_id: VALID_UUID,
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(201);
@@ -193,7 +193,7 @@ describe('POST /chapters/[id]/revisions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { author: 'admin', bodyText: 'x' }) as any,
+      jsonReq('http://t/x', 'POST', { author: 'admin', bodyText: 'x' }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(400);
@@ -213,7 +213,7 @@ describe('POST /chapters/[id]/revisions', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { author: 'user', bodyText: 'one two' }) as any,
+      jsonReq('http://t/x', 'POST', { author: 'user', bodyText: 'one two' }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(201);
@@ -230,7 +230,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { bodyText: 'edit' }) as any,
+      jsonReq('http://t/x', 'PATCH', { bodyText: 'edit' }) as never,
       { params: Promise.resolve({ id: 'c-x', revId: 'r-1' }) },
     );
     expect(res.status).toBe(404);
@@ -247,7 +247,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { bodyText: 'edit' }) as any,
+      jsonReq('http://t/x', 'PATCH', { bodyText: 'edit' }) as never,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
     expect(res.status).toBe(404);
@@ -272,7 +272,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
     );
     // valid kind passes
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['death'] }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['death'] }) as never,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
     expect(res.status).toBe(200);
@@ -283,7 +283,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
     );
     // invalid enum fails
     const res2 = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['BOGUS'] }) as never,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
     expect(res2.status).toBe(400);
@@ -307,7 +307,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['legal'] }) as any,
+      jsonReq('http://t/x', 'PATCH', { sensitiveKinds: ['legal'] }) as never,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
     expect(res.status).toBe(200);
@@ -335,7 +335,7 @@ describe('PATCH /chapters/[id]/revisions/[revId]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { bodyText: 'new prose' }) as any,
+      jsonReq('http://t/x', 'PATCH', { bodyText: 'new prose' }) as never,
       { params: Promise.resolve({ id: 'c-1', revId: 'r-1' }) },
     );
     expect(res.status).toBe(200);
@@ -362,7 +362,7 @@ describe('DELETE /chapters/[id]/revisions/[revId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'c-1', revId: 'r-1' }),
     });
     expect(res.status).toBe(200);
@@ -383,7 +383,7 @@ describe('DELETE /chapters/[id]/revisions/[revId]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/revisions/[revId]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'c-1', revId: 'r-1' }),
     });
     expect(res.status).toBe(404);

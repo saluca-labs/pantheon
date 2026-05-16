@@ -135,7 +135,7 @@ describe('normalizeTags', () => {
     expect(normalizeTags(42)).toEqual([]);
   });
   it('skips non-string entries', () => {
-    expect(normalizeTags(['foo', 42 as any, null as any, 'bar'])).toEqual(['foo', 'bar']);
+    expect(normalizeTags(['foo', 42 as never, null as never, 'bar'])).toEqual(['foo', 'bar']);
   });
 });
 
@@ -160,7 +160,7 @@ describe('validatePerson', () => {
     expect(validatePerson({ firstName: 'J', lastName: 'S', email: undefined }).filter((e) => /Email/i.test(e))).toEqual([]);
   });
   it('flags a stage outside the legacy taxonomy', () => {
-    expect(validatePerson({ firstName: 'J', lastName: 'S', stage: 'prospect' as any }).some((e) => /Stage/i.test(e))).toBe(true);
+    expect(validatePerson({ firstName: 'J', lastName: 'S', stage: 'prospect' as never }).some((e) => /Stage/i.test(e))).toBe(true);
   });
 });
 
