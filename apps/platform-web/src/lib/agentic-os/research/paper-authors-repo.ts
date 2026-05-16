@@ -44,7 +44,28 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToLink(row: any): PaperAuthorLink {
+interface RawPaperAuthorLinkRow {
+  id: string;
+  paper_id: string;
+  author_id: string;
+  position: number | string;
+  created_at: Date | string;
+}
+
+interface RawJoinedAuthorRow {
+  a_id: string;
+  a_user_id: string;
+  a_display_name: string;
+  a_given_name: string | null;
+  a_family_name: string | null;
+  a_orcid: string | null;
+  a_affiliation: string | null;
+  a_metadata: Record<string, unknown> | null;
+  a_created_at: Date | string;
+  a_updated_at: Date | string;
+}
+
+function rowToLink(row: RawPaperAuthorLinkRow): PaperAuthorLink {
   return {
     id: row.id,
     paperId: row.paper_id,
@@ -54,7 +75,7 @@ function rowToLink(row: any): PaperAuthorLink {
   };
 }
 
-function rowToAuthor(row: any): Author {
+function rowToAuthor(row: RawJoinedAuthorRow): Author {
   return {
     id: row.a_id,
     userId: row.a_user_id,
@@ -129,7 +150,7 @@ export async function listOrderedAuthorsForPaper(
       ORDER BY pa.position ASC`,
     [paperId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawPaperAuthorLinkRow & RawJoinedAuthorRow) => ({
     link: rowToLink({
       id: row.id,
       paper_id: row.paper_id,

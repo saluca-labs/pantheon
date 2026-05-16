@@ -37,7 +37,20 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToAuthor(row: any): Author {
+interface RawAuthorRow {
+  id: string;
+  user_id: string;
+  display_name: string;
+  given_name: string | null;
+  family_name: string | null;
+  orcid: string | null;
+  affiliation: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToAuthor(row: RawAuthorRow): Author {
   return {
     id: row.id,
     userId: row.user_id,
@@ -59,7 +72,7 @@ export async function listAuthors(
   opts: AuthorsListOpts = {},
 ): Promise<Author[]> {
   const pool = getResearchPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.familyNamePrefix && opts.familyNamePrefix.trim()) {
@@ -160,7 +173,7 @@ export async function updateAuthor(
 ): Promise<UpdateAuthorOutcome> {
   const pool = getResearchPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.displayName !== undefined) {

@@ -44,7 +44,24 @@ export interface ListHypothesesOpts {
   archived?: boolean | 'all';
 }
 
-function rowToHypothesis(row: any): Hypothesis {
+interface RawResearchHypothesisRow {
+  id: string;
+  user_id: string;
+  title: string;
+  if_clause: string;
+  then_clause: string;
+  because_clause: string;
+  status: string;
+  confidence: string;
+  tags: string[] | null;
+  experiment_ids: string[] | null;
+  description_md: string | null;
+  archived_at: Date | string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+function rowToHypothesis(row: RawResearchHypothesisRow): Hypothesis {
   return {
     id: row.id,
     userId: row.user_id,
@@ -227,7 +244,22 @@ export async function restoreHypothesis(
 
 // ─── Experiments — legacy hypothesis-keyed view (kept for back-compat) ────
 
-function rowToExperimentDesign(row: any): ExperimentDesign {
+interface RawExperimentDesignRow {
+  id: string;
+  hypothesis_id: string;
+  user_id: string;
+  title: string;
+  independent: string;
+  dependent: string;
+  controls: string | null;
+  protocol: string | null;
+  success_criteria: string | null;
+  status: ExperimentDesign['status'];
+  created_at: Date;
+  updated_at: Date;
+}
+
+function rowToExperimentDesign(row: RawExperimentDesignRow): ExperimentDesign {
   return {
     id: row.id,
     hypothesisId: row.hypothesis_id,
@@ -334,7 +366,30 @@ const EXPERIMENT_COLUMNS = `id, user_id, hypothesis_id, title AS name, descripti
                             independent, dependent, controls, protocol, success_criteria,
                             created_at, updated_at`;
 
-function rowToExperiment(row: any): ResearchExperiment {
+interface RawResearchExperimentRow {
+  id: string;
+  user_id: string;
+  hypothesis_id: string | null;
+  name: string;
+  description: string | null;
+  status: string | null;
+  tags: string[] | null;
+  cover_image_url: string | null;
+  target_completion_date: Date | string | null;
+  team_size: number | string | null;
+  phase_progress: unknown;
+  archived_at: Date | string | null;
+  metadata: Record<string, unknown> | null;
+  independent: string | null;
+  dependent: string | null;
+  controls: string | null;
+  protocol: string | null;
+  success_criteria: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToExperiment(row: RawResearchExperimentRow): ResearchExperiment {
   return {
     id: row.id,
     userId: row.user_id,
@@ -373,7 +428,7 @@ export async function listExperimentsForUser(
   opts: ListExperimentsOpts = {},
 ): Promise<ResearchExperiment[]> {
   const pool = getResearchPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = ['user_id = $1'];
 
   if (opts.status) {

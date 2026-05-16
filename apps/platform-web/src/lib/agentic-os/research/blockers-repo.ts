@@ -95,7 +95,17 @@ export async function listTopBlockers(
 
   const items: BlockerItem[] = [];
 
-  for (const row of milestoneRows.rows as any[]) {
+  type RawBlockerMilestoneRow = {
+    id: string;
+    experiment_id: string;
+    title: string;
+    status: string;
+    due_at: Date | string | null;
+    blocked_reason: string | null;
+    created_at: Date | string;
+    experiment_name: string | null;
+  };
+  for (const row of milestoneRows.rows as RawBlockerMilestoneRow[]) {
     const status = row.status as MilestoneStatus;
     const dueAt = toDateOrNull(row.due_at);
     const severity = milestoneBlockerSeverity(status, dueAt, todayIso, cutoffIso);
@@ -114,7 +124,16 @@ export async function listTopBlockers(
     });
   }
 
-  for (const row of dependencyRows.rows as any[]) {
+  type RawBlockerDependencyRow = {
+    id: string;
+    from_experiment_id: string;
+    to_experiment_id: string;
+    notes: string | null;
+    created_at: Date | string;
+    from_name: string | null;
+    to_name: string | null;
+  };
+  for (const row of dependencyRows.rows as RawBlockerDependencyRow[]) {
     const severity: BlockerSeverity = 'medium';
     items.push({
       kind: 'dependency',

@@ -52,7 +52,23 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToEntry(row: any): NotebookEntry {
+interface RawNotebookEntryRow {
+  id: string;
+  user_id: string;
+  experiment_id: string;
+  entry_kind: string;
+  title: string;
+  body_md: string | null;
+  attached_urls: string[] | null;
+  tags: string[] | null;
+  entry_at: Date | string;
+  archived_at: Date | string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToEntry(row: RawNotebookEntryRow): NotebookEntry {
   const kind = asEntryKind(row.entry_kind);
   if (!kind) {
     // Defensive: the CHECK should make this unreachable, but a corrupt
@@ -127,7 +143,7 @@ export async function listNotebookEntriesForExperiment(
   opts: NotebookListOpts = {},
 ): Promise<NotebookEntry[]> {
   const pool = getResearchPool();
-  const params: any[] = [experimentId, userId];
+  const params: unknown[] = [experimentId, userId];
   const where: string[] = [
     `n.experiment_id = $1`,
     `EXISTS (

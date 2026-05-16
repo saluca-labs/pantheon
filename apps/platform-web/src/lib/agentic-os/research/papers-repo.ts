@@ -49,7 +49,26 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToPaper(row: any): Paper {
+interface RawPaperRow {
+  id: string;
+  user_id: string;
+  title: string;
+  kind: string;
+  doi: string | null;
+  arxiv_id: string | null;
+  url: string | null;
+  authors_text: string | null;
+  venue: string | null;
+  year: number | string | null;
+  abstract_md: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPaper(row: RawPaperRow): Paper {
   return {
     id: row.id,
     userId: row.user_id,
@@ -77,7 +96,7 @@ export async function listPapers(
   opts: PapersListOpts = {},
 ): Promise<Paper[]> {
   const pool = getResearchPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`p.user_id = $1`];
 
   if (opts.archived === true) {
@@ -225,7 +244,7 @@ export async function updatePaper(
   // patch uses CASE WHEN ... or explicit set-if-present per column.
   // Simpler approach: only update columns the caller actually included.
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {
