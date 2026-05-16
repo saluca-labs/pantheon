@@ -28,7 +28,7 @@ import {
   countLinkedExperimentsForPaper,
 } from '@/lib/agentic-os/research/papers-repo';
 import { listOrderedAuthorsForPaper } from '@/lib/agentic-os/research/paper-authors-repo';
-import { PAPER_KINDS } from '@/lib/agentic-os/research/paper-kinds';
+import { PAPER_KINDS, type PaperKind } from '@/lib/agentic-os/research/paper-kinds';
 
 const PatchBody = z
   .object({
@@ -117,15 +117,15 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const { archived: _drop, ...rest } = d;
   const outcome = await updatePaper(id, user.userId, {
     title: rest.title,
-    kind: rest.kind as any,
-    doi: rest.doi as any,
-    arxivId: rest.arxiv_id as any,
-    url: rest.url as any,
-    authorsText: rest.authors_text as any,
-    venue: rest.venue as any,
-    year: rest.year as any,
-    abstractMd: rest.abstract_md as any,
-    tags: rest.tags as any,
+    kind: rest.kind as PaperKind | undefined,
+    doi: rest.doi,
+    arxivId: rest.arxiv_id,
+    url: rest.url,
+    authorsText: rest.authors_text,
+    venue: rest.venue,
+    year: rest.year,
+    abstractMd: rest.abstract_md,
+    tags: rest.tags,
     metadata: rest.metadata,
   });
 

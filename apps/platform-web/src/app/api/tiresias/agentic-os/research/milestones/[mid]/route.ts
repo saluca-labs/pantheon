@@ -24,6 +24,7 @@ import {
 import {
   MILESTONE_STATUS_VALUES,
   MILESTONE_PRIORITY_VALUES,
+  type UpdateMilestoneInput,
 } from '@/lib/agentic-os/research/milestones';
 
 const STATUS_ENUM = z.enum(
@@ -78,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const milestone = await updateMilestone(mid, user.userId, parsed.data as any);
+    const milestone = await updateMilestone(mid, user.userId, parsed.data as UpdateMilestoneInput);
     if (!milestone) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     await recordAudit({

@@ -30,7 +30,7 @@ import {
   listLinkedHypothesesForExperiment,
   createLink,
 } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
-import { LINK_ROLES } from '@/lib/agentic-os/research/experiment-hypotheses';
+import { LINK_ROLES, type LinkRole } from '@/lib/agentic-os/research/experiment-hypotheses';
 
 const CreateBody = z.object({
   hypothesis_id: z.string().uuid(),
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const outcome = await createLink(experimentId, user.userId, {
     hypothesisId: parsed.data.hypothesis_id,
-    role: parsed.data.role as any,
+    role: parsed.data.role as LinkRole | undefined,
     notes: parsed.data.notes ?? null,
   });
 

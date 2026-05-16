@@ -29,6 +29,7 @@ import {
 import {
   REPRO_STATE_VALUES,
   validateReproItemKey,
+  type UpdateReproCheckInput,
 } from '@/lib/agentic-os/research/reproducibility';
 
 const STATE_ENUM = z.enum(
@@ -73,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       experimentId,
       itemKey,
       user.userId,
-      parsed.data as any,
+      parsed.data as UpdateReproCheckInput,
     );
     if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

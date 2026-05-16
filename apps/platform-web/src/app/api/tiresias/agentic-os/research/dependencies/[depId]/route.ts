@@ -22,6 +22,7 @@ import {
 import {
   DEPENDENCY_KIND_VALUES,
   DEPENDENCY_STATUS_VALUES,
+  type UpdateDependencyInput,
 } from '@/lib/agentic-os/research/dependencies';
 
 const KIND_ENUM = z.enum(
@@ -59,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const dependency = await updateDependency(depId, user.userId, parsed.data as any);
+    const dependency = await updateDependency(depId, user.userId, parsed.data as UpdateDependencyInput);
     if (!dependency) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Status transition audit events.
