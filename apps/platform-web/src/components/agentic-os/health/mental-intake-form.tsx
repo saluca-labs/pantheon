@@ -187,8 +187,12 @@ export function MentalIntakeForm({ initial, onSaved }: Props) {
         >
           {saving ? 'Saving…' : 'Save mental-health profile'}
         </button>
-        {message && <span className="text-sm text-emerald-300">{message}</span>}
-        {error && <span className="text-sm text-red-300">{error}</span>}
+        <span role="status" aria-live="polite" className="text-sm text-emerald-300">
+          {message ?? ''}
+        </span>
+        <span role="alert" className="text-sm text-red-300">
+          {error ?? ''}
+        </span>
       </div>
     </form>
   );
