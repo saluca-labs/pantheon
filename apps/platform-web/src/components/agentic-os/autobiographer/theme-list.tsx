@@ -36,7 +36,7 @@ export function ThemeList({
   if (themes.length === 0) {
     if (!emptyText) return null;
     return (
-      <span className="text-[10px] text-[#64748b] italic">{emptyText}</span>
+      <span className="text-[10px] text-text-tertiary italic">{emptyText}</span>
     );
   }
   return (

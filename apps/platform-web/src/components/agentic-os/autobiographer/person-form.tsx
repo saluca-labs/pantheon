@@ -146,7 +146,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
 
         <label className="block">
           <span className="text-xs uppercase tracking-wide text-text-secondary">
-            Canonical name<span className="text-red-400">*</span>
+            Canonical name<span className="text-danger">*</span>
           </span>
           <input
             value={canonicalName}
@@ -161,7 +161,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
         <label className="block">
           <span className="text-xs uppercase tracking-wide text-text-secondary">
             Aliases{' '}
-            <span className="text-[#64748b] normal-case">(one per line)</span>
+            <span className="text-text-tertiary normal-case">(one per line)</span>
           </span>
           <textarea
             value={aliasesInput}
@@ -279,7 +279,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
         </label>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
+          <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2">
             {error}
           </div>
         )}
@@ -295,7 +295,7 @@ export function PersonForm({ open, onClose, initial }: PersonFormProps) {
           <button
             type="submit"
             disabled={submitting || !canonicalName.trim()}
-            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
+            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-accent/90 transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Add person'}
           </button>

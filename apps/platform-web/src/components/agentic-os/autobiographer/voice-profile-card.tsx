@@ -86,7 +86,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
     <article
       className={`rounded-xl border bg-surface-2 p-4 space-y-3 ${
         profile.isActive
-          ? 'border-emerald-500/40 ring-1 ring-emerald-500/20'
+          ? 'border-positive/40 ring-1 ring-positive/20'
           : 'border-border-subtle'
       }`}
     >
@@ -97,7 +97,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
               Version {profile.version}
             </h3>
             {profile.isActive && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-positive/15 text-positive border border-positive/30">
                 <CheckCircle2 className="w-3 h-3" />
                 Active
               </span>
@@ -110,7 +110,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
             <span>•</span>
             <span>{profile.sampleWordCount.toLocaleString()} words</span>
             <span>•</span>
-            <span className="font-mono text-[10px] text-[#64748b] truncate max-w-[12rem]">
+            <span className="font-mono text-[10px] text-text-tertiary truncate max-w-[12rem]">
               {profile.builder}
             </span>
           </div>
@@ -121,7 +121,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
               type="button"
               onClick={activate}
               disabled={busy !== null}
-              className="text-xs px-2 py-1 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:text-white hover:bg-emerald-500/20 disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+              className="text-xs px-2 py-1 rounded border border-positive/30 bg-positive/10 text-positive hover:text-white hover:bg-positive/20 disabled:opacity-50 inline-flex items-center gap-1.5 transition"
             >
               <Power className="w-3.5 h-3.5" />
               {busy === 'activate' ? 'Activating…' : 'Activate'}
@@ -131,7 +131,7 @@ export function VoiceProfileCard({ profile }: VoiceProfileCardProps) {
             type="button"
             onClick={remove}
             disabled={busy !== null}
-            className="text-xs px-2 py-1 rounded border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:text-white hover:bg-rose-500/20 disabled:opacity-50 inline-flex items-center gap-1.5 transition"
+            className="text-xs px-2 py-1 rounded border border-danger/30 bg-danger/10 text-danger hover:text-white hover:bg-danger/20 disabled:opacity-50 inline-flex items-center gap-1.5 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             {busy === 'delete' ? 'Deleting…' : 'Delete'}

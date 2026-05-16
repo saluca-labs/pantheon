@@ -31,7 +31,7 @@ export function CoachCitationPanel({ assistantText, memoryTitles }: Props) {
   const citations = useMemo(() => parseCitations(assistantText), [assistantText]);
   if (citations.length === 0) {
     return (
-      <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 text-xs text-[#64748b] italic">
+      <div className="rounded-lg border border-border-subtle bg-surface-0 p-3 text-xs text-text-tertiary italic">
         No citation markers yet. The drafter appends a{' '}
         <code className="font-mono">[cites: …]</code> line after each paragraph;
         none have been emitted on this turn.

@@ -67,7 +67,7 @@ export function PersonEditButton({ person }: PersonEditButtonProps) {
           type="button"
           onClick={remove}
           disabled={deleting}
-          className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:text-white hover:bg-rose-500/20 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded border border-danger/30 bg-danger/10 text-danger hover:text-white hover:bg-danger/20 disabled:opacity-50 transition"
         >
           <Trash2 className="w-4 h-4" />
           {deleting ? 'Deleting…' : 'Delete'}
@@ -90,7 +90,7 @@ export function PersonActions({ label }: { label?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] transition"
+        className="inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-accent/90 transition"
       >
         <Plus className="w-4 h-4" />
         {label ?? 'Add person'}

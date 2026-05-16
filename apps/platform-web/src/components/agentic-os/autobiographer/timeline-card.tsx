@@ -38,7 +38,7 @@ export function TimelineCard({ memory }: TimelineCardProps) {
               <span className="text-text-primary">{memory.whenInLife}</span>
             )}
             {memory.isSensitive && (
-              <span className="inline-flex items-center gap-1 text-amber-300">
+              <span className="inline-flex items-center gap-1 text-warning">
                 <Lock className="w-3 h-3" />
                 sensitive
               </span>

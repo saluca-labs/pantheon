@@ -92,7 +92,7 @@ export function VoiceSampleCard({ sample }: VoiceSampleCardProps) {
             {sample.isArchived && (
               <>
                 <span>•</span>
-                <span className="text-amber-300">Archived</span>
+                <span className="text-warning">Archived</span>
               </>
             )}
           </div>

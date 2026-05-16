@@ -36,7 +36,7 @@ export function PrivacyPeoplePanel({ people }: PrivacyPeoplePanelProps) {
         </span>
       </div>
       {people.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic">
+        <p className="text-xs text-text-tertiary italic">
           No people are referenced in the memories linked to this book yet.
         </p>
       ) : (
@@ -52,10 +52,10 @@ export function PrivacyPeoplePanel({ people }: PrivacyPeoplePanelProps) {
               >
                 <UserCircle2 className="w-4 h-4 text-text-secondary shrink-0" />
                 <span className="truncate">{p.canonicalName}</span>
-                <ExternalLink className="w-3 h-3 text-[#64748b] shrink-0" />
+                <ExternalLink className="w-3 h-3 text-text-tertiary shrink-0" />
               </Link>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-[#64748b]">
+                <span className="text-xs text-text-tertiary">
                   {p.memoryCount}{' '}
                   {p.memoryCount === 1 ? 'memory' : 'memories'}
                 </span>
