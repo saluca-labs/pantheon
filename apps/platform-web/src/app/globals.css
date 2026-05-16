@@ -30,6 +30,17 @@
 @source inline("border-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}/30");
 @source inline("ring-os-{health,maker,research,secure-dev,filmmaker,cyber,autobiographer,business,creator}/40");
 
+/* Configurable accent tokens (W-F.3). `accent-info` + `accent-pink` are
+ * the two "rare-color" surfaces that surfaced during the business/ drain
+ * (expense category palette, status pills). They're first-class
+ * tenant-configurable surfaces — defaults below, per-tenant override
+ * planned via Wave F.7/G config layer. Same opacity-modifier surface
+ * area as the per-OS accents (10/15/20/30/40/70). */
+@source inline("{bg,text,border}-accent-{info,pink}");
+@source inline("bg-accent-{info,pink}/{10,15,20,30,40,70}");
+@source inline("border-accent-{info,pink}/{30,40}");
+@source inline("text-accent-{info,pink}/{70,80}");
+
 /* ------------------------------------------------------------------ *
  * Pantheon design tokens
  *
@@ -84,6 +95,16 @@
   --warning: #fbbf24;
   --attention: #fb923c;
   --danger: #f87171;
+
+  /* Configurable accents (W-F.3). Two "rare-color" surfaces extracted
+   * during the business/ palette drain. Defaults below; per-tenant
+   * override planned via Wave F.7/G config layer.
+   *  - accent-info: neutral-info accent (cyan-400, calmer than
+   *    os-research's sky for non-research surfaces).
+   *  - accent-pink: tertiary-pink accent for category/status pills
+   *    that need a 12th distinct hue beyond the per-OS palette. */
+  --accent-info: #22d3ee;        /* cyan-400 */
+  --accent-pink: #f472b6;        /* pink-400 */
 
   /* Per-OS accents (one per registry slug) */
   --os-health: #34d399;          /* emerald-400 */
@@ -146,6 +167,9 @@
   --color-warning: var(--warning);
   --color-attention: var(--attention);
   --color-danger: var(--danger);
+
+  --color-accent-info: var(--accent-info);
+  --color-accent-pink: var(--accent-pink);
 
   --color-os-health: var(--os-health);
   --color-os-maker: var(--os-maker);

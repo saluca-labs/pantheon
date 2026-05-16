@@ -12,20 +12,20 @@ import React from 'react';
 import type { ExpenseCategory } from '@/lib/agentic-os/business/expenses';
 
 const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  general: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  software: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  hardware: 'bg-violet-900/40 text-violet-300 border-violet-800',
-  travel: 'bg-cyan-900/40 text-cyan-300 border-cyan-800',
-  meals: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  marketing: 'bg-pink-900/40 text-pink-300 border-pink-800',
-  contractor: 'bg-indigo-900/40 text-indigo-300 border-indigo-800',
-  office: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  utilities: 'bg-yellow-900/40 text-yellow-300 border-yellow-800',
-  insurance: 'bg-red-900/40 text-red-300 border-red-800',
-  professional_services: 'bg-teal-900/40 text-teal-300 border-teal-800',
-  education: 'bg-orange-900/40 text-orange-300 border-orange-800',
-  taxes: 'bg-rose-900/40 text-rose-300 border-rose-800',
-  other: 'bg-slate-900/40 text-slate-400 border-slate-800',
+  general: 'bg-surface-2 text-text-secondary border-border-subtle',
+  software: 'bg-accent/15 text-accent border-accent/30',
+  hardware: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
+  travel: 'bg-accent-info/15 text-accent-info border-accent-info/30',
+  meals: 'bg-warning/15 text-warning border-warning/30',
+  marketing: 'bg-accent-pink/15 text-accent-pink border-accent-pink/30',
+  contractor: 'bg-os-autobiographer/15 text-os-autobiographer border-os-autobiographer/30',
+  office: 'bg-positive/15 text-positive border-positive/30',
+  utilities: 'bg-os-maker/15 text-os-maker border-os-maker/30',
+  insurance: 'bg-danger/15 text-danger border-danger/30',
+  professional_services: 'bg-os-business/15 text-os-business border-os-business/30',
+  education: 'bg-attention/15 text-attention border-attention/30',
+  taxes: 'bg-os-filmmaker/15 text-os-filmmaker border-os-filmmaker/30',
+  other: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 interface Props {

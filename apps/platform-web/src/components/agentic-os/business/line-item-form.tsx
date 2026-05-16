@@ -2,7 +2,7 @@
  * Business OS Phase 4 — line item inline row editor.
  *
  * Wave D (UI Depth Wave) polish: migrated the hand-spelled hex / `text-white`
- * / `bg-teal-600` literals onto the visual-language tokens (text hierarchy,
+ * / raw teal palette literals onto the visual-language tokens (text hierarchy,
  * `danger` status token, `os-business` accent for the add button). Same
  * fields, same submit payload, same routes — presentation only.
  *
