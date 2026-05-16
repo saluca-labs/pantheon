@@ -16,6 +16,7 @@ import {
   createSupplier,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import type { SupplierUpsert } from '@/lib/agentic-os/maker/suppliers';
 
 const SupplierBody = z.object({
   name: z.string().min(1).max(200),
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supplier = await createSupplier(user.userId, parsed.data as any);
+  const supplier = await createSupplier(user.userId, parsed.data as SupplierUpsert);
   await recordAudit({
     actorId: user.userId,
     action: 'maker.supplier.created',

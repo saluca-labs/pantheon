@@ -16,6 +16,7 @@ import {
   PROJECT_STATUSES,
   MAKER_PHASES,
   coercePhaseProgress,
+  type ProjectStatus,
 } from '@/lib/agentic-os/maker/projects';
 
 const PhaseProgressSchema = z
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
   const project = await createProject(user.userId, {
     name: d.name,
     description: d.description ?? null,
-    status: d.status as any,
+    status: d.status as ProjectStatus | undefined,
     tags: d.tags,
     coverImageUrl: d.coverImageUrl ?? null,
     targetCompletionDate: d.targetCompletionDate ?? null,

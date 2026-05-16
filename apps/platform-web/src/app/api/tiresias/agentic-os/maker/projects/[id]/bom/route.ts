@@ -17,7 +17,7 @@ import {
   createBomLine,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { BOM_PRIORITY_VALUES } from '@/lib/agentic-os/maker/bom';
+import { BOM_PRIORITY_VALUES, type BomLineUpsert } from '@/lib/agentic-os/maker/bom';
 
 const CreateBody = z.object({
   partCatalogId: z.string().uuid(),
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const line = await createBomLine(projectId, user.userId, parsed.data as any);
+    const line = await createBomLine(projectId, user.userId, parsed.data as BomLineUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.bom_line.created',
