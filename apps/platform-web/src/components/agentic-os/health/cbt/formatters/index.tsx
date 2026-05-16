@@ -80,7 +80,7 @@ export function BehavioralActivationFormatter({ log }: FormatterProps) {
         </Field>
         <Field label="Completed">
           {d.completed ? (
-            <span className="text-emerald-300">Yes</span>
+            <span className="text-positive">Yes</span>
           ) : (
             <span className="text-text-secondary">Not yet</span>
           )}
@@ -261,7 +261,7 @@ export function SleepHygieneFormatter({ log }: FormatterProps) {
                   <span
                     className={`inline-block w-3.5 h-3.5 rounded-sm border ${
                       met
-                        ? 'bg-emerald-500/40 border-emerald-400/60'
+                        ? 'bg-positive/40 border-positive/60'
                         : 'bg-transparent border-border-subtle'
                     }`}
                     aria-hidden="true"

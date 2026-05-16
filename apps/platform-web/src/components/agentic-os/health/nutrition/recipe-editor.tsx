@@ -262,7 +262,7 @@ export function RecipeEditor({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <div className="lg:col-span-2 space-y-5">
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+          <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
             {error}
           </div>
         )}
@@ -345,7 +345,7 @@ export function RecipeEditor({
               type="button"
               onClick={saveHeader}
               disabled={savingHeader || name.trim().length === 0}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
               {savingHeader
@@ -527,7 +527,7 @@ function IngredientRow({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded p-1 text-text-secondary hover:bg-red-500/15 hover:text-red-300"
+          className="rounded p-1 text-text-secondary hover:bg-danger/15 hover:text-danger"
           aria-label="Delete"
         >
           <Trash2 className="h-4 w-4" />
@@ -619,7 +619,7 @@ function NewIngredientForm({
           type="button"
           onClick={submit}
           disabled={submitting || (!query.trim() && !selectedFood)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-60"
         >
           <Plus className="h-3.5 w-3.5" />
           Add
@@ -655,7 +655,7 @@ function NutritionPanel({ nutrition }: { nutrition: RecipeNutritionData }) {
         </div>
       </div>
       {nutrition.partial > 0 && (
-        <div className="text-[11px] text-amber-200/80">
+        <div className="text-[11px] text-warning/80">
           {nutrition.partial} ingredient{nutrition.partial === 1 ? '' : 's'} could
           not be auto-converted to grams — totals are partial.
         </div>

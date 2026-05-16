@@ -25,9 +25,9 @@ const INTENSITY_LABEL: Record<Intensity, string> = {
 };
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
-  light: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  light: 'text-positive bg-positive/10 border-positive/30',
   moderate: 'text-accent bg-accent/10 border-accent/40',
-  vigorous: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
+  vigorous: 'text-warning bg-warning/10 border-warning/30',
   rest: 'text-text-primary bg-surface-0 border-border-subtle',
 };
 
