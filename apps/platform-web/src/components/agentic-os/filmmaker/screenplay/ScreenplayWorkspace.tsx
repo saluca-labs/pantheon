@@ -316,7 +316,10 @@ export function ScreenplayWorkspace({
         </div>
 
         {error && (
-          <div className="mx-auto max-w-3xl rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
+          <div
+            role="alert"
+            className="mx-auto max-w-3xl rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger"
+          >
             {error}
           </div>
         )}
@@ -428,7 +431,10 @@ export function ScreenplayWorkspace({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
+        <div
+          role="alert"
+          className="rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger"
+        >
           {error}
         </div>
       )}

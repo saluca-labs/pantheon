@@ -122,7 +122,11 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
   if (savedId) {
     return (
       <div className="space-y-3">
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-2">
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-2"
+        >
           <Sparkles className="w-4 h-4 text-emerald-300 mt-0.5 shrink-0" />
           <div className="text-sm text-emerald-100">
             Saved. You can revisit or edit this on the journal trail below.
@@ -274,7 +278,9 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
               ? 'Save changes'
               : 'Save check-in'}
         </button>
-        {error && <span className="text-xs text-red-300">{error}</span>}
+        <span role="alert" className="text-xs text-red-300">
+          {error ?? ''}
+        </span>
       </div>
     </div>
   );
