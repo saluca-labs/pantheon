@@ -80,7 +80,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
       - run: pnpm install --frozen-lockfile
       - name: Lint TypeScript packages
-        run: pnpm lint || true   # non-fatal until ESLint config is added
+        run: pnpm lint || true   # non-fatal until @typescript-eslint/no-explicit-any debt is drained (Wave F)
 
   # ── Typecheck ────────────────────────────────────────────────────────────────
   typecheck:
