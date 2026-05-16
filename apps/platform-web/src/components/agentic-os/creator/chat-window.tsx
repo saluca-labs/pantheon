@@ -173,15 +173,16 @@ export function ChatWindow({
           }
         }
       }
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      if (errErr.name !== 'AbortError') {
         console.error('Stream error', err);
         // Add error note
         setMessages((prev) => [
           ...prev,
           {
             role: 'assistant',
-            content: `_Error: ${err.message || 'Failed to get response'}_`,
+            content: `_Error: ${errErr.message || 'Failed to get response'}_`,
           },
         ]);
       }

@@ -190,8 +190,10 @@ export async function attachChapterToArc(
        VALUES ($1, $2, $3, $4)`,
       [id, arcId, data.chapterId, pos],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       const dup = new Error('duplicate');
       (dup as any).code = 'duplicate';
       throw dup;

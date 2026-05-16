@@ -108,8 +108,9 @@ export function MemoryPeoplePicker({
       setPendingRole('');
       setSearch('');
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to link person');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to link person');
     } finally {
       setBusy(false);
     }
@@ -128,8 +129,9 @@ export function MemoryPeoplePicker({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to unlink person');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to unlink person');
     } finally {
       setBusy(false);
     }
@@ -154,8 +156,9 @@ export function MemoryPeoplePicker({
       setEditingPersonId(null);
       setEditRole('');
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save role');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save role');
     } finally {
       setBusy(false);
     }

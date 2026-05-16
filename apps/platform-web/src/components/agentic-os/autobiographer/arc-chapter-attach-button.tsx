@@ -52,8 +52,9 @@ export function ArcChapterAttachButton({
       }
       setOpen(false);
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to attach chapter');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to attach chapter');
     } finally {
       setBusy(false);
     }

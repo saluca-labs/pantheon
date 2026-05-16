@@ -90,11 +90,13 @@ export async function POST(request: NextRequest, { params }: Props) {
       projectId: arc?.bookId ?? null,
     });
     return NextResponse.json({ row }, { status: 201 });
-  } catch (err: any) {
-    if (err?.code === 'not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'not_found') {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    if (err?.code === 'duplicate') {
+    if (errErr?.code === 'duplicate') {
       return NextResponse.json(
         { error: 'Chapter is already attached to this arc.' },
         { status: 409 },
@@ -132,8 +134,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       projectId: arc?.bookId ?? null,
     });
     return NextResponse.json({ chapters });
-  } catch (err: any) {
-    if (err?.code === 'not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'not_found') {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
     throw err;
@@ -164,8 +168,10 @@ export async function DELETE(request: NextRequest, { params }: Props) {
       projectId: arc?.bookId ?? null,
     });
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    if (err?.code === 'not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'not_found') {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
     throw err;

@@ -63,8 +63,9 @@ export function SensitiveKindsPicker({
       }
       setCurrent(next);
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save tags');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save tags');
     } finally {
       setBusy(false);
     }

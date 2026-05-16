@@ -60,8 +60,9 @@ export function VoiceSampleToggle({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to mark as voice sample');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to mark as voice sample');
     } finally {
       setBusy(false);
     }
@@ -81,8 +82,9 @@ export function VoiceSampleToggle({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to unmark voice sample');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to unmark voice sample');
     } finally {
       setBusy(false);
     }

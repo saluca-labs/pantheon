@@ -181,8 +181,10 @@ export async function createPseudonym(
         data.notes ?? null,
       ],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       const dup = new Error('duplicate');
       (dup as any).code = 'duplicate';
       throw dup;

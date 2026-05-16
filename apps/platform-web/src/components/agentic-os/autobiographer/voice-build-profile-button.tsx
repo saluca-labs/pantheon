@@ -55,8 +55,9 @@ export function VoiceBuildProfileButton({
         );
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to build profile');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to build profile');
     } finally {
       setBusy(false);
     }

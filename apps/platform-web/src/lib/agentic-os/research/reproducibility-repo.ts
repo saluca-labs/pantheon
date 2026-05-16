@@ -220,8 +220,10 @@ export async function createReproCheck(
         JSON.stringify(data.metadata ?? {}),
       ],
     );
-  } catch (err: any) {
-    if (err && err.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (err && errErr.code === '23505') {
       throw new ReproDuplicateError();
     }
     throw err;

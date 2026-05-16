@@ -129,8 +129,9 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
         onSuccess?.(updated);
         router.refresh();
       }
-    } catch (err: any) {
-      setError(err.message ?? 'Save failed');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr.message ?? 'Save failed');
     } finally {
       setSaving(false);
     }

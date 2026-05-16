@@ -220,9 +220,11 @@ export async function createDependency(
         JSON.stringify(data.metadata ?? {}),
       ],
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
     // 23505 = unique_violation in Postgres.
-    if (err && err.code === '23505') {
+    if (err && errErr.code === '23505') {
       throw new DependencyDuplicateError();
     }
     throw err;

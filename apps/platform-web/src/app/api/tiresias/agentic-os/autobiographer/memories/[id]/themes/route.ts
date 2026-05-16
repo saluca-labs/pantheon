@@ -60,11 +60,13 @@ export async function POST(request: NextRequest, { params }: Props) {
       projectId: memory?.bookId ?? null,
     });
     return NextResponse.json({ link }, { status: 201 });
-  } catch (err: any) {
-    if (err?.code === 'not_found') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === 'not_found') {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    if (err?.code === 'duplicate') {
+    if (errErr?.code === 'duplicate') {
       return NextResponse.json(
         { error: 'Theme is already linked to this memory.' },
         { status: 409 },

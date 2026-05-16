@@ -188,9 +188,11 @@ export async function linkExistingAuthor(
        VALUES ($1, $2, $3, $4)`,
       [id, paperId, authorId, pos],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
-      const constraint: string = err.constraint ?? '';
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
+      const constraint: string = errErr.constraint ?? '';
       // Check `position` BEFORE `author` — the position-unique constraint
       // name contains "author" (the table name is `paper_authors`), so a
       // simple `.includes('author')` first would mis-route.

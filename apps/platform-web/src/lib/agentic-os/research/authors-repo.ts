@@ -133,8 +133,10 @@ export async function createAuthor(
         JSON.stringify(data.metadata ?? {}),
       ],
     );
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       return { kind: 'duplicate', field: 'orcid' };
     }
     throw err;
@@ -203,8 +205,10 @@ export async function updateAuthor(
       params,
     );
     if ((r.rowCount ?? 0) === 0) return { kind: 'not_found' };
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err: unknown) {
+    if (!(err instanceof Error)) throw err;
+    const errErr = err as Error & { code?: string; constraint?: string };
+    if (errErr?.code === '23505') {
       return { kind: 'duplicate', field: 'orcid' };
     }
     throw err;

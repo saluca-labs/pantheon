@@ -74,8 +74,9 @@ export function PseudonymRow({
         throw new Error(data.error ?? `${res.status} ${res.statusText}`);
       }
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to save pseudonym');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to save pseudonym');
     } finally {
       setBusy(false);
     }
@@ -101,8 +102,9 @@ export function PseudonymRow({
       setPseudonym('');
       setNotes('');
       router.refresh();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to clear pseudonym');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to clear pseudonym');
     } finally {
       setBusy(false);
     }

@@ -91,8 +91,9 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
       } else {
         router.push('/dashboard/os/creator/podcast');
       }
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to save');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr.message ?? 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -116,8 +117,9 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
       }
 
       router.push('/dashboard/os/creator/podcast');
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to publish');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr.message ?? 'Failed to publish');
     } finally {
       setSaving(false);
     }

@@ -63,8 +63,9 @@ export function ReproducibilityItemForm({
       const { item } = await r.json();
       onCreated?.(item);
       setItemKey('');
-    } catch (err: any) {
-      setError(err?.message ?? 'Network error');
+    } catch (err: unknown) {
+      const errErr = err instanceof Error ? err : new Error(String(err));
+      setError(errErr?.message ?? 'Network error');
     } finally {
       setSubmitting(false);
     }

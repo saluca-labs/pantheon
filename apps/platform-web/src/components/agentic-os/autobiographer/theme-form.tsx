@@ -72,8 +72,9 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
       setColor('');
       onClose();
       if (typeof window !== 'undefined') window.location.reload();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to create theme');
+    } catch (e: unknown) {
+      const eErr = e instanceof Error ? e : new Error(String(e));
+      setError(eErr.message ?? 'Failed to create theme');
     } finally {
       setBusy(false);
     }
