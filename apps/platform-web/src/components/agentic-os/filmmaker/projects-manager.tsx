@@ -43,10 +43,10 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_COLOR: Record<ProjectStatus, string> = {
-  pre_production: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  production: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  post_production: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  wrapped: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  pre_production: 'text-accent bg-accent/10 border-accent/30',
+  production: 'text-warning bg-warning/10 border-warning/30',
+  post_production: 'text-os-filmmaker bg-os-filmmaker/10 border-os-filmmaker/30',
+  wrapped: 'text-positive bg-positive/10 border-positive/30',
   archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 
@@ -269,7 +269,7 @@ function NewProjectDrawer({
         </Field>
 
         <div className="flex items-center justify-end gap-2 pt-2">
-          {error && <span className="text-sm text-red-300 mr-auto">{error}</span>}
+          {error && <span className="text-sm text-danger mr-auto">{error}</span>}
           <button
             type="button"
             onClick={onClose}
@@ -281,7 +281,7 @@ function NewProjectDrawer({
           <button
             type="submit"
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Creating…' : 'Create project'}
           </button>
@@ -430,7 +430,7 @@ export function ProjectsManager({ initialProjects }: { initialProjects: Filmmake
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white font-medium px-4 py-2 text-sm transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white font-medium px-4 py-2 text-sm transition"
           >
             <Plus className="w-4 h-4" />
             New project

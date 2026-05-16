@@ -17,12 +17,12 @@ import {
 } from '@/lib/agentic-os/filmmaker/characters';
 
 const ROLE_COLOR: Record<CharacterRole, string> = {
-  protagonist: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  antagonist: 'text-red-300 bg-red-500/10 border-red-500/30',
-  deuteragonist: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  supporting: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
+  protagonist: 'text-warning bg-warning/10 border-warning/30',
+  antagonist: 'text-danger bg-danger/10 border-danger/30',
+  deuteragonist: 'text-accent bg-accent/10 border-accent/30',
+  supporting: 'text-os-research bg-os-research/10 border-os-research/30',
   minor: 'text-text-secondary bg-surface-2 border-border-subtle',
-  ensemble: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  ensemble: 'text-positive bg-positive/10 border-positive/30',
 };
 
 function initials(name: string): string {

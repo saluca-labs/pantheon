@@ -85,7 +85,7 @@ export function ScreenplayVersionView({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-2.5 text-xs text-red-300">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 p-2.5 text-xs text-danger">
           {error}
         </div>
       )}

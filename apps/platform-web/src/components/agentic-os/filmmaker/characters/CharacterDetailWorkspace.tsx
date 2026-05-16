@@ -39,12 +39,12 @@ interface Props {
 }
 
 const ROLE_COLOR: Record<CharacterRole, string> = {
-  protagonist: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  antagonist: 'text-red-300 bg-red-500/10 border-red-500/30',
-  deuteragonist: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  supporting: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
+  protagonist: 'text-warning bg-warning/10 border-warning/30',
+  antagonist: 'text-danger bg-danger/10 border-danger/30',
+  deuteragonist: 'text-accent bg-accent/10 border-accent/30',
+  supporting: 'text-os-research bg-os-research/10 border-os-research/30',
   minor: 'text-text-secondary bg-surface-2 border-border-subtle',
-  ensemble: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  ensemble: 'text-positive bg-positive/10 border-positive/30',
 };
 
 function initials(name: string): string {
@@ -167,7 +167,7 @@ export function CharacterDetailWorkspace({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:border-red-500/60 text-red-300 transition"
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-danger/30 bg-danger/10 hover:border-danger/60 text-danger transition"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete
@@ -272,7 +272,7 @@ export function CharacterDetailWorkspace({
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="rounded-lg bg-red-500/80 hover:bg-red-500 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+                className="rounded-lg bg-danger/80 hover:bg-danger disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
               >
                 {deleting ? 'Deleting…' : 'Delete forever'}
               </button>

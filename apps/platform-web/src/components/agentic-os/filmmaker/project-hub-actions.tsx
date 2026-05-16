@@ -73,7 +73,7 @@ export function ProjectHubActions({ project }: Props) {
       <button
         type="button"
         onClick={() => setConfirmDelete(true)}
-        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:border-red-500/60 text-red-300 transition"
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-danger/30 bg-danger/10 hover:border-danger/60 text-danger transition"
       >
         <Trash2 className="w-3.5 h-3.5" />
         Delete
@@ -103,7 +103,7 @@ export function ProjectHubActions({ project }: Props) {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="rounded-lg bg-red-500/80 hover:bg-red-500 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+                className="rounded-lg bg-danger/80 hover:bg-danger disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
               >
                 {deleting ? 'Deleting…' : 'Delete forever'}
               </button>
@@ -294,7 +294,7 @@ function EditDrawer({
         </Field>
 
         <div className="flex items-center justify-end gap-2 pt-2">
-          {error && <span className="text-sm text-red-300 mr-auto">{error}</span>}
+          {error && <span className="text-sm text-danger mr-auto">{error}</span>}
           <button
             type="button"
             onClick={onClose}
@@ -306,7 +306,7 @@ function EditDrawer({
           <button
             type="submit"
             disabled={saving || !form.name.trim()}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

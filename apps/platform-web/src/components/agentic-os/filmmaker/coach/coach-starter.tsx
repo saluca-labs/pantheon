@@ -88,7 +88,7 @@ export function CoachStarter({ projectId, initialMode = 'general' }: Props) {
             type="button"
             disabled={submitting}
             onClick={() => start(s)}
-            className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-[#3b4252] hover:bg-[#161823] transition px-3 py-2 disabled:opacity-50"
+            className="text-left text-sm text-text-primary rounded-lg border border-border-subtle bg-surface-0 hover:border-border-strong hover:bg-surface-1 transition px-3 py-2 disabled:opacity-50"
           >
             {s}
           </button>
@@ -108,12 +108,12 @@ export function CoachStarter({ projectId, initialMode = 'general' }: Props) {
           disabled={submitting}
           placeholder="Or type your own…"
           rows={2}
-          className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-tertiary px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={submitting || !text.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
           Send
@@ -123,7 +123,7 @@ export function CoachStarter({ projectId, initialMode = 'general' }: Props) {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+          className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
         >
           {error}
         </div>

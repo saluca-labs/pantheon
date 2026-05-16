@@ -36,10 +36,10 @@ function characterName(characters: Character[], id: string): string {
 
 function tensionColor(t: number | null): string {
   if (t == null) return 'bg-border-subtle';
-  if (t <= 2) return 'bg-emerald-500/60';
-  if (t <= 5) return 'bg-amber-500/60';
-  if (t <= 7) return 'bg-orange-500/70';
-  return 'bg-red-500/70';
+  if (t <= 2) return 'bg-positive/60';
+  if (t <= 5) return 'bg-warning/60';
+  if (t <= 7) return 'bg-attention/70';
+  return 'bg-danger/70';
 }
 
 export function RelationshipList({
@@ -231,7 +231,7 @@ export function RelationshipList({
                   <button
                     type="button"
                     onClick={() => handleDelete(rel.id)}
-                    className="p-1.5 rounded text-text-secondary hover:text-red-300 hover:bg-surface-0 transition"
+                    className="p-1.5 rounded text-text-secondary hover:text-danger hover:bg-surface-0 transition"
                     aria-label="Delete relationship"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
