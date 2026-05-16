@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
   const d = parsed.data;
   const project = await createProject(user.userId, {
     title: d.title,
-    slug: d.slug ?? undefined as any,
+    slug: d.slug ?? '',
     contactId: d.contact_id,
     dealId: d.deal_id,
     descriptionMd: d.description_md,

@@ -27,6 +27,7 @@ import {
   validateAttachmentExclusivity,
   type SpecSheetAttachment,
   type SpecSheetKind,
+  type SpecSheetUpsert,
 } from '@/lib/agentic-os/maker/spec-sheets';
 
 const SpecSheetBody = z.object({
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const specSheet = await createSpecSheet(user.userId, parsed.data as any);
+    const specSheet = await createSpecSheet(user.userId, parsed.data as SpecSheetUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.spec_sheet.created',

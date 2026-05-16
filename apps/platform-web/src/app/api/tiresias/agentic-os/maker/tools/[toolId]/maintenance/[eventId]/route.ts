@@ -20,7 +20,7 @@ import {
   deleteMaintenanceEvent,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { MAINTENANCE_EVENT_KIND_VALUES } from '@/lib/agentic-os/maker/maintenance';
+import { MAINTENANCE_EVENT_KIND_VALUES, type MaintenanceEventPatch } from '@/lib/agentic-os/maker/maintenance';
 
 const PatchBody = z.object({
   eventKind: z
@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       eventId,
       toolId,
       user.userId,
-      parsed.data as any,
+      parsed.data as MaintenanceEventPatch,
     );
     if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({

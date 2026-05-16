@@ -29,7 +29,7 @@ import {
   validateDatasetKind,
   validateDatasetName,
 } from '@/lib/agentic-os/research/datasets';
-import { DATASET_KINDS } from '@/lib/agentic-os/research/dataset-kinds';
+import { DATASET_KINDS, type DatasetKind } from '@/lib/agentic-os/research/dataset-kinds';
 
 const CreateBody = z.object({
   name: z.string(),
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     if (kindErr) {
       return NextResponse.json({ error: kindErr }, { status: 400 });
     }
-    opts.kind = kindParam as any;
+    opts.kind = kindParam as DatasetKind;
   }
   if (archivedParam != null) {
     if (archivedParam === 'true') opts.archived = true;
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   const dataset = await createDataset(experimentId, user.userId, {
     name: d.name.trim(),
     url: d.url.trim(),
-    kind: d.kind as any,
+    kind: d.kind as DatasetKind | undefined,
     version: d.version ?? null,
     sizeBytes: d.sizeBytes ?? null,
     checksum: d.checksum ?? null,

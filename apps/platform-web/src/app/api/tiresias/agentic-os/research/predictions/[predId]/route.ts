@@ -24,7 +24,7 @@ import {
   updatePrediction,
   deletePrediction,
 } from '@/lib/agentic-os/research/predictions-repo';
-import { PREDICTION_KINDS } from '@/lib/agentic-os/research/predictions';
+import { PREDICTION_KINDS, type PredictionKind } from '@/lib/agentic-os/research/predictions';
 
 const PatchBody = z.object({
   text: z.string().min(1).max(2000).optional(),
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const d = parsed.data;
   const prediction = await updatePrediction(predId, user.userId, {
     text: d.text,
-    kind: d.kind as any,
+    kind: d.kind as PredictionKind | undefined,
     confidence: d.confidence,
     metadata: d.metadata,
   });

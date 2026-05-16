@@ -20,7 +20,7 @@ import {
   deleteReference,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { REFERENCE_KIND_VALUES } from '@/lib/agentic-os/maker/references';
+import { REFERENCE_KIND_VALUES, type ReferencePatch } from '@/lib/agentic-os/maker/references';
 
 const PatchBody = z.object({
   title: z.string().min(1).max(300).optional(),
@@ -64,7 +64,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     );
   }
   try {
-    const updated = await updateReference(id, user.userId, parsed.data as any);
+    const updated = await updateReference(id, user.userId, parsed.data as ReferencePatch);
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

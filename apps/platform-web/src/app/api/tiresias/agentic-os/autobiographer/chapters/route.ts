@@ -8,7 +8,12 @@ import {
   createEvent,
   recordAudit,
 } from '@/lib/agentic-os/autobiographer/repo';
-import { LEGACY_CHAPTER_STATUSES, EVENT_KINDS } from '@/lib/agentic-os/autobiographer/chapters';
+import {
+  LEGACY_CHAPTER_STATUSES,
+  EVENT_KINDS,
+  type LegacyChapterStatus,
+  type EventKind,
+} from '@/lib/agentic-os/autobiographer/chapters';
 
 // Legacy single-chapter editor endpoint. The Phase 4 book-scoped chapter
 // CRUD lives at `/books/[bookId]/chapters` + `/chapters/[id]`; this route
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
     const event = await createEvent({
       chapterId: parsed.data.chapterId,
       userId: user.userId,
-      kind: parsed.data.kind as any,
+      kind: parsed.data.kind as EventKind,
       headline: parsed.data.headline,
       detail: parsed.data.detail,
       occurredYear: parsed.data.occurredYear,
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
     title: parsed.data.title,
     bodyText: parsed.data.bodyText,
     periodLabel: parsed.data.periodLabel,
-    status: parsed.data.status as any,
+    status: parsed.data.status as LegacyChapterStatus | undefined,
   });
   await recordAudit({ actorId: user.userId, action: 'autobiographer.chapter.created', payload: { chapterId: chapter.id } });
   return NextResponse.json({ chapter }, { status: 201 });
@@ -92,7 +97,7 @@ export async function PUT(request: NextRequest) {
     title: parsed.data.title,
     bodyText: parsed.data.bodyText,
     periodLabel: parsed.data.periodLabel,
-    status: parsed.data.status as any,
+    status: parsed.data.status as LegacyChapterStatus | undefined,
   });
   await recordAudit({ actorId: user.userId, action: 'autobiographer.chapter.updated', payload: { chapterId: id } });
   return NextResponse.json({ chapter });

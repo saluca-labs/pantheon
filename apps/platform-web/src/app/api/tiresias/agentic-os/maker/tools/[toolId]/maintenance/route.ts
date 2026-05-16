@@ -18,7 +18,7 @@ import {
   createMaintenanceEvent,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { MAINTENANCE_EVENT_KIND_VALUES } from '@/lib/agentic-os/maker/maintenance';
+import { MAINTENANCE_EVENT_KIND_VALUES, type MaintenanceEventUpsert } from '@/lib/agentic-os/maker/maintenance';
 
 const EventBody = z.object({
   eventKind: z.enum(MAINTENANCE_EVENT_KIND_VALUES as unknown as [string, ...string[]]),
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const event = await createMaintenanceEvent(toolId, user.userId, parsed.data as any);
+    const event = await createMaintenanceEvent(toolId, user.userId, parsed.data as MaintenanceEventUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.tool.maintenance.logged',

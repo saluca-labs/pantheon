@@ -18,7 +18,7 @@ import {
   deleteLogEntry,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { ATTACHED_URL_KINDS } from '@/lib/agentic-os/maker/log';
+import { ATTACHED_URL_KINDS, type BuildLogEntryPatch } from '@/lib/agentic-os/maker/log';
 
 const AttachedUrlSchema = z.object({
   url: z.string().min(1).max(2000),
@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const entry = await updateLogEntry(entryId, projectId, user.userId, parsed.data as any);
+    const entry = await updateLogEntry(entryId, projectId, user.userId, parsed.data as BuildLogEntryPatch);
     if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

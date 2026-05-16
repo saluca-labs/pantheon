@@ -14,6 +14,8 @@ import { listLogSources, createLogSource, recordAudit } from '@/lib/agentic-os/c
 import {
   LOG_SOURCE_KIND_VALUES,
   LOG_SOURCE_STATUS_VALUES,
+  type LogSourceKind,
+  type LogSourceStatus,
 } from '@/lib/agentic-os/cyber/log-sources';
 
 const LogSourceBody = z.object({
@@ -38,11 +40,11 @@ export async function GET(request: NextRequest) {
     ownerId: user.userId,
     status:
       status && (LOG_SOURCE_STATUS_VALUES as readonly string[]).includes(status)
-        ? (status as any)
+        ? (status as LogSourceStatus)
         : undefined,
     kind:
       kind && (LOG_SOURCE_KIND_VALUES as readonly string[]).includes(kind)
-        ? (kind as any)
+        ? (kind as LogSourceKind)
         : undefined,
   });
   return NextResponse.json({ sources });

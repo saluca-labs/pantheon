@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { listSnapshots, createSnapshot } from '@/lib/agentic-os/business/pnl-snapshots-repo';
-import { PERIOD_KINDS } from '@/lib/agentic-os/business/pnl-snapshots';
+import { PERIOD_KINDS, type PeriodKind } from '@/lib/agentic-os/business/pnl-snapshots';
 
 const CreateBody = z.object({
   period_kind: z.enum(PERIOD_KINDS),
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 
   const snapshots = await listSnapshots(user.userId, {
-    periodKind: periodKindParam as any,
+    periodKind: (periodKindParam as PeriodKind | null) ?? undefined,
     locked: lockedParam === 'true' ? true : lockedParam === 'false' ? false : undefined,
     from: fromParam ?? undefined,
     to: toParam ?? undefined,

@@ -24,7 +24,7 @@ import { z } from 'zod';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { recordAudit } from '@/lib/agentic-os/research/repo';
 import { listPapers, createPaper } from '@/lib/agentic-os/research/papers-repo';
-import { PAPER_KINDS } from '@/lib/agentic-os/research/paper-kinds';
+import { PAPER_KINDS, type PaperKind } from '@/lib/agentic-os/research/paper-kinds';
 
 const CreateBody = z.object({
   title: z.string().min(1).max(500),
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
   }
 
   const papers = await listPapers(user.userId, {
-    kind: (kindParam ?? undefined) as any,
+    kind: (kindParam ?? undefined) as PaperKind | undefined,
     tag: tagParam ?? undefined,
     year,
     q: qParam ?? undefined,
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
   const d = parsed.data;
   const outcome = await createPaper(user.userId, {
     title: d.title,
-    kind: d.kind as any,
+    kind: d.kind as PaperKind | undefined,
     doi: d.doi,
     arxivId: d.arxiv_id,
     url: d.url,

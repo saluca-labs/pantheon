@@ -31,7 +31,10 @@ import {
   DEAL_STAGES,
   computePipelineForecast,
   computeWeightedValue,
+  type Deal,
+  type DealStage,
   type DealWithForecast,
+  type PipelineForecast,
 } from '@/lib/agentic-os/business/deals';
 
 const CreateBody = z.object({
@@ -96,7 +99,7 @@ export async function GET(request: NextRequest) {
   const deals = await listDeals(user.userId, {
     archived: archivedParam === 'true',
     stage: stageParam
-      ? (stageParam.split(',').map((s) => s.trim()) as any)
+      ? (stageParam.split(',').map((s) => s.trim()) as DealStage[])
       : undefined,
     contactId: contactIdParam ?? undefined,
     organizationId: orgIdParam ?? undefined,
@@ -108,7 +111,7 @@ export async function GET(request: NextRequest) {
     offset,
   });
 
-  const response: any = { deals };
+  const response: { deals: Deal[] | DealWithForecast[]; forecast?: PipelineForecast } = { deals };
 
   if (includeParam === 'forecast') {
     const dealsWithForecast: DealWithForecast[] = deals.map((d) => ({

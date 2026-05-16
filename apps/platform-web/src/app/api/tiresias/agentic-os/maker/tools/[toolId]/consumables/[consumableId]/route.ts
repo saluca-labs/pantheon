@@ -20,6 +20,7 @@ import {
   deleteConsumable,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import type { ToolConsumablePatch } from '@/lib/agentic-os/maker/consumables';
 
 const PatchBody = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -69,7 +70,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       consumableId,
       toolId,
       user.userId,
-      parsed.data as any,
+      parsed.data as ToolConsumablePatch,
     );
     if (!consumable) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({

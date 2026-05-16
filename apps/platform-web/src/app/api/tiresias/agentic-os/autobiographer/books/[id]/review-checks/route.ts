@@ -29,6 +29,8 @@ import {
   REVIEW_CHECK_KINDS,
   REVIEW_CHECK_NOTES_MAX,
   REVIEW_CHECK_STATUSES,
+  type ReviewCheckKind,
+  type ReviewCheckStatus,
 } from '@/lib/agentic-os/autobiographer/review-checks';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 
@@ -88,8 +90,8 @@ export async function POST(request: NextRequest, { params }: Props) {
     const check = await createReviewCheck(user.userId, {
       bookId,
       chapterId: d.chapterId ?? null,
-      kind: d.kind as any,
-      status: d.status as any,
+      kind: d.kind as ReviewCheckKind,
+      status: d.status as ReviewCheckStatus | undefined,
       notes: d.notes ?? null,
       checkedAt: d.checkedAt ?? null,
       checkedBy: d.checkedBy ?? null,

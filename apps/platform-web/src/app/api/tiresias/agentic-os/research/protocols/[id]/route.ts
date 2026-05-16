@@ -30,7 +30,7 @@ import {
   validateProtocolTitle,
   validateProtocolVersion,
 } from '@/lib/agentic-os/research/protocols';
-import { PROTOCOL_KINDS } from '@/lib/agentic-os/research/protocol-kinds';
+import { PROTOCOL_KINDS, type ProtocolKind } from '@/lib/agentic-os/research/protocol-kinds';
 
 const PatchBody = z.object({
   title: z.string().optional(),
@@ -96,7 +96,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   if (d.title !== undefined) patch.title = d.title.trim();
   if (d.version !== undefined) patch.version = d.version.trim();
   if (d.bodyMd !== undefined) patch.bodyMd = d.bodyMd;
-  if (d.kind !== undefined) patch.kind = d.kind as any;
+  if (d.kind !== undefined) patch.kind = d.kind as ProtocolKind;
   if (d.attachedUrls !== undefined) {
     patch.attachedUrls = normalizeAttachedUrls(d.attachedUrls);
   }

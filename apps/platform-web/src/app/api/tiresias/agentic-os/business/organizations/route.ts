@@ -26,7 +26,7 @@ import {
   listOrganizations,
   createOrganization,
 } from '@/lib/agentic-os/business/orgs-repo';
-import { ORG_TYPES } from '@/lib/agentic-os/business/crm';
+import { ORG_TYPES, type OrgType } from '@/lib/agentic-os/business/crm';
 
 const CreateBody = z.object({
   name: z.string().min(1).max(200),
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     archived: archivedParam === 'true',
     tag: tagParam ?? undefined,
     industry: industryParam ?? undefined,
-    orgType: (orgTypeParam ?? undefined) as any,
+    orgType: (orgTypeParam ?? undefined) as OrgType | undefined,
     q: qParam ?? undefined,
     limit,
     offset,
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
   const d = parsed.data;
   const organization = await createOrganization(user.userId, {
     name: d.name,
-    orgType: d.org_type as any,
+    orgType: d.org_type as OrgType | undefined,
     website: d.website,
     industry: d.industry,
     notes: d.notes,

@@ -5,6 +5,7 @@ import {
   listSubscribers,
   addSubscriber,
 } from '@/lib/agentic-os/creator/subscribers-repo';
+import type { SubscriberStatus } from '@/lib/agentic-os/creator/subscribers';
 
 const AddBody = z.object({
   email: z.string().email().max(320),
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     : undefined;
 
   const subscribers = await listSubscribers(user.userId, {
-    status: status as any,
+    status: status as SubscriberStatus | undefined,
     search,
     limit,
     offset,
