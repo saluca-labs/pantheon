@@ -14,6 +14,315 @@ import {
   searchFoods as fdcSearchFoods,
 } from './usda-fdc';
 
+// ─── Raw DB row shapes ─────────────────────────────────────────────────────
+//
+// Loosely-typed shapes that mirror node-postgres results for this OS. Most
+// columns are typed as the narrowest TS shape the mappers actually consume;
+// JSONB columns are kept as `unknown` and cast at the access site.
+
+interface RawScreenerRow {
+  id: string;
+  user_id: string;
+  screener: string;
+  answers: unknown;
+  score: number;
+  severity: string;
+  crisis_flag: boolean;
+  created_at: Date;
+}
+
+interface RawMentalProfileRow {
+  user_id: string;
+  tenant_id: string;
+  stress_baseline: number | string | null;
+  sleep_quality: string | null;
+  support_system: string | null;
+  current_therapy: boolean | null;
+  current_meds: boolean | null;
+  med_notes: string | null;
+  goals: string[] | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawConsentRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  scope: ConsentScope;
+  granted: boolean;
+  granted_at: Date;
+  revoked_at: Date | null;
+  metadata: Record<string, unknown> | null;
+}
+
+interface RawRiskFlagRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  kind: string;
+  severity: string;
+  source: string;
+  payload: Record<string, unknown> | null;
+  created_at: Date;
+  dismissed_at: Date | null;
+  dismissed_by_user_id: string | null;
+}
+
+interface RawMoodEntryRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  mood_score: number | string | null;
+  energy_score: number | string | null;
+  anxiety_score: number | string | null;
+  sleep_quality: string | null;
+  notes: string | null;
+  entry_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawMoodTagRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  name: string;
+  color: string | null;
+  created_at: Date;
+}
+
+interface RawJournalPromptRow {
+  id: string;
+  slug: string;
+  category: string;
+  prompt: string;
+  source: string | null;
+  is_seed: boolean;
+}
+
+interface RawJournalEntryRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  prompt_id: string | null;
+  title: string | null;
+  body: string;
+  entry_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCbtExerciseRow {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  kind: string;
+  citation: string | null;
+  instructions: Record<string, unknown> | null;
+  is_seed: boolean;
+}
+
+interface RawCbtLogRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  kind: string;
+  exercise_id: string | null;
+  started_at: Date;
+  completed_at: Date | null;
+  mood_before: number | string | null;
+  mood_after: number | string | null;
+  data: Record<string, unknown> | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawMeditationSessionRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  source: string;
+  source_ref: string | null;
+  duration_min: number | string;
+  completed_at: Date;
+  mood_before: number | string | null;
+  mood_after: number | string | null;
+  notes: string | null;
+  created_at: Date;
+}
+
+interface RawMeditationPlanRow {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  week_start: Date | string;
+  plan: unknown;
+  created_at: Date;
+}
+
+interface RawFoodItemRow {
+  id: string;
+  tenant_id: string;
+  user_id: string | null;
+  source: string;
+  usda_fdc_id: string | null;
+  name: string;
+  brand: string | null;
+  serving_size_g: number | string | null;
+  serving_label: string | null;
+  kcal: number | string | null;
+  protein_g: number | string | null;
+  carbs_g: number | string | null;
+  fat_g: number | string | null;
+  fiber_g: number | string | null;
+  sugar_g: number | string | null;
+  sodium_mg: number | string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawMealEntryRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  entry_date: Date | string;
+  meal_slot: string;
+  food_item_id: string | null;
+  freeform_description: string | null;
+  servings: number | string;
+  kcal_override: number | string | null;
+  protein_g_override: number | string | null;
+  carbs_g_override: number | string | null;
+  fat_g_override: number | string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawActivityEntryRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  entry_date: Date | string;
+  activity_type: string;
+  duration_min: number | string;
+  intensity: string;
+  kcal_burned: number | string | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawRecipeRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  servings: number | string;
+  prep_minutes: number | string | null;
+  cook_minutes: number | string | null;
+  instructions: string | null;
+  tags: string[] | null;
+  image_url: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawRecipeIngredientRow {
+  id: string;
+  recipe_id: string;
+  food_item_id: string | null;
+  freeform_name: string | null;
+  quantity: number | string;
+  unit: string | null;
+  position: number | string;
+  notes: string | null;
+}
+
+interface RawMealPlanRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  week_start_date: Date | string;
+  name: string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawMealPlanSlotRow {
+  id: string;
+  plan_id: string;
+  day_of_week: number | string;
+  meal_slot: string;
+  recipe_id: string | null;
+  food_item_id: string | null;
+  freeform_text: string | null;
+  servings: number | string;
+  notes: string | null;
+  position: number | string;
+}
+
+interface RawWorkoutTemplateRow {
+  id: string;
+  tenant_id: string | null;
+  user_id: string | null;
+  source: string;
+  name: string;
+  description: string | null;
+  category: string;
+  target_intensity: string;
+  est_duration_min: number | string;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+  block_count?: number | string;
+}
+
+interface RawWorkoutTemplateBlockRow {
+  id: string;
+  template_id: string;
+  position: number | string;
+  kind: string;
+  name: string;
+  sets: number | string | null;
+  reps: string | null;
+  duration_sec: number | string | null;
+  rest_sec: number | string | null;
+  weight_hint: string | null;
+  notes: string | null;
+}
+
+interface RawActivityPlanRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  week_start_date: Date | string;
+  name: string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawActivityPlanSlotRow {
+  id: string;
+  plan_id: string;
+  day_of_week: number | string;
+  template_id: string | null;
+  freeform_text: string | null;
+  target_duration_min: number | string | null;
+  target_intensity: string | null;
+  notes: string | null;
+  position: number | string;
+}
+
 // ─── Profile ───────────────────────────────────────────────────────────────
 
 export interface HealthProfile {
@@ -167,11 +476,11 @@ export async function listScreeners(userId: string, limit = 25): Promise<Screene
       LIMIT $2`,
     [userId, limit],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawScreenerRow) => ({
     id: row.id,
     userId: row.user_id,
     screener: row.screener as ScreenerKey,
-    answers: row.answers ?? [],
+    answers: (row.answers ?? []) as number[],
     score: row.score,
     severity: row.severity as Severity,
     crisisFlag: row.crisis_flag,
@@ -248,7 +557,7 @@ export interface MentalProfile {
   updatedAt: string;
 }
 
-function rowToMentalProfile(row: any): MentalProfile {
+function rowToMentalProfile(row: RawMentalProfileRow): MentalProfile {
   return {
     userId: row.user_id,
     tenantId: row.tenant_id,
@@ -332,7 +641,7 @@ export interface ConsentRow {
   metadata: Record<string, unknown>;
 }
 
-function rowToConsent(row: any): ConsentRow {
+function rowToConsent(row: RawConsentRow): ConsentRow {
   return {
     id: row.id,
     userId: row.user_id,
@@ -423,7 +732,7 @@ export interface RiskFlagRow {
   dismissedByUserId: string | null;
 }
 
-function rowToRiskFlag(row: any): RiskFlagRow {
+function rowToRiskFlag(row: RawRiskFlagRow): RiskFlagRow {
   return {
     id: row.id,
     userId: row.user_id,
@@ -542,7 +851,7 @@ export interface MoodEntry {
   tags?: MoodTag[];
 }
 
-function rowToMoodEntry(row: any): MoodEntry {
+function rowToMoodEntry(row: RawMoodEntryRow): MoodEntry {
   return {
     id: row.id,
     userId: row.user_id,
@@ -619,7 +928,7 @@ export async function listMoodEntries(
 ): Promise<MoodEntry[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 365);
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   let where = 'WHERE user_id = $1';
   if (opts.from) {
     params.push(opts.from instanceof Date ? opts.from : new Date(opts.from));
@@ -759,7 +1068,7 @@ export interface MoodTag {
   createdAt: string;
 }
 
-function rowToMoodTag(row: any): MoodTag {
+function rowToMoodTag(row: RawMoodTagRow): MoodTag {
   return {
     id: row.id,
     userId: row.user_id,
@@ -856,7 +1165,7 @@ export async function attachTagsToEntry(
     `SELECT id FROM agos_mh_mood_tag WHERE id = ANY($1::uuid[]) AND user_id = $2`,
     [tagIds, userId],
   );
-  const ownedIds: string[] = owned.rows.map((row: any) => row.id);
+  const ownedIds: string[] = owned.rows.map((row: { id: string }) => row.id);
   for (const tagId of ownedIds) {
     await pool.query(
       `INSERT INTO agos_mh_mood_entry_tag (mood_entry_id, tag_id)
@@ -904,7 +1213,7 @@ export interface JournalPrompt {
   isSeed: boolean;
 }
 
-function rowToJournalPrompt(row: any): JournalPrompt {
+function rowToJournalPrompt(row: RawJournalPromptRow): JournalPrompt {
   return {
     id: row.id,
     slug: row.slug,
@@ -919,7 +1228,7 @@ export async function listJournalPrompts(
   opts: { category?: JournalPromptCategory } = {},
 ): Promise<JournalPrompt[]> {
   const pool = getHealthPool();
-  const params: any[] = [];
+  const params: unknown[] = [];
   let where = '';
   if (opts.category) {
     params.push(opts.category);
@@ -965,7 +1274,7 @@ export interface JournalEntry {
   updatedAt: string;
 }
 
-function rowToJournalEntry(row: any): JournalEntry {
+function rowToJournalEntry(row: RawJournalEntryRow): JournalEntry {
   return {
     id: row.id,
     userId: row.user_id,
@@ -1031,7 +1340,7 @@ export async function listJournalEntries(
 ): Promise<JournalEntry[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 365);
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   let where = 'WHERE j.user_id = $1';
   if (opts.from) {
     params.push(opts.from instanceof Date ? opts.from : new Date(opts.from));
@@ -1054,14 +1363,21 @@ export async function listJournalEntries(
       LIMIT $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => {
+  type JoinedJournalRow = RawJournalEntryRow & {
+    p_slug: string | null;
+    p_category: string | null;
+    p_prompt: string | null;
+    p_source: string | null;
+    p_is_seed: boolean | null;
+  };
+  return r.rows.map((row: JoinedJournalRow) => {
     const entry = rowToJournalEntry(row);
     if (opts.withPrompt && row.prompt_id) {
       entry.prompt = {
         id: row.prompt_id,
-        slug: row.p_slug,
-        category: row.p_category,
-        prompt: row.p_prompt,
+        slug: row.p_slug as string,
+        category: row.p_category as JournalPromptCategory,
+        prompt: row.p_prompt as string,
         source: row.p_source,
         isSeed: !!row.p_is_seed,
       };
@@ -1168,12 +1484,12 @@ export interface CbtExercise {
   isSeed: boolean;
 }
 
-function rowToCbtExercise(row: any): CbtExercise {
+function rowToCbtExercise(row: RawCbtExerciseRow): CbtExercise {
   return {
     id: row.id,
     slug: row.slug,
     name: row.name,
-    description: row.description,
+    description: row.description ?? '',
     kind: row.kind as CbtKindValue,
     citation: row.citation,
     instructions: row.instructions ?? {},
@@ -1224,7 +1540,7 @@ export interface CbtLog {
   updatedAt: string;
 }
 
-function rowToCbtLog(row: any): CbtLog {
+function rowToCbtLog(row: RawCbtLogRow): CbtLog {
   return {
     id: row.id,
     userId: row.user_id,
@@ -1297,7 +1613,7 @@ export async function listCbtLogs(
 ): Promise<CbtLog[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 365);
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   let where = 'WHERE user_id = $1';
   if (opts.kind) {
     params.push(opts.kind);
@@ -1358,7 +1674,7 @@ export async function updateCbtLog(
   const pool = getHealthPool();
   // completedAt: tri-state — true → set now; false → set null; undefined → leave alone.
   let completedClause = 'completed_at';
-  const params: any[] = [
+  const params: unknown[] = [
     id,
     userId,
     patch.moodBefore ?? null,
@@ -1419,7 +1735,7 @@ export interface MeditationSession {
   createdAt: string;
 }
 
-function rowToMeditationSession(row: any): MeditationSession {
+function rowToMeditationSession(row: RawMeditationSessionRow): MeditationSession {
   return {
     id: row.id,
     userId: row.user_id,
@@ -1493,7 +1809,7 @@ export async function listMeditationSessions(
 ): Promise<MeditationSession[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 365);
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   let where = 'WHERE user_id = $1';
   if (opts.from) {
     params.push(opts.from instanceof Date ? opts.from : new Date(opts.from));
@@ -1604,7 +1920,7 @@ export interface MeditationPlan {
   createdAt: string;
 }
 
-function rowToMeditationPlan(row: any): MeditationPlan {
+function rowToMeditationPlan(row: RawMeditationPlanRow): MeditationPlan {
   const weekStart =
     row.week_start instanceof Date
       ? row.week_start.toISOString().slice(0, 10)
@@ -1907,13 +2223,21 @@ export async function getTrends(
       ORDER BY 1`,
     [userId],
   );
-  const mood_series = moodRes.rows.map((r: any) => ({
-    date: r.day,
-    mood: r.mood === null ? null : Number(r.mood),
-    energy: r.energy === null ? null : Number(r.energy),
-    anxiety: r.anxiety === null ? null : Number(r.anxiety),
-    sleep: r.sleep === null ? null : Number(r.sleep),
-  }));
+  const mood_series = moodRes.rows.map(
+    (r: {
+      day: string;
+      mood: number | string | null;
+      energy: number | string | null;
+      anxiety: number | string | null;
+      sleep: number | string | null;
+    }) => ({
+      date: r.day,
+      mood: r.mood === null ? null : Number(r.mood),
+      energy: r.energy === null ? null : Number(r.energy),
+      anxiety: r.anxiety === null ? null : Number(r.anxiety),
+      sleep: r.sleep === null ? null : Number(r.sleep),
+    }),
+  );
 
   // Screener scores over time.
   const screenerRes = await pool.query(
@@ -1926,11 +2250,13 @@ export async function getTrends(
       ORDER BY created_at`,
     [userId],
   );
-  const screener_series = screenerRes.rows.map((r: any) => ({
-    date: r.day,
-    kind: r.screener as ScreenerKey,
-    score: Number(r.score),
-  }));
+  const screener_series = screenerRes.rows.map(
+    (r: { day: string; screener: string; score: number | string }) => ({
+      date: r.day,
+      kind: r.screener as ScreenerKey,
+      score: Number(r.score),
+    }),
+  );
 
   // Mood tag × day-of-week heatmap.
   // dow: 0=Sun..6=Sat from extract(dow ...); we relabel as Mon..Sun for
@@ -1949,11 +2275,13 @@ export async function getTrends(
     [userId],
   );
   const DOW_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const tag_heatmap = tagRes.rows.map((r: any) => ({
-    tag: r.tag as string,
-    bucket: DOW_LABELS[Number(r.dow)] ?? 'Sun',
-    count: Number(r.count),
-  }));
+  const tag_heatmap = tagRes.rows.map(
+    (r: { tag: string; dow: number | string; count: number | string }) => ({
+      tag: r.tag,
+      bucket: DOW_LABELS[Number(r.dow)] ?? 'Sun',
+      count: Number(r.count),
+    }),
+  );
 
   // Aggregate stats — three counts + avg mood + screener-trend direction.
   const statsRes = await pool.query(
@@ -2012,13 +2340,21 @@ export async function getTrends(
       ORDER BY 1`,
     [userId],
   );
-  const nutrition_series = nutritionRes.rows.map((r: any) => ({
-    date: r.day,
-    kcal: Number(r.kcal ?? 0),
-    protein_g: Number(r.protein_g ?? 0),
-    carbs_g: Number(r.carbs_g ?? 0),
-    fat_g: Number(r.fat_g ?? 0),
-  }));
+  const nutrition_series = nutritionRes.rows.map(
+    (r: {
+      day: string;
+      kcal: number | string | null;
+      protein_g: number | string | null;
+      carbs_g: number | string | null;
+      fat_g: number | string | null;
+    }) => ({
+      date: r.day,
+      kcal: Number(r.kcal ?? 0),
+      protein_g: Number(r.protein_g ?? 0),
+      carbs_g: Number(r.carbs_g ?? 0),
+      fat_g: Number(r.fat_g ?? 0),
+    }),
+  );
 
   // Per-day activity rollups.
   const activityRes = await pool.query(
@@ -2032,11 +2368,13 @@ export async function getTrends(
       ORDER BY 1`,
     [userId],
   );
-  const activity_series = activityRes.rows.map((r: any) => ({
-    date: r.day,
-    duration_min: Number(r.duration_min ?? 0),
-    kcal_burned: Number(r.kcal_burned ?? 0),
-  }));
+  const activity_series = activityRes.rows.map(
+    (r: { day: string; duration_min: number | string | null; kcal_burned: number | string | null }) => ({
+      date: r.day,
+      duration_min: Number(r.duration_min ?? 0),
+      kcal_burned: Number(r.kcal_burned ?? 0),
+    }),
+  );
 
   // Daily averages for the stat cards. Use the window length as the denominator
   // (not just observed days) so the average reflects "how I'm doing across the
@@ -2119,7 +2457,7 @@ const FOOD_ITEM_COLS = `
 const num = (v: unknown): number | null =>
   v === null || v === undefined ? null : Number(v);
 
-function rowToFoodItem(row: any): FoodItem {
+function rowToFoodItem(row: RawFoodItemRow): FoodItem {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -2205,7 +2543,7 @@ export async function searchFoodItems(
 ): Promise<FoodItem[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE tenant_id = $1 AND (user_id = $2 OR user_id IS NULL)`;
   if (input.query && input.query.trim().length > 0) {
     params.push(`%${input.query.trim()}%`);
@@ -2359,7 +2697,7 @@ const MEAL_ENTRY_COLS = `
   carbs_g_override, fat_g_override, notes, created_at, updated_at
 `;
 
-function rowToMealEntry(row: any, food?: FoodItem | null): MealEntry {
+function rowToMealEntry(row: RawMealEntryRow, food?: FoodItem | null): MealEntry {
   const entry: MealEntry = {
     id: row.id,
     tenantId: row.tenant_id,
@@ -2490,7 +2828,7 @@ export async function listMealEntries(
 ): Promise<MealEntry[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE m.tenant_id = $1 AND m.user_id = $2`;
   if (input.fromDate) {
     params.push(input.fromDate);
@@ -2521,16 +2859,37 @@ export async function listMealEntries(
       LIMIT $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => {
+  type RawMealJoinedRow = RawMealEntryRow & {
+    f_id: string | null;
+    f_tenant_id: string | null;
+    f_user_id: string | null;
+    f_source: string | null;
+    f_usda_fdc_id: string | null;
+    f_name: string | null;
+    f_brand: string | null;
+    f_serving_size_g: number | string | null;
+    f_serving_label: string | null;
+    f_kcal: number | string | null;
+    f_protein_g: number | string | null;
+    f_carbs_g: number | string | null;
+    f_fat_g: number | string | null;
+    f_fiber_g: number | string | null;
+    f_sugar_g: number | string | null;
+    f_sodium_mg: number | string | null;
+    f_metadata: Record<string, unknown> | null;
+    f_created_at: Date | null;
+    f_updated_at: Date | null;
+  };
+  return r.rows.map((row: RawMealJoinedRow) => {
     let food: FoodItem | null = null;
     if (row.f_id) {
       food = rowToFoodItem({
         id: row.f_id,
-        tenant_id: row.f_tenant_id,
+        tenant_id: row.f_tenant_id as string,
         user_id: row.f_user_id,
-        source: row.f_source,
+        source: row.f_source as string,
         usda_fdc_id: row.f_usda_fdc_id,
-        name: row.f_name,
+        name: row.f_name as string,
         brand: row.f_brand,
         serving_size_g: row.f_serving_size_g,
         serving_label: row.f_serving_label,
@@ -2542,8 +2901,8 @@ export async function listMealEntries(
         sugar_g: row.f_sugar_g,
         sodium_mg: row.f_sodium_mg,
         metadata: row.f_metadata,
-        created_at: row.f_created_at,
-        updated_at: row.f_updated_at,
+        created_at: row.f_created_at as Date,
+        updated_at: row.f_updated_at as Date,
       });
     }
     return rowToMealEntry(row, food);
@@ -2661,7 +3020,7 @@ const ACTIVITY_ENTRY_COLS = `
   intensity, kcal_burned, notes, metadata, created_at, updated_at
 `;
 
-function rowToActivityEntry(row: any): ActivityEntry {
+function rowToActivityEntry(row: RawActivityEntryRow): ActivityEntry {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -2821,7 +3180,7 @@ export async function listActivityEntries(
 ): Promise<ActivityEntry[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE tenant_id = $1 AND user_id = $2`;
   if (input.fromDate) {
     params.push(input.fromDate);
@@ -3223,7 +3582,7 @@ const INGREDIENT_COLS = `
   id, recipe_id, food_item_id, freeform_name, quantity, unit, position, notes
 `;
 
-function rowToRecipe(row: any, ingredients?: RecipeIngredient[]): Recipe {
+function rowToRecipe(row: RawRecipeRow, ingredients?: RecipeIngredient[]): Recipe {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -3243,7 +3602,7 @@ function rowToRecipe(row: any, ingredients?: RecipeIngredient[]): Recipe {
 }
 
 function rowToIngredient(
-  row: any,
+  row: RawRecipeIngredientRow,
   food?: FoodItem | null,
 ): RecipeIngredient {
   return {
@@ -3330,7 +3689,7 @@ export async function listRecipes(
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
   const offset = Math.max(input.offset ?? 0, 0);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE tenant_id = $1 AND user_id = $2`;
   if (input.q && input.q.trim().length > 0) {
     params.push(`%${input.q.trim()}%`);
@@ -3347,7 +3706,7 @@ export async function listRecipes(
       OFFSET $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => rowToRecipe(row));
+  return r.rows.map((row: RawRecipeRow) => rowToRecipe(row));
 }
 
 export interface UpdateRecipeInput {
@@ -3439,16 +3798,37 @@ export async function listRecipeIngredients(
       ORDER BY i.position`,
     [recipeId, tenantId],
   );
-  return r.rows.map((row: any) => {
+  type RawIngredientJoinedRow = RawRecipeIngredientRow & {
+    f_id: string | null;
+    f_tenant_id: string | null;
+    f_user_id: string | null;
+    f_source: string | null;
+    f_usda_fdc_id: string | null;
+    f_name: string | null;
+    f_brand: string | null;
+    f_serving_size_g: number | string | null;
+    f_serving_label: string | null;
+    f_kcal: number | string | null;
+    f_protein_g: number | string | null;
+    f_carbs_g: number | string | null;
+    f_fat_g: number | string | null;
+    f_fiber_g: number | string | null;
+    f_sugar_g: number | string | null;
+    f_sodium_mg: number | string | null;
+    f_metadata: Record<string, unknown> | null;
+    f_created_at: Date | null;
+    f_updated_at: Date | null;
+  };
+  return r.rows.map((row: RawIngredientJoinedRow) => {
     let food: FoodItem | null = null;
     if (row.f_id) {
       food = rowToFoodItem({
         id: row.f_id,
-        tenant_id: row.f_tenant_id,
+        tenant_id: row.f_tenant_id as string,
         user_id: row.f_user_id,
-        source: row.f_source,
+        source: row.f_source as string,
         usda_fdc_id: row.f_usda_fdc_id,
-        name: row.f_name,
+        name: row.f_name as string,
         brand: row.f_brand,
         serving_size_g: row.f_serving_size_g,
         serving_label: row.f_serving_label,
@@ -3460,8 +3840,8 @@ export async function listRecipeIngredients(
         sugar_g: row.f_sugar_g,
         sodium_mg: row.f_sodium_mg,
         metadata: row.f_metadata,
-        created_at: row.f_created_at,
-        updated_at: row.f_updated_at,
+        created_at: row.f_created_at as Date,
+        updated_at: row.f_updated_at as Date,
       });
     }
     return rowToIngredient(row, food);
@@ -3763,7 +4143,7 @@ const PLAN_SLOT_COLS = `
   freeform_text, servings, notes, position
 `;
 
-function rowToPlan(row: any, slots?: MealPlanSlot[]): MealPlan {
+function rowToPlan(row: RawMealPlanRow, slots?: MealPlanSlot[]): MealPlan {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -3781,7 +4161,7 @@ function rowToPlan(row: any, slots?: MealPlanSlot[]): MealPlan {
 }
 
 function rowToSlot(
-  row: any,
+  row: RawMealPlanSlotRow,
   recipe?: Recipe | null,
   food?: FoodItem | null,
 ): MealPlanSlot {
@@ -3871,7 +4251,7 @@ export async function listMealPlans(
 ): Promise<MealPlan[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 26, 1), 200);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE tenant_id = $1 AND user_id = $2`;
   if (input.fromWeek) {
     params.push(input.fromWeek);
@@ -3890,7 +4270,7 @@ export async function listMealPlans(
       LIMIT $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => rowToPlan(row));
+  return r.rows.map((row: RawMealPlanRow) => rowToPlan(row));
 }
 
 export interface UpdateMealPlanInput {
@@ -3988,33 +4368,67 @@ async function listMealPlanSlots(
       ORDER BY s.day_of_week, s.meal_slot, s.position`,
     [planId, tenantId],
   );
-  return r.rows.map((row: any) => {
+  type RawSlotJoinedRow = RawMealPlanSlotRow & {
+    r_id: string | null;
+    r_tenant_id: string | null;
+    r_user_id: string | null;
+    r_name: string | null;
+    r_description: string | null;
+    r_servings: number | string | null;
+    r_prep_minutes: number | string | null;
+    r_cook_minutes: number | string | null;
+    r_instructions: string | null;
+    r_tags: string[] | null;
+    r_image_url: string | null;
+    r_created_at: Date | null;
+    r_updated_at: Date | null;
+    f_id: string | null;
+    f_tenant_id: string | null;
+    f_user_id: string | null;
+    f_source: string | null;
+    f_usda_fdc_id: string | null;
+    f_name: string | null;
+    f_brand: string | null;
+    f_serving_size_g: number | string | null;
+    f_serving_label: string | null;
+    f_kcal: number | string | null;
+    f_protein_g: number | string | null;
+    f_carbs_g: number | string | null;
+    f_fat_g: number | string | null;
+    f_fiber_g: number | string | null;
+    f_sugar_g: number | string | null;
+    f_sodium_mg: number | string | null;
+    f_metadata: Record<string, unknown> | null;
+    f_created_at: Date | null;
+    f_updated_at: Date | null;
+  };
+  return r.rows.map((row: RawSlotJoinedRow) => {
     const recipe: Recipe | null = row.r_id
       ? rowToRecipe({
           id: row.r_id,
-          tenant_id: row.r_tenant_id,
-          user_id: row.r_user_id,
-          name: row.r_name,
+          tenant_id: row.r_tenant_id as string,
+          user_id: row.r_user_id as string,
+          name: row.r_name as string,
           description: row.r_description,
-          servings: row.r_servings,
+          servings: row.r_servings as number | string,
           prep_minutes: row.r_prep_minutes,
           cook_minutes: row.r_cook_minutes,
           instructions: row.r_instructions,
           tags: row.r_tags,
           image_url: row.r_image_url,
-          created_at: row.r_created_at,
-          updated_at: row.r_updated_at,
+          created_at: row.r_created_at as Date,
+          updated_at: row.r_updated_at as Date,
         })
       : null;
     let food: FoodItem | null = null;
     if (row.f_id) {
       food = rowToFoodItem({
         id: row.f_id,
-        tenant_id: row.f_tenant_id,
+        tenant_id: row.f_tenant_id as string,
         user_id: row.f_user_id,
-        source: row.f_source,
+        source: row.f_source as string,
         usda_fdc_id: row.f_usda_fdc_id,
-        name: row.f_name,
+        name: row.f_name as string,
         brand: row.f_brand,
         serving_size_g: row.f_serving_size_g,
         serving_label: row.f_serving_label,
@@ -4026,8 +4440,8 @@ async function listMealPlanSlots(
         sugar_g: row.f_sugar_g,
         sodium_mg: row.f_sodium_mg,
         metadata: row.f_metadata,
-        created_at: row.f_created_at,
-        updated_at: row.f_updated_at,
+        created_at: row.f_created_at as Date,
+        updated_at: row.f_updated_at as Date,
       });
     }
     return rowToSlot(row, recipe, food);
@@ -4263,7 +4677,7 @@ const WORKOUT_TEMPLATE_BLOCK_COLS = `
 `;
 
 function rowToWorkoutTemplate(
-  row: any,
+  row: RawWorkoutTemplateRow,
   blocks?: WorkoutTemplateBlock[],
   blockCount?: number,
 ): WorkoutTemplate {
@@ -4288,7 +4702,7 @@ function rowToWorkoutTemplate(
   };
 }
 
-function rowToWorkoutTemplateBlock(row: any): WorkoutTemplateBlock {
+function rowToWorkoutTemplateBlock(row: RawWorkoutTemplateBlockRow): WorkoutTemplateBlock {
   return {
     id: row.id,
     templateId: row.template_id,
@@ -4320,7 +4734,7 @@ export async function listWorkoutTemplates(
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 100, 1), 500);
   const offset = Math.max(input.offset ?? 0, 0);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   // Visibility: system rows (cross-tenant) OR your own customs.
   let where = `WHERE (source = 'system'
                      OR (source = 'custom' AND tenant_id = $1 AND user_id = $2))`;
@@ -4350,7 +4764,7 @@ export async function listWorkoutTemplates(
       OFFSET $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => rowToWorkoutTemplate(row));
+  return r.rows.map((row: RawWorkoutTemplateRow) => rowToWorkoutTemplate(row));
 }
 
 export async function getWorkoutTemplate(
@@ -4360,7 +4774,7 @@ export async function getWorkoutTemplate(
 ): Promise<WorkoutTemplate | null> {
   const pool = getHealthPool();
   // System rows visible to all; customs only to their owner.
-  const params: any[] = [id, tenantId];
+  const params: unknown[] = [id, tenantId];
   let where = `WHERE id = $1 AND (source = 'system'
                                   OR (source = 'custom' AND tenant_id = $2`;
   if (userId !== undefined) {
@@ -4750,7 +5164,7 @@ const ACTIVITY_PLAN_SLOT_COLS = `
 `;
 
 function rowToActivityPlan(
-  row: any,
+  row: RawActivityPlanRow,
   slots?: ActivityPlanSlot[],
 ): ActivityPlan {
   return {
@@ -4770,7 +5184,7 @@ function rowToActivityPlan(
 }
 
 function rowToActivityPlanSlot(
-  row: any,
+  row: RawActivityPlanSlotRow,
   template?: WorkoutTemplate | null,
 ): ActivityPlanSlot {
   return {
@@ -4861,7 +5275,7 @@ export async function listActivityPlans(
 ): Promise<ActivityPlan[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 26, 1), 200);
-  const params: any[] = [input.tenantId, input.userId];
+  const params: unknown[] = [input.tenantId, input.userId];
   let where = `WHERE tenant_id = $1 AND user_id = $2`;
   if (input.fromWeek) {
     params.push(input.fromWeek);
@@ -4880,7 +5294,7 @@ export async function listActivityPlans(
       LIMIT $${params.length}`,
     params,
   );
-  return r.rows.map((row: any) => rowToActivityPlan(row));
+  return r.rows.map((row: RawActivityPlanRow) => rowToActivityPlan(row));
 }
 
 export async function getActivityPlanForWeek(
@@ -4964,22 +5378,37 @@ async function listActivityPlanSlots(
       ORDER BY s.day_of_week, s.position`,
     [planId, tenantId],
   );
-  return r.rows.map((row: any) => {
+  type RawActivityPlanSlotJoinedRow = RawActivityPlanSlotRow & {
+    t_id: string | null;
+    t_tenant_id: string | null;
+    t_user_id: string | null;
+    t_source: string | null;
+    t_name: string | null;
+    t_description: string | null;
+    t_category: string | null;
+    t_target_intensity: string | null;
+    t_est_duration_min: number | string | null;
+    t_tags: string[] | null;
+    t_metadata: Record<string, unknown> | null;
+    t_created_at: Date | null;
+    t_updated_at: Date | null;
+  };
+  return r.rows.map((row: RawActivityPlanSlotJoinedRow) => {
     const template: WorkoutTemplate | null = row.t_id
       ? rowToWorkoutTemplate({
           id: row.t_id,
           tenant_id: row.t_tenant_id,
           user_id: row.t_user_id,
-          source: row.t_source,
-          name: row.t_name,
+          source: row.t_source as string,
+          name: row.t_name as string,
           description: row.t_description,
-          category: row.t_category,
-          target_intensity: row.t_target_intensity,
-          est_duration_min: row.t_est_duration_min,
+          category: row.t_category as string,
+          target_intensity: row.t_target_intensity as string,
+          est_duration_min: row.t_est_duration_min as number | string,
           tags: row.t_tags,
           metadata: row.t_metadata,
-          created_at: row.t_created_at,
-          updated_at: row.t_updated_at,
+          created_at: row.t_created_at as Date,
+          updated_at: row.t_updated_at as Date,
         })
       : null;
     return rowToActivityPlanSlot(row, template);
