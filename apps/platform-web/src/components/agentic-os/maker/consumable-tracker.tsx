@@ -41,9 +41,9 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_FILL: Record<ConsumableStatus, string> = {
-  exhausted: 'bg-red-500',
-  low: 'bg-amber-500',
-  ok: 'bg-emerald-500',
+  exhausted: 'bg-danger',
+  low: 'bg-warning',
+  ok: 'bg-positive',
   unknown: 'bg-border-subtle',
 };
 
@@ -55,9 +55,9 @@ const STATUS_LABEL: Record<ConsumableStatus, string> = {
 };
 
 const STATUS_TEXT: Record<ConsumableStatus, string> = {
-  exhausted: 'text-red-300',
-  low: 'text-amber-300',
-  ok: 'text-emerald-300',
+  exhausted: 'text-danger',
+  low: 'text-warning',
+  ok: 'text-positive',
   unknown: 'text-text-secondary',
 };
 
@@ -275,7 +275,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
           {wearStats.exhausted > 0 && (
             <span
               data-testid="consumable-rollup-exhausted"
-              className="inline-flex items-center gap-1 text-[10px] text-red-300"
+              className="inline-flex items-center gap-1 text-[10px] text-danger"
             >
               <CircleAlert className="h-3 w-3" />
               <span className="tabular-nums">{wearStats.exhausted}</span> exhausted
@@ -284,7 +284,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
           {wearStats.low > 0 && (
             <span
               data-testid="consumable-rollup-low"
-              className="inline-flex items-center gap-1 text-[10px] text-amber-300"
+              className="inline-flex items-center gap-1 text-[10px] text-warning"
             >
               <AlertTriangle className="h-3 w-3" />
               <span className="tabular-nums">{wearStats.low}</span> low
@@ -300,7 +300,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
         </button>
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {showAdd && (
         <form
@@ -407,7 +407,7 @@ export function ConsumableTracker({ toolId, initialConsumables }: Props) {
                     <button
                       type="button"
                       onClick={() => remove(c)}
-                      className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-red-300 hover:bg-red-500/10 inline-flex items-center gap-1 transition"
+                      className="rounded-md border border-border-subtle bg-surface-2 px-2 py-1 text-[10px] text-danger hover:bg-danger/10 inline-flex items-center gap-1 transition"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

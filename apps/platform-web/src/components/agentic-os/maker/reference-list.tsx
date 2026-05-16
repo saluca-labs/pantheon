@@ -168,7 +168,7 @@ export function ReferenceList({ initialReferences }: Props) {
         }
       />
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       {showAdd && (
         <ReferenceForm
@@ -253,7 +253,7 @@ export function ReferenceList({ initialReferences }: Props) {
                     <button
                       type="button"
                       onClick={() => handleDelete(r.id)}
-                      className="text-xs text-text-secondary hover:text-red-400 transition"
+                      className="text-xs text-text-secondary hover:text-danger transition"
                     >
                       Delete
                     </button>

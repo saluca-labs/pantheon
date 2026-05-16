@@ -529,7 +529,7 @@ export default async function MakerProjectHubPage({ params, searchParams }: Prop
           </p>
           <Link
             href={`/dashboard/os/maker/coach?project_id=${project.id}&mode=build_planner`}
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-os-maker hover:bg-os-maker/90 text-black text-sm font-medium px-4 py-2 transition"
           >
             <Sparkles className="w-4 h-4" />
             Open project coach

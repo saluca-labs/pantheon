@@ -43,27 +43,27 @@ const inputCls =
   'w-full rounded-md border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-secondary/60 focus:border-accent focus:outline-none';
 
 const STATUS_STYLE: Record<MilestoneStatus, string> = {
-  done: 'border-emerald-500/50 text-emerald-300 bg-emerald-500/5',
-  overdue: 'border-red-500/50 text-red-300 bg-red-500/5',
-  due_soon: 'border-amber-500/50 text-amber-300 bg-amber-500/5',
+  done: 'border-positive/50 text-positive bg-positive/5',
+  overdue: 'border-danger/50 text-danger bg-danger/5',
+  due_soon: 'border-warning/50 text-warning bg-warning/5',
   upcoming: 'border-accent/50 text-text-primary bg-accent/5',
   undated: 'border-border-subtle text-text-secondary bg-surface-0',
 };
 
 const STORED_STATUS_BADGE: Record<MilestoneStoredStatus, string> = {
   pending: 'border-border-subtle text-text-secondary',
-  at_risk: 'border-yellow-500/50 text-yellow-300',
-  blocked: 'border-red-500/50 text-red-300',
-  on_track: 'border-emerald-500/50 text-emerald-300',
-  done: 'border-emerald-600/50 text-emerald-200',
-  missed: 'border-red-600/60 text-red-300',
+  at_risk: 'border-warning/50 text-warning',
+  blocked: 'border-danger/50 text-danger',
+  on_track: 'border-positive/50 text-positive',
+  done: 'border-positive/50 text-positive',
+  missed: 'border-danger/60 text-danger',
 };
 
 const PRIORITY_BADGE: Record<MilestonePriority, string> = {
   low: 'border-border-subtle text-text-secondary',
   medium: 'border-accent/50 text-text-primary',
-  high: 'border-amber-500/50 text-amber-300',
-  critical: 'border-red-500/50 text-red-300',
+  high: 'border-warning/50 text-warning',
+  critical: 'border-danger/50 text-danger',
 };
 
 interface Props {
@@ -173,13 +173,13 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
           <span className="text-white font-medium">{stats.done}</span> / {stats.total} done
         </span>
         {stats.overdue > 0 && (
-          <span className="inline-flex items-center gap-1 text-red-300">
+          <span className="inline-flex items-center gap-1 text-danger">
             <AlertTriangle className="w-3 h-3" />
             {stats.overdue} overdue
           </span>
         )}
         {stats.dueSoon > 0 && (
-          <span className="inline-flex items-center gap-1 text-amber-300">
+          <span className="inline-flex items-center gap-1 text-warning">
             <Calendar className="w-3 h-3" />
             {stats.dueSoon} due soon
           </span>
@@ -187,7 +187,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+        <div className="rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger">
           {error}
         </div>
       )}
@@ -226,7 +226,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                           {MILESTONE_PRIORITY_LABELS[m.priority]}
                         </span>
                         {m.isBlocker && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-red-500/60 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-red-300">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-danger/60 bg-danger/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-danger">
                             <ShieldAlert className="w-3 h-3" />
                             Blocker
                           </span>
@@ -246,7 +246,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         </p>
                       )}
                       {m.blockedReason && (
-                        <p className="mt-2 text-xs text-red-300 whitespace-pre-wrap">
+                        <p className="mt-2 text-xs text-danger whitespace-pre-wrap">
                           <ShieldAlert className="inline w-3 h-3 mr-1" />
                           {m.blockedReason}
                         </p>
@@ -259,7 +259,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         aria-label={done ? 'Mark milestone pending' : 'Mark milestone done'}
                         className={`flex h-5 w-5 items-center justify-center rounded border transition ${
                           done
-                            ? 'border-emerald-500 bg-emerald-500/30 text-emerald-200'
+                            ? 'border-positive bg-positive/30 text-positive'
                             : 'border-border-subtle hover:border-accent'
                         }`}
                       >
@@ -281,7 +281,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
                         type="button"
                         onClick={() => remove(m)}
                         aria-label="Delete milestone"
-                        className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
+                        className="rounded p-1 text-text-secondary hover:bg-danger/10 hover:text-danger"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -337,7 +337,7 @@ export function MilestoneStrip({ projectId, initialMilestones }: Props) {
           <button
             type="submit"
             disabled={adding || !draft.label.trim()}
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Adding…' : 'Add milestone'}
           </button>

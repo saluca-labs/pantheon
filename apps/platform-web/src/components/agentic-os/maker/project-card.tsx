@@ -19,13 +19,13 @@ import {
 } from '@/lib/agentic-os/maker/projects';
 
 export const STATUS_COLOR: Record<ProjectStatus, string> = {
-  concept: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  design: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  procurement: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30',
-  fabrication: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  assembly: 'text-orange-300 bg-orange-500/10 border-orange-500/30',
-  commissioning: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  done: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  concept: 'text-accent bg-accent/10 border-accent/30',
+  design: 'text-os-research bg-os-research/10 border-os-research/30',
+  procurement: 'text-accent-info bg-accent-info/10 border-accent-info/30',
+  fabrication: 'text-warning bg-warning/10 border-warning/30',
+  assembly: 'text-attention bg-attention/10 border-attention/30',
+  commissioning: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
+  done: 'text-positive bg-positive/10 border-positive/30',
   archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 

@@ -91,8 +91,8 @@ export function ProjectOverviewLinks({
                     <span
                       className={`inline-flex items-center gap-1 tabular-nums ${
                         row.line.priority === 'critical'
-                          ? 'text-red-300'
-                          : 'text-amber-300'
+                          ? 'text-danger'
+                          : 'text-warning'
                       }`}
                     >
                       <AlertTriangle className="h-3 w-3" />

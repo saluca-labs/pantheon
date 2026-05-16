@@ -262,7 +262,7 @@ export function SpecSheetForm({ scope, onCreated, onCancel }: Props) {
         </div>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
 
       <div className="flex items-center gap-2">
         <button
