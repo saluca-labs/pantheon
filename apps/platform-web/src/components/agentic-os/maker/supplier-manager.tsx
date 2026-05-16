@@ -194,11 +194,11 @@ export function SupplierManager({ initialSuppliers }: Props) {
           <button
             type="submit"
             disabled={adding || !newSup.name.trim()}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
           >
             {adding ? 'Adding…' : 'Create supplier'}
           </button>
-          {addError && <span className="text-sm text-red-300">{addError}</span>}
+          {addError && <span className="text-sm text-danger">{addError}</span>}
         </div>
       </form>
     </div>
@@ -282,14 +282,14 @@ function SupplierEditDrawer({
             });
             setBusy(false);
           }}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-3 py-1.5 text-sm transition"
         >
           {busy ? 'Saving…' : 'Save changes'}
         </button>
         <button
           type="button"
           onClick={() => void onDelete()}
-          className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-300 transition"
+          className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-danger transition"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Delete supplier

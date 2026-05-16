@@ -219,7 +219,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
           </div>
         )}
         {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+          <div className="rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger">
             {error}
           </div>
         )}
@@ -227,7 +227,7 @@ export function BuildLogFeed({ projectId, initialEntries }: Props) {
           <button
             type="submit"
             disabled={adding || !body.trim()}
-            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3651D9] disabled:opacity-50 disabled:hover:bg-accent"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 disabled:hover:bg-accent"
           >
             {adding ? 'Posting…' : 'Post entry'}
           </button>
@@ -314,7 +314,7 @@ function LogEntryBody({
           type="button"
           onClick={() => onDelete(entry)}
           aria-label="Delete entry"
-          className="rounded p-1 text-text-secondary hover:bg-red-500/10 hover:text-red-300"
+          className="rounded p-1 text-text-secondary hover:bg-danger/10 hover:text-danger"
         >
           <Trash2 className="w-4 h-4" />
         </button>
