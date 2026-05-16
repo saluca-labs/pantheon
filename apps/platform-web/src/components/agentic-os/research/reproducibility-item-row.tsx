@@ -10,7 +10,7 @@
  * @license MIT — Tiresias Research OS Phase 6 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { ReproducibilityStatePill } from './reproducibility-state-pill';
 import {
@@ -40,6 +40,9 @@ export function ReproducibilityItemRow({
   const [notes, setNotes] = useState(item.notes ?? '');
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const evidenceUrlId = useId();
+  const notesId = useId();
 
   const isCanonical = (CANONICAL_REPRO_ITEM_KEYS as readonly string[]).includes(
     item.itemKey,
@@ -156,10 +159,11 @@ export function ReproducibilityItemRow({
       {editing && (
         <div className="space-y-2 pt-2 border-t border-border-subtle">
           <div className="space-y-1">
-            <label className="text-xs uppercase tracking-wide text-text-secondary">
+            <label htmlFor={evidenceUrlId} className="text-xs uppercase tracking-wide text-text-secondary">
               Evidence URL
             </label>
             <input
+              id={evidenceUrlId}
               type="url"
               value={evidenceUrl}
               onChange={(e) => setEvidenceUrl(e.target.value)}
@@ -169,10 +173,11 @@ export function ReproducibilityItemRow({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs uppercase tracking-wide text-text-secondary">
+            <label htmlFor={notesId} className="text-xs uppercase tracking-wide text-text-secondary">
               Notes
             </label>
             <textarea
+              id={notesId}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}

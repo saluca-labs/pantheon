@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import type { Task } from '@/lib/agentic-os/business/tasks';
 import type { TimeEntry } from '@/lib/agentic-os/business/time-entries';
 
@@ -53,6 +53,9 @@ export default function TimeEntryForm({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -150,8 +153,9 @@ export default function TimeEntryForm({
 
       {/* Task select */}
       <div>
-        <label className={labelClass}>Task *</label>
+        <label htmlFor={fid('task')} className={labelClass}>Task *</label>
         <select
+          id={fid('task')}
           className={inputClass}
           value={taskId}
           onChange={(e) => setTaskId(e.target.value)}
@@ -168,8 +172,9 @@ export default function TimeEntryForm({
 
       {/* Description */}
       <div>
-        <label className={labelClass}>Description</label>
+        <label htmlFor={fid('description')} className={labelClass}>Description</label>
         <input
+          id={fid('description')}
           className={inputClass}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -188,8 +193,9 @@ export default function TimeEntryForm({
       {mode === 'manual' && (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelClass}>Started At</label>
+            <label htmlFor={fid('started-at')} className={labelClass}>Started At</label>
             <input
+              id={fid('started-at')}
               className={inputClass}
               type="datetime-local"
               value={startedAt}
@@ -197,8 +203,9 @@ export default function TimeEntryForm({
             />
           </div>
           <div>
-            <label className={labelClass}>Duration (minutes)</label>
+            <label htmlFor={fid('duration')} className={labelClass}>Duration (minutes)</label>
             <input
+              id={fid('duration')}
               className={inputClass}
               type="number"
               value={durationMinutes}
@@ -213,8 +220,9 @@ export default function TimeEntryForm({
       {/* Rate + Billable */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Billing Rate (cents)</label>
+          <label htmlFor={fid('billing-rate')} className={labelClass}>Billing Rate (cents)</label>
           <input
+            id={fid('billing-rate')}
             className={inputClass}
             type="number"
             value={billingRateCents}

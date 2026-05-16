@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ContactOption {
@@ -86,6 +86,9 @@ export default function QuoteForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -154,8 +157,9 @@ export default function QuoteForm({
 
       <div className={compact ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         <div>
-          <label className={labelClass}>Title *</label>
+          <label htmlFor={fid('title')} className={labelClass}>Title *</label>
           <input
+            id={fid('title')}
             className={inputClass}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -164,8 +168,9 @@ export default function QuoteForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Quote Number *</label>
+          <label htmlFor={fid('quote-number')} className={labelClass}>Quote Number *</label>
           <input
+            id={fid('quote-number')}
             className={inputClass}
             value={quoteNumber}
             onChange={(e) => setQuoteNumber(e.target.value)}
@@ -174,8 +179,8 @@ export default function QuoteForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Contact</label>
-          <select className={selectClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
+          <label htmlFor={fid('contact')} className={labelClass}>Contact</label>
+          <select id={fid('contact')} className={selectClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
             <option value="">-- None --</option>
             {contacts.map((c) => (
               <option key={c.id} value={c.id}>
@@ -185,8 +190,8 @@ export default function QuoteForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Deal</label>
-          <select className={selectClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
+          <label htmlFor={fid('deal')} className={labelClass}>Deal</label>
+          <select id={fid('deal')} className={selectClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
             <option value="">-- None --</option>
             {deals.map((d) => (
               <option key={d.id} value={d.id}>
@@ -196,8 +201,8 @@ export default function QuoteForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Project</label>
-          <select className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <label htmlFor={fid('project')} className={labelClass}>Project</label>
+          <select id={fid('project')} className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">-- None --</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -207,8 +212,9 @@ export default function QuoteForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Currency</label>
+          <label htmlFor={fid('currency')} className={labelClass}>Currency</label>
           <input
+            id={fid('currency')}
             className={inputClass}
             value={currency}
             onChange={(e) => setCurrency(e.target.value.toUpperCase())}
@@ -216,8 +222,9 @@ export default function QuoteForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Quote Date</label>
+          <label htmlFor={fid('quote-date')} className={labelClass}>Quote Date</label>
           <input
+            id={fid('quote-date')}
             className={inputClass}
             type="date"
             value={quoteDate}
@@ -225,8 +232,9 @@ export default function QuoteForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Expires On</label>
+          <label htmlFor={fid('expires-on')} className={labelClass}>Expires On</label>
           <input
+            id={fid('expires-on')}
             className={inputClass}
             type="date"
             value={expiresOn}
@@ -236,8 +244,9 @@ export default function QuoteForm({
       </div>
 
       <div>
-        <label className={labelClass}>Description</label>
+        <label htmlFor={fid('description')} className={labelClass}>Description</label>
         <textarea
+          id={fid('description')}
           className={inputClass}
           rows={3}
           value={descriptionMd}

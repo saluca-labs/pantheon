@@ -24,7 +24,7 @@
  * @license MIT — Tiresias Creator OS Phase 2 (internal).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import {
   Mail,
   Plus,
@@ -74,6 +74,9 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
     'all',
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const emailInputId = useId();
+  const nameInputId = useId();
 
   const activeCount = subs.filter((s) => s.status === 'active').length;
 
@@ -278,10 +281,11 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
         </h2>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+            <label htmlFor={emailInputId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Email
             </label>
             <input
+              id={emailInputId}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -291,10 +295,11 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
             />
           </div>
           <div className="flex-1 min-w-[150px]">
-            <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+            <label htmlFor={nameInputId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
               Name (optional)
             </label>
             <input
+              id={nameInputId}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

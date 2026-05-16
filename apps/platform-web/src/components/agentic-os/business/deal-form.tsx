@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { DEAL_STAGES, type Deal, type DealStage } from '@/lib/agentic-os/business/deals';
 
 interface DealFormProps {
@@ -46,6 +46,10 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Stable id prefix for label↔control wiring (jsx-a11y/label-has-associated-control).
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -118,8 +122,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
 
       {/* Title */}
       <div>
-        <label className={labelClass}>Title *</label>
+        <label htmlFor={fid('title')} className={labelClass}>Title *</label>
         <input
+          id={fid('title')}
           className={inputClass}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -131,8 +136,8 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
       {/* Contact + Org selects */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Contact</label>
-          <select className={inputClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
+          <label htmlFor={fid('contact')} className={labelClass}>Contact</label>
+          <select id={fid('contact')} className={inputClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
             <option value="">None</option>
             {contacts.map((c) => (
               <option key={c.id} value={c.id} className="bg-surface-2 text-white">
@@ -142,8 +147,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
           </select>
         </div>
         <div>
-          <label className={labelClass}>Organization</label>
+          <label htmlFor={fid('organization')} className={labelClass}>Organization</label>
           <select
+            id={fid('organization')}
             className={inputClass}
             value={organizationId}
             onChange={(e) => setOrganizationId(e.target.value)}
@@ -161,8 +167,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
       {/* Value + Currency */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Value (cents)</label>
+          <label htmlFor={fid('value-cents')} className={labelClass}>Value (cents)</label>
           <input
+            id={fid('value-cents')}
             className={inputClass}
             type="number"
             value={valueCents}
@@ -172,8 +179,8 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
           />
         </div>
         <div>
-          <label className={labelClass}>Currency</label>
-          <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+          <label htmlFor={fid('currency')} className={labelClass}>Currency</label>
+          <select id={fid('currency')} className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
             <option value="USD" className="bg-surface-2 text-white">USD</option>
             <option value="EUR" className="bg-surface-2 text-white">EUR</option>
             <option value="GBP" className="bg-surface-2 text-white">GBP</option>
@@ -186,8 +193,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
       {/* Probability + Close Date + Stage */}
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className={labelClass}>Probability %</label>
+          <label htmlFor={fid('probability')} className={labelClass}>Probability %</label>
           <input
+            id={fid('probability')}
             className={inputClass}
             type="number"
             value={probabilityPct}
@@ -197,8 +205,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
           />
         </div>
         <div>
-          <label className={labelClass}>Expected Close</label>
+          <label htmlFor={fid('close-date')} className={labelClass}>Expected Close</label>
           <input
+            id={fid('close-date')}
             className={inputClass}
             type="date"
             value={expectedCloseDate}
@@ -206,8 +215,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
           />
         </div>
         <div>
-          <label className={labelClass}>Stage</label>
+          <label htmlFor={fid('stage')} className={labelClass}>Stage</label>
           <select
+            id={fid('stage')}
             className={inputClass}
             value={stage}
             onChange={(e) => setStage(e.target.value as DealStage)}
@@ -224,8 +234,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
       {/* Source + Tags */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className={labelClass}>Source</label>
+          <label htmlFor={fid('source')} className={labelClass}>Source</label>
           <input
+            id={fid('source')}
             className={inputClass}
             value={source}
             onChange={(e) => setSource(e.target.value)}
@@ -233,8 +244,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
           />
         </div>
         <div>
-          <label className={labelClass}>Tags (comma-separated)</label>
+          <label htmlFor={fid('tags')} className={labelClass}>Tags (comma-separated)</label>
           <input
+            id={fid('tags')}
             className={inputClass}
             value={tags}
             onChange={(e) => setTags(e.target.value)}
@@ -246,8 +258,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
       {/* Lost reason (only when stage is lost) */}
       {stage === 'lost' && (
         <div>
-          <label className={labelClass}>Lost Reason</label>
+          <label htmlFor={fid('lost-reason')} className={labelClass}>Lost Reason</label>
           <input
+            id={fid('lost-reason')}
             className={inputClass}
             value={lostReason}
             onChange={(e) => setLostReason(e.target.value)}
@@ -258,8 +271,9 @@ export default function DealForm({ contacts, orgs, onCreated, initial }: DealFor
 
       {/* Description */}
       <div>
-        <label className={labelClass}>Description (Markdown)</label>
+        <label htmlFor={fid('description')} className={labelClass}>Description (Markdown)</label>
         <textarea
+          id={fid('description')}
           className={inputClass}
           rows={4}
           value={descriptionMd}
