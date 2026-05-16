@@ -6,16 +6,16 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-interface PgResult { rows: any[]; rowCount: number }
+interface PgResult { rows: unknown[]; rowCount: number }
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
 }
 
 const mockClient = {
-  query: vi.fn(async (sql: string, params: any[] = []) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     calls.push({ sql, params });
     return queue.shift() ?? { rows: [], rowCount: 0 };
   }),
@@ -24,7 +24,7 @@ const mockClient = {
 
 vi.mock('@/lib/agentic-os/cyber/session', () => ({
   getCyberPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -52,7 +52,7 @@ beforeEach(() => {
   mockClient.query.mockClear();
 });
 
-function exposureRow(overrides: Record<string, any> = {}): any {
+function exposureRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'e-1',
     vulnerability_id: 'v-1',
@@ -164,7 +164,7 @@ describe('closeExposure stamps remediated_at', () => {
 
 describe('bulkCreateExposures', () => {
   it('inserts one row per asset, idempotent via ON CONFLICT DO NOTHING', async () => {
-    mockClient.query.mockImplementation(async (sql: string, params: any[] = []) => {
+    mockClient.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
       // vuln owner check

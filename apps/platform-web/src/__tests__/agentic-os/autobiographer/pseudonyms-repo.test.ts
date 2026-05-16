@@ -11,12 +11,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 const errorsToThrow: (Error | null)[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
@@ -31,7 +31,7 @@ function pushError(err: Error): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       const err = errorsToThrow.shift();
       const result = queue.shift() ?? { rows: [], rowCount: 0 };
@@ -137,7 +137,7 @@ describe('createPseudonym', () => {
   });
 
   it('maps Postgres 23505 to typed duplicate error', async () => {
-    const dup: any = new Error('unique_violation');
+    const dup = new Error('unique_violation') as Error & { code?: string; constraint?: string };
     dup.code = '23505';
     pushError(dup);
     await expect(

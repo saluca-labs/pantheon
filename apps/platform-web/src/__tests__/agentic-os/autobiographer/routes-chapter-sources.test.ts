@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -54,7 +54,7 @@ vi.mock('@/lib/agentic-os/autobiographer/chapter-sources-repo', () => sourcesRep
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -66,9 +66,9 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(chaptersRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(memoriesRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(sourcesRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(chaptersRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(memoriesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(sourcesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -97,7 +97,7 @@ describe('GET /chapters/[id]/sources', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(401);
@@ -109,7 +109,7 @@ describe('GET /chapters/[id]/sources', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-x' }),
     });
     expect(res.status).toBe(404);
@@ -124,7 +124,7 @@ describe('GET /chapters/[id]/sources', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(200);
@@ -143,7 +143,7 @@ describe('POST /chapters/[id]/sources', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as never,
       { params: Promise.resolve({ id: 'c-x' }) },
     );
     expect(res.status).toBe(404);
@@ -155,7 +155,7 @@ describe('POST /chapters/[id]/sources', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', { weight: 0.5 }) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', { weight: 0.5 }) as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(400);
@@ -169,7 +169,7 @@ describe('POST /chapters/[id]/sources', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(404);
@@ -190,7 +190,7 @@ describe('POST /chapters/[id]/sources', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { memory_id: M_UUID, weight: 0.7 }) as any,
+      jsonReq('http://t/x', 'POST', { memory_id: M_UUID, weight: 0.7 }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(201);
@@ -213,7 +213,7 @@ describe('POST /chapters/[id]/sources', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { memory_id: M_UUID }) as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(409);
@@ -228,7 +228,7 @@ describe('DELETE /chapters/[id]/sources?memory_id=', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'c-1' }),
     });
     expect(res.status).toBe(400);
@@ -241,7 +241,7 @@ describe('DELETE /chapters/[id]/sources?memory_id=', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await DELETE(
-      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as any,
+      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(404);
@@ -255,7 +255,7 @@ describe('DELETE /chapters/[id]/sources?memory_id=', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await DELETE(
-      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as any,
+      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(200);
@@ -274,7 +274,7 @@ describe('DELETE /chapters/[id]/sources?memory_id=', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/chapters/[id]/sources/route'
     );
     const res = await DELETE(
-      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as any,
+      jsonReq(`http://t/x?memory_id=${M_UUID}`, 'DELETE') as never,
       { params: Promise.resolve({ id: 'c-1' }) },
     );
     expect(res.status).toBe(404);

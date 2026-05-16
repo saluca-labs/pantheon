@@ -22,7 +22,7 @@ import {
 } from '@/lib/agentic-os/health/schemas';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
@@ -154,7 +154,7 @@ describe('Meditation Zod schemas', () => {
   });
   it('MeditationSessionBody rejects unknown source', () => {
     const r = MeditationSessionBody.safeParse({
-      source: 'youtube' as any,
+      source: 'youtube' as never,
       durationMin: 10,
     });
     expect(r.success).toBe(false);
@@ -171,7 +171,7 @@ describe('Meditation Zod schemas', () => {
   });
   it('MeditationPlanBody rejects unknown goal', () => {
     expect(
-      MeditationPlanBody.safeParse({ goal: 'mindfulness' as any }).success,
+      MeditationPlanBody.safeParse({ goal: 'mindfulness' as never }).success,
     ).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -57,7 +57,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -69,9 +69,9 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(booksRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(chaptersRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(reviewRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(booksRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(chaptersRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(reviewRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -98,7 +98,7 @@ describe('GET /books/[id]/review-checks', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/review-checks/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(401);
@@ -110,7 +110,7 @@ describe('GET /books/[id]/review-checks', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/review-checks/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(404);
@@ -126,7 +126,7 @@ describe('GET /books/[id]/review-checks', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/review-checks/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -142,7 +142,7 @@ describe('POST /books/[id]/review-checks', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/review-checks/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(400);
@@ -162,7 +162,7 @@ describe('POST /books/[id]/review-checks', () => {
       jsonReq('http://t/x', 'POST', {
         chapterId: '00000000-0000-0000-0000-000000000001',
         kind: 'consent_collected',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(404);
@@ -175,7 +175,7 @@ describe('POST /books/[id]/review-checks', () => {
       id: '00000000-0000-0000-0000-000000000001',
       bookId: 'b-1',
     });
-    const dup: any = new Error('duplicate');
+    const dup = new Error('duplicate') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     reviewRepoMocks.createReviewCheck.mockRejectedValue(dup);
     const { POST } = await import(
@@ -185,7 +185,7 @@ describe('POST /books/[id]/review-checks', () => {
       jsonReq('http://t/x', 'POST', {
         chapterId: '00000000-0000-0000-0000-000000000001',
         kind: 'consent_collected',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(409);
@@ -205,7 +205,7 @@ describe('POST /books/[id]/review-checks', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/review-checks/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { kind: 'legal_reviewed' }) as any,
+      jsonReq('http://t/x', 'POST', { kind: 'legal_reviewed' }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(201);
@@ -227,7 +227,7 @@ describe('PATCH /review-checks/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/review-checks/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'passed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'passed' }) as never,
       { params: Promise.resolve({ id: 'rc-1' }) },
     );
     expect(res.status).toBe(404);
@@ -245,7 +245,7 @@ describe('PATCH /review-checks/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/review-checks/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'BOGUS' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'BOGUS' }) as never,
       { params: Promise.resolve({ id: 'rc-1' }) },
     );
     expect(res.status).toBe(400);
@@ -270,7 +270,7 @@ describe('PATCH /review-checks/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/review-checks/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { status: 'passed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { status: 'passed' }) as never,
       { params: Promise.resolve({ id: 'rc-1' }) },
     );
     expect(res.status).toBe(200);
@@ -297,7 +297,7 @@ describe('DELETE /review-checks/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/review-checks/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'rc-1' }),
     });
     expect(res.status).toBe(200);

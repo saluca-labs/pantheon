@@ -10,14 +10,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const poolQueue: PgResult[] = [];
-const poolCalls: { sql: string; params: any[] }[] = [];
+const poolCalls: { sql: string; params: unknown[] }[] = [];
 const clientQueue: PgResult[] = [];
-const clientCalls: { sql: string; params: any[] }[] = [];
+const clientCalls: { sql: string; params: unknown[] }[] = [];
 const clientErrors: (Error | null)[] = [];
 
 function pushPool(r: Partial<PgResult>): void {
@@ -36,7 +36,7 @@ function pushClient(r: Partial<PgResult>): void {
 
 const clientReleaseSpy = vi.fn();
 const clientMock = {
-  query: vi.fn(async (sql: string, params: any[] = []) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     clientCalls.push({ sql, params });
     const err = clientErrors.shift();
     const result = clientQueue.shift() ?? { rows: [], rowCount: 0 };
@@ -49,7 +49,7 @@ const clientMock = {
 const poolErrors: (Error | null)[] = [];
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       poolCalls.push({ sql, params });
       const err = poolErrors.shift();
       const result = poolQueue.shift() ?? { rows: [], rowCount: 0 };
@@ -120,7 +120,7 @@ describe('attachChapterToArc', () => {
     pushPool({ rows: [{ book_id: 'b-1' }] });
     pushPool({ rows: [{ book_id: 'b-1' }] });
     pushPool({ rows: [{ next: 0 }] });
-    const err: any = new Error('dup');
+    const err = new Error('dup') as Error & { code?: string; constraint?: string };
     err.code = '23505';
     poolErrors.push(null, null, null, err);
     pushPool({ rows: [] }); // INSERT (will throw via poolErrors)

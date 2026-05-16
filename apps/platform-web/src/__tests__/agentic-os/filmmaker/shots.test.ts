@@ -30,12 +30,12 @@ describe('validateShot', () => {
   });
 
   it('rejects unknown shot types', () => {
-    const errors = validateShot({ sceneNumber: '1', shotNumber: 'A', shotType: 'FISHEYE' as any, cameraMove: 'STATIC' });
+    const errors = validateShot({ sceneNumber: '1', shotNumber: 'A', shotType: 'FISHEYE' as never, cameraMove: 'STATIC' });
     expect(errors.some((e) => e.toLowerCase().includes('shot type'))).toBe(true);
   });
 
   it('rejects unknown camera moves', () => {
-    const errors = validateShot({ sceneNumber: '1', shotNumber: 'A', shotType: 'WS', cameraMove: 'SPIN' as any });
+    const errors = validateShot({ sceneNumber: '1', shotNumber: 'A', shotType: 'WS', cameraMove: 'SPIN' as never });
     expect(errors.some((e) => e.toLowerCase().includes('camera move'))).toBe(true);
   });
 

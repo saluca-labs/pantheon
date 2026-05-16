@@ -32,12 +32,12 @@ import type { CbtLog } from '@/lib/agentic-os/health/repo';
 // ─── Fake pool — same pattern as Phase 2 ────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -48,7 +48,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/health/session', () => ({
   getHealthPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -216,7 +216,7 @@ describe('CbtLogBody discriminated union', () => {
     expect(r.success).toBe(false);
   });
   it('rejects an unknown kind', () => {
-    const r = CbtLogBody.safeParse({ kind: 'meditation', data: {} } as any);
+    const r = CbtLogBody.safeParse({ kind: 'meditation', data: {} } as never);
     expect(r.success).toBe(false);
   });
 });

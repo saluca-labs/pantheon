@@ -159,7 +159,7 @@ describe('buildSystemPrompt: sensitive footer reification', () => {
         voice_profile: null,
         people: [],
         pseudonyms: [],
-        sensitive_kinds: kinds as any,
+        sensitive_kinds: kinds as never,
       },
     };
   }
@@ -246,7 +246,7 @@ describe('activeSensitiveKinds', () => {
           voice_profile: null,
           people: [],
           pseudonyms: [],
-          sensitive_kinds: ['legal', 'death'] as any,
+          sensitive_kinds: ['legal', 'death'] as never,
         },
       }),
     ).toEqual(['legal', 'death']);

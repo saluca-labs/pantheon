@@ -178,7 +178,7 @@ describe('validateStepTitle', () => {
   });
 
   it('rejects non-string input', () => {
-    expect(validateStepTitle(42 as any)).toMatch(/string/);
+    expect(validateStepTitle(42 as never)).toMatch(/string/);
   });
 });
 
@@ -200,7 +200,7 @@ describe('validateEstMinutes', () => {
   });
 
   it('rejects non-numeric input', () => {
-    expect(validateEstMinutes('5' as any)).toMatch(/number or null/);
+    expect(validateEstMinutes('5' as never)).toMatch(/number or null/);
   });
 });
 
@@ -217,6 +217,6 @@ describe('validateOrdinal', () => {
   });
 
   it('rejects non-numeric input', () => {
-    expect(validateOrdinal('1' as any)).toMatch(/must be a number/);
+    expect(validateOrdinal('1' as never)).toMatch(/must be a number/);
   });
 });

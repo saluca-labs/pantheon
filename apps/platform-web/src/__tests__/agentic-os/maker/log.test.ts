@@ -54,7 +54,7 @@ describe('validateLogBody', () => {
   });
 
   it('rejects non-string', () => {
-    expect(validateLogBody(123 as any)).toMatch(/string/);
+    expect(validateLogBody(123 as never)).toMatch(/string/);
   });
 });
 
@@ -99,7 +99,7 @@ describe('validateUrlString', () => {
   });
 
   it('rejects non-string', () => {
-    expect(validateUrlString(123 as any)).toMatch(/string/);
+    expect(validateUrlString(123 as never)).toMatch(/string/);
   });
 });
 

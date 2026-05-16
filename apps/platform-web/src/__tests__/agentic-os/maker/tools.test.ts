@@ -146,7 +146,7 @@ describe('validateToolKind', () => {
 
   it('rejects unknown values', () => {
     expect(validateToolKind('drone')).toMatch(/one of/);
-    expect(validateToolKind(42 as any)).toMatch(/one of/);
+    expect(validateToolKind(42 as never)).toMatch(/one of/);
     expect(validateToolKind(null)).toMatch(/one of/);
   });
 });
@@ -178,7 +178,7 @@ describe('validateToolName', () => {
   });
 
   it('rejects non-string input', () => {
-    expect(validateToolName(42 as any)).toMatch(/string/);
+    expect(validateToolName(42 as never)).toMatch(/string/);
   });
 });
 
@@ -197,6 +197,6 @@ describe('validatePurchasedAt', () => {
   });
 
   it('rejects non-string non-null input', () => {
-    expect(validatePurchasedAt(42 as any)).toMatch(/string/);
+    expect(validatePurchasedAt(42 as never)).toMatch(/string/);
   });
 });

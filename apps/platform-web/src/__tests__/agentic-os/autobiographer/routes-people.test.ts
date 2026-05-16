@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -34,7 +34,7 @@ vi.mock('@/lib/agentic-os/autobiographer/people-repo', () => peopleRepoMocks);
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(peopleRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(peopleRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -73,7 +73,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -85,7 +85,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.people).toHaveLength(1);
@@ -98,7 +98,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
     await GET(
-      jsonReq('http://t/x?consent_to_publish=pending', 'GET') as any,
+      jsonReq('http://t/x?consent_to_publish=pending', 'GET') as never,
     );
     expect(peopleRepoMocks.listPeople).toHaveBeenCalledWith(
       expect.objectContaining({ consentToPublish: 'pending' }),
@@ -111,7 +111,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
     const res = await GET(
-      jsonReq('http://t/x?consent_to_publish=nope', 'GET') as any,
+      jsonReq('http://t/x?consent_to_publish=nope', 'GET') as never,
     );
     expect(res.status).toBe(400);
   });
@@ -126,7 +126,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people', () => {
       jsonReq(
         'http://t/x?relation=mother&q=maria',
         'GET',
-      ) as any,
+      ) as never,
     );
     expect(peopleRepoMocks.listPeople).toHaveBeenCalledWith(
       expect.objectContaining({ relation: 'mother', q: 'maria' }),
@@ -143,7 +143,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as any,
+      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -153,7 +153,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -167,7 +167,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as any,
+      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as never,
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -181,14 +181,14 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people', () => {
 
   it('returns 409 when the repo throws duplicate_name', async () => {
     authedUser();
-    const dup: any = new Error('duplicate_name');
+    const dup = new Error('duplicate_name') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate_name';
     peopleRepoMocks.createPerson.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as any,
+      jsonReq('http://t/x', 'POST', { canonicalName: 'Maria' }) as never,
     );
     expect(res.status).toBe(409);
   });
@@ -202,7 +202,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(401);
@@ -214,7 +214,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'p-other' }),
     });
     expect(res.status).toBe(404);
@@ -229,7 +229,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(200);
@@ -247,7 +247,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { consentToPublish: 'nope' }) as any,
+      jsonReq('http://t/x', 'PATCH', { consentToPublish: 'nope' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -260,7 +260,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { canonicalName: 'X' }) as any,
+      jsonReq('http://t/x', 'PATCH', { canonicalName: 'X' }) as never,
       { params: Promise.resolve({ id: 'missing' }) },
     );
     expect(res.status).toBe(404);
@@ -268,7 +268,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
 
   it('returns 409 on duplicate_name rename collision', async () => {
     authedUser();
-    const dup: any = new Error('duplicate_name');
+    const dup = new Error('duplicate_name') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate_name';
     peopleRepoMocks.updatePerson.mockRejectedValue(dup);
     const { PATCH } = await import(
@@ -277,7 +277,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const res = await PATCH(
       jsonReq('http://t/x', 'PATCH', {
         canonicalName: 'CollidesWithSibling',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(409);
@@ -293,7 +293,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { canonicalName: 'Renamed' }) as any,
+      jsonReq('http://t/x', 'PATCH', { canonicalName: 'Renamed' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -315,7 +315,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'p-other' }),
     });
     expect(res.status).toBe(404);
@@ -332,7 +332,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/people/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(200);
@@ -358,7 +358,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people/[id]/consent', () 
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/consent/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { state: 'granted' }) as any,
+      jsonReq('http://t/x', 'POST', { state: 'granted' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(401);
@@ -370,7 +370,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people/[id]/consent', () 
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/consent/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { state: 'nope' }) as any,
+      jsonReq('http://t/x', 'POST', { state: 'nope' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -383,7 +383,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people/[id]/consent', () 
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/consent/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { state: 'granted' }) as any,
+      jsonReq('http://t/x', 'POST', { state: 'granted' }) as never,
       { params: Promise.resolve({ id: 'p-other' }) },
     );
     expect(res.status).toBe(404);
@@ -402,7 +402,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people/[id]/consent', () 
       jsonReq('http://t/x', 'POST', {
         state: 'granted',
         recordedBy: 'verbal, 2026-04-12',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -434,7 +434,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/people/[id]/consent', () 
       '@/app/api/tiresias/agentic-os/autobiographer/people/[id]/consent/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { state: 'withheld' }) as any,
+      jsonReq('http://t/x', 'POST', { state: 'withheld' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);

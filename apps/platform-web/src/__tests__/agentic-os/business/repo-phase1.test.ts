@@ -23,7 +23,7 @@ vi.mock('@/lib/agentic-os/business/session', () => ({
 // Spy the shared audit so we can assert the migration plumbing.
 const sharedRecordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/_shared/audit', () => ({
-  recordAudit: (args: any) => sharedRecordAudit(args),
+  recordAudit: (args: unknown) => sharedRecordAudit(args),
 }));
 
 beforeEach(() => {
@@ -34,7 +34,7 @@ beforeEach(() => {
 
 const NOW = new Date('2026-05-12T10:00:00.000Z');
 
-function mockSelectOrgs(rows: any[]) {
+function mockSelectOrgs(rows: unknown[]) {
   query.mockResolvedValueOnce({ rows, rowCount: rows.length });
 }
 
@@ -114,7 +114,7 @@ describe('listOrganizations', () => {
   it('throws on invalid orgType filter', async () => {
     const { listOrganizations } = await import('@/lib/agentic-os/business/orgs-repo');
     await expect(
-      listOrganizations('u-1', { orgType: 'startup' as any }),
+      listOrganizations('u-1', { orgType: 'startup' as never }),
     ).rejects.toThrow(/Invalid org_type filter/);
   });
 
@@ -166,7 +166,7 @@ describe('createOrganization', () => {
       name: 'Acme',
       tags: [' Enterprise', 'USA', 'enterprise'],
     });
-    const params = query.mock.calls[0]![1] as any[];
+    const params = query.mock.calls[0]![1] as never[];
     // Tags param (index 9) should be normalized + deduped.
     expect(params[9]).toEqual(['enterprise', 'usa']);
   });
@@ -174,7 +174,7 @@ describe('createOrganization', () => {
   it('throws on invalid orgType', async () => {
     const { createOrganization } = await import('@/lib/agentic-os/business/orgs-repo');
     await expect(
-      createOrganization('u-1', { name: 'X', orgType: 'startup' as any }),
+      createOrganization('u-1', { name: 'X', orgType: 'startup' as never }),
     ).rejects.toThrow(/Invalid org_type/);
   });
 });
@@ -229,7 +229,7 @@ describe('listPeople', () => {
     query.mockResolvedValueOnce({ rowCount: 0, rows: [] });
     const { listPeople } = await import('@/lib/agentic-os/business/people-repo');
     await listPeople('u-1', { organizationId: 'org-1' });
-    const params = query.mock.calls[0]![1] as any[];
+    const params = query.mock.calls[0]![1] as never[];
     expect(params).toContain('org-1');
   });
 
@@ -283,7 +283,7 @@ describe('listInteractions', () => {
     query.mockResolvedValueOnce({ rowCount: 0, rows: [] });
     const { listInteractions } = await import('@/lib/agentic-os/business/interactions-repo');
     await listInteractions('u-1', { from: '2026-05-01', to: '2026-05-31' });
-    const params = query.mock.calls[0]![1] as any[];
+    const params = query.mock.calls[0]![1] as never[];
     expect(params).toContain('2026-05-01');
     expect(params).toContain('2026-05-31');
   });
@@ -291,7 +291,7 @@ describe('listInteractions', () => {
   it('throws on invalid interactionType filter', async () => {
     const { listInteractions } = await import('@/lib/agentic-os/business/interactions-repo');
     await expect(
-      listInteractions('u-1', { interactionType: 'phonecall' as any }),
+      listInteractions('u-1', { interactionType: 'phonecall' as never }),
     ).rejects.toThrow(/Invalid interaction_type filter/);
   });
 });
@@ -300,7 +300,7 @@ describe('createInteraction', () => {
   it('rejects invalid interactionType', async () => {
     const { createInteraction } = await import('@/lib/agentic-os/business/interactions-repo');
     await expect(
-      createInteraction('u-1', { interactionType: 'phonecall' as any, summary: 'x' }),
+      createInteraction('u-1', { interactionType: 'phonecall' as never, summary: 'x' }),
     ).rejects.toThrow(/Invalid interaction_type/);
   });
 });
@@ -368,7 +368,7 @@ describe('getOrCreateSettings', () => {
     const now = new Date();
     query.mockResolvedValueOnce({ rowCount: 0, rows: [] }); // initial GET miss
     // INSERT throws 23505 (race winner already created the row).
-    const dupErr: any = new Error('duplicate key');
+    const dupErr = new Error('duplicate key') as Error & { code?: string; constraint?: string };
     dupErr.code = '23505';
     query.mockRejectedValueOnce(dupErr);
     // Final re-read returns the winning row.

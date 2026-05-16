@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -33,7 +33,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -45,8 +45,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(arcsRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(acRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(arcsRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(acRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -74,7 +74,7 @@ describe('GET /arcs/[id]/chapters', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'a-x' }),
     });
     expect(res.status).toBe(404);
@@ -89,7 +89,7 @@ describe('GET /arcs/[id]/chapters', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'a-1' }),
     });
     expect(res.status).toBe(200);
@@ -104,7 +104,7 @@ describe('POST /arcs/[id]/chapters', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'a-1' }),
     });
     expect(res.status).toBe(400);
@@ -112,14 +112,14 @@ describe('POST /arcs/[id]/chapters', () => {
 
   it('404 when repo throws not_found (cross-book chapter)', async () => {
     authedUser();
-    const nf: any = new Error('nf');
+    const nf = new Error('nf') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     acRepoMocks.attachChapterToArc.mockRejectedValue(nf);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(404);
@@ -127,14 +127,14 @@ describe('POST /arcs/[id]/chapters', () => {
 
   it('409 on duplicate', async () => {
     authedUser();
-    const dup: any = new Error('dup');
+    const dup = new Error('dup') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     acRepoMocks.attachChapterToArc.mockRejectedValue(dup);
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(409);
@@ -154,7 +154,7 @@ describe('POST /arcs/[id]/chapters', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as any,
+      jsonReq('http://t/x', 'POST', { chapter_id: CHAPTER_UUID }) as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(201);
@@ -173,7 +173,7 @@ describe('PATCH /arcs/[id]/chapters (reorder)', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
-    const res = await PATCH(jsonReq('http://t/x', 'PATCH', {}) as any, {
+    const res = await PATCH(jsonReq('http://t/x', 'PATCH', {}) as never, {
       params: Promise.resolve({ id: 'a-1' }),
     });
     expect(res.status).toBe(400);
@@ -181,7 +181,7 @@ describe('PATCH /arcs/[id]/chapters (reorder)', () => {
 
   it('404 when repo throws not_found', async () => {
     authedUser();
-    const nf: any = new Error('nf');
+    const nf = new Error('nf') as Error & { code?: string; constraint?: string };
     nf.code = 'not_found';
     acRepoMocks.reorderArcChapters.mockRejectedValue(nf);
     const { PATCH } = await import(
@@ -193,7 +193,7 @@ describe('PATCH /arcs/[id]/chapters (reorder)', () => {
           { chapter_id: CHAPTER_UUID, position: 0 },
           { chapter_id: OTHER_CHAPTER, position: 1 },
         ],
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(404);
@@ -212,7 +212,7 @@ describe('PATCH /arcs/[id]/chapters (reorder)', () => {
           { chapter_id: CHAPTER_UUID, position: 1 },
           { chapter_id: OTHER_CHAPTER, position: 0 },
         ],
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(200);
@@ -230,7 +230,7 @@ describe('DELETE /arcs/[id]/chapters?chapter_id=', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'a-1' }),
     });
     expect(res.status).toBe(400);
@@ -243,7 +243,7 @@ describe('DELETE /arcs/[id]/chapters?chapter_id=', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
     const res = await DELETE(
-      jsonReq(`http://t/x?chapter_id=${CHAPTER_UUID}`, 'DELETE') as any,
+      jsonReq(`http://t/x?chapter_id=${CHAPTER_UUID}`, 'DELETE') as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(404);
@@ -257,7 +257,7 @@ describe('DELETE /arcs/[id]/chapters?chapter_id=', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/arcs/[id]/chapters/route'
     );
     const res = await DELETE(
-      jsonReq(`http://t/x?chapter_id=${CHAPTER_UUID}`, 'DELETE') as any,
+      jsonReq(`http://t/x?chapter_id=${CHAPTER_UUID}`, 'DELETE') as never,
       { params: Promise.resolve({ id: 'a-1' }) },
     );
     expect(res.status).toBe(200);

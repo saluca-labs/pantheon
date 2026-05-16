@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentOsUser = vi.fn();
 vi.mock('@/lib/agentic-os/_shared/session', () => ({
-  getCurrentOsUser: (...args: any[]) => getCurrentOsUser(...args),
+  getCurrentOsUser: (...args: unknown[]) => getCurrentOsUser(...args),
   getOsPool: () => ({ query: vi.fn() }),
 }));
 
@@ -26,14 +26,14 @@ vi.mock('@/lib/agentic-os/_shared/saved-views-repo', () => repoMocks);
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/health/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
 }));
 
 beforeEach(() => {
   getCurrentOsUser.mockReset();
   recordAudit.mockReset();
   recordAudit.mockResolvedValue(undefined);
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -62,7 +62,7 @@ describe('GET /shared/saved-views', () => {
     getCurrentOsUser.mockResolvedValue(null);
     const { GET } = await import(COLLECTION);
     const res = await GET(
-      jsonReq('http://t/x?entityKind=blockers', 'GET') as any,
+      jsonReq('http://t/x?entityKind=blockers', 'GET') as never,
     );
     expect(res.status).toBe(401);
   });
@@ -70,7 +70,7 @@ describe('GET /shared/saved-views', () => {
   it('400 when entityKind query param is missing', async () => {
     authedUser();
     const { GET } = await import(COLLECTION);
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(400);
     expect(repoMocks.listSavedViews).not.toHaveBeenCalled();
   });
@@ -82,7 +82,7 @@ describe('GET /shared/saved-views', () => {
     ]);
     const { GET } = await import(COLLECTION);
     const res = await GET(
-      jsonReq('http://t/x?entityKind=research%3Ahypotheses', 'GET') as any,
+      jsonReq('http://t/x?entityKind=research%3Ahypotheses', 'GET') as never,
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -105,7 +105,7 @@ describe('POST /shared/saved-views', () => {
         entityKind: 'blockers',
         name: 'X',
         query: {},
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -113,7 +113,7 @@ describe('POST /shared/saved-views', () => {
   it('400 on missing required fields', async () => {
     authedUser();
     const { POST } = await import(COLLECTION);
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
     expect(repoMocks.createSavedView).not.toHaveBeenCalled();
   });
@@ -127,7 +127,7 @@ describe('POST /shared/saved-views', () => {
         name: 'X',
         query: {},
         bogus: 1,
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -150,7 +150,7 @@ describe('POST /shared/saved-views', () => {
         entityKind: 'research:hypotheses',
         name: 'Open',
         query: { status: 'open' },
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     const body = await res.json();
@@ -186,7 +186,7 @@ describe('POST /shared/saved-views', () => {
         entityKind: 'blockers',
         name: 'X',
         query: {},
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.createSavedView).toHaveBeenCalledWith(
@@ -202,7 +202,7 @@ describe('DELETE /shared/saved-views/[id]', () => {
   it('401 when unauthed', async () => {
     getCurrentOsUser.mockResolvedValue(null);
     const { DELETE } = await import(ITEM);
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'sv-1' }),
     });
     expect(res.status).toBe(401);
@@ -212,7 +212,7 @@ describe('DELETE /shared/saved-views/[id]', () => {
     authedUser();
     repoMocks.deleteSavedView.mockResolvedValue(false);
     const { DELETE } = await import(ITEM);
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'sv-foreign' }),
     });
     expect(res.status).toBe(404);
@@ -223,7 +223,7 @@ describe('DELETE /shared/saved-views/[id]', () => {
     authedUser();
     repoMocks.deleteSavedView.mockResolvedValue(true);
     const { DELETE } = await import(ITEM);
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'sv-1' }),
     });
     expect(res.status).toBe(200);

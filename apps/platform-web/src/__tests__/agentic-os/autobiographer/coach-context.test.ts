@@ -83,10 +83,10 @@ import {
 } from '@/lib/agentic-os/autobiographer/coach/context';
 
 beforeEach(() => {
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
-function makeBook(over: Record<string, any> = {}): any {
+function makeBook(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'b-1',
     userId: 'u-1',
@@ -112,7 +112,7 @@ function makeBook(over: Record<string, any> = {}): any {
   };
 }
 
-function makeMemory(over: Record<string, any> = {}): any {
+function makeMemory(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     userId: 'u-1',
@@ -430,7 +430,7 @@ describe('buildCoachContext: general', () => {
     repoMocks.listChaptersForBook.mockResolvedValue([
       { id: 'c-1' },
       { id: 'c-2' },
-    ] as any);
+    ] as never);
     repoMocks.listPeople.mockResolvedValue([]);
   });
 
@@ -440,8 +440,9 @@ describe('buildCoachContext: general', () => {
       mode: 'general',
     });
     expect(context.mode).toBe('general');
-    expect((context.data as any).book).toBeNull();
-    expect((context.data as any).counts.book_count).toBe(2);
+    const d1 = context.data as unknown as { book: unknown; counts: Record<string, number> };
+    expect(d1.book).toBeNull();
+    expect(d1.counts.book_count).toBe(2);
   });
 
   it('returns book-scoped counts when bookId set', async () => {
@@ -451,9 +452,10 @@ describe('buildCoachContext: general', () => {
       mode: 'general',
       bookId: 'b-1',
     });
-    expect((context.data as any).book.title).toBe('My Memoir');
-    expect((context.data as any).counts.chapter_count).toBe(2);
-    expect((context.data as any).counts.memory_count).toBe(1);
+    const d2 = context.data as unknown as { book: { title: string }; counts: Record<string, number> };
+    expect(d2.book.title).toBe('My Memoir');
+    expect(d2.counts.chapter_count).toBe(2);
+    expect(d2.counts.memory_count).toBe(1);
   });
 });
 
@@ -474,7 +476,7 @@ describe('truncateInterviewer drop order', () => {
         body_snippet: big,
         emotion_tags: [],
         content_tags: [],
-        sensitive_kinds: [] as any,
+        sensitive_kinds: [] as never,
         source: 'text',
       })),
       person_memories: [],
@@ -599,7 +601,7 @@ describe('truncateChapterDrafter drop order', () => {
         memory_era_date: null,
         weight: 1,
         notes: big,
-        sensitive_kinds: [] as any,
+        sensitive_kinds: [] as never,
       })),
       voice_profile: null,
       people: [],

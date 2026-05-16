@@ -25,12 +25,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Pool mock ────────────────────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 let lastInsertedId: string | null = null;
 
 function pushResult(r: Partial<PgResult>): void {
@@ -39,7 +39,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 // Reusable client mock for transactional calls (reorderBuildSteps).
 const clientMock = {
-  query: vi.fn(async (sql: string, params: any[] = []) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     calls.push({ sql, params });
     if (/^INSERT INTO /m.test(sql) && typeof params[0] === 'string') {
       lastInsertedId = params[0];
@@ -55,7 +55,7 @@ const clientMock = {
 
 vi.mock('@/lib/agentic-os/maker/session', () => ({
   getMakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       if (/^INSERT INTO /m.test(sql) && typeof params[0] === 'string') {
         lastInsertedId = params[0];
@@ -94,7 +94,7 @@ beforeEach(() => {
   clientMock.release.mockClear();
 });
 
-function projectRow(over: Record<string, any> = {}): any {
+function projectRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -113,7 +113,7 @@ function projectRow(over: Record<string, any> = {}): any {
   };
 }
 
-function stepRow(over: Record<string, any> = {}): any {
+function stepRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 's-1',
     project_id: 'p-1',
@@ -130,7 +130,7 @@ function stepRow(over: Record<string, any> = {}): any {
   };
 }
 
-function logRow(over: Record<string, any> = {}): any {
+function logRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'e-1',
     project_id: 'p-1',
@@ -143,7 +143,7 @@ function logRow(over: Record<string, any> = {}): any {
   };
 }
 
-function milestoneRow(over: Record<string, any> = {}): any {
+function milestoneRow(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     project_id: 'p-1',
@@ -266,7 +266,7 @@ describe('reorderBuildSteps', () => {
     await reorderBuildSteps('p-1', 'u-1', ['s-3', 's-1', 's-2']);
     // BEGIN + SELECT + 6 UPDATE + COMMIT = at least 9 client.query calls.
     expect(clientMock.query).toHaveBeenCalled();
-    const sqls = clientMock.query.mock.calls.map((c: any[]) => c[0]);
+    const sqls = clientMock.query.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(sqls.some((s: string) => /^BEGIN$/.test(s))).toBe(true);
     expect(sqls.some((s: string) => /^COMMIT$/.test(s))).toBe(true);
     // First-pass writes negative ordinals, second-pass writes positive.

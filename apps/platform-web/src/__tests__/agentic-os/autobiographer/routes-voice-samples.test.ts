@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentAutobiographerUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -49,7 +49,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -61,8 +61,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
-  for (const m of Object.values(memoriesRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(memoriesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -89,7 +89,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(401);
   });
 
@@ -99,7 +99,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any);
+    const res = await GET(jsonReq('http://t/x', 'GET') as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.samples).toHaveLength(1);
@@ -111,7 +111,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    await GET(jsonReq('http://t/x?is_archived=true', 'GET') as any);
+    await GET(jsonReq('http://t/x?is_archived=true', 'GET') as never);
     expect(repoMocks.listVoiceSamples).toHaveBeenCalledWith(
       expect.objectContaining({ isArchived: true }),
     );
@@ -123,7 +123,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    await GET(jsonReq('http://t/x?memory_backed=false', 'GET') as any);
+    await GET(jsonReq('http://t/x?memory_backed=false', 'GET') as never);
     expect(repoMocks.listVoiceSamples).toHaveBeenCalledWith(
       expect.objectContaining({ memoryBacked: false }),
     );
@@ -135,7 +135,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    await GET(jsonReq('http://t/x?q=tuesday', 'GET') as any);
+    await GET(jsonReq('http://t/x?q=tuesday', 'GET') as never);
     expect(repoMocks.listVoiceSamples).toHaveBeenCalledWith(
       expect.objectContaining({ q: 'tuesday' }),
     );
@@ -151,7 +151,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { bodyText: 'b' }) as any,
+      jsonReq('http://t/x', 'POST', { bodyText: 'b' }) as never,
     );
     expect(res.status).toBe(401);
   });
@@ -161,7 +161,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any);
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -171,7 +171,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/route'
     );
     const res = await POST(
-      jsonReq('http://t/x', 'POST', { bodyText: '' }) as any,
+      jsonReq('http://t/x', 'POST', { bodyText: '' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -189,7 +189,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
     const res = await POST(
       jsonReq('http://t/x', 'POST', {
         bodyText: 'a sample of my prose',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
@@ -211,7 +211,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
       jsonReq('http://t/x', 'POST', {
         memoryId: '11111111-1111-1111-1111-111111111111',
         bodyText: 'body',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(404);
     expect(repoMocks.createVoiceSample).not.toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe('POST /api/tiresias/agentic-os/autobiographer/voice-samples', () => {
       jsonReq('http://t/x', 'POST', {
         memoryId: '11111111-1111-1111-1111-111111111111',
         bodyText: 'five words right over here',
-      }) as any,
+      }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.createVoiceSample).toHaveBeenCalled();
@@ -248,7 +248,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () =>
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 's-other' }),
     });
     expect(res.status).toBe(404);
@@ -260,7 +260,7 @@ describe('GET /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () =>
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 's-1' }),
     });
     expect(res.status).toBe(200);
@@ -279,7 +279,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () 
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'New' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'New' }) as never,
       { params: Promise.resolve({ id: 's-other' }) },
     );
     expect(res.status).toBe(404);
@@ -296,7 +296,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () 
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { title: 'New' }) as any,
+      jsonReq('http://t/x', 'PATCH', { title: 'New' }) as never,
       { params: Promise.resolve({ id: 's-1' }) },
     );
     expect(res.status).toBe(200);
@@ -318,7 +318,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () 
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
     await PATCH(
-      jsonReq('http://t/x', 'PATCH', { isArchived: true }) as any,
+      jsonReq('http://t/x', 'PATCH', { isArchived: true }) as never,
       { params: Promise.resolve({ id: 's-1' }) },
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -339,7 +339,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () 
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
     await PATCH(
-      jsonReq('http://t/x', 'PATCH', { isArchived: false }) as any,
+      jsonReq('http://t/x', 'PATCH', { isArchived: false }) as never,
       { params: Promise.resolve({ id: 's-1' }) },
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -360,7 +360,7 @@ describe('PATCH /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', () 
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
     await PATCH(
-      jsonReq('http://t/x', 'PATCH', { isArchived: true }) as any,
+      jsonReq('http://t/x', 'PATCH', { isArchived: true }) as never,
       { params: Promise.resolve({ id: 's-1' }) },
     );
     expect(recordAudit).toHaveBeenCalledWith(
@@ -380,7 +380,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', ()
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 's-other' }),
     });
     expect(res.status).toBe(404);
@@ -397,7 +397,7 @@ describe('DELETE /api/tiresias/agentic-os/autobiographer/voice-samples/[id]', ()
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/voice-samples/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 's-1' }),
     });
     expect(res.status).toBe(200);

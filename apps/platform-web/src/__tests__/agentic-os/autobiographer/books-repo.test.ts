@@ -10,12 +10,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({
@@ -26,7 +26,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -48,7 +48,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function bookRow(overrides: Record<string, any> = {}): any {
+function bookRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'b-1',
     user_id: 'u-1',
@@ -90,7 +90,7 @@ describe('listBooks', () => {
 
   it('rejects invalid status', async () => {
     await expect(
-      listBooks({ userId: 'u-1', status: 'nope' as any }),
+      listBooks({ userId: 'u-1', status: 'nope' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
@@ -189,7 +189,7 @@ describe('createBook', () => {
     expect(tagsArg).toEqual(['memoir']);
     // phase_progress is a JSON string
     expect(typeof insert.params[10]).toBe('string');
-    expect(() => JSON.parse(insert.params[10])).not.toThrow();
+    expect(() => JSON.parse(insert.params[10] as string)).not.toThrow();
     // metadata is a JSON string
     expect(typeof insert.params[11]).toBe('string');
   });
@@ -203,7 +203,7 @@ describe('createBook', () => {
 
   it('rejects an invalid status', async () => {
     await expect(
-      createBook('u-1', { title: 'T', status: 'invalid' as any }),
+      createBook('u-1', { title: 'T', status: 'invalid' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
@@ -240,7 +240,7 @@ describe('updateBook', () => {
 
   it('rejects an invalid status patch', async () => {
     await expect(
-      updateBook('b-1', 'u-1', { status: 'nope' as any }),
+      updateBook('b-1', 'u-1', { status: 'nope' as never }),
     ).rejects.toThrow(/Invalid status/);
   });
 
