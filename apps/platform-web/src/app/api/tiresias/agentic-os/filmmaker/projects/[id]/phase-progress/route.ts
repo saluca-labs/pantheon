@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { updatePhaseProgress, recordAudit } from '@/lib/agentic-os/filmmaker/repo';
-import { PHASE_KEYS } from '@/lib/agentic-os/filmmaker/projects';
+import { PHASE_KEYS, type PhaseProgress } from '@/lib/agentic-os/filmmaker/projects';
 
 const PhaseProgressSchema = z
   .object(
@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     );
   }
 
-  const project = await updatePhaseProgress(id, user.userId, parsed.data as any);
+  const project = await updatePhaseProgress(id, user.userId, parsed.data as Partial<PhaseProgress>);
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await recordAudit({

@@ -11,7 +11,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentCyberUser } from '@/lib/agentic-os/cyber/session';
 import { listAssets, createAsset, recordAudit } from '@/lib/agentic-os/cyber/repo';
-import { ASSET_KIND_VALUES, ASSET_CRITICALITY_VALUES } from '@/lib/agentic-os/cyber/assets';
+import {
+  ASSET_KIND_VALUES,
+  ASSET_CRITICALITY_VALUES,
+  type AssetKind,
+  type AssetCriticality,
+} from '@/lib/agentic-os/cyber/assets';
 
 const AssetBody = z.object({
   name: z.string().min(1).max(200),
@@ -43,10 +48,10 @@ export async function GET(request: NextRequest) {
     q,
     environment,
     includeDecommissioned,
-    kind: kind && (ASSET_KIND_VALUES as readonly string[]).includes(kind) ? (kind as any) : undefined,
+    kind: kind && (ASSET_KIND_VALUES as readonly string[]).includes(kind) ? (kind as AssetKind) : undefined,
     criticality:
       criticality && (ASSET_CRITICALITY_VALUES as readonly string[]).includes(criticality)
-        ? (criticality as any)
+        ? (criticality as AssetCriticality)
         : undefined,
   });
   return NextResponse.json({ assets });

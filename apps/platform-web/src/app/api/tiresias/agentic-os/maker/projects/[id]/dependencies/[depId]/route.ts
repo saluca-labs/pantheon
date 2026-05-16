@@ -21,6 +21,7 @@ import {
 import {
   DEPENDENCY_KIND_VALUES,
   DEPENDENCY_STATUS_VALUES,
+  type ProjectDependencyPatch,
 } from '@/lib/agentic-os/maker/dependencies';
 
 const KIND_ENUM = z.enum(
@@ -58,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       depId,
       projectId,
       user.userId,
-      parsed.data as any,
+      parsed.data as ProjectDependencyPatch,
     );
     if (!dependency) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });

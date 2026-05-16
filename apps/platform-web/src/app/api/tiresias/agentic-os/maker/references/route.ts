@@ -23,6 +23,7 @@ import {
 import {
   REFERENCE_KIND_VALUES,
   type ReferenceKind,
+  type ReferenceUpsert,
 } from '@/lib/agentic-os/maker/references';
 
 const ReferenceBody = z.object({
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const reference = await createReference(user.userId, parsed.data as any);
+    const reference = await createReference(user.userId, parsed.data as ReferenceUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.reference.created',

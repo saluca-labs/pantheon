@@ -16,7 +16,11 @@ import {
   createCharacter,
   recordAudit,
 } from '@/lib/agentic-os/filmmaker/repo';
-import { CHARACTER_ROLE_VALUES } from '@/lib/agentic-os/filmmaker/characters';
+import {
+  CHARACTER_ROLE_VALUES,
+  type CharacterRole,
+  type CharacterUpsert,
+} from '@/lib/agentic-os/filmmaker/characters';
 
 const CreateBody = z.object({
   name: z.string().min(1).max(200),
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest, { params }: Props) {
   const roleParam = url.searchParams.get('role');
   const role =
     roleParam && (CHARACTER_ROLE_VALUES as readonly string[]).includes(roleParam)
-      ? (roleParam as any)
+      ? (roleParam as CharacterRole)
       : undefined;
 
   const characters = await listCharacters({
@@ -84,7 +88,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     projectId: id,
     tenantId: user.tenantId,
     userId: user.userId,
-    data: parsed.data as any,
+    data: parsed.data as CharacterUpsert,
   });
 
   await recordAudit({

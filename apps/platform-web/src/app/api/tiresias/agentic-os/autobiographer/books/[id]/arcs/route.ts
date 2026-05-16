@@ -22,6 +22,7 @@ import {
   ARC_DESCRIPTION_MAX,
   ARC_KINDS,
   ARC_TITLE_MAX,
+  type ArcKind,
 } from '@/lib/agentic-os/autobiographer/arcs';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   const arc = await createArc(user.userId, {
     bookId,
     title: d.title,
-    kind: d.kind as any,
+    kind: d.kind as ArcKind | undefined,
     description: d.description ?? null,
     isPrimary: d.isPrimary ?? false,
     metadata: d.metadata,

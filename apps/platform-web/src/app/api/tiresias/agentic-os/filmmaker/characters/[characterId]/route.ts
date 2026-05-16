@@ -18,7 +18,7 @@ import {
   deleteCharacter,
   recordAudit,
 } from '@/lib/agentic-os/filmmaker/repo';
-import { CHARACTER_ROLE_VALUES } from '@/lib/agentic-os/filmmaker/characters';
+import { CHARACTER_ROLE_VALUES, type CharacterUpsert } from '@/lib/agentic-os/filmmaker/characters';
 
 const PatchBody = z
   .object({
@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     id: characterId,
     tenantId: user.tenantId,
     userId: user.userId,
-    patch: parsed.data as any,
+    patch: parsed.data as Partial<CharacterUpsert>,
   });
   if (!character) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

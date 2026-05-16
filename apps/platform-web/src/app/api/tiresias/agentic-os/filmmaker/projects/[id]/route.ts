@@ -23,6 +23,7 @@ import {
   FORMATS,
   PHASE_KEYS,
   coercePhaseProgress,
+  type ProjectUpsert,
 } from '@/lib/agentic-os/filmmaker/projects';
 
 const PhaseProgressSchema = z
@@ -79,7 +80,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   const project = await updateProject(id, user.userId, {
-    ...(d as any),
+    ...(d as Partial<ProjectUpsert>),
     phaseProgress: d.phaseProgress ? coercePhaseProgress(d.phaseProgress) : undefined,
   });
   if (!project) {

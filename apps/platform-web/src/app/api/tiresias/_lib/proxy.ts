@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Pool } from 'pg';
 import { validateSession, getSessionToken } from '@platform/auth';
+import type { ReadableCookieStore } from '@platform/auth/cookies';
 import { extractRoleFromLocalSession, hasPermission } from '@/lib/rbac/check';
 import { Permission } from '@/lib/rbac/permissions';
 import { buildIdentityHeaders } from './headers';
@@ -78,7 +79,7 @@ export async function proxyToBackend(
 ): Promise<NextResponse> {
   // 1. Authenticate via local session
   const cookieStore = await cookies();
-  const token = getSessionToken(cookieStore as any);
+  const token = getSessionToken(cookieStore as ReadableCookieStore);
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

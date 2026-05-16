@@ -34,7 +34,7 @@ import {
   updateReference,
   deleteReference,
 } from '@/lib/agentic-os/research/experiment-references-repo';
-import { REFERENCE_RELEVANCES } from '@/lib/agentic-os/research/experiment-references';
+import { REFERENCE_RELEVANCES, type ReferenceRelevance } from '@/lib/agentic-os/research/experiment-references';
 
 const PatchBody = z
   .object({
@@ -81,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   const updated = await updateReference(experimentId, paperId, user.userId, {
-    relevance: d.relevance as any,
+    relevance: d.relevance as ReferenceRelevance | undefined,
     notes: d.notes ?? null,
   });
   if (!updated) {
@@ -143,7 +143,7 @@ export async function DELETE(request: NextRequest, { params }: Props) {
     experimentId,
     paperId,
     user.userId,
-    relevanceParam as any,
+    relevanceParam as ReferenceRelevance,
   );
   if (removed === 0) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

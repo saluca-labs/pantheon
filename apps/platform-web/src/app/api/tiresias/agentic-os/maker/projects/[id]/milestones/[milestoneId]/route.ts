@@ -22,6 +22,7 @@ import {
 import {
   MILESTONE_STORED_STATUS_VALUES,
   MILESTONE_PRIORITY_VALUES,
+  type BuildMilestonePatch,
 } from '@/lib/agentic-os/maker/milestones';
 
 const STATUS_ENUM = z.enum(
@@ -85,7 +86,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       milestoneId,
       projectId,
       user.userId,
-      parsed.data as any,
+      parsed.data as BuildMilestonePatch,
     );
     if (!milestone) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({

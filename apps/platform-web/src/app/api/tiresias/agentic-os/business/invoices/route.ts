@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { listInvoices, createInvoice } from '@/lib/agentic-os/business/invoices-repo';
-import { INVOICE_STATUSES } from '@/lib/agentic-os/business/invoices';
+import { INVOICE_STATUSES, type InvoiceStatus } from '@/lib/agentic-os/business/invoices';
 
 const CreateBody = z.object({
   title: z.string().min(1).max(300),
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
   const invoices = await listInvoices(user.userId, {
     status: statusParam
-      ? (statusParam.split(',').map((s) => s.trim()) as any)
+      ? (statusParam.split(',').map((s) => s.trim()) as InvoiceStatus[])
       : undefined,
     contactId: contactIdParam ?? undefined,
     projectId: projectIdParam ?? undefined,

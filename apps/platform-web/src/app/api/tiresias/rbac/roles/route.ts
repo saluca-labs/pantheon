@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { validateSession } from '@platform/auth';
-import { getSessionToken } from '@platform/auth/cookies';
+import { getSessionToken, type ReadableCookieStore } from '@platform/auth/cookies';
 import { extractRoleFromLocalSession } from '@/lib/rbac/check';
 import { Permission, Role, DEFAULT_ROLE_PERMISSIONS } from '@/lib/rbac/permissions';
 import { Pool } from 'pg';
@@ -19,7 +19,7 @@ function getPool(): Pool {
 
 async function getLocalSession() {
   const cookieStore = await cookies();
-  const token = getSessionToken(cookieStore as any);
+  const token = getSessionToken(cookieStore as ReadableCookieStore);
   if (!token) return null;
   return validateSession(token, getPool());
 }

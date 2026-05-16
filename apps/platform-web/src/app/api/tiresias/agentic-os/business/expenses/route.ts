@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { listExpenses, createExpense } from '@/lib/agentic-os/business/expenses-repo';
-import { EXPENSE_CATEGORIES } from '@/lib/agentic-os/business/expenses';
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from '@/lib/agentic-os/business/expenses';
 
 const CreateBody = z.object({
   project_id: z.string().uuid().nullable().optional(),
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
   const expenses = await listExpenses(user.userId, {
     category: categoryParam
-      ? (categoryParam.split(',').map((c) => c.trim()) as any)
+      ? (categoryParam.split(',').map((c) => c.trim()) as ExpenseCategory[])
       : undefined,
     projectId: projectIdParam ?? undefined,
     from: fromParam ?? undefined,
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   const expense = await createExpense(user.userId, {
     projectId: d.project_id ?? null,
-    category: d.category as any,
+    category: d.category as ExpenseCategory,
     vendor: d.vendor ?? null,
     description: d.description,
     amountCents: d.amount_cents,

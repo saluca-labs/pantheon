@@ -114,7 +114,7 @@ export async function POST(
   } catch (err: unknown) {
     if (
       err instanceof Error &&
-      (err.message.includes('pandoc') || (err as any).code === 'ENOENT')
+      (err.message.includes('pandoc') || (err as NodeJS.ErrnoException).code === 'ENOENT')
     ) {
       return NextResponse.json(
         { error: 'Pandoc is not installed. Install pandoc to enable exports.' },

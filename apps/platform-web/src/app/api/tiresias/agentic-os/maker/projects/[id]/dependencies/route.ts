@@ -25,7 +25,7 @@ import {
   createProjectDependency,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { DEPENDENCY_KIND_VALUES } from '@/lib/agentic-os/maker/dependencies';
+import { DEPENDENCY_KIND_VALUES, type DependencyKind } from '@/lib/agentic-os/maker/dependencies';
 
 const KIND_ENUM = z.enum(
   DEPENDENCY_KIND_VALUES as unknown as [string, ...string[]],
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   try {
     const dependency = await createProjectDependency(projectId, user.userId, {
       toProjectId: parsed.data.to_project_id,
-      kind: parsed.data.kind as any,
+      kind: parsed.data.kind as DependencyKind | undefined,
       notes: parsed.data.notes,
     });
     await recordAudit({
