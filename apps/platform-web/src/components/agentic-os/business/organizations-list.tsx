@@ -17,8 +17,8 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Organization } from '@/lib/agentic-os/business/crm';
-import { ORG_TYPES } from '@/lib/agentic-os/business/crm';
+import type { Organization, OrgType } from '@/lib/agentic-os/business/crm';
+import { ORG_TYPES, asOrgType } from '@/lib/agentic-os/business/crm';
 import { orgMatchesFilter } from '@/lib/agentic-os/business/orgs';
 import {
   EmptyState,
@@ -105,12 +105,13 @@ export function OrganizationsList({ initialOrganizations }: Props) {
   };
 
   const filtered = useMemo(() => {
+    const orgType: OrgType | undefined = typeFilter ? asOrgType(typeFilter) ?? undefined : undefined;
     return orgs.filter((o) =>
       orgMatchesFilter(o, {
         archived: showArchived,
         tag: tagFilter || undefined,
         industry: industryFilter || undefined,
-        orgType: (typeFilter || undefined) as any,
+        orgType,
         q: q || undefined,
       }),
     );

@@ -143,8 +143,8 @@ export function EditorialCalendar({ initial }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       const data = await r.json();
       setPosts((prev) => [data.post, ...prev]);

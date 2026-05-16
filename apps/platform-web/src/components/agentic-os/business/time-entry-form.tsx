@@ -68,7 +68,15 @@ export default function TimeEntryForm({
 
     const isTimer = mode === 'timer';
 
-    const body: any = {
+    const body: {
+      task_id: string;
+      project_id: string;
+      description: string | undefined;
+      is_billable: boolean;
+      billing_rate_cents: number | null;
+      started_at?: string;
+      duration_minutes?: number;
+    } = {
       task_id: taskId,
       project_id: projectId,
       description: description.trim() || undefined,

@@ -128,8 +128,8 @@ export function SubscriberTable({ subscribers }: SubscriberTableProps) {
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${res.status})`);
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${res.status})`);
       }
       const data = await res.json();
       if (data.created) {

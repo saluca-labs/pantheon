@@ -10,6 +10,17 @@ export interface CaseScopeOption {
   status: string;
 }
 
+interface CaseListItem {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+}
+
+interface CasesListResponse {
+  cases?: CaseListItem[];
+}
+
 interface Props {
   value: CaseScopeOption | null;
   onChange: (value: CaseScopeOption | null) => void;
@@ -36,12 +47,12 @@ export function CaseScopePicker({ value, onChange, disabled }: Props) {
       ? `/api/tiresias/agentic-os/cyber/cases?q=${encodeURIComponent(term)}&limit=20`
       : `/api/tiresias/agentic-os/cyber/cases?limit=20`;
     fetch(url, { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : { cases: [] }))
+      .then((r) => (r.ok ? (r.json() as Promise<CasesListResponse>) : ({ cases: [] } as CasesListResponse)))
       .then((body) => {
         if (cancelled) return;
-        const cases = Array.isArray(body?.cases) ? body.cases : [];
+        const cases: CaseListItem[] = Array.isArray(body?.cases) ? body.cases : [];
         setResults(
-          cases.map((c: any) => ({
+          cases.map((c) => ({
             id: c.id,
             title: c.title,
             severity: c.severity,
