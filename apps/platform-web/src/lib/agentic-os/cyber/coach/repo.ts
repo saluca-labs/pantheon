@@ -50,7 +50,32 @@ const CONVERSATION_COLUMNS = `id, owner_id, case_id, mode, title, model,
                               system_prompt_version, metadata,
                               created_at, updated_at`;
 
-function rowToConversation(row: any): CoachConversation {
+interface RawCyberCoachConversationRow {
+  id: string;
+  owner_id: string;
+  case_id: string | null;
+  mode: string;
+  title: string | null;
+  model: string;
+  system_prompt_version: string;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberCoachMessageRow {
+  id: string;
+  conversation_id: string;
+  role: string;
+  content: string;
+  tool_calls: CoachToolCall[] | null;
+  redacted: boolean;
+  redaction_matches: RedactionMatch[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+function rowToConversation(row: RawCyberCoachConversationRow): CoachConversation {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -65,7 +90,7 @@ function rowToConversation(row: any): CoachConversation {
   };
 }
 
-function rowToMessage(row: any): CoachMessage {
+function rowToMessage(row: RawCyberCoachMessageRow): CoachMessage {
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -156,7 +181,7 @@ export async function listConversations(
   const pool = getCyberPool();
   const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
   const offset = Math.max(input.offset ?? 0, 0);
-  const params: any[] = [input.ownerId];
+  const params: unknown[] = [input.ownerId];
   let where = 'WHERE owner_id = $1';
   if (input.caseId !== undefined && input.caseId !== null) {
     params.push(input.caseId);
@@ -287,7 +312,7 @@ export async function listMessages(
   const pool = getCyberPool();
   const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
   const offset = Math.max(input.offset ?? 0, 0);
-  const params: any[] = [input.conversationId];
+  const params: unknown[] = [input.conversationId];
   let where = 'WHERE conversation_id = $1';
   if (input.before) {
     params.push(new Date(input.before));

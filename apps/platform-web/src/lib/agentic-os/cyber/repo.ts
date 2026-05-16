@@ -69,9 +69,279 @@ import type {
   ThreatType,
 } from './iocs';
 
+// ─── Raw DB row shapes ─────────────────────────────────────────────────────
+
+interface RawCyberAlertRow {
+  id: string;
+  title: string;
+  description: string | null;
+  severity: string;
+  category: string;
+  status: string;
+  source: string | null;
+  source_ip: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  occurred_at: Date;
+  created_at: Date;
+  updated_at: Date;
+  asset_id: string | null;
+  log_source_id: string | null;
+  tactic: string | null;
+  technique: string | null;
+  correlation_id: string | null;
+  tags: string[] | null;
+  raw_jsonb: Record<string, unknown> | null;
+}
+
+interface RawCyberAssetRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  kind: string;
+  criticality: string;
+  environment: string | null;
+  hostname: string | null;
+  ip_address: string | null;
+  os_family: string | null;
+  os_version: string | null;
+  owner_email: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  decommissioned_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberAssetGroupRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  tags: string[] | null;
+  member_count: number | string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberLogSourceRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  kind: string;
+  vendor: string | null;
+  endpoint_hint: string | null;
+  status: string;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberCaseRow {
+  id: string;
+  owner_id: string;
+  title: string;
+  summary: string | null;
+  severity: string;
+  status: string;
+  priority: string;
+  assigned_to: string | null;
+  tactic: string | null;
+  technique: string | null;
+  tags: string[] | null;
+  closed_at: Date | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberCaseEventRow {
+  id: string;
+  case_id: string;
+  kind: string;
+  author: string | null;
+  body: string | null;
+  payload: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+interface RawCyberEvidenceRow {
+  id: string;
+  case_id: string;
+  kind: string;
+  title: string;
+  description: string | null;
+  url: string | null;
+  content: string | null;
+  mime_type: string | null;
+  sha256: string | null;
+  collected_at: Date;
+  collected_by: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberTaskRow {
+  id: string;
+  case_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  assigned_to: string | null;
+  priority: string;
+  due_at: Date | null;
+  completed_at: Date | null;
+  position: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberDetectionRuleRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  author: string | null;
+  lifecycle: string;
+  severity: string;
+  tactic: string | null;
+  technique: string | null;
+  log_source_kind: string | null;
+  detection: unknown;
+  false_positives: string[] | null;
+  references: string[] | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberDetectionRunRow {
+  id: string;
+  rule_id: string;
+  alert_id: string | null;
+  triggered_at: Date;
+  payload: unknown;
+  created_at: Date;
+}
+
+interface RawCyberPlaybookRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  lifecycle: string;
+  tactic: string | null;
+  steps: unknown;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberPlaybookRunRow {
+  id: string;
+  playbook_id: string;
+  owner_id: string;
+  case_id: string | null;
+  status: string;
+  started_at: Date;
+  completed_at: Date | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberPlaybookStepRunRow {
+  id: string;
+  run_id: string;
+  step_index: number;
+  step_snapshot: unknown;
+  status: string;
+  input: unknown;
+  notes: string | null;
+  started_at: Date | null;
+  completed_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberVulnerabilityRow {
+  id: string;
+  owner_id: string;
+  cve_id: string | null;
+  title: string;
+  description: string | null;
+  severity: string;
+  cvss_score: number | string | null;
+  cvss_vector: string | null;
+  cwe_id: string | null;
+  vendor: string | null;
+  product: string | null;
+  affected_versions: string[] | null;
+  fixed_versions: string[] | null;
+  published_at: Date | null;
+  references: string[] | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberExposureRow {
+  id: string;
+  vulnerability_id: string;
+  asset_id: string;
+  owner_id: string;
+  status: string;
+  detected_at: Date;
+  remediated_at: Date | null;
+  detected_by: string | null;
+  assigned_to: string | null;
+  priority: string;
+  notes: string | null;
+  evidence_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawCyberExposureWithRefsRow extends RawCyberExposureRow {
+  vuln_title: string;
+  vuln_cve_id: string | null;
+  vuln_severity: string;
+  asset_name: string;
+  asset_criticality: string;
+}
+
+interface RawCyberIocRow {
+  id: string;
+  owner_id: string;
+  kind: string;
+  value: string;
+  title: string | null;
+  description: string | null;
+  threat_type: string | null;
+  confidence: number | string | null;
+  first_seen_at: Date;
+  last_seen_at: Date;
+  expires_at: Date | null;
+  source: string | null;
+  tags: string[] | null;
+  references: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // ─── Alerts ────────────────────────────────────────────────────────────────
 
-function rowToAlert(row: any): Alert {
+function rowToAlert(row: RawCyberAlertRow): Alert {
   return {
     id: row.id,
     title: row.title,
@@ -254,7 +524,7 @@ export async function updateAlertEnrichment(args: {
 
 // ─── Assets ────────────────────────────────────────────────────────────────
 
-function rowToAsset(row: any): Asset {
+function rowToAsset(row: RawCyberAssetRow): Asset {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -475,7 +745,7 @@ export interface AssetGroupUpsert {
   tags?: string[];
 }
 
-function rowToGroup(row: any): AssetGroup {
+function rowToGroup(row: RawCyberAssetGroupRow): AssetGroup {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -637,7 +907,7 @@ export async function removeAssetFromGroup(args: {
 
 // ─── Log sources ───────────────────────────────────────────────────────────
 
-function rowToLogSource(row: any): LogSource {
+function rowToLogSource(row: RawCyberLogSourceRow): LogSource {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -817,7 +1087,7 @@ export async function recordAudit(args: {
 
 // ─── Cases ─────────────────────────────────────────────────────────────────
 
-function rowToCase(row: any): Case {
+function rowToCase(row: RawCyberCaseRow): Case {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -1120,7 +1390,7 @@ export async function deleteCase(id: string, ownerId: string): Promise<boolean> 
 
 // ─── Case events ───────────────────────────────────────────────────────────
 
-function rowToCaseEvent(row: any): CaseEvent {
+function rowToCaseEvent(row: RawCyberCaseEventRow): CaseEvent {
   return {
     id: row.id,
     caseId: row.case_id,
@@ -1133,7 +1403,10 @@ function rowToCaseEvent(row: any): CaseEvent {
 }
 
 interface PgLike {
-  query: (sql: string, params?: any[]) => Promise<{ rows: any[]; rowCount: number | null }>;
+  query: <R = unknown>(
+    sql: string,
+    params?: unknown[],
+  ) => Promise<{ rows: R[]; rowCount: number | null }>;
 }
 
 async function insertCaseEvent(
@@ -1147,7 +1420,7 @@ async function insertCaseEvent(
   },
 ): Promise<CaseEvent> {
   const id = randomUUID();
-  const r = await client.query(
+  const r = await client.query<RawCyberCaseEventRow>(
     `INSERT INTO agos_cyber_case_events
        (id, case_id, kind, author, body, payload)
      VALUES ($1,$2,$3,$4,$5,$6::jsonb)
@@ -1307,7 +1580,7 @@ export async function listLinkedAlerts(
 
 // ─── Evidence ──────────────────────────────────────────────────────────────
 
-function rowToEvidence(row: any): Evidence {
+function rowToEvidence(row: RawCyberEvidenceRow): Evidence {
   return {
     id: row.id,
     caseId: row.case_id,
@@ -1468,7 +1741,7 @@ export async function deleteEvidence(id: string, ownerId: string): Promise<boole
 
 // ─── Tasks ─────────────────────────────────────────────────────────────────
 
-function rowToTask(row: any): Task {
+function rowToTask(row: RawCyberTaskRow): Task {
   return {
     id: row.id,
     caseId: row.case_id,
@@ -1476,7 +1749,7 @@ function rowToTask(row: any): Task {
     description: row.description ?? null,
     status: row.status as TaskStatus,
     assignedTo: row.assigned_to ?? null,
-    priority: row.priority,
+    priority: row.priority as Task['priority'],
     dueAt: row.due_at ? row.due_at.toISOString() : null,
     completedAt: row.completed_at ? row.completed_at.toISOString() : null,
     position: row.position,
@@ -1691,6 +1964,7 @@ import type {
   DetectionRun,
   DetectionRunInsert,
   DetectionLifecycle,
+  DetectionLogSourceKind,
   DetectionSeverity,
 } from './detections';
 import type {
@@ -1707,7 +1981,7 @@ import type {
 
 // ----- Detection rules -----
 
-function rowToDetectionRule(row: any): DetectionRule {
+function rowToDetectionRule(row: RawCyberDetectionRuleRow): DetectionRule {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -1718,8 +1992,8 @@ function rowToDetectionRule(row: any): DetectionRule {
     severity: row.severity as DetectionSeverity,
     tactic: row.tactic ?? null,
     technique: row.technique ?? null,
-    logSourceKind: row.log_source_kind ?? null,
-    detection: row.detection ?? {},
+    logSourceKind: (row.log_source_kind ?? null) as DetectionLogSourceKind | null,
+    detection: (row.detection ?? {}) as Record<string, unknown>,
     falsePositives: row.false_positives ?? [],
     references: row.references ?? [],
     tags: row.tags ?? [],
@@ -1744,7 +2018,7 @@ export async function listDetectionRules(args: ListDetectionRulesArgs): Promise<
   const pool = getCyberPool();
   const { ownerId, lifecycle, severity, q, limit = 200, offset = 0 } = args;
   let sql = `SELECT ${DETECTION_RULE_COLS} FROM agos_cyber_detection_rules WHERE owner_id = $1`;
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let paramIndex = 2;
 
   if (lifecycle) {
@@ -1806,7 +2080,7 @@ export async function createDetectionRule(ownerId: string, data: DetectionRuleUp
 export async function updateDetectionRule(id: string, ownerId: string, patch: DetectionRulePatch): Promise<DetectionRule | null> {
   const pool = getCyberPool();
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   let paramIndex = 1;
 
   if (patch.name !== undefined) {
@@ -1889,13 +2163,13 @@ export async function deleteDetectionRule(id: string, ownerId: string): Promise<
 
 // ----- Detection runs -----
 
-function rowToDetectionRun(row: any): DetectionRun {
+function rowToDetectionRun(row: RawCyberDetectionRunRow): DetectionRun {
   return {
     id: row.id,
     ruleId: row.rule_id,
     alertId: row.alert_id ?? null,
     triggeredAt: row.triggered_at.toISOString(),
-    payload: row.payload ?? {},
+    payload: (row.payload ?? {}) as Record<string, unknown>,
     createdAt: row.created_at.toISOString(),
   };
 }
@@ -1949,7 +2223,7 @@ export async function recordDetectionRun(args: {
 
 // ----- Playbooks -----
 
-function rowToPlaybook(row: any): Playbook {
+function rowToPlaybook(row: RawCyberPlaybookRow): Playbook {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -1958,7 +2232,7 @@ function rowToPlaybook(row: any): Playbook {
     description: row.description ?? null,
     lifecycle: row.lifecycle as 'draft' | 'testing' | 'active' | 'deprecated' | 'archived',
     tactic: row.tactic ?? null,
-    steps: row.steps ?? [],
+    steps: (row.steps ?? []) as PlaybookStep[],
     tags: row.tags ?? [],
     metadata: row.metadata ?? {},
     createdAt: row.created_at.toISOString(),
@@ -1978,7 +2252,7 @@ export async function listPlaybooks(args: ListPlaybooksArgs): Promise<Playbook[]
   const pool = getCyberPool();
   const { ownerId, lifecycle, q } = args;
   let sql = `SELECT ${PLAYBOOK_COLS} FROM agos_cyber_playbooks WHERE owner_id = $1`;
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let paramIndex = 2;
 
   if (lifecycle) {
@@ -2029,7 +2303,7 @@ export async function createPlaybook(ownerId: string, data: PlaybookUpsert): Pro
 export async function updatePlaybook(id: string, ownerId: string, patch: PlaybookPatch): Promise<Playbook | null> {
   const pool = getCyberPool();
   const fields: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   let paramIndex = 1;
 
   if (patch.name !== undefined) {
@@ -2110,30 +2384,30 @@ export async function replacePlaybookSteps(args: {
 
 // ----- Playbook runs -----
 
-function rowToPlaybookRun(row: any): PlaybookRun {
+function rowToPlaybookRun(row: RawCyberPlaybookRunRow): PlaybookRun {
   return {
     id: row.id,
     playbookId: row.playbook_id,
     ownerId: row.owner_id,
     caseId: row.case_id ?? null,
-    status: row.status,
+    status: row.status as PlaybookRunStatus,
     startedAt: row.started_at.toISOString(),
     completedAt: row.completed_at ? row.completed_at.toISOString() : null,
     notes: row.notes,
-    metadata: row.metadata,
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };
 }
 
-function rowToPlaybookStepRun(row: any): PlaybookStepRun {
+function rowToPlaybookStepRun(row: RawCyberPlaybookStepRunRow): PlaybookStepRun {
   return {
     id: row.id,
     runId: row.run_id,
     stepIndex: row.step_index,
-    stepSnapshot: row.step_snapshot,
-    status: row.status,
-    input: row.input,
+    stepSnapshot: row.step_snapshot as PlaybookStep,
+    status: row.status as PlaybookStepRunStatus,
+    input: (row.input ?? {}) as Record<string, unknown>,
     notes: row.notes,
     startedAt: row.started_at ? row.started_at.toISOString() : null,
     completedAt: row.completed_at ? row.completed_at.toISOString() : null,
@@ -2161,7 +2435,7 @@ export async function listPlaybookRuns(args: ListPlaybookRunsArgs): Promise<(Pla
     JOIN agos_cyber_playbooks pb ON pr.playbook_id = pb.id
     WHERE pr.owner_id = $1
   `;
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let paramIndex = 2;
 
   if (status) {
@@ -2227,7 +2501,7 @@ export async function startPlaybookRun(args: {
     `SELECT steps FROM agos_cyber_playbooks WHERE id = $1 AND owner_id = $2`,
     [playbookId, ownerId]
   );
-  const steps = playbookRes.rows[0].steps as any[];
+  const steps = playbookRes.rows[0].steps as unknown[];
 
   const runId = randomUUID();
   await pool.query(
@@ -2262,7 +2536,7 @@ export async function updateStepRun(args: {
   const current = rowToPlaybookStepRun(currentRes.rows[0]);
 
   const setFields: string[] = [];
-  const setValues: any[] = [];
+  const setValues: unknown[] = [];
   let setParamIndex = 1;
 
   if (args.patch.status !== undefined) {
@@ -2354,7 +2628,7 @@ export async function completeRun(args: {
 
 const VULN_COLS = `id, owner_id, cve_id, title, description, severity, cvss_score, cvss_vector, cwe_id, vendor, product, affected_versions, fixed_versions, published_at, "references", tags, metadata, created_at, updated_at`;
 
-function rowToVulnerability(row: any): Vulnerability {
+function rowToVulnerability(row: RawCyberVulnerabilityRow): Vulnerability {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -2390,7 +2664,7 @@ export async function listVulnerabilities(args: ListVulnerabilitiesArgs): Promis
   const pool = getCyberPool();
   const { ownerId, severity, q, limit = 200, offset = 0 } = args;
   let sql = `SELECT ${VULN_COLS} FROM agos_cyber_vulnerabilities WHERE owner_id = $1`;
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let i = 2;
   if (severity) {
     sql += ` AND severity = $${i++}`;
@@ -2607,7 +2881,7 @@ export async function bulkUpsertVulnerabilities(args: {
 
 const EXPOSURE_COLS = `id, vulnerability_id, asset_id, owner_id, status, detected_at, remediated_at, detected_by, assigned_to, priority, notes, evidence_url, metadata, created_at, updated_at`;
 
-function rowToExposure(row: any): Exposure {
+function rowToExposure(row: RawCyberExposureRow): Exposure {
   return {
     id: row.id,
     vulnerabilityId: row.vulnerability_id,
@@ -2627,7 +2901,7 @@ function rowToExposure(row: any): Exposure {
   };
 }
 
-function rowToExposureWithRefs(row: any): ExposureWithRefs {
+function rowToExposureWithRefs(row: RawCyberExposureWithRefsRow): ExposureWithRefs {
   return {
     ...rowToExposure(row),
     vulnerabilityTitle: row.vuln_title,
@@ -2652,7 +2926,7 @@ export async function listExposures(args: ListExposuresArgs): Promise<ExposureWi
   const pool = getCyberPool();
   const { ownerId, status, priority, assetId, vulnerabilityId, limit = 200, offset = 0 } = args;
   const where: string[] = [`e.owner_id = $1`];
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let i = 2;
   if (status)         { where.push(`e.status = $${i++}`);          params.push(status); }
   if (priority)       { where.push(`e.priority = $${i++}`);        params.push(priority); }
@@ -2879,7 +3153,7 @@ export async function closeExposure(args: {
 
 const IOC_COLS = `id, owner_id, kind, value, title, description, threat_type, confidence, first_seen_at, last_seen_at, expires_at, source, tags, "references", metadata, created_at, updated_at`;
 
-function rowToIoc(row: any): Ioc {
+function rowToIoc(row: RawCyberIocRow): Ioc {
   return {
     id: row.id,
     ownerId: row.owner_id,
@@ -2914,7 +3188,7 @@ export async function searchIocs(args: SearchIocsArgs): Promise<Ioc[]> {
   const pool = getCyberPool();
   const { ownerId, q, kind, threatType, limit = 200, offset = 0 } = args;
   const where: string[] = [`owner_id = $1`];
-  const params: any[] = [ownerId];
+  const params: unknown[] = [ownerId];
   let i = 2;
   if (kind)       { where.push(`kind = $${i++}`);        params.push(kind); }
   if (threatType) { where.push(`threat_type = $${i++}`); params.push(threatType); }
@@ -3053,13 +3327,21 @@ export async function matchIocAgainstAlerts(args: {
       LIMIT 1000`,
     [args.ownerId, args.withinDays ?? 7],
   );
-  return r.rows.map((row: any) => ({
-    alertId: row.alert_id,
-    iocId: row.ioc_id,
-    iocValue: row.ioc_value,
-    iocKind: row.ioc_kind as IocKind,
-    occurredAt: row.occurred_at.toISOString(),
-  }));
+  return r.rows.map(
+    (row: {
+      alert_id: string;
+      ioc_id: string;
+      ioc_value: string;
+      ioc_kind: string;
+      occurred_at: Date;
+    }) => ({
+      alertId: row.alert_id,
+      iocId: row.ioc_id,
+      iocValue: row.ioc_value,
+      iocKind: row.ioc_kind as IocKind,
+      occurredAt: row.occurred_at.toISOString(),
+    }),
+  );
 }
 
 // ─── Trends + dashboard analytics ──────────────────────────────────────────
@@ -3133,16 +3415,20 @@ export async function getCyberTrendsData(args: {
   );
 
   return {
-    alertsByDay: alertsByDayRes.rows.map((r: any) => ({
-      date: r.day,
-      total: Number(r.total ?? 0),
-      critical: Number(r.critical ?? 0),
-      high: Number(r.high ?? 0),
-    })),
-    openVulnsBySeverity: vulnsRes.rows.map((r: any) => ({
-      severity: r.severity,
-      count: Number(r.count ?? 0),
-    })),
+    alertsByDay: alertsByDayRes.rows.map(
+      (r: { day: string; total: number | string | null; critical: number | string | null; high: number | string | null }) => ({
+        date: r.day,
+        total: Number(r.total ?? 0),
+        critical: Number(r.critical ?? 0),
+        high: Number(r.high ?? 0),
+      }),
+    ),
+    openVulnsBySeverity: vulnsRes.rows.map(
+      (r: { severity: string; count: number | string | null }) => ({
+        severity: r.severity,
+        count: Number(r.count ?? 0),
+      }),
+    ),
     exposuresMttrDays: mttrRes.rows[0]?.mttr_days != null
       ? Number(mttrRes.rows[0].mttr_days)
       : null,
@@ -3150,10 +3436,12 @@ export async function getCyberTrendsData(args: {
     exposuresClosedLast30d: Number(mttrRes.rows[0]?.closed_30d ?? 0),
     iocHitsLast7d: hits7.length,
     iocHitsLast30d: hits30.length,
-    topVulnerableAssets: topRes.rows.map((r: any) => ({
-      assetId: r.asset_id,
-      assetName: r.asset_name,
-      openExposures: Number(r.open_exposures ?? 0),
-    })),
+    topVulnerableAssets: topRes.rows.map(
+      (r: { asset_id: string; asset_name: string; open_exposures: number | string | null }) => ({
+        assetId: r.asset_id,
+        assetName: r.asset_name,
+        openExposures: Number(r.open_exposures ?? 0),
+      }),
+    ),
   };
 }

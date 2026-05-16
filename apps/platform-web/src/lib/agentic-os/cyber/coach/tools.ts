@@ -31,12 +31,21 @@ import {
 import {
   CASE_SEVERITY_VALUES,
   CASE_STATUS_VALUES,
+  type CaseSeverity,
+  type CaseStatus,
 } from '../cases';
 import {
   DETECTION_LOG_SOURCE_KIND_VALUES,
   DETECTION_SEVERITY_VALUES,
+  type DetectionLogSourceKind,
+  type DetectionSeverity,
 } from '../detections';
-import { IOC_KIND_VALUES, THREAT_TYPE_VALUES } from '../iocs';
+import {
+  IOC_KIND_VALUES,
+  THREAT_TYPE_VALUES,
+  type IocKind,
+  type ThreatType,
+} from '../iocs';
 import { logCoachAction } from './repo';
 
 export interface CoachToolBindings {
@@ -206,8 +215,8 @@ export function buildCoachTools(bindings: CoachToolBindings) {
       execute: async (input) => {
         const cases = await listCases({
           ownerId,
-          status: input.status as any,
-          severity: input.severity as any,
+          status: input.status as CaseStatus | undefined,
+          severity: input.severity as CaseSeverity | undefined,
           limit: 30,
         });
         const result = {
@@ -278,10 +287,10 @@ export function buildCoachTools(bindings: CoachToolBindings) {
           name: input.name,
           description: input.description ?? null,
           lifecycle: 'draft',
-          severity: (input.severity ?? 'medium') as any,
+          severity: (input.severity ?? 'medium') as DetectionSeverity,
           tactic: input.tactic ?? null,
           technique: input.technique ?? null,
-          logSourceKind: (input.log_source_kind ?? null) as any,
+          logSourceKind: (input.log_source_kind ?? null) as DetectionLogSourceKind | null,
           detection: input.detection_yaml ? { raw_yaml: input.detection_yaml } : {},
           falsePositives: input.false_positives ?? [],
           references: [],
@@ -352,8 +361,8 @@ export function buildCoachTools(bindings: CoachToolBindings) {
       execute: async (input) => {
         const iocs = await searchIocs({
           ownerId,
-          kind: input.kind as any,
-          threatType: input.threatType as any,
+          kind: input.kind as IocKind | undefined,
+          threatType: input.threatType as ThreatType | undefined,
           q: input.q,
           limit: 20,
         });
@@ -389,9 +398,9 @@ export function buildCoachTools(bindings: CoachToolBindings) {
       }),
       execute: async (input) => {
         const ioc = await createIoc(ownerId, {
-          kind: input.kind as any,
+          kind: input.kind as IocKind,
           value: input.value,
-          threatType: (input.threatType ?? null) as any,
+          threatType: (input.threatType ?? null) as ThreatType | null,
           confidence: input.confidence ?? 50,
           source: input.source ?? 'cyber.coach',
         });

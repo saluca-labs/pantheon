@@ -28,7 +28,18 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToSubscriber(row: any): CreatorSubscriber {
+interface RawSubscriberRow {
+  id: string;
+  user_id: string;
+  email: string;
+  name: string | null;
+  status: string;
+  source: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToSubscriber(row: RawSubscriberRow): CreatorSubscriber {
   return {
     id: row.id,
     userId: row.user_id,
@@ -48,7 +59,7 @@ export async function listSubscribers(
   opts: ListSubscribersOpts = {},
 ): Promise<CreatorSubscriber[]> {
   const pool = getCreatorPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.status) {

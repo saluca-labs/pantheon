@@ -37,7 +37,30 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToLink(row: any): ExperimentHypothesisLink {
+interface RawLinkRow {
+  id: string;
+  experiment_id: string;
+  hypothesis_id: string;
+  role: string | null;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+interface RawHypothesisRow {
+  id: string;
+  user_id: string;
+  title: string;
+  if_clause: string;
+  then_clause: string;
+  because_clause: string;
+  status: Hypothesis['status'];
+  confidence: Hypothesis['confidence'];
+  tags: string[] | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToLink(row: RawLinkRow): ExperimentHypothesisLink {
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -48,7 +71,7 @@ function rowToLink(row: any): ExperimentHypothesisLink {
   };
 }
 
-function rowToHypothesis(row: any): Hypothesis {
+function rowToHypothesis(row: RawHypothesisRow): Hypothesis {
   return {
     id: row.id,
     userId: row.user_id,
@@ -135,7 +158,20 @@ export async function listLinkedHypothesesForExperiment(
       ORDER BY lk.created_at ASC`,
     [experimentId, userId],
   );
-  return r.rows.map((row: any) => ({
+  type JoinedRow = RawLinkRow & {
+    h_id: string;
+    h_user_id: string;
+    h_title: string;
+    h_if_clause: string;
+    h_then_clause: string;
+    h_because_clause: string;
+    h_status: Hypothesis['status'];
+    h_confidence: Hypothesis['confidence'];
+    h_tags: string[] | null;
+    h_created_at: Date | string;
+    h_updated_at: Date | string;
+  };
+  return r.rows.map((row: JoinedRow) => ({
     link: rowToLink({
       id: row.id,
       experiment_id: row.experiment_id,

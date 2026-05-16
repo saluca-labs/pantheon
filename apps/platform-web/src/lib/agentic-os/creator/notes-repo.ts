@@ -35,7 +35,23 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToNote(row: any): CreatorNote {
+interface RawNoteRow {
+  id: string;
+  user_id: string;
+  title: string;
+  content: Record<string, unknown> | null;
+  icon: string | null;
+  cover_image_url: string | null;
+  parent_id: string | null;
+  position: number | string | null;
+  tags: string[] | null;
+  is_pinned: boolean | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToNote(row: RawNoteRow): CreatorNote {
   return {
     id: row.id,
     userId: row.user_id,
@@ -60,7 +76,7 @@ export async function listNotes(
   opts: ListCreatorNotesOpts = {},
 ): Promise<CreatorNote[]> {
   const pool = getCreatorPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.includeArchived !== true) {
@@ -175,7 +191,7 @@ export async function updateNote(
 ): Promise<UpdateNoteOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

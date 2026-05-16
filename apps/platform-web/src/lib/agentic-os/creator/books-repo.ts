@@ -40,7 +40,30 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToBook(row: any): CreatorBook {
+interface RawBookRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  status: CreatorBook['status'];
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawChapterRow {
+  id: string;
+  book_id: string;
+  title: string;
+  content: Record<string, unknown> | null;
+  order: number | string | null;
+  word_count: number | string | null;
+  status: CreatorChapter['status'];
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToBook(row: RawBookRow): CreatorBook {
   return {
     id: row.id,
     userId: row.user_id,
@@ -53,7 +76,7 @@ function rowToBook(row: any): CreatorBook {
   };
 }
 
-function rowToChapter(row: any): CreatorChapter {
+function rowToChapter(row: RawChapterRow): CreatorChapter {
   return {
     id: row.id,
     bookId: row.book_id,
@@ -146,7 +169,7 @@ export async function updateBook(
 ): Promise<UpdateBookOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {
@@ -328,7 +351,7 @@ export async function updateChapter(
 ): Promise<UpdateChapterOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [chapterId, bookId, userId];
+  const params: unknown[] = [chapterId, bookId, userId];
   let n = 3;
 
   if (patch.title !== undefined) {
@@ -431,7 +454,7 @@ export async function reorderChapters(
   const pool = getCreatorPool();
 
   // Build a CASE statement for bulk update
-  const params: any[] = [bookId, userId];
+  const params: unknown[] = [bookId, userId];
   const whenClauses: string[] = [];
   orderedIds.forEach((chapterId, idx) => {
     params.push(chapterId);

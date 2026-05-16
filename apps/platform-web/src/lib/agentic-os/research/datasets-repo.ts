@@ -37,7 +37,26 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToDataset(row: any): Dataset {
+interface RawDatasetRow {
+  id: string;
+  user_id: string;
+  experiment_id: string;
+  name: string;
+  kind: string;
+  url: string;
+  version: string | null;
+  size_bytes: number | string | null;
+  checksum: string | null;
+  archived: boolean | null;
+  published_doi: string | null;
+  notes_md: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToDataset(row: RawDatasetRow): Dataset {
   return {
     id: row.id,
     userId: row.user_id,
@@ -82,7 +101,7 @@ export async function listDatasetsForExperiment(
   opts: DatasetsListOpts = {},
 ): Promise<Dataset[]> {
   const pool = getResearchPool();
-  const params: any[] = [experimentId, userId];
+  const params: unknown[] = [experimentId, userId];
   const where: string[] = [
     `d.experiment_id = $1`,
     `EXISTS (
@@ -204,7 +223,7 @@ export async function updateDataset(
   }
 
   const set: string[] = [];
-  const params: any[] = [datasetId, userId];
+  const params: unknown[] = [datasetId, userId];
   let n = 2;
 
   if (patch.name !== undefined) {

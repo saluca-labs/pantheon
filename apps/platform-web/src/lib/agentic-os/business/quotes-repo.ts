@@ -47,7 +47,30 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToQuote(row: any): Quote {
+interface RawQuoteRow {
+  id: string;
+  user_id: string;
+  deal_id: string | null;
+  contact_id: string | null;
+  project_id: string | null;
+  quote_number: string;
+  title: string;
+  description_md: string | null;
+  status: string;
+  quote_date: Date | string | null;
+  expires_on: Date | string | null;
+  subtotal_cents: number | string | null;
+  tax_cents: number | string | null;
+  total_cents: number | string | null;
+  currency: string | null;
+  converted_invoice_id: string | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToQuote(row: RawQuoteRow): Quote {
   return {
     id: row.id,
     userId: row.user_id,
@@ -79,7 +102,7 @@ export async function listQuotes(
   opts: QuotesListOpts = {},
 ): Promise<Quote[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.archived === true) {
@@ -212,7 +235,7 @@ export async function updateQuote(
 ): Promise<UpdateQuoteOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

@@ -47,7 +47,22 @@ function toBoolean(v: unknown): boolean {
   return Boolean(v);
 }
 
-function rowToSnapshot(row: any): PnlSnapshot {
+interface RawPnlSnapshotRow {
+  id: string;
+  user_id: string;
+  period_kind: string;
+  period_start: Date | string | null;
+  period_end: Date | string | null;
+  revenue_cents: number | string | null;
+  expense_cents: number | string | null;
+  margin_cents: number | string | null;
+  currency: string | null;
+  is_locked: boolean;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+function rowToSnapshot(row: RawPnlSnapshotRow): PnlSnapshot {
   return {
     id: row.id,
     userId: row.user_id,
@@ -71,7 +86,7 @@ export async function listSnapshots(
   opts: PnlSnapshotsListOpts = {},
 ): Promise<PnlSnapshot[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.periodKind) {
@@ -218,7 +233,7 @@ export async function updateSnapshot(
 
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.isLocked !== undefined) {

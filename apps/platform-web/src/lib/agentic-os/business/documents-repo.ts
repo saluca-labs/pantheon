@@ -39,7 +39,25 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToDocument(row: any): BusinessDocument {
+interface RawBusinessDocumentRow {
+  id: string;
+  user_id: string;
+  template_id: string | null;
+  project_id: string | null;
+  deal_id: string | null;
+  contact_id: string | null;
+  title: string | null;
+  body_md: string | null;
+  status: string;
+  sent_at: Date | string | null;
+  signed_at: Date | string | null;
+  pdf_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToDocument(row: RawBusinessDocumentRow): BusinessDocument {
   return {
     id: row.id,
     userId: row.user_id,
@@ -67,7 +85,7 @@ export async function listDocuments(
 ): Promise<BusinessDocument[]> {
   const pool = getBusinessPool();
   const clauses: string[] = ['d.user_id = $1'];
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   let idx = 2;
 
   if (opts.status) {
@@ -192,7 +210,7 @@ export async function updateDocument(
 
   const pool = getBusinessPool();
   const setClauses: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] =[];
   let idx = 1;
 
   if (patch.title !== undefined) {

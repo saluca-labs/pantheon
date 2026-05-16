@@ -67,7 +67,23 @@ const PROFILE_COLUMNS = `id, user_id, version, is_active, style_summary,
                          sample_count, sample_word_count, built_at, builder,
                          metadata`;
 
-function rowToProfile(row: any): AutobiographerVoiceProfile {
+interface RawVoiceProfileRow {
+  id: string;
+  user_id: string;
+  version: number | string;
+  is_active: boolean;
+  style_summary: string;
+  style_adjectives: string[] | null;
+  style_rules: unknown;
+  example_openings: unknown;
+  sample_count: number | string | null;
+  sample_word_count: number | string | null;
+  built_at: Date | string;
+  builder: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
+function rowToProfile(row: RawVoiceProfileRow): AutobiographerVoiceProfile {
   return {
     id: row.id,
     userId: row.user_id,
@@ -104,7 +120,7 @@ export async function listVoiceProfiles(
   args: ListVoiceProfilesArgs,
 ): Promise<AutobiographerVoiceProfile[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
   if (args.isActive !== undefined) {
     params.push(args.isActive);

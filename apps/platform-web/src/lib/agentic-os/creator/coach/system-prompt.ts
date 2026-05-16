@@ -14,7 +14,15 @@
  * @license MIT — Tiresias Creator OS Phase 7 (internal).
  */
 
-import type { CreatorCoachContext } from './context';
+import type {
+  CreatorCoachContext,
+  CoachStrategistContext,
+  CoachWritingContext,
+  CoachAudienceContext,
+  CoachMonetizationContext,
+  CoachGeneralContext,
+  CoachPostSummary,
+} from './context';
 import type { CoachMode } from './modes';
 
 export const SYSTEM_PROMPT_VERSION = 'v1';
@@ -108,7 +116,7 @@ Apply the hard rules consistently: never invent data, never plagiarize,
 defer regulated advice.`,
 };
 
-function renderStrategist(data: any): string {
+function renderStrategist(data: CoachStrategistContext): string {
   const lines: string[] = [];
   lines.push('## Content strategy context');
 
@@ -149,23 +157,27 @@ function renderStrategist(data: any): string {
   return lines.join('\n');
 }
 
-function renderWriting(data: any): string {
+function renderWriting(data: CoachWritingContext): string {
   const lines: string[] = [];
   lines.push('## Writing coach context');
 
   if (data.scoped_post) {
     lines.push('');
     lines.push('## Active draft');
-    const sp = data.scoped_post;
-    lines.push(`- Title: ${sp.title}`);
-    lines.push(`- Status: ${sp.status}`);
-    lines.push(`- Word count: ${sp.word_count ?? 'unknown'}`);
-    lines.push(`- Categories: ${(sp.categories ?? []).join(', ') || 'none'}`);
-    if (sp.excerpt) {
-      lines.push(`- Excerpt: "${sp.excerpt.slice(0, 200)}"`);
+    const sp = data.scoped_post as CoachWritingContext['scoped_post'] & {
+      word_count?: number | null;
+      content?: string | { slice(start: number, end: number): string };
+    };
+    lines.push(`- Title: ${sp!.title}`);
+    lines.push(`- Status: ${sp!.status}`);
+    lines.push(`- Word count: ${sp!.word_count ?? 'unknown'}`);
+    lines.push(`- Categories: ${(sp!.categories ?? []).join(', ') || 'none'}`);
+    if (sp!.excerpt) {
+      lines.push(`- Excerpt: "${sp!.excerpt.slice(0, 200)}"`);
     }
-    if (sp.content) {
-      const preview = sp.content.slice(0, 3000);
+    if (sp!.content) {
+      const content = sp!.content as { slice(start: number, end: number): string };
+      const preview = content.slice(0, 3000);
       lines.push(`- Content preview (first ${preview.length} chars):`);
       lines.push('```');
       lines.push(preview);
@@ -197,7 +209,7 @@ function renderWriting(data: any): string {
   return lines.join('\n');
 }
 
-function renderAudience(data: any): string {
+function renderAudience(data: CoachAudienceContext): string {
   const lines: string[] = [];
   lines.push('## Audience context');
 
@@ -213,7 +225,9 @@ function renderAudience(data: any): string {
     lines.push('## Post performance\n- (no data)');
   } else {
     lines.push(`## Post performance (${postPerf.length})`);
-    for (const pp of postPerf.slice(0, 10)) {
+    for (const pp of postPerf.slice(0, 10) as Array<
+      CoachPostSummary & { view_count?: number | null }
+    >) {
       lines.push(
         `- ${pp.title}: ${pp.view_count ?? 0} views, published ${pp.published_at?.slice(0, 10) ?? 'unknown'}`,
       );
@@ -231,7 +245,7 @@ function renderAudience(data: any): string {
   return lines.join('\n');
 }
 
-function renderMonetization(data: any): string {
+function renderMonetization(data: CoachMonetizationContext): string {
   const lines: string[] = [];
   lines.push('## Monetization context');
 
@@ -262,7 +276,7 @@ function renderMonetization(data: any): string {
   return lines.join('\n');
 }
 
-function renderGeneral(data: any): string {
+function renderGeneral(data: CoachGeneralContext): string {
   const lines: string[] = [];
   lines.push('## Creator snapshot');
 
@@ -271,7 +285,7 @@ function renderGeneral(data: any): string {
 
   const posts = data.recent_posts ?? [];
   lines.push(`- Posts: ${posts.length} recent`);
-  const scheduled = posts.filter((p: any) => p.status === 'scheduled');
+  const scheduled = posts.filter((p) => p.status === 'scheduled');
   lines.push(`- Scheduled posts: ${scheduled.length}`);
 
   const notes = data.recent_notes ?? [];

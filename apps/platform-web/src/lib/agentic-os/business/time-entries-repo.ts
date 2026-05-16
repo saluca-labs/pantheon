@@ -38,7 +38,25 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToTimeEntry(row: any): TimeEntry {
+interface RawTimeEntryRow {
+  id: string;
+  user_id: string;
+  task_id: string;
+  project_id: string;
+  description: string | null;
+  started_at: Date | string;
+  ended_at: Date | string | null;
+  duration_minutes: number | string | null;
+  is_billable: boolean;
+  billing_rate_cents: number | string | null;
+  billed_at: Date | string | null;
+  invoice_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToTimeEntry(row: RawTimeEntryRow): TimeEntry {
   return {
     id: row.id,
     userId: row.user_id,
@@ -67,7 +85,7 @@ export async function listTimeEntries(
   opts: TimeEntriesListOpts = {},
 ): Promise<TimeEntry[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.taskId) {
@@ -306,7 +324,7 @@ export async function updateTimeEntry(
 ): Promise<UpdateTimeEntryOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.taskId !== undefined) {

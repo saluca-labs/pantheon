@@ -12,6 +12,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { getBusinessPool } from './session';
 import { getDocument, signDocument } from './documents-repo';
+import type { BusinessDocument } from './documents';
 import {
   SIGNER_ROLES,
   type BusinessSignature,
@@ -36,7 +37,22 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToSignature(row: any): BusinessSignature {
+interface RawBusinessSignatureRow {
+  id: string;
+  document_id: string;
+  user_id: string;
+  signer_role: string;
+  signer_name: string | null;
+  signer_email: string | null;
+  signature_image_url: string | null;
+  signed_at: Date | string;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+}
+
+function rowToSignature(row: RawBusinessSignatureRow): BusinessSignature {
   return {
     id: row.id,
     documentId: row.document_id,
@@ -81,7 +97,7 @@ export async function captureSignature(
   documentId: string,
   input: CreateSignatureInput,
 ): Promise<
-  | { kind: 'ok'; signature: BusinessSignature; document?: any }
+  | { kind: 'ok'; signature: BusinessSignature; document?: BusinessDocument }
   | { kind: 'not_found' }
   | { kind: 'invalid_transition'; reason: string }
 > {

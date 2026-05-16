@@ -144,6 +144,246 @@ import {
 } from '../_shared/audit';
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Raw DB row shapes — match SELECT column lists in this file.
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface RawMakerProjectRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  status: string | null;
+  tags: string[] | null;
+  cover_image_url: string | null;
+  target_completion_date: Date | string | null;
+  team_size: number | string | null;
+  phase_progress: unknown;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerCatalogRow {
+  id: string;
+  user_id: string;
+  name: string;
+  category: string;
+  manufacturer: string | null;
+  mfg_part_number: string | null;
+  unit: string | null;
+  parent_part_catalog_id: string | null;
+  quantity_on_hand: number | string | null;
+  default_supplier_id: string | null;
+  datasheet_url: string | null;
+  image_url: string | null;
+  tags: string[] | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerVariantRow {
+  id: string;
+  part_catalog_id: string;
+  variant_label: string;
+  quantity_on_hand: number | string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerSupplierRow {
+  id: string;
+  user_id: string;
+  name: string;
+  homepage_url: string | null;
+  notes: string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerLinkRow {
+  id: string;
+  part_catalog_id: string;
+  supplier_id: string;
+  supplier_part_number: string | null;
+  unit_price_cents: number | string | null;
+  currency: string | null;
+  lead_time_days: number | string | null;
+  url: string | null;
+  last_priced_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerBomLineRow {
+  id: string;
+  project_id: string;
+  part_catalog_id: string;
+  variant_id: string | null;
+  quantity_needed: number | string | null;
+  notes: string | null;
+  priority: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerStepRow {
+  id: string;
+  project_id: string;
+  ordinal: number | string | null;
+  title: string;
+  body: string | null;
+  est_minutes: number | string | null;
+  completed_at: Date | string | null;
+  blocker_text: string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerLogEntryRow {
+  id: string;
+  project_id: string;
+  step_id: string | null;
+  body: string;
+  attached_urls: unknown;
+  author_id: string | null;
+  created_at: Date | string;
+}
+
+interface RawMakerMilestoneRow {
+  id: string;
+  project_id: string;
+  label: string;
+  due_at: Date | string | null;
+  completed_at: Date | string | null;
+  sort_order: number | string | null;
+  notes: string | null;
+  status: string | null;
+  priority: string | null;
+  is_blocker: boolean;
+  blocked_reason: string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerDependencyRow {
+  id: string;
+  user_id: string;
+  from_project_id: string;
+  to_project_id: string;
+  kind: string;
+  status: string;
+  notes: string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerToolRow {
+  id: string;
+  user_id: string;
+  name: string;
+  kind: string;
+  manufacturer: string | null;
+  model: string | null;
+  serial: string | null;
+  location: string | null;
+  status: string | null;
+  purchased_at: Date | string | null;
+  image_url: string | null;
+  datasheet_url: string | null;
+  manual_url: string | null;
+  notes: string | null;
+  tags: string[] | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerConsumableRow {
+  id: string;
+  tool_id: string;
+  name: string;
+  kind: string | null;
+  hours_remaining: number | string | null;
+  max_hours: number | string | null;
+  last_replaced_at: Date | string | null;
+  notes: string | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerMaintenanceRow {
+  id: string;
+  tool_id: string;
+  event_kind: string;
+  performed_at: Date | string;
+  cost_cents: number | string | null;
+  currency: string | null;
+  vendor: string | null;
+  notes: string | null;
+  next_due_at: Date | string | null;
+  metadata: unknown;
+  created_at: Date | string;
+}
+
+interface RawMakerProjectToolLinkRow {
+  id: string;
+  project_id: string;
+  tool_id: string;
+  required: boolean;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+interface RawMakerSpecSheetRow {
+  id: string;
+  user_id: string;
+  title: string;
+  kind: string | null;
+  url: string;
+  notes: string | null;
+  revision: string | null;
+  issued_at: Date | string | null;
+  part_id: string | null;
+  tool_id: string | null;
+  project_id: string | null;
+  tags: string[] | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerReferenceRow {
+  id: string;
+  user_id: string;
+  title: string;
+  kind: string | null;
+  url: string;
+  authors: string | null;
+  publisher: string | null;
+  published_at: Date | string | null;
+  notes: string | null;
+  tags: string[] | null;
+  metadata: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMakerProjectReferenceLinkRow {
+  id: string;
+  project_id: string;
+  reference_id: string;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Projects (Phase 1, unchanged)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -182,7 +422,7 @@ const PROJECT_COLUMNS = `id, user_id, name, description, status, tags,
                          phase_progress, metadata,
                          created_at, updated_at`;
 
-function rowToProject(row: any): MakerProject {
+function rowToProject(row: RawMakerProjectRow): MakerProject {
   return {
     id: row.id,
     userId: row.user_id,
@@ -341,7 +581,7 @@ const CATALOG_COLUMNS = `id, user_id, name, category, manufacturer, mfg_part_num
                          default_supplier_id, datasheet_url, image_url,
                          tags, metadata, created_at, updated_at`;
 
-function rowToCatalog(row: any): PartCatalogRow {
+function rowToCatalog(row: RawMakerCatalogRow): PartCatalogRow {
   return {
     id: row.id,
     userId: row.user_id,
@@ -373,7 +613,7 @@ export interface ListCatalogArgs {
 
 export async function listCatalog(args: ListCatalogArgs): Promise<PartCatalogRow[]> {
   const pool = getMakerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
   if (args.category) {
     if (!(PART_CATEGORY_VALUES as readonly string[]).includes(args.category)) {
@@ -524,7 +764,7 @@ export async function deleteCatalogRow(id: string, userId: string): Promise<bool
 const VARIANT_COLUMNS = `id, part_catalog_id, variant_label, quantity_on_hand,
                          metadata, created_at, updated_at`;
 
-function rowToVariant(row: any): PartVariant {
+function rowToVariant(row: RawMakerVariantRow): PartVariant {
   return {
     id: row.id,
     partCatalogId: row.part_catalog_id,
@@ -637,7 +877,7 @@ export async function deleteVariant(
 const SUPPLIER_COLUMNS = `id, user_id, name, homepage_url, notes, metadata,
                           created_at, updated_at`;
 
-function rowToSupplier(row: any): Supplier {
+function rowToSupplier(row: RawMakerSupplierRow): Supplier {
   return {
     id: row.id,
     userId: row.user_id,
@@ -746,7 +986,7 @@ const LINK_COLUMNS = `id, part_catalog_id, supplier_id, supplier_part_number,
                       unit_price_cents, currency, lead_time_days, url,
                       last_priced_at, created_at, updated_at`;
 
-function rowToLink(row: any): PartSupplierLink {
+function rowToLink(row: RawMakerLinkRow): PartSupplierLink {
   return {
     id: row.id,
     partCatalogId: row.part_catalog_id,
@@ -874,7 +1114,7 @@ const BOM_COLUMNS = `id, project_id, part_catalog_id, variant_id,
                      quantity_needed, notes, priority,
                      created_at, updated_at`;
 
-function rowToBomLine(row: any): BomLine {
+function rowToBomLine(row: RawMakerBomLineRow): BomLine {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1130,7 +1370,7 @@ const STEP_COLUMNS = `id, project_id, ordinal, title, body, est_minutes,
                       completed_at, blocker_text, metadata,
                       created_at, updated_at`;
 
-function rowToStep(row: any): BuildStep {
+function rowToStep(row: RawMakerStepRow): BuildStep {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1338,7 +1578,7 @@ export async function reorderBuildSteps(
         ORDER BY ordinal ASC, created_at ASC`,
       [projectId],
     );
-    const existing: string[] = existingRes.rows.map((r: any) => r.id);
+    const existing: string[] = existingRes.rows.map((r: { id: string }) => r.id);
     const existingSet = new Set(existing);
     const seen = new Set<string>();
     const finalOrder: string[] = [];
@@ -1387,7 +1627,7 @@ export async function reorderBuildSteps(
 const LOG_COLUMNS = `id, project_id, step_id, body, attached_urls,
                      author_id, created_at`;
 
-function rowToLogEntry(row: any): BuildLogEntry {
+function rowToLogEntry(row: RawMakerLogEntryRow): BuildLogEntry {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1411,7 +1651,7 @@ export interface ListLogEntriesArgs {
 export async function listLogEntries(args: ListLogEntriesArgs): Promise<BuildLogEntry[]> {
   await assertProjectOwnership(args.projectId, args.userId);
   const pool = getMakerPool();
-  const params: any[] = [args.projectId];
+  const params: unknown[] = [args.projectId];
   const where: string[] = ['project_id = $1'];
   if (args.stepId !== undefined && args.stepId !== null) {
     params.push(args.stepId);
@@ -1539,7 +1779,7 @@ export async function listRecentLogEntries(
       LIMIT $2`,
     [userId, safeLimit],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawMakerLogEntryRow & { project_name: string | null }) => ({
     ...rowToLogEntry(row),
     projectName: row.project_name ?? 'Untitled project',
   }));
@@ -1554,7 +1794,7 @@ const MILESTONE_COLUMNS = `id, project_id, label, due_at, completed_at,
                            is_blocker, blocked_reason, metadata,
                            created_at, updated_at`;
 
-function rowToMilestone(row: any): BuildMilestone {
+function rowToMilestone(row: RawMakerMilestoneRow): BuildMilestone {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1770,7 +2010,7 @@ const DEPENDENCY_COLUMNS = `id, user_id, from_project_id, to_project_id,
                             kind, status, notes, metadata,
                             created_at, updated_at`;
 
-function rowToDependency(row: any): ProjectDependency {
+function rowToDependency(row: RawMakerDependencyRow): ProjectDependency {
   return {
     id: row.id,
     userId: row.user_id,
@@ -1838,7 +2078,13 @@ export async function listProjectDependencies(
     [projectId, userId],
   );
 
-  function hydrate(row: any): ProjectDependencyHydrated {
+  type RawDepWithPeer = RawMakerDependencyRow & {
+    peer_id: string;
+    peer_name: string | null;
+    peer_status: string | null;
+    peer_phase_progress: unknown;
+  };
+  function hydrate(row: RawDepWithPeer): ProjectDependencyHydrated {
     const phaseAvg = computePhaseAvg(row.peer_phase_progress);
     return {
       ...rowToDependency(row),
@@ -2060,7 +2306,17 @@ export async function listTopBlockers(
 
   const items: BlockerItem[] = [];
 
-  for (const row of milestoneRows.rows as any[]) {
+  type RawBlockerMilestoneRow = {
+    id: string;
+    project_id: string;
+    label: string;
+    status: string;
+    due_at: Date | string | null;
+    blocked_reason: string | null;
+    created_at: Date | string;
+    project_name: string | null;
+  };
+  for (const row of milestoneRows.rows as RawBlockerMilestoneRow[]) {
     const status = row.status as MilestoneStoredStatus;
     const dueAt =
       row.due_at instanceof Date
@@ -2098,7 +2354,16 @@ export async function listTopBlockers(
     });
   }
 
-  for (const row of dependencyRows.rows as any[]) {
+  type RawBlockerDependencyRow = {
+    id: string;
+    from_project_id: string;
+    to_project_id: string;
+    notes: string | null;
+    created_at: Date | string;
+    from_name: string | null;
+    to_name: string | null;
+  };
+  for (const row of dependencyRows.rows as RawBlockerDependencyRow[]) {
     items.push({
       kind: 'dependency',
       id: row.id,
@@ -2132,7 +2397,7 @@ const TOOL_COLUMNS = `id, user_id, name, kind, manufacturer, model, serial,
                       manual_url, notes, tags, metadata,
                       created_at, updated_at`;
 
-function rowToTool(row: any): Tool {
+function rowToTool(row: RawMakerToolRow): Tool {
   return {
     id: row.id,
     userId: row.user_id,
@@ -2170,7 +2435,7 @@ export interface ListToolsArgs {
 
 export async function listTools(args: ListToolsArgs): Promise<Tool[]> {
   const pool = getMakerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
   if (args.status) {
     if (!(TOOL_STATUS_VALUES as readonly string[]).includes(args.status)) {
@@ -2342,7 +2607,7 @@ const CONSUMABLE_COLUMNS = `id, tool_id, name, kind, hours_remaining,
                             max_hours, last_replaced_at, notes, metadata,
                             created_at, updated_at`;
 
-function rowToConsumable(row: any): ToolConsumable {
+function rowToConsumable(row: RawMakerConsumableRow): ToolConsumable {
   return {
     id: row.id,
     toolId: row.tool_id,
@@ -2484,7 +2749,7 @@ const MAINTENANCE_COLUMNS = `id, tool_id, event_kind, performed_at,
                              cost_cents, currency, vendor, notes,
                              next_due_at, metadata, created_at`;
 
-function rowToMaintenanceEvent(row: any): MaintenanceEvent {
+function rowToMaintenanceEvent(row: RawMakerMaintenanceRow): MaintenanceEvent {
   return {
     id: row.id,
     toolId: row.tool_id,
@@ -2638,7 +2903,7 @@ export async function deleteMaintenanceEvent(
 
 const PROJECT_TOOL_COLUMNS = `id, project_id, tool_id, required, notes, created_at`;
 
-function rowToProjectToolLink(row: any): ProjectToolLink {
+function rowToProjectToolLink(row: RawMakerProjectToolLinkRow): ProjectToolLink {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -2675,12 +2940,20 @@ export async function listToolsForProject(
       ORDER BY pt.required DESC, t.name ASC`,
     [projectId, userId],
   );
-  return r.rows.map((row: any) => ({
-    ...rowToProjectToolLink(row),
-    toolName: row.tool_name,
-    toolKind: row.tool_kind as ToolKind,
-    toolStatus: (row.tool_status as ToolStatus) ?? 'active',
-  }));
+  return r.rows.map(
+    (
+      row: RawMakerProjectToolLinkRow & {
+        tool_name: string;
+        tool_kind: string;
+        tool_status: string | null;
+      },
+    ) => ({
+      ...rowToProjectToolLink(row),
+      toolName: row.tool_name,
+      toolKind: row.tool_kind as ToolKind,
+      toolStatus: (row.tool_status as ToolStatus) ?? 'active',
+    }),
+  );
 }
 
 /**
@@ -2789,12 +3062,19 @@ export async function listProjectsUsingTool(
       ORDER BY p.updated_at DESC`,
     [toolId, userId],
   );
-  return r.rows.map((row: any) => ({
-    projectId: row.project_id,
-    projectName: row.project_name,
-    projectStatus: row.project_status,
-    required: row.required === true,
-  }));
+  return r.rows.map(
+    (row: {
+      project_id: string;
+      project_name: string;
+      project_status: string;
+      required: boolean;
+    }) => ({
+      projectId: row.project_id,
+      projectName: row.project_name,
+      projectStatus: row.project_status,
+      required: row.required === true,
+    }),
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2805,7 +3085,7 @@ const SPEC_SHEET_COLUMNS = `id, user_id, title, kind, url, notes, revision,
                             issued_at, part_id, tool_id, project_id, tags,
                             metadata, created_at, updated_at`;
 
-function rowToSpecSheet(row: any): SpecSheet {
+function rowToSpecSheet(row: RawMakerSpecSheetRow): SpecSheet {
   return {
     id: row.id,
     userId: row.user_id,
@@ -2844,7 +3124,7 @@ export interface ListSpecSheetsArgs {
 
 export async function listSpecSheets(args: ListSpecSheetsArgs): Promise<SpecSheet[]> {
   const pool = getMakerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
 
   if (args.attachment === 'part') where.push(`part_id IS NOT NULL`);
@@ -3057,7 +3337,7 @@ const REFERENCE_COLUMNS = `id, user_id, title, kind, url, authors, publisher,
                            published_at, notes, tags, metadata,
                            created_at, updated_at`;
 
-function rowToReference(row: any): Reference {
+function rowToReference(row: RawMakerReferenceRow): Reference {
   return {
     id: row.id,
     userId: row.user_id,
@@ -3089,7 +3369,7 @@ export interface ListReferencesArgs {
 
 export async function listReferences(args: ListReferencesArgs): Promise<Reference[]> {
   const pool = getMakerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
   if (args.kind) {
     if (!(REFERENCE_KIND_VALUES as readonly string[]).includes(args.kind)) {
@@ -3224,7 +3504,7 @@ async function assertReferenceOwnership(
 // Project↔reference join (Phase 5)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function rowToProjectReferenceLink(row: any): ProjectReferenceLink {
+function rowToProjectReferenceLink(row: RawMakerProjectReferenceLinkRow): ProjectReferenceLink {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -3262,20 +3542,32 @@ export async function listReferencesForProject(
       ORDER BY pr.created_at DESC`,
     [projectId, userId],
   );
-  return r.rows.map((row: any) => ({
-    ...rowToProjectReferenceLink(row),
-    referenceTitle: row.reference_title,
-    referenceKind: row.reference_kind as ReferenceKind,
-    referenceUrl: row.reference_url,
-    referenceAuthors: row.reference_authors ?? null,
-    referencePublisher: row.reference_publisher ?? null,
-    referencePublishedAt: row.reference_published_at
-      ? row.reference_published_at instanceof Date
-        ? row.reference_published_at.toISOString().slice(0, 10)
-        : String(row.reference_published_at).slice(0, 10)
-      : null,
-    referenceTags: Array.isArray(row.reference_tags) ? row.reference_tags : [],
-  }));
+  return r.rows.map(
+    (
+      row: RawMakerProjectReferenceLinkRow & {
+        reference_title: string;
+        reference_kind: string;
+        reference_url: string;
+        reference_authors: string | null;
+        reference_publisher: string | null;
+        reference_published_at: Date | string | null;
+        reference_tags: string[] | null;
+      },
+    ) => ({
+      ...rowToProjectReferenceLink(row),
+      referenceTitle: row.reference_title,
+      referenceKind: row.reference_kind as ReferenceKind,
+      referenceUrl: row.reference_url,
+      referenceAuthors: row.reference_authors ?? null,
+      referencePublisher: row.reference_publisher ?? null,
+      referencePublishedAt: row.reference_published_at
+        ? row.reference_published_at instanceof Date
+          ? row.reference_published_at.toISOString().slice(0, 10)
+          : String(row.reference_published_at).slice(0, 10)
+        : null,
+      referenceTags: Array.isArray(row.reference_tags) ? row.reference_tags : [],
+    }),
+  );
 }
 
 /**

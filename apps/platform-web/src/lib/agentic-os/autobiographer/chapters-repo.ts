@@ -83,7 +83,22 @@ const CHAPTER_COLUMNS = `id, user_id, book_id, title, slug, position, status,
                          summary, target_word_count, metadata,
                          created_at, updated_at`;
 
-function rowToChapter(row: any): AutobiographerChapter {
+interface RawChapterRow {
+  id: string;
+  user_id: string;
+  book_id: string;
+  title: string | null;
+  slug: string | null;
+  position: number | string | null;
+  status: string | null;
+  summary: string | null;
+  target_word_count: number | string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToChapter(row: RawChapterRow): AutobiographerChapter {
   return {
     id: row.id,
     userId: row.user_id,
@@ -133,7 +148,7 @@ export async function nextSlugForBook(
   // probe candidate; if collision, append -N until free
   // (excludeChapterId lets PATCH skip self-collision)
   for (let i = 0; i < 1000; i++) {
-    const params: any[] = [bookId, candidate];
+    const params: unknown[] =[bookId, candidate];
     let sql = `SELECT 1 FROM agos_autobiographer_chapters
                 WHERE book_id = $1 AND slug = $2`;
     if (excludeChapterId) {
@@ -230,7 +245,7 @@ export async function listChaptersForUser(
   args: { bookId?: string | null; limit?: number; offset?: number } = {},
 ): Promise<AutobiographerChapter[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   let where = `user_id = $1`;
   if (args.bookId) {
     params.push(args.bookId);

@@ -24,7 +24,13 @@
  * @license MIT — Tiresias Autobiographer OS Phase 7 (internal).
  */
 
-import type { AutobiographerCoachContext } from './context';
+import type {
+  AutobiographerCoachContext,
+  CoachInterviewerContext,
+  CoachChapterDrafterContext,
+  CoachNarrativeCriticContext,
+  CoachGeneralContext,
+} from './context';
 import type { CoachMode } from './modes';
 import {
   shouldAppendSensitiveFooter,
@@ -221,7 +227,7 @@ function renderMemoryEntry(m: {
   return lines.join('\n');
 }
 
-function renderInterviewer(data: any): string {
+function renderInterviewer(data: CoachInterviewerContext): string {
   const lines: string[] = [];
   lines.push(renderBook(data.book));
   lines.push('');
@@ -255,7 +261,7 @@ function renderInterviewer(data: any): string {
   return lines.join('\n');
 }
 
-function renderChapterDrafter(data: any): string {
+function renderChapterDrafter(data: CoachChapterDrafterContext): string {
   const lines: string[] = [];
   lines.push(renderBook(data.book));
   lines.push('');
@@ -349,7 +355,7 @@ function renderChapterDrafter(data: any): string {
   return lines.join('\n');
 }
 
-function renderNarrativeCritic(data: any): string {
+function renderNarrativeCritic(data: CoachNarrativeCriticContext): string {
   const lines: string[] = [];
   lines.push(renderBook(data.book));
   lines.push('');
@@ -386,7 +392,7 @@ function renderNarrativeCritic(data: any): string {
   return lines.join('\n');
 }
 
-function renderGeneral(data: any): string {
+function renderGeneral(data: CoachGeneralContext): string {
   const lines: string[] = [];
   lines.push(renderBook(data.book));
   lines.push('');

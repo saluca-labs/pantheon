@@ -35,7 +35,19 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToPrediction(row: any): Prediction {
+interface RawPredictionRow {
+  id: string;
+  hypothesis_id: string;
+  user_id: string;
+  text: string;
+  kind: string;
+  confidence: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPrediction(row: RawPredictionRow): Prediction {
   return {
     id: row.id,
     hypothesisId: row.hypothesis_id,

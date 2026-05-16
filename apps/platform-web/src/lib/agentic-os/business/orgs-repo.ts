@@ -36,7 +36,24 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToOrg(row: any): Organization {
+interface RawOrgRow {
+  id: string;
+  user_id: string;
+  name: string;
+  org_type: string;
+  website: string | null;
+  industry: string | null;
+  notes: string | null;
+  description_md: string | null;
+  address: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToOrg(row: RawOrgRow): Organization {
   return {
     id: row.id,
     userId: row.user_id,
@@ -62,7 +79,7 @@ export async function listOrganizations(
   opts: OrgsListOpts = {},
 ): Promise<Organization[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.archived === true) {
@@ -185,7 +202,7 @@ export async function updateOrganization(
     throw new Error(`Invalid org_type: ${patch.orgType}`);
   }
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.name !== undefined) {

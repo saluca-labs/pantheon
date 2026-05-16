@@ -46,7 +46,31 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToLink(row: any): ExperimentProtocolLink {
+interface RawProtocolLinkRow {
+  id: string;
+  experiment_id: string;
+  protocol_id: string;
+  pinned_version: string;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+interface RawJoinedProtocolRow {
+  p_id: string;
+  p_user_id: string;
+  p_title: string;
+  p_version: string;
+  p_body_md: string | null;
+  p_kind: string;
+  p_attached_urls: string[] | null;
+  p_tags: string[] | null;
+  p_parent_protocol_id: string | null;
+  p_metadata: Record<string, unknown> | null;
+  p_created_at: Date | string;
+  p_updated_at: Date | string;
+}
+
+function rowToLink(row: RawProtocolLinkRow): ExperimentProtocolLink {
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -57,7 +81,7 @@ function rowToLink(row: any): ExperimentProtocolLink {
   };
 }
 
-function rowToProtocol(row: any): Protocol {
+function rowToProtocol(row: RawJoinedProtocolRow): Protocol {
   return {
     id: row.p_id,
     userId: row.p_user_id,

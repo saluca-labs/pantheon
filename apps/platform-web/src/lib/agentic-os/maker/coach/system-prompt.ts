@@ -19,7 +19,13 @@
  * @license MIT — Tiresias Maker OS Phase 7 (internal).
  */
 
-import type { MakerCoachContext } from './context';
+import type {
+  MakerCoachContext,
+  CoachProcurementContext,
+  CoachBuildPlannerContext,
+  CoachShopSafetyContext,
+  CoachGeneralContext,
+} from './context';
 import type { CoachMode } from './modes';
 
 export const SYSTEM_PROMPT_VERSION = 'v1';
@@ -156,7 +162,7 @@ function renderProject(p: {
   return lines.join('\n');
 }
 
-function renderProcurement(data: any): string {
+function renderProcurement(data: CoachProcurementContext): string {
   const lines: string[] = [];
   lines.push(renderProject(data.project));
   lines.push('');
@@ -187,7 +193,7 @@ function renderProcurement(data: any): string {
   return lines.join('\n');
 }
 
-function renderBuildPlanner(data: any): string {
+function renderBuildPlanner(data: CoachBuildPlannerContext): string {
   const lines: string[] = [];
   lines.push(renderProject(data.project));
   lines.push('');
@@ -244,7 +250,7 @@ function renderBuildPlanner(data: any): string {
   return lines.join('\n');
 }
 
-function renderShopSafety(data: any): string {
+function renderShopSafety(data: CoachShopSafetyContext): string {
   const lines: string[] = [];
   lines.push(renderProject(data.project));
   lines.push('');
@@ -299,7 +305,7 @@ function renderShopSafety(data: any): string {
   return lines.join('\n');
 }
 
-function renderGeneral(data: any): string {
+function renderGeneral(data: CoachGeneralContext): string {
   const lines: string[] = [];
   lines.push(renderProject(data.project));
   lines.push('');

@@ -23,7 +23,34 @@ export interface MemoryThemeLink {
 
 const LINK_COLUMNS = `memory_id, theme_id, created_at`;
 
-function rowToLink(row: any): MemoryThemeLink {
+interface RawMemoryThemeLinkRow {
+  memory_id: string;
+  theme_id: string;
+  created_at: Date | string;
+}
+
+interface RawThemeJoinedRow {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawMemoryAppearanceRow {
+  memory_id: string;
+  book_id: string | null;
+  title: string;
+  when_in_life: string | null;
+  era_date_estimate: Date | string | null;
+  updated_at: Date | string;
+}
+
+function rowToLink(row: RawMemoryThemeLinkRow): MemoryThemeLink {
   return {
     memoryId: row.memory_id,
     themeId: row.theme_id,
@@ -78,7 +105,7 @@ export async function listThemesForMemory(
       ORDER BY lower(t.name) ASC`,
     [memoryId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawThemeJoinedRow) => ({
     id: row.id,
     userId: row.user_id,
     name: row.name,
@@ -124,7 +151,7 @@ export async function listMemoriesForTheme(
       ORDER BY m.era_date_estimate ASC NULLS LAST, m.updated_at DESC`,
     [themeId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawMemoryAppearanceRow) => ({
     memoryId: row.memory_id,
     bookId: row.book_id ?? null,
     title: row.title,
@@ -154,8 +181,8 @@ export async function linkThemeToMemory(
     themeBelongsToUser(themeId, userId),
   ]);
   if (!memOk || !themeOk) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
   const pool = getAutobiographerPool();
@@ -170,8 +197,8 @@ export async function linkThemeToMemory(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;
@@ -196,8 +223,8 @@ export async function unlinkThemeFromMemory(
     themeBelongsToUser(themeId, userId),
   ]);
   if (!memOk || !themeOk) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
   const pool = getAutobiographerPool();

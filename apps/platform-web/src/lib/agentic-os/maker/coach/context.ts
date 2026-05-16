@@ -258,17 +258,18 @@ export function enforceContextSizeCap(payload: unknown): unknown {
 }
 
 interface ArrayContainer {
-  parent: any;
+  parent: Record<string, unknown>;
   key: string;
-  array: any[];
+  array: unknown[];
   truncated: boolean;
 }
 
-function collectArrayContainers(node: any, into: ArrayContainer[] = []): ArrayContainer[] {
+function collectArrayContainers(node: unknown, into: ArrayContainer[] = []): ArrayContainer[] {
   if (node == null || typeof node !== 'object') return into;
-  for (const [key, value] of Object.entries(node)) {
+  const obj = node as Record<string, unknown>;
+  for (const [key, value] of Object.entries(obj)) {
     if (Array.isArray(value)) {
-      into.push({ parent: node, key, array: value, truncated: false });
+      into.push({ parent: obj, key, array: value, truncated: false });
     } else if (value && typeof value === 'object') {
       collectArrayContainers(value, into);
     }

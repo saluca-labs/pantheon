@@ -42,7 +42,17 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToSavedView(row: any): SavedViewRow {
+interface RawSavedViewRow {
+  id: string;
+  user_id: string;
+  entity_kind: string;
+  name: string;
+  query: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToSavedView(row: RawSavedViewRow): SavedViewRow {
   return {
     id: row.id,
     userId: row.user_id,

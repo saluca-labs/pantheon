@@ -48,7 +48,18 @@ function coerceMessages(value: unknown): ChatMessage[] {
   return out;
 }
 
-function rowToConversation(row: any): CreatorConversation {
+interface RawConversationRow {
+  id: string;
+  user_id: string;
+  title: string;
+  model: string;
+  system_prompt: string | null;
+  messages: unknown;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToConversation(row: RawConversationRow): CreatorConversation {
   return {
     id: row.id,
     userId: row.user_id,
@@ -142,7 +153,7 @@ export async function updateConversation(
 ): Promise<UpdateConversationOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

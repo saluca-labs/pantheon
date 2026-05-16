@@ -30,7 +30,25 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToSettings(row: any): BusinessSettings {
+interface RawBusinessSettingsRow {
+  id: string;
+  user_id: string;
+  business_name: string | null;
+  logo_url: string | null;
+  address: string | null;
+  tax_id: string | null;
+  default_currency: string | null;
+  invoice_number_prefix: string | null;
+  quote_number_prefix: string | null;
+  default_payment_terms: string | null;
+  default_hourly_rate_cents: number | string | null;
+  accent_color: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToSettings(row: RawBusinessSettingsRow): BusinessSettings {
   return {
     id: row.id,
     userId: row.user_id,
@@ -138,7 +156,7 @@ export async function updateSettings(
   await getOrCreateSettings(userId);
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   let n = 1;
 
   if (patch.businessName !== undefined) {

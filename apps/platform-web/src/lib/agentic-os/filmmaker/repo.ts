@@ -87,9 +87,231 @@ import {
 } from './storyboards';
 import { parseFountain, countWords as countFountainWords } from './fountain-parser';
 
+// ─── Raw DB row shapes ───────────────────────────────────────────────────────
+
+interface RawProjectRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  tags: string[] | null;
+  format: string | null;
+  logline: string | null;
+  cover_image_url: string | null;
+  phase_progress: unknown;
+  target_completion_date: Date | string | null;
+  team_size: number | string | null;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawShotRow {
+  id: string;
+  project_id: string;
+  scene_number: string;
+  shot_number: string;
+  shot_type: string;
+  camera_move: string;
+  subject: string;
+  description: string;
+  estimated_seconds: number | string | null;
+  completed: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawStoryDocumentRow {
+  id: string;
+  project_id: string;
+  kind: string;
+  title: string;
+  content_json: unknown;
+  content_text: string | null;
+  version: number | string;
+  word_count: number | string;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawStoryDocumentVersionRow {
+  id: string;
+  document_id: string;
+  version: number | string;
+  content_json: unknown;
+  content_text: string | null;
+  word_count: number | string;
+  created_at: Date;
+}
+
+interface RawCharacterRow {
+  id: string;
+  project_id: string;
+  name: string;
+  role: string;
+  archetype: string | null;
+  logline: string | null;
+  age: string | null;
+  pronouns: string | null;
+  gender: string | null;
+  occupation: string | null;
+  backstory: string | null;
+  goals: string | null;
+  needs: string | null;
+  fears: string | null;
+  wounds: string | null;
+  arc: string | null;
+  voice_notes: string | null;
+  physical_description: string | null;
+  portrait_url: string | null;
+  tags: string[] | null;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawRelationshipRow {
+  id: string;
+  project_id: string;
+  from_id: string;
+  to_id: string;
+  kind: string;
+  direction: string;
+  description: string | null;
+  tension: number | string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawScreenplayRow {
+  id: string;
+  project_id: string;
+  title: string;
+  format: string;
+  status: string;
+  head_version_id: string | null;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawScreenplayVersionRow {
+  id: string;
+  screenplay_id: string;
+  version_number: number | string;
+  label: string | null;
+  is_head: boolean;
+  fountain_text: string | null;
+  word_count: number | string;
+  page_count_estimate: number | string;
+  created_at: Date;
+}
+
+interface RawScreenplaySceneRow {
+  id: string;
+  screenplay_id: string;
+  version_id: string;
+  scene_number: number | string;
+  heading: string;
+  interior: boolean | null;
+  location: string | null;
+  time_of_day: string | null;
+  page_start: number | string | null;
+  eighths: number | string | null;
+  dialogue_word_counts: unknown;
+  action_text: string | null;
+  dialogue_text: string | null;
+  metadata: unknown;
+}
+
+interface RawBreakdownElementRow {
+  id: string;
+  screenplay_id: string;
+  scene_id: string;
+  category: string;
+  name: string;
+  description: string | null;
+  quantity: number | string;
+  is_principal: boolean;
+  character_id: string | null;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawSceneMetaRow {
+  id: string;
+  scene_id: string;
+  eighths: number | string;
+  est_shoot_minutes: number | string | null;
+  notes: string | null;
+  complexity: string | null;
+  status: string;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawShootingDayRow {
+  id: string;
+  project_id: string;
+  shoot_date: Date | string | null;
+  day_number: number | string;
+  label: string | null;
+  call_time: string | null;
+  wrap_time: string | null;
+  unit: string;
+  status: string;
+  notes: string | null;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawStripRow {
+  id: string;
+  shooting_day_id: string;
+  scene_id: string;
+  order_index: number | string;
+  est_minutes: number | string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawStoryboardRow {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  scene_id: string | null;
+  status: string;
+  metadata: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawPanelRow {
+  id: string;
+  storyboard_id: string;
+  position: number | string;
+  image_url: string | null;
+  camera_angle: string | null;
+  camera_move: string | null;
+  shot_size: string | null;
+  description: string | null;
+  dialogue_excerpt: string | null;
+  duration_seconds: number | string | null;
+  notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // ─── Row mappers ─────────────────────────────────────────────────────────────
 
-function rowToProject(row: any): FilmmakerProject {
+function rowToProject(row: RawProjectRow): FilmmakerProject {
   return {
     id: row.id,
     userId: row.user_id,
@@ -346,7 +568,7 @@ export async function listShots(projectId: string): Promise<ShotListEntry[]> {
       ORDER BY scene_number, shot_number`,
     [projectId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawShotRow) => ({
     id: row.id,
     projectId: row.project_id,
     sceneNumber: row.scene_number,
@@ -419,7 +641,7 @@ const STORY_DOC_COLUMNS = `id, project_id, kind, title, content_json,
                            content_text, version, word_count, metadata,
                            created_at, updated_at`;
 
-function rowToStoryDocument(row: any): StoryDocument {
+function rowToStoryDocument(row: RawStoryDocumentRow): StoryDocument {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -435,7 +657,7 @@ function rowToStoryDocument(row: any): StoryDocument {
   };
 }
 
-function rowToStoryDocumentVersion(row: any): StoryDocumentVersion {
+function rowToStoryDocumentVersion(row: RawStoryDocumentVersionRow): StoryDocumentVersion {
   return {
     id: row.id,
     documentId: row.document_id,
@@ -714,7 +936,7 @@ const CHARACTER_COLUMNS = `id, project_id, name, role, archetype, logline,
                            voice_notes, physical_description, portrait_url,
                            tags, metadata, created_at, updated_at`;
 
-function rowToCharacter(row: any): Character {
+function rowToCharacter(row: RawCharacterRow): Character {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -753,7 +975,7 @@ export interface ListCharactersArgs {
 export async function listCharacters(args: ListCharactersArgs): Promise<Character[]> {
   const pool = getFilmmakerPool();
   const columns = CHARACTER_COLUMNS.split(',').map((c) => `c.${c.trim()}`).join(', ');
-  const params: any[] = [args.projectId, args.userId];
+  const params: unknown[] = [args.projectId, args.userId];
   const where: string[] = [`c.project_id = $1`, `p.user_id = $2`];
   if (args.role) {
     params.push(args.role);
@@ -946,7 +1168,7 @@ export async function deleteCharacter(
 const RELATIONSHIP_COLUMNS = `id, project_id, from_id, to_id, kind, direction,
                               description, tension, created_at, updated_at`;
 
-function rowToRelationship(row: any): CharacterRelationship {
+function rowToRelationship(row: RawRelationshipRow): CharacterRelationship {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -973,7 +1195,7 @@ export async function listCharacterRelationships(
 ): Promise<CharacterRelationship[]> {
   const pool = getFilmmakerPool();
   const columns = RELATIONSHIP_COLUMNS.split(',').map((c) => `r.${c.trim()}`).join(', ');
-  const params: any[] = [args.projectId, args.userId];
+  const params: unknown[] = [args.projectId, args.userId];
   const where: string[] = [`r.project_id = $1`, `p.user_id = $2`];
   if (args.characterId) {
     params.push(args.characterId);
@@ -1142,7 +1364,7 @@ const SCREENPLAY_SCENE_COLUMNS = `id, screenplay_id, version_id, scene_number,
                                   page_start, eighths, dialogue_word_counts,
                                   action_text, dialogue_text, metadata`;
 
-function rowToScreenplay(row: any): Screenplay {
+function rowToScreenplay(row: RawScreenplayRow): Screenplay {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1156,7 +1378,7 @@ function rowToScreenplay(row: any): Screenplay {
   };
 }
 
-function rowToScreenplayVersion(row: any): ScreenplayVersion {
+function rowToScreenplayVersion(row: RawScreenplayVersionRow): ScreenplayVersion {
   return {
     id: row.id,
     screenplayId: row.screenplay_id,
@@ -1170,7 +1392,7 @@ function rowToScreenplayVersion(row: any): ScreenplayVersion {
   };
 }
 
-function rowToScreenplayScene(row: any): ScreenplayScene {
+function rowToScreenplayScene(row: RawScreenplaySceneRow): ScreenplayScene {
   return {
     id: row.id,
     screenplayId: row.screenplay_id,
@@ -1586,7 +1808,7 @@ const SCENE_META_COLUMNS = `id, scene_id, eighths, est_shoot_minutes, notes,
                             complexity, status, metadata,
                             created_at, updated_at`;
 
-function rowToBreakdownElement(row: any): BreakdownElement {
+function rowToBreakdownElement(row: RawBreakdownElementRow): BreakdownElement {
   return {
     id: row.id,
     screenplayId: row.screenplay_id,
@@ -1603,7 +1825,7 @@ function rowToBreakdownElement(row: any): BreakdownElement {
   };
 }
 
-function rowToSceneMeta(row: any): SceneBreakdownMeta {
+function rowToSceneMeta(row: RawSceneMetaRow): SceneBreakdownMeta {
   return {
     id: row.id,
     sceneId: row.scene_id,
@@ -1932,10 +2154,12 @@ export async function getProjectBreakdownSummary(
       ORDER BY count DESC`,
     [projectId],
   );
-  const byCategory = elementBreakdown.rows.map((row: any) => ({
-    category: row.category as BreakdownCategory,
-    count: Number(row.count),
-  }));
+  const byCategory = elementBreakdown.rows.map(
+    (row: { category: string; count: number | string }) => ({
+      category: row.category as BreakdownCategory,
+      count: Number(row.count),
+    }),
+  );
   const totalElements = byCategory.reduce((acc, x) => acc + x.count, 0);
 
   const scenesWithBreakdownRow = await pool.query(
@@ -1973,7 +2197,7 @@ const SHOOTING_DAY_COLUMNS = `id, project_id, shoot_date, day_number, label,
 const SCHEDULE_STRIP_COLUMNS = `id, shooting_day_id, scene_id, order_index,
                                 est_minutes, notes, created_at, updated_at`;
 
-function rowToShootingDay(row: any): ShootingDay {
+function rowToShootingDay(row: RawShootingDayRow): ShootingDay {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -1993,7 +2217,7 @@ function rowToShootingDay(row: any): ShootingDay {
   };
 }
 
-function rowToStrip(row: any): ScheduleStrip {
+function rowToStrip(row: RawStripRow): ScheduleStrip {
   return {
     id: row.id,
     shootingDayId: row.shooting_day_id,
@@ -2015,7 +2239,7 @@ export async function listShootingDays(args: {
   const columns = SHOOTING_DAY_COLUMNS.split(',')
     .map((c) => `d.${c.trim()}`)
     .join(', ');
-  const params: any[] = [args.projectId, args.userId];
+  const params: unknown[] = [args.projectId, args.userId];
   const where: string[] = ['d.project_id = $1', 'p.user_id = $2'];
   if (args.unit) {
     if (!(SHOOTING_UNIT_VALUES as readonly string[]).includes(args.unit)) {
@@ -2207,7 +2431,7 @@ export async function deleteShootingDay(
       [id],
     );
     if (orphans.rows.length > 0) {
-      const ids = orphans.rows.map((r: any) => r.scene_id);
+      const ids = orphans.rows.map((r: { scene_id: string }) => r.scene_id);
       await client.query(
         `UPDATE agos_filmmaker_scene_breakdown_meta
             SET status = 'unscheduled', updated_at = now()
@@ -2326,21 +2550,34 @@ async function listStripsForDay(
       ORDER BY st.order_index ASC`,
     [shootingDayId, userId],
   );
-  return r.rows.map((row: any): ScheduleStripJoined => {
+  type RawStripJoinedRow = RawStripRow &
+    RawScreenplaySceneRow & {
+      m_id: string | null;
+      m_scene_id: string | null;
+      m_eighths: number | string | null;
+      m_est_shoot_minutes: number | string | null;
+      m_notes: string | null;
+      m_complexity: string | null;
+      m_status: string | null;
+      m_metadata: unknown;
+      m_created_at: Date | null;
+      m_updated_at: Date | null;
+    };
+  return r.rows.map((row: RawStripJoinedRow): ScheduleStripJoined => {
     const strip = rowToStrip(row);
     const scene = rowToScreenplayScene(row);
     const sceneMeta: SceneBreakdownMeta | null = row.m_id
       ? rowToSceneMeta({
           id: row.m_id,
-          scene_id: row.m_scene_id,
-          eighths: row.m_eighths,
+          scene_id: row.m_scene_id as string,
+          eighths: row.m_eighths as number | string,
           est_shoot_minutes: row.m_est_shoot_minutes,
           notes: row.m_notes,
           complexity: row.m_complexity,
-          status: row.m_status,
+          status: row.m_status as string,
           metadata: row.m_metadata,
-          created_at: row.m_created_at,
-          updated_at: row.m_updated_at,
+          created_at: row.m_created_at as Date,
+          updated_at: row.m_updated_at as Date,
         })
       : null;
     return { ...strip, scene, sceneMeta };
@@ -2600,7 +2837,7 @@ export async function reorderStripsWithinDay(
         WHERE shooting_day_id = $1`,
       [shootingDayId],
     );
-    const known = new Set<string>(existing.rows.map((r: any) => r.id));
+    const known = new Set<string>(existing.rows.map((r: { id: string }) => r.id));
     const seen = new Set<string>();
     const finalOrder: string[] = [];
     for (const id of orderedStripIds) {
@@ -2757,7 +2994,7 @@ export async function getProjectScheduleSummary(
 const STORYBOARD_COLUMNS = `id, project_id, name, description, scene_id,
                             status, metadata, created_at, updated_at`;
 
-function rowToStoryboard(row: any): Storyboard {
+function rowToStoryboard(row: RawStoryboardRow): Storyboard {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -2775,7 +3012,7 @@ const PANEL_COLUMNS = `id, storyboard_id, position, image_url, camera_angle,
                        camera_move, shot_size, description, dialogue_excerpt,
                        duration_seconds, notes, created_at, updated_at`;
 
-function rowToPanel(row: any): StoryboardPanel {
+function rowToPanel(row: RawPanelRow): StoryboardPanel {
   return {
     id: row.id,
     storyboardId: row.storyboard_id,
@@ -2808,14 +3045,23 @@ export async function listStoryboards(args: {
       ORDER BY sb.updated_at DESC`,
     [args.projectId, args.userId],
   );
-  return r.rows.map((row: any) => ({
-    id: row.id,
-    name: row.name,
-    status: row.status as StoryboardStatus,
-    sceneId: row.scene_id ?? null,
-    panelCount: Number(row.panel_count),
-    updatedAt: row.updated_at.toISOString(),
-  }));
+  return r.rows.map(
+    (row: {
+      id: string;
+      name: string;
+      status: string;
+      scene_id: string | null;
+      panel_count: number | string;
+      updated_at: Date;
+    }) => ({
+      id: row.id,
+      name: row.name,
+      status: row.status as StoryboardStatus,
+      sceneId: row.scene_id ?? null,
+      panelCount: Number(row.panel_count),
+      updatedAt: row.updated_at.toISOString(),
+    }),
+  );
 }
 
 async function getStoryboardBare(
@@ -3142,7 +3388,7 @@ export async function reorderStoryboardPanels(
         WHERE storyboard_id = $1`,
       [storyboardId],
     );
-    const known = new Set<string>(existing.rows.map((r: any) => r.id));
+    const known = new Set<string>(existing.rows.map((r: { id: string }) => r.id));
     const seen = new Set<string>();
     const finalOrder: string[] = [];
     for (const id of orderedPanelIds) {

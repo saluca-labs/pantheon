@@ -23,7 +23,20 @@ export async function listPosts(userId: string, limit = 50): Promise<CalendarPos
       LIMIT $2`,
     [userId, limit],
   );
-  return r.rows.map((row: any) => ({
+  interface RawCreatorPostRow {
+    id: string;
+    user_id: string;
+    title: string;
+    status: string;
+    channel: string;
+    content_format: string;
+    publish_at: Date | null;
+    body: string | null;
+    tags: string[] | null;
+    created_at: Date;
+    updated_at: Date;
+  }
+  return r.rows.map((row: RawCreatorPostRow) => ({
     id: row.id,
     userId: row.user_id,
     title: row.title,

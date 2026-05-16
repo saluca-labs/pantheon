@@ -59,7 +59,20 @@ export interface UpdateArcInput {
 const ARC_COLUMNS = `id, user_id, book_id, title, kind, description,
                      is_primary, metadata, created_at, updated_at`;
 
-function rowToArc(row: any): AutobiographerArc {
+interface RawArcRow {
+  id: string;
+  user_id: string;
+  book_id: string;
+  title: string;
+  kind: string | null;
+  description: string | null;
+  is_primary: boolean;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToArc(row: RawArcRow): AutobiographerArc {
   return {
     id: row.id,
     userId: row.user_id,

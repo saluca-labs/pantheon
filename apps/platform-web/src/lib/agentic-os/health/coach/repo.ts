@@ -41,7 +41,30 @@ export interface CoachMessage {
   createdAt: string;
 }
 
-function rowToConversation(row: any): CoachConversation {
+interface RawHealthCoachConversationRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  title: string | null;
+  model: string;
+  system_prompt_version: string;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawHealthCoachMessageRow {
+  id: string;
+  conversation_id: string;
+  role: string;
+  content: string;
+  tool_calls: CoachToolCall[] | null;
+  crisis_detected: boolean | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+function rowToConversation(row: RawHealthCoachConversationRow): CoachConversation {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -55,7 +78,7 @@ function rowToConversation(row: any): CoachConversation {
   };
 }
 
-function rowToMessage(row: any): CoachMessage {
+function rowToMessage(row: RawHealthCoachMessageRow): CoachMessage {
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -247,7 +270,7 @@ export async function listMessages(
 ): Promise<CoachMessage[]> {
   const pool = getHealthPool();
   const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
-  const params: any[] = [input.conversationId];
+  const params: unknown[] = [input.conversationId];
   let where = 'WHERE conversation_id = $1';
   if (input.before) {
     params.push(new Date(input.before));

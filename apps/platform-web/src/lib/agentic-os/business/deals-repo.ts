@@ -45,7 +45,29 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToDeal(row: any): Deal {
+interface RawDealRow {
+  id: string;
+  user_id: string;
+  contact_id: string | null;
+  organization_id: string | null;
+  title: string;
+  description_md: string | null;
+  stage: string;
+  value_cents: number | string | null;
+  currency: string | null;
+  probability_pct: number | string | null;
+  expected_close_date: Date | string | null;
+  closed_at: Date | string | null;
+  lost_reason: string | null;
+  source: string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  archived_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToDeal(row: RawDealRow): Deal {
   return {
     id: row.id,
     userId: row.user_id,
@@ -76,7 +98,7 @@ export async function listDeals(
   opts: DealsListOpts = {},
 ): Promise<Deal[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.archived === true) {
@@ -213,7 +235,7 @@ export async function updateDeal(
 ): Promise<UpdateDealOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

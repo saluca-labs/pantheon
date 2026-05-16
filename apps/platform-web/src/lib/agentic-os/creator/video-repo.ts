@@ -36,7 +36,20 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToVideo(row: any): CreatorVideoAsset {
+interface RawVideoRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  status: CreatorVideoAsset['status'];
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToVideo(row: RawVideoRow): CreatorVideoAsset {
   return {
     id: row.id,
     userId: row.user_id,
@@ -58,7 +71,7 @@ export async function listVideos(
   opts: ListVideoAssetsOpts = {},
 ): Promise<CreatorVideoAsset[]> {
   const pool = getCreatorPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.status) {
@@ -152,7 +165,7 @@ export async function updateVideo(
 ): Promise<UpdateVideoOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

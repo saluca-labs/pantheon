@@ -22,6 +22,10 @@ import { listPosts } from '../posts-repo';
 import { listNotes } from '../notes-repo';
 import { listBooks } from '../books-repo';
 import { listSubscribers } from '../subscribers-repo';
+import type { CreatorPost } from '../posts';
+import type { CreatorNote } from '../notes';
+import type { CreatorBook } from '../books';
+import type { CreatorSubscriber } from '../subscribers';
 import type { CoachMode } from './modes';
 
 /** Hard cap on the rendered JSON size (50 KB pre-prompt). Truncate beyond. */
@@ -138,17 +142,18 @@ export function enforceContextSizeCap(payload: unknown): unknown {
 }
 
 interface ArrayContainer {
-  parent: any;
+  parent: Record<string, unknown>;
   key: string;
-  array: any[];
+  array: unknown[];
   truncated: boolean;
 }
 
-function collectArrayContainers(node: any, into: ArrayContainer[] = []): ArrayContainer[] {
+function collectArrayContainers(node: unknown, into: ArrayContainer[] = []): ArrayContainer[] {
   if (node == null || typeof node !== 'object') return into;
-  for (const [key, value] of Object.entries(node)) {
+  const obj = node as Record<string, unknown>;
+  for (const [key, value] of Object.entries(obj)) {
     if (Array.isArray(value)) {
-      into.push({ parent: node, key, array: value, truncated: false });
+      into.push({ parent: obj, key, array: value, truncated: false });
     } else if (value && typeof value === 'object') {
       collectArrayContainers(value, into);
     }
@@ -158,7 +163,7 @@ function collectArrayContainers(node: any, into: ArrayContainer[] = []): ArrayCo
 
 // ─── Pure mapping helpers ─────────────────────────────────────────────────
 
-function mapPost(p: any): CoachPostSummary {
+function mapPost(p: CreatorPost): CoachPostSummary {
   return {
     id: p.id,
     title: p.title,
@@ -170,7 +175,7 @@ function mapPost(p: any): CoachPostSummary {
   };
 }
 
-function mapNote(n: any): CoachNoteSummary {
+function mapNote(n: CreatorNote): CoachNoteSummary {
   return {
     id: n.id,
     title: n.title,
@@ -178,7 +183,7 @@ function mapNote(n: any): CoachNoteSummary {
   };
 }
 
-function mapBook(b: any): CoachBookSummary {
+function mapBook(b: CreatorBook & { wordCount?: number | null }): CoachBookSummary {
   return {
     id: b.id,
     title: b.title,
@@ -225,7 +230,7 @@ async function loadWriting(userId: string): Promise<CoachWritingContext> {
 
   const books = await listBooks(userId).catch(() => []);
   const bookList = Array.isArray(books) ? books : [];
-  const bookDrafts = bookList.filter((b: any) => b.status === 'draft');
+  const bookDrafts = bookList.filter((b: CreatorBook) => b.status === 'draft');
   const scopedBook = bookDrafts.length > 0 ? mapBook(bookDrafts[0]) : null;
 
   return {
@@ -244,8 +249,10 @@ async function loadAudience(userId: string): Promise<CoachAudienceContext> {
   ]);
 
   const subscriberList = Array.isArray(subscribers) ? subscribers : [];
-  const active = subscriberList.filter((s: any) => s.status === 'active').length;
-  const unsubscribed = subscriberList.filter((s: any) => s.status === 'unsubscribed').length;
+  const active = subscriberList.filter((s: CreatorSubscriber) => s.status === 'active').length;
+  const unsubscribed = subscriberList.filter(
+    (s: CreatorSubscriber) => s.status === 'unsubscribed',
+  ).length;
 
   const publishedPosts = posts
     .filter((p) => p.status === 'published')
@@ -272,7 +279,7 @@ async function loadMonetization(userId: string): Promise<CoachMonetizationContex
   ]);
 
   const subscriberList = Array.isArray(subscribers) ? subscribers : [];
-  const active = subscriberList.filter((s: any) => s.status === 'active').length;
+  const active = subscriberList.filter((s: CreatorSubscriber) => s.status === 'active').length;
 
   return {
     pricing_info: {},
@@ -295,7 +302,7 @@ async function loadGeneral(userId: string): Promise<CoachGeneralContext> {
   ]);
 
   const subscriberList = Array.isArray(subscribers) ? subscribers : [];
-  const active = subscriberList.filter((s: any) => s.status === 'active').length;
+  const active = subscriberList.filter((s: CreatorSubscriber) => s.status === 'active').length;
 
   return {
     subscriber_stats: {

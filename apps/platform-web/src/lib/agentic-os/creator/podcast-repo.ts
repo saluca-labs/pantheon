@@ -46,7 +46,41 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToPodcast(row: any): CreatorPodcast {
+interface RawPodcastRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  author: string | null;
+  cover_image_url: string | null;
+  language: string | null;
+  category: string | null;
+  explicit: boolean | null;
+  website_url: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawEpisodeRow {
+  id: string;
+  podcast_id: string;
+  title: string;
+  description: string | null;
+  notes_md: string | null;
+  audio_file_url: string | null;
+  duration_seconds: number | null;
+  file_size_bytes: number | null;
+  mime_type: string | null;
+  season_number: number | null;
+  episode_number: number | null;
+  episode_type: CreatorEpisode['episodeType'] | null;
+  status: CreatorEpisode['status'] | null;
+  published_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPodcast(row: RawPodcastRow): CreatorPodcast {
   return {
     id: row.id,
     userId: row.user_id,
@@ -63,7 +97,7 @@ function rowToPodcast(row: any): CreatorPodcast {
   };
 }
 
-function rowToEpisode(row: any): CreatorEpisode {
+function rowToEpisode(row: RawEpisodeRow): CreatorEpisode {
   return {
     id: row.id,
     podcastId: row.podcast_id,
@@ -154,7 +188,7 @@ export async function listEpisodes(
   opts: ListEpisodesOpts = {},
 ): Promise<CreatorEpisode[]> {
   const pool = getCreatorPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`p.user_id = $1`];
 
   if (opts.seasonNumber !== undefined) {
@@ -297,7 +331,7 @@ export async function updateEpisode(
   if ((existing.rowCount ?? 0) === 0) return { kind: 'not_found' };
 
   const set: string[] = [];
-  const params: any[] = [episodeId];
+  const params: unknown[] = [episodeId];
   let n = 1;
 
   if (patch.title !== undefined) {

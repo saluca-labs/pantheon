@@ -69,7 +69,21 @@ const REVIEW_COLUMNS = `id, user_id, book_id, chapter_id, kind, status,
                         notes, checked_at, checked_by,
                         created_at, updated_at`;
 
-function rowToReviewCheck(row: any): AutobiographerReviewCheck {
+interface RawReviewCheckRow {
+  id: string;
+  user_id: string;
+  book_id: string;
+  chapter_id: string | null;
+  kind: string;
+  status: string;
+  notes: string | null;
+  checked_at: Date | string | null;
+  checked_by: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToReviewCheck(row: RawReviewCheckRow): AutobiographerReviewCheck {
   return {
     id: row.id,
     userId: row.user_id,
@@ -198,8 +212,8 @@ export async function createReviewCheck(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;

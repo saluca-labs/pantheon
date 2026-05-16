@@ -61,7 +61,24 @@ const BOOK_COLUMNS = `id, user_id, title, subtitle, cover_image_url, description
                       tags, phase_progress, metadata,
                       created_at, updated_at`;
 
-function rowToBook(row: any): AutobiographerBook {
+interface RawBookRow {
+  id: string;
+  user_id: string;
+  title: string;
+  subtitle: string | null;
+  cover_image_url: string | null;
+  description: string | null;
+  status: string | null;
+  target_completion_date: Date | string | null;
+  target_audience: string | null;
+  tags: string[] | null;
+  phase_progress: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToBook(row: RawBookRow): AutobiographerBook {
   return {
     id: row.id,
     userId: row.user_id,
@@ -98,7 +115,7 @@ export interface ListBooksArgs {
 
 export async function listBooks(args: ListBooksArgs): Promise<AutobiographerBook[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['user_id = $1'];
 
   if (args.status) {

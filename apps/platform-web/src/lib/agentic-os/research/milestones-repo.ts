@@ -51,7 +51,24 @@ function toDateString(v: unknown): string | null {
   return s.slice(0, 10);
 }
 
-function rowToMilestone(row: any): ExperimentMilestone {
+interface RawMilestoneRow {
+  id: string;
+  experiment_id: string;
+  user_id: string;
+  title: string;
+  due_at: Date | string | null;
+  status: string;
+  priority: string;
+  is_blocker: boolean;
+  blocked_reason: string | null;
+  notes_md: string | null;
+  completed_at: Date | string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToMilestone(row: RawMilestoneRow): ExperimentMilestone {
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -104,7 +121,7 @@ export async function listMilestonesForExperiment(
   opts: ListMilestonesOpts = {},
 ): Promise<ExperimentMilestone[]> {
   const pool = getResearchPool();
-  const params: any[] = [experimentId, userId];
+  const params: unknown[] = [experimentId, userId];
   const where: string[] = [
     `m.experiment_id = $1`,
     `EXISTS (

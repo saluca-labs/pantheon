@@ -48,7 +48,22 @@ export interface UpdateChapterSourceInput {
   notes?: string | null;
 }
 
-function rowToSource(row: any): AutobiographerChapterSource {
+interface RawChapterSourceRow {
+  id: string;
+  chapter_id: string;
+  memory_id: string;
+  weight: number | string | null;
+  notes: string | null;
+}
+
+interface RawChapterSourceJoinedRow extends RawChapterSourceRow {
+  memory_title: string | null;
+  memory_when_in_life: string | null;
+  memory_era_date_estimate: Date | string | null;
+  paragraph_citation_count: number | string | null;
+}
+
+function rowToSource(row: RawChapterSourceRow): AutobiographerChapterSource {
   return {
     id: row.id,
     chapterId: row.chapter_id,
@@ -58,7 +73,7 @@ function rowToSource(row: any): AutobiographerChapterSource {
   };
 }
 
-function rowToSourceJoined(row: any): ChapterSourceWithMemory {
+function rowToSourceJoined(row: RawChapterSourceJoinedRow): ChapterSourceWithMemory {
   return {
     ...rowToSource(row),
     memoryTitle: row.memory_title ?? 'Untitled memory',

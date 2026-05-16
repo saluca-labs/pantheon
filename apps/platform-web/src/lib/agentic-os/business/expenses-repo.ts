@@ -47,7 +47,27 @@ function toBoolean(v: unknown): boolean {
   return Boolean(v);
 }
 
-function rowToExpense(row: any): Expense {
+interface RawExpenseRow {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  category: string;
+  vendor: string | null;
+  description: string | null;
+  amount_cents: number | string | null;
+  currency: string | null;
+  incurred_on: Date | string | null;
+  paid_on: Date | string | null;
+  receipt_url: string | null;
+  is_reimbursable: boolean;
+  reimbursed_at: Date | string | null;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToExpense(row: RawExpenseRow): Expense {
   return {
     id: row.id,
     userId: row.user_id,
@@ -76,7 +96,7 @@ export async function listExpenses(
   opts: ExpensesListOpts = {},
 ): Promise<Expense[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.category) {
@@ -209,7 +229,7 @@ export async function updateExpense(
 ): Promise<UpdateExpenseOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.projectId !== undefined) {

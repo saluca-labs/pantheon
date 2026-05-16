@@ -42,7 +42,7 @@ export interface OsSessionUser {
  */
 export async function getCurrentOsUser(): Promise<OsSessionUser | null> {
   const cookieStore = await cookies();
-  const token = getSessionToken(cookieStore as any);
+  const token = getSessionToken(cookieStore as unknown as Parameters<typeof getSessionToken>[0]);
   if (!token) return null;
   const result = await validateSession(token, getOsPool());
   if (!result) return null;
