@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { listShots, createShot, toggleShotCompleted, recordAudit } from '@/lib/agentic-os/filmmaker/repo';
-import { SHOT_TYPES, CAMERA_MOVES } from '@/lib/agentic-os/filmmaker/shots';
+import {
+  SHOT_TYPES,
+  CAMERA_MOVES,
+  type ShotType,
+  type CameraMove,
+} from '@/lib/agentic-os/filmmaker/shots';
 
 const ShotBody = z.object({
   sceneNumber: z.string().min(1).max(16),
@@ -43,8 +48,8 @@ export async function POST(request: NextRequest) {
   const shot = await createShot(projectId, {
     sceneNumber: parsed.data.sceneNumber,
     shotNumber: parsed.data.shotNumber,
-    shotType: parsed.data.shotType as any,
-    cameraMove: parsed.data.cameraMove as any,
+    shotType: parsed.data.shotType as ShotType,
+    cameraMove: parsed.data.cameraMove as CameraMove,
     subject: parsed.data.subject,
     description: parsed.data.description,
     estimatedSeconds: parsed.data.estimatedSeconds,
