@@ -60,7 +60,18 @@ export function BusinessSettingsForm({ initial }: Props) {
         }
         rateCents = Math.round(parsed * 100);
       }
-      const body: any = {
+      const body: {
+        business_name: string;
+        logo_url: string | null;
+        address: string;
+        tax_id: string | null;
+        default_currency: string;
+        invoice_number_prefix: string;
+        quote_number_prefix: string;
+        default_payment_terms: string;
+        default_hourly_rate_cents: number | null | undefined;
+        accent_color: string;
+      } = {
         business_name: form.business_name,
         logo_url: form.logo_url.trim() || null,
         address: form.address,
@@ -78,8 +89,8 @@ export function BusinessSettingsForm({ initial }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       setMsg('Saved.');
       router.refresh();

@@ -99,8 +99,8 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Save failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Save failed (${r.status})`);
       }
       const data = await r.json();
       if (!chapterId) setChapterId(data.chapter.id);
@@ -138,8 +138,8 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       const data = await r.json();
       setEvents((prev) => [...prev, data.event]);
