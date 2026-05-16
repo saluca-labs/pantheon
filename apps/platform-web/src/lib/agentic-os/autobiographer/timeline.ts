@@ -83,7 +83,23 @@ const MEM_COLUMNS = `m.id, m.book_id, m.title, m.body_markdown,
                      m.created_at, m.updated_at,
                      b.title AS book_title`;
 
-function rowToBase(row: any): Omit<TimelineMemory, 'themes' | 'arcs'> {
+interface RawTimelineMemoryRow {
+  id: string;
+  book_id: string | null;
+  book_title: string | null;
+  title: string;
+  body_markdown: string | null;
+  when_in_life: string | null;
+  era_date_estimate: Date | string | null;
+  location: string | null;
+  emotion_tags: string[] | null;
+  content_tags: string[] | null;
+  is_sensitive: boolean;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToBase(row: RawTimelineMemoryRow): Omit<TimelineMemory, 'themes' | 'arcs'> {
   return {
     id: row.id,
     bookId: row.book_id ?? null,
@@ -122,7 +138,7 @@ export async function listTimeline(
   args: ListTimelineArgs,
 ): Promise<TimelineMemory[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] = [args.userId];
   const where: string[] = ['m.user_id = $1'];
 
   const scope = args.scope ?? (args.bookId ? 'book' : 'workshop');
@@ -274,5 +290,5 @@ export async function listAvailableDecades(
       ORDER BY decade ASC`,
     [userId],
   );
-  return r.rows.map((row: any) => Number(row.decade));
+  return r.rows.map((row: { decade: number | string }) => Number(row.decade));
 }

@@ -37,7 +37,23 @@ export interface ArcChapterJoined extends ArcChapterRow {
 
 const ROW_COLUMNS = `id, arc_id, chapter_id, position, created_at`;
 
-function rowToArcChapter(row: any): ArcChapterRow {
+interface RawArcChapterRow {
+  id: string;
+  arc_id: string;
+  chapter_id: string;
+  position: number | string | null;
+  created_at: Date | string;
+}
+
+interface RawArcChapterJoinedRow extends RawArcChapterRow {
+  chapter_title: string | null;
+  chapter_slug: string | null;
+  chapter_status: string | null;
+  chapter_summary: string | null;
+  chapter_updated_at: Date | string;
+}
+
+function rowToArcChapter(row: RawArcChapterRow): ArcChapterRow {
   return {
     id: row.id,
     arcId: row.arc_id,
@@ -50,7 +66,7 @@ function rowToArcChapter(row: any): ArcChapterRow {
   };
 }
 
-function rowToArcChapterJoined(row: any): ArcChapterJoined {
+function rowToArcChapterJoined(row: RawArcChapterJoinedRow): ArcChapterJoined {
   return {
     ...rowToArcChapter(row),
     chapterTitle: row.chapter_title ?? null,
@@ -135,7 +151,7 @@ export async function listChapterIdsForArc(
       ORDER BY ac.position ASC, ac.created_at ASC`,
     [arcId, userId],
   );
-  return r.rows.map((row: any) => String(row.chapter_id));
+  return r.rows.map((row: { chapter_id: string }) => String(row.chapter_id));
 }
 
 export interface AttachArcChapterInput {
@@ -162,8 +178,8 @@ export async function attachChapterToArc(
   const arcOwn = await arcOwnedByUser(arcId, userId);
   const chOwn = await chapterOwnedByUser(data.chapterId, userId);
   if (!arcOwn || !chOwn || arcOwn.bookId !== chOwn.bookId) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
 
@@ -194,8 +210,8 @@ export async function attachChapterToArc(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;
@@ -226,8 +242,8 @@ export async function reorderArcChapters(
 ): Promise<ArcChapterJoined[]> {
   const arcOwn = await arcOwnedByUser(arcId, userId);
   if (!arcOwn) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
   // Validate positions form a valid set: integers, non-negative, unique.
@@ -252,12 +268,14 @@ export async function reorderArcChapters(
         WHERE arc_id = $1`,
       [arcId],
     );
-    const existingIds = new Set(existing.rows.map((r: any) => String(r.chapter_id)));
+    const existingIds = new Set(
+      existing.rows.map((r: { chapter_id: string }) => String(r.chapter_id)),
+    );
     for (const e of entries) {
       if (!existingIds.has(e.chapterId)) {
         await client.query('ROLLBACK');
-        const err = new Error('not_found');
-        (err as any).code = 'not_found';
+        const err = new Error('not_found') as Error & { code?: string };
+        err.code = 'not_found';
         throw err;
       }
     }
@@ -287,8 +305,8 @@ export async function unlinkChapterFromArc(
 ): Promise<boolean> {
   const arcOwn = await arcOwnedByUser(arcId, userId);
   if (!arcOwn) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
   const pool = getAutobiographerPool();

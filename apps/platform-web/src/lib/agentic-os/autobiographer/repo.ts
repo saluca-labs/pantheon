@@ -38,17 +38,29 @@ export async function listChapters(userId: string): Promise<Chapter[]> {
       ORDER BY updated_at DESC`,
     [userId],
   );
-  return r.rows.map((row: any) => ({
-    id: row.id,
-    userId: row.user_id,
-    title: row.title,
-    bodyText: row.body_text,
-    periodLabel: row.period_label,
-    status: row.status as LegacyChapterStatus,
-    wordCount: Number(row.word_count),
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
-  }));
+  return r.rows.map(
+    (row: {
+      id: string;
+      user_id: string;
+      title: string;
+      body_text: string;
+      period_label: string | null;
+      status: string;
+      word_count: number | string;
+      created_at: Date;
+      updated_at: Date;
+    }) => ({
+      id: row.id,
+      userId: row.user_id,
+      title: row.title,
+      bodyText: row.body_text,
+      periodLabel: row.period_label,
+      status: row.status as LegacyChapterStatus,
+      wordCount: Number(row.word_count),
+      createdAt: row.created_at.toISOString(),
+      updatedAt: row.updated_at.toISOString(),
+    }),
+  );
 }
 
 export async function getChapter(id: string): Promise<Chapter | null> {
@@ -137,16 +149,27 @@ export async function listEvents(chapterId: string): Promise<LifeEvent[]> {
       ORDER BY occurred_year ASC NULLS LAST, created_at ASC`,
     [chapterId],
   );
-  return r.rows.map((row: any) => ({
-    id: row.id,
-    chapterId: row.chapter_id,
-    userId: row.user_id,
-    kind: row.kind as EventKind,
-    headline: row.headline,
-    detail: row.detail,
-    occurredYear: row.occurred_year === null ? null : Number(row.occurred_year),
-    createdAt: row.created_at.toISOString(),
-  }));
+  return r.rows.map(
+    (row: {
+      id: string;
+      chapter_id: string;
+      user_id: string;
+      kind: string;
+      headline: string;
+      detail: string | null;
+      occurred_year: number | string | null;
+      created_at: Date;
+    }) => ({
+      id: row.id,
+      chapterId: row.chapter_id,
+      userId: row.user_id,
+      kind: row.kind as EventKind,
+      headline: row.headline,
+      detail: row.detail,
+      occurredYear: row.occurred_year === null ? null : Number(row.occurred_year),
+      createdAt: row.created_at.toISOString(),
+    }),
+  );
 }
 
 export async function createEvent(args: {

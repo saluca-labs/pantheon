@@ -52,7 +52,19 @@ export interface UpdateThemeInput {
 const THEME_COLUMNS = `id, user_id, name, slug, description, color,
                        metadata, created_at, updated_at`;
 
-function rowToTheme(row: any): AutobiographerTheme {
+interface RawThemeRow {
+  id: string;
+  user_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToTheme(row: RawThemeRow): AutobiographerTheme {
   return {
     id: row.id,
     userId: row.user_id,
@@ -84,7 +96,7 @@ export async function listThemes(
   args: ListThemesArgs,
 ): Promise<AutobiographerTheme[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] =[args.userId];
   let where = `user_id = $1`;
   if (args.search && args.search.trim().length > 0) {
     params.push(`%${args.search.trim().toLowerCase()}%`);
@@ -166,8 +178,8 @@ export async function createTheme(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;
@@ -224,8 +236,8 @@ export async function updateTheme(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;
