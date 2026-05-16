@@ -20,7 +20,7 @@ import {
   autoTitle,
   type CoachMessage,
 } from '@/lib/agentic-os/business/coach/sessions-repo';
-import { COACH_MODE_VALUES } from '@/lib/agentic-os/business/coach/modes';
+import { COACH_MODE_VALUES, type CoachMode } from '@/lib/agentic-os/business/coach/modes';
 import { isCoachConfigured } from '@/lib/agentic-os/business/coach/anthropic';
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   const sessions = await listSessions({
     userId: user.userId,
-    mode: (mode as any) ?? undefined,
+    mode: (mode as CoachMode | null) ?? undefined,
     projectId: projectId ?? undefined,
     dealId: dealId ?? undefined,
     scope,

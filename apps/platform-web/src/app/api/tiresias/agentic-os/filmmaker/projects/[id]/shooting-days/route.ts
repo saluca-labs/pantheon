@@ -19,6 +19,7 @@ import {
 import {
   SHOOTING_UNIT_VALUES,
   SHOOTING_DAY_STATUS_VALUES,
+  type ShootingUnit,
 } from '@/lib/agentic-os/filmmaker/schedule';
 
 const CreateBody = z.object({
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: Props) {
   const days = await listShootingDays({
     projectId: id,
     userId: user.userId,
-    unit: unit as any,
+    unit: unit as ShootingUnit | undefined,
   });
   return NextResponse.json({ days });
 }

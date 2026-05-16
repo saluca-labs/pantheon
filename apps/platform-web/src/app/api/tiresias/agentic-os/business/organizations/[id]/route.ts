@@ -17,7 +17,7 @@ import {
   archiveOrganization,
   countActivePeopleForOrganization,
 } from '@/lib/agentic-os/business/orgs-repo';
-import { ORG_TYPES } from '@/lib/agentic-os/business/crm';
+import { ORG_TYPES, type OrgType } from '@/lib/agentic-os/business/crm';
 
 const PatchBody = z
   .object({
@@ -87,12 +87,12 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const { archived: _drop, ...rest } = d;
   const outcome = await updateOrganization(id, user.userId, {
     name: rest.name,
-    orgType: rest.org_type as any,
-    website: rest.website as any,
-    industry: rest.industry as any,
-    notes: rest.notes as any,
+    orgType: rest.org_type as OrgType | undefined,
+    website: rest.website,
+    industry: rest.industry,
+    notes: rest.notes,
     descriptionMd: rest.description_md,
-    address: rest.address as any,
+    address: rest.address,
     tags: rest.tags,
     metadata: rest.metadata,
   });

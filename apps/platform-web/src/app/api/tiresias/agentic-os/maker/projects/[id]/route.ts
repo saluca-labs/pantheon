@@ -17,6 +17,7 @@ import {
   updateProject,
   deleteProject,
   recordAudit,
+  type UpdateMakerProjectInput,
 } from '@/lib/agentic-os/maker/repo';
 import {
   PROJECT_STATUSES,
@@ -76,7 +77,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   const project = await updateProject(id, user.userId, {
-    ...(d as any),
+    ...(d as UpdateMakerProjectInput),
     phaseProgress: d.phaseProgress ? coercePhaseProgress(d.phaseProgress) : undefined,
   });
   if (!project) {

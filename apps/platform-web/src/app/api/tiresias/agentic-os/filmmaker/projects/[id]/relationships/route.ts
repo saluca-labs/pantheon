@@ -19,6 +19,7 @@ import {
 import {
   RELATIONSHIP_KIND_VALUES,
   RELATIONSHIP_DIRECTION_VALUES,
+  type CharacterRelationshipUpsert,
 } from '@/lib/agentic-os/filmmaker/characters';
 
 const CreateBody = z.object({
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     const relationship = await createCharacterRelationship({
       tenantId: user.tenantId,
       userId: user.userId,
-      data: parsed.data as any,
+      data: parsed.data as CharacterRelationshipUpsert,
     });
 
     if (relationship.projectId !== id) {

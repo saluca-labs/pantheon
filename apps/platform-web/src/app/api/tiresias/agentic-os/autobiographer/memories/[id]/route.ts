@@ -17,6 +17,7 @@ import {
   getMemory,
   updateMemory,
   deleteMemory,
+  type UpdateMemoryInput,
 } from '@/lib/agentic-os/autobiographer/memories-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import { MEMORY_SOURCES } from '@/lib/agentic-os/autobiographer/memories';
@@ -80,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const memory = await updateMemory(id, user.userId, parsed.data as any);
+    const memory = await updateMemory(id, user.userId, parsed.data as UpdateMemoryInput);
     if (!memory) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }

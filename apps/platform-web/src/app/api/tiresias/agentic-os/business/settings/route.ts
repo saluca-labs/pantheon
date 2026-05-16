@@ -75,14 +75,14 @@ export async function PATCH(request: NextRequest) {
   const d = parsed.data;
   const settings = await updateSettings(user.userId, {
     businessName: d.business_name,
-    logoUrl: d.logo_url as any,
+    logoUrl: d.logo_url,
     address: d.address,
-    taxId: d.tax_id as any,
+    taxId: d.tax_id,
     defaultCurrency: d.default_currency,
     invoiceNumberPrefix: d.invoice_number_prefix,
     quoteNumberPrefix: d.quote_number_prefix,
     defaultPaymentTerms: d.default_payment_terms,
-    defaultHourlyRateCents: d.default_hourly_rate_cents as any,
+    defaultHourlyRateCents: d.default_hourly_rate_cents,
     accentColor: d.accent_color,
     metadata: d.metadata,
   });

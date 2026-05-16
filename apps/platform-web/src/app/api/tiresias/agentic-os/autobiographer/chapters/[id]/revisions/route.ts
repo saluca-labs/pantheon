@@ -27,6 +27,7 @@ import {
   REVISION_BODY_MAX,
   REVISION_CITATIONS_MAX,
   REVISION_SUMMARY_MAX,
+  type RevisionAuthor,
 } from '@/lib/agentic-os/autobiographer/chapter-revisions';
 import {
   insertRevision,
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const revision = await insertRevision(user.userId, {
     chapterId,
-    author: d.author as any,
+    author: d.author as RevisionAuthor,
     bodyText: d.bodyText,
     summary: d.summary ?? null,
     citations: d.citations,

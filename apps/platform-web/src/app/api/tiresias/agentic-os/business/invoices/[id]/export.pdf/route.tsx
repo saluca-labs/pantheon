@@ -13,9 +13,13 @@ import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { getInvoice } from '@/lib/agentic-os/business/invoices-repo';
+import type { Invoice } from '@/lib/agentic-os/business/invoices';
 import { listLineItems } from '@/lib/agentic-os/business/line-items-repo';
+import type { LineItem } from '@/lib/agentic-os/business/line-items';
 import { listPayments } from '@/lib/agentic-os/business/payments-repo';
+import type { Payment } from '@/lib/agentic-os/business/payments';
 import { getOrCreateSettings } from '@/lib/agentic-os/business/settings-repo';
+import type { BusinessSettings } from '@/lib/agentic-os/business/settings';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
 import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
@@ -55,10 +59,10 @@ function fmtCents(cents: number, currency: string): string {
 }
 
 interface InvoicePdfProps {
-  invoice: any;
-  lineItems: any[];
-  payments: any[];
-  settings: any;
+  invoice: Invoice;
+  lineItems: LineItem[];
+  payments: Payment[];
+  settings: BusinessSettings;
 }
 
 function InvoicePdfDocument({ invoice, lineItems, payments, settings }: InvoicePdfProps) {
@@ -114,7 +118,7 @@ function InvoicePdfDocument({ invoice, lineItems, payments, settings }: InvoiceP
           <Text style={styles.colTotal}>Line Total</Text>
         </View>
 
-        {lineItems.map((item: any) => (
+        {lineItems.map((item: LineItem) => (
           <View style={styles.tableRow} key={item.id}>
             <Text style={styles.colDesc}>{item.description}</Text>
             <Text style={styles.colQty}>{item.quantity}</Text>
@@ -155,7 +159,7 @@ function InvoicePdfDocument({ invoice, lineItems, payments, settings }: InvoiceP
               <Text style={styles.colPrice}>Reference</Text>
               <Text style={styles.colTotal}>Amount</Text>
             </View>
-            {payments.map((p: any) => (
+            {payments.map((p: Payment) => (
               <View style={styles.tableRow} key={p.id}>
                 <Text style={styles.colDesc}>{p.method}</Text>
                 <Text style={styles.colQty}>{p.receivedOn}</Text>
@@ -212,11 +216,12 @@ export async function GET(_req: NextRequest, { params }: Props) {
   const invoice = await getInvoice(id, user.userId);
   if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const [lineItems, payments, settings] = await Promise.all([
+  const [lineItems, payments, settingsResult] = await Promise.all([
     listLineItems('invoice', id, user.userId),
     listPayments(user.userId, { invoiceId: id }),
     getOrCreateSettings(user.userId),
   ]);
+  const settings = settingsResult.settings;
 
   const buf = await renderPdfToBuffer(
     React.createElement(InvoicePdfDocument, { invoice, lineItems, payments, settings }),

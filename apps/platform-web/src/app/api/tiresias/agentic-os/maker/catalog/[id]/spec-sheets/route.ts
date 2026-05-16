@@ -18,7 +18,10 @@ import {
   createSpecSheet,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { SPEC_SHEET_KIND_VALUES } from '@/lib/agentic-os/maker/spec-sheets';
+import {
+  SPEC_SHEET_KIND_VALUES,
+  type SpecSheetUpsert,
+} from '@/lib/agentic-os/maker/spec-sheets';
 
 const PartSpecSheetBody = z.object({
   title: z.string().min(1).max(200),
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     const specSheet = await createSpecSheet(user.userId, {
       ...parsed.data,
       partId,
-    } as any);
+    } as SpecSheetUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.spec_sheet.created',

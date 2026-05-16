@@ -22,6 +22,7 @@ import {
 import {
   SCREENPLAY_FORMAT_VALUES,
   SCREENPLAY_STATUS_VALUES,
+  type ScreenplayUpsert,
 } from '@/lib/agentic-os/filmmaker/screenplays';
 
 const PatchBody = z
@@ -86,7 +87,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     updated = await updateScreenplayMeta({
       id: screenplay.id,
       userId: user.userId,
-      patch: parsed.data as any,
+      patch: parsed.data as ScreenplayUpsert,
     });
   } catch (err) {
     return NextResponse.json(

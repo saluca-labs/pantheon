@@ -19,6 +19,7 @@ import {
 import {
   REVIEW_CHECK_NOTES_MAX,
   REVIEW_CHECK_STATUSES,
+  type ReviewCheckStatus,
 } from '@/lib/agentic-os/autobiographer/review-checks';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const d = parsed.data;
 
   const check = await updateReviewCheck(id, user.userId, {
-    status: d.status as any,
+    status: d.status as ReviewCheckStatus | undefined,
     notes: d.notes,
     checkedAt: d.checkedAt,
     checkedBy: d.checkedBy,

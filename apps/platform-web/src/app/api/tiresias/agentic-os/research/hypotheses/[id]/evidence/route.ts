@@ -32,6 +32,8 @@ import {
   EVIDENCE_POLARITIES,
   EVIDENCE_SOURCE_KINDS,
   validateEvidenceInput,
+  type EvidencePolarity,
+  type EvidenceSourceKind,
 } from '@/lib/agentic-os/research/evidence';
 
 const CreateBody = z.object({
@@ -90,8 +92,8 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   const evidence = await createEvidence(hypothesisId, user.userId, {
-    polarity: d.polarity as any,
-    sourceKind: d.sourceKind as any,
+    polarity: d.polarity as EvidencePolarity,
+    sourceKind: d.sourceKind as EvidenceSourceKind,
     sourceId: d.sourceId ?? null,
     sourceUrl: d.sourceUrl ?? null,
     notes: d.notes ?? null,

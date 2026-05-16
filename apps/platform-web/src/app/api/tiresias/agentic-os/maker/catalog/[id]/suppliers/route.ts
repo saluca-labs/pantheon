@@ -20,6 +20,7 @@ import {
   deleteSupplierLink,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import type { PartSupplierLinkUpsert } from '@/lib/agentic-os/maker/suppliers';
 
 const CreateBody = z.object({
   supplierId: z.string().uuid(),
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const link = await createSupplierLink(id, user.userId, parsed.data as any);
+    const link = await createSupplierLink(id, user.userId, parsed.data as PartSupplierLinkUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.supplier_link.created',
@@ -104,7 +105,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const { id: linkId, ...patch } = parsed.data;
 
   try {
-    const link = await updateSupplierLink(linkId, id, user.userId, patch as any);
+    const link = await updateSupplierLink(linkId, id, user.userId, patch as Partial<PartSupplierLinkUpsert>);
     if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

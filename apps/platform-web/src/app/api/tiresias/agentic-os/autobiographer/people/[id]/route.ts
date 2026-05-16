@@ -19,6 +19,7 @@ import {
   getPersonWithCounts,
   updatePerson,
   deletePerson,
+  type UpdatePersonInput,
 } from '@/lib/agentic-os/autobiographer/people-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import {
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   try {
-    const person = await updatePerson(id, user.userId, d as any);
+    const person = await updatePerson(id, user.userId, d as UpdatePersonInput);
     if (!person) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     await recordAudit({

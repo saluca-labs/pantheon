@@ -13,8 +13,11 @@ import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { getQuote } from '@/lib/agentic-os/business/quotes-repo';
+import type { Quote } from '@/lib/agentic-os/business/quotes';
 import { listLineItems } from '@/lib/agentic-os/business/line-items-repo';
+import type { LineItem } from '@/lib/agentic-os/business/line-items';
 import { getOrCreateSettings } from '@/lib/agentic-os/business/settings-repo';
+import type { BusinessSettings } from '@/lib/agentic-os/business/settings';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
 import { respondWithPdf } from '@/lib/agentic-os/_shared/blob-store';
 
@@ -53,9 +56,9 @@ function fmtCents(cents: number, currency: string): string {
 }
 
 interface QuotePdfProps {
-  quote: any;
-  lineItems: any[];
-  settings: any;
+  quote: Quote;
+  lineItems: LineItem[];
+  settings: BusinessSettings;
 }
 
 function QuotePdfDocument({ quote, lineItems, settings }: QuotePdfProps) {
@@ -109,7 +112,7 @@ function QuotePdfDocument({ quote, lineItems, settings }: QuotePdfProps) {
           <Text style={styles.colTotal}>Line Total</Text>
         </View>
 
-        {lineItems.map((item: any) => (
+        {lineItems.map((item: LineItem) => (
           <View style={styles.tableRow} key={item.id}>
             <Text style={styles.colDesc}>{item.description}</Text>
             <Text style={styles.colQty}>{item.quantity}</Text>
@@ -156,10 +159,11 @@ export async function GET(_req: NextRequest, { params }: Props) {
   const quote = await getQuote(id, user.userId);
   if (!quote) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const [lineItems, settings] = await Promise.all([
+  const [lineItems, settingsResult] = await Promise.all([
     listLineItems('quote', id, user.userId),
     getOrCreateSettings(user.userId),
   ]);
+  const settings = settingsResult.settings;
 
   const buf = await renderPdfToBuffer(
     React.createElement(QuotePdfDocument, { quote, lineItems, settings }),

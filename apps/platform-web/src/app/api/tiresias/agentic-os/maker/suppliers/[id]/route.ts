@@ -18,6 +18,7 @@ import {
   deleteSupplier,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import type { SupplierUpsert } from '@/lib/agentic-os/maker/suppliers';
 
 const PatchBody = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -52,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     );
   }
 
-  const supplier = await updateSupplier(id, user.userId, parsed.data as any);
+  const supplier = await updateSupplier(id, user.userId, parsed.data as Partial<SupplierUpsert>);
   if (!supplier) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   await recordAudit({
     actorId: user.userId,

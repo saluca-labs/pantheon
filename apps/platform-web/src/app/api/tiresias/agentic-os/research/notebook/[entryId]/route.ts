@@ -30,7 +30,7 @@ import {
   updateNotebookEntry,
   archiveNotebookEntry,
 } from '@/lib/agentic-os/research/notebook-entries-repo';
-import { ENTRY_KINDS } from '@/lib/agentic-os/research/entry-kinds';
+import { ENTRY_KINDS, type EntryKind } from '@/lib/agentic-os/research/entry-kinds';
 
 const PatchBody = z.object({
   entry_kind: z
@@ -89,7 +89,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   const entry = await updateNotebookEntry(entryId, user.userId, {
-    entryKind: d.entry_kind as any,
+    entryKind: d.entry_kind as EntryKind | undefined,
     title: d.title,
     bodyMd: d.body_md,
     attachedUrls: d.attached_urls,

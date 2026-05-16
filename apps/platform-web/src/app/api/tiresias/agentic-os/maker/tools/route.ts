@@ -25,6 +25,7 @@ import {
   TOOL_STATUS_VALUES,
   type ToolKind,
   type ToolStatus,
+  type ToolUpsert,
 } from '@/lib/agentic-os/maker/tools';
 
 const ToolBody = z.object({
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const tool = await createTool(user.userId, parsed.data as any);
+    const tool = await createTool(user.userId, parsed.data as ToolUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.tool.created',

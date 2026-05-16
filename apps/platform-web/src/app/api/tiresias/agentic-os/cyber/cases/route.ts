@@ -15,6 +15,9 @@ import {
   CASE_SEVERITY_VALUES,
   CASE_STATUS_VALUES,
   CASE_PRIORITY_VALUES,
+  type CaseSeverity,
+  type CaseStatus,
+  type CasePriority,
 } from '@/lib/agentic-os/cyber/cases';
 
 const CaseBody = z.object({
@@ -43,9 +46,9 @@ export async function GET(request: NextRequest) {
   const cases = await listCases({
     ownerId: user.userId,
     q,
-    status: status && (CASE_STATUS_VALUES as readonly string[]).includes(status) ? (status as any) : undefined,
-    severity: severity && (CASE_SEVERITY_VALUES as readonly string[]).includes(severity) ? (severity as any) : undefined,
-    priority: priority && (CASE_PRIORITY_VALUES as readonly string[]).includes(priority) ? (priority as any) : undefined,
+    status: status && (CASE_STATUS_VALUES as readonly string[]).includes(status) ? (status as CaseStatus) : undefined,
+    severity: severity && (CASE_SEVERITY_VALUES as readonly string[]).includes(severity) ? (severity as CaseSeverity) : undefined,
+    priority: priority && (CASE_PRIORITY_VALUES as readonly string[]).includes(priority) ? (priority as CasePriority) : undefined,
   });
   return NextResponse.json({ cases });
 }

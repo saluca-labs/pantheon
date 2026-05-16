@@ -16,7 +16,7 @@ import {
   deleteBomLine,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { BOM_PRIORITY_VALUES } from '@/lib/agentic-os/maker/bom';
+import { BOM_PRIORITY_VALUES, type BomLinePatch } from '@/lib/agentic-os/maker/bom';
 
 const PatchBody = z.object({
   variantId: z.string().uuid().nullable().optional(),
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const line = await updateBomLine(lineId, projectId, user.userId, parsed.data as any);
+    const line = await updateBomLine(lineId, projectId, user.userId, parsed.data as BomLinePatch);
     if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

@@ -23,7 +23,7 @@ import {
   DependencyCrossOwnershipError,
   DependencySelfLoopError,
 } from '@/lib/agentic-os/research/dependencies-repo';
-import { DEPENDENCY_KIND_VALUES } from '@/lib/agentic-os/research/dependencies';
+import { DEPENDENCY_KIND_VALUES, type DependencyKind } from '@/lib/agentic-os/research/dependencies';
 
 const KIND_ENUM = z.enum(
   DEPENDENCY_KIND_VALUES as unknown as [string, ...string[]],
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   try {
     const dependency = await createDependency(experimentId, user.userId, {
       toExperimentId: parsed.data.toExperimentId,
-      kind: parsed.data.kind as any,
+      kind: parsed.data.kind as DependencyKind,
       notes: parsed.data.notes ?? null,
       metadata: parsed.data.metadata,
     });

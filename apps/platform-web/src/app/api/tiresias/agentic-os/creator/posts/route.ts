@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     : undefined;
 
   const posts = await listPosts(user.userId, {
-    status: status as any,
+    status: status as PostStatus[] | undefined,
     search,
     limit,
     offset,

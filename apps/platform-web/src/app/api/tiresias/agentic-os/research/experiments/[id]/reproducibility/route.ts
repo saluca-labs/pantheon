@@ -31,6 +31,7 @@ import {
   computeReproRollup,
   blockingReproItems,
   validateReproItemKey,
+  type CreateReproCheckInput,
 } from '@/lib/agentic-os/research/reproducibility';
 
 const STATE_ENUM = z.enum(
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const item = await createReproCheck(experimentId, user.userId, parsed.data as any);
+    const item = await createReproCheck(experimentId, user.userId, parsed.data as CreateReproCheckInput);
     await recordAudit({
       actorId: user.userId,
       action: 'research.reproducibility.item_added',

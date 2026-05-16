@@ -21,6 +21,7 @@ import {
 import {
   MILESTONE_STORED_STATUS_VALUES,
   MILESTONE_PRIORITY_VALUES,
+  type BuildMilestoneUpsert,
 } from '@/lib/agentic-os/maker/milestones';
 
 const STATUS_ENUM = z.enum(
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const milestone = await createMilestone(projectId, user.userId, parsed.data as any);
+    const milestone = await createMilestone(projectId, user.userId, parsed.data as BuildMilestoneUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.milestone.created',

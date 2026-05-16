@@ -33,7 +33,7 @@ import {
   validateDatasetKind,
   validateDatasetName,
 } from '@/lib/agentic-os/research/datasets';
-import { DATASET_KINDS } from '@/lib/agentic-os/research/dataset-kinds';
+import { DATASET_KINDS, type DatasetKind } from '@/lib/agentic-os/research/dataset-kinds';
 
 const PatchBody = z.object({
   name: z.string().optional(),
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const patch: Parameters<typeof updateDataset>[2] = {};
   if (d.name !== undefined) patch.name = d.name.trim();
   if (d.url !== undefined) patch.url = d.url.trim();
-  if (d.kind !== undefined) patch.kind = d.kind as any;
+  if (d.kind !== undefined) patch.kind = d.kind as DatasetKind;
   if (d.version !== undefined) patch.version = d.version;
   if (d.sizeBytes !== undefined) patch.sizeBytes = d.sizeBytes;
   if (d.checksum !== undefined) patch.checksum = d.checksum;

@@ -18,6 +18,7 @@ import {
   createConsumable,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
+import type { ToolConsumableUpsert } from '@/lib/agentic-os/maker/consumables';
 
 const ConsumableBody = z.object({
   name: z.string().min(1).max(200),
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const consumable = await createConsumable(toolId, user.userId, parsed.data as any);
+    const consumable = await createConsumable(toolId, user.userId, parsed.data as ToolConsumableUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.tool.consumable.created',

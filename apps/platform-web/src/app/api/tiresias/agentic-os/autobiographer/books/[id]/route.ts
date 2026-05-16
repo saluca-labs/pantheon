@@ -19,6 +19,7 @@ import {
   updateBook,
   softDeleteBook,
   deleteBook,
+  type UpdateBookInput,
 } from '@/lib/agentic-os/autobiographer/books-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import {
@@ -82,7 +83,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const d = parsed.data;
   const book = await updateBook(id, user.userId, {
-    ...(d as any),
+    ...(d as UpdateBookInput),
     phaseProgress: d.phaseProgress
       ? coerceBookPhaseProgress(d.phaseProgress)
       : undefined,

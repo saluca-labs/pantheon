@@ -30,9 +30,12 @@ import {
 import { listNotebookEntriesForExperiment } from '@/lib/agentic-os/research/notebook-entries-repo';
 import { listLinkedHypothesesForExperiment } from '@/lib/agentic-os/research/experiment-hypotheses-repo';
 import { listPredictionsForHypothesis } from '@/lib/agentic-os/research/predictions-repo';
+import type { Prediction } from '@/lib/agentic-os/research/predictions';
 import { listFalsifiersForHypothesis } from '@/lib/agentic-os/research/falsifiers-repo';
+import type { Falsifier } from '@/lib/agentic-os/research/falsifiers';
 import { listReferencesForExperiment } from '@/lib/agentic-os/research/experiment-references-repo';
 import { listOrderedAuthorsForPaper } from '@/lib/agentic-os/research/paper-authors-repo';
+import type { OrderedAuthor } from '@/lib/agentic-os/research/paper-authors';
 import { listDatasetsForExperiment } from '@/lib/agentic-os/research/datasets-repo';
 import { listProtocolsForExperiment } from '@/lib/agentic-os/research/experiment-protocols-repo';
 import { renderPdfToBuffer } from '@/lib/agentic-os/_shared/pdf/render';
@@ -115,11 +118,11 @@ export async function GET(_request: NextRequest, { params }: Props) {
     hypotheses.push({
       id: h.id,
       title: h.title,
-      statement: statementOf(h as any),
+      statement: statementOf(h),
       predictionCount: preds.length,
-      topPredictions: preds.slice(0, 3).map((p: any) => p.text ?? ''),
+      topPredictions: preds.slice(0, 3).map((p: Prediction) => p.text ?? ''),
       falsifierCount: fals.length,
-      topFalsifiers: fals.slice(0, 2).map((f: any) => f.text ?? f.condition ?? ''),
+      topFalsifiers: fals.slice(0, 2).map((f: Falsifier) => f.text ?? ''),
     });
   }
 
@@ -133,7 +136,7 @@ export async function GET(_request: NextRequest, { params }: Props) {
         const ordered = await listOrderedAuthorsForPaper(paper.id, user.userId);
         if (Array.isArray(ordered) && ordered.length > 0) {
           authors = ordered
-            .map((a: any) => a?.author?.displayName ?? '')
+            .map((a: OrderedAuthor) => a?.author?.displayName ?? '')
             .filter(Boolean)
             .join(', ');
         }

@@ -17,6 +17,8 @@ import {
   FORMATS,
   PHASE_KEYS,
   coercePhaseProgress,
+  type ProjectStatus,
+  type ProjectFormat,
 } from '@/lib/agentic-os/filmmaker/projects';
 
 const PhaseProgressSchema = z
@@ -67,9 +69,9 @@ export async function POST(request: NextRequest) {
   const project = await createProject(user.userId, {
     name: d.name,
     description: d.description ?? null,
-    status: d.status as any,
+    status: d.status as ProjectStatus | undefined,
     tags: d.tags,
-    format: d.format as any,
+    format: d.format as ProjectFormat | undefined,
     logline: d.logline ?? null,
     coverImageUrl: d.coverImageUrl ?? null,
     phaseProgress: d.phaseProgress ? coercePhaseProgress(d.phaseProgress) : undefined,

@@ -16,7 +16,10 @@ import {
   createStoryDocument,
   recordAudit,
 } from '@/lib/agentic-os/filmmaker/repo';
-import { STORY_DOCUMENT_KIND_VALUES } from '@/lib/agentic-os/filmmaker/story-documents';
+import {
+  STORY_DOCUMENT_KIND_VALUES,
+  type StoryDocumentKind,
+} from '@/lib/agentic-os/filmmaker/story-documents';
 
 const CreateBody = z.object({
   kind: z.enum(STORY_DOCUMENT_KIND_VALUES as unknown as [string, ...string[]]),
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     projectId: id,
     tenantId: user.tenantId,
     userId: user.userId,
-    kind: parsed.data.kind as any,
+    kind: parsed.data.kind as StoryDocumentKind,
     title: parsed.data.title,
   });
 

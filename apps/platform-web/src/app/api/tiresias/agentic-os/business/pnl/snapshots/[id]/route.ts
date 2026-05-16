@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
   const outcome = await updateSnapshot(id, user.userId, {
     isLocked: d.is_locked,
-    notes: d.notes as any,
+    notes: d.notes,
   });
 
   if (outcome.kind === 'not_found') {

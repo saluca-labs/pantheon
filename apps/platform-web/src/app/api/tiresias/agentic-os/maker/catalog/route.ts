@@ -22,6 +22,7 @@ import {
 import {
   PART_CATEGORY_VALUES,
   type PartCategory,
+  type PartCatalogUpsert,
 } from '@/lib/agentic-os/maker/catalog';
 
 const CatalogBody = z.object({
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const row = await createCatalogRow(user.userId, parsed.data as any);
+    const row = await createCatalogRow(user.userId, parsed.data as PartCatalogUpsert);
     await recordAudit({
       actorId: user.userId,
       action: 'maker.catalog.created',

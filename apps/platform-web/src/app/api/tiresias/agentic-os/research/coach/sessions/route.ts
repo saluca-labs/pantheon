@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
   const sessions = await listSessions({
     userId: user.userId,
-    mode: (mode as any) ?? undefined,
+    mode: (mode as CoachMode | null) ?? undefined,
     experimentId: experimentId ?? undefined,
     scope,
     limit: limit ? Number(limit) : undefined,

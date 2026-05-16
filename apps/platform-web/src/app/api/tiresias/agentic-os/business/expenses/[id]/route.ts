@@ -66,15 +66,15 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const d = parsed.data;
 
   const outcome = await updateExpense(id, user.userId, {
-    projectId: d.project_id as any,
-    category: d.category as any,
-    vendor: d.vendor as any,
+    projectId: d.project_id,
+    category: d.category,
+    vendor: d.vendor,
     description: d.description,
     amountCents: d.amount_cents,
     currency: d.currency,
     incurredOn: d.incurred_on,
-    paidOn: d.paid_on as any,
-    receiptUrl: d.receipt_url as any,
+    paidOn: d.paid_on,
+    receiptUrl: d.receipt_url,
     isReimbursable: d.is_reimbursable,
     tags: d.tags,
     metadata: d.metadata,

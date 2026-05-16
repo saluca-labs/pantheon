@@ -20,6 +20,7 @@ import {
 import {
   RELATIONSHIP_KIND_VALUES,
   RELATIONSHIP_DIRECTION_VALUES,
+  type CharacterRelationshipUpsert,
 } from '@/lib/agentic-os/filmmaker/characters';
 
 const PatchBody = z
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     id: relationshipId,
     tenantId: user.tenantId,
     userId: user.userId,
-    patch: parsed.data as any,
+    patch: parsed.data as Partial<Omit<CharacterRelationshipUpsert, 'fromId' | 'toId'>>,
   });
   if (!relationship) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

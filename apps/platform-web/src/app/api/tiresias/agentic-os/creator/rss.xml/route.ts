@@ -14,12 +14,14 @@ function escapeXml(str: string): string {
 
 function tipTapToPlainText(content: Record<string, unknown>): string {
   // Simple recursive extraction of text from TipTap JSON
-  function extract(node: any): string {
+  function extract(node: unknown): string {
     if (!node) return '';
     if (typeof node === 'string') return node;
-    if (node.text) return node.text;
-    if (node.content && Array.isArray(node.content)) {
-      return node.content.map(extract).join('');
+    if (typeof node !== 'object') return '';
+    const obj = node as { text?: unknown; content?: unknown };
+    if (typeof obj.text === 'string') return obj.text;
+    if (Array.isArray(obj.content)) {
+      return obj.content.map(extract).join('');
     }
     return '';
   }

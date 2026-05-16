@@ -95,15 +95,15 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const outcome = await updatePerson(id, user.userId, {
     firstName: rest.first_name,
     lastName: rest.last_name,
-    email: rest.email as any,
-    phone: rest.phone as any,
-    role: rest.role as any,
-    organizationId: rest.organization_id as any,
+    email: rest.email,
+    phone: rest.phone,
+    role: rest.role,
+    organizationId: rest.organization_id,
     stage: rest.stage,
     tags: rest.tags,
-    notes: rest.notes as any,
+    notes: rest.notes,
     descriptionMd: rest.description_md,
-    address: rest.address as any,
+    address: rest.address,
     metadata: rest.metadata,
   });
   if (outcome.kind === 'not_found') {

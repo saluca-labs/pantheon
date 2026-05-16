@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 import { hashPassword, verifyPassword, createSession } from '@platform/auth';
-import { setSessionCookie } from '@platform/auth/cookies';
+import { setSessionCookie, type MutableCookieStore } from '@platform/auth/cookies';
 
 /**
  * JSON-based login endpoint, complementing the React server-action flow
@@ -59,6 +59,6 @@ export async function POST(request: Request) {
   });
 
   const response = NextResponse.json({ userId: row.id }, { status: 200 });
-  setSessionCookie(response.cookies as any, session.token);
+  setSessionCookie(response.cookies as MutableCookieStore, session.token);
   return response;
 }

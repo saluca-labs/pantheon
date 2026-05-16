@@ -28,7 +28,7 @@ import {
   validateProtocolTitle,
   validateProtocolVersion,
 } from '@/lib/agentic-os/research/protocols';
-import { PROTOCOL_KINDS } from '@/lib/agentic-os/research/protocol-kinds';
+import { PROTOCOL_KINDS, type ProtocolKind } from '@/lib/agentic-os/research/protocol-kinds';
 
 const CreateBody = z.object({
   title: z.string(),
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   if (kindParam) {
     const err = validateProtocolKind(kindParam);
     if (err) return NextResponse.json({ error: err }, { status: 400 });
-    opts.kind = kindParam as any;
+    opts.kind = kindParam as ProtocolKind;
   }
   const tagParam = url.searchParams.get('tag');
   if (tagParam) opts.tag = tagParam;
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     title: d.title.trim(),
     version: d.version?.trim(),
     bodyMd: d.bodyMd ?? '',
-    kind: d.kind as any,
+    kind: d.kind as ProtocolKind | undefined,
     attachedUrls: normalizeAttachedUrls(d.attachedUrls),
     tags: normalizeProtocolTags(d.tags),
     metadata: d.metadata ?? {},

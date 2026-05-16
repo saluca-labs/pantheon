@@ -23,6 +23,7 @@ import {
 import {
   TOOL_KIND_VALUES,
   TOOL_STATUS_VALUES,
+  type ToolPatch,
 } from '@/lib/agentic-os/maker/tools';
 
 const PatchBody = z.object({
@@ -73,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const tool = await updateTool(toolId, user.userId, parsed.data as any);
+    const tool = await updateTool(toolId, user.userId, parsed.data as ToolPatch);
     if (!tool) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

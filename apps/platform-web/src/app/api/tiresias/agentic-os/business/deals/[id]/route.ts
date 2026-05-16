@@ -96,16 +96,16 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const { archived: _drop, ...rest } = d;
   const outcome = await updateDeal(id, user.userId, {
     title: rest.title,
-    contactId: rest.contact_id as any,
-    organizationId: rest.organization_id as any,
+    contactId: rest.contact_id,
+    organizationId: rest.organization_id,
     descriptionMd: rest.description_md,
     stage: rest.stage,
-    valueCents: rest.value_cents as any,
+    valueCents: rest.value_cents,
     currency: rest.currency,
     probabilityPct: rest.probability_pct,
-    expectedCloseDate: rest.expected_close_date as any,
-    lostReason: rest.lost_reason as any,
-    source: rest.source as any,
+    expectedCloseDate: rest.expected_close_date,
+    lostReason: rest.lost_reason,
+    source: rest.source,
     tags: rest.tags,
     metadata: rest.metadata,
   });

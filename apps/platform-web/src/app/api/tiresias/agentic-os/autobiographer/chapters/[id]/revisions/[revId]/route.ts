@@ -28,6 +28,7 @@ import {
   deleteRevision,
   getRevision,
   updateRevision,
+  type UpdateRevisionInput,
 } from '@/lib/agentic-os/autobiographer/chapter-revisions-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 import { SENSITIVE_KINDS } from '@/lib/agentic-os/autobiographer/sensitive-kinds';
@@ -94,7 +95,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     );
   }
   const d = parsed.data;
-  const revision = await updateRevision(revId, user.userId, d as any);
+  const revision = await updateRevision(revId, user.userId, d as UpdateRevisionInput);
   if (!revision) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

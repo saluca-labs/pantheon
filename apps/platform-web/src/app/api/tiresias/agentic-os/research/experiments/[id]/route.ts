@@ -25,6 +25,7 @@ import {
   EXPERIMENT_STATUSES,
   EXPERIMENT_PHASES,
   coercePhaseProgress,
+  type ExperimentStatus,
 } from '@/lib/agentic-os/research/experiments';
 
 const PhaseProgressSchema = z
@@ -93,7 +94,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const experiment = await updateExperiment(id, user.userId, {
     name: d.name,
     description: d.description,
-    status: d.status as any,
+    status: d.status as ExperimentStatus | undefined,
     tags: d.tags,
     coverImageUrl: d.coverImageUrl,
     targetCompletionDate: d.targetCompletionDate,

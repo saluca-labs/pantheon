@@ -68,9 +68,9 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const outcome = await updateInvoice(id, user.userId, {
     title: d.title,
     invoiceNumber: d.invoice_number,
-    contactId: d.contact_id as any,
-    dealId: d.deal_id as any,
-    projectId: d.project_id as any,
+    contactId: d.contact_id,
+    dealId: d.deal_id,
+    projectId: d.project_id,
     descriptionMd: d.description_md,
     invoiceDate: d.invoice_date,
     dueOn: d.due_on,

@@ -27,7 +27,7 @@ import {
   listReferencesForExperiment,
   createReference,
 } from '@/lib/agentic-os/research/experiment-references-repo';
-import { REFERENCE_RELEVANCES } from '@/lib/agentic-os/research/experiment-references';
+import { REFERENCE_RELEVANCES, type ReferenceRelevance } from '@/lib/agentic-os/research/experiment-references';
 
 const CreateBody = z.object({
   paperId: z.string().uuid(),
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   const outcome = await createReference(experimentId, user.userId, {
     paperId: d.paperId,
-    relevance: d.relevance as any,
+    relevance: d.relevance as ReferenceRelevance | undefined,
     notes: d.notes ?? null,
   });
 

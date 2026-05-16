@@ -16,7 +16,7 @@ import {
   listTemplates,
   createTemplate,
 } from '@/lib/agentic-os/business/doc-templates-repo';
-import { DOC_TEMPLATE_KINDS } from '@/lib/agentic-os/business/doc-templates';
+import { DOC_TEMPLATE_KINDS, type DocTemplateKind } from '@/lib/agentic-os/business/doc-templates';
 
 const CreateBody = z.object({
   title: z.string().min(1).max(300),
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   const templates = await listTemplates(user.userId, {
-    kind: kindParam as any,
+    kind: (kindParam as DocTemplateKind | null) ?? undefined,
     q: qParam ?? undefined,
     tag: tagParam ?? undefined,
     limit,

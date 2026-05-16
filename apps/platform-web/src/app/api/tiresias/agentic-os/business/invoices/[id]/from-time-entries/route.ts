@@ -14,6 +14,7 @@ import { getInvoice, updateInvoiceTotals } from '@/lib/agentic-os/business/invoi
 import { listTimeEntries, markBilled } from '@/lib/agentic-os/business/time-entries-repo';
 import { listTasks } from '@/lib/agentic-os/business/tasks-repo';
 import { createLineItem } from '@/lib/agentic-os/business/line-items-repo';
+import type { LineItem } from '@/lib/agentic-os/business/line-items';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -61,7 +62,7 @@ export async function POST(_req: NextRequest, { params }: Props) {
     groups.set(entry.taskId, list);
   }
 
-  const createdItems: any[] = [];
+  const createdItems: LineItem[] = [];
   const billedEntryIds: string[] = [];
 
   for (const [taskId, group] of groups) {

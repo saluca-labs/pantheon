@@ -18,7 +18,7 @@ import {
   updateInteraction,
   deleteInteraction,
 } from '@/lib/agentic-os/business/interactions-repo';
-import { INTERACTION_TYPES } from '@/lib/agentic-os/business/crm';
+import { INTERACTION_TYPES, type InteractionType } from '@/lib/agentic-os/business/crm';
 
 const PatchBody = z
   .object({
@@ -59,10 +59,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
   const d = parsed.data;
   const outcome = await updateInteraction(id, user.userId, {
-    personId: d.person_id as any,
-    organizationId: d.organization_id as any,
-    dealId: d.deal_id as any,
-    interactionType: d.interaction_type as any,
+    personId: d.person_id,
+    organizationId: d.organization_id,
+    dealId: d.deal_id,
+    interactionType: d.interaction_type as InteractionType | undefined,
     summary: d.summary,
     occurredAt: d.occurred_at,
   });

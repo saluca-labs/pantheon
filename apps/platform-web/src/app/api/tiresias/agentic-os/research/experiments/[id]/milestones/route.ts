@@ -21,6 +21,9 @@ import {
 import {
   MILESTONE_STATUS_VALUES,
   MILESTONE_PRIORITY_VALUES,
+  type MilestoneStatus,
+  type MilestonePriority,
+  type CreateMilestoneInput,
 } from '@/lib/agentic-os/research/milestones';
 
 const STATUS_ENUM = z.enum(
@@ -82,8 +85,8 @@ export async function GET(request: NextRequest, { params }: Props) {
 
   try {
     const milestones = await listMilestonesForExperiment(experimentId, user.userId, {
-      status: (statusFilter as any) ?? undefined,
-      priority: (priorityFilter as any) ?? undefined,
+      status: (statusFilter as MilestoneStatus | null) ?? undefined,
+      priority: (priorityFilter as MilestonePriority | null) ?? undefined,
       isBlocker,
     });
     return NextResponse.json({ milestones });
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const milestone = await createMilestone(experimentId, user.userId, parsed.data as any);
+    const milestone = await createMilestone(experimentId, user.userId, parsed.data as CreateMilestoneInput);
     await recordAudit({
       actorId: user.userId,
       action: 'research.milestone.created',

@@ -19,7 +19,7 @@ import {
   deleteCatalogRow,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { PART_CATEGORY_VALUES } from '@/lib/agentic-os/maker/catalog';
+import { PART_CATEGORY_VALUES, type PartCatalogUpsert } from '@/lib/agentic-os/maker/catalog';
 
 const PatchBody = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
 
   try {
-    const row = await updateCatalogRow(id, user.userId, parsed.data as any);
+    const row = await updateCatalogRow(id, user.userId, parsed.data as Partial<PartCatalogUpsert>);
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

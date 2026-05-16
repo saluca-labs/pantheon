@@ -79,10 +79,10 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const d = parsed.data;
   const outcome = await updateAuthor(id, user.userId, {
     displayName: d.display_name,
-    givenName: d.given_name as any,
-    familyName: d.family_name as any,
-    orcid: d.orcid as any,
-    affiliation: d.affiliation as any,
+    givenName: d.given_name,
+    familyName: d.family_name,
+    orcid: d.orcid,
+    affiliation: d.affiliation,
     metadata: d.metadata,
   });
   if (outcome.kind === 'not_found') {

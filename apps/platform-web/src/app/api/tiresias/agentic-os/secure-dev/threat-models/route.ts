@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentSecureDevUser } from '@/lib/agentic-os/secure-dev/session';
 import { listThreatModels, saveThreatModel, recordAudit } from '@/lib/agentic-os/secure-dev/repo';
+import type { StrideChecklist } from '@/lib/agentic-os/secure-dev/stride';
 
 const ThreatModelBody = z.object({
   systemName: z.string().min(1).max(200),
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     userId: user.userId,
     systemName: parsed.data.systemName,
     systemDescription: parsed.data.systemDescription,
-    checklist: parsed.data.checklist as any,
+    checklist: parsed.data.checklist as StrideChecklist,
   });
 
   await recordAudit({

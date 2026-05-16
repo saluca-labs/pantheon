@@ -18,6 +18,7 @@ import {
   deleteStoryDocument,
   recordAudit,
 } from '@/lib/agentic-os/filmmaker/repo';
+import type { ProseMirrorJson } from '@/lib/agentic-os/filmmaker/story-documents';
 
 const PatchBody = z
   .object({
@@ -60,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     tenantId: user.tenantId,
     userId: user.userId,
     title: parsed.data.title,
-    contentJson: parsed.data.contentJson as any,
+    contentJson: parsed.data.contentJson as ProseMirrorJson | undefined,
   });
   if (!document) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

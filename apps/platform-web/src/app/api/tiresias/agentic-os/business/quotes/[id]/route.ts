@@ -82,13 +82,13 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   const outcome = await updateQuote(id, user.userId, {
     title: rest.title,
     quoteNumber: rest.quote_number,
-    contactId: rest.contact_id as any,
-    dealId: rest.deal_id as any,
-    projectId: rest.project_id as any,
+    contactId: rest.contact_id,
+    dealId: rest.deal_id,
+    projectId: rest.project_id,
     descriptionMd: rest.description_md,
     status: rest.status,
     quoteDate: rest.quote_date,
-    expiresOn: rest.expires_on as any,
+    expiresOn: rest.expires_on,
     currency: rest.currency,
     metadata: rest.metadata,
   });

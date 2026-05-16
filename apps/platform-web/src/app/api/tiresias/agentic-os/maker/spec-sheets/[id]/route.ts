@@ -23,7 +23,7 @@ import {
   deleteSpecSheet,
   recordAudit,
 } from '@/lib/agentic-os/maker/repo';
-import { SPEC_SHEET_KIND_VALUES } from '@/lib/agentic-os/maker/spec-sheets';
+import { SPEC_SHEET_KIND_VALUES, type SpecSheetPatch } from '@/lib/agentic-os/maker/spec-sheets';
 
 const PatchBody = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     );
   }
   try {
-    const updated = await updateSpecSheet(id, user.userId, parsed.data as any);
+    const updated = await updateSpecSheet(id, user.userId, parsed.data as SpecSheetPatch);
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     await recordAudit({
       actorId: user.userId,

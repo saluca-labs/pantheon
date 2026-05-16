@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { recordAudit } from '@/lib/agentic-os/business/repo';
 import { listQuotes, createQuote } from '@/lib/agentic-os/business/quotes-repo';
-import { QUOTE_STATUSES } from '@/lib/agentic-os/business/quotes';
+import { QUOTE_STATUSES, type QuoteStatus } from '@/lib/agentic-os/business/quotes';
 
 const CreateBody = z.object({
   title: z.string().min(1).max(300),
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   const quotes = await listQuotes(user.userId, {
     archived: archivedParam === 'true',
     status: statusParam
-      ? (statusParam.split(',').map((s) => s.trim()) as any)
+      ? (statusParam.split(',').map((s) => s.trim()) as QuoteStatus[])
       : undefined,
     contactId: contactIdParam ?? undefined,
     dealId: dealIdParam ?? undefined,
