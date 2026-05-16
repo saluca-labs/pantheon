@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { invalidateSession } from '@platform/auth';
 import { clearSessionCookie, getSessionToken } from '@platform/auth/cookies';
+import type { MutableCookieStore, ReadableCookieStore } from '@platform/auth/cookies';
 import { Pool } from 'pg';
 
 let _pool: Pool | null = null;
@@ -14,7 +15,7 @@ function getPool(): Pool {
 
 export async function POST(_req: NextRequest) {
   const cookieStore = await cookies();
-  const token = getSessionToken(cookieStore as any);
+  const token = getSessionToken(cookieStore as unknown as ReadableCookieStore);
 
   if (token) {
     try {
@@ -24,7 +25,7 @@ export async function POST(_req: NextRequest) {
     }
   }
 
-  clearSessionCookie(cookieStore as any);
+  clearSessionCookie(cookieStore as unknown as MutableCookieStore);
 
   return NextResponse.redirect(new URL('/login', _req.url), { status: 303 });
 }

@@ -45,7 +45,7 @@ export default async function QuotesPage({ searchParams }: Props) {
 
   const sp = await searchParams;
   const showNew = sp.new === '1';
-  const activeStatus = STATUSES.includes(sp.status as any) ? sp.status : 'all';
+  const activeStatus = STATUSES.includes(sp.status as (typeof STATUSES)[number]) ? sp.status : 'all';
 
   const [quotes, people, deals, projects, settingsResult] = await Promise.all([
     listQuotes(user.userId, { limit: 500 }),
