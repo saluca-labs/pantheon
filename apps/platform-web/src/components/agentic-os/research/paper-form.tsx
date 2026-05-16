@@ -141,7 +141,15 @@ export function PaperForm({ initial, initialAuthors = [], onCancel }: Props) {
       // — failing one mid-flight surfaces the error and stops.
       if (!initial) {
         for (const p of authors) {
-          const linkBody: any = { position: p.position };
+          const linkBody: {
+            position: number;
+            authorId?: string;
+            displayName?: string;
+            givenName?: string;
+            familyName?: string;
+            orcid?: string;
+            affiliation?: string;
+          } = { position: p.position };
           if (p.authorId) {
             linkBody.authorId = p.authorId;
           } else {
