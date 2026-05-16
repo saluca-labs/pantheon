@@ -14,7 +14,7 @@
  * @license MIT — Tiresias Creator OS Phase 2 (internal).
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useId, useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Save,
@@ -55,6 +55,9 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
   );
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const postIdRef = useRef(initialPost.id);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   // Reset state when navigating to a different post
   useEffect(() => {
@@ -296,8 +299,9 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
       {/* Slug */}
       <div className="mb-4">
-        <label className={labelCls}>Slug</label>
+        <label htmlFor={fid('slug')} className={labelCls}>Slug</label>
         <input
+          id={fid('slug')}
           type="text"
           value={post.slug}
           onChange={(e) => {
@@ -316,8 +320,9 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
       {/* Excerpt */}
       <div className="mb-4">
-        <label className={labelCls}>Excerpt</label>
+        <label htmlFor={fid('excerpt')} className={labelCls}>Excerpt</label>
         <textarea
+          id={fid('excerpt')}
           value={post.excerpt ?? ''}
           onChange={(e) => {
             const excerpt = e.target.value || null;
@@ -332,8 +337,9 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
       {/* Cover image URL */}
       <div className="mb-4">
-        <label className={labelCls}>Cover Image URL</label>
+        <label htmlFor={fid('cover-image')} className={labelCls}>Cover Image URL</label>
         <input
+          id={fid('cover-image')}
           type="text"
           value={post.coverImageUrl ?? ''}
           onChange={(e) => {
@@ -348,8 +354,9 @@ export function PostEditor({ post: initialPost }: PostEditorProps) {
 
       {/* Tags */}
       <div className="mb-6">
-        <label className={labelCls}>Tags</label>
+        <label htmlFor={fid('tags')} className={labelCls}>Tags</label>
         <input
+          id={fid('tags')}
           type="text"
           value={post.tags.join(', ')}
           onChange={(e) => {

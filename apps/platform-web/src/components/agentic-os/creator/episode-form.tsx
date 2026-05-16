@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CreatorEpisode, EpisodeType } from '@/lib/agentic-os/creator/podcast';
 
@@ -34,6 +34,9 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
   const [mimeType, setMimeType] = useState(episode?.mimeType ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const isDraft = !episode || episode.status === 'draft';
 
@@ -161,10 +164,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('title')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Title <span className="text-red-400">*</span>
           </label>
           <input
+            id={fid('title')}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -175,10 +179,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('description')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Description
           </label>
           <textarea
+            id={fid('description')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Episode description..."
@@ -189,10 +194,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
 
         {/* Audio file URL */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('audio-url')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Audio File URL
           </label>
           <input
+            id={fid('audio-url')}
             type="text"
             value={audioFileUrl}
             onChange={(e) => setAudioFileUrl(e.target.value)}
@@ -204,10 +210,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
         {/* Metadata row */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('duration')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Duration (seconds)
             </label>
             <input
+              id={fid('duration')}
               type="number"
               value={durationSeconds}
               onChange={(e) => setDurationSeconds(e.target.value)}
@@ -216,10 +223,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('file-size')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               File Size (bytes)
             </label>
             <input
+              id={fid('file-size')}
               type="number"
               value={fileSizeBytes}
               onChange={(e) => setFileSizeBytes(e.target.value)}
@@ -228,10 +236,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('mime-type')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               MIME Type
             </label>
             <input
+              id={fid('mime-type')}
               type="text"
               value={mimeType}
               onChange={(e) => setMimeType(e.target.value)}
@@ -244,10 +253,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
         {/* Season / Episode row */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('season')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Season
             </label>
             <input
+              id={fid('season')}
               type="number"
               value={seasonNumber}
               onChange={(e) => setSeasonNumber(e.target.value)}
@@ -256,10 +266,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('episode-num')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Episode #
             </label>
             <input
+              id={fid('episode-num')}
               type="number"
               value={episodeNumber}
               onChange={(e) => setEpisodeNumber(e.target.value)}
@@ -268,10 +279,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('episode-type')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Type
             </label>
             <select
+              id={fid('episode-type')}
               value={episodeType}
               onChange={(e) => setEpisodeType(e.target.value as EpisodeType)}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-fuchsia-500 focus:outline-none focus:ring-1 focus:ring-fuchsia-500"
@@ -285,10 +297,11 @@ export function EpisodeForm({ episode, podcastId, isNew }: EpisodeFormProps) {
 
         {/* Show notes */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('notes')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Show Notes (Markdown)
           </label>
           <textarea
+            id={fid('notes')}
             value={notesMd}
             onChange={(e) => setNotesMd(e.target.value)}
             placeholder="## Show Notes&#10;&#10;- Topic 1&#10;- Topic 2"

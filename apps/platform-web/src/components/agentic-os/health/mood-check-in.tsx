@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeartPulse, Sparkles } from 'lucide-react';
 import type { MoodTag } from '@/lib/agentic-os/health/repo';
@@ -49,6 +49,8 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
   const [newTagName, setNewTagName] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const notesId = useId();
   const [savedId, setSavedId] = useState<string | null>(null);
 
   // Keep tags fresh after a create.
@@ -179,9 +181,9 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       />
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Sleep quality
-        </label>
+        </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           {SLEEP_OPTIONS.map((opt) => (
             <button
@@ -201,9 +203,9 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Tags
-        </label>
+        </span>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {tags.map((tag) => {
             const selected = selectedTagIds.has(tag.id);
@@ -249,10 +251,11 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={notesId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Notes (optional)
         </label>
         <textarea
+          id={notesId}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}

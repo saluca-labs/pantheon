@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { DocTemplate } from '@/lib/agentic-os/business/doc-templates';
 
@@ -62,6 +62,9 @@ export default function DocumentForm({
   const [bodyMd, setBodyMd] = useState(initialValues?.bodyMd ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   const handleTemplateChange = useCallback(
     (selectedId: string) => {
@@ -139,8 +142,9 @@ export default function DocumentForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Title *</label>
+          <label htmlFor={fid('title')} className={labelClass}>Title *</label>
           <input
+            id={fid('title')}
             className={inputClass}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -149,8 +153,9 @@ export default function DocumentForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Template</label>
+          <label htmlFor={fid('template')} className={labelClass}>Template</label>
           <select
+            id={fid('template')}
             className={selectClass}
             value={templateId}
             onChange={(e) => handleTemplateChange(e.target.value)}
@@ -164,8 +169,9 @@ export default function DocumentForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Contact</label>
+          <label htmlFor={fid('contact')} className={labelClass}>Contact</label>
           <select
+            id={fid('contact')}
             className={selectClass}
             value={contactId}
             onChange={(e) => setContactId(e.target.value)}
@@ -179,8 +185,9 @@ export default function DocumentForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Project</label>
+          <label htmlFor={fid('project')} className={labelClass}>Project</label>
           <select
+            id={fid('project')}
             className={selectClass}
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
@@ -194,8 +201,9 @@ export default function DocumentForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Deal</label>
+          <label htmlFor={fid('deal')} className={labelClass}>Deal</label>
           <select
+            id={fid('deal')}
             className={selectClass}
             value={dealId}
             onChange={(e) => setDealId(e.target.value)}
@@ -210,8 +218,9 @@ export default function DocumentForm({
         </div>
         <div />
         <div className="md:col-span-2">
-          <label className={labelClass}>Body (Markdown)</label>
+          <label htmlFor={fid('body')} className={labelClass}>Body (Markdown)</label>
           <textarea
+            id={fid('body')}
             className={inputClass}
             value={bodyMd}
             onChange={(e) => setBodyMd(e.target.value)}

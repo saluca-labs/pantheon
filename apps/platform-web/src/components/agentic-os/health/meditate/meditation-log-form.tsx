@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
 import { MoodScale, TextInput } from '../cbt/wizards/_shared';
@@ -15,6 +15,8 @@ export function MeditationLogForm() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const durationId = useId();
 
   async function onSubmit() {
     setSubmitting(true);
@@ -50,9 +52,9 @@ export function MeditationLogForm() {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <span className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Session source
-        </label>
+        </span>
         <div className="flex flex-wrap gap-1.5">
           {(['manual', 'medito', 'plan'] as const).map((s) => (
             <button
@@ -83,10 +85,11 @@ export function MeditationLogForm() {
         />
       )}
       <div>
-        <label className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
+        <label htmlFor={durationId} className="block text-xs uppercase tracking-wide text-text-secondary mb-1.5">
           Duration (minutes)
         </label>
         <input
+          id={durationId}
           type="number"
           min={1}
           max={240}

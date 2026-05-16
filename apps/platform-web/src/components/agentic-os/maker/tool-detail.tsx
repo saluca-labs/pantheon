@@ -18,7 +18,7 @@
  */
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Wrench } from 'lucide-react';
 import {
   TOOL_KIND_LABELS,
@@ -59,6 +59,7 @@ export function ToolDetail({
   const [status, setStatus] = useState<ToolStatus>(tool.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const statusSelectId = useId();
 
   async function changeStatus(next: ToolStatus) {
     if (next === status) return;
@@ -162,8 +163,9 @@ export function ToolDetail({
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs text-text-secondary">Status:</label>
+              <label htmlFor={statusSelectId} className="text-xs text-text-secondary">Status:</label>
               <select
+                id={statusSelectId}
                 value={status}
                 onChange={(e) => changeStatus(e.target.value as ToolStatus)}
                 disabled={saving}

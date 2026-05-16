@@ -15,7 +15,7 @@
  * @license MIT — Tiresias Maker OS Phase 6 (internal).
  */
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import {
   DEPENDENCY_KIND_VALUES,
@@ -50,6 +50,9 @@ export function DependencyPicker({
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   // Filter the candidate list: drop the current project, drop existing
   // peers (the parent passes the set of peer ids that already have an
@@ -121,10 +124,11 @@ export function DependencyPicker({
         </p>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('search')} className="text-[10px] uppercase tracking-wide text-text-secondary">
             Search projects
           </label>
           <input
+            id={fid('search')}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -159,8 +163,9 @@ export function DependencyPicker({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</label>
+          <label htmlFor={fid('kind')} className="text-[10px] uppercase tracking-wide text-text-secondary">Kind</label>
           <select
+            id={fid('kind')}
             value={kind}
             onChange={(e) => setKind(e.target.value as DependencyKind)}
             className={inputCls}
@@ -174,10 +179,11 @@ export function DependencyPicker({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-wide text-text-secondary">
+          <label htmlFor={fid('notes')} className="text-[10px] uppercase tracking-wide text-text-secondary">
             Notes
           </label>
           <textarea
+            id={fid('notes')}
             rows={3}
             maxLength={4000}
             value={notes}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CreatorPodcast } from '@/lib/agentic-os/creator/podcast';
 
@@ -20,6 +20,9 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
   const [websiteUrl, setWebsiteUrl] = useState(podcast?.websiteUrl ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSave() {
     if (!title.trim()) {
@@ -93,10 +96,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('title')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Show Title <span className="text-red-400">*</span>
           </label>
           <input
+            id={fid('title')}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -107,10 +111,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
 
         {/* Author */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('author')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Author
           </label>
           <input
+            id={fid('author')}
             type="text"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
@@ -121,10 +126,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('description')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Description
           </label>
           <textarea
+            id={fid('description')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What is your podcast about?"
@@ -135,10 +141,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
 
         {/* Cover Image URL */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('cover-image')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Cover Image URL
           </label>
           <input
+            id={fid('cover-image')}
             type="text"
             value={coverImageUrl}
             onChange={(e) => setCoverImageUrl(e.target.value)}
@@ -151,10 +158,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
         {/* Row: Language + Category */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('language')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Language
             </label>
             <input
+              id={fid('language')}
               type="text"
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
@@ -163,10 +171,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+            <label htmlFor={fid('category')} className="block text-sm font-medium text-zinc-400 mb-1.5">
               Apple Podcasts Category
             </label>
             <input
+              id={fid('category')}
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -178,10 +187,11 @@ export function PodcastSettingsForm({ podcast }: PodcastSettingsFormProps) {
 
         {/* Website URL */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor={fid('website')} className="block text-sm font-medium text-zinc-400 mb-1.5">
             Website URL
           </label>
           <input
+            id={fid('website')}
             type="text"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}

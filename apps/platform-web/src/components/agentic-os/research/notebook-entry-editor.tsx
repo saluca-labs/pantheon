@@ -16,7 +16,7 @@
  * @license MIT — Tiresias Research OS Phase 2 (internal).
  */
 
-import { useState, useEffect } from 'react';
+import { useId, useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import {
   ENTRY_KINDS,
@@ -90,6 +90,9 @@ export function NotebookEntryEditor({
   const [entryAtLocal, setEntryAtLocal] = useState<string>(() =>
     initial?.entryAt ? localFromIso(initial.entryAt) : isoLocalNow(),
   );
+
+  const urlInputId = useId();
+  const tagInputId = useId();
 
   // Refresh form state when `initial` changes (e.g. opening the editor on
   // a different entry).
@@ -217,11 +220,12 @@ export function NotebookEntryEditor({
 
       {/* Attached URLs */}
       <div>
-        <label className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
+        <label htmlFor={urlInputId} className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
           Attached URLs
         </label>
         <div className="flex gap-2">
           <input
+            id={urlInputId}
             type="url"
             value={urlDraft}
             onChange={(e) => setUrlDraft(e.target.value)}
@@ -270,11 +274,12 @@ export function NotebookEntryEditor({
 
       {/* Tags */}
       <div>
-        <label className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
+        <label htmlFor={tagInputId} className="text-[10px] font-medium uppercase tracking-wide text-text-secondary block mb-1">
           Tags
         </label>
         <div className="flex gap-2">
           <input
+            id={tagInputId}
             type="text"
             value={tagDraft}
             onChange={(e) => setTagDraft(e.target.value)}

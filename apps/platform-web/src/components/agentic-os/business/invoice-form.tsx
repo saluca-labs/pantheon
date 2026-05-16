@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useId, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 const TERMS_OPTIONS = [
@@ -104,6 +104,9 @@ export default function InvoiceForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -173,8 +176,9 @@ export default function InvoiceForm({
 
       <div className={compact ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         <div>
-          <label className={labelClass}>Title *</label>
+          <label htmlFor={fid('title')} className={labelClass}>Title *</label>
           <input
+            id={fid('title')}
             className={inputClass}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -183,8 +187,9 @@ export default function InvoiceForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Invoice Number *</label>
+          <label htmlFor={fid('invoice-number')} className={labelClass}>Invoice Number *</label>
           <input
+            id={fid('invoice-number')}
             className={inputClass}
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -193,8 +198,8 @@ export default function InvoiceForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Contact</label>
-          <select className={selectClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
+          <label htmlFor={fid('contact')} className={labelClass}>Contact</label>
+          <select id={fid('contact')} className={selectClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
             <option value="">-- None --</option>
             {contacts.map((c) => (
               <option key={c.id} value={c.id}>
@@ -204,8 +209,8 @@ export default function InvoiceForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Deal</label>
-          <select className={selectClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
+          <label htmlFor={fid('deal')} className={labelClass}>Deal</label>
+          <select id={fid('deal')} className={selectClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
             <option value="">-- None --</option>
             {deals.map((d) => (
               <option key={d.id} value={d.id}>
@@ -215,8 +220,8 @@ export default function InvoiceForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Project</label>
-          <select className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+          <label htmlFor={fid('project')} className={labelClass}>Project</label>
+          <select id={fid('project')} className={selectClass} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">-- None --</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -226,8 +231,8 @@ export default function InvoiceForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Terms</label>
-          <select className={selectClass} value={terms} onChange={(e) => setTerms(e.target.value)}>
+          <label htmlFor={fid('terms')} className={labelClass}>Terms</label>
+          <select id={fid('terms')} className={selectClass} value={terms} onChange={(e) => setTerms(e.target.value)}>
             {TERMS_OPTIONS.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
@@ -236,8 +241,9 @@ export default function InvoiceForm({
           </select>
         </div>
         <div>
-          <label className={labelClass}>Invoice Date</label>
+          <label htmlFor={fid('invoice-date')} className={labelClass}>Invoice Date</label>
           <input
+            id={fid('invoice-date')}
             className={inputClass}
             type="date"
             value={invoiceDate}
@@ -245,8 +251,9 @@ export default function InvoiceForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Due Date</label>
+          <label htmlFor={fid('due-on')} className={labelClass}>Due Date</label>
           <input
+            id={fid('due-on')}
             className={inputClass}
             type="date"
             value={dueOn}
@@ -254,8 +261,9 @@ export default function InvoiceForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Currency</label>
+          <label htmlFor={fid('currency')} className={labelClass}>Currency</label>
           <input
+            id={fid('currency')}
             className={inputClass}
             value={currency}
             onChange={(e) => setCurrency(e.target.value.toUpperCase())}
@@ -265,8 +273,9 @@ export default function InvoiceForm({
       </div>
 
       <div>
-        <label className={labelClass}>Description</label>
+        <label htmlFor={fid('description')} className={labelClass}>Description</label>
         <textarea
+          id={fid('description')}
           className={inputClass}
           rows={3}
           value={descriptionMd}
