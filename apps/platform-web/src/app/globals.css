@@ -96,6 +96,23 @@
   --os-business: #2dd4bf;        /* teal-400 */
   --os-creator: #e879f9;         /* fuchsia-400 */
 
+  /* Per-kind colors (W-E.5). One token per Research-OS entry kind so the
+   * `ENTRY_KIND_COLOR` palette in `lib/agentic-os/research/entry-kinds.ts`
+   * (and any future kind-coded surface) consumes tokens rather than raw
+   * Tailwind palette strings. Documented in `_design/tokens.md` §11.
+   *  - note        → neutral secondary text (no chroma; pure hierarchy)
+   *  - observation → sky-300 (bench-time data, calmer than os-research)
+   *  - result      → positive (final outputs read as success)
+   *  - decision    → violet-300 (mirrors filmmaker decision-log accent)
+   *  - question    → warning (open questions = non-blocking concern)
+   *  - todo        → attention (todo items = needs-look-at) */
+  --kind-note: var(--text-secondary);
+  --kind-observation: #7dd3fc;
+  --kind-result: var(--positive);
+  --kind-decision: #c4b5fd;
+  --kind-question: var(--warning);
+  --kind-todo: var(--attention);
+
   /* Legacy aliases — kept so any stragglers using `var(--background)`
    * etc. don't break mid-migration. Remove in Wave E coherence pass. */
   --background: var(--surface-0);
@@ -139,6 +156,15 @@
   --color-os-autobiographer: var(--os-autobiographer);
   --color-os-business: var(--os-business);
   --color-os-creator: var(--os-creator);
+
+  /* Per-kind color aliases (W-E.5) — exposed to Tailwind so utility classes
+   * like `bg-kind-observation/10` / `text-kind-decision` JIT-compile. */
+  --color-kind-note: var(--kind-note);
+  --color-kind-observation: var(--kind-observation);
+  --color-kind-result: var(--kind-result);
+  --color-kind-decision: var(--kind-decision);
+  --color-kind-question: var(--kind-question);
+  --color-kind-todo: var(--kind-todo);
 
   /* Legacy aliases (preserved during migration). Wave E removes. */
   --color-background: var(--surface-0);
