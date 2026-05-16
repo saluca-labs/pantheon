@@ -16,7 +16,7 @@
 
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   PROJECT_STATUSES,
@@ -67,6 +67,9 @@ export default function ProjectForm({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -143,8 +146,9 @@ export default function ProjectForm({
 
       {/* Title */}
       <div>
-        <label className={labelClass}>Title *</label>
+        <label htmlFor={fid('title')} className={labelClass}>Title *</label>
         <input
+          id={fid('title')}
           className={inputClass}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -157,8 +161,9 @@ export default function ProjectForm({
         <>
           {/* Slug */}
           <div>
-            <label className={labelClass}>Slug</label>
+            <label htmlFor={fid('slug')} className={labelClass}>Slug</label>
             <input
+              id={fid('slug')}
               className={inputClass}
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
@@ -169,8 +174,8 @@ export default function ProjectForm({
           {/* Contact + Deal */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Contact</label>
-              <select className={inputClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
+              <label htmlFor={fid('contact')} className={labelClass}>Contact</label>
+              <select id={fid('contact')} className={inputClass} value={contactId} onChange={(e) => setContactId(e.target.value)}>
                 <option value="">None</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id} className="bg-surface-2 text-white">
@@ -180,8 +185,8 @@ export default function ProjectForm({
               </select>
             </div>
             <div>
-              <label className={labelClass}>Deal</label>
-              <select className={inputClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
+              <label htmlFor={fid('deal')} className={labelClass}>Deal</label>
+              <select id={fid('deal')} className={inputClass} value={dealId} onChange={(e) => setDealId(e.target.value)}>
                 <option value="">None</option>
                 {deals.map((d) => (
                   <option key={d.id} value={d.id} className="bg-surface-2 text-white">
@@ -195,8 +200,9 @@ export default function ProjectForm({
           {/* Status + Billing Model */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Status</label>
+              <label htmlFor={fid('status')} className={labelClass}>Status</label>
               <select
+                id={fid('status')}
                 className={inputClass}
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ProjectStatus)}
@@ -209,8 +215,9 @@ export default function ProjectForm({
               </select>
             </div>
             <div>
-              <label className={labelClass}>Billing Model</label>
+              <label htmlFor={fid('billing-model')} className={labelClass}>Billing Model</label>
               <select
+                id={fid('billing-model')}
                 className={inputClass}
                 value={billingModel}
                 onChange={(e) => setBillingModel(e.target.value as BillingModel)}
@@ -227,8 +234,9 @@ export default function ProjectForm({
           {/* Rate + Budget */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Default Rate (cents)</label>
+              <label htmlFor={fid('default-rate')} className={labelClass}>Default Rate (cents)</label>
               <input
+                id={fid('default-rate')}
                 className={inputClass}
                 type="number"
                 value={defaultRateCents}
@@ -238,8 +246,9 @@ export default function ProjectForm({
               />
             </div>
             <div>
-              <label className={labelClass}>Budget (cents)</label>
+              <label htmlFor={fid('budget')} className={labelClass}>Budget (cents)</label>
               <input
+                id={fid('budget')}
                 className={inputClass}
                 type="number"
                 value={budgetCents}
@@ -253,8 +262,8 @@ export default function ProjectForm({
           {/* Currency + Dates */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className={labelClass}>Currency</label>
-              <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <label htmlFor={fid('currency')} className={labelClass}>Currency</label>
+              <select id={fid('currency')} className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
                 <option value="USD" className="bg-surface-2 text-white">USD</option>
                 <option value="EUR" className="bg-surface-2 text-white">EUR</option>
                 <option value="GBP" className="bg-surface-2 text-white">GBP</option>
@@ -262,8 +271,9 @@ export default function ProjectForm({
               </select>
             </div>
             <div>
-              <label className={labelClass}>Start Date</label>
+              <label htmlFor={fid('start-date')} className={labelClass}>Start Date</label>
               <input
+                id={fid('start-date')}
                 className={inputClass}
                 type="date"
                 value={startDate}
@@ -271,8 +281,9 @@ export default function ProjectForm({
               />
             </div>
             <div>
-              <label className={labelClass}>Target Completion</label>
+              <label htmlFor={fid('target-completion')} className={labelClass}>Target Completion</label>
               <input
+                id={fid('target-completion')}
                 className={inputClass}
                 type="date"
                 value={targetCompletionDate}
@@ -283,8 +294,9 @@ export default function ProjectForm({
 
           {/* Tags */}
           <div>
-            <label className={labelClass}>Tags (comma-separated)</label>
+            <label htmlFor={fid('tags')} className={labelClass}>Tags (comma-separated)</label>
             <input
+              id={fid('tags')}
               className={inputClass}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -294,8 +306,9 @@ export default function ProjectForm({
 
           {/* Description */}
           <div>
-            <label className={labelClass}>Description (Markdown)</label>
+            <label htmlFor={fid('description')} className={labelClass}>Description (Markdown)</label>
             <textarea
+              id={fid('description')}
               className={inputClass}
               rows={4}
               value={descriptionMd}

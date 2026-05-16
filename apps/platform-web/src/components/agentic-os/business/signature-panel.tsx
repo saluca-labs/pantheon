@@ -15,7 +15,7 @@
 
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useId, useRef, useState, useCallback } from 'react';
 import { FileSignature, Eraser } from 'lucide-react';
 import type { BusinessDocument } from '@/lib/agentic-os/business/documents';
 import { EmptyState } from '@/components/agentic-os/_shared/views';
@@ -37,6 +37,10 @@ export default function SignaturePanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const lastPos = useRef<{ x: number; y: number } | null>(null);
+
+  const idBase = useId();
+  const fid = (slug: string) => `${idBase}-${slug}`;
+  const canvasId = fid('signature-canvas');
 
   const getCanvasPos = useCallback(
     (clientX: number, clientY: number) => {
@@ -207,8 +211,9 @@ export default function SignaturePanel({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Signer Name *</label>
+          <label htmlFor={fid('signer-name')} className={labelClass}>Signer Name *</label>
           <input
+            id={fid('signer-name')}
             className={inputClass}
             value={signerName}
             onChange={(e) => setSignerName(e.target.value)}
@@ -217,8 +222,9 @@ export default function SignaturePanel({
           />
         </div>
         <div>
-          <label className={labelClass}>Signer Email</label>
+          <label htmlFor={fid('signer-email')} className={labelClass}>Signer Email</label>
           <input
+            id={fid('signer-email')}
             className={inputClass}
             type="email"
             value={signerEmail}
@@ -229,9 +235,10 @@ export default function SignaturePanel({
       </div>
 
       <div>
-        <label className={labelClass}>Draw your signature</label>
+        <label htmlFor={canvasId} className={labelClass}>Draw your signature</label>
         <div className="max-w-[400px] rounded-lg border border-dashed border-border-strong bg-surface-0 p-1 transition focus-within:border-accent">
           <canvas
+            id={canvasId}
             ref={canvasRef}
             width={400}
             height={120}

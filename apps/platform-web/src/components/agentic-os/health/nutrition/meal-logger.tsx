@@ -12,7 +12,7 @@
  * via the BFF on date change and after every mutation.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Pencil, Plus, Trash2, Utensils, X } from 'lucide-react';
 import {
   FoodCombobox,
@@ -346,6 +346,8 @@ function MealDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const notesId = useId();
+
   const numOrNull = (s: string): number | null =>
     s.trim().length === 0 ? null : Number(s);
 
@@ -415,9 +417,9 @@ function MealDrawer({
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-text-secondary">
+            <span className="mb-1 block text-xs text-text-secondary">
               Food (search the catalog or type freeform)
-            </label>
+            </span>
             <FoodCombobox
               value={foodQuery}
               onChange={setFoodQuery}
@@ -454,8 +456,9 @@ function MealDrawer({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-text-secondary">Notes</label>
+            <label htmlFor={notesId} className="mb-1 block text-xs text-text-secondary">Notes</label>
             <textarea
+              id={notesId}
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
