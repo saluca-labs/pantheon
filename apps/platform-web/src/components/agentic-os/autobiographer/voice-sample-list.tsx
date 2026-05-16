@@ -76,7 +76,7 @@ export function VoiceSampleList({ initial }: VoiceSampleListProps) {
               }`}
             >
               {FILTER_LABELS[m]}{' '}
-              <span className="text-[#64748b]">({counts[m]})</span>
+              <span className="text-text-tertiary">({counts[m]})</span>
             </button>
           ))}
         </div>

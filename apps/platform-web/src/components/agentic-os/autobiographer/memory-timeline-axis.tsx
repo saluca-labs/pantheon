@@ -45,7 +45,7 @@ function renderMemoryItem(
     <div className="flex flex-col items-center gap-0.5" title={memory.title}>
       <span
         className={`h-2.5 w-2.5 rotate-45 rounded-[2px] ring-2 ring-surface-2 ${
-          memory.isSensitive ? 'bg-amber-400' : 'bg-os-autobiographer'
+          memory.isSensitive ? 'bg-warning' : 'bg-os-autobiographer'
         }`}
       />
       <span className="max-w-[8rem] truncate text-2xs text-text-tertiary">
@@ -104,7 +104,7 @@ export function MemoryTimelineAxis({ memories }: MemoryTimelineAxisProps) {
           </span>
         ) : null}
         <span className="inline-flex items-center gap-1">
-          <Lock className="h-3 w-3 text-amber-300" />
+          <Lock className="h-3 w-3 text-warning" />
           sensitive memories marked amber
         </span>
       </p>

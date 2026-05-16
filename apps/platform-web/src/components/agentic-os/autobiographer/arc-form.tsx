@@ -137,7 +137,7 @@ export function ArcForm({
         </div>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-3">
+          <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2 mb-3">
             {error}
           </div>
         )}
@@ -188,7 +188,7 @@ export function ArcForm({
               type="checkbox"
               checked={isPrimary}
               onChange={(e) => setIsPrimary(e.target.checked)}
-              className="accent-amber-500"
+              className="accent-warning"
             />
             Use as primary arc for this book
           </label>
@@ -199,7 +199,7 @@ export function ArcForm({
                 type="button"
                 onClick={destroy}
                 disabled={busy}
-                className="text-xs px-3 py-1.5 rounded border border-rose-500/30 text-rose-300 hover:bg-rose-500/10 disabled:opacity-50 transition inline-flex items-center gap-1 mr-auto"
+                className="text-xs px-3 py-1.5 rounded border border-danger/30 text-danger hover:bg-danger/10 disabled:opacity-50 transition inline-flex items-center gap-1 mr-auto"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete arc
@@ -216,7 +216,7 @@ export function ArcForm({
               type="button"
               onClick={submit}
               disabled={busy || title.trim().length === 0}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition"
             >
               <Save className="w-3.5 h-3.5" />
               Save

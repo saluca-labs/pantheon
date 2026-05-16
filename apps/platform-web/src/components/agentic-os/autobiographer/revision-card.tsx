@@ -53,7 +53,7 @@ function DeltaChip({ delta }: { delta: number }) {
   return (
     <span
       className={`inline-flex items-center gap-0.5 text-[10px] ${
-        up ? 'text-emerald-300' : 'text-rose-300'
+        up ? 'text-positive' : 'text-danger'
       }`}
       title={`${up ? '+' : ''}${delta.toLocaleString()} words vs the previous revision`}
     >
@@ -97,8 +97,8 @@ export function RevisionCard({
           <span
             className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded border inline-flex items-center gap-1 ${
               revision.author === 'coach'
-                ? 'text-fuchsia-300 bg-fuchsia-500/10 border-fuchsia-500/30'
-                : 'text-blue-300 bg-blue-500/10 border-blue-500/30'
+                ? 'text-os-creator bg-os-creator/10 border-os-creator/30'
+                : 'text-accent bg-accent/10 border-accent/30'
             }`}
           >
             <Icon className="w-2.5 h-2.5" />

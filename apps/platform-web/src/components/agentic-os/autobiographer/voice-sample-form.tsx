@@ -102,7 +102,7 @@ export function VoiceSampleForm({
         </header>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
+          <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2">
             {error}
           </div>
         )}
@@ -134,7 +134,7 @@ export function VoiceSampleForm({
             </label>
             <span
               className={`text-xs ${
-                tooShort ? 'text-amber-300' : 'text-[#64748b]'
+                tooShort ? 'text-warning' : 'text-text-tertiary'
               }`}
             >
               {wordCount} words
@@ -166,7 +166,7 @@ export function VoiceSampleForm({
           <button
             type="submit"
             disabled={submitting || wordCount === 0}
-            className="text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-[#3a52d8] disabled:opacity-50 transition"
+            className="text-sm px-3 py-1.5 rounded bg-accent text-white font-medium hover:bg-accent/90 disabled:opacity-50 transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Create sample'}
           </button>

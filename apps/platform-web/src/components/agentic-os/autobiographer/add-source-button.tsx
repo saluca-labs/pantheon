@@ -131,7 +131,7 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
               </button>
             </div>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748b]" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary" />
               <input
                 type="text"
                 value={query}
@@ -141,7 +141,7 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
               />
             </div>
             {error ? (
-              <p className="text-xs text-red-400">{error}</p>
+              <p className="text-xs text-danger">{error}</p>
             ) : null}
             <div className="max-h-80 overflow-auto rounded-md border border-border-subtle bg-surface-0">
               {loading ? (
@@ -176,7 +176,7 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
                         type="button"
                         disabled={adding === m.id}
                         onClick={() => link(m.id)}
-                        className="text-[11px] px-2 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-60 shrink-0"
+                        className="text-[11px] px-2 py-1 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-60 shrink-0"
                       >
                         {adding === m.id ? 'Linking…' : 'Link'}
                       </button>

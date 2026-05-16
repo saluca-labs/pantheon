@@ -128,7 +128,7 @@ export function ArcChapterRow({
           <ChevronDown className="w-3 h-3" />
         </button>
       </div>
-      <span className="text-[10px] text-[#64748b] w-6 text-right">
+      <span className="text-[10px] text-text-tertiary w-6 text-right">
         #{position + 1}
       </span>
       <div className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export function ArcChapterRow({
           {status}
         </span>
         {error && (
-          <span className="text-[10px] text-red-400 block" role="alert">
+          <span className="text-[10px] text-danger block" role="alert">
             {error}
           </span>
         )}
@@ -148,7 +148,7 @@ export function ArcChapterRow({
         type="button"
         onClick={remove}
         disabled={busy}
-        className="text-rose-400 hover:text-rose-200 disabled:opacity-50"
+        className="text-danger hover:text-danger/80 disabled:opacity-50"
         title="Remove from arc"
       >
         <Trash2 className="w-3.5 h-3.5" />

@@ -186,7 +186,7 @@ export function MemoryForm({
 
         <label className="block">
           <span className="text-xs uppercase tracking-wide text-text-secondary">
-            Title<span className="text-red-400">*</span>
+            Title<span className="text-danger">*</span>
           </span>
           <input
             value={title}
@@ -200,8 +200,8 @@ export function MemoryForm({
 
         <label className="block">
           <span className="text-xs uppercase tracking-wide text-text-secondary">
-            Memory<span className="text-red-400">*</span>{' '}
-            <span className="text-[#64748b] normal-case">(markdown)</span>
+            Memory<span className="text-danger">*</span>{' '}
+            <span className="text-text-tertiary normal-case">(markdown)</span>
           </span>
           <textarea
             value={bodyMarkdown}
@@ -346,7 +346,7 @@ export function MemoryForm({
 
         <label className="block">
           <span className="text-xs uppercase tracking-wide text-text-secondary">
-            Photo URLs <span className="text-[#64748b] normal-case">(one per line)</span>
+            Photo URLs <span className="text-text-tertiary normal-case">(one per line)</span>
           </span>
           <textarea
             value={photoUrlsInput}
@@ -368,7 +368,7 @@ export function MemoryForm({
         </label>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
+          <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2">
             {error}
           </div>
         )}
@@ -384,7 +384,7 @@ export function MemoryForm({
           <button
             type="submit"
             disabled={submitting || !title.trim() || !bodyMarkdown.trim()}
-            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-[#3a52d8] transition"
+            className="text-sm px-4 py-1.5 rounded bg-accent text-white font-medium disabled:opacity-50 hover:bg-accent/90 transition"
           >
             {submitting ? 'Saving…' : isEdit ? 'Save' : 'Capture memory'}
           </button>
