@@ -111,7 +111,7 @@ export function DatasetCard({ dataset }: Props) {
             data-testid={`dataset-card-delete-${dataset.id}`}
           >
             {deleting ? (
-              <Spinner size="xs" />
+              <Spinner label="Deleting" size="xs" />
             ) : (
               <Trash2 className="w-3 h-3" />
             )}

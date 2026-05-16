@@ -217,7 +217,7 @@ export function DatasetForm({ experimentId, onClose }: Props) {
           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/80 disabled:opacity-50 transition"
           data-testid="dataset-form-submit"
         >
-          {busy && <Spinner size="xs" />}
+          {busy && <Spinner label="Saving" size="xs" />}
           Save dataset
         </button>
       </div>
