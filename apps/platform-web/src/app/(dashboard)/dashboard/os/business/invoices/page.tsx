@@ -20,12 +20,12 @@ export const dynamic = 'force-dynamic';
 const STATUSES = ['all', 'draft', 'sent', 'partial', 'paid', 'overdue', 'voided'] as const;
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  partial: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  paid: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  overdue: 'bg-red-900/40 text-red-300 border-red-800',
-  voided: 'bg-slate-900/40 text-slate-500 border-slate-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  partial: 'bg-warning/15 text-warning border-warning/30',
+  paid: 'bg-positive/15 text-positive border-positive/30',
+  overdue: 'bg-danger/15 text-danger border-danger/30',
+  voided: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 function fmtCents(cents: number): string {
@@ -93,12 +93,12 @@ export default async function InvoicesPage({ searchParams }: Props) {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Receipt className="w-6 h-6 text-teal-300" />
+          <Receipt className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Invoices</h1>
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New invoice
@@ -135,8 +135,8 @@ export default async function InvoicesPage({ searchParams }: Props) {
           href={outstandingOnly ? '?' : '?outstanding=1'}
           className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
             outstandingOnly
-              ? 'border-amber-600 bg-amber-600/10 text-amber-400'
-              : 'border-border-subtle bg-surface-2 text-text-secondary hover:text-white hover:border-amber-600/50'
+              ? 'border-warning bg-warning/10 text-warning'
+              : 'border-border-subtle bg-surface-2 text-text-secondary hover:text-white hover:border-warning/50'
           }`}
         >
           Outstanding only
@@ -156,7 +156,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
                 className="rounded-xl border border-border-subtle bg-surface-2 hover:border-accent/30 p-5 transition-colors group"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] text-[#64748b] font-mono">
+                  <span className="text-[10px] text-text-tertiary font-mono">
                     {inv.invoiceNumber}
                   </span>
                   <span
@@ -167,7 +167,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
                     {inv.status}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium text-white group-hover:text-teal-300 transition-colors mb-1 truncate">
+                <h3 className="text-sm font-medium text-white group-hover:text-os-business transition-colors mb-1 truncate">
                   {inv.title}
                 </h3>
                 {contact && (
@@ -176,7 +176,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
                   </p>
                 )}
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-[#64748b]">
+                  <p className="text-xs text-text-tertiary">
                     {inv.invoiceDate}
                     {inv.dueOn && ` — Due ${inv.dueOn}`}
                   </p>
@@ -189,11 +189,11 @@ export default async function InvoicesPage({ searchParams }: Props) {
                   <div>
                     <div className="h-1.5 rounded-full bg-surface-0 border border-border-subtle overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-teal-500 transition-all"
+                        className="h-full rounded-full bg-os-business transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="text-[10px] text-[#64748b] mt-1 text-right">
+                    <p className="text-[10px] text-text-tertiary mt-1 text-right">
                       {fmtCents(inv.paidCents)} paid ({pct}%)
                     </p>
                   </div>
@@ -204,7 +204,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <Receipt className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+          <Receipt className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary text-sm">
             {invoices.length === 0
               ? 'No invoices yet. Create your first invoice or convert a quote.'

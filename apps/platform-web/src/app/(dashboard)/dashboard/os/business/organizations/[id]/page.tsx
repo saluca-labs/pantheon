@@ -96,7 +96,7 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
       {/* ─── QUOTES TAB ────────────────────────────────────────────────── */}
       {activeTab === 'quotes' && (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
-          <FileText className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+          <FileText className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary text-sm">
             Quotes and invoices are per-contact. Open a contact to see their billing history.
           </p>
@@ -106,7 +106,7 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
       {/* ─── INVOICES TAB ──────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-8 text-center">
-          <Receipt className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+          <Receipt className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary text-sm">
             Quotes and invoices are per-contact. Open a contact to see their billing history.
           </p>

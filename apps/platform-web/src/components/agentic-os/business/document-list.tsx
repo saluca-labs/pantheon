@@ -63,16 +63,16 @@ export default function DocumentList({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border-subtle bg-surface-2">
-                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
+                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                   Status
                 </th>
-                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
+                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                   Title
                 </th>
-                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
+                <th className="py-3 px-4 text-left text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                   Updated
                 </th>
-                <th className="py-3 px-4 text-right text-[10px] font-semibold uppercase tracking-wider text-[#64748b]">
+                <th className="py-3 px-4 text-right text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
                   Actions
                 </th>
               </tr>

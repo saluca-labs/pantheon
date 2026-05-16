@@ -133,7 +133,7 @@ export default function ExpenseForm({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-text-tertiary focus:border-accent focus:outline-none';
   const selectClass = inputClass;
   const labelClass = 'block text-xs text-text-secondary mb-1';
 
@@ -146,8 +146,8 @@ export default function ExpenseForm({
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -276,7 +276,7 @@ export default function ExpenseForm({
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
       >
         {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Expense'}
       </button>

@@ -92,7 +92,7 @@ export default function TemplateForm({
   );
 
   const inputClass =
-    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-text-tertiary focus:border-accent focus:outline-none';
   const selectClass = inputClass;
   const labelClass = 'block text-xs text-text-secondary mb-1';
 
@@ -105,8 +105,8 @@ export default function TemplateForm({
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -189,7 +189,7 @@ export default function TemplateForm({
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium"
+        className="rounded-lg bg-accent hover:bg-accent/90 text-white px-4 py-2 text-sm font-medium"
       >
         {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Template'}
       </button>

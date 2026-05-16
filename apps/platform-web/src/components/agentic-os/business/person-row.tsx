@@ -27,7 +27,7 @@ export function PersonRow({ person, orgName }: Props) {
           <p className="text-sm font-medium text-white truncate">
             {fullName(person)}
             {person.archivedAt && (
-              <span className="ml-2 text-[10px] text-amber-300 font-normal">(archived)</span>
+              <span className="ml-2 text-[10px] text-warning font-normal">(archived)</span>
             )}
           </p>
           {person.role && (
@@ -37,7 +37,7 @@ export function PersonRow({ person, orgName }: Props) {
             <p className="text-[11px] text-text-secondary/80 truncate">{orgName}</p>
           )}
         </div>
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-slate-500/15 text-slate-300 border-slate-500/30">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-surface-2 text-text-secondary border-border-subtle">
           {person.stage}
         </span>
       </div>

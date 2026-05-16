@@ -46,7 +46,7 @@ export default function DealRow({ deal, contactName, orgName }: DealRowProps) {
   const expectedClose = formatDate(deal.expectedCloseDate);
 
   return (
-    <tr className="border-b border-border-subtle hover:bg-[#1e2130] transition-colors">
+    <tr className="border-b border-border-subtle hover:bg-surface-3 transition-colors">
       <td className="px-4 py-2.5">
         <Link
           href={`/dashboard/os/business/deals/${deal.id}`}
@@ -61,7 +61,7 @@ export default function DealRow({ deal, contactName, orgName }: DealRowProps) {
         {orgName && !contactName && <span>{orgName}</span>}
         {contactName && orgName && <span>{orgName}</span>}
       </td>
-      <td className="px-4 py-2.5 text-xs text-teal-300 font-medium">
+      <td className="px-4 py-2.5 text-xs text-os-business font-medium">
         {deal.valueCents != null ? formatValue(deal.valueCents, deal.currency) : '--'}
       </td>
       <td className="px-4 py-2.5">

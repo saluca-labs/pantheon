@@ -56,7 +56,7 @@ export default function DealCard({ deal, contactName, orgName }: DealCardProps) 
       {/* Stage + Value */}
       <div className="flex items-center justify-between mb-2">
         <DealStagePicker stage={deal.stage} disabled />
-        <span className="text-teal-300 text-xs font-medium">
+        <span className="text-os-business text-xs font-medium">
           {deal.valueCents != null ? formatValue(deal.valueCents, deal.currency) : '--'}
         </span>
       </div>

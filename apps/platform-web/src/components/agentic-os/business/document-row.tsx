@@ -13,11 +13,11 @@ import { Pencil, Trash2, Send, PenLine, Download } from 'lucide-react';
 import type { BusinessDocument } from '@/lib/agentic-os/business/documents';
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  signed: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  declined: 'bg-red-900/40 text-red-300 border-red-800',
-  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  signed: 'bg-positive/15 text-positive border-positive/30',
+  declined: 'bg-danger/15 text-danger border-danger/30',
+  expired: 'bg-warning/15 text-warning border-warning/30',
 };
 
 interface Props {
@@ -72,7 +72,7 @@ export default function DocumentRow({
           {doc.title}
         </Link>
       </td>
-      <td className="py-3 px-4 text-xs text-[#64748b]">
+      <td className="py-3 px-4 text-xs text-text-tertiary">
         {doc.updatedAt.slice(0, 10)}
       </td>
       <td className="py-3 px-4">
@@ -81,14 +81,14 @@ export default function DocumentRow({
             <>
               <button
                 onClick={() => onSend?.(doc.id)}
-                className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-blue-900/30 text-[#64748b] hover:text-blue-400 transition-colors"
+                className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-accent/15 text-text-tertiary hover:text-accent transition-colors"
                 title="Send document"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => onEdit?.(doc.id)}
-                className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-white transition-colors"
                 title="Edit document"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ export default function DocumentRow({
           {doc.status === 'sent' && (
             <button
               onClick={() => onSign?.(doc.id)}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-emerald-900/30 text-[#64748b] hover:text-emerald-400 transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-positive/15 text-text-tertiary hover:text-positive transition-colors"
               title="Sign document"
             >
               <PenLine className="w-3.5 h-3.5" />
@@ -109,7 +109,7 @@ export default function DocumentRow({
               href={`/api/tiresias/agentic-os/business/documents/${doc.id}/export.pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-white transition-colors"
               title="Download PDF"
             >
               <Download className="w-3.5 h-3.5" />
@@ -118,7 +118,7 @@ export default function DocumentRow({
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-red-900/30 text-[#64748b] hover:text-red-400 transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-danger/15 text-text-tertiary hover:text-danger transition-colors"
             title="Delete document"
           >
             <Trash2 className="w-3.5 h-3.5" />

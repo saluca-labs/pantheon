@@ -2,7 +2,7 @@
  * Business OS Phase 4 — invoice form (create + edit).
  *
  * Wave D (UI Depth Wave) polish: migrated the hand-spelled hex / `text-white`
- * / `border-red-800` literals onto the visual-language tokens (surface ladder,
+ * / raw red palette literals onto the visual-language tokens (surface ladder,
  * text hierarchy, `danger` status token, `accent`). Same fields, same submit
  * payload, same routes — presentation only.
  *

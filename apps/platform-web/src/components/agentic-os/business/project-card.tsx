@@ -27,12 +27,12 @@ interface ProjectCardProps {
 }
 
 const statusColors: Record<string, string> = {
-  proposed: 'bg-purple-900/40 text-purple-300 border-purple-800',
-  active: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  on_hold: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  completed: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  cancelled: 'bg-red-900/40 text-red-300 border-red-800',
-  archived: 'bg-slate-900/40 text-slate-400 border-slate-800',
+  proposed: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
+  active: 'bg-positive/15 text-positive border-positive/30',
+  on_hold: 'bg-warning/15 text-warning border-warning/30',
+  completed: 'bg-accent/15 text-accent border-accent/30',
+  cancelled: 'bg-danger/15 text-danger border-danger/30',
+  archived: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 const billingModelLabels: Record<string, string> = {
@@ -61,7 +61,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
     >
       {/* Top row: title + status */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h3 className="text-white text-sm font-semibold group-hover:text-teal-300 transition-colors line-clamp-1">
+        <h3 className="text-white text-sm font-semibold group-hover:text-os-business transition-colors line-clamp-1">
           {project.title}
         </h3>
         <span
@@ -74,7 +74,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
       </div>
 
       {/* Slug */}
-      <p className="text-[10px] text-[#64748b] font-mono mb-2">
+      <p className="text-[10px] text-text-tertiary font-mono mb-2">
         {project.slug}
       </p>
 
@@ -100,7 +100,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
           </div>
           <div className="w-full h-1.5 rounded-full bg-surface-0 overflow-hidden">
             <div
-              className="h-full rounded-full bg-teal-500/60"
+              className="h-full rounded-full bg-os-business/60"
               style={{ width: `${Math.min(budgetPercent, 100)}%` }}
             />
           </div>
@@ -108,7 +108,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
       )}
 
       {/* Dates */}
-      <div className="flex items-center gap-4 text-[10px] text-[#64748b]">
+      <div className="flex items-center gap-4 text-[10px] text-text-tertiary">
         {project.startDate && (
           <span className="inline-flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -126,7 +126,7 @@ export default function ProjectCard({ project, deal }: ProjectCardProps) {
       {/* Linked deal */}
       {deal && (
         <div className="mt-2 pt-2 border-t border-border-subtle">
-          <p className="text-[10px] text-[#64748b]">
+          <p className="text-[10px] text-text-tertiary">
             Deal: <span className="text-text-secondary">{deal.title}</span>
           </p>
         </div>

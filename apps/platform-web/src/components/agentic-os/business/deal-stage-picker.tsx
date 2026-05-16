@@ -19,13 +19,13 @@
 import { DEAL_STAGES, type DealStage } from '@/lib/agentic-os/business/deals';
 
 export const STAGE_COLORS: Record<DealStage, { bg: string; text: string; label: string }> = {
-  lead:        { bg: 'bg-[#374151]',   text: 'text-[#9ca3af]', label: 'Lead' },
-  qualified:   { bg: 'bg-[#1e3a5f]',   text: 'text-[#60a5fa]', label: 'Qualified' },
-  proposal:    { bg: 'bg-[#4a3a0a]',   text: 'text-[#fbbf24]', label: 'Proposal' },
-  negotiation: { bg: 'bg-[#4a2a0a]',   text: 'text-[#fb923c]', label: 'Negotiation' },
-  won:         { bg: 'bg-[#064e3b]',   text: 'text-[#34d399]', label: 'Won' },
-  lost:        { bg: 'bg-[#3b0a0a]',   text: 'text-[#f87171]', label: 'Lost' },
-  on_hold:     { bg: 'bg-[#2e1065]',   text: 'text-[#a78bfa]', label: 'On Hold' },
+  lead:        { bg: 'bg-surface-3',         text: 'text-text-secondary',    label: 'Lead' },
+  qualified:   { bg: 'bg-accent/20',         text: 'text-accent',            label: 'Qualified' },
+  proposal:    { bg: 'bg-warning/20',        text: 'text-warning',           label: 'Proposal' },
+  negotiation: { bg: 'bg-attention/20',      text: 'text-attention',         label: 'Negotiation' },
+  won:         { bg: 'bg-positive/20',       text: 'text-positive',          label: 'Won' },
+  lost:        { bg: 'bg-danger/20',         text: 'text-danger',            label: 'Lost' },
+  on_hold:     { bg: 'bg-os-secure-dev/20',  text: 'text-os-secure-dev',     label: 'On Hold' },
 };
 
 interface DealStagePickerProps {

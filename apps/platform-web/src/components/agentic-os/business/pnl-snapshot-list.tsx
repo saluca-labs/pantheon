@@ -22,7 +22,7 @@ export default function PnlSnapshotList({
   if (snapshots.length === 0) {
     return (
       <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-        <BarChart3 className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+        <BarChart3 className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
         <p className="text-text-secondary text-sm">{emptyMessage}</p>
       </div>
     );
@@ -33,31 +33,31 @@ export default function PnlSnapshotList({
       <table className="w-full">
         <thead>
           <tr className="border-b border-border-subtle bg-surface-0/50">
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Kind
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Period
             </th>
-            <th className="py-3 px-4 text-right text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-right text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Revenue
             </th>
-            <th className="py-3 px-4 text-right text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-right text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Expenses
             </th>
-            <th className="py-3 px-4 text-right text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-right text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Margin
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               CCY
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Created
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Status
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Actions
             </th>
           </tr>

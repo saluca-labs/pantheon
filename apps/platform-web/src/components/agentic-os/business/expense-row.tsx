@@ -67,7 +67,7 @@ export default function ExpenseRow({ expense }: Props) {
       <td className="py-3 px-4 text-sm text-text-secondary max-w-[250px] truncate">
         {expense.description || '—'}
       </td>
-      <td className="py-3 px-4 text-xs text-[#64748b]">
+      <td className="py-3 px-4 text-xs text-text-tertiary">
         {expense.incurredOn}
       </td>
       <td className="py-3 px-4 text-sm font-mono text-white text-right">
@@ -75,7 +75,7 @@ export default function ExpenseRow({ expense }: Props) {
       </td>
       <td className="py-3 px-4">
         {expense.isReimbursable && (
-          <span className="inline-flex items-center gap-1 rounded-md border border-amber-800 bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+          <span className="inline-flex items-center gap-1 rounded-md border border-warning/30 bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
             {expense.reimbursedAt ? (
               <>
                 <BadgeCheck className="w-3 h-3" />
@@ -94,7 +94,7 @@ export default function ExpenseRow({ expense }: Props) {
               href={expense.receiptUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-white transition-colors"
               title="View receipt"
             >
               <Receipt className="w-3.5 h-3.5" />
@@ -104,7 +104,7 @@ export default function ExpenseRow({ expense }: Props) {
             <button
               onClick={handleReimburse}
               disabled={reimbursing}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-amber-400 transition-colors"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-warning transition-colors"
               title="Mark reimbursed"
             >
               <BadgeCheck className="w-3.5 h-3.5" />
@@ -115,7 +115,7 @@ export default function ExpenseRow({ expense }: Props) {
               // Edit — navigate to edit form via URL param or modal
               router.push(`?edit=${expense.id}`);
             }}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-white transition-colors"
             title="Edit expense"
           >
             <Pencil className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ export default function ExpenseRow({ expense }: Props) {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-red-900/30 text-[#64748b] hover:text-red-400 transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-danger/15 text-text-tertiary hover:text-danger transition-colors"
             title="Delete expense"
           >
             <Trash2 className="w-3.5 h-3.5" />

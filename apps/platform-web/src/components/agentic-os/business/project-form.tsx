@@ -139,7 +139,7 @@ export default function ProjectForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md border border-red-800 bg-red-900/20 px-3 py-2 text-xs text-red-400">
+        <div className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
           {error}
         </div>
       )}
@@ -324,7 +324,7 @@ export default function ProjectForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-1.5 transition disabled:opacity-50"
+          className="rounded-lg bg-os-business hover:bg-os-business/90 text-white text-sm font-medium px-4 py-1.5 transition disabled:opacity-50"
         >
           {loading ? 'Saving...' : isEditing ? 'Update Project' : 'Create Project'}
         </button>

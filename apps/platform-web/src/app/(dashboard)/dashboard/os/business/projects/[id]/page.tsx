@@ -33,21 +33,21 @@ const TABS = ['overview', 'tasks', 'time', 'quotes', 'invoices', 'documents', 's
 type Tab = (typeof TABS)[number];
 
 const quoteStatusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  accepted: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  rejected: 'bg-red-900/40 text-red-300 border-red-800',
-  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  converted: 'bg-violet-900/40 text-violet-300 border-violet-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  accepted: 'bg-positive/15 text-positive border-positive/30',
+  rejected: 'bg-danger/15 text-danger border-danger/30',
+  expired: 'bg-warning/15 text-warning border-warning/30',
+  converted: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
 };
 
 const invoiceStatusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  partial: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  paid: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  overdue: 'bg-red-900/40 text-red-300 border-red-800',
-  voided: 'bg-slate-900/40 text-slate-500 border-slate-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  partial: 'bg-warning/15 text-warning border-warning/30',
+  paid: 'bg-positive/15 text-positive border-positive/30',
+  overdue: 'bg-danger/15 text-danger border-danger/30',
+  voided: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 function fmtCents(cents: number): string {
@@ -57,18 +57,18 @@ function fmtCents(cents: number): string {
 const statusOrder: TaskStatus[] = ['in_progress', 'blocked', 'todo', 'done', 'cancelled'];
 
 const statusColors: Record<string, string> = {
-  todo: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  in_progress: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  blocked: 'bg-red-900/40 text-red-300 border-red-800',
-  done: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  cancelled: 'bg-slate-900/40 text-slate-500 border-slate-800 line-through',
+  todo: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  in_progress: 'bg-accent/15 text-accent border-accent/30',
+  blocked: 'bg-danger/15 text-danger border-danger/30',
+  done: 'bg-positive/15 text-positive border-positive/30',
+  cancelled: 'bg-surface-2 text-text-tertiary border-border-subtle line-through',
 };
 
 const priorityColors: Record<string, string> = {
-  low: 'text-[#64748b]',
+  low: 'text-text-tertiary',
   medium: 'text-text-secondary',
-  high: 'text-amber-400',
-  urgent: 'text-red-400',
+  high: 'text-warning',
+  urgent: 'text-danger',
 };
 
 function formatCents(cents: number | null): string {
@@ -182,10 +182,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <Briefcase className="w-6 h-6 text-teal-300" />
+            <Briefcase className="w-6 h-6 text-os-business" />
             <h1 className="text-2xl font-semibold text-white">{project.title}</h1>
           </div>
-          <p className="text-xs text-[#64748b] font-mono mt-1">{project.slug}</p>
+          <p className="text-xs text-text-tertiary font-mono mt-1">{project.slug}</p>
         </div>
         <span
           className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${
@@ -231,7 +231,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           <div className="flex items-center gap-2 mb-4">
             <Link
               href={`/dashboard/os/business/coach?project_id=${project.id}&mode=pricing_advisor`}
-              className="inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-os-business hover:text-os-business/80 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Ask AI Coach about this project
@@ -240,22 +240,22 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           {/* Meta cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-1">Billing Model</p>
+              <p className="text-xs text-text-tertiary mb-1">Billing Model</p>
               <p className="text-sm text-white font-medium">{billingModelLabel}</p>
               {project.defaultRateCents != null && (
-                <p className="text-xs text-teal-300 mt-1">
+                <p className="text-xs text-os-business mt-1">
                   {formatCents(project.defaultRateCents)}/hr default rate
                 </p>
               )}
             </div>
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-1">Budget</p>
+              <p className="text-xs text-text-tertiary mb-1">Budget</p>
               <p className="text-sm text-white font-medium">
                 {project.budgetCents != null ? formatCents(project.budgetCents) : 'No budget set'}
               </p>
             </div>
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-1">Dates</p>
+              <p className="text-xs text-text-tertiary mb-1">Dates</p>
               <div className="space-y-1">
                 {project.startDate && (
                   <p className="text-xs text-text-secondary">Start: {project.startDate}</p>
@@ -275,7 +275,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           {/* Linked contact and deal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-1">Contact</p>
+              <p className="text-xs text-text-tertiary mb-1">Contact</p>
               {contact ? (
                 <div>
                   <p className="text-sm text-white font-medium">
@@ -287,11 +287,11 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               )}
             </div>
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-1">Deal</p>
+              <p className="text-xs text-text-tertiary mb-1">Deal</p>
               {deal ? (
                 <Link
                   href={`/dashboard/os/business/deals/${deal.id}`}
-                  className="text-sm text-teal-300 hover:underline font-medium"
+                  className="text-sm text-os-business hover:underline font-medium"
                 >
                   {deal.title}
                 </Link>
@@ -304,7 +304,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           {/* Description */}
           {project.descriptionMd && (
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-2">Description</p>
+              <p className="text-xs text-text-tertiary mb-2">Description</p>
               <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
                 {project.descriptionMd}
               </div>
@@ -314,7 +314,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           {/* Tags */}
           {project.tags.length > 0 && (
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-              <p className="text-xs text-[#64748b] mb-2">Tags</p>
+              <p className="text-xs text-text-tertiary mb-2">Tags</p>
               <div className="flex flex-wrap gap-2">
                 {project.tags.map((tag) => (
                   <span
@@ -332,7 +332,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           <div>
             <Link
               href="?edit=1&tab=settings"
-              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
               Edit project
@@ -352,7 +352,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             <div className="flex items-center gap-2">
               <Link
                 href="?tab=tasks&new_task=1"
-                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Add task
@@ -376,10 +376,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               return (
                 <div key={status} className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#64748b]">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                       {status.replace('_', ' ')}
                     </h3>
-                    <span className="text-[10px] text-[#64748b]">
+                    <span className="text-[10px] text-text-tertiary">
                       ({statusTasks.length})
                     </span>
                   </div>
@@ -397,7 +397,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                               {task.title}
                             </p>
                             {task.descriptionMd && (
-                              <p className="text-xs text-[#64748b] mt-1 line-clamp-2">
+                              <p className="text-xs text-text-tertiary mt-1 line-clamp-2">
                                 {task.descriptionMd}
                               </p>
                             )}
@@ -411,17 +411,17 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                                   task.priority.slice(1)}
                               </span>
                               {task.assigneeText && (
-                                <span className="text-[10px] text-[#64748b]">
+                                <span className="text-[10px] text-text-tertiary">
                                   {task.assigneeText}
                                 </span>
                               )}
                               {task.dueOn && (
-                                <span className="text-[10px] text-[#64748b]">
+                                <span className="text-[10px] text-text-tertiary">
                                   Due: {task.dueOn}
                                 </span>
                               )}
                               {task.isBillable && (
-                                <span className="text-[10px] text-teal-600">Billable</span>
+                                <span className="text-[10px] text-os-business">Billable</span>
                               )}
                             </div>
                           </div>
@@ -442,7 +442,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             })
           ) : (
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-              <ListTodo className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+              <ListTodo className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
               <p className="text-text-secondary text-sm">
                 No tasks yet. Add your first task to start tracking work.
               </p>
@@ -462,7 +462,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             <div className="flex items-center gap-2">
               <Link
                 href="?tab=time&log_time=1"
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-os-business hover:bg-os-business/90 text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Clock className="w-4 h-4" />
                 Log time
@@ -472,9 +472,9 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
 
           {/* Running timer alert */}
           {isTimerRunning && running && (
-            <div className="rounded-xl border border-teal-800 bg-teal-900/20 p-4 flex items-center justify-between">
+            <div className="rounded-xl border border-os-business/30 bg-os-business/10 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Play className="w-4 h-4 text-teal-300" />
+                <Play className="w-4 h-4 text-os-business" />
                 <div>
                   <p className="text-sm text-white font-medium">
                     Timer running: {running.description || taskNames.get(running.taskId) || 'No description'}
@@ -517,10 +517,10 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                         {entry.description || 'No description'}
                       </p>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[10px] text-[#64748b]">
+                        <span className="text-[10px] text-text-tertiary">
                           {taskNames.get(entry.taskId) ?? 'Unknown task'}
                         </span>
-                        <span className="text-[10px] text-[#64748b]">
+                        <span className="text-[10px] text-text-tertiary">
                           {new Date(entry.startedAt).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -529,7 +529,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                           })}
                         </span>
                         {entry.endedAt && (
-                          <span className="text-[10px] text-[#64748b]">
+                          <span className="text-[10px] text-text-tertiary">
                             to{' '}
                             {new Date(entry.endedAt).toLocaleTimeString('en-US', {
                               hour: '2-digit',
@@ -545,7 +545,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                           {formatMinutes(duration)}
                         </p>
                         {entry.isBillable && amount != null && (
-                          <p className="text-[10px] font-mono text-teal-300">
+                          <p className="text-[10px] font-mono text-os-business">
                             {formatCents(amount)}
                           </p>
                         )}
@@ -555,8 +555,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                         <span
                           className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-medium ${
                             entry.billedAt
-                              ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-800'
-                              : 'bg-amber-900/40 text-amber-400 border border-amber-800'
+                              ? 'bg-positive/15 text-positive border border-positive/30'
+                              : 'bg-warning/15 text-warning border border-warning/30'
                           }`}
                         >
                           {entry.billedAt ? 'Billed' : 'Pending'}
@@ -569,7 +569,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             </div>
           ) : (
             <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-              <Clock className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+              <Clock className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
               <p className="text-text-secondary text-sm">
                 No time entries yet. Start tracking time for this project.
               </p>
@@ -594,7 +594,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white">{q.title}</p>
-                    <p className="text-[10px] text-[#64748b] font-mono">{q.quoteNumber}</p>
+                    <p className="text-[10px] text-text-tertiary font-mono">{q.quoteNumber}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${quoteStatusColors[q.status] ?? quoteStatusColors.draft}`}>
@@ -606,7 +606,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               </Link>
             ))
           ) : (
-            <p className="text-sm text-[#64748b] py-4">No quotes linked to this project yet.</p>
+            <p className="text-sm text-text-tertiary py-4">No quotes linked to this project yet.</p>
           )}
         </div>
       )}
@@ -627,7 +627,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white">{inv.title}</p>
-                    <p className="text-[10px] text-[#64748b] font-mono">{inv.invoiceNumber}</p>
+                    <p className="text-[10px] text-text-tertiary font-mono">{inv.invoiceNumber}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${invoiceStatusColors[inv.status] ?? invoiceStatusColors.draft}`}>
@@ -639,7 +639,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
               </Link>
             ))
           ) : (
-            <p className="text-sm text-[#64748b] py-4">No invoices linked to this project yet.</p>
+            <p className="text-sm text-text-tertiary py-4">No invoices linked to this project yet.</p>
           )}
         </div>
       )}
@@ -674,7 +674,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
             <div className="space-y-4">
               <Link
                 href="?tab=settings&edit=1"
-                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Edit project
@@ -683,8 +683,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           )}
 
           {/* Archive section */}
-          <div className="rounded-xl border border-red-900/50 bg-surface-2 p-5 mt-6 pt-6 border-t border-red-900/30">
-            <h3 className="text-sm font-semibold text-red-400 mb-2">Danger Zone</h3>
+          <div className="rounded-xl border border-danger/30 bg-surface-2 p-5 mt-6 pt-6 border-t border-danger/20">
+            <h3 className="text-sm font-semibold text-danger mb-2">Danger Zone</h3>
             <p className="text-xs text-text-secondary mb-4">
               Archiving this project will hide it from default views. You can restore it later.
             </p>

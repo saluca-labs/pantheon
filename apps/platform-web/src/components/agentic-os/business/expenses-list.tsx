@@ -39,25 +39,25 @@ export default function ExpensesList({
       <table className="w-full">
         <thead>
           <tr className="border-b border-border-subtle bg-surface-0/50">
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Category
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Vendor
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Description
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Date
             </th>
-            <th className="py-3 px-4 text-right text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-right text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Amount
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Reimbursable
             </th>
-            <th className="py-3 px-4 text-left text-[10px] font-medium text-[#64748b] uppercase tracking-wider">
+            <th className="py-3 px-4 text-left text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
               Actions
             </th>
           </tr>

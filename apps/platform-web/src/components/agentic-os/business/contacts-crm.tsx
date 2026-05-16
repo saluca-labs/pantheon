@@ -33,13 +33,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const STAGE_COLORS: Record<ContactStage, string> = {
-  lead: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  qualified: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-  proposal: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  negotiation: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-  won: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  lost: 'bg-red-500/15 text-red-300 border-red-500/30',
-  inactive: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  lead: 'bg-accent/15 text-accent border-accent/30',
+  qualified: 'bg-os-autobiographer/15 text-os-autobiographer border-os-autobiographer/30',
+  proposal: 'bg-warning/15 text-warning border-warning/30',
+  negotiation: 'bg-attention/15 text-attention border-attention/30',
+  won: 'bg-positive/15 text-positive border-positive/30',
+  lost: 'bg-danger/15 text-danger border-danger/30',
+  inactive: 'bg-surface-2 text-text-secondary border-border-subtle',
 };
 
 const BLANK_PERSON = {
@@ -203,12 +203,12 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
           <button
             type="submit"
             disabled={savingPerson}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {savingPerson ? 'Adding…' : 'Add contact'}
           </button>
-          {personMsg && <span className="text-sm text-emerald-300">{personMsg}</span>}
-          {personError && <span className="text-sm text-red-300">{personError}</span>}
+          {personMsg && <span className="text-sm text-positive">{personMsg}</span>}
+          {personError && <span className="text-sm text-danger">{personError}</span>}
         </div>
       </form>
 
@@ -259,7 +259,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
           >
             {savingInteraction ? 'Logging…' : '+ Log'}
           </button>
-          {interactionError && <span className="text-sm text-red-300">{interactionError}</span>}
+          {interactionError && <span className="text-sm text-danger">{interactionError}</span>}
         </div>
       </form>
 
@@ -291,7 +291,7 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
                   <span
                     className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${
                       (STAGE_COLORS as Record<string, string>)[p.stage] ??
-                      'bg-slate-500/15 text-slate-300 border-slate-500/30'
+                      'bg-surface-2 text-text-secondary border-border-subtle'
                     }`}
                   >
                     {p.stage}

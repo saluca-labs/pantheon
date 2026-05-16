@@ -6,9 +6,13 @@
  * Wave D (UI Depth Wave) polish: the gating not-`sent` state now uses the
  * shared `EmptyState` primitive ("doors, not apologies"), the error panel maps
  * to the `danger` status token, the canvas gets a clearer dashed-border draw
- * affordance, and legacy `text-white` / `text-[#64748b]` / `bg-[#3a56d4]`
- * literals are migrated onto the visual-language tokens. Same capture flow,
- * same route, same payload — presentation only.
+ * affordance, and legacy raw-text + raw-hex literals are migrated onto the
+ * visual-language tokens. Same capture flow, same route, same payload —
+ * presentation only.
+ *
+ * Carve-out: the Canvas 2D `strokeStyle` literal below stays as raw hex; it's
+ * a JS API call (not a Tailwind class) and cannot resolve a CSS var without a
+ * `getComputedStyle` lookup, which would be a logic change.
  *
  * @license MIT — Tiresias Business OS Phase 6 (internal).
  */

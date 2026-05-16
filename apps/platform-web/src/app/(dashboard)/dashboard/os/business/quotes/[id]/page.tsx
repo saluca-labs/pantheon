@@ -19,12 +19,12 @@ import LineItemForm from '@/components/agentic-os/business/line-item-form';
 export const dynamic = 'force-dynamic';
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  accepted: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  rejected: 'bg-red-900/40 text-red-300 border-red-800',
-  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  converted: 'bg-violet-900/40 text-violet-300 border-violet-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  accepted: 'bg-positive/15 text-positive border-positive/30',
+  rejected: 'bg-danger/15 text-danger border-danger/30',
+  expired: 'bg-warning/15 text-warning border-warning/30',
+  converted: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
 };
 
 function fmtCents(cents: number): string {
@@ -97,7 +97,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <FileText className="w-6 h-6 text-teal-300 shrink-0" />
+          <FileText className="w-6 h-6 text-os-business shrink-0" />
           <h1 className="text-2xl font-semibold text-white truncate">{quote.title}</h1>
           <span
             className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium ${
@@ -112,7 +112,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             <form action={sendQuoteAction.bind(null, quote.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
               >
                 <Send className="w-4 h-4" />
                 Send
@@ -123,7 +123,7 @@ export default async function QuoteDetailPage({ params }: Props) {
             <form action={convertQuoteAction.bind(null, quote.id)}>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2 transition-colors"
+                className="inline-flex items-center gap-2 rounded-lg bg-os-business hover:bg-os-business/90 text-white text-sm font-medium px-4 py-2 transition-colors"
               >
                 <ArrowRightLeft className="w-4 h-4" />
                 Convert to Invoice
@@ -133,7 +133,7 @@ export default async function QuoteDetailPage({ params }: Props) {
           <Link
             href={`/api/tiresias/agentic-os/business/quotes/${quote.id}/export.pdf`}
             target="_blank"
-            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
+            className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition"
           >
             Export PDF
           </Link>
@@ -143,18 +143,18 @@ export default async function QuoteDetailPage({ params }: Props) {
       {/* Meta Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Quote Number</p>
+          <p className="text-xs text-text-tertiary mb-1">Quote Number</p>
           <p className="text-sm text-white font-mono">{quote.quoteNumber}</p>
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Dates</p>
+          <p className="text-xs text-text-tertiary mb-1">Dates</p>
           <p className="text-xs text-text-secondary">Date: {quote.quoteDate}</p>
           {quote.expiresOn && (
             <p className="text-xs text-text-secondary">Expires: {quote.expiresOn}</p>
           )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Totals</p>
+          <p className="text-xs text-text-tertiary mb-1">Totals</p>
           <p className="text-sm text-white font-bold">{fmtCents(quote.totalCents)}</p>
           <p className="text-xs text-text-secondary">
             Sub {fmtCents(quote.subtotalCents)} + Tax {fmtCents(quote.taxCents)}
@@ -165,11 +165,11 @@ export default async function QuoteDetailPage({ params }: Props) {
       {/* Linked entities */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Contact</p>
+          <p className="text-xs text-text-tertiary mb-1">Contact</p>
           {contact ? (
             <Link
               href={`/dashboard/os/business/people/${contact.id}`}
-              className="text-sm text-teal-300 hover:underline"
+              className="text-sm text-os-business hover:underline"
             >
               {contact.firstName} {contact.lastName}
             </Link>
@@ -178,11 +178,11 @@ export default async function QuoteDetailPage({ params }: Props) {
           )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Deal</p>
+          <p className="text-xs text-text-tertiary mb-1">Deal</p>
           {deal ? (
             <Link
               href={`/dashboard/os/business/deals/${deal.id}`}
-              className="text-sm text-teal-300 hover:underline"
+              className="text-sm text-os-business hover:underline"
             >
               {deal.title}
             </Link>
@@ -191,11 +191,11 @@ export default async function QuoteDetailPage({ params }: Props) {
           )}
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-          <p className="text-xs text-[#64748b] mb-1">Project</p>
+          <p className="text-xs text-text-tertiary mb-1">Project</p>
           {project ? (
             <Link
               href={`/dashboard/os/business/projects/${project.id}`}
-              className="text-sm text-teal-300 hover:underline"
+              className="text-sm text-os-business hover:underline"
             >
               {project.title}
             </Link>
@@ -208,7 +208,7 @@ export default async function QuoteDetailPage({ params }: Props) {
       {/* Description */}
       {quote.descriptionMd && (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-5 mb-6">
-          <p className="text-xs text-[#64748b] mb-2">Description</p>
+          <p className="text-xs text-text-tertiary mb-2">Description</p>
           <div className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">
             {quote.descriptionMd}
           </div>
@@ -238,7 +238,7 @@ export default async function QuoteDetailPage({ params }: Props) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-white">{item.description}</p>
-                  <p className="text-[10px] text-[#64748b]">
+                  <p className="text-[10px] text-text-tertiary">
                     {item.quantity} x {item.unitLabel || 'unit'} @ {fmtCents(item.unitPriceCents)}
                     {item.taxRateBp > 0 && ` (${(item.taxRateBp / 100).toFixed(1)}% tax)`}
                   </p>

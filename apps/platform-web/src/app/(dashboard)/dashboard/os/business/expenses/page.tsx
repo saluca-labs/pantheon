@@ -67,12 +67,12 @@ export default async function ExpensesPage({ searchParams }: Props) {
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Wallet className="w-6 h-6 text-teal-300" />
+          <Wallet className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Expenses</h1>
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New expense
@@ -106,8 +106,8 @@ export default async function ExpensesPage({ searchParams }: Props) {
           href={reimbursableOnly ? '?' : '?reimbursable=1'}
           className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
             reimbursableOnly
-              ? 'border-amber-600 bg-amber-600/10 text-amber-400'
-              : 'border-border-subtle bg-surface-2 text-text-secondary hover:text-white hover:border-amber-600/50'
+              ? 'border-warning bg-warning/10 text-warning'
+              : 'border-border-subtle bg-surface-2 text-text-secondary hover:text-white hover:border-warning/50'
           }`}
         >
           Reimbursable only

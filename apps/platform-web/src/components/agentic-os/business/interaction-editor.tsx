@@ -98,11 +98,11 @@ export function InteractionEditor({
       <button
         type="submit"
         disabled={saving}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+        className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
       >
         {saving ? '…' : '+ Log'}
       </button>
-      {err && <span className="sm:col-span-3 text-xs text-red-300">{err}</span>}
+      {err && <span className="sm:col-span-3 text-xs text-danger">{err}</span>}
     </form>
   );
 }

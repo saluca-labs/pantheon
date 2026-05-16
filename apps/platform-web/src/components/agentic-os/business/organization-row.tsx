@@ -21,14 +21,14 @@ export function OrganizationRow({ organization }: { organization: Organization }
           <p className="text-sm font-medium text-white truncate">
             {organization.name}
             {organization.archivedAt && (
-              <span className="ml-2 text-[10px] text-amber-300 font-normal">(archived)</span>
+              <span className="ml-2 text-[10px] text-warning font-normal">(archived)</span>
             )}
           </p>
           {organization.industry && (
             <p className="text-xs text-text-secondary truncate">{organization.industry}</p>
           )}
         </div>
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-teal-500/15 text-teal-300 border-teal-500/30">
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border bg-os-business/15 text-os-business border-os-business/30">
           {organization.orgType.replace(/_/g, ' ')}
         </span>
       </div>

@@ -43,12 +43,12 @@ export default async function BusinessOrgsPage({ searchParams }: Props) {
 
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div className="flex items-center gap-3">
-          <Building2 className="w-6 h-6 text-teal-300" />
+          <Building2 className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Organizations</h1>
         </div>
         <Link
           href="/dashboard/os/business/organizations?new=1"
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-1.5 transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-1.5 transition"
         >
           + Add organization
         </Link>

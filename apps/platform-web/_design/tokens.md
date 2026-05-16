@@ -86,6 +86,19 @@ Single system accent + four status colors. Status colors are semantic — `posit
 
 **Why two reds (`attention` + `danger`):** Cyber OS triage benefits from distinguishing "look at this" (`attention`, orange-leaning) from "this failed / is destructive" (`danger`, red). Without this split, every alert reads at the same intensity.
 
+### Configurable accents (W-F.3)
+
+Two rare-color surfaces extracted during the Business-OS palette drain (expense-category pills, project/invoice/quote status maps). They live alongside `accent` + status as **first-class configurable surfaces** — every tenant will be able to override them via the Wave F.7/G config layer (cross-OS theming). Defaults align with the Tailwind `-400` step to match the per-OS palette's saturation level.
+
+| Token              | Hex       | HSL                  | Tailwind utility                        | Purpose                                                                |
+|--------------------|-----------|----------------------|-----------------------------------------|------------------------------------------------------------------------|
+| `accent-info`      | `#22d3ee` | hsl(187 86% 53%)    | `bg-accent-info` / `text-accent-info`   | Neutral-info accent (calmer than `os-research`'s sky for non-research surfaces — e.g. travel/utility category pills). |
+| `accent-pink`      | `#f472b6` | hsl(330 81% 70%)    | `bg-accent-pink` / `text-accent-pink`   | Tertiary-pink accent for category/status pills needing a 12th distinct hue beyond the per-OS palette (e.g. marketing/insurance expense categories). |
+
+**Tailwind utility:** both tokens resolve to `bg-accent-<name>`, `text-accent-<name>`, `border-accent-<name>` with the same opacity-modifier surface area as per-OS accents (10/15/20/30/40/70). Safelist entries live in `globals.css` next to the per-OS safelist.
+
+**Why a separate tier (not folded into status or per-OS):** these read as *categorical chroma slots* — they distinguish unrelated buckets in a pill palette where status semantics (positive/warning/danger) and OS identity (teal/sky/fuchsia) don't apply. Folding `pink` into `os-filmmaker` would imply a filmmaker affinity for marketing-expense pills, which is wrong; folding `cyan` into `os-research` would imply a research affinity for travel pills. Configurable means the tenant can re-skin without semantic drift.
+
 ---
 
 ## 5. Per-OS accents

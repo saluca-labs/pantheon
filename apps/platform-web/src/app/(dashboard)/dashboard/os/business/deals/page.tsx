@@ -48,12 +48,12 @@ export default async function DealsPage({ searchParams }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <DollarSign className="w-6 h-6 text-teal-300" />
+          <DollarSign className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Deals</h1>
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add deal

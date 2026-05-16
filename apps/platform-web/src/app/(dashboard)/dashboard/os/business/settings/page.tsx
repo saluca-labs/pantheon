@@ -30,7 +30,7 @@ export default async function BusinessSettingsPage() {
       </Link>
 
       <div className="flex items-center gap-3 mb-1">
-        <SettingsIcon className="w-6 h-6 text-teal-300" />
+        <SettingsIcon className="w-6 h-6 text-os-business" />
         <h1 className="text-2xl font-semibold text-white">Business settings</h1>
       </div>
       <p className="text-sm text-text-secondary mb-6">

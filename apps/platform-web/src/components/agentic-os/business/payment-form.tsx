@@ -81,7 +81,7 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
   );
 
   const inputClass =
-    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-[#64748b] focus:border-accent focus:outline-none';
+    'w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder-text-tertiary focus:border-accent focus:outline-none';
   const selectClass = inputClass;
   const labelClass = 'block text-xs text-text-secondary mb-1';
 
@@ -90,8 +90,8 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
       <h2 className="text-lg font-medium text-white">Record Payment</h2>
 
       {error && (
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-3">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="rounded-lg border border-danger/30 bg-danger/10 p-3">
+          <p className="text-sm text-danger">{error}</p>
         </div>
       )}
 
@@ -109,7 +109,7 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
             required
           />
           {amountCents > 0 && (
-            <p className="text-[10px] text-teal-400 mt-1">
+            <p className="text-[10px] text-os-business mt-1">
               = ${(amountCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           )}
@@ -161,7 +161,7 @@ export default function PaymentForm({ invoiceId, onSuccess }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
+        className="inline-flex items-center gap-2 rounded-lg bg-os-business hover:bg-os-business/90 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 transition-colors"
       >
         {loading ? 'Recording...' : 'Record Payment'}
       </button>

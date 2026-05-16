@@ -57,11 +57,11 @@ export default function ForecastStrip({ deals }: ForecastStripProps) {
         {openDeals} open deal{openDeals !== 1 ? 's' : ''}
       </span>
       <span className="text-xs text-text-secondary">·</span>
-      <span className="text-xs text-teal-300 font-semibold">
+      <span className="text-xs text-os-business font-semibold">
         {formatDollars(totalValue)} total
       </span>
       <span className="text-xs text-text-secondary">·</span>
-      <span className="text-xs text-teal-300/80">
+      <span className="text-xs text-os-business/80">
         {formatDollars(weightedValue)} weighted
       </span>
     </div>

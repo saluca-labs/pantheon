@@ -22,21 +22,21 @@ const TABS = ['overview', 'quotes', 'invoices'] as const;
 type Tab = (typeof TABS)[number];
 
 const quoteStatusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  accepted: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  rejected: 'bg-red-900/40 text-red-300 border-red-800',
-  expired: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  converted: 'bg-violet-900/40 text-violet-300 border-violet-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  accepted: 'bg-positive/15 text-positive border-positive/30',
+  rejected: 'bg-danger/15 text-danger border-danger/30',
+  expired: 'bg-warning/15 text-warning border-warning/30',
+  converted: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
 };
 
 const invoiceStatusColors: Record<string, string> = {
-  draft: 'bg-slate-900/40 text-slate-300 border-slate-800',
-  sent: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  partial: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  paid: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  overdue: 'bg-red-900/40 text-red-300 border-red-800',
-  voided: 'bg-slate-900/40 text-slate-500 border-slate-800',
+  draft: 'bg-surface-3 text-text-tertiary border-border-subtle',
+  sent: 'bg-accent/15 text-accent border-accent/30',
+  partial: 'bg-warning/15 text-warning border-warning/30',
+  paid: 'bg-positive/15 text-positive border-positive/30',
+  overdue: 'bg-danger/15 text-danger border-danger/30',
+  voided: 'bg-surface-2 text-text-tertiary border-border-subtle',
 };
 
 function fmtCents(cents: number): string {
@@ -134,7 +134,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white">{q.title}</p>
-                    <p className="text-[10px] text-[#64748b] font-mono">{q.quoteNumber}</p>
+                    <p className="text-[10px] text-text-tertiary font-mono">{q.quoteNumber}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${quoteStatusColors[q.status] ?? quoteStatusColors.draft}`}>
@@ -146,7 +146,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               </Link>
             ))
           ) : (
-            <p className="text-sm text-[#64748b] py-4">No quotes for this contact yet.</p>
+            <p className="text-sm text-text-tertiary py-4">No quotes for this contact yet.</p>
           )}
         </div>
       )}
@@ -167,7 +167,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white">{inv.title}</p>
-                    <p className="text-[10px] text-[#64748b] font-mono">{inv.invoiceNumber}</p>
+                    <p className="text-[10px] text-text-tertiary font-mono">{inv.invoiceNumber}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-medium ${invoiceStatusColors[inv.status] ?? invoiceStatusColors.draft}`}>
@@ -179,7 +179,7 @@ export default async function PersonDetailPage({ params, searchParams }: Props) 
               </Link>
             ))
           ) : (
-            <p className="text-sm text-[#64748b] py-4">No invoices for this contact yet.</p>
+            <p className="text-sm text-text-tertiary py-4">No invoices for this contact yet.</p>
           )}
         </div>
       )}
