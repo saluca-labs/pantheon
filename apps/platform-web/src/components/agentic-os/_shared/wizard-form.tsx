@@ -69,18 +69,28 @@ export function WizardForm({
         {steps.map((step, idx) => {
           const isActive = step.id === active.id;
           const isPast = idx < activeIndex;
+          // W-E.4: past-state retoken from raw emerald palette to the
+          // `positive` semantic token (matches the four-status contract in
+          // `_design/tokens.md` §4). Visual hue identical (#34d399 family).
           const cls = isActive
             ? 'rounded-md border border-accent/60 bg-accent/15 text-white'
             : isPast
-              ? 'rounded-md border border-emerald-500/40 bg-emerald-500/5 text-emerald-200'
+              ? 'rounded-md border border-positive/40 bg-positive/5 text-positive'
               : 'rounded-md border border-border-subtle bg-surface-0 text-text-secondary hover:text-white hover:border-accent/40';
           return (
             <Link
               key={step.id}
               href={hrefFor(step.id)}
+              aria-current={isActive ? 'step' : undefined}
               className={`${cls} px-3 py-2 text-center font-medium transition`}
             >
-              <span className="block opacity-60">Step {idx + 1}</span>
+              <span className="sr-only">
+                Step {idx + 1} of {steps.length}
+                {isActive ? ', current' : isPast ? ', completed' : ''}:
+              </span>
+              <span className="block opacity-60" aria-hidden="true">
+                Step {idx + 1}
+              </span>
               <span className="block">{step.label}</span>
             </Link>
           );

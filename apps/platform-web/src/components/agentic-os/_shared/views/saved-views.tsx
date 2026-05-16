@@ -161,6 +161,7 @@ export function SavedViews<TQuery>({
         <span className="inline-flex items-center gap-1 rounded border border-border-strong bg-surface-2 px-1.5 py-0.5">
           <input
             type="text"
+            // eslint-disable-next-line jsx-a11y/no-autofocus -- W-E.4 carve-out: autoFocus is intentional UX here. The input appears in response to a user clicking "Save view", so the focus is invited (not surprise-stealing) and matches typeahead-rename patterns elsewhere.
             autoFocus
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}

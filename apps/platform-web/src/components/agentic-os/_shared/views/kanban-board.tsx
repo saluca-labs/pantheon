@@ -238,6 +238,47 @@ export function KanbanBoard<TItem extends KanbanItemBase>({
     [activeId, items],
   );
 
+  // W-E.4: screen-reader announcements for keyboard / pointer drag events.
+  // Default dnd-kit announcements are generic ("Item picked up") — these
+  // reference the item id + column id so assistive tech users can follow.
+  // Column labels would be richer, but they're rendered via the optional
+  // `columnHeader` render-prop, so we fall back to the column id.
+  const announcements = useMemo(
+    () => ({
+      onDragStart({ active }: { active: { id: string | number } }) {
+        const fromColumnId =
+          (items.find((i) => i.id === active.id)?.columnId as string) ?? '';
+        return `Picked up item ${active.id} from column ${fromColumnId}.`;
+      },
+      onDragOver({
+        active,
+        over,
+      }: {
+        active: { id: string | number };
+        over: { id: string | number } | null;
+      }) {
+        if (!over) return `Item ${active.id} is not over a droppable column.`;
+        return `Item ${active.id} is over column ${over.id}.`;
+      },
+      onDragEnd({
+        active,
+        over,
+      }: {
+        active: { id: string | number };
+        over: { id: string | number } | null;
+      }) {
+        if (!over) {
+          return `Item ${active.id} was dropped without a target.`;
+        }
+        return `Item ${active.id} was dropped onto column ${over.id}.`;
+      },
+      onDragCancel({ active }: { active: { id: string | number } }) {
+        return `Drag of item ${active.id} was cancelled.`;
+      },
+    }),
+    [items],
+  );
+
   function handleDragStart(event: DragStartEvent) {
     setActiveId(String(event.active.id));
   }
@@ -267,6 +308,7 @@ export function KanbanBoard<TItem extends KanbanItemBase>({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      accessibility={{ announcements }}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
