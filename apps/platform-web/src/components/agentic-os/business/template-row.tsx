@@ -13,13 +13,13 @@ import { Pencil, Trash2 } from 'lucide-react';
 import type { DocTemplate } from '@/lib/agentic-os/business/doc-templates';
 
 const kindColors: Record<string, string> = {
-  nda: 'bg-violet-900/40 text-violet-300 border-violet-800',
-  sow: 'bg-blue-900/40 text-blue-300 border-blue-800',
-  msa: 'bg-teal-900/40 text-teal-300 border-teal-800',
-  proposal: 'bg-amber-900/40 text-amber-300 border-amber-800',
-  '1099': 'bg-rose-900/40 text-rose-300 border-rose-800',
-  invoice_terms: 'bg-emerald-900/40 text-emerald-300 border-emerald-800',
-  other: 'bg-slate-900/40 text-slate-300 border-slate-800',
+  nda: 'bg-os-secure-dev/15 text-os-secure-dev border-os-secure-dev/30',
+  sow: 'bg-accent/15 text-accent border-accent/30',
+  msa: 'bg-os-business/15 text-os-business border-os-business/30',
+  proposal: 'bg-warning/15 text-warning border-warning/30',
+  '1099': 'bg-os-filmmaker/15 text-os-filmmaker border-os-filmmaker/30',
+  invoice_terms: 'bg-positive/15 text-positive border-positive/30',
+  other: 'bg-surface-2 text-text-secondary border-border-subtle',
 };
 
 interface Props {
@@ -66,17 +66,17 @@ export default function TemplateRow({ template, onEdit, onDelete }: Props) {
           {template.title}
         </Link>
       </td>
-      <td className="py-3 px-4 text-xs text-[#64748b] font-mono">
+      <td className="py-3 px-4 text-xs text-text-tertiary font-mono">
         v{template.version}
       </td>
-      <td className="py-3 px-4 text-xs text-[#64748b]">
+      <td className="py-3 px-4 text-xs text-text-tertiary">
         {template.updatedAt.slice(0, 10)}
       </td>
       <td className="py-3 px-4">
         <div className="flex items-center gap-1">
           <button
             onClick={() => onEdit?.(template.id)}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-[#64748b] hover:text-white transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-border-subtle text-text-tertiary hover:text-white transition-colors"
             title="Edit template"
           >
             <Pencil className="w-3.5 h-3.5" />
@@ -84,7 +84,7 @@ export default function TemplateRow({ template, onEdit, onDelete }: Props) {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-red-900/30 text-[#64748b] hover:text-red-400 transition-colors"
+            className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-danger/15 text-text-tertiary hover:text-danger transition-colors"
             title="Delete template"
           >
             <Trash2 className="w-3.5 h-3.5" />

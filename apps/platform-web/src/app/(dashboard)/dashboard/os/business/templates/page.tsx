@@ -41,7 +41,7 @@ export default async function TemplatesPage({ searchParams }: Props) {
         </div>
         <Link
           href="/dashboard/os/business/templates/new"
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
+          className="rounded-lg bg-accent hover:bg-accent/90 text-white px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           New template

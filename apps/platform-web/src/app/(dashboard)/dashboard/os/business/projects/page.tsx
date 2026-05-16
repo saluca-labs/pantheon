@@ -67,12 +67,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Briefcase className="w-6 h-6 text-teal-300" />
+          <Briefcase className="w-6 h-6 text-os-business" />
           <h1 className="text-2xl font-semibold text-white">Projects</h1>
         </div>
         <Link
           href="?new=1"
-          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New project
@@ -154,7 +154,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
             />
             <button
               type="submit"
-              className="rounded-md bg-accent hover:bg-[#3a56d4] text-white text-xs font-medium px-3 py-1.5 transition"
+              className="rounded-md bg-accent hover:bg-accent/90 text-white text-xs font-medium px-3 py-1.5 transition"
             >
               Search
             </button>
@@ -175,7 +175,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="rounded-xl border border-border-subtle bg-surface-2 p-12 text-center">
-          <Briefcase className="w-8 h-8 text-[#64748b] mx-auto mb-3" />
+          <Briefcase className="w-8 h-8 text-text-tertiary mx-auto mb-3" />
           <p className="text-text-secondary text-sm">
             No projects yet. Create your first project to start tracking work.
           </p>

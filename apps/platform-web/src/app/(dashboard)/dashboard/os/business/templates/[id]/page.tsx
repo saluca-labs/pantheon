@@ -21,7 +21,7 @@ function BumpVersionButton({ id }: { id: string }) {
   return (
     <Link
       href={`/api/tiresias/agentic-os/business/templates/${id}/versions`}
-      className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
+      className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
     >
       <GitBranch className="w-4 h-4" />
       Bump version
@@ -71,7 +71,7 @@ export default async function TemplateDetailPage({ params }: Props) {
           >
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-[#252836] text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-2 hover:bg-surface-3 text-text-secondary hover:text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <GitBranch className="w-4 h-4" />
               Bump version
@@ -99,7 +99,7 @@ export default async function TemplateDetailPage({ params }: Props) {
         {/* Version history sidebar */}
         <div className="space-y-4">
           <div className="rounded-xl border border-border-subtle bg-surface-2 p-5">
-            <h3 className="text-xs font-semibold text-[#64748b] uppercase tracking-wider mb-3">
+            <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">
               Version History
             </h3>
             {versionHistory.length > 0 ? (
@@ -116,7 +116,7 @@ export default async function TemplateDetailPage({ params }: Props) {
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-white font-medium">v{v.version}</span>
-                      <span className="text-[#64748b] font-mono">
+                      <span className="text-text-tertiary font-mono">
                         {v.updatedAt.slice(0, 10)}
                       </span>
                     </div>
@@ -124,7 +124,7 @@ export default async function TemplateDetailPage({ params }: Props) {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-[#64748b]">
+              <p className="text-xs text-text-tertiary">
                 This is the only version. Bump to create a new version.
               </p>
             )}

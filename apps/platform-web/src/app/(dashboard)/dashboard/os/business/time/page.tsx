@@ -118,14 +118,14 @@ export default async function TimePage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Clock className="w-6 h-6 text-teal-300" />
+        <Clock className="w-6 h-6 text-os-business" />
         <h1 className="text-2xl font-semibold text-white">Time Tracking</h1>
       </div>
 
       {/* Running timer section */}
       <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <Play className="w-4 h-4 text-teal-300" />
+          <Play className="w-4 h-4 text-os-business" />
           Running Timer
         </h2>
 
@@ -143,16 +143,16 @@ export default async function TimePage() {
                   {runningProjectName && <span>Project: {runningProjectName}</span>}
                 </p>
                 {running.isBillable && running.billingRateCents != null && (
-                  <p className="text-xs text-[#64748b] mt-1">
+                  <p className="text-xs text-text-tertiary mt-1">
                     Rate: {formatCents(running.billingRateCents)}/hr
                   </p>
                 )}
               </div>
               <div className="text-right">
-                <p className="text-2xl font-mono text-teal-300 tabular-nums">
+                <p className="text-2xl font-mono text-os-business tabular-nums">
                   {formatMinutes(elapsedMinutes(running.startedAt))}
                 </p>
-                <p className="text-[10px] text-[#64748b] mt-1">elapsed</p>
+                <p className="text-[10px] text-text-tertiary mt-1">elapsed</p>
                 <StopTimerButton entryId={running.id} />
               </div>
             </div>
@@ -162,7 +162,7 @@ export default async function TimePage() {
             <p className="text-text-secondary text-sm mb-3">No timer running</p>
             <Link
               href="/dashboard/os/business/projects"
-              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-4 py-2 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               <Play className="w-4 h-4" />
               Go to projects to start a timer
@@ -174,7 +174,7 @@ export default async function TimePage() {
       {/* Unbilled summary */}
       <div className="mb-6 rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-teal-300" />
+          <DollarSign className="w-4 h-4 text-os-business" />
           Unbilled Summary
         </h2>
 
@@ -187,7 +187,7 @@ export default async function TimePage() {
               </div>
               <div className="rounded-lg bg-surface-0 border border-border-subtle p-4">
                 <p className="text-xs text-text-secondary mb-1">Total Unbilled Amount</p>
-                <p className="text-xl font-mono text-teal-300">{formatCents(totalUnbilledCents)}</p>
+                <p className="text-xl font-mono text-os-business">{formatCents(totalUnbilledCents)}</p>
               </div>
             </div>
 
@@ -201,7 +201,7 @@ export default async function TimePage() {
                   <span className="text-sm text-white">{data.projectName}</span>
                   <div className="flex items-center gap-4 text-xs">
                     <span className="text-text-secondary">{formatMinutes(data.totalMinutes)}</span>
-                    <span className="text-teal-300 font-mono">{formatCents(data.totalCents)}</span>
+                    <span className="text-os-business font-mono">{formatCents(data.totalCents)}</span>
                   </div>
                 </Link>
               ))}
@@ -217,7 +217,7 @@ export default async function TimePage() {
       {/* Recent entries */}
       <div className="rounded-xl border border-border-subtle bg-surface-2 p-6">
         <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-teal-300" />
+          <Calendar className="w-4 h-4 text-os-business" />
           Recent Entries
         </h2>
 
@@ -225,7 +225,7 @@ export default async function TimePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border-subtle text-[#64748b]">
+                <tr className="border-b border-border-subtle text-text-tertiary">
                   <th className="text-left py-2 font-medium">Description</th>
                   <th className="text-left py-2 font-medium">Task</th>
                   <th className="text-left py-2 font-medium">Project</th>
@@ -252,7 +252,7 @@ export default async function TimePage() {
                       </td>
                       <td className="py-2.5 text-text-secondary">{entry.taskTitle}</td>
                       <td className="py-2.5 text-text-secondary">{entry.projectTitle}</td>
-                      <td className="py-2.5 text-[#64748b]">
+                      <td className="py-2.5 text-text-tertiary">
                         {new Date(entry.startedAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -263,9 +263,9 @@ export default async function TimePage() {
                       </td>
                       <td className="py-2.5 text-right font-mono">
                         {entry.isBillable && amount != null ? (
-                          <span className="text-teal-300">{formatCents(amount)}</span>
+                          <span className="text-os-business">{formatCents(amount)}</span>
                         ) : (
-                          <span className="text-[#64748b]">--</span>
+                          <span className="text-text-tertiary">--</span>
                         )}
                       </td>
                     </tr>

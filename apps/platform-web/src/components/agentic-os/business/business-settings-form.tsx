@@ -201,14 +201,14 @@ export function BusinessSettingsForm({ initial }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
-        <span role="status" aria-live="polite" className="text-sm text-emerald-300">
+        <span role="status" aria-live="polite" className="text-sm text-positive">
           {msg ?? ''}
         </span>
-        <span role="alert" className="text-sm text-red-300">
+        <span role="alert" className="text-sm text-danger">
           {err ?? ''}
         </span>
       </div>

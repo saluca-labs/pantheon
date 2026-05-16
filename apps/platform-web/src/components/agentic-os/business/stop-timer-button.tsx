@@ -52,7 +52,7 @@ export default function StopTimerButton({ entryId }: StopTimerButtonProps) {
     <button
       onClick={handleStop}
       disabled={loading}
-      className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-500 text-white text-xs font-medium px-3 py-1.5 transition disabled:opacity-50"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-danger hover:bg-danger/90 text-white text-xs font-medium px-3 py-1.5 transition disabled:opacity-50"
     >
       <Square className="w-3 h-3" />
       {loading ? 'Stopping...' : 'Stop'}

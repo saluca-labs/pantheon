@@ -3,7 +3,7 @@
  *
  * Wave D (UI Depth Wave) specialization: the deal-detail page's quotes and
  * invoices tabs used to be inline JSX with hand-spelled status-color maps and
- * `text-[#64748b]` literals. This extracts that into a small presentational
+ * raw tertiary-text literals. This extracts that into a small presentational
  * component aligned to the visual-language tokens, shared by both tabs and the
  * `CrossEntityTabs`-driven deal-detail page. Empty state uses the shared
  * `EmptyState` primitive ("doors, not apologies").
