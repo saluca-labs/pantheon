@@ -37,7 +37,25 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToPost(row: any): CreatorPost {
+interface RawPostRow {
+  id: string;
+  user_id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: Record<string, unknown> | null;
+  cover_image_url: string | null;
+  status: string;
+  scheduled_at: Date | string | null;
+  published_at: Date | string | null;
+  tags: string[] | null;
+  notes_md: string | null;
+  publish_at: Date | string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPost(row: RawPostRow): CreatorPost {
   return {
     id: row.id,
     userId: row.user_id,
@@ -77,7 +95,7 @@ async function generateUniqueSlug(
   let counter = 1;
 
   while (true) {
-    const params: any[] = [userId, candidate];
+    const params: unknown[] = [userId, candidate];
     let excludeClause = '';
     if (excludeId) {
       params.push(excludeId);
@@ -103,7 +121,7 @@ export async function listPosts(
   opts: ListCreatorPostsOpts = {},
 ): Promise<CreatorPost[]> {
   const pool = getCreatorPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.includeArchived !== true) {
@@ -236,7 +254,7 @@ export async function updatePost(
 ): Promise<UpdatePostOutcome> {
   const pool = getCreatorPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] = [id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

@@ -31,6 +31,10 @@ import { listProjects, getProject } from '../projects-repo';
 import { listTimeEntries } from '../time-entries-repo';
 import { listPeople, getPerson } from '../people-repo';
 import { listInteractions } from '../interactions-repo';
+import type { Deal } from '../deals';
+import type { Invoice } from '../invoices';
+import type { Person } from '../people';
+import type { Interaction } from '../interactions';
 import type { CoachMode } from './modes';
 
 /** Hard cap on the rendered JSON size (50 KB pre-prompt). Truncate beyond. */
@@ -192,17 +196,18 @@ export function enforceContextSizeCap(payload: unknown): unknown {
 }
 
 interface ArrayContainer {
-  parent: any;
+  parent: Record<string, unknown>;
   key: string;
-  array: any[];
+  array: unknown[];
   truncated: boolean;
 }
 
-function collectArrayContainers(node: any, into: ArrayContainer[] = []): ArrayContainer[] {
+function collectArrayContainers(node: unknown, into: ArrayContainer[] = []): ArrayContainer[] {
   if (node == null || typeof node !== 'object') return into;
-  for (const [key, value] of Object.entries(node)) {
+  const obj = node as Record<string, unknown>;
+  for (const [key, value] of Object.entries(obj)) {
     if (Array.isArray(value)) {
-      into.push({ parent: node, key, array: value, truncated: false });
+      into.push({ parent: obj, key, array: value, truncated: false });
     } else if (value && typeof value === 'object') {
       collectArrayContainers(value, into);
     }
@@ -212,7 +217,7 @@ function collectArrayContainers(node: any, into: ArrayContainer[] = []): ArrayCo
 
 // ─── Pure mapping helpers ─────────────────────────────────────────────────
 
-function mapDeal(d: any): CoachDealSummary {
+function mapDeal(d: Deal): CoachDealSummary {
   return {
     id: d.id,
     title: d.title,
@@ -225,7 +230,7 @@ function mapDeal(d: any): CoachDealSummary {
   };
 }
 
-function mapInvoice(i: any): CoachInvoiceSummary {
+function mapInvoice(i: Invoice): CoachInvoiceSummary {
   return {
     id: i.id,
     title: i.title,
@@ -237,7 +242,7 @@ function mapInvoice(i: any): CoachInvoiceSummary {
   };
 }
 
-function mapContactFromPerson(p: any): CoachContactSummary {
+function mapContactFromPerson(p: Person): CoachContactSummary {
   return {
     id: p.id,
     first_name: p.firstName,
@@ -248,7 +253,7 @@ function mapContactFromPerson(p: any): CoachContactSummary {
   };
 }
 
-function mapInteraction(i: any): CoachInteractionSummary {
+function mapInteraction(i: Interaction): CoachInteractionSummary {
   return {
     id: i.id,
     deal_id: i.dealId ?? null,

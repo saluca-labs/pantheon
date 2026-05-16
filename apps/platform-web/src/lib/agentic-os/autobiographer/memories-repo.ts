@@ -76,7 +76,29 @@ const MEMORY_COLUMNS = `id, user_id, book_id, title, body_markdown, transcript,
                         sensitive_kinds,
                         metadata, created_at, updated_at`;
 
-function rowToMemory(row: any): AutobiographerMemory {
+interface RawMemoryRow {
+  id: string;
+  user_id: string;
+  book_id: string | null;
+  title: string;
+  body_markdown: string | null;
+  transcript: string | null;
+  audio_url: string | null;
+  photo_urls: string[] | null;
+  when_in_life: string | null;
+  era_date_estimate: Date | string | null;
+  location: string | null;
+  emotion_tags: string[] | null;
+  content_tags: string[] | null;
+  is_sensitive: boolean;
+  source: string | null;
+  sensitive_kinds: unknown;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToMemory(row: RawMemoryRow): AutobiographerMemory {
   return {
     id: row.id,
     userId: row.user_id,
@@ -132,7 +154,7 @@ export async function listMemories(
   args: ListMemoriesArgs,
 ): Promise<AutobiographerMemory[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] =[args.userId];
   const where: string[] = ['user_id = $1'];
 
   if (args.bookId !== undefined) {
@@ -225,8 +247,8 @@ export async function createMemory(
   if (data.bookId) {
     const ok = await bookBelongsToUser(data.bookId, userId);
     if (!ok) {
-      const err = new Error('book_not_found');
-      (err as any).code = 'book_not_found';
+      const err = new Error('book_not_found') as Error & { code?: string };
+      err.code = 'book_not_found';
       throw err;
     }
   }
@@ -290,8 +312,8 @@ export async function updateMemory(
   if (patch.bookId) {
     const ok = await bookBelongsToUser(patch.bookId, userId);
     if (!ok) {
-      const err = new Error('book_not_found');
-      (err as any).code = 'book_not_found';
+      const err = new Error('book_not_found') as Error & { code?: string };
+      err.code = 'book_not_found';
       throw err;
     }
   }

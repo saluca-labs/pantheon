@@ -63,7 +63,24 @@ export interface UpdatePseudonymInput {
 const PSEUDONYM_COLUMNS = `id, book_id, user_id, person_id, pseudonym,
                            notes, applied, created_at, updated_at`;
 
-function rowToPseudonym(row: any): AutobiographerPseudonym {
+interface RawPseudonymRow {
+  id: string;
+  book_id: string;
+  user_id: string;
+  person_id: string;
+  pseudonym: string;
+  notes: string | null;
+  applied: boolean;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawPseudonymJoinedRow extends RawPseudonymRow {
+  person_canonical_name: string | null;
+  person_aliases: string[] | null;
+}
+
+function rowToPseudonym(row: RawPseudonymRow): AutobiographerPseudonym {
   return {
     id: row.id,
     bookId: row.book_id,
@@ -83,7 +100,7 @@ function rowToPseudonym(row: any): AutobiographerPseudonym {
   };
 }
 
-function rowToPseudonymWithPerson(row: any): PseudonymWithPerson {
+function rowToPseudonymWithPerson(row: RawPseudonymJoinedRow): PseudonymWithPerson {
   return {
     ...rowToPseudonym(row),
     personCanonicalName: row.person_canonical_name ?? '',
@@ -185,8 +202,8 @@ export async function createPseudonym(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;

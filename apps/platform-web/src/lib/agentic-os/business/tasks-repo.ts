@@ -44,7 +44,27 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToTask(row: any): Task {
+interface RawTaskRow {
+  id: string;
+  user_id: string;
+  project_id: string;
+  title: string;
+  description_md: string | null;
+  status: string;
+  priority: string;
+  assignee_text: string | null;
+  due_on: Date | string | null;
+  completed_at: Date | string | null;
+  billing_rate_cents: number | string | null;
+  is_billable: boolean;
+  position: number | string;
+  tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToTask(row: RawTaskRow): Task {
   return {
     id: row.id,
     userId: row.user_id,
@@ -74,7 +94,7 @@ export async function listTasks(
   opts: TasksListOpts,
 ): Promise<Task[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId, opts.projectId];
+  const params: unknown[] =[userId, opts.projectId];
   const where: string[] = [`user_id = $1`, `project_id = $2`];
 
   if (opts.status) {
@@ -217,7 +237,7 @@ export async function updateTask(
 ): Promise<UpdateTaskOutcome> {
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

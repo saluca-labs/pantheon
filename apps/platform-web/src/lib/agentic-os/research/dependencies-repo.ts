@@ -43,7 +43,20 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToDependency(row: any): ExperimentDependency {
+interface RawDependencyRow {
+  id: string;
+  user_id: string;
+  from_experiment_id: string;
+  to_experiment_id: string;
+  kind: string;
+  status: string;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToDependency(row: RawDependencyRow): ExperimentDependency {
   return {
     id: row.id,
     userId: row.user_id,
@@ -122,7 +135,12 @@ export async function listDependenciesForExperiment(
     [experimentId, userId],
   );
 
-  function hydrate(row: any): ExperimentDependencyHydrated {
+  type DepWithPeer = RawDependencyRow & {
+    peer_id: string;
+    peer_name: string | null;
+    peer_status: string | null;
+  };
+  function hydrate(row: DepWithPeer): ExperimentDependencyHydrated {
     return {
       ...rowToDependency(row),
       peer: {

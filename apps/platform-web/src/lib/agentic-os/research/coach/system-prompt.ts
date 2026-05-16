@@ -18,7 +18,13 @@
  * @license MIT — Tiresias Research OS Phase 7 (internal).
  */
 
-import type { ResearchCoachContext } from './context';
+import type {
+  ResearchCoachContext,
+  CoachLitReviewerContext,
+  CoachHypothesisCriticContext,
+  CoachMethodsAdvisorContext,
+  CoachGeneralContext,
+} from './context';
 import type { CoachMode } from './modes';
 import {
   buildReferralFooter,
@@ -178,7 +184,7 @@ function renderExperiment(
   return lines.join('\n');
 }
 
-function renderLitReviewer(data: any): string {
+function renderLitReviewer(data: CoachLitReviewerContext): string {
   const lines: string[] = [];
   lines.push(renderExperiment(data.experiment));
   lines.push('');
@@ -221,7 +227,7 @@ function renderLitReviewer(data: any): string {
   return lines.join('\n');
 }
 
-function renderHypothesisCritic(data: any): string {
+function renderHypothesisCritic(data: CoachHypothesisCriticContext): string {
   const lines: string[] = [];
   lines.push(renderExperiment(data.experiment));
   lines.push('');
@@ -272,7 +278,7 @@ function renderHypothesisCritic(data: any): string {
   return lines.join('\n');
 }
 
-function renderMethodsAdvisor(data: any): string {
+function renderMethodsAdvisor(data: CoachMethodsAdvisorContext): string {
   const lines: string[] = [];
   lines.push(renderExperiment(data.experiment));
   if (data.experiment_description) {
@@ -315,7 +321,7 @@ function renderMethodsAdvisor(data: any): string {
   return lines.join('\n');
 }
 
-function renderGeneral(data: any): string {
+function renderGeneral(data: CoachGeneralContext): string {
   const lines: string[] = [];
   lines.push(renderExperiment(data.experiment));
   lines.push('');

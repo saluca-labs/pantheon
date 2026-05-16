@@ -36,7 +36,20 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToEvidence(row: any): Evidence {
+interface RawEvidenceRow {
+  id: string;
+  hypothesis_id: string;
+  user_id: string;
+  polarity: string;
+  source_kind: string;
+  source_id: string | null;
+  source_url: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+}
+
+function rowToEvidence(row: RawEvidenceRow): Evidence {
   const polarity = asEvidencePolarity(row.polarity) ?? 'mixed';
   const sourceKind = asEvidenceSourceKind(row.source_kind) ?? 'free_text';
   return {

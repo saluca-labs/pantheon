@@ -40,7 +40,21 @@ function parseDateOrNull(v: unknown): string | null {
   return null;
 }
 
-function rowToPayment(row: any): Payment {
+interface RawPaymentRow {
+  id: string;
+  invoice_id: string;
+  user_id: string;
+  amount_cents: number | string | null;
+  currency: string | null;
+  method: string;
+  received_on: Date | string | null;
+  reference: string | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+}
+
+function rowToPayment(row: RawPaymentRow): Payment {
   return {
     id: row.id,
     invoiceId: row.invoice_id,
@@ -79,7 +93,7 @@ export async function listPayments(
   opts: PaymentsListOpts = {},
 ): Promise<Payment[]> {
   const pool = getBusinessPool();
-  const params: any[] = [userId];
+  const params: unknown[] =[userId];
   const where: string[] = [`user_id = $1`];
 
   if (opts.invoiceId) {
@@ -192,7 +206,7 @@ export async function updatePayment(
 
   const pool = getBusinessPool();
   const set: string[] = [];
-  const params: any[] = [id, userId];
+  const params: unknown[] =[id, userId];
   let n = 2;
 
   if (patch.amountCents !== undefined) {

@@ -60,7 +60,25 @@ const PERSON_COLUMNS = `id, user_id, canonical_name, aliases, relation,
                         notes, image_url, metadata,
                         created_at, updated_at`;
 
-function rowToPerson(row: any): AutobiographerPerson {
+interface RawPersonRow {
+  id: string;
+  user_id: string;
+  canonical_name: string;
+  aliases: string[] | null;
+  relation: string | null;
+  birth_year: number | string | null;
+  death_year: number | string | null;
+  consent_to_publish: string;
+  consent_recorded_at: Date | string | null;
+  consent_recorded_by: string | null;
+  notes: string | null;
+  image_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToPerson(row: RawPersonRow): AutobiographerPerson {
   return {
     id: row.id,
     userId: row.user_id,
@@ -103,7 +121,7 @@ export async function listPeople(
   args: ListPeopleArgs,
 ): Promise<AutobiographerPerson[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] =[args.userId];
   const where: string[] = ['user_id = $1'];
 
   if (args.consentToPublish) {
@@ -250,8 +268,8 @@ export async function createPerson(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate_name');
-      (dup as any).code = 'duplicate_name';
+      const dup = new Error('duplicate_name') as Error & { code?: string };
+      dup.code = 'duplicate_name';
       throw dup;
     }
     throw err;
@@ -314,8 +332,8 @@ export async function updatePerson(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate_name');
-      (dup as any).code = 'duplicate_name';
+      const dup = new Error('duplicate_name') as Error & { code?: string };
+      dup.code = 'duplicate_name';
       throw dup;
     }
     throw err;

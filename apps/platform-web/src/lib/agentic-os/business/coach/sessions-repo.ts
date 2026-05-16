@@ -69,7 +69,20 @@ function coerceMessages(value: unknown): CoachMessage[] {
   return out;
 }
 
-function rowToSession(row: any): CoachSession {
+interface RawCoachSessionRow {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  deal_id: string | null;
+  mode: string;
+  title: string;
+  messages: unknown;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToSession(row: RawCoachSessionRow): CoachSession {
   return {
     id: row.id,
     userId: row.user_id,
@@ -164,7 +177,7 @@ export async function listSessions(
   input: ListSessionsInput,
 ): Promise<CoachSession[]> {
   const pool = getBusinessPool();
-  const params: any[] = [input.userId];
+  const params: unknown[] = [input.userId];
   const where: string[] = ['user_id = $1'];
   if (input.mode) {
     if (!(COACH_MODE_VALUES as readonly string[]).includes(input.mode)) {

@@ -21,7 +21,16 @@ export interface ThreatModelRow {
   createdAt: string;
 }
 
-function rowToModel(row: any): ThreatModelRow {
+interface RawThreatModelRow {
+  id: string;
+  user_id: string;
+  system_name: string;
+  system_description: string;
+  checklist: unknown;
+  created_at: Date;
+}
+
+function rowToModel(row: RawThreatModelRow): ThreatModelRow {
   return {
     id: row.id,
     userId: row.user_id,

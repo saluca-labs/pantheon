@@ -16,6 +16,7 @@ import 'server-only';
 import { getAutobiographerPool } from './session';
 import { normalizeRole } from './memory-people';
 import type { AutobiographerPerson } from './people-repo';
+import type { ConsentState } from './people';
 
 export interface MemoryPersonLink {
   memoryId: string;
@@ -47,7 +48,53 @@ export interface PersonMemoryJoined {
 
 const LINK_COLUMNS = `memory_id, person_id, role, notes, created_at, updated_at`;
 
-function rowToLink(row: any): MemoryPersonLink {
+interface RawMemoryPersonLinkRow {
+  memory_id: string;
+  person_id: string;
+  role: string | null;
+  notes: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface RawPersonJoinedRow {
+  id: string;
+  user_id: string;
+  canonical_name: string;
+  aliases: string[] | null;
+  relation: string | null;
+  birth_year: number | string | null;
+  death_year: number | string | null;
+  consent_to_publish: string;
+  consent_recorded_at: Date | string | null;
+  consent_recorded_by: string | null;
+  notes: string | null;
+  image_url: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+  link_role: string | null;
+  link_notes: string | null;
+}
+
+interface RawPersonMemoryRow {
+  memory_id: string;
+  book_id: string | null;
+  title: string;
+  when_in_life: string | null;
+  era_date_estimate: Date | string | null;
+  updated_at: Date | string;
+  link_role: string | null;
+  link_notes: string | null;
+}
+
+interface RawPersonBookAppearanceRow {
+  book_id: string;
+  book_title: string;
+  memory_count: number | string;
+}
+
+function rowToLink(row: RawMemoryPersonLinkRow): MemoryPersonLink {
   return {
     memoryId: row.memory_id,
     personId: row.person_id,
@@ -119,7 +166,7 @@ export async function listPeopleForMemory(
       ORDER BY lower(p.canonical_name) ASC`,
     [memoryId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawPersonJoinedRow) => ({
     person: {
       id: row.id,
       userId: row.user_id,
@@ -128,7 +175,7 @@ export async function listPeopleForMemory(
       relation: row.relation ?? null,
       birthYear: row.birth_year === null ? null : Number(row.birth_year),
       deathYear: row.death_year === null ? null : Number(row.death_year),
-      consentToPublish: row.consent_to_publish,
+      consentToPublish: row.consent_to_publish as ConsentState,
       consentRecordedAt:
         row.consent_recorded_at instanceof Date
           ? row.consent_recorded_at.toISOString()
@@ -175,7 +222,7 @@ export async function listMemoriesForPerson(
       ORDER BY m.era_date_estimate ASC NULLS LAST, m.updated_at DESC`,
     [personId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawPersonMemoryRow) => ({
     memoryId: row.memory_id,
     bookId: row.book_id ?? null,
     title: row.title,
@@ -224,7 +271,7 @@ export async function listBooksForPerson(
       ORDER BY memory_count DESC, lower(b.title) ASC`,
     [personId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawPersonBookAppearanceRow) => ({
     bookId: row.book_id,
     bookTitle: row.book_title,
     memoryCount: Number(row.memory_count),
@@ -252,8 +299,8 @@ export async function linkPersonToMemory(
     personBelongsToUser(personId, userId),
   ]);
   if (!memOk || !personOk) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
 
@@ -269,8 +316,8 @@ export async function linkPersonToMemory(
     if (!(err instanceof Error)) throw err;
     const errErr = err as Error & { code?: string; constraint?: string };
     if (errErr?.code === '23505') {
-      const dup = new Error('duplicate');
-      (dup as any).code = 'duplicate';
+      const dup = new Error('duplicate') as Error & { code?: string };
+      dup.code = 'duplicate';
       throw dup;
     }
     throw err;
@@ -298,8 +345,8 @@ export async function updateLink(
     personBelongsToUser(personId, userId),
   ]);
   if (!memOk || !personOk) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
 
@@ -349,8 +396,8 @@ export async function deleteLink(
     personBelongsToUser(personId, userId),
   ]);
   if (!memOk || !personOk) {
-    const err = new Error('not_found');
-    (err as any).code = 'not_found';
+    const err = new Error('not_found') as Error & { code?: string };
+    err.code = 'not_found';
     throw err;
   }
 
