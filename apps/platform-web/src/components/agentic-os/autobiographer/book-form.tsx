@@ -103,13 +103,24 @@ export function BookForm({ open, onClose, initial }: BookFormProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isEdit ? 'Edit book' : 'New book'}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
+      {/* Backdrop — rendered as a button so keyboard users can dismiss
+          via Enter / Space without an inline a11y disable. */}
+      <button
+        type="button"
+        aria-label="Close dialog"
+        tabIndex={-1}
+        onClick={onClose}
+        className="absolute inset-0 h-full w-full cursor-default bg-black/60"
+      />
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={submit}
-        className="w-full max-w-xl bg-surface-2 rounded-xl border border-border-subtle p-5 space-y-4"
+        className="relative w-full max-w-xl bg-surface-2 rounded-xl border border-border-subtle p-5 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
