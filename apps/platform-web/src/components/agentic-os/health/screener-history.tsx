@@ -15,11 +15,11 @@ const SEVERITY_LABEL: Record<string, string> = {
 };
 
 const SEVERITY_CLASS: Record<string, string> = {
-  minimal: 'text-emerald-300',
-  mild: 'text-emerald-300',
-  moderate: 'text-amber-300',
-  moderately_severe: 'text-orange-300',
-  severe: 'text-red-300',
+  minimal: 'text-positive',
+  mild: 'text-positive',
+  moderate: 'text-warning',
+  moderately_severe: 'text-attention',
+  severe: 'text-danger',
 };
 
 export function ScreenerHistory({ items }: Props) {
@@ -58,7 +58,7 @@ export function ScreenerHistory({ items }: Props) {
               </td>
               <td className="py-2 pr-4">
                 {row.crisisFlag ? (
-                  <span className="text-xs uppercase tracking-wide px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30">
+                  <span className="text-xs uppercase tracking-wide px-2 py-0.5 rounded-full bg-danger/15 text-danger border border-danger/30">
                     Safety prompt
                   </span>
                 ) : (

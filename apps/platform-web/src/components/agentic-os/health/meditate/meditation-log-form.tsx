@@ -122,12 +122,12 @@ export function MeditationLogForm() {
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 transition"
         >
           <Save className="w-4 h-4" />
           {submitting ? 'Saving…' : 'Save session'}
         </button>
-        {error && <span className="text-xs text-red-300">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
     </div>
   );

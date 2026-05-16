@@ -140,7 +140,7 @@ export function MoodEntryListInline({ entries }: { entries: MoodEntry[] }) {
           </div>
           <Link
             href={`/dashboard/os/health/journal/new?mood=${e.id}`}
-            className="text-xs text-accent hover:text-[#5d7aff] transition shrink-0"
+            className="text-xs text-accent hover:text-accent/80 transition shrink-0"
           >
             Add journal →
           </Link>

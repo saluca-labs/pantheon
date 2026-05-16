@@ -38,6 +38,13 @@ export const WARNING = '#fbbf24';
 export const ATTENTION = '#fb923c';
 export const DANGER = '#f87171';
 
+/** Configurable accents (W-F.3). Hex mirrors of the `--accent-info` /
+ * `--accent-pink` CSS tokens introduced by the business/ drain, for use in
+ * Recharts SVG props (same constraint that motivated this bridge file).
+ * Keep in sync with `globals.css` `:root` block. */
+export const ACCENT_INFO = '#22d3ee';
+export const ACCENT_PINK = '#f472b6';
+
 /** Per-OS accents (keyed by registry slug). */
 export const OS_ACCENT: Record<string, string> = {
   health: '#34d399',

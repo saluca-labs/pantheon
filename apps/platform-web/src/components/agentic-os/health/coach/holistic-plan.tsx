@@ -16,14 +16,14 @@ const SECTIONS: Array<{
   icon: React.ComponentType<{ className?: string }>;
   tone: string;
 }> = [
-  { key: 'activity', label: 'Activity', icon: Activity, tone: 'text-sky-300' },
-  { key: 'nutrition', label: 'Nutrition', icon: Apple, tone: 'text-emerald-300' },
-  { key: 'sleep', label: 'Sleep', icon: Moon, tone: 'text-indigo-300' },
+  { key: 'activity', label: 'Activity', icon: Activity, tone: 'text-os-research' },
+  { key: 'nutrition', label: 'Nutrition', icon: Apple, tone: 'text-positive' },
+  { key: 'sleep', label: 'Sleep', icon: Moon, tone: 'text-os-autobiographer' },
   {
     key: 'mental_health',
     label: 'Mental health',
     icon: Brain,
-    tone: 'text-fuchsia-300',
+    tone: 'text-os-creator',
   },
 ];
 
@@ -66,7 +66,7 @@ export function HolisticPlanGenerator() {
           type="button"
           onClick={generate}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a55d6] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
         >
           {plan ? (
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -78,7 +78,7 @@ export function HolisticPlanGenerator() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">
+        <div className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       )}
@@ -100,7 +100,7 @@ export function HolisticPlanGenerator() {
                     key={i}
                     className="text-sm text-text-primary leading-relaxed flex gap-2"
                   >
-                    <span className="text-[#64748b] font-mono text-xs mt-0.5">
+                    <span className="text-text-tertiary font-mono text-xs mt-0.5">
                       {i + 1}.
                     </span>
                     <span>{rec}</span>

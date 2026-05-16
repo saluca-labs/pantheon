@@ -183,14 +183,14 @@ export function MentalIntakeForm({ initial, onSaved }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
         >
           {saving ? 'Saving…' : 'Save mental-health profile'}
         </button>
-        <span role="status" aria-live="polite" className="text-sm text-emerald-300">
+        <span role="status" aria-live="polite" className="text-sm text-positive">
           {message ?? ''}
         </span>
-        <span role="alert" className="text-sm text-red-300">
+        <span role="alert" className="text-sm text-danger">
           {error ?? ''}
         </span>
       </div>
