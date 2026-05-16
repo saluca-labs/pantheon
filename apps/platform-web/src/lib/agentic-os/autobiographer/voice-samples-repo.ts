@@ -51,7 +51,20 @@ export interface UpdateVoiceSampleInput {
 const SAMPLE_COLUMNS = `id, user_id, memory_id, title, body_text, word_count,
                         is_archived, metadata, created_at, updated_at`;
 
-function rowToSample(row: any): AutobiographerVoiceSample {
+interface RawVoiceSampleRow {
+  id: string;
+  user_id: string;
+  memory_id: string | null;
+  title: string | null;
+  body_text: string;
+  word_count: number | string | null;
+  is_archived: boolean;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToSample(row: RawVoiceSampleRow): AutobiographerVoiceSample {
   return {
     id: row.id,
     userId: row.user_id,
@@ -88,7 +101,7 @@ export async function listVoiceSamples(
   args: ListVoiceSamplesArgs,
 ): Promise<AutobiographerVoiceSample[]> {
   const pool = getAutobiographerPool();
-  const params: any[] = [args.userId];
+  const params: unknown[] =[args.userId];
   const where: string[] = ['user_id = $1'];
 
   if (args.isArchived !== undefined) {
@@ -272,11 +285,19 @@ export async function listSamplesForBuilder(
       ORDER BY created_at ASC`,
     [userId],
   );
-  return r.rows.map((row: any) => ({
-    id: row.id,
-    title: row.title ?? null,
-    bodyText: row.body_text,
-    wordCount: Number(row.word_count ?? 0),
-    memoryId: row.memory_id ?? null,
-  }));
+  return r.rows.map(
+    (row: {
+      id: string;
+      title: string | null;
+      body_text: string;
+      word_count: number | string | null;
+      memory_id: string | null;
+    }) => ({
+      id: row.id,
+      title: row.title ?? null,
+      bodyText: row.body_text,
+      wordCount: Number(row.word_count ?? 0),
+      memoryId: row.memory_id ?? null,
+    }),
+  );
 }

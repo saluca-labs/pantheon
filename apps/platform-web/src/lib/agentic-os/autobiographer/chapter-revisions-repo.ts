@@ -71,7 +71,23 @@ const REVISION_COLUMNS = `id, chapter_id, user_id, version, author, body_text,
                           word_count, summary, citations, coach_session_id,
                           sensitive_kinds, metadata, created_at`;
 
-function rowToRevision(row: any): AutobiographerChapterRevision {
+interface RawRevisionRow {
+  id: string;
+  chapter_id: string;
+  user_id: string;
+  version: number | string;
+  author: string;
+  body_text: string;
+  word_count: number | string | null;
+  summary: string | null;
+  citations: unknown;
+  coach_session_id: string | null;
+  sensitive_kinds: unknown;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+}
+
+function rowToRevision(row: RawRevisionRow): AutobiographerChapterRevision {
   let citations: RevisionCitation[] = [];
   if (Array.isArray(row.citations)) {
     citations = normalizeCitations(row.citations);

@@ -27,7 +27,18 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToFalsifier(row: any): Falsifier {
+interface RawFalsifierRow {
+  id: string;
+  hypothesis_id: string;
+  user_id: string;
+  text: string;
+  criterion_md: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToFalsifier(row: RawFalsifierRow): Falsifier {
   return {
     id: row.id,
     hypothesisId: row.hypothesis_id,

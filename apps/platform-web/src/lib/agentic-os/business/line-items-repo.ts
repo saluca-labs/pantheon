@@ -38,7 +38,25 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToLineItem(row: any): LineItem {
+interface RawLineItemRow {
+  id: string;
+  quote_id: string | null;
+  invoice_id: string | null;
+  user_id: string;
+  position: number | string | null;
+  description: string | null;
+  quantity: number | string | null;
+  unit_label: string | null;
+  unit_price_cents: number | string | null;
+  line_total_cents: number | string | null;
+  tax_rate_bp: number | string | null;
+  line_tax_cents: number | string | null;
+  time_entry_ids: string[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+}
+
+function rowToLineItem(row: RawLineItemRow): LineItem {
   return {
     id: row.id,
     quoteId: row.quote_id ?? null,
@@ -225,7 +243,7 @@ export async function updateLineItem(
   const pool = getBusinessPool();
   const parentCol = parentType === 'quote' ? 'quote_id' : 'invoice_id';
   const set: string[] = [];
-  const params: any[] = [id, parentId, userId];
+  const params: unknown[] =[id, parentId, userId];
   let n = 3;
 
   if (patch.description !== undefined) {

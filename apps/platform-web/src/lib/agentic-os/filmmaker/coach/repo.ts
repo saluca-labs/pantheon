@@ -46,7 +46,29 @@ const CONVERSATION_COLUMNS = `id, project_id, mode, title, model,
                               system_prompt_version, metadata,
                               created_at, updated_at`;
 
-function rowToConversation(row: any): CoachConversation {
+interface RawConversationRow {
+  id: string;
+  project_id: string;
+  mode: string;
+  title: string | null;
+  model: string;
+  system_prompt_version: string;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface RawMessageRow {
+  id: string;
+  conversation_id: string;
+  role: string;
+  content: string;
+  tool_calls: CoachToolCall[] | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+function rowToConversation(row: RawConversationRow): CoachConversation {
   return {
     id: row.id,
     projectId: row.project_id,
@@ -60,7 +82,7 @@ function rowToConversation(row: any): CoachConversation {
   };
 }
 
-function rowToMessage(row: any): CoachMessage {
+function rowToMessage(row: RawMessageRow): CoachMessage {
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -268,7 +290,7 @@ export async function listMessages(
   const pool = getFilmmakerPool();
   const limit = Math.min(Math.max(input.limit ?? 200, 1), 1000);
   const offset = Math.max(input.offset ?? 0, 0);
-  const params: any[] = [input.conversationId];
+  const params: unknown[] = [input.conversationId];
   let where = 'WHERE conversation_id = $1';
   if (input.before) {
     params.push(new Date(input.before));

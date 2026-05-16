@@ -43,7 +43,35 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToLink(row: any): ExperimentReferenceLink {
+interface RawLinkRow {
+  id: string;
+  experiment_id: string;
+  paper_id: string;
+  relevance: string | null;
+  notes: string | null;
+  created_at: Date | string;
+}
+
+interface RawJoinedPaperRow {
+  p_id: string;
+  p_user_id: string;
+  p_title: string;
+  p_kind: string;
+  p_doi: string | null;
+  p_arxiv_id: string | null;
+  p_url: string | null;
+  p_authors_text: string | null;
+  p_venue: string | null;
+  p_year: number | string | null;
+  p_abstract_md: string | null;
+  p_tags: string[] | null;
+  p_metadata: Record<string, unknown> | null;
+  p_archived_at: Date | string | null;
+  p_created_at: Date | string;
+  p_updated_at: Date | string;
+}
+
+function rowToLink(row: RawLinkRow): ExperimentReferenceLink {
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -54,7 +82,7 @@ function rowToLink(row: any): ExperimentReferenceLink {
   };
 }
 
-function rowToPaper(row: any): Paper {
+function rowToPaper(row: RawJoinedPaperRow): Paper {
   return {
     id: row.p_id,
     userId: row.p_user_id,
@@ -141,7 +169,7 @@ export async function listReferencesForExperiment(
       ORDER BY er.created_at ASC`,
     [experimentId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row: RawLinkRow & RawJoinedPaperRow) => ({
     link: rowToLink({
       id: row.id,
       experiment_id: row.experiment_id,
@@ -163,7 +191,7 @@ export async function getReferenceByPair(
   relevance?: ReferenceRelevance,
 ): Promise<ExperimentReferenceLink | null> {
   const pool = getResearchPool();
-  const params: any[] = [experimentId, paperId, userId];
+  const params: unknown[] = [experimentId, paperId, userId];
   let clause = '';
   if (relevance) {
     params.push(relevance);
@@ -217,17 +245,19 @@ export async function listExperimentsLinkingPaper(
       ORDER BY er.created_at DESC`,
     [paperId, userId],
   );
-  return r.rows.map((row: any) => ({
-    link: rowToLink({
-      id: row.id,
-      experiment_id: row.experiment_id,
-      paper_id: row.paper_id,
-      relevance: row.relevance,
-      notes: row.notes,
-      created_at: row.created_at,
+  return r.rows.map(
+    (row: RawLinkRow & { e_id: string; e_name: string }) => ({
+      link: rowToLink({
+        id: row.id,
+        experiment_id: row.experiment_id,
+        paper_id: row.paper_id,
+        relevance: row.relevance,
+        notes: row.notes,
+        created_at: row.created_at,
+      }),
+      experiment: { id: row.e_id, name: row.e_name },
     }),
-    experiment: { id: row.e_id, name: row.e_name },
-  }));
+  );
 }
 
 // ─── Create / link ────────────────────────────────────────────────────────
@@ -281,7 +311,7 @@ export async function updateReference(
     throw new Error(`Invalid relevance: ${patch.relevance}`);
   }
   const set: string[] = [];
-  const params: any[] = [experimentId, paperId, userId];
+  const params: unknown[] = [experimentId, paperId, userId];
   let n = 3;
   if (patch.relevance !== undefined) {
     params.push(patch.relevance);
@@ -345,7 +375,7 @@ export async function deleteReference(
   relevance?: ReferenceRelevance,
 ): Promise<number> {
   const pool = getResearchPool();
-  const params: any[] = [experimentId, paperId, userId];
+  const params: unknown[] = [experimentId, paperId, userId];
   let clause = '';
   if (relevance) {
     params.push(relevance);
@@ -441,14 +471,25 @@ export async function listRelatedNotebookEntriesForPaper(
       ORDER BY ev.created_at DESC`,
     [paperId, userId],
   );
-  return r.rows.map((row: any) => ({
-    evidenceId: row.evidence_id,
-    hypothesisId: row.hypothesis_id,
-    notebookEntryId: row.ne_id ?? '',
-    notebookEntryTitle: row.ne_title ?? '',
-    notebookEntryKind: row.ne_kind ?? '',
-    polarity: row.polarity,
-    notes: row.notes ?? null,
-    createdAt: toIso(row.created_at),
-  }));
+  return r.rows.map(
+    (row: {
+      evidence_id: string;
+      hypothesis_id: string;
+      ne_id: string | null;
+      ne_title: string | null;
+      ne_kind: string | null;
+      polarity: string;
+      notes: string | null;
+      created_at: Date | string;
+    }) => ({
+      evidenceId: row.evidence_id,
+      hypothesisId: row.hypothesis_id,
+      notebookEntryId: row.ne_id ?? '',
+      notebookEntryTitle: row.ne_title ?? '',
+      notebookEntryKind: row.ne_kind ?? '',
+      polarity: row.polarity,
+      notes: row.notes ?? null,
+      createdAt: toIso(row.created_at),
+    }),
+  );
 }

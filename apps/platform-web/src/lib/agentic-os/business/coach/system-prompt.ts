@@ -14,7 +14,15 @@
  * @license MIT — Tiresias Business OS Phase 7 (internal).
  */
 
-import type { BusinessCoachContext } from './context';
+import type {
+  BusinessCoachContext,
+  CoachInteractionSummary,
+  CoachPricingContext,
+  CoachSalesContext,
+  CoachMarketingContext,
+  CoachStrategyContext,
+  CoachGeneralContext,
+} from './context';
 import type { CoachMode } from './modes';
 
 export const SYSTEM_PROMPT_VERSION = 'v1';
@@ -109,7 +117,7 @@ Apply the hard rules consistently: never invent data, defer regulated
 advice, and don't make accounting-method assertions.`,
 };
 
-function renderPricing(data: any): string {
+function renderPricing(data: CoachPricingContext): string {
   const lines: string[] = [];
   lines.push('## Pricing context');
   const ph = data.pricing_history ?? {};
@@ -159,7 +167,7 @@ function renderPricing(data: any): string {
   return lines.join('\n');
 }
 
-function renderSales(data: any): string {
+function renderSales(data: CoachSalesContext): string {
   const lines: string[] = [];
   lines.push('## Sales context');
 
@@ -194,7 +202,7 @@ function renderSales(data: any): string {
   } else {
     lines.push(`## Recent interactions (for ${dealIds.length} deals)`);
     for (const [dealId, interactions] of Object.entries(ri)) {
-      const ixList = interactions as any[];
+      const ixList = interactions as CoachInteractionSummary[];
       for (const ix of ixList.slice(0, 3)) {
         lines.push(
           `- Deal ${dealId.slice(0, 8)}: ${ix.interaction_type} — "${(ix.summary ?? '').slice(0, 80)}"`,
@@ -226,7 +234,7 @@ function renderSales(data: any): string {
   return lines.join('\n');
 }
 
-function renderMarketing(data: any): string {
+function renderMarketing(data: CoachMarketingContext): string {
   const lines: string[] = [];
   lines.push('## Marketing context');
 
@@ -293,7 +301,7 @@ function renderMarketing(data: any): string {
   return lines.join('\n');
 }
 
-function renderStrategy(data: any): string {
+function renderStrategy(data: CoachStrategyContext): string {
   const lines: string[] = [];
   lines.push('## Strategy context');
 
@@ -349,7 +357,7 @@ function renderStrategy(data: any): string {
   return lines.join('\n');
 }
 
-function renderGeneral(data: any): string {
+function renderGeneral(data: CoachGeneralContext): string {
   const lines: string[] = [];
   lines.push('## Business snapshot');
   lines.push(`- Contacts: ${data.contact_count ?? 0}`);

@@ -35,7 +35,22 @@ function toIso(v: unknown): string {
   return new Date(0).toISOString();
 }
 
-function rowToProtocol(row: any): Protocol {
+interface RawProtocolRow {
+  id: string;
+  user_id: string;
+  title: string;
+  version: string;
+  body_md: string | null;
+  kind: string;
+  attached_urls: string[] | null;
+  tags: string[] | null;
+  parent_protocol_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToProtocol(row: RawProtocolRow): Protocol {
   return {
     id: row.id,
     userId: row.user_id,
@@ -75,7 +90,7 @@ export async function listProtocols(
   opts: ProtocolsListOpts = {},
 ): Promise<Protocol[]> {
   const pool = getResearchPool();
-  const params: any[] = [userId];
+  const params: unknown[] = [userId];
   const where: string[] = [`p.user_id = $1`];
 
   if (opts.kind !== undefined) {
@@ -288,7 +303,7 @@ export async function updateProtocol(
     throw new Error(`Invalid protocol kind: ${patch.kind}`);
   }
   const set: string[] = [];
-  const params: any[] = [protocolId, userId];
+  const params: unknown[] = [protocolId, userId];
   let n = 2;
 
   if (patch.title !== undefined) {

@@ -45,7 +45,21 @@ function toIsoOrNull(v: unknown): string | null {
   return toIso(v);
 }
 
-function rowToReproCheck(row: any): ReproCheck {
+interface RawReproCheckRow {
+  id: string;
+  experiment_id: string;
+  user_id: string;
+  item_key: string;
+  state: string;
+  evidence_url: string | null;
+  notes: string | null;
+  completed_at: Date | string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+function rowToReproCheck(row: RawReproCheckRow): ReproCheck {
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -94,7 +108,7 @@ export async function seedCanonicalReproItems(
   const ids = CANONICAL_REPRO_ITEM_KEYS.map(() => randomUUID());
   // Build VALUES list with positional parameters for each canonical key.
   const valuesSql: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] = [];
   let p = 1;
   CANONICAL_REPRO_ITEM_KEYS.forEach((key, i) => {
     valuesSql.push(
