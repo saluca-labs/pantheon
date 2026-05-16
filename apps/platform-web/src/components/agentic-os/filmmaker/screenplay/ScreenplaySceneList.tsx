@@ -53,7 +53,7 @@ export function ScreenplaySceneList({ scenes, onJumpToScene }: Props) {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[11px] text-[#64748b] font-mono">
+                    <p className="text-[11px] text-text-tertiary font-mono">
                       {scene.sceneNumber.toString().padStart(2, '0')}
                       {' · '}
                       <span className="text-text-secondary">p. {Number(scene.pageStart ?? 0).toFixed(1)}</span>

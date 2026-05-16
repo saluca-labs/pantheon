@@ -128,7 +128,7 @@ export function StoryDocumentList({ projectId, initialDocuments, activeDocumentI
         );
       })}
 
-      {error && <p className="text-xs text-red-300">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }
