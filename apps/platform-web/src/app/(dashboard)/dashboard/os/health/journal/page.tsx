@@ -32,8 +32,8 @@ export default async function HealthJournalPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Health OS
         </Link>
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
-          <h1 className="text-lg font-semibold text-amber-50 mb-2">
+        <div className="rounded-xl border border-warning/30 bg-warning/5 p-6 text-sm text-warning/90">
+          <h1 className="text-lg font-semibold text-warning mb-2">
             Mental-health consent required
           </h1>
           <p className="leading-relaxed">
@@ -41,7 +41,7 @@ export default async function HealthJournalPage() {
             explicit consent. Grant the “mental” scope on the{' '}
             <Link
               href="/dashboard/os/health"
-              className="underline hover:text-amber-50"
+              className="underline hover:text-warning"
             >
               Health OS hub
             </Link>{' '}
@@ -74,7 +74,7 @@ export default async function HealthJournalPage() {
         </div>
         <Link
           href="/dashboard/os/health/journal/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] text-white text-sm font-medium px-3 py-2 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-2 transition"
         >
           <Plus className="w-4 h-4" />
           New entry

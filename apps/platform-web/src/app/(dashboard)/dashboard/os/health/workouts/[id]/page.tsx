@@ -39,7 +39,7 @@ export default async function WorkoutDetailPage({
   if (!mentalConsent?.granted) {
     return (
       <div className="max-w-3xl">
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
+        <div className="rounded-xl border border-warning/30 bg-warning/5 p-6 text-sm text-warning/90">
           Mental-health consent required.
         </div>
       </div>
@@ -125,9 +125,9 @@ function ReadMode({
             <span
               className={
                 template.targetIntensity === 'light'
-                  ? 'text-emerald-300'
+                  ? 'text-positive'
                   : template.targetIntensity === 'vigorous'
-                    ? 'text-amber-300'
+                    ? 'text-warning'
                     : 'text-accent'
               }
             >

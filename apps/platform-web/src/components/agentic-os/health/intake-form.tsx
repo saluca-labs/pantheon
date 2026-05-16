@@ -166,12 +166,12 @@ export function IntakeForm({ initial }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
         >
           {saving ? 'Saving…' : 'Save profile'}
         </button>
-        {message && <span className="text-sm text-emerald-300">{message}</span>}
-        {error && <span className="text-sm text-red-300">{error}</span>}
+        {message && <span className="text-sm text-positive">{message}</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </form>
   );

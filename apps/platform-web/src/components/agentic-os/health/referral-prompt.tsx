@@ -19,25 +19,25 @@ export function ReferralPrompt({ data, compact = false }: Props) {
   return (
     <div
       role="note"
-      className={`rounded-xl border border-amber-500/30 bg-amber-500/5 ${
+      className={`rounded-xl border border-warning/30 bg-warning/5 ${
         compact ? 'p-4' : 'p-5'
       }`}
     >
       <div className="flex items-start gap-2.5 mb-3">
         <LifeBuoy
-          className={`text-amber-300 mt-0.5 shrink-0 ${
+          className={`text-warning mt-0.5 shrink-0 ${
             compact ? 'w-4 h-4' : 'w-5 h-5'
           }`}
         />
         <div>
           <h3
-            className={`font-semibold text-amber-100 ${
+            className={`font-semibold text-warning ${
               compact ? 'text-sm' : 'text-base'
             }`}
           >
             {data.headline}
           </h3>
-          <p className="text-sm text-amber-100/90 mt-1 italic">
+          <p className="text-sm text-warning/90 mt-1 italic">
             {data.nudge}
           </p>
         </div>
@@ -49,15 +49,15 @@ export function ReferralPrompt({ data, compact = false }: Props) {
               href={r.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition p-3"
+              className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 hover:bg-warning/10 transition p-3"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-amber-300 mt-0.5 shrink-0" />
+              <ExternalLink className="w-3.5 h-3.5 text-warning mt-0.5 shrink-0" />
               <div className="min-w-0">
-                <div className="text-sm font-medium text-amber-50">
+                <div className="text-sm font-medium text-warning">
                   {r.label}
                 </div>
                 {r.detail && (
-                  <p className="text-xs text-amber-100/80 leading-relaxed mt-0.5">
+                  <p className="text-xs text-warning/80 leading-relaxed mt-0.5">
                     {r.detail}
                   </p>
                 )}

@@ -32,11 +32,11 @@ const CATEGORY: Record<
   PlanRecommendation['category'],
   { label: string; icon: React.ComponentType<{ className?: string }>; tone: string }
 > = {
-  activity: { label: 'Activity', icon: Activity, tone: 'text-sky-300' },
-  nutrition: { label: 'Nutrition', icon: Apple, tone: 'text-emerald-300' },
-  sleep: { label: 'Sleep', icon: Moon, tone: 'text-indigo-300' },
-  mental_health: { label: 'Mental health', icon: Brain, tone: 'text-fuchsia-300' },
-  safety: { label: 'Safety', icon: Shield, tone: 'text-red-300' },
+  activity: { label: 'Activity', icon: Activity, tone: 'text-os-research' },
+  nutrition: { label: 'Nutrition', icon: Apple, tone: 'text-positive' },
+  sleep: { label: 'Sleep', icon: Moon, tone: 'text-os-autobiographer' },
+  mental_health: { label: 'Mental health', icon: Brain, tone: 'text-os-creator' },
+  safety: { label: 'Safety', icon: Shield, tone: 'text-danger' },
 };
 
 export function PlanGenerator() {
@@ -97,12 +97,12 @@ export function PlanGenerator() {
         type="button"
         onClick={onGenerate}
         disabled={loading}
-        className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
+        className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-4 py-2 transition"
       >
         {loading ? 'Generating…' : 'Generate plan'}
       </button>
 
-      {error && <p className="text-sm text-red-300">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {blocked && (
         <CrisisBanner

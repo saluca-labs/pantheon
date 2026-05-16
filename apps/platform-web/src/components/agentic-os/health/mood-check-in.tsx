@@ -127,10 +127,10 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
         <div
           role="status"
           aria-live="polite"
-          className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-2"
+          className="rounded-lg border border-positive/30 bg-positive/5 p-4 flex items-start gap-2"
         >
-          <Sparkles className="w-4 h-4 text-emerald-300 mt-0.5 shrink-0" />
-          <div className="text-sm text-emerald-100">
+          <Sparkles className="w-4 h-4 text-positive mt-0.5 shrink-0" />
+          <div className="text-sm text-positive">
             Saved. You can revisit or edit this on the journal trail below.
           </div>
         </div>
@@ -158,7 +158,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
   return (
     <div className="space-y-4">
       <Slider
-        icon={<HeartPulse className="w-4 h-4 text-rose-300" />}
+        icon={<HeartPulse className="w-4 h-4 text-os-filmmaker" />}
         label="Mood"
         value={moodScore}
         onChange={setMoodScore}
@@ -273,7 +273,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
           type="button"
           onClick={() => void onSubmit()}
           disabled={submitting}
-          className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+          className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
         >
           {submitting
             ? 'Saving…'
@@ -281,7 +281,7 @@ export function MoodCheckIn({ initialTags, editingId, initial }: Props) {
               ? 'Save changes'
               : 'Save check-in'}
         </button>
-        <span role="alert" className="text-xs text-red-300">
+        <span role="alert" className="text-xs text-danger">
           {error ?? ''}
         </span>
       </div>

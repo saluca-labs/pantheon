@@ -17,11 +17,11 @@ const SEVERITY_LABEL: Record<string, string> = {
 };
 
 const SEVERITY_CLASS: Record<string, string> = {
-  minimal: 'text-emerald-300',
-  mild: 'text-emerald-300',
-  moderate: 'text-amber-300',
-  moderately_severe: 'text-orange-300',
-  severe: 'text-red-300',
+  minimal: 'text-positive',
+  mild: 'text-positive',
+  moderate: 'text-warning',
+  moderately_severe: 'text-attention',
+  severe: 'text-danger',
 };
 
 export function ScreenerWizard({ screener }: Props) {
@@ -153,7 +153,7 @@ export function ScreenerWizard({ screener }: Props) {
               type="button"
               onClick={onSubmit}
               disabled={!allAnswered || submitting}
-              className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+              className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
             >
               {submitting ? 'Submitting…' : `Submit ${def.title}`}
             </button>
@@ -163,7 +163,7 @@ export function ScreenerWizard({ screener }: Props) {
                 {answers.filter((a) => a === null).length === 1 ? '' : 's'} left
               </span>
             )}
-            {error && <span className="text-xs text-red-300">{error}</span>}
+            {error && <span className="text-xs text-danger">{error}</span>}
           </div>
         </>
       )}

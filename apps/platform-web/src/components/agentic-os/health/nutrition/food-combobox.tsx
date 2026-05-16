@@ -146,7 +146,7 @@ export function FoodCombobox({
             type="button"
             onClick={onUsdaSearch}
             disabled={value.trim().length < 2 || usdaLoading}
-            className="text-accent hover:text-[#3a56d4] disabled:opacity-40 disabled:hover:text-accent"
+            className="text-accent hover:text-accent/80 disabled:opacity-40 disabled:hover:text-accent"
           >
             {usdaLoading ? 'Searching USDA…' : 'Search USDA Foods →'}
           </button>

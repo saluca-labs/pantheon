@@ -88,7 +88,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
                 <button
                   type="button"
                   onClick={() => removeRow(i)}
-                  className="text-xs text-text-secondary hover:text-red-300 px-2"
+                  className="text-xs text-text-secondary hover:text-danger px-2"
                 >
                   remove
                 </button>
@@ -119,7 +119,7 @@ export function ValuesClarifier({ exerciseId }: Props) {
       <button
         type="button"
         onClick={addRow}
-        className="text-xs text-accent hover:text-[#5d7aff] transition"
+        className="text-xs text-accent hover:text-accent/80 transition"
       >
         + Add another domain
       </button>

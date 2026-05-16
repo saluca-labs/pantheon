@@ -160,13 +160,13 @@ export function SubmitBar({
         type="button"
         onClick={onClick}
         disabled={submitting || disabled}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition"
       >
         <Save className="w-4 h-4" />
         {submitting ? 'Saving…' : (label ?? 'Save log')}
       </button>
       {children}
-      {error && <span className="text-xs text-red-300">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
     </div>
   );
 }

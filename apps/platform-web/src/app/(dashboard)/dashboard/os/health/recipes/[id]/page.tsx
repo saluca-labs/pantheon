@@ -39,7 +39,7 @@ export default async function RecipeDetailPage({
   if (!mentalConsent?.granted) {
     return (
       <div className="max-w-3xl">
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-100/90">
+        <div className="rounded-xl border border-warning/30 bg-warning/5 p-6 text-sm text-warning/90">
           Mental-health consent required.
         </div>
       </div>
@@ -253,7 +253,7 @@ function ReadMode({
                 </div>
               </div>
               {nutrition.partial > 0 && (
-                <div className="text-[11px] text-amber-200/80">
+                <div className="text-[11px] text-warning/80">
                   {nutrition.partial} ingredient
                   {nutrition.partial === 1 ? '' : 's'} not auto-converted to
                   grams.

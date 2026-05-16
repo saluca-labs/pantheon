@@ -78,7 +78,7 @@ export default async function HealthIntakePage({ searchParams }: Props) {
           <div className="mt-4 flex justify-end">
             <Link
               href="/dashboard/os/health/intake?phase=mental"
-              className="text-sm font-medium text-accent hover:text-[#5d7aff] transition"
+              className="text-sm font-medium text-accent hover:text-accent/80 transition"
             >
               Continue to mental-health intake →
             </Link>
@@ -89,14 +89,14 @@ export default async function HealthIntakePage({ searchParams }: Props) {
           {mentalConsentGranted ? (
             <MentalIntakeForm initial={mentalProfile} />
           ) : (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100/90">
+            <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 text-sm text-warning/90">
               <p className="font-medium mb-1">Mental-health consent required</p>
               <p className="text-xs leading-relaxed">
                 Mental-health features are gated behind explicit consent. Grant
                 the “mental” scope on the{' '}
                 <Link
                   href="/dashboard/os/health"
-                  className="underline hover:text-amber-100"
+                  className="underline hover:text-warning"
                 >
                   Health OS hub
                 </Link>{' '}

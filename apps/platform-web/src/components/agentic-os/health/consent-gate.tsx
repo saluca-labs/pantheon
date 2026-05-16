@@ -62,9 +62,9 @@ export function ConsentGate({ initial }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5">
+    <div className="rounded-xl border border-positive/30 bg-positive/5 p-5">
       <div className="flex items-start gap-3 mb-3">
-        <ShieldCheck className="w-5 h-5 text-emerald-300 mt-0.5 shrink-0" />
+        <ShieldCheck className="w-5 h-5 text-positive mt-0.5 shrink-0" />
         <div>
           <h3 className="text-sm font-semibold text-white">Consent required</h3>
           <p className="text-xs text-text-secondary mt-1 leading-relaxed">
@@ -91,7 +91,7 @@ export function ConsentGate({ initial }: Props) {
                 type="button"
                 disabled={busy === scope}
                 onClick={() => toggle(scope, true)}
-                className="rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 transition shrink-0"
+                className="rounded-md bg-positive hover:bg-positive/90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 transition shrink-0"
               >
                 {busy === scope ? 'Saving…' : 'Grant'}
               </button>
@@ -99,7 +99,7 @@ export function ConsentGate({ initial }: Props) {
           );
         })}
       </div>
-      {error && <p className="text-xs text-red-300 mt-3">{error}</p>}
+      {error && <p className="text-xs text-danger mt-3">{error}</p>}
     </div>
   );
 }

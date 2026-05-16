@@ -71,9 +71,9 @@ export interface ActivityPlanCalendarProps {
 const DAY_LABEL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const INTENSITY_COLOR: Record<Intensity, string> = {
-  light: 'text-emerald-300',
+  light: 'text-positive',
   moderate: 'text-accent',
-  vigorous: 'text-amber-300',
+  vigorous: 'text-warning',
 };
 
 function addDaysISO(iso: string, days: number): string {
@@ -329,7 +329,7 @@ export function ActivityPlanCalendar({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+        <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
           {error}
         </div>
       )}
@@ -355,7 +355,7 @@ export function ActivityPlanCalendar({
                 >
                   {label}
                 </span>
-                <span className="text-[10px] text-[#64748b]">
+                <span className="text-[10px] text-text-tertiary">
                   {addDaysISO(weekStart, day).slice(5)}
                 </span>
               </div>
@@ -477,8 +477,8 @@ function SlotCard({
               onClick={onLog}
               className={`rounded p-0.5 ${
                 logged
-                  ? 'text-emerald-400'
-                  : 'text-text-secondary hover:text-emerald-400'
+                  ? 'text-positive'
+                  : 'text-text-secondary hover:text-positive'
               }`}
               aria-label="I did this"
               title="I did this"
@@ -489,7 +489,7 @@ function SlotCard({
           <button
             type="button"
             onClick={onDelete}
-            className="rounded p-0.5 text-text-secondary hover:text-red-300"
+            className="rounded p-0.5 text-text-secondary hover:text-danger"
             aria-label="Delete"
           >
             <Trash2 className="h-3 w-3" />
@@ -655,7 +655,7 @@ function SlotDrawer({
                 value={freeformText}
                 onChange={(e) => setFreeformText(e.target.value)}
                 placeholder={'e.g. "rest day", "PT appointment"'}
-                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
+                className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-tertiary focus:border-accent focus:outline-none"
               />
             </label>
           )}
@@ -700,12 +700,12 @@ function SlotDrawer({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Optional"
-              className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-[#64748b] focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-0 px-3 py-2 text-sm text-white placeholder:text-text-tertiary focus:border-accent focus:outline-none"
             />
           </label>
 
           {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+            <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
               {error}
             </div>
           )}
@@ -721,7 +721,7 @@ function SlotDrawer({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#3a56d4] disabled:opacity-60"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-60"
             >
               {submitting ? 'Saving…' : 'Save'}
             </button>
