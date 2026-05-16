@@ -39,7 +39,7 @@ describe('validatePerson', () => {
   });
 
   it('rejects invalid stage', () => {
-    const errors = validatePerson({ firstName: 'J', lastName: 'S', stage: 'prospect' as any });
+    const errors = validatePerson({ firstName: 'J', lastName: 'S', stage: 'prospect' as never });
     expect(errors.some((e) => e.includes('Stage'))).toBe(true);
   });
 });

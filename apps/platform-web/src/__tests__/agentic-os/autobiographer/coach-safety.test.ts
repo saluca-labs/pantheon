@@ -44,7 +44,7 @@ describe('shouldAppendSensitiveFooter', () => {
   });
 
   it('returns false for a list of invalid tokens', () => {
-    expect(shouldAppendSensitiveFooter(['foo', 'bar', null as any, 42 as any])).toBe(
+    expect(shouldAppendSensitiveFooter(['foo', 'bar', null as never, 42 as never])).toBe(
       false,
     );
   });
@@ -98,7 +98,7 @@ describe('shouldRecommendProfessionalReader', () => {
 describe('buildSensitiveFooter', () => {
   it('returns null when no sensitive kinds are present', () => {
     expect(buildSensitiveFooter([])).toBeNull();
-    expect(buildSensitiveFooter(['nonsense' as any])).toBeNull();
+    expect(buildSensitiveFooter(['nonsense' as never])).toBeNull();
   });
 
   it('returns the generic footer for non-trauma sensitive kinds', () => {
@@ -169,7 +169,7 @@ describe('unionSensitiveKinds', () => {
   it('drops invalid tokens silently', () => {
     expect(
       unionSensitiveKinds([
-        { sensitive_kinds: ['nonsense', 'legal', 42 as any, null as any] },
+        { sensitive_kinds: ['nonsense', 'legal', 42 as never, null as never] },
       ]),
     ).toEqual(['legal']);
   });

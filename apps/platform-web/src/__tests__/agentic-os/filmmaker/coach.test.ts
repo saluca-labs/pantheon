@@ -130,12 +130,12 @@ describe('buildSystemPrompt', () => {
 // ─── Repo plumbing (mocked pg) ─────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -143,7 +143,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -167,7 +167,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function convRow(overrides: Record<string, any> = {}): any {
+function convRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'cv-1',
     project_id: 'p-1',
@@ -182,7 +182,7 @@ function convRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function messageRow(overrides: Record<string, any> = {}): any {
+function messageRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'm-1',
     conversation_id: 'cv-1',
@@ -351,7 +351,7 @@ describe('appendMessage', () => {
     expect(calls[0].sql).toContain('INSERT INTO agos_filmmaker_coach_message');
     // tool_calls param at index 4 is the JSON-encoded array
     expect(typeof calls[0].params[4]).toBe('string');
-    expect(JSON.parse(calls[0].params[4])).toHaveLength(1);
+    expect(JSON.parse(calls[0].params[4] as string)).toHaveLength(1);
   });
 });
 
@@ -409,23 +409,26 @@ describe('logCoachAction', () => {
 // ─── add_breakdown_element tool path ──────────────────────────────────────
 
 vi.mock('@/lib/agentic-os/filmmaker/repo', async () => {
-  const actual = await vi.importActual<any>('@/lib/agentic-os/filmmaker/repo');
+  const actual = await vi.importActual<Record<string, unknown>>('@/lib/agentic-os/filmmaker/repo');
   return {
     ...actual,
-    addBreakdownElement: vi.fn(async (args: any) => ({
-      id: 'be-99',
-      screenplayId: 'sp-1',
-      sceneId: args.sceneId,
-      category: args.data.category,
-      name: args.data.name,
-      description: args.data.description ?? null,
-      quantity: args.data.quantity ?? 1,
-      isPrincipal: args.data.isPrincipal ?? false,
-      characterId: null,
-      metadata: {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })),
+    addBreakdownElement: vi.fn(async (argsIn: unknown) => {
+      const args = argsIn as { sceneId: string; data: Record<string, unknown> };
+      return {
+        id: 'be-99',
+        screenplayId: 'sp-1',
+        sceneId: args.sceneId,
+        category: args.data.category,
+        name: args.data.name,
+        description: args.data.description ?? null,
+        quantity: args.data.quantity ?? 1,
+        isPrincipal: args.data.isPrincipal ?? false,
+        characterId: null,
+        metadata: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }),
     recordAudit: vi.fn(async () => undefined),
     getProject: vi.fn(),
     listCharacters: vi.fn(),
@@ -451,7 +454,7 @@ describe('add_breakdown_element tool', () => {
       conversationId: 'cv-1',
     });
     const tool = tools.add_breakdown_element;
-    const out = await (tool.execute as any)(
+    const out = await (tool.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       {
         sceneId: '00000000-0000-0000-0000-000000000001',
         category: 'props',

@@ -43,7 +43,7 @@ describe('ACTIVE_PROJECT_STATUSES + isActiveStatus', () => {
       'assembly',
       'commissioning',
     ]) {
-      expect(isActiveStatus(s as any)).toBe(true);
+      expect(isActiveStatus(s as never)).toBe(true);
     }
   });
   it('done and archived are not active', () => {
@@ -83,7 +83,7 @@ describe('validateQuantityNeeded', () => {
     expect(validateQuantityNeeded(0)).toMatch(/positive/);
     expect(validateQuantityNeeded(-1)).toMatch(/positive/);
     expect(validateQuantityNeeded(Number.NaN)).toMatch(/positive/);
-    expect(validateQuantityNeeded('1' as any)).toMatch(/positive/);
+    expect(validateQuantityNeeded('1' as never)).toMatch(/positive/);
   });
 });
 

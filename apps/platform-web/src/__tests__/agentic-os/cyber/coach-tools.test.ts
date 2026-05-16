@@ -11,12 +11,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -24,7 +24,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/cyber/session', () => ({
   getCyberPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -33,49 +33,55 @@ vi.mock('@/lib/agentic-os/cyber/session', () => ({
 }));
 
 vi.mock('@/lib/agentic-os/cyber/repo', async () => {
-  const actual = await vi.importActual<any>('@/lib/agentic-os/cyber/repo');
+  const actual = await vi.importActual<Record<string, unknown>>('@/lib/agentic-os/cyber/repo');
   return {
     ...actual,
     recordAudit: vi.fn(async () => undefined),
-    attachAlertToCase: vi.fn(async (args: any) => true),
-    createDetectionRule: vi.fn(async (_owner: string, data: any) => ({
-      id: 'rule-99',
-      ownerId: 'u-1',
-      name: data.name,
-      description: data.description ?? null,
-      author: null,
-      lifecycle: 'draft',
-      severity: data.severity ?? 'medium',
-      tactic: data.tactic ?? null,
-      technique: data.technique ?? null,
-      logSourceKind: data.logSourceKind ?? null,
-      detection: data.detection ?? {},
-      falsePositives: data.falsePositives ?? [],
-      references: [],
-      tags: data.tags ?? [],
-      metadata: data.metadata ?? {},
-      createdAt: '2026-05-10T00:00:00Z',
-      updatedAt: '2026-05-10T00:00:00Z',
-    })),
-    createIoc: vi.fn(async (_owner: string, data: any) => ({
-      id: 'ioc-99',
-      ownerId: 'u-1',
-      kind: data.kind,
-      value: data.value,
-      title: null,
-      description: null,
-      threatType: data.threatType ?? null,
-      confidence: data.confidence ?? 50,
-      firstSeenAt: '2026-05-10T00:00:00Z',
-      lastSeenAt: '2026-05-10T00:00:00Z',
-      expiresAt: null,
-      source: data.source ?? 'cyber.coach',
-      tags: [],
-      references: [],
-      metadata: {},
-      createdAt: '2026-05-10T00:00:00Z',
-      updatedAt: '2026-05-10T00:00:00Z',
-    })),
+    attachAlertToCase: vi.fn(async (args: unknown) => true),
+    createDetectionRule: vi.fn(async (_owner: string, dataIn: unknown) => {
+      const data = dataIn as Record<string, unknown>;
+      return {
+        id: 'rule-99',
+        ownerId: 'u-1',
+        name: data.name,
+        description: data.description ?? null,
+        author: null,
+        lifecycle: 'draft',
+        severity: data.severity ?? 'medium',
+        tactic: data.tactic ?? null,
+        technique: data.technique ?? null,
+        logSourceKind: data.logSourceKind ?? null,
+        detection: data.detection ?? {},
+        falsePositives: data.falsePositives ?? [],
+        references: [],
+        tags: data.tags ?? [],
+        metadata: data.metadata ?? {},
+        createdAt: '2026-05-10T00:00:00Z',
+        updatedAt: '2026-05-10T00:00:00Z',
+      };
+    }),
+    createIoc: vi.fn(async (_owner: string, dataIn: unknown) => {
+      const data = dataIn as Record<string, unknown>;
+      return {
+        id: 'ioc-99',
+        ownerId: 'u-1',
+        kind: data.kind,
+        value: data.value,
+        title: null,
+        description: null,
+        threatType: data.threatType ?? null,
+        confidence: data.confidence ?? 50,
+        firstSeenAt: '2026-05-10T00:00:00Z',
+        lastSeenAt: '2026-05-10T00:00:00Z',
+        expiresAt: null,
+        source: data.source ?? 'cyber.coach',
+        tags: [],
+        references: [],
+        metadata: {},
+        createdAt: '2026-05-10T00:00:00Z',
+        updatedAt: '2026-05-10T00:00:00Z',
+      };
+    }),
     getAlert: vi.fn(async () => ({
       id: 'a-1',
       title: 'PowerShell encoded command',
@@ -264,12 +270,12 @@ describe('list_open_alerts', () => {
       ownerId: 'u-1',
       conversationId: 'cv-1',
     });
-    const out = await (tools.list_open_alerts.execute as any)(
+    const out = await (tools.list_open_alerts.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       { limit: 5 },
       aiCallArgs,
     );
     expect(out.alerts).toHaveLength(1);
-    expect(out.alerts[0].status).toBe('open');
+    expect((out.alerts as Array<{ status: string }>)[0].status).toBe('open');
     expect(cyberRepo.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'cyber.coach.list_open_alerts' }),
     );
@@ -287,7 +293,7 @@ describe('attach_alert_to_case tool', () => {
       conversationId: 'cv-1',
       caseId: 'c-1',
     });
-    const out = await (tools.attach_alert_to_case.execute as any)(
+    const out = await (tools.attach_alert_to_case.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       {
         caseId: '00000000-0000-0000-0000-000000000001',
         alertId: '00000000-0000-0000-0000-000000000002',
@@ -320,7 +326,7 @@ describe('propose_detection_rule tool', () => {
       ownerId: 'u-1',
       conversationId: 'cv-1',
     });
-    const out = await (tools.propose_detection_rule.execute as any)(
+    const out = await (tools.propose_detection_rule.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       {
         name: 'Auth-failure spike on prod',
         description: 'Burst of failed auths',
@@ -335,7 +341,7 @@ describe('propose_detection_rule tool', () => {
     expect(out.lifecycle).toBe('draft');
     expect(cyberRepo.createDetectionRule).toHaveBeenCalledOnce();
     // The lifecycle the tool sent must be 'draft', not 'active'
-    const firstCallArgs = (cyberRepo.createDetectionRule as any).mock.calls[0];
+    const firstCallArgs = (cyberRepo.createDetectionRule as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(firstCallArgs[1].lifecycle).toBe('draft');
     expect(cyberRepo.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'cyber.coach.propose_detection_rule' }),
@@ -350,7 +356,7 @@ describe('lookup_cve tool', () => {
   it('returns the registered vuln when CVE id matches', async () => {
     pushResult({ rows: [] });
     const tools = buildCoachTools({ ownerId: 'u-1', conversationId: 'cv-1' });
-    const out = await (tools.lookup_cve.execute as any)(
+    const out = await (tools.lookup_cve.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       { cveId: 'CVE-2026-1234' },
       aiCallArgs,
     );
@@ -366,7 +372,7 @@ describe('add_ioc tool', () => {
   it('creates an IOC, audits, logs', async () => {
     pushResult({ rows: [] });
     const tools = buildCoachTools({ ownerId: 'u-1', conversationId: 'cv-1' });
-    const out = await (tools.add_ioc.execute as any)(
+    const out = await (tools.add_ioc.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       {
         kind: 'ipv4',
         value: '203.0.113.99',
@@ -390,12 +396,13 @@ describe('get_breakdown_or_run_summary tool', () => {
   it('returns playbook run summary with step titles from snapshot', async () => {
     pushResult({ rows: [] });
     const tools = buildCoachTools({ ownerId: 'u-1', conversationId: 'cv-1' });
-    const out = await (tools.get_breakdown_or_run_summary.execute as any)(
+    const out = await (tools.get_breakdown_or_run_summary.execute as unknown as (...args: unknown[]) => Promise<Record<string, unknown>>)(
       { playbookRunId: '00000000-0000-0000-0000-000000000003' },
       aiCallArgs,
     );
     expect(out.id).toBe('pr-1');
-    expect(out.stepRuns[0].title).toBe('Identify infected host');
-    expect(out.stepRuns[0].notes).toBe('host=prod-web-01');
+    const stepRuns = out.stepRuns as Array<{ title: string; notes: string }>;
+    expect(stepRuns[0].title).toBe('Identify infected host');
+    expect(stepRuns[0].notes).toBe('host=prod-web-01');
   });
 });

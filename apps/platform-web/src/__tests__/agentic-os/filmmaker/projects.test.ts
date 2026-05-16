@@ -98,7 +98,7 @@ describe('PHASE_KEYS', () => {
   it('has five lifecycle phases', () => {
     expect(PHASE_KEYS).toHaveLength(5);
     for (const k of ['development', 'pre_production', 'production', 'post_production', 'distribution']) {
-      expect(PHASE_KEYS).toContain(k as any);
+      expect(PHASE_KEYS).toContain(k as never);
     }
   });
 
@@ -138,7 +138,7 @@ describe('coercePhaseProgress', () => {
   });
 
   it('ignores non-numeric values', () => {
-    const p = coercePhaseProgress({ development: 'high' as any, production: NaN });
+    const p = coercePhaseProgress({ development: 'high' as never, production: NaN });
     expect(p.development).toBe(0);
     expect(p.production).toBe(0);
   });

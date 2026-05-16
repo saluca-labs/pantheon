@@ -57,12 +57,12 @@ const referencesRepo = {
 };
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...a: any[]) => getCurrentResearchUser(...a),
+  getCurrentResearchUser: (...a: unknown[]) => getCurrentResearchUser(...a),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 
 vi.mock('@/lib/agentic-os/research/repo', () => ({
-  recordAudit: (...a: any[]) => recordAudit(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
 }));
 
 vi.mock('@/lib/agentic-os/research/papers-repo', () => papersRepo);
@@ -100,11 +100,11 @@ beforeEach(() => {
     ...paperAuthorsRepo,
     ...referencesRepo,
   })) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
 });
 
-function makePaper(o: Record<string, any> = {}) {
+function makePaper(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     userId: 'u-1',
@@ -126,7 +126,7 @@ function makePaper(o: Record<string, any> = {}) {
   };
 }
 
-function makeAuthor(o: Record<string, any> = {}) {
+function makeAuthor(o: Record<string, unknown> = {}) {
   return {
     id: 'a-1',
     userId: 'u-1',
@@ -150,7 +150,7 @@ describe('GET /papers', () => {
   it('401 when unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
@@ -158,7 +158,7 @@ describe('GET /papers', () => {
     authed();
     papersRepo.listPapers.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    await GET(new Request(`${URL}?kind=preprint&tag=robotics&year=2024&q=topology`) as any);
+    await GET(new Request(`${URL}?kind=preprint&tag=robotics&year=2024&q=topology`) as never);
     expect(papersRepo.listPapers).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({
@@ -174,14 +174,14 @@ describe('GET /papers', () => {
   it('400 on invalid kind filter', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await GET(new Request(`${URL}?kind=bogus`) as any);
+    const r = await GET(new Request(`${URL}?kind=bogus`) as never);
     expect(r.status).toBe(400);
   });
 
   it('400 on out-of-range year', async () => {
     authed();
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await GET(new Request(`${URL}?year=999`) as any);
+    const r = await GET(new Request(`${URL}?year=999`) as never);
     expect(r.status).toBe(400);
   });
 
@@ -189,7 +189,7 @@ describe('GET /papers', () => {
     authed();
     papersRepo.listPapers.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    await GET(new Request(`${URL}?archived=true`) as any);
+    await GET(new Request(`${URL}?archived=true`) as never);
     expect(papersRepo.listPapers).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ archived: true }),
@@ -203,7 +203,7 @@ describe('POST /papers', () => {
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { wrong: true }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -211,7 +211,7 @@ describe('POST /papers', () => {
     authed();
     papersRepo.createPaper.mockResolvedValue({ kind: 'duplicate', field: 'doi' });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await POST(jsonReq(URL, 'POST', { title: 'T', doi: '10.1/x' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { title: 'T', doi: '10.1/x' }) as never);
     expect(r.status).toBe(409);
   });
 
@@ -219,7 +219,7 @@ describe('POST /papers', () => {
     authed();
     papersRepo.createPaper.mockResolvedValue({ kind: 'duplicate', field: 'arxiv_id' });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await POST(jsonReq(URL, 'POST', { title: 'T', arxiv_id: '2401.12345' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { title: 'T', arxiv_id: '2401.12345' }) as never);
     expect(r.status).toBe(409);
   });
 
@@ -227,7 +227,7 @@ describe('POST /papers', () => {
     authed();
     papersRepo.createPaper.mockResolvedValue({ kind: 'ok', paper: makePaper() });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/route');
-    const r = await POST(jsonReq(URL, 'POST', { title: 'T' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { title: 'T' }) as never);
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.paper.created' }),
@@ -242,7 +242,7 @@ describe('GET /papers/[id]', () => {
     authed();
     papersRepo.getPaper.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -252,7 +252,7 @@ describe('GET /papers/[id]', () => {
     paperAuthorsRepo.listOrderedAuthorsForPaper.mockResolvedValue([]);
     papersRepo.countLinkedExperimentsForPaper.mockResolvedValue(2);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.linkedExperimentsCount).toBe(2);
@@ -266,7 +266,7 @@ describe('PATCH /papers/[id]', () => {
     authed();
     papersRepo.getPaper.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -277,7 +277,7 @@ describe('PATCH /papers/[id]', () => {
       makePaper({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: true }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.paper.archived' }),
@@ -289,7 +289,7 @@ describe('PATCH /papers/[id]', () => {
     authed();
     papersRepo.getPaper.mockResolvedValue(makePaper());
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { archived: false }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(400);
     const body = await r.json();
     expect(body.restorePath).toBe(`/api/tiresias/agentic-os/research/papers/p-1/restore`);
@@ -300,7 +300,7 @@ describe('PATCH /papers/[id]', () => {
     papersRepo.getPaper.mockResolvedValue(makePaper());
     papersRepo.updatePaper.mockResolvedValue({ kind: 'duplicate', field: 'doi' });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { doi: '10.1/x' }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { doi: '10.1/x' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(409);
   });
 
@@ -309,7 +309,7 @@ describe('PATCH /papers/[id]', () => {
     papersRepo.getPaper.mockResolvedValue(makePaper());
     papersRepo.updatePaper.mockResolvedValue({ kind: 'ok', paper: makePaper({ title: 'New' }) });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as any, params({ id: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', { title: 'New' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.paper.updated' }),
@@ -324,7 +324,7 @@ describe('DELETE /papers/[id] (soft-archive)', () => {
     authed();
     papersRepo.getPaper.mockResolvedValue(null);
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -335,7 +335,7 @@ describe('DELETE /papers/[id] (soft-archive)', () => {
       makePaper({ archivedAt: '2026-05-12T11:00:00Z' }),
     );
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/route');
-    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as any, params({ id: 'p-1' }));
+    const r = await DELETE(new Request(URL, { method: 'DELETE' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.paper.archived' }),
@@ -350,7 +350,7 @@ describe('POST /papers/[id]/restore', () => {
     authed();
     papersRepo.restorePaper.mockResolvedValue(null);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -358,7 +358,7 @@ describe('POST /papers/[id]/restore', () => {
     authed();
     papersRepo.restorePaper.mockResolvedValue({ paper: makePaper(), alreadyActive: true });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -369,7 +369,7 @@ describe('POST /papers/[id]/restore', () => {
       alreadyActive: false,
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/restore/route');
-    const r = await POST(new Request(URL, { method: 'POST' }) as any, params({ id: 'p-1' }));
+    const r = await POST(new Request(URL, { method: 'POST' }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.paper.restored' }),
@@ -386,7 +386,7 @@ describe('GET /papers/[id]/authors', () => {
     authed();
     paperAuthorsRepo.isPaperOwnedByUser.mockResolvedValue(false);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -395,7 +395,7 @@ describe('GET /papers/[id]/authors', () => {
     paperAuthorsRepo.isPaperOwnedByUser.mockResolvedValue(true);
     paperAuthorsRepo.listOrderedAuthorsForPaper.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'p-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(200);
   });
 });
@@ -407,7 +407,7 @@ describe('POST /papers/[id]/authors', () => {
     authed();
     paperAuthorsRepo.isPaperOwnedByUser.mockResolvedValue(true);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
-    const r = await POST(jsonReq(URL, 'POST', { position: 1 }) as any, params({ id: 'p-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { position: 1 }) as never, params({ id: 'p-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -417,7 +417,7 @@ describe('POST /papers/[id]/authors', () => {
     paperAuthorsRepo.isAuthorOwnedByUser.mockResolvedValue(false);
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { authorId: '00000000-0000-0000-0000-000000000001' }) as any,
+      jsonReq(URL, 'POST', { authorId: '00000000-0000-0000-0000-000000000001' }) as never,
       params({ id: 'p-1' }),
     );
     expect(r.status).toBe(404);
@@ -441,7 +441,7 @@ describe('POST /papers/[id]/authors', () => {
     });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { displayName: 'Smith, J.' }) as any,
+      jsonReq(URL, 'POST', { displayName: 'Smith, J.' }) as never,
       params({ id: 'p-1' }),
     );
     expect(r.status).toBe(201);
@@ -457,7 +457,7 @@ describe('POST /papers/[id]/authors', () => {
     paperAuthorsRepo.linkExistingAuthor.mockResolvedValue({ kind: 'duplicate_author' });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/papers/[id]/authors/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { authorId: '00000000-0000-0000-0000-000000000001' }) as any,
+      jsonReq(URL, 'POST', { authorId: '00000000-0000-0000-0000-000000000001' }) as never,
       params({ id: 'p-1' }),
     );
     expect(r.status).toBe(409);
@@ -473,7 +473,7 @@ describe('POST /papers/[id]/authors', () => {
       jsonReq(URL, 'POST', {
         authorId: '00000000-0000-0000-0000-000000000001',
         position: 1,
-      }) as any,
+      }) as never,
       params({ id: 'p-1' }),
     );
     expect(r.status).toBe(409);
@@ -491,7 +491,7 @@ describe('PATCH/DELETE /papers/[id]/authors/[authorId]', () => {
       '@/app/api/tiresias/agentic-os/research/papers/[id]/authors/[authorId]/route'
     );
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { position: 3 }) as any,
+      jsonReq(URL, 'PATCH', { position: 3 }) as never,
       params({ id: 'p-1', authorId: 'a-1' }),
     );
     expect(r.status).toBe(200);
@@ -508,7 +508,7 @@ describe('PATCH/DELETE /papers/[id]/authors/[authorId]', () => {
       '@/app/api/tiresias/agentic-os/research/papers/[id]/authors/[authorId]/route'
     );
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { position: 3 }) as any,
+      jsonReq(URL, 'PATCH', { position: 3 }) as never,
       params({ id: 'p-1', authorId: 'a-1' }),
     );
     expect(r.status).toBe(404);
@@ -522,7 +522,7 @@ describe('PATCH/DELETE /papers/[id]/authors/[authorId]', () => {
       '@/app/api/tiresias/agentic-os/research/papers/[id]/authors/[authorId]/route'
     );
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { position: 100 }) as any,
+      jsonReq(URL, 'PATCH', { position: 100 }) as never,
       params({ id: 'p-1', authorId: 'a-1' }),
     );
     expect(r.status).toBe(400);
@@ -535,7 +535,7 @@ describe('PATCH/DELETE /papers/[id]/authors/[authorId]', () => {
       '@/app/api/tiresias/agentic-os/research/papers/[id]/authors/[authorId]/route'
     );
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'p-1', authorId: 'a-1' }),
     );
     expect(r.status).toBe(404);
@@ -549,7 +549,7 @@ describe('PATCH/DELETE /papers/[id]/authors/[authorId]', () => {
       '@/app/api/tiresias/agentic-os/research/papers/[id]/authors/[authorId]/route'
     );
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'p-1', authorId: 'a-1' }),
     );
     expect(r.status).toBe(200);
@@ -567,7 +567,7 @@ describe('GET /authors', () => {
   it('401 unauthenticated', async () => {
     getCurrentResearchUser.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/authors/route');
-    const r = await GET(new Request(URL) as any);
+    const r = await GET(new Request(URL) as never);
     expect(r.status).toBe(401);
   });
 
@@ -575,7 +575,7 @@ describe('GET /authors', () => {
     authed();
     authorsRepo.listAuthors.mockResolvedValue([]);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/authors/route');
-    await GET(new Request(`${URL}?family_name_prefix=Sm&q=jane`) as any);
+    await GET(new Request(`${URL}?family_name_prefix=Sm&q=jane`) as never);
     expect(authorsRepo.listAuthors).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ familyNamePrefix: 'Sm', q: 'jane' }),
@@ -589,7 +589,7 @@ describe('POST /authors', () => {
   it('400 on invalid body', async () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/authors/route');
-    const r = await POST(jsonReq(URL, 'POST', { foo: 'bar' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { foo: 'bar' }) as never);
     expect(r.status).toBe(400);
   });
 
@@ -597,7 +597,7 @@ describe('POST /authors', () => {
     authed();
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/authors/route');
     const r = await POST(
-      jsonReq(URL, 'POST', { display_name: 'Smith', orcid: 'not-an-orcid' }) as any,
+      jsonReq(URL, 'POST', { display_name: 'Smith', orcid: 'not-an-orcid' }) as never,
     );
     expect(r.status).toBe(400);
   });
@@ -610,7 +610,7 @@ describe('POST /authors', () => {
       jsonReq(URL, 'POST', {
         display_name: 'Smith',
         orcid: '0000-0001-2345-6789',
-      }) as any,
+      }) as never,
     );
     expect(r.status).toBe(409);
   });
@@ -619,7 +619,7 @@ describe('POST /authors', () => {
     authed();
     authorsRepo.createAuthor.mockResolvedValue({ kind: 'ok', author: makeAuthor() });
     const { POST } = await import('@/app/api/tiresias/agentic-os/research/authors/route');
-    const r = await POST(jsonReq(URL, 'POST', { display_name: 'Smith' }) as any);
+    const r = await POST(jsonReq(URL, 'POST', { display_name: 'Smith' }) as never);
     expect(r.status).toBe(201);
     expect(recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'research.author.created' }),
@@ -634,7 +634,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authed();
     authorsRepo.getAuthor.mockResolvedValue(null);
     const { GET } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
-    const r = await GET(new Request(URL) as any, params({ id: 'a-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'a-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -643,7 +643,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authorsRepo.getAuthor.mockResolvedValue(null);
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { display_name: 'Smith' }) as any,
+      jsonReq(URL, 'PATCH', { display_name: 'Smith' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(404);
@@ -655,7 +655,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authorsRepo.updateAuthor.mockResolvedValue({ kind: 'duplicate', field: 'orcid' });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { orcid: '0000-0001-2345-6789' }) as any,
+      jsonReq(URL, 'PATCH', { orcid: '0000-0001-2345-6789' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(409);
@@ -670,7 +670,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     });
     const { PATCH } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { display_name: 'New' }) as any,
+      jsonReq(URL, 'PATCH', { display_name: 'New' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(200);
@@ -684,7 +684,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authorsRepo.deleteAuthor.mockResolvedValue({ kind: 'not_found' });
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(404);
@@ -695,7 +695,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authorsRepo.deleteAuthor.mockResolvedValue({ kind: 'in_use', count: 2 });
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(409);
@@ -708,7 +708,7 @@ describe('GET/PATCH/DELETE /authors/[id]', () => {
     authorsRepo.deleteAuthor.mockResolvedValue({ kind: 'ok' });
     const { DELETE } = await import('@/app/api/tiresias/agentic-os/research/authors/[id]/route');
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'a-1' }),
     );
     expect(r.status).toBe(200);
@@ -729,7 +729,7 @@ describe('GET /experiments/[id]/references', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
-    const r = await GET(new Request(URL) as any, params({ id: 'e-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'e-1' }));
     expect(r.status).toBe(404);
   });
 
@@ -740,7 +740,7 @@ describe('GET /experiments/[id]/references', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
-    const r = await GET(new Request(URL) as any, params({ id: 'e-1' }));
+    const r = await GET(new Request(URL) as never, params({ id: 'e-1' }));
     expect(r.status).toBe(200);
   });
 });
@@ -755,7 +755,7 @@ describe('POST /experiments/[id]/references', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
     const r = await POST(
-      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as any,
+      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as never,
       params({ id: 'e-1' }),
     );
     expect(r.status).toBe(404);
@@ -769,7 +769,7 @@ describe('POST /experiments/[id]/references', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
     const r = await POST(
-      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as any,
+      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as never,
       params({ id: 'e-1' }),
     );
     expect(r.status).toBe(404);
@@ -781,7 +781,7 @@ describe('POST /experiments/[id]/references', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
-    const r = await POST(jsonReq(URL, 'POST', { foo: 'bar' }) as any, params({ id: 'e-1' }));
+    const r = await POST(jsonReq(URL, 'POST', { foo: 'bar' }) as never, params({ id: 'e-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -797,7 +797,7 @@ describe('POST /experiments/[id]/references', () => {
       jsonReq(URL, 'POST', {
         paperId: '00000000-0000-0000-0000-000000000001',
         relevance: 'cites',
-      }) as any,
+      }) as never,
       params({ id: 'e-1' }),
     );
     expect(r.status).toBe(409);
@@ -827,7 +827,7 @@ describe('POST /experiments/[id]/references', () => {
         jsonReq(URL, 'POST', {
           paperId: '00000000-0000-0000-0000-000000000001',
           relevance: rel,
-        }) as any,
+        }) as never,
         params({ id: 'e-1' }),
       );
       expect(r.status).toBe(201);
@@ -853,7 +853,7 @@ describe('POST /experiments/[id]/references', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/route'
     );
     await POST(
-      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as any,
+      jsonReq(URL, 'POST', { paperId: '00000000-0000-0000-0000-000000000001' }) as never,
       params({ id: 'e-1' }),
     );
     const audit = recordAudit.mock.calls[0]?.[0];
@@ -872,7 +872,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { relevance: 'methods' }) as any,
+      jsonReq(URL, 'PATCH', { relevance: 'methods' }) as never,
       params({ id: 'e-1', paperId: 'p-1' }),
     );
     expect(r.status).toBe(404);
@@ -893,7 +893,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
-    const r = await PATCH(jsonReq(URL, 'PATCH', {}) as any, params({ id: 'e-1', paperId: 'p-1' }));
+    const r = await PATCH(jsonReq(URL, 'PATCH', {}) as never, params({ id: 'e-1', paperId: 'p-1' }));
     expect(r.status).toBe(400);
   });
 
@@ -921,7 +921,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
     const r = await PATCH(
-      jsonReq(URL, 'PATCH', { relevance: 'methods', notes: 'updated' }) as any,
+      jsonReq(URL, 'PATCH', { relevance: 'methods', notes: 'updated' }) as never,
       params({ id: 'e-1', paperId: 'p-1' }),
     );
     expect(r.status).toBe(200);
@@ -942,7 +942,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
     const r = await DELETE(
-      new Request(URL, { method: 'DELETE' }) as any,
+      new Request(URL, { method: 'DELETE' }) as never,
       params({ id: 'e-1', paperId: 'p-1' }),
     );
     expect(r.status).toBe(404);
@@ -956,7 +956,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
     const r = await DELETE(
-      new Request(`${URL}?relevance=bogus`, { method: 'DELETE' }) as any,
+      new Request(`${URL}?relevance=bogus`, { method: 'DELETE' }) as never,
       params({ id: 'e-1', paperId: 'p-1' }),
     );
     expect(r.status).toBe(400);
@@ -971,7 +971,7 @@ describe('PATCH/DELETE /experiments/[id]/references/[paperId]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/references/[paperId]/route'
     );
     const r = await DELETE(
-      new Request(`${URL}?relevance=cites`, { method: 'DELETE' }) as any,
+      new Request(`${URL}?relevance=cites`, { method: 'DELETE' }) as never,
       params({ id: 'e-1', paperId: 'p-1' }),
     );
     expect(r.status).toBe(200);

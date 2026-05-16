@@ -72,7 +72,7 @@ describe('getStoryDocumentKindInfo', () => {
   });
 
   it('throws on unknown kind', () => {
-    expect(() => getStoryDocumentKindInfo('synopsis' as any)).toThrow();
+    expect(() => getStoryDocumentKindInfo('synopsis' as never)).toThrow();
   });
 });
 
@@ -161,8 +161,8 @@ describe('countWords', () => {
   });
 
   it('returns 0 for non-string input', () => {
-    expect(countWords(null as any)).toBe(0);
-    expect(countWords(undefined as any)).toBe(0);
+    expect(countWords(null as never)).toBe(0);
+    expect(countWords(undefined as never)).toBe(0);
   });
 
   it('counts a single word', () => {
@@ -184,12 +184,12 @@ describe('countWords', () => {
 // ─── Repo plumbing (mocked pg) ───────────────────────────────────────────────
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const queue: PgResult[] = [];
-const calls: { sql: string; params: any[] }[] = [];
+const calls: { sql: string; params: unknown[] }[] = [];
 
 function pushResult(r: Partial<PgResult>): void {
   queue.push({ rows: r.rows ?? [], rowCount: r.rowCount ?? (r.rows?.length ?? 0) });
@@ -197,7 +197,7 @@ function pushResult(r: Partial<PgResult>): void {
 
 vi.mock('@/lib/agentic-os/filmmaker/session', () => ({
   getFilmmakerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       calls.push({ sql, params });
       return queue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -220,7 +220,7 @@ beforeEach(() => {
   calls.length = 0;
 });
 
-function docRow(overrides: Record<string, any> = {}): any {
+function docRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'd-1',
     project_id: 'p-1',
@@ -237,7 +237,7 @@ function docRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function versionRow(overrides: Record<string, any> = {}): any {
+function versionRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'v-1',
     document_id: 'd-1',
@@ -250,7 +250,7 @@ function versionRow(overrides: Record<string, any> = {}): any {
   };
 }
 
-function projectRow(overrides: Record<string, any> = {}): any {
+function projectRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     user_id: 'u-1',
@@ -324,7 +324,7 @@ describe('createStoryDocument', () => {
         projectId: 'p-1',
         tenantId: 't-1',
         userId: 'u-1',
-        kind: 'synopsis' as any,
+        kind: 'synopsis' as never,
       }),
     ).rejects.toThrow(/Invalid story document kind/);
   });

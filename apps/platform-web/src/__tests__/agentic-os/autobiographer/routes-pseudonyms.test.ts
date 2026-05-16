@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -43,7 +43,7 @@ vi.mock(
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -55,8 +55,8 @@ vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
 beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
-  for (const m of Object.values(booksRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(pseudonymsRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(booksRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(pseudonymsRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -83,7 +83,7 @@ describe('GET /books/[id]/pseudonyms', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/pseudonyms/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(401);
@@ -95,7 +95,7 @@ describe('GET /books/[id]/pseudonyms', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/pseudonyms/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(404);
@@ -108,7 +108,7 @@ describe('GET /books/[id]/pseudonyms', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/pseudonyms/route'
     );
-    const res = await GET(jsonReq('http://t/x', 'GET') as any, {
+    const res = await GET(jsonReq('http://t/x', 'GET') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
@@ -128,7 +128,7 @@ describe('POST /books/[id]/pseudonyms', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/pseudonyms/route'
     );
-    const res = await POST(jsonReq('http://t/x', 'POST', {}) as any, {
+    const res = await POST(jsonReq('http://t/x', 'POST', {}) as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(400);
@@ -145,7 +145,7 @@ describe('POST /books/[id]/pseudonyms', () => {
         personId: '00000000-0000-0000-0000-000000000001',
         pseudonym: 'Mary',
         bogus: 'x',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(400);
@@ -161,7 +161,7 @@ describe('POST /books/[id]/pseudonyms', () => {
       jsonReq('http://t/x', 'POST', {
         personId: '00000000-0000-0000-0000-000000000001',
         pseudonym: 'Mary',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(404);
@@ -178,7 +178,7 @@ describe('POST /books/[id]/pseudonyms', () => {
       jsonReq('http://t/x', 'POST', {
         personId: '00000000-0000-0000-0000-000000000001',
         pseudonym: 'Mary',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(404);
@@ -188,7 +188,7 @@ describe('POST /books/[id]/pseudonyms', () => {
     authedUser();
     booksRepoMocks.getBook.mockResolvedValue({ id: 'b-1', userId: 'u-1' });
     pseudonymsRepoMocks.bookAndPersonBelongToUser.mockResolvedValue(true);
-    const dup: any = new Error('duplicate');
+    const dup = new Error('duplicate') as Error & { code?: string; constraint?: string };
     dup.code = 'duplicate';
     pseudonymsRepoMocks.createPseudonym.mockRejectedValue(dup);
     const { POST } = await import(
@@ -198,7 +198,7 @@ describe('POST /books/[id]/pseudonyms', () => {
       jsonReq('http://t/x', 'POST', {
         personId: '00000000-0000-0000-0000-000000000001',
         pseudonym: 'Mary',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(409);
@@ -221,7 +221,7 @@ describe('POST /books/[id]/pseudonyms', () => {
         personId: '00000000-0000-0000-0000-000000000001',
         pseudonym: 'Mary',
         notes: 'hello',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'b-1' }) },
     );
     expect(res.status).toBe(201);
@@ -243,7 +243,7 @@ describe('PATCH /pseudonyms/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/pseudonyms/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { pseudonym: 'Mary' }) as any,
+      jsonReq('http://t/x', 'PATCH', { pseudonym: 'Mary' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(404);
@@ -261,7 +261,7 @@ describe('PATCH /pseudonyms/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/pseudonyms/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { bogus: 'x' }) as any,
+      jsonReq('http://t/x', 'PATCH', { bogus: 'x' }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(400);
@@ -285,7 +285,7 @@ describe('PATCH /pseudonyms/[id]', () => {
       '@/app/api/tiresias/agentic-os/autobiographer/pseudonyms/[id]/route'
     );
     const res = await PATCH(
-      jsonReq('http://t/x', 'PATCH', { applied: true }) as any,
+      jsonReq('http://t/x', 'PATCH', { applied: true }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -319,7 +319,7 @@ describe('PATCH /pseudonyms/[id]', () => {
       jsonReq('http://t/x', 'PATCH', {
         pseudonym: 'Maria',
         notes: 'why',
-      }) as any,
+      }) as never,
       { params: Promise.resolve({ id: 'p-1' }) },
     );
     expect(res.status).toBe(200);
@@ -340,7 +340,7 @@ describe('DELETE /pseudonyms/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/pseudonyms/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(404);
@@ -358,7 +358,7 @@ describe('DELETE /pseudonyms/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/pseudonyms/[id]/route'
     );
-    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as any, {
+    const res = await DELETE(jsonReq('http://t/x', 'DELETE') as never, {
       params: Promise.resolve({ id: 'p-1' }),
     });
     expect(res.status).toBe(200);

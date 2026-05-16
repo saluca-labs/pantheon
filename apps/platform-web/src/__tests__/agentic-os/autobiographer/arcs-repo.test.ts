@@ -12,14 +12,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface PgResult {
-  rows: any[];
+  rows: unknown[];
   rowCount: number;
 }
 
 const poolQueue: PgResult[] = [];
-const poolCalls: { sql: string; params: any[] }[] = [];
+const poolCalls: { sql: string; params: unknown[] }[] = [];
 const clientQueue: PgResult[] = [];
-const clientCalls: { sql: string; params: any[] }[] = [];
+const clientCalls: { sql: string; params: unknown[] }[] = [];
 
 function pushPool(r: Partial<PgResult>): void {
   poolQueue.push({
@@ -36,7 +36,7 @@ function pushClient(r: Partial<PgResult>): void {
 
 const clientReleaseSpy = vi.fn();
 const clientMock = {
-  query: vi.fn(async (sql: string, params: any[] = []) => {
+  query: vi.fn(async (sql: string, params: unknown[] = []) => {
     clientCalls.push({ sql, params });
     return clientQueue.shift() ?? { rows: [], rowCount: 0 };
   }),
@@ -45,7 +45,7 @@ const clientMock = {
 
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
   getAutobiographerPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       poolCalls.push({ sql, params });
       return poolQueue.shift() ?? { rows: [], rowCount: 0 };
     }),
@@ -73,7 +73,7 @@ beforeEach(() => {
   clientReleaseSpy.mockClear();
 });
 
-function arcRow(overrides: Record<string, any> = {}): any {
+function arcRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'a-1',
     user_id: 'u-1',
@@ -133,7 +133,7 @@ describe('createArc', () => {
   });
   it('rejects invalid kind', async () => {
     await expect(
-      createArc('u-1', { bookId: 'b-1', title: 't', kind: 'bogus' as any }),
+      createArc('u-1', { bookId: 'b-1', title: 't', kind: 'bogus' as never }),
     ).rejects.toThrow(/Invalid arc kind/);
   });
 

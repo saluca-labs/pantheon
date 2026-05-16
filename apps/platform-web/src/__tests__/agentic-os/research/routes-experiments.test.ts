@@ -21,7 +21,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const getCurrentResearchUser = vi.fn();
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...args: any[]) => getCurrentResearchUser(...args),
+  getCurrentResearchUser: (...args: unknown[]) => getCurrentResearchUser(...args),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 
@@ -40,7 +40,7 @@ vi.mock('@/lib/agentic-os/research/repo', () => repoMocks);
 
 beforeEach(() => {
   getCurrentResearchUser.mockReset();
-  for (const m of Object.values(repoMocks)) (m as any).mockReset();
+  for (const m of Object.values(repoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
 });
 
 function authedUser() {
@@ -69,7 +69,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await GET(new Request(URL_BASE) as any);
+    const res = await GET(new Request(URL_BASE) as never);
     expect(res.status).toBe(401);
   });
 
@@ -79,7 +79,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await GET(new Request(URL_BASE) as any);
+    const res = await GET(new Request(URL_BASE) as never);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.experiments).toHaveLength(1);
@@ -95,7 +95,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    await GET(new Request(`${URL_BASE}?status=running`) as any);
+    await GET(new Request(`${URL_BASE}?status=running`) as never);
     expect(repoMocks.listExperimentsForUser).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ status: 'running' }),
@@ -107,7 +107,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await GET(new Request(`${URL_BASE}?status=shipping`) as any);
+    const res = await GET(new Request(`${URL_BASE}?status=shipping`) as never);
     expect(res.status).toBe(400);
   });
 
@@ -117,7 +117,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    await GET(new Request(`${URL_BASE}?tag=biology`) as any);
+    await GET(new Request(`${URL_BASE}?tag=biology`) as never);
     expect(repoMocks.listExperimentsForUser).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ tag: 'biology' }),
@@ -130,7 +130,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    await GET(new Request(`${URL_BASE}?archived=true`) as any);
+    await GET(new Request(`${URL_BASE}?archived=true`) as never);
     expect(repoMocks.listExperimentsForUser).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ archived: true }),
@@ -143,7 +143,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    await GET(new Request(`${URL_BASE}?archived=false`) as any);
+    await GET(new Request(`${URL_BASE}?archived=false`) as never);
     expect(repoMocks.listExperimentsForUser).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ archived: false }),
@@ -156,7 +156,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    await GET(new Request(`${URL_BASE}?limit=20&offset=40`) as any);
+    await GET(new Request(`${URL_BASE}?limit=20&offset=40`) as never);
     expect(repoMocks.listExperimentsForUser).toHaveBeenCalledWith(
       'u-1',
       expect.objectContaining({ limit: 20, offset: 40 }),
@@ -168,7 +168,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await GET(new Request(`${URL_BASE}?limit=9999`) as any);
+    const res = await GET(new Request(`${URL_BASE}?limit=9999`) as never);
     expect(res.status).toBe(400);
   });
 
@@ -177,7 +177,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await GET(new Request(`${URL_BASE}?offset=-5`) as any);
+    const res = await GET(new Request(`${URL_BASE}?offset=-5`) as never);
     expect(res.status).toBe(400);
   });
 });
@@ -188,7 +188,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'X' }) as any);
+    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'X' }) as never);
     expect(res.status).toBe(401);
   });
 
@@ -197,7 +197,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await POST(jsonReq(URL_BASE, 'POST', {}) as any);
+    const res = await POST(jsonReq(URL_BASE, 'POST', {}) as never);
     expect(res.status).toBe(400);
   });
 
@@ -207,7 +207,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
     const res = await POST(
-      jsonReq(URL_BASE, 'POST', { name: 'X', status: 'shipping' }) as any,
+      jsonReq(URL_BASE, 'POST', { name: 'X', status: 'shipping' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -218,7 +218,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
     const res = await POST(
-      jsonReq(URL_BASE, 'POST', { name: 'X', targetCompletionDate: '05/11/2026' }) as any,
+      jsonReq(URL_BASE, 'POST', { name: 'X', targetCompletionDate: '05/11/2026' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -229,7 +229,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
     const res = await POST(
-      jsonReq(URL_BASE, 'POST', { name: 'X', coverImageUrl: 'not a url' }) as any,
+      jsonReq(URL_BASE, 'POST', { name: 'X', coverImageUrl: 'not a url' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -241,7 +241,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'Foo' }) as any);
+    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'Foo' }) as never);
     expect(res.status).toBe(201);
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -260,7 +260,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
     const res = await POST(
-      jsonReq(URL_BASE, 'POST', { name: 'Foo', hypothesisId: null }) as any,
+      jsonReq(URL_BASE, 'POST', { name: 'Foo', hypothesisId: null }) as never,
     );
     expect(res.status).toBe(201);
     expect(repoMocks.createExperiment).toHaveBeenCalledWith(
@@ -276,7 +276,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
-    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'Foo' }) as any);
+    const res = await POST(jsonReq(URL_BASE, 'POST', { name: 'Foo' }) as never);
     expect(res.status).toBe(201);
   });
 
@@ -286,7 +286,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/route'
     );
     const res = await POST(
-      jsonReq(URL_BASE, 'POST', { name: 'X', hypothesisId: 'not-a-uuid' }) as any,
+      jsonReq(URL_BASE, 'POST', { name: 'X', hypothesisId: 'not-a-uuid' }) as never,
     );
     expect(res.status).toBe(400);
   });
@@ -300,7 +300,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(401);
@@ -312,7 +312,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'someone-elses' }),
     });
     expect(res.status).toBe(404);
@@ -324,7 +324,7 @@ describe('GET /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await GET({} as any, {
+    const res = await GET({} as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(200);
@@ -339,7 +339,7 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as any, {
+    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(401);
@@ -351,7 +351,7 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as any, {
+    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(404);
@@ -365,7 +365,7 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
     const res = await PATCH(
-      jsonReq(`${URL_BASE}/e-1`, 'PATCH', { status: 'shipping' }) as any,
+      jsonReq(`${URL_BASE}/e-1`, 'PATCH', { status: 'shipping' }) as never,
       { params: Promise.resolve({ id: 'e-1' }) },
     );
     expect(res.status).toBe(400);
@@ -379,7 +379,7 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Renamed' }) as any, {
+    const res = await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Renamed' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(200);
@@ -399,7 +399,7 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { status: 'running' }) as any, {
+    await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { status: 'running' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(repoMocks.recordAudit).toHaveBeenCalledWith(
@@ -418,10 +418,10 @@ describe('PATCH /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { PATCH } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as any, {
+    await PATCH(jsonReq(`${URL_BASE}/e-1`, 'PATCH', { name: 'Foo' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
-    const actions = repoMocks.recordAudit.mock.calls.map((c: any[]) => c[0].action);
+    const actions = repoMocks.recordAudit.mock.calls.map((c: unknown[]) => (c[0] as { action: string }).action);
     expect(actions).not.toContain('research.experiment.status_changed');
   });
 });
@@ -432,7 +432,7 @@ describe('DELETE /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await DELETE(new Request(`${URL_BASE}/e-1`, { method: 'DELETE' }) as any, {
+    const res = await DELETE(new Request(`${URL_BASE}/e-1`, { method: 'DELETE' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(401);
@@ -444,7 +444,7 @@ describe('DELETE /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await DELETE(new Request(`${URL_BASE}/missing`, { method: 'DELETE' }) as any, {
+    const res = await DELETE(new Request(`${URL_BASE}/missing`, { method: 'DELETE' }) as never, {
       params: Promise.resolve({ id: 'missing' }),
     });
     expect(res.status).toBe(404);
@@ -462,7 +462,7 @@ describe('DELETE /api/tiresias/agentic-os/research/experiments/[id]', () => {
     const { DELETE } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
-    const res = await DELETE(new Request(`${URL_BASE}/e-1`, { method: 'DELETE' }) as any, {
+    const res = await DELETE(new Request(`${URL_BASE}/e-1`, { method: 'DELETE' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(200);
@@ -482,7 +482,7 @@ describe('DELETE /api/tiresias/agentic-os/research/experiments/[id]', () => {
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/route'
     );
     const res = await DELETE(
-      new Request(`${URL_BASE}/e-1?hard=true`, { method: 'DELETE' }) as any,
+      new Request(`${URL_BASE}/e-1?hard=true`, { method: 'DELETE' }) as never,
       { params: Promise.resolve({ id: 'e-1' }) },
     );
     expect(res.status).toBe(200);
@@ -505,7 +505,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments/[id]/restore', () =
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/restore/route'
     );
-    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as any, {
+    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(401);
@@ -517,7 +517,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments/[id]/restore', () =
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/restore/route'
     );
-    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as any, {
+    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(404);
@@ -535,7 +535,7 @@ describe('POST /api/tiresias/agentic-os/research/experiments/[id]/restore', () =
     const { POST } = await import(
       '@/app/api/tiresias/agentic-os/research/experiments/[id]/restore/route'
     );
-    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as any, {
+    const res = await POST(new Request(`${URL_BASE}/e-1/restore`, { method: 'POST' }) as never, {
       params: Promise.resolve({ id: 'e-1' }),
     });
     expect(res.status).toBe(200);

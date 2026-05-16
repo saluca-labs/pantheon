@@ -84,14 +84,14 @@ const paperAuthorsMocks = {
   listOrderedAuthorsForPaper: vi.fn(),
 };
 const repoMocks = {
-  recordAudit: (...a: any[]) => recordAudit(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
   getExperiment: vi.fn(),
   listHypotheses: vi.fn(),
 };
 const renderPdfToBuffer = vi.fn();
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...a: any[]) => getCurrentResearchUser(...a),
+  getCurrentResearchUser: (...a: unknown[]) => getCurrentResearchUser(...a),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 
@@ -127,7 +127,7 @@ vi.mock(
   () => paperAuthorsMocks,
 );
 vi.mock('@/lib/agentic-os/_shared/pdf/render', () => ({
-  renderPdfToBuffer: (...a: any[]) => renderPdfToBuffer(...a),
+  renderPdfToBuffer: (...a: unknown[]) => renderPdfToBuffer(...a),
 }));
 
 function authed() {
@@ -166,16 +166,16 @@ beforeEach(() => {
     ...falsifiersMocks,
     ...paperAuthorsMocks,
   })) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
   for (const m of Object.values(repoMocks)) {
-    if (typeof m === 'function' && (m as any).mockReset) {
-      (m as any).mockReset();
+    if (typeof m === 'function' && (m as unknown as ReturnType<typeof vi.fn>).mockReset) {
+      (m as unknown as { mockReset: () => void }).mockReset();
     }
   }
 });
 
-function makeDataset(o: Record<string, any> = {}) {
+function makeDataset(o: Record<string, unknown> = {}) {
   return {
     id: 'd-1',
     userId: 'u-1',
@@ -197,7 +197,7 @@ function makeDataset(o: Record<string, any> = {}) {
   };
 }
 
-function makeProtocol(o: Record<string, any> = {}) {
+function makeProtocol(o: Record<string, unknown> = {}) {
   return {
     id: 'p-1',
     userId: 'u-1',
@@ -215,7 +215,7 @@ function makeProtocol(o: Record<string, any> = {}) {
   };
 }
 
-function makeExperiment(o: Record<string, any> = {}) {
+function makeExperiment(o: Record<string, unknown> = {}) {
   return {
     id: 'e-1',
     userId: 'u-1',

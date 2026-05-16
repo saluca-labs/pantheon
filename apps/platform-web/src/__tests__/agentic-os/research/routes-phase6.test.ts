@@ -80,11 +80,11 @@ const blockersRepo = {
   listTopBlockers: vi.fn(),
 };
 const repoMocks = {
-  recordAudit: (...a: any[]) => recordAudit(...a),
+  recordAudit: (...a: unknown[]) => recordAudit(...a),
 };
 
 vi.mock('@/lib/agentic-os/research/session', () => ({
-  getCurrentResearchUser: (...a: any[]) => getCurrentResearchUser(...a),
+  getCurrentResearchUser: (...a: unknown[]) => getCurrentResearchUser(...a),
   getResearchPool: () => ({ query: vi.fn() }),
 }));
 vi.mock('@/lib/agentic-os/research/repo', () => repoMocks);
@@ -94,7 +94,7 @@ vi.mock('@/lib/agentic-os/research/reproducibility-repo', () => reproRepo);
 vi.mock('@/lib/agentic-os/research/blockers-repo', () => blockersRepo);
 
 function req(url: string, init?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost'), init as any);
+  return new NextRequest(new URL(url, 'http://localhost'), init as never);
 }
 
 beforeEach(() => {
@@ -236,7 +236,7 @@ describe('PATCH /milestones/[mid]', () => {
       { params: Promise.resolve({ mid: 'm-1' }) },
     );
     expect(res.status).toBe(200);
-    const actions = recordAudit.mock.calls.map((c: any) => c[0].action);
+    const actions = recordAudit.mock.calls.map((c: unknown) => ((c as Array<{ action: string }>)[0]).action);
     expect(actions).toContain('research.milestone.updated');
     expect(actions).toContain('research.milestone.completed');
   });
@@ -262,7 +262,7 @@ describe('PATCH /milestones/[mid]', () => {
       }),
       { params: Promise.resolve({ mid: 'm-1' }) },
     );
-    const actions = recordAudit.mock.calls.map((c: any) => c[0].action);
+    const actions = recordAudit.mock.calls.map((c: unknown) => ((c as Array<{ action: string }>)[0]).action);
     expect(actions).not.toContain('research.milestone.completed');
   });
 
@@ -456,7 +456,7 @@ describe('PATCH /dependencies/[depId]', () => {
       }),
       { params: Promise.resolve({ depId: 'd-1' }) },
     );
-    const actions = recordAudit.mock.calls.map((c: any) => c[0].action);
+    const actions = recordAudit.mock.calls.map((c: unknown) => ((c as Array<{ action: string }>)[0]).action);
     expect(actions).toContain('research.dependency.cleared');
   });
 
@@ -483,7 +483,7 @@ describe('PATCH /dependencies/[depId]', () => {
       }),
       { params: Promise.resolve({ depId: 'd-1' }) },
     );
-    const actions = recordAudit.mock.calls.map((c: any) => c[0].action);
+    const actions = recordAudit.mock.calls.map((c: unknown) => ((c as Array<{ action: string }>)[0]).action);
     expect(actions).toContain('research.dependency.reopened');
   });
 });

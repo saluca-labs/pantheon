@@ -55,7 +55,7 @@ describe('validateChapter', () => {
   });
 
   it('rejects invalid status', () => {
-    const errors = validateChapter({ title: 'T', status: 'published' as any });
+    const errors = validateChapter({ title: 'T', status: 'published' as never });
     expect(errors.some((e) => e.includes('Status'))).toBe(true);
   });
 });

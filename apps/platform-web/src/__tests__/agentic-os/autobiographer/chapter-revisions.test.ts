@@ -80,8 +80,8 @@ describe('countRevisionWords', () => {
 describe('normalizeCitations', () => {
   it('drops non-array inputs', () => {
     expect(normalizeCitations(null)).toEqual([]);
-    expect(normalizeCitations('hi' as any)).toEqual([]);
-    expect(normalizeCitations(42 as any)).toEqual([]);
+    expect(normalizeCitations('hi' as never)).toEqual([]);
+    expect(normalizeCitations(42 as never)).toEqual([]);
   });
 
   it('accepts snake_case wire shape', () => {
@@ -107,7 +107,7 @@ describe('normalizeCitations', () => {
 
   it('drops empty / non-string memory ids', () => {
     const r = normalizeCitations([
-      { paragraphIndex: 0, memoryIds: ['m-1', '', null as any, 42 as any, 'm-2'] },
+      { paragraphIndex: 0, memoryIds: ['m-1', '', null as never, 42 as never, 'm-2'] },
     ]);
     expect(r[0]!.memoryIds).toEqual(['m-1', 'm-2']);
   });
@@ -123,7 +123,7 @@ describe('normalizeCitations', () => {
 
   it('skips entries with non-numeric paragraphIndex', () => {
     const r = normalizeCitations([
-      { paragraphIndex: 'lol' as any, memoryIds: ['m-1'] },
+      { paragraphIndex: 'lol' as never, memoryIds: ['m-1'] },
       { paragraphIndex: 1, memoryIds: ['m-2'] },
     ]);
     expect(r).toHaveLength(1);
@@ -132,7 +132,7 @@ describe('normalizeCitations', () => {
 
   it('skips entries with non-array memoryIds', () => {
     const r = normalizeCitations([
-      { paragraphIndex: 1, memoryIds: 'oops' as any },
+      { paragraphIndex: 1, memoryIds: 'oops' as never },
       { paragraphIndex: 2, memoryIds: ['m-3'] },
     ]);
     expect(r).toHaveLength(1);

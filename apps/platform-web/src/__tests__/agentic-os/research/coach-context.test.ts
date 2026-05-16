@@ -89,6 +89,12 @@ import {
   type CoachHypothesisCriticContext,
   type CoachLitReviewerContext,
   type CoachMethodsAdvisorContext,
+  type CoachContextPaperEntry,
+  type CoachContextExperimentReferenceEntry,
+  type CoachContextEvidenceEntry,
+  type CoachContextHypothesisEntry,
+  type CoachContextProtocolEntry,
+  type CoachContextDatasetEntry,
 } from '@/lib/agentic-os/research/coach/context';
 
 beforeEach(() => {
@@ -106,11 +112,11 @@ beforeEach(() => {
     datasetsMocks.listDatasetsForExperiment,
     reproMocks.listReproChecksForExperiment,
   ]) {
-    (m as any).mockReset();
+    (m as unknown as { mockReset: () => void }).mockReset();
   }
 });
 
-function makeExperiment(over: Record<string, any> = {}): any {
+function makeExperiment(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'exp-1',
     userId: 'u-1',
@@ -136,7 +142,7 @@ function makeExperiment(over: Record<string, any> = {}): any {
   };
 }
 
-function makePaper(over: Record<string, any> = {}): any {
+function makePaper(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'p-1',
     userId: 'u-1',
@@ -158,7 +164,7 @@ function makePaper(over: Record<string, any> = {}): any {
   };
 }
 
-function makeHypothesis(over: Record<string, any> = {}): any {
+function makeHypothesis(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'h-1',
     userId: 'u-1',
@@ -178,7 +184,7 @@ function makeHypothesis(over: Record<string, any> = {}): any {
   };
 }
 
-function makeDataset(over: Record<string, any> = {}): any {
+function makeDataset(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'd-1',
     userId: 'u-1',
@@ -200,7 +206,7 @@ function makeDataset(over: Record<string, any> = {}): any {
   };
 }
 
-function makeProtocolPin(over: Record<string, any> = {}): any {
+function makeProtocolPin(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     link: {
       id: 'epl-1',
@@ -525,7 +531,7 @@ describe('buildCoachContext — methods_advisor', () => {
     repoMocks.getExperiment.mockResolvedValue(makeExperiment());
     const big = 'x'.repeat(2000);
     const pin = makeProtocolPin();
-    pin.resolved.bodyMd = big;
+    (pin.resolved as { bodyMd: string }).bodyMd = big;
     expProtocolsMocks.listProtocolsForExperiment.mockResolvedValue([pin]);
     datasetsMocks.listDatasetsForExperiment.mockResolvedValue([]);
     reproMocks.listReproChecksForExperiment.mockResolvedValue([]);
@@ -583,7 +589,7 @@ describe('buildCoachContext — general', () => {
 // ─── Truncation ──────────────────────────────────────────────────────────
 
 describe('truncateLitReviewer', () => {
-  function makeBigPaper(id: string): any {
+  function makeBigPaper(id: string): CoachContextPaperEntry {
     return {
       id,
       title: 'A paper with a fairly long title that adds bytes',
@@ -592,15 +598,15 @@ describe('truncateLitReviewer', () => {
       kind: 'paper',
       tags: ['ml', 'systems', 'theory', 'survey'],
       abstract_snippet: 'X'.repeat(390),
-    };
+    } as CoachContextPaperEntry;
   }
-  function makeRef(id: string): any {
+  function makeRef(id: string): CoachContextExperimentReferenceEntry {
     return {
       paper_id: id,
       paper_title: 'A long-ish paper title',
       relevance: 'prior_art',
       notes: 'X'.repeat(200),
-    };
+    } as CoachContextExperimentReferenceEntry;
   }
 
   it('drops oldest papers first', () => {
@@ -646,7 +652,7 @@ describe('truncateLitReviewer', () => {
 });
 
 describe('truncateHypothesisCritic', () => {
-  function makeBigEvidence(id: string): any {
+  function makeBigEvidence(id: string): CoachContextEvidenceEntry {
     return {
       id,
       hypothesis_id: 'h-1',
@@ -654,9 +660,9 @@ describe('truncateHypothesisCritic', () => {
       source_kind: 'notebook_entry',
       notes_snippet: 'X'.repeat(195),
       created_at: '2026-05-01T00:00:00Z',
-    };
+    } as CoachContextEvidenceEntry;
   }
-  function makeBigHypothesis(id: string): any {
+  function makeBigHypothesis(id: string): CoachContextHypothesisEntry {
     return {
       id,
       title: 'Long title that takes some bytes to encode here',
@@ -673,7 +679,7 @@ describe('truncateHypothesisCritic', () => {
         text: 'A falsifier text that runs at moderate length',
         criterion_snippet: 'X'.repeat(195),
       })),
-    };
+    } as CoachContextHypothesisEntry;
   }
 
   it('drops oldest evidence first', () => {
@@ -724,23 +730,23 @@ describe('truncateHypothesisCritic', () => {
 });
 
 describe('truncateMethodsAdvisor', () => {
-  function makeBigPin(id: string): any {
+  function makeBigPin(id: string): CoachContextProtocolEntry {
     return {
       protocol_id: id,
       title: `Protocol ${id} with a longer title`,
       pinned_version: '1.0',
       kind: 'method',
       body_snippet: 'X'.repeat(1000),
-    };
+    } as CoachContextProtocolEntry;
   }
-  function makeBigDataset(id: string): any {
+  function makeBigDataset(id: string): CoachContextDatasetEntry {
     return {
       id,
       name: `Dataset ${id} with descriptive name`,
       kind: 'tabular',
       size_bytes: 1024 * 1024,
       archived: false,
-    };
+    } as CoachContextDatasetEntry;
   }
 
   it('drops protocol body_snippet detail when over the cap', () => {

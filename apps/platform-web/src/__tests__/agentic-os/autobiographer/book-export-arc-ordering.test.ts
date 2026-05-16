@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const getCurrentAutobiographerUser = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/session', () => ({
-  getCurrentAutobiographerUser: (...args: any[]) =>
+  getCurrentAutobiographerUser: (...args: unknown[]) =>
     getCurrentAutobiographerUser(...args),
   getAutobiographerPool: () => ({ query: vi.fn() }),
 }));
@@ -72,12 +72,12 @@ vi.mock(
 
 const renderPdfToBuffer = vi.fn();
 vi.mock('@/lib/agentic-os/_shared/pdf/render', () => ({
-  renderPdfToBuffer: (...args: any[]) => renderPdfToBuffer(...args),
+  renderPdfToBuffer: (...args: unknown[]) => renderPdfToBuffer(...args),
 }));
 
 const recordAudit = vi.fn();
 vi.mock('@/lib/agentic-os/autobiographer/repo', () => ({
-  recordAudit: (...args: any[]) => recordAudit(...args),
+  recordAudit: (...args: unknown[]) => recordAudit(...args),
   listChapters: vi.fn(),
   getChapter: vi.fn(),
   createChapter: vi.fn(),
@@ -90,12 +90,12 @@ beforeEach(() => {
   getCurrentAutobiographerUser.mockReset();
   recordAudit.mockReset();
   renderPdfToBuffer.mockReset();
-  for (const m of Object.values(booksRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(chaptersRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(revRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(memoriesRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(sourcesRepoMocks)) (m as any).mockReset();
-  for (const m of Object.values(pseudonymsRepoMocks)) (m as any).mockReset();
+  for (const m of Object.values(booksRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(chaptersRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(revRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(memoriesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(sourcesRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
+  for (const m of Object.values(pseudonymsRepoMocks)) (m as unknown as { mockReset: () => void }).mockReset();
   pseudonymsRepoMocks.listPseudonymsForBook.mockResolvedValue([]);
   pseudonymsRepoMocks.markPseudonymsApplied.mockResolvedValue(0);
 });
@@ -129,7 +129,7 @@ describe('book export PDF — Phase 5 arc activation', () => {
     const { GET } = await import(
       '@/app/api/tiresias/agentic-os/autobiographer/books/[id]/export.pdf/route'
     );
-    const res = await GET(new Request('http://t/x') as any, {
+    const res = await GET(new Request('http://t/x') as never, {
       params: Promise.resolve({ id: 'b-1' }),
     });
     expect(res.status).toBe(200);
