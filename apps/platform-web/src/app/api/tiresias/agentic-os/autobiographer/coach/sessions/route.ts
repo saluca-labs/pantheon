@@ -22,7 +22,7 @@ import {
   autoTitle,
   type CoachMessage,
 } from '@/lib/agentic-os/autobiographer/coach/sessions-repo';
-import { COACH_MODE_VALUES } from '@/lib/agentic-os/autobiographer/coach/modes';
+import { COACH_MODE_VALUES, type CoachMode } from '@/lib/agentic-os/autobiographer/coach/modes';
 import { isCoachConfigured } from '@/lib/agentic-os/autobiographer/coach/anthropic';
 import { SYSTEM_PROMPT_VERSION } from '@/lib/agentic-os/autobiographer/coach/system-prompt';
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
   const sessions = await listSessions({
     userId: user.userId,
-    mode: (mode as any) ?? undefined,
+    mode: (mode as CoachMode | null) ?? undefined,
     bookId: bookId ?? undefined,
     scope,
     limit: limit ? Number(limit) : undefined,

@@ -25,6 +25,7 @@ import {
   CHAPTER_SLUG_MAX,
   CHAPTER_SUMMARY_MAX,
   CHAPTER_TITLE_MAX,
+  type ChapterStatus,
 } from '@/lib/agentic-os/autobiographer/chapters';
 import {
   createChapter,
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       bookId,
       title: d.title ?? null,
       slug: d.slug ?? null,
-      status: d.status as any,
+      status: d.status as ChapterStatus | undefined,
       summary: d.summary ?? null,
       targetWordCount: d.targetWordCount ?? null,
       metadata: d.metadata,

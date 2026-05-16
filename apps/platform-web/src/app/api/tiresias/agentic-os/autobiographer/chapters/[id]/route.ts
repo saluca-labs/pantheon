@@ -31,6 +31,7 @@ import {
   getChapter,
   reorderChapter,
   updateChapter,
+  type UpdateChapterInput,
 } from '@/lib/agentic-os/autobiographer/chapters-repo';
 import { recordAudit } from '@/lib/agentic-os/autobiographer/repo';
 
@@ -108,7 +109,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       : existing;
 
     if (Object.keys(rest).length > 0) {
-      const updated = await updateChapter(id, user.userId, rest as any);
+      const updated = await updateChapter(id, user.userId, rest as UpdateChapterInput);
       if (!updated) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
       }

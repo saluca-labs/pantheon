@@ -18,6 +18,7 @@ import {
   deleteArc,
   getArc,
   updateArc,
+  type UpdateArcInput,
 } from '@/lib/agentic-os/autobiographer/arcs-repo';
 import {
   ARC_DESCRIPTION_MAX,
@@ -62,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   }
   const before = await getArc(id, user.userId);
   if (!before) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  const updated = await updateArc(id, user.userId, parsed.data as any);
+  const updated = await updateArc(id, user.userId, parsed.data as UpdateArcInput);
   if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await recordAudit({
