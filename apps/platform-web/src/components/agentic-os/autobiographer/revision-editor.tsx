@@ -115,9 +115,9 @@ export function RevisionEditor({
           className="text-[11px] text-text-secondary"
         >
           {error ? (
-            <span className="text-red-400">{error}</span>
+            <span className="text-danger">{error}</span>
           ) : saved ? (
-            <span className="text-emerald-400">Saved.</span>
+            <span className="text-positive">Saved.</span>
           ) : dirty ? (
             <span>Unsaved changes.</span>
           ) : (
@@ -129,7 +129,7 @@ export function RevisionEditor({
             type="button"
             onClick={onSave}
             disabled={!dirty || saving}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             {saving ? 'Saving…' : 'Save revision'}

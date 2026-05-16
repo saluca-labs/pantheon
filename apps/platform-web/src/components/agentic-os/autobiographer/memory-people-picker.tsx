@@ -179,7 +179,7 @@ export function MemoryPeoplePicker({
       </div>
 
       {error && (
-        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2 mb-3">
           {error}
         </div>
       )}
@@ -212,7 +212,7 @@ export function MemoryPeoplePicker({
                       type="button"
                       onClick={() => saveRole(p.id)}
                       disabled={busy}
-                      className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50"
+                      className="text-xs px-2 py-1 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
                     >
                       Save
                     </button>
@@ -232,7 +232,7 @@ export function MemoryPeoplePicker({
                     Role: <span className="text-text-primary">{p.role}</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] text-[#64748b] italic">
+                  <span className="text-[10px] text-text-tertiary italic">
                     No role set
                   </span>
                 )}
@@ -254,7 +254,7 @@ export function MemoryPeoplePicker({
                     type="button"
                     onClick={() => unlinkPerson(p.id)}
                     disabled={busy}
-                    className="text-rose-400 hover:text-rose-200 disabled:opacity-50"
+                    className="text-danger hover:text-danger/80 disabled:opacity-50"
                     title="Unlink"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -265,7 +265,7 @@ export function MemoryPeoplePicker({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-[#64748b] italic mb-4">
+        <p className="text-xs text-text-tertiary italic mb-4">
           No people linked yet. Search below to add someone.
         </p>
       )}
@@ -318,7 +318,7 @@ export function MemoryPeoplePicker({
               type="button"
               onClick={linkPerson}
               disabled={busy}
-              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition"
             >
               <Plus className="w-3.5 h-3.5" />
               Link

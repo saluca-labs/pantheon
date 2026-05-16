@@ -96,7 +96,7 @@ export function VoiceSampleToggle({
         disabled={busy}
         className={`inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded border transition ${
           isMarked
-            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:text-white hover:bg-emerald-500/20'
+            ? 'border-positive/30 bg-positive/10 text-positive hover:text-white hover:bg-positive/20'
             : 'border-border-subtle bg-surface-0 text-text-primary hover:text-white'
         } disabled:opacity-50`}
       >
@@ -113,7 +113,7 @@ export function VoiceSampleToggle({
         )}
       </button>
       {error && (
-        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2.5 py-1.5">
+        <div className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2.5 py-1.5">
           {error}
         </div>
       )}

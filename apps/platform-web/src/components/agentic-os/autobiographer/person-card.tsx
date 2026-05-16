@@ -71,10 +71,10 @@ export function PersonCard({ person }: { person: PersonCardData }) {
                 {person.relation}
               </span>
             )}
-            {yrs && <span className="text-[#64748b]">{yrs}</span>}
+            {yrs && <span className="text-text-tertiary">{yrs}</span>}
             {person.aliases.length > 0 && (
               <span
-                className="text-[#64748b]"
+                className="text-text-tertiary"
                 title={`Aliases: ${person.aliases.join(', ')}`}
               >
                 {person.aliases.length} alias

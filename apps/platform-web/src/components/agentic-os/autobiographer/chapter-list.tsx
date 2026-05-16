@@ -60,7 +60,7 @@ export function ChapterList({
     <div className="space-y-3">
       {books.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-[#64748b] uppercase tracking-wide">
+          <span className="text-text-tertiary uppercase tracking-wide">
             Book
           </span>
           <button

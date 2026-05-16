@@ -84,7 +84,7 @@ export function LockChapterButton({
           type="button"
           onClick={() => void attempt(true)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-positive/30 bg-positive/10 text-positive hover:bg-positive/20 transition disabled:opacity-50"
         >
           <Unlock className="w-3.5 h-3.5" />
           Unlock chapter
@@ -94,14 +94,14 @@ export function LockChapterButton({
           type="button"
           onClick={() => void attempt(false)}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition disabled:opacity-50"
         >
           <Lock className="w-3.5 h-3.5" />
           Lock chapter
         </button>
       )}
       {error && (
-        <span className="text-xs text-red-400 ml-2">{error}</span>
+        <span className="text-xs text-danger ml-2">{error}</span>
       )}
       <LockShortfallModal
         open={modal.open}

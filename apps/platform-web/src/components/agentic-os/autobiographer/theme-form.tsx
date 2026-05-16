@@ -97,7 +97,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
         </div>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-3">
+          <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2 mb-3">
             {error}
           </div>
         )}
@@ -178,7 +178,7 @@ export function ThemeForm({ open, onClose, onCreated, initialName }: ThemeFormPr
               type="button"
               onClick={submit}
               disabled={busy || name.trim().length === 0}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-50 transition"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition"
             >
               <Plus className="w-3.5 h-3.5" />
               Create

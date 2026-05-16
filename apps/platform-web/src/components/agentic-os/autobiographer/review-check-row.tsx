@@ -47,21 +47,21 @@ const ACTION_BUTTONS: Array<{
     label: 'Pass',
     icon: CheckCircle2,
     classes:
-      'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20',
+      'border-positive/30 bg-positive/10 text-positive hover:bg-positive/20',
   },
   {
     status: 'waived',
     label: 'Waive',
     icon: MinusCircle,
     classes:
-      'border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20',
+      'border-os-research/30 bg-os-research/10 text-os-research hover:bg-os-research/20',
   },
   {
     status: 'failed',
     label: 'Fail',
     icon: XCircle,
     classes:
-      'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20',
+      'border-danger/30 bg-danger/10 text-danger hover:bg-danger/20',
   },
 ];
 
@@ -190,7 +190,7 @@ export function ReviewCheckRow({
             </span>
             <ReviewCheckStatusPill status={status} />
             {required && (
-              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300">
+              <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">
                 Required
               </span>
             )}
@@ -200,7 +200,7 @@ export function ReviewCheckRow({
           </p>
         </div>
         {checkedAt && (
-          <span className="text-[10px] text-[#64748b] shrink-0">
+          <span className="text-[10px] text-text-tertiary shrink-0">
             checked {new Date(checkedAt).toLocaleDateString()}
           </span>
         )}
@@ -244,7 +244,7 @@ export function ReviewCheckRow({
       )}
 
       {error && (
-        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">
+        <div className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
           {error}
         </div>
       )}

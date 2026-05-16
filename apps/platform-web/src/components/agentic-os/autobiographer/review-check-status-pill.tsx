@@ -13,9 +13,9 @@ import {
 
 export const REVIEW_CHECK_STATUS_COLOR: Record<ReviewCheckStatus, string> = {
   pending: 'text-text-secondary bg-surface-0 border-border-subtle',
-  passed: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  waived: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  failed: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
+  passed: 'text-positive bg-positive/10 border-positive/30',
+  waived: 'text-os-research bg-os-research/10 border-os-research/30',
+  failed: 'text-danger bg-danger/10 border-danger/30',
 };
 
 export function ReviewCheckStatusPill({

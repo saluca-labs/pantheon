@@ -14,9 +14,9 @@ import {
 
 export const CHAPTER_STATUS_COLOR: Record<ChapterStatus, string> = {
   outline: 'text-text-secondary bg-surface-0 border-border-subtle',
-  drafting: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  revised: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  locked: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+  drafting: 'text-accent bg-accent/10 border-accent/30',
+  revised: 'text-warning bg-warning/10 border-warning/30',
+  locked: 'text-positive bg-positive/10 border-positive/30',
 };
 
 export function ChapterStatusPill({ status }: { status: ChapterStatus }) {

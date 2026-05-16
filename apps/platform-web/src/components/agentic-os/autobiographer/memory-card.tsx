@@ -57,7 +57,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
         <div className="flex items-center gap-1 shrink-0">
           {memory.isSensitive && (
             <span
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-300 inline-flex items-center gap-1"
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-danger/30 bg-danger/10 text-danger inline-flex items-center gap-1"
               title="Marked sensitive — Phase 6 review will surface this"
             >
               <ShieldAlert className="w-3 h-3" />
@@ -99,7 +99,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
             {memory.location}
           </span>
         )}
-        <span className="text-[#64748b]">{MEMORY_SOURCE_LABELS[memory.source]}</span>
+        <span className="text-text-tertiary">{MEMORY_SOURCE_LABELS[memory.source]}</span>
       </div>
 
       {(memory.contentTags.length > 0 || memory.emotionTags.length > 0) && (
@@ -115,7 +115,7 @@ export function MemoryCard({ memory }: { memory: MemoryCardData }) {
           {memory.emotionTags.slice(0, 4).map((t) => (
             <span
               key={`e-${t}`}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/5 border border-rose-500/20 text-rose-200/80"
+              className="text-[10px] px-1.5 py-0.5 rounded bg-os-filmmaker/5 border border-os-filmmaker/20 text-os-filmmaker/80"
             >
               {t}
             </span>

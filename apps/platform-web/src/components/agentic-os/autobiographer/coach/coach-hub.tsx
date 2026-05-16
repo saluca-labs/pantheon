@@ -126,7 +126,7 @@ export function CoachHub({ bookId, initialMode, sessions }: Props) {
         </div>
 
         {!canStart && (
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
             <strong>{COACH_MODE_LABELS[mode]}</strong> mode reads a specific
             book. Open a book and pick this mode from the Coach tab to scope
             the session.
@@ -157,12 +157,12 @@ export function CoachHub({ bookId, initialMode, sessions }: Props) {
             disabled={submitting || !canStart}
             placeholder="Or type your own…"
             rows={2}
-            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-[#64748b] px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
+            className="flex-1 rounded-lg border border-border-subtle bg-surface-0 text-sm text-white placeholder:text-text-tertiary px-3 py-2 focus:outline-none focus:border-accent disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={submitting || !text.trim() || !canStart}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-[#3651DE] text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium px-3 py-2 disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             Send
@@ -172,7 +172,7 @@ export function CoachHub({ bookId, initialMode, sessions }: Props) {
         {error && (
           <div
             role="alert"
-            className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200"
+            className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
           >
             {error}
           </div>

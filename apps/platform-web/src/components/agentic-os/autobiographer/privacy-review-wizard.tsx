@@ -95,10 +95,10 @@ const STEP_META: Record<
 /** Small status dot for the step rail + summary rows. */
 function StatusDot({ status }: { status: WizardStepStatus }) {
   if (status === 'complete') {
-    return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
+    return <CheckCircle2 className="h-4 w-4 text-positive" />;
   }
   if (status === 'attention') {
-    return <AlertTriangle className="h-4 w-4 text-amber-400" />;
+    return <AlertTriangle className="h-4 w-4 text-warning" />;
   }
   return <Circle className="h-4 w-4 text-text-tertiary" />;
 }
@@ -231,8 +231,8 @@ export function PrivacyReviewWizard({
             <div
               className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                 ready
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                  ? 'border-positive/30 bg-positive/10 text-positive'
+                  : 'border-warning/30 bg-warning/10 text-warning'
               }`}
             >
               {ready ? (

@@ -16,11 +16,11 @@ import {
 } from '@/lib/agentic-os/autobiographer/people';
 
 export const CONSENT_STATE_COLOR: Record<ConsentState, string> = {
-  granted: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  pending: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  withheld: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  deceased: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  public_figure: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
+  granted: 'text-positive bg-positive/10 border-positive/30',
+  pending: 'text-warning bg-warning/10 border-warning/30',
+  withheld: 'text-danger bg-danger/10 border-danger/30',
+  deceased: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
+  public_figure: 'text-os-research bg-os-research/10 border-os-research/30',
   not_applicable: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 

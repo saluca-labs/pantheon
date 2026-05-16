@@ -85,7 +85,7 @@ export function SensitiveKindsPicker({
     <section className="rounded-xl border border-border-subtle bg-surface-2 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs uppercase tracking-wide text-text-secondary inline-flex items-center gap-1.5">
-          <ShieldAlert className="w-3.5 h-3.5 text-amber-300/80" />
+          <ShieldAlert className="w-3.5 h-3.5 text-warning/80" />
           {label}
         </h3>
         {busy && (
@@ -94,13 +94,13 @@ export function SensitiveKindsPicker({
       </div>
 
       {error && (
-        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">
+        <div className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
           {error}
         </div>
       )}
 
       {current.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic">
+        <p className="text-xs text-text-tertiary italic">
           No sensitive tags. Add below if the content warrants a flag.
         </p>
       ) : (

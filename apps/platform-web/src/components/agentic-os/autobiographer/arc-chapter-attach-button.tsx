@@ -61,7 +61,7 @@ export function ArcChapterAttachButton({
 
   if (attachable.length === 0) {
     return (
-      <p className="text-[10px] text-[#64748b] italic px-1">
+      <p className="text-[10px] text-text-tertiary italic px-1">
         Every chapter in this book is already in the arc.
       </p>
     );
@@ -90,7 +90,7 @@ export function ArcChapterAttachButton({
                 <span className="truncate">
                   {c.title ?? 'Untitled chapter'}
                 </span>
-                <span className="text-[10px] text-[#64748b]">
+                <span className="text-[10px] text-text-tertiary">
                   pos {c.position}
                 </span>
               </button>
@@ -99,7 +99,7 @@ export function ArcChapterAttachButton({
         </ul>
       )}
       {error && (
-        <span className="text-[10px] text-red-400 ml-2" role="alert">
+        <span className="text-[10px] text-danger ml-2" role="alert">
           {error}
         </span>
       )}

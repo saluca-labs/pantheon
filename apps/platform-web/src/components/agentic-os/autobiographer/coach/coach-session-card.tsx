@@ -29,14 +29,14 @@ export function CoachSessionCard(props: CoachSessionCardProps) {
       className="block rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-surface-0 hover:text-white transition"
     >
       <div className="flex items-center gap-2">
-        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-[#64748b]" />
+        <MessageCircle className="w-3.5 h-3.5 shrink-0 text-text-tertiary" />
         <span className="truncate">{props.title || 'Untitled session'}</span>
       </div>
       <div className="flex items-center justify-between mt-1">
         <span className="text-[10px] uppercase tracking-wide text-accent">
           {COACH_MODE_LABELS[props.mode]}
         </span>
-        <span className="text-[10px] text-[#64748b]">
+        <span className="text-[10px] text-text-tertiary">
           {new Date(props.updatedAt).toLocaleDateString()}
         </span>
       </div>

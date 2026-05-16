@@ -51,7 +51,7 @@ export async function ArcChapterList({ arcId, bookId }: ArcChapterListProps) {
     <div className="space-y-2">
       <ArcChapterAttachButton arcId={arcId} attachable={attachable} />
       {rows.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic px-1">
+        <p className="text-xs text-text-tertiary italic px-1">
           No chapters attached. Use the button above to add some.
         </p>
       ) : (

@@ -120,7 +120,7 @@ export function PseudonymRow({
             <ConsentBadge state={consentState} />
             {applied && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] text-emerald-300 uppercase tracking-wide"
+                className="inline-flex items-center gap-1 text-[10px] text-positive uppercase tracking-wide"
                 title="This pseudonym has been substituted in at least one PDF export."
               >
                 <CheckCircle2 className="w-3 h-3" />
@@ -129,7 +129,7 @@ export function PseudonymRow({
             )}
           </div>
           {personAliases.length > 0 && (
-            <p className="text-xs text-[#64748b] mt-0.5 ml-6">
+            <p className="text-xs text-text-tertiary mt-0.5 ml-6">
               also: {personAliases.join(', ')}
             </p>
           )}
@@ -159,7 +159,7 @@ export function PseudonymRow({
             type="button"
             onClick={clearRow}
             disabled={busy}
-            className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition"
+            className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Clear
@@ -177,7 +177,7 @@ export function PseudonymRow({
       />
 
       {error && (
-        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded px-2 py-1">
+        <div className="text-xs text-danger bg-danger/10 border border-danger/30 rounded px-2 py-1">
           {error}
         </div>
       )}

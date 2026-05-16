@@ -128,7 +128,7 @@ export function ThemePicker({
       </div>
 
       {error && (
-        <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-danger bg-danger/10 border border-danger/30 rounded px-3 py-2 mb-3">
           {error}
         </div>
       )}
@@ -148,7 +148,7 @@ export function ThemePicker({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-[#64748b] italic mb-4">
+        <p className="text-xs text-text-tertiary italic mb-4">
           No themes attached. Search below or create one.
         </p>
       )}

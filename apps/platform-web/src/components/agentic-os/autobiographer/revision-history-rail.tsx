@@ -108,7 +108,7 @@ export function RevisionHistoryRail({
           {creating ? 'Saving…' : 'New revision'}
         </button>
       </div>
-      {error ? <p className="text-[11px] text-red-400">{error}</p> : null}
+      {error ? <p className="text-[11px] text-danger">{error}</p> : null}
       {revisions.length === 0 ? (
         <p className="text-xs text-text-secondary">No revisions yet.</p>
       ) : (

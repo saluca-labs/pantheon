@@ -20,10 +20,10 @@ import {
 } from '@/lib/agentic-os/autobiographer/books';
 
 export const BOOK_STATUS_COLOR: Record<BookStatus, string> = {
-  drafting: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
-  revising: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  done: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  paused: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
+  drafting: 'text-accent bg-accent/10 border-accent/30',
+  revising: 'text-warning bg-warning/10 border-warning/30',
+  done: 'text-positive bg-positive/10 border-positive/30',
+  paused: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
   archived: 'text-text-secondary bg-surface-2 border-border-subtle',
 };
 

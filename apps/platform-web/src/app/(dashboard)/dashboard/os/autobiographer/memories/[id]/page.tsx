@@ -142,10 +142,10 @@ export default async function MemoryDetailPage({ params }: Props) {
             </Link>
           )}
           {!book && (
-            <span className="italic text-[#64748b]">Workshop-only (no book)</span>
+            <span className="italic text-text-tertiary">Workshop-only (no book)</span>
           )}
           {memory.isSensitive && (
-            <span className="inline-flex items-center gap-1 text-rose-300">
+            <span className="inline-flex items-center gap-1 text-danger">
               <ShieldAlert className="w-3.5 h-3.5" />
               Marked sensitive
             </span>
@@ -165,7 +165,7 @@ export default async function MemoryDetailPage({ params }: Props) {
             {memory.emotionTags.map((t) => (
               <span
                 key={`e-${t}`}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/5 border border-rose-500/20 text-rose-200/80"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-os-filmmaker/5 border border-os-filmmaker/20 text-os-filmmaker/80"
               >
                 {t}
               </span>
@@ -206,7 +206,7 @@ export default async function MemoryDetailPage({ params }: Props) {
             <h2 className="text-sm uppercase tracking-wide text-text-secondary mb-1">
               Voice sample
             </h2>
-            <p className="text-xs text-[#64748b]">
+            <p className="text-xs text-text-tertiary">
               Mark this memory as a sample of your voice so the Phase 3
               voice builder picks it up. Sourced samples are CASCADE-deleted
               if you delete the memory.

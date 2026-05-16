@@ -26,7 +26,7 @@ export function SensitiveKindsBadges({
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       {variant === 'expanded' && (
-        <span className="inline-flex items-center gap-1 text-xs text-amber-300/80">
+        <span className="inline-flex items-center gap-1 text-xs text-warning/80">
           <ShieldAlert className="w-3.5 h-3.5" />
           Sensitive content:
         </span>

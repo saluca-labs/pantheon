@@ -57,7 +57,7 @@ export function ChapterReorderHandle({
     return (
       <span
         title="Ordering is controlled by the active arc"
-        className="inline-flex items-center justify-center w-6 h-6 text-[#64748b]"
+        className="inline-flex items-center justify-center w-6 h-6 text-text-tertiary"
       >
         <GripVertical className="w-3.5 h-3.5" />
       </span>

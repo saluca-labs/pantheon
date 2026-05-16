@@ -17,14 +17,14 @@ import {
 } from '@/lib/agentic-os/autobiographer/sensitive-kinds';
 
 const ACCENT_CLASSES: Record<string, string> = {
-  rose: 'text-rose-300 bg-rose-500/10 border-rose-500/30',
-  red: 'text-red-300 bg-red-500/10 border-red-500/30',
-  violet: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  amber: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-  emerald: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-  slate: 'text-slate-300 bg-slate-500/10 border-slate-500/30',
-  sky: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  zinc: 'text-zinc-300 bg-zinc-500/10 border-zinc-500/30',
+  rose: 'text-os-filmmaker bg-os-filmmaker/10 border-os-filmmaker/30',
+  red: 'text-danger bg-danger/10 border-danger/30',
+  violet: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
+  amber: 'text-warning bg-warning/10 border-warning/30',
+  emerald: 'text-positive bg-positive/10 border-positive/30',
+  slate: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
+  sky: 'text-os-research bg-os-research/10 border-os-research/30',
+  zinc: 'text-text-secondary bg-text-secondary/10 border-text-secondary/30',
 };
 
 export interface SensitiveKindChipProps {

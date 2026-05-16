@@ -161,7 +161,7 @@ export function MemoryFilters({
                   : 'bg-surface-0 text-text-primary border-border-subtle hover:text-white'
               }`}
             >
-              {t} <span className="text-[#64748b]">{count}</span>
+              {t} <span className="text-text-tertiary">{count}</span>
             </button>
           ))}
           {contentTagCounts.length > 8 && !showAllContent && (
@@ -187,7 +187,7 @@ export function MemoryFilters({
             onClick={() => onChange({ ...value, emotionTag: null })}
             className={`text-xs px-2 py-0.5 rounded border transition ${
               value.emotionTag === null
-                ? 'bg-rose-500/20 text-white border-rose-500/60'
+                ? 'bg-os-filmmaker/20 text-white border-os-filmmaker/60'
                 : 'bg-surface-0 text-text-secondary border-border-subtle hover:text-white'
             }`}
           >
@@ -205,11 +205,11 @@ export function MemoryFilters({
               }
               className={`text-xs px-2 py-0.5 rounded border transition ${
                 value.emotionTag === t
-                  ? 'bg-rose-500/20 text-white border-rose-500/60'
-                  : 'bg-rose-500/5 text-rose-200/80 border-rose-500/20 hover:text-white'
+                  ? 'bg-os-filmmaker/20 text-white border-os-filmmaker/60'
+                  : 'bg-os-filmmaker/5 text-os-filmmaker/80 border-os-filmmaker/20 hover:text-white'
               }`}
             >
-              {t} <span className="text-[#64748b]">{count}</span>
+              {t} <span className="text-text-tertiary">{count}</span>
             </button>
           ))}
           {emotionTagCounts.length > 8 && !showAllEmotion && (

@@ -28,9 +28,9 @@ export interface ArcCardProps {
 }
 
 const KIND_COLOR: Record<ArcKind, string> = {
-  chronological: 'text-sky-300 bg-sky-500/10 border-sky-500/30',
-  thematic: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-  character_led: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
+  chronological: 'text-os-research bg-os-research/10 border-os-research/30',
+  thematic: 'text-os-secure-dev bg-os-secure-dev/10 border-os-secure-dev/30',
+  character_led: 'text-warning bg-warning/10 border-warning/30',
   custom: 'text-text-primary bg-surface-2 border-border-subtle',
 };
 
@@ -50,8 +50,8 @@ export function ArcCard({ arc }: ArcCardProps) {
               {ARC_KIND_LABELS[arc.kind]}
             </span>
             {arc.isPrimary && (
-              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">
-                <Star className="w-3 h-3 fill-amber-300/40" />
+              <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full border border-warning/40 bg-warning/10 text-warning">
+                <Star className="w-3 h-3 fill-warning/40" />
                 Primary
               </span>
             )}
@@ -61,7 +61,7 @@ export function ArcCard({ arc }: ArcCardProps) {
               {arc.description}
             </p>
           )}
-          <p className="text-[10px] text-[#64748b] mt-1.5">
+          <p className="text-[10px] text-text-tertiary mt-1.5">
             {arc.chapterCount}{' '}
             {arc.chapterCount === 1 ? 'chapter' : 'chapters'} in this arc
           </p>

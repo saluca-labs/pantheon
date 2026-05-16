@@ -208,12 +208,12 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-accent hover:bg-[#3a56d4] disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
+            className="rounded-lg bg-accent hover:bg-accent/90 disabled:opacity-60 text-white font-medium px-4 py-2 text-sm transition"
           >
             {saving ? 'Saving…' : 'Save chapter'}
           </button>
-          {message && <span className="text-sm text-emerald-300">{message}</span>}
-          {saveError && <span className="text-sm text-red-300">{saveError}</span>}
+          {message && <span className="text-sm text-positive">{message}</span>}
+          {saveError && <span className="text-sm text-danger">{saveError}</span>}
         </div>
       </form>
 
@@ -267,7 +267,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
             >
               {addingEvent ? 'Adding…' : '+ Add event'}
             </button>
-            {eventError && <span className="text-sm text-red-300">{eventError}</span>}
+            {eventError && <span className="text-sm text-danger">{eventError}</span>}
           </div>
         </form>
 
@@ -278,7 +278,7 @@ export function ChapterEditor({ initial, events: initialEvents }: Props) {
                 key={ev.id}
                 className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-0 p-3"
               >
-                <span className="mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+                <span className="mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-os-autobiographer/20 text-os-autobiographer border border-os-autobiographer/30 shrink-0">
                   {ev.kind}
                 </span>
                 <div className="flex-1 min-w-0">

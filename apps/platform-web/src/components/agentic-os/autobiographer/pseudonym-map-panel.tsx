@@ -51,7 +51,7 @@ export function PseudonymMapPanel({
       </p>
 
       {people.length === 0 ? (
-        <p className="text-xs text-[#64748b] italic">
+        <p className="text-xs text-text-tertiary italic">
           No people are referenced in this book yet. Add memories that link
           to people (Phase 2) and they'll appear here.
         </p>

@@ -54,7 +54,7 @@ function Field({
       </span>
       {children}
       {hint ? (
-        <span className="block text-[10px] text-[#64748b] mt-1">{hint}</span>
+        <span className="block text-[10px] text-text-tertiary mt-1">{hint}</span>
       ) : null}
     </label>
   );
@@ -194,7 +194,7 @@ export function ChapterForm({ initial, onClose }: Props) {
       </Field>
 
       {error ? (
-        <p className="text-xs text-red-400">{error}</p>
+        <p className="text-xs text-danger">{error}</p>
       ) : null}
 
       <div className="flex items-center gap-2 justify-end">
@@ -208,7 +208,7 @@ export function ChapterForm({ initial, onClose }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-[#3a52d8] disabled:opacity-60"
+          className="text-xs px-3 py-1.5 rounded bg-accent text-white hover:bg-accent/90 disabled:opacity-60"
         >
           {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create chapter'}
         </button>

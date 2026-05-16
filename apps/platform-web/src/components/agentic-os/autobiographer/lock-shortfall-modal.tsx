@@ -48,10 +48,10 @@ export function LockShortfallModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-amber-500/30 bg-surface-2 shadow-xl">
+      <div className="w-full max-w-lg rounded-xl border border-warning/30 bg-surface-2 shadow-xl">
         <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border-subtle">
           <div className="inline-flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-300" />
+            <AlertCircle className="w-5 h-5 text-warning" />
             <h2 className="text-base font-semibold text-white">
               Lock blocked — review checklist incomplete
             </h2>
@@ -69,8 +69,8 @@ export function LockShortfallModal({
         <div className="px-4 py-3 space-y-3">
           <p className="text-sm text-text-primary leading-relaxed">
             Locking this chapter requires the following review checks to be
-            in <code className="text-emerald-300">passed</code> or{' '}
-            <code className="text-sky-300">waived</code> status:
+            in <code className="text-positive">passed</code> or{' '}
+            <code className="text-os-research">waived</code> status:
           </p>
           <ul className="space-y-1">
             {required.map((kind) => {
@@ -81,21 +81,21 @@ export function LockShortfallModal({
                   key={kind}
                   className="text-sm text-text-primary inline-flex items-center gap-2"
                 >
-                  <span className="text-[#64748b]">·</span>
+                  <span className="text-text-tertiary">·</span>
                   {label}
                 </li>
               );
             })}
           </ul>
           {hasSensitiveContent && (
-            <p className="text-xs text-amber-300/80 inline-flex items-center gap-1">
+            <p className="text-xs text-warning/80 inline-flex items-center gap-1">
               Sensitive content detected — `sensitive_flagged` joined the
               required set automatically.
             </p>
           )}
 
-          <div className="rounded border border-rose-500/30 bg-rose-500/10 p-3">
-            <p className="text-xs uppercase tracking-wide text-rose-300 mb-1">
+          <div className="rounded border border-danger/30 bg-danger/10 p-3">
+            <p className="text-xs uppercase tracking-wide text-danger mb-1">
               {missing.length}{' '}
               {missing.length === 1 ? 'check is' : 'checks are'} blocking
             </p>
@@ -109,9 +109,9 @@ export function LockShortfallModal({
                     key={m.kind}
                     className="text-sm text-text-primary inline-flex items-center gap-2"
                   >
-                    <span className="text-[#64748b]">·</span>
+                    <span className="text-text-tertiary">·</span>
                     <span>{label}</span>
-                    <span className="text-[10px] uppercase tracking-wide text-rose-300/80">
+                    <span className="text-[10px] uppercase tracking-wide text-danger/80">
                       ({statusLabel(m.status)})
                     </span>
                   </li>

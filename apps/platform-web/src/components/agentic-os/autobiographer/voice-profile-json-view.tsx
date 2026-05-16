@@ -47,7 +47,7 @@ export function VoiceProfileJsonView({
       {open && (
         <div className="px-3 pb-3 space-y-3 border-t border-border-subtle pt-3">
           <div>
-            <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
+            <h4 className="text-[10px] uppercase tracking-wide text-text-tertiary mb-1">
               style_summary
             </h4>
             <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
@@ -57,7 +57,7 @@ export function VoiceProfileJsonView({
 
           {styleAdjectives.length > 0 && (
             <div>
-              <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
+              <h4 className="text-[10px] uppercase tracking-wide text-text-tertiary mb-1">
                 style_adjectives
               </h4>
               <div className="flex flex-wrap gap-1.5">
@@ -75,7 +75,7 @@ export function VoiceProfileJsonView({
 
           {styleRules.length > 0 && (
             <div>
-              <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
+              <h4 className="text-[10px] uppercase tracking-wide text-text-tertiary mb-1">
                 style_rules
               </h4>
               <ol className="list-decimal list-inside space-y-0.5 text-sm text-text-primary">
@@ -88,7 +88,7 @@ export function VoiceProfileJsonView({
 
           {exampleOpenings.length > 0 && (
             <div>
-              <h4 className="text-[10px] uppercase tracking-wide text-[#64748b] mb-1">
+              <h4 className="text-[10px] uppercase tracking-wide text-text-tertiary mb-1">
                 example_openings
               </h4>
               <div className="space-y-2">

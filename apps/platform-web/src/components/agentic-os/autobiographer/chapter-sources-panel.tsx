@@ -67,7 +67,7 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
         />
       </div>
 
-      {error ? <p className="text-[11px] text-red-400">{error}</p> : null}
+      {error ? <p className="text-[11px] text-danger">{error}</p> : null}
 
       {sources.length === 0 ? (
         <p className="text-xs text-text-secondary">
@@ -100,7 +100,7 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
                   onClick={() => unlink(s.memoryId)}
                   disabled={working === s.memoryId}
                   title="Unlink from chapter"
-                  className="text-text-secondary hover:text-red-400 disabled:opacity-50"
+                  className="text-text-secondary hover:text-danger disabled:opacity-50"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -112,7 +112,7 @@ export function ChapterSourcesPanel({ chapterId, sources }: Props) {
                 <span
                   className={`px-1.5 py-0.5 rounded border ${
                     s.paragraphCitationCount > 0
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                      ? 'border-positive/30 bg-positive/10 text-positive'
                       : 'border-border-subtle bg-surface-2 text-text-secondary'
                   }`}
                 >
