@@ -90,8 +90,8 @@ export function ShotListBuilder({ projectId, initial }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Request failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Request failed (${r.status})`);
       }
       const data = await r.json();
       setShots((prev) => [...prev, data.shot]);

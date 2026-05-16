@@ -128,9 +128,9 @@ export function ChatWindow({
       );
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => null);
+        const errData = (await res.json().catch(() => null)) as { error?: string } | null;
         throw new Error(
-          (errData as any)?.error || `HTTP ${res.status}`,
+          errData?.error || `HTTP ${res.status}`,
         );
       }
 

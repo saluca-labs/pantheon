@@ -96,8 +96,8 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       const data = await r.json();
       setPeople((prev) => [data.person, ...prev]);
@@ -130,8 +130,8 @@ export function ContactsCrm({ initial, interactions: initialInteractions }: Prop
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       const data = await r.json();
       setInteractions((prev) => [data.interaction, ...prev]);

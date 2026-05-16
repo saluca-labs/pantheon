@@ -58,10 +58,21 @@ interface BookEditorProps {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function extractText(json: Record<string, unknown>): string {
-  const node = json as any;
-  if (node?.type === 'text') return node.text ?? '';
-  if (Array.isArray(node?.content)) {
-    return node.content.map(extractText).join(' ');
+  if (typeof json === 'object' && json !== null) {
+    if ((json as { type?: unknown }).type === 'text') {
+      const t = (json as { text?: unknown }).text;
+      return typeof t === 'string' ? t : '';
+    }
+    const content = (json as { content?: unknown }).content;
+    if (Array.isArray(content)) {
+      return content
+        .map((child) =>
+          typeof child === 'object' && child !== null
+            ? extractText(child as Record<string, unknown>)
+            : '',
+        )
+        .join(' ');
+    }
   }
   return '';
 }

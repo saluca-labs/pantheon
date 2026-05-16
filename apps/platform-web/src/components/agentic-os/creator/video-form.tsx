@@ -84,8 +84,8 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
         });
 
         if (!r.ok) {
-          const data = await r.json().catch(() => ({}));
-          throw new Error((data as any).error ?? 'Failed to create video');
+          const data = (await r.json().catch(() => ({}))) as { error?: string };
+          throw new Error(data.error ?? 'Failed to create video');
         }
 
         const created = await r.json();
@@ -121,8 +121,8 @@ export function VideoForm({ video, isNew, onSuccess, onCancel }: VideoFormProps)
         );
 
         if (!r.ok) {
-          const data = await r.json().catch(() => ({}));
-          throw new Error((data as any).error ?? 'Failed to update video');
+          const data = (await r.json().catch(() => ({}))) as { error?: string };
+          throw new Error(data.error ?? 'Failed to update video');
         }
 
         const updated = await r.json();

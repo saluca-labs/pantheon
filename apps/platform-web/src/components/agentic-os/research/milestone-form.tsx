@@ -49,7 +49,15 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
     setError(null);
     setSubmitting(true);
     try {
-      const body: any = {
+      const body: {
+        title: string;
+        dueAt: string | null;
+        status: MilestoneStatus;
+        priority: MilestonePriority;
+        isBlocker: boolean;
+        blockedReason: string | null;
+        notesMd: string | null;
+      } = {
         title: title.trim(),
         dueAt: dueAt ? dueAt : null,
         status,
@@ -68,11 +76,11 @@ export function MilestoneForm({ experimentId, initial, onSaved, onCancel }: Prop
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const errBody = await r.json().catch(() => ({}));
+        const errBody = (await r.json().catch(() => ({}))) as { error?: string };
         setError(errBody.error ?? `Failed (${r.status})`);
         return;
       }
-      const { milestone } = await r.json();
+      const { milestone } = (await r.json()) as { milestone: ExperimentMilestone };
       onSaved?.(milestone);
     } catch (err: unknown) {
       const errErr = err instanceof Error ? err : new Error(String(err));

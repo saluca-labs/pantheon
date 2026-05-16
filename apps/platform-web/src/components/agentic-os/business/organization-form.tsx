@@ -41,7 +41,16 @@ export function OrganizationForm({ onCreated }: { onCreated?: () => void }) {
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
-      const body: any = {
+      const body: {
+        name: string;
+        org_type: string;
+        website: string | null;
+        industry: string | null;
+        notes: string | null;
+        address: string | null;
+        description_md: string;
+        tags: string[];
+      } = {
         name: form.name.trim(),
         org_type: form.orgType,
         website: form.website.trim() || null,
@@ -57,8 +66,8 @@ export function OrganizationForm({ onCreated }: { onCreated?: () => void }) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       onCreated?.();
       router.refresh();

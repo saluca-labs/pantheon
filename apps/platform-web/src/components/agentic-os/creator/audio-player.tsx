@@ -17,6 +17,8 @@ import { useEffect, useRef } from 'react';
 import { Headphones } from 'lucide-react';
 import 'plyr/dist/plyr.css';
 
+type PlyrInstance = InstanceType<typeof import('plyr')>;
+
 interface AudioPlayerProps {
   audioUrl: string;
   title: string;
@@ -26,7 +28,7 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ audioUrl, title, subtitle }: AudioPlayerProps) {
   const ref = useRef<HTMLAudioElement>(null);
-  const plyrRef = useRef<any>(null);
+  const plyrRef = useRef<PlyrInstance | null>(null);
 
   useEffect(() => {
     let cancelled = false;

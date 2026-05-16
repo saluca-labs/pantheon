@@ -47,9 +47,9 @@ export function AddSourceButton({ chapterId, excludedMemoryIds }: Props) {
         if (!r.ok) throw new Error(`Load failed (${r.status})`);
         return r.json();
       })
-      .then((data) => {
+      .then((data: { memories?: { id: string; title?: string | null; whenInLife?: string | null }[] }) => {
         if (cancelled) return;
-        const rows: MemoryOption[] = (data?.memories ?? []).map((m: any) => ({
+        const rows: MemoryOption[] = (data?.memories ?? []).map((m) => ({
           id: m.id,
           title: m.title ?? 'Untitled memory',
           whenInLife: m.whenInLife ?? null,

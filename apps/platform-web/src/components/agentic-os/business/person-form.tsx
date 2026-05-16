@@ -64,7 +64,19 @@ export function PersonForm({ organizations, onCreated }: Props) {
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
-      const body: any = {
+      const body: {
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        phone: string | null;
+        role: string | null;
+        organization_id: string | null;
+        stage: string;
+        tags: string[];
+        notes: string | null;
+        address: string | null;
+        description_md: string;
+      } = {
         first_name: form.firstName.trim(),
         last_name: form.lastName.trim(),
         email: form.email.trim() || null,
@@ -83,8 +95,8 @@ export function PersonForm({ organizations, onCreated }: Props) {
         body: JSON.stringify(body),
       });
       if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
-        throw new Error((data as any).error ?? `Failed (${r.status})`);
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Failed (${r.status})`);
       }
       onCreated?.();
       router.refresh();
