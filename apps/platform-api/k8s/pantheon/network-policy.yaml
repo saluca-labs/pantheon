@@ -460,3 +460,46 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+---
+# soul-service: only accepts from pantheon pods, egress to DNS + WI metadata +
+# 443 for optional Supabase cold tier + Anthropic compression. No cloud-sql-proxy
+# sidecar today (Soul's cold tier is Supabase upstream; switching to Postgres
+# requires an upstream PR — see VENDORED.md).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soul-service-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soul-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # 443 left open for optional Supabase cold tier writes + Anthropic
+    # compression calls. Both are public-CDN endpoints, so we cannot tighten
+    # to the GCP private VIP range.
+    - ports:
+        - protocol: TCP
+          port: 443

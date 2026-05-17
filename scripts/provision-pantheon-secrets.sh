@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/provision-pantheon-secrets.sh
 #
-# Idempotently sync the 8 pantheon-* secrets from GCP Secret Manager into the
+# Idempotently sync the 9 pantheon-* secrets from GCP Secret Manager into the
 # `pantheon` k8s namespace as a single Secret named `pantheon-secrets`.
 #
 # Usage:
@@ -33,6 +33,10 @@ declare -A KEYS=(
   ["jwt-kid"]="pantheon-jwt-kid"
   ["internal-api-key"]="pantheon-internal-api-key"
   ["memory-service-key"]="pantheon-memory-service-key"
+  # soul-service (W-J.2) — shared key consumed by the soul-service pod's
+  # X-Soul-Service-Key middleware. Generate once with `openssl rand -hex 32`
+  # and stash in Secret Manager as `pantheon-soul-service-key`.
+  ["soul-service-key"]="pantheon-soul-service-key"
 )
 
 TMPDIR_SECRET="$(mktemp -d)"
@@ -72,7 +76,7 @@ echo ">>> Verifying keys..."
 ACTUAL_KEYS="$(kubectl get secret "$SECRET_NAME" -n "$NAMESPACE" -o jsonpath='{.data}' | python -c 'import json,sys; print(",".join(sorted(json.load(sys.stdin).keys())))')"
 EXPECTED_KEYS="$(printf '%s\n' "${!KEYS[@]}" | sort | paste -sd, -)"
 if [ "$ACTUAL_KEYS" = "$EXPECTED_KEYS" ]; then
-  echo "    OK: all 8 keys present in $NAMESPACE/$SECRET_NAME"
+  echo "    OK: all ${#KEYS[@]} keys present in $NAMESPACE/$SECRET_NAME"
   echo "    keys: $ACTUAL_KEYS"
 else
   echo "!!! MISMATCH: expected '$EXPECTED_KEYS' got '$ACTUAL_KEYS'" >&2

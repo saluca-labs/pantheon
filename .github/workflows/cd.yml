@@ -139,6 +139,16 @@ jobs:
             image: pantheon-agos-audit-retention
             dockerfile: apps/cronjobs/agos-audit-retention/Dockerfile
             context: .
+          # soul-service — Python FastAPI, cryptographic memory service.
+          # Vendored from github.com/cristianxruvalcaba-coder/soul (Apache
+          # 2.0); see apps/soul-service/VENDORED.md for the refresh
+          # procedure. Build context is apps/soul-service/ so the upstream
+          # `soul/` package + `pantheon_entry.py` wrapper land in /app
+          # without dragging the rest of the monorepo into the layer.
+          - service: soul-service
+            image: soul-service
+            dockerfile: apps/soul-service/Dockerfile
+            context: apps/soul-service
 
     steps:
       - uses: actions/checkout@v4
@@ -227,7 +237,7 @@ jobs:
           # `pantheon-<job>` short-name convention (see
           # apps/platform-api/k8s/pantheon/cronjobs/README.md).
           for svc in portal platform-web soulauth soulgate soulwatch memory-service \
-                     tiresias-proxy pantheon-agos-audit-retention; do
+                     tiresias-proxy pantheon-agos-audit-retention soul-service; do
             kustomize edit set image \
               "${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}=${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}:${TAG}"
           done
@@ -268,7 +278,7 @@ jobs:
       - name: Wait for deployments to roll out
         run: |
           set -euo pipefail
-          for d in portal platform-web soulauth soulgate soulwatch memory-service tiresias-proxy; do
+          for d in portal platform-web soulauth soulgate soulwatch memory-service tiresias-proxy soul-service; do
             echo "── rollout: $d ──"
             kubectl rollout status deployment/$d -n "${{ env.GKE_NAMESPACE }}" --timeout=600s
           done

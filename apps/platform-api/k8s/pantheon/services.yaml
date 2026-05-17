@@ -147,3 +147,25 @@ spec:
       name: http
   selector:
     app: tiresias-proxy
+---
+# soul-service is internal-only (no ingress route); ClusterIP on its native 8080.
+# Pantheon callers reach it as http://soul-service:8080 in-cluster.
+# Auth: X-Soul-Service-Key header, key in pantheon-secrets/soul-service-key.
+apiVersion: v1
+kind: Service
+metadata:
+  name: soul-service
+  namespace: pantheon
+  labels:
+    app: soul-service
+    app.kubernetes.io/name: soul-service
+    app.kubernetes.io/part-of: pantheon
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: soul-service

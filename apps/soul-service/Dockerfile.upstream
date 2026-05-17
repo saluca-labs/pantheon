@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir \
+    anthropic==0.40.0 \
+    supabase==2.10.0 \
+    google-cloud-secret-manager==2.20.0 \
+    google-cloud-aiplatform==1.71.0 \
+    fastapi==0.115.0 \
+    uvicorn[standard]==0.32.0
+
+COPY . /app/soul/
+COPY ../gcp_config.py /app/gcp_config.py
+
+ENV PYTHONPATH=/app
+ENV GCP_PROJECT=agent-zero-prod
+ENV PORT=8080
+
+# Health + serve endpoint
+COPY serve.py /app/serve.py
+CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8080"]

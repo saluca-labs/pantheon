@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soul-memory"
+version = "0.1.0"
+description = "Cryptographically-verified persistent memory for LLMs — dual-path storage, hash-graph integrity, O(1) topic routing, recursive compression"
+authors = [{name = "Cristian Ruvalcaba"}]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["llm", "memory", "ai", "agents", "persistent-memory", "hash-graph"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "anthropic>=0.40.0",
+    "supabase>=2.0.0",
+    "redis>=5.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+gcp = ["google-cloud-secret-manager>=2.0.0", "google-cloud-firestore>=2.0.0"]
+dev = ["pytest>=7.0", "pytest-cov", "black", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/cristianxruvalcaba-coder/soul"
+Repository = "https://github.com/cristianxruvalcaba-coder/soul"
+
+[tool.setuptools]
+packages = ["soul"]
+package-dir = {"soul" = "."}
+
+[tool.setuptools.package-data]
+soul = ["*.py"]
