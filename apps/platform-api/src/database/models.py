@@ -807,3 +807,40 @@ class AgosAgent(Base):
         Index("idx_agos_agents_persona", "persona_id"),
         Index("idx_agos_agents_prompt", "prompt_id"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave H.2.b — Pantheon process-wide config
+#
+# Single k/v table that holds runtime configuration the platform-api needs
+# at startup BEFORE the agents-store (LocalPg or Supabase) is constructed.
+# Lives in pantheon's main DB regardless of where agents/prompts live.
+# See migration 0041 for the full rationale.
+# ---------------------------------------------------------------------------
+
+
+class PantheonConfig(Base):
+    """_pantheon_config - process-wide k/v config (key, JSON value, updated_at).
+
+    Seeded by migration 0041 with two W-H.2.b keys:
+
+      * ``agents_store.kind``   → "local" | "supabase"   (default: "local")
+      * ``agents_store.config`` → JSON object (empty until Supabase configured)
+
+    The Supabase config payload is::
+
+        {
+            "url": "https://xxxxx.supabase.co",
+            "service_role_key_ref": "env://SUPABASE_SERVICE_ROLE_KEY"
+        }
+
+    Per locked decision #5, the service-role key is NEVER stored in this
+    table — only a secret URI reference is stored, resolved at use time.
+    """
+    __tablename__ = "_pantheon_config"
+
+    key: Mapped[str] = mapped_column(Text, primary_key=True, nullable=False)
+    value: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_now, onupdate=_now, nullable=False
+    )
