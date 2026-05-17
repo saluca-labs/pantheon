@@ -80,7 +80,15 @@ class SoulTenant(Base):
 
 
 class Soulkey(Base):
-    """_soulkeys - Durable agent identity credentials."""
+    """_soulkeys - Durable agent identity credentials.
+
+    A SoulKey is a tenant-scoped credential bound to a persona_id (the natural
+    key for an agent). Optionally, an Agos agent row may be linked via
+    ``agent_id`` so that the SoulKey inherits a display name, description,
+    prompt, and policy from the agent. Pre-Wave H.2.a rows have
+    ``agent_id = NULL``; the H.2.a backfill populates ``agent_id`` for every
+    pre-existing ``(tenant_id, persona_id)`` tuple. See AgosAgent below.
+    """
     __tablename__ = "_soulkeys"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
@@ -98,10 +106,18 @@ class Soulkey(Base):
     revoked_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     revocation_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    # Wave H.2.a: optional back-link to a first-class Agos agent (see AgosAgent).
+    # Nullable for backwards compatibility; the H.2.a migration backfills this
+    # for all pre-existing rows. Future SoulKey issuance through the agent
+    # CRUD layer (W-H.2.b) will set this on insert.
+    agent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_agos_agents.id"), nullable=True
+    )
 
     __table_args__ = (
         Index("idx_soulkeys_hash", "key_hash"),
         Index("idx_soulkeys_tenant_persona", "tenant_id", "persona_id"),
+        Index("idx_soulkeys_agent_id", "agent_id"),
     )
 
 
@@ -664,4 +680,139 @@ class RolePermission(Base):
     __table_args__ = (
         UniqueConstraint('role_name', 'permission', 'tenant_id', name='uq_role_permission_tenant'),
         Index('idx_role_permissions_tenant', 'tenant_id', 'role_name'),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Wave H.2.a — First-class Agents + DB-canonical Prompts
+#
+# Per locked decisions in HANDOFF_pantheon_agents_providers_routing_2026-05-17.md:
+#   1. Agents are configurable but start GLOBAL (tenant_id nullable; per-tenant
+#      backfill on existing personas; marketplace templates land later).
+#   2. persona_id stays the natural key — agents are keyed by persona_id, not
+#      by a new opaque agent_uuid in the wire model. The UUID `id` PK exists
+#      for FK joins but persona_id remains the identifier the user sees.
+#   3. Prompts are DB-canonical (the "Alfred model" pattern — though Alfred
+#      itself currently stores prompts in Python source, this DB layout follows
+#      the conventional append-only versioned-prompt approach: new versions
+#      create new rows, `supersedes_id` chains them, one 'active' row per name
+#      at a time, old rows kept for audit/rollback).
+#   4. Plain-text prompts (no {{var}} templating, no Handlebars).
+#   9. Agent = key + persona + prompt; model-independent (no model column here;
+#      routing lives in the policy YAML and ModelPolicy block per H.2.c).
+# ---------------------------------------------------------------------------
+
+
+class AgosPrompt(Base):
+    """_agos_prompts - Append-only versioned prompt body (plain text).
+
+    Following the "Alfred model" conceptual pattern: new versions of a named
+    prompt create new rows; ``supersedes_id`` chains them backwards; one
+    ``status='active'`` row per ``(tenant_id, name)`` at a time. Older rows
+    are retained for audit and rollback. Prompt bodies are plain text — no
+    templating (per locked decision #4).
+
+    A ``NULL`` tenant_id marks a global / marketplace template. Tenant rows
+    take precedence when an agent resolves its prompt by name.
+
+    Defined BEFORE AgosAgent so the FK from AgosAgent.prompt_id resolves
+    cleanly when SQLAlchemy compiles the schema (matters for SQLite tests
+    where create_all walks the metadata in declared order).
+    """
+    __tablename__ = "_agos_prompts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=True,
+        comment="NULL = global / marketplace template; non-NULL = tenant-owned override"
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="Stable name across versions, e.g. 'research-coach-lit-reviewer'"
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="Plain-text prompt body. No {{var}} templating; callers append context in code"
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    supersedes_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_agos_prompts.id", ondelete="SET NULL"), nullable=True,
+        comment="Backwards chain to the prompt row this one replaced"
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active",
+        comment="draft | active | deprecated"
+    )
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True,
+        comment="_soul_users.id of the author; nullable for system seeds / migrations"
+    )
+
+    __table_args__ = (
+        CheckConstraint("status IN ('draft', 'active', 'deprecated')", name="ck_agos_prompts_status"),
+        Index("idx_agos_prompts_tenant_name", "tenant_id", "name"),
+        Index("idx_agos_prompts_name", "name"),
+        Index("idx_agos_prompts_supersedes", "supersedes_id"),
+    )
+
+
+class AgosAgent(Base):
+    """_agos_agents - First-class agent: key + persona + prompt (model-independent).
+
+    An agent is the user-visible noun that bundles a credential (SoulKey),
+    a persona role (persona_id), and a behavior definition (prompt_id).
+    Routing/model preferences are intentionally NOT stored here per locked
+    decision #9 (SHI / model-independence): the persona policy YAML and the
+    ``model_policies`` block already encode routing and are the canonical
+    source for model selection.
+
+    persona_id is the natural key today (matches _soulkeys.persona_id and
+    _soulauth_policy_cache.persona_id). No FK constraint — persona_id is a
+    free-form string in those tables. Agents are GLOBAL by default
+    (tenant_id NULL); per-tenant agents are uniquely keyed by
+    (tenant_id, persona_id).
+    """
+    __tablename__ = "_agos_agents"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=True,
+        comment="NULL = global / marketplace template; non-NULL = tenant-owned agent"
+    )
+    persona_id: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="Natural key; links to _soulkeys.persona_id (no FK — free-form across system)"
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False, comment="Display name")
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    prompt_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        Uuid, ForeignKey("_agos_prompts.id", ondelete="SET NULL"), nullable=True,
+        comment="Currently-pinned prompt row; resolver may fall back to latest active by name"
+    )
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active",
+        comment="active | draft | archived"
+    )
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True,
+        comment="_soul_users.id of the creator; nullable for system seeds / migrations"
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, onupdate=_now, nullable=True
+    )
+
+    __table_args__ = (
+        # A given (tenant, persona_id) maps to exactly one agent row. Global
+        # rows (tenant_id IS NULL) are uniquely keyed by persona_id alone —
+        # Postgres treats NULL as distinct in UNIQUE constraints, so the
+        # global uniqueness is enforced via a partial unique index below
+        # (in the migration). The constraint here covers the per-tenant case.
+        UniqueConstraint("tenant_id", "persona_id", name="uq_agos_agents_tenant_persona"),
+        CheckConstraint("status IN ('active', 'draft', 'archived')", name="ck_agos_agents_status"),
+        Index("idx_agos_agents_tenant", "tenant_id"),
+        Index("idx_agos_agents_persona", "persona_id"),
+        Index("idx_agos_agents_prompt", "prompt_id"),
     )
