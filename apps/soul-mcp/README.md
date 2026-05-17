@@ -2,15 +2,25 @@
 
 Dual-surface adapter for the Soul tool family. Exposes the full
 `mcp__soul__*` tool surface (soul + mesh + nexus, 22 tools) over **two
-transports at the same time**:
+transports**:
 
 | Transport | Audience | Wire |
 |---|---|---|
 | MCP-over-stdio | LLM harnesses (claude-code, opencode, …) | stdin/stdout JSON-RPC frames |
 | HTTP REST | In-cluster Pantheon services (portal, soulauth, cronjobs) | `POST /api/tools/<name>` JSON body |
 
-A single process serves both — the container's default `CMD` runs
-`--transport=both`.
+A single binary serves both. The container's `CMD` runs with no
+`--transport` flag, so the binary defaults to `both`; the in-cluster
+Deployment overrides this with `SOUL_MCP_TRANSPORT=http` so HTTP is the
+only listener on the running container (see "Production deployment"
+below for why stdio is opted out at runtime).
+
+This adapter is one half of the Soul stack. The other half is
+[`apps/soul-service`](../soul-service/README.md) — the vendored
+cryptographic memory backend. For how the two pods fit together
+(diagram, auth, deployment topology, when to flip on Tier 2 storage,
+how to wire an external MCP client), see
+[`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md).
 
 ## Why a separate adapter
 
@@ -64,11 +74,13 @@ transcripts, mesh coordination, nexus catalog. This adapter:
 | `POST` | `/api/nexus/services/upsert` | catalog feed — node-scanner pushes service state |
 | `POST` | `/api/nexus/projects/upsert` | catalog feed — node-scanner pushes project/GSD state |
 
-Auth is opt-in (matches soul-service). When `SOUL_SERVICE_KEY` is set,
-every non-health endpoint requires `X-Soul-Service-Key:
-$SOUL_SERVICE_KEY` or it returns 401. When unset, the adapter accepts
-every request — so the pod is deploy-able before the Secret Manager
-key exists.
+Auth is opt-in fail-open (matches soul-service). When
+`SOUL_SERVICE_KEY` is set, every non-health endpoint requires
+`X-Soul-Service-Key: $SOUL_SERVICE_KEY` or it returns 401. When unset
+or empty, the adapter boots, logs a single startup WARNING, and accepts
+every request without authentication — so the pod is deploy-able before
+the Secret Manager key exists. Self-hosters running outside Pantheon's
+GCP project can leave the key unset.
 
 ## Configuration
 
@@ -116,6 +128,18 @@ Deployed to `tiresias-prod` (namespace `pantheon`) by `.github/workflows/cd.yml`
 The Kubernetes manifest is `apps/platform-api/k8s/pantheon/soul-mcp-deployment.yaml`
 and the ClusterIP Service entry lives in `services.yaml`. Internal-only —
 clients reach it as `http://soul-mcp:8090` in-cluster.
+
+The deployment sets `SOUL_MCP_TRANSPORT=http` so the running container
+serves HTTP only. Pod stdin/stdout is plumbed to the container's main
+process and is unsafe to share with the HTTP listener, so MCP-over-stdio
+is delivered via a separate `kubectl exec` per harness session — see
+"Connecting an LLM harness over MCP" below.
+
+The soul-mcp pod and the soul-service pod share a single secret
+(`pantheon-secrets/soul-service-key`, synced from GCP Secret Manager).
+For the full Soul stack topology (both pods, shared secret, when to
+flip on Tier 2 storage) see
+[`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md).
 
 ## Connecting an LLM harness over MCP
 

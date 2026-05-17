@@ -99,6 +99,13 @@ Pantheon-specific glue (auth middleware, health endpoints, Dockerfile,
 k8s manifests) belongs OUTSIDE `soul/` — see `pantheon_entry.py` and
 `Dockerfile` for the current pattern. That code is safe to edit in-place.
 
+The wider `mcp__soul__*` tool surface (22 tools across soul/mesh/nexus)
+is served by a separate adapter pod, [`apps/soul-mcp`](../soul-mcp/README.md),
+not by this vendored service. soul-mcp proxies memory primitives here
+and keeps mesh/nexus/session bookkeeping in its own local SQLite store.
+See [`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md)
+for the two-pod topology.
+
 ## What runs and what does not (vs. ARCH.md)
 
 The vendored `serve.py` exposes a narrow REST surface (memory read/write,
@@ -128,5 +135,8 @@ The pieces that DO run in the vendored service today:
 For the **Pantheon deployment** specifically, see
 [README.md → Deferred features](README.md#deferred-features-and-how-to-flip-them-on)
 for step-by-step instructions on enabling Tier 2 Supabase, the Anthropic
-compression layer, a Postgres cold tier, multi-replica scale-out, a public
-ingress route, and the MCP adapter.
+compression layer, a Postgres cold tier, multi-replica scale-out, and a
+public ingress route. The MCP adapter is already shipped as
+[`apps/soul-mcp`](../soul-mcp/README.md); the two-pod topology is
+documented in
+[`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md).

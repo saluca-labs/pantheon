@@ -97,6 +97,27 @@ Vendored from saluca-labs/elysium. Provides agent memory with:
 - Temporal decay for relevance scoring.
 - SQLite (dev) and PostgreSQL (prod) adapters.
 
+### Soul stack (apps/soul-service + apps/soul-mcp)
+Two cooperating pods in the `pantheon` namespace, sharing one
+`X-Soul-Service-Key` secret:
+
+- **apps/soul-service** — Python/FastAPI deployment of the vendored
+  [Soul](https://github.com/cristianxruvalcaba-coder/soul) cryptographic
+  memory service. ClusterIP `soul-service:8080`. Surface: `/memory/*`,
+  `/tkhr/*`, `/graph/integrity/*`. Tier 0 (SQLite) and Tier 1
+  (in-process) always on; Tier 2 (Supabase) opt-in. See
+  [`apps/soul-service/README.md`](../../apps/soul-service/README.md).
+- **apps/soul-mcp** — Node/Fastify dual-transport adapter that exposes
+  the full 22-tool `mcp__soul__*` family (soul + mesh + nexus) over
+  MCP-over-stdio (for LLM harnesses) and HTTP REST (for in-cluster
+  consumers). ClusterIP `soul-mcp:8090`. Memory tools proxy to
+  soul-service; mesh/nexus/session bookkeeping is local SQLite until
+  upstream Soul gains first-class backends. See
+  [`apps/soul-mcp/README.md`](../../apps/soul-mcp/README.md).
+
+Full topology, storage split, auth, deployment, and external MCP client
+wiring: [`docs/architecture/soul-stack.md`](soul-stack.md).
+
 ### Agentic OS layer (apps/platform-web)
 Nine domain-specific products (Health, Maker, Research, Secure-Dev,
 CyberSec, Filmmaker, Autobiographer, Business, Creator) ship inside

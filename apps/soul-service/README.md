@@ -14,6 +14,22 @@ For the architecture, hash contract, and API reference, read the
 upstream docs: [README.upstream.md](README.upstream.md),
 [ARCH.md](ARCH.md), [PAPER.md](PAPER.md).
 
+## How MCP clients reach Soul
+
+soul-service exposes a narrow HTTP API for memory primitives only
+(`/memory/*`, `/tkhr/*`, `/graph/integrity/*`). The full
+`mcp__soul__*` tool surface (22 tools across soul/mesh/nexus) is
+served by a companion adapter pod, [`apps/soul-mcp`](../soul-mcp/README.md),
+which exposes those tools over both MCP-over-stdio (for LLM harnesses)
+and HTTP REST (for in-cluster Pantheon services). soul-mcp proxies
+memory primitives to this service and keeps mesh/nexus/session
+bookkeeping in its own local SQLite store. Both pods share a single
+`X-Soul-Service-Key` secret and live in the `pantheon` namespace.
+
+The two-pod topology, the storage split, deployment, and external MCP
+client wiring are documented in
+[`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md).
+
 ## Layout
 
 ```
@@ -247,7 +263,10 @@ the full 22-tool `mcp__soul__*` family over BOTH MCP-over-stdio (for
 LLM harnesses) AND HTTP REST (for in-cluster Pantheon services that
 prefer plain HTTP). Memory primitives proxy to this service; mesh and
 nexus state live in a local SQLite store inside the adapter pod until
-they have first-class upstream backends.
+they have first-class upstream backends. The two-pod topology
+(soul-service + soul-mcp), shared secret, and external MCP client
+wiring are written up in
+[`docs/architecture/soul-stack.md`](../../docs/architecture/soul-stack.md).
 
 soul-mcp is reachable in-cluster at `http://soul-mcp:8090`. The HTTP
 surface (`POST /api/tools/<name>`) takes JSON bodies matching each
