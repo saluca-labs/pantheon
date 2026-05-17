@@ -22,9 +22,6 @@
  *                         footer link, and the BookList client filter
  *                         chips can't be expressed by the
  *                         widgets+chart+activity declarative slots.
- *   - `roadmapMarkdown` — the Autobiographer execution plan in the
- *                         collapsed accordion (rendered when the plan
- *                         markdown is present in `content/agentic-os/`).
  *
  * Same data, same routes, same counts, same status mixes, same empty
  * states, same quick-create behavior — presentation layer only.
@@ -34,7 +31,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentAutobiographerUser } from '@/lib/agentic-os/autobiographer/session';
 import { listBooks } from '@/lib/agentic-os/autobiographer/books-repo';
@@ -66,7 +62,6 @@ export default async function AutobiographerHubPage() {
   }
 
   const [
-    plan,
     books,
     recentMemories,
     people,
@@ -75,7 +70,6 @@ export default async function AutobiographerHubPage() {
     memoryCount,
     peopleCount,
   ] = await Promise.all([
-    loadAgenticOsPlan(AUTO_SLUG),
     listBooks({ userId: user.userId, limit: 50 }),
     listMemories({ userId: user.userId, limit: 5 }),
     listPeople({ userId: user.userId, limit: 5 }),
@@ -88,7 +82,6 @@ export default async function AutobiographerHubPage() {
   return (
     <DashboardHub
       module={mod}
-      roadmapMarkdown={plan ?? null}
       dashboardSlot={
         <AutobiographerDashboard
           books={books}

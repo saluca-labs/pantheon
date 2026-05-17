@@ -25,7 +25,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentSecureDevUser } from '@/lib/agentic-os/secure-dev/session';
 import { listThreatModels } from '@/lib/agentic-os/secure-dev/repo';
@@ -44,18 +43,9 @@ export default async function SecureDevOsPage() {
     throw new Error('Secure-Dev OS module missing from registry');
   }
 
-  const [plan, models] = await Promise.all([
-    loadAgenticOsPlan(SECURE_DEV_SLUG),
-    listThreatModels(user.userId),
-  ]);
+  const models = await listThreatModels(user.userId);
 
   const dashboard = buildSecureDevDashboardSpec({ models });
 
-  return (
-    <DashboardHub
-      module={mod}
-      roadmapMarkdown={plan ?? null}
-      dashboard={dashboard}
-    />
-  );
+  return <DashboardHub module={mod} dashboard={dashboard} />;
 }

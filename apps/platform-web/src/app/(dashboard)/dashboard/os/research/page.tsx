@@ -14,8 +14,6 @@
  *   - `dashboard`       — the Experiments / Hypotheses / Literature / Open
  *                         blockers stat trio-plus-one, built by the pure
  *                         `buildResearchDashboardSpec` adapter.
- *   - `roadmapMarkdown` — the Research execution plan in the collapsed
- *                         accordion.
  *
  * The `TopBlockersWidget` (an interactive client component that refreshes
  * on focus) and the experiments section (`ExperimentList` + the hypothesis
@@ -32,7 +30,6 @@ import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentResearchUser } from '@/lib/agentic-os/research/session';
 import { listExperimentsForUser, listHypotheses } from '@/lib/agentic-os/research/repo';
@@ -59,9 +56,8 @@ export default async function ResearchHubPage() {
   // Load both active and archived in one shot so the client-side toggle
   // can switch without a round-trip. 200-row cap mirrors the API ceiling.
   // Hypotheses + papers are loaded for the hub aggregate widgets only.
-  const [plan, active, archived, initialBlockers, hypotheses, papers] =
+  const [active, archived, initialBlockers, hypotheses, papers] =
     await Promise.all([
-      loadAgenticOsPlan(RESEARCH_SLUG),
       listExperimentsForUser(user.userId, { archived: false, limit: 200 }),
       listExperimentsForUser(user.userId, { archived: true, limit: 200 }),
       listTopBlockers(user.userId, { limit: 5 }),
@@ -81,7 +77,6 @@ export default async function ResearchHubPage() {
     <div className="space-y-6">
       <DashboardHub
         module={mod}
-        roadmapMarkdown={plan ?? null}
         dashboard={dashboard}
       />
 

@@ -228,7 +228,7 @@ describe('Filmmaker hub — DashboardHub convergence (behavior-preserving)', () 
   const mod = findAgenticOsModule('filmmaker')!;
 
   it('renders the same metadata header the inline [slug] route produced', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(
       screen.getByRole('heading', { name: 'Filmmaker OS', level: 1 }),
     ).toBeInTheDocument();
@@ -240,7 +240,7 @@ describe('Filmmaker hub — DashboardHub convergence (behavior-preserving)', () 
   });
 
   it('renders the registry feature grid — all eight feature cards', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(
       screen.getByRole('heading', { name: 'Features', level: 2 }),
     ).toBeInTheDocument();
@@ -255,7 +255,7 @@ describe('Filmmaker hub — DashboardHub convergence (behavior-preserving)', () 
       projects: [mkProject({ name: 'Short Film 2026' })],
     });
     render(
-      <DashboardHub module={mod} roadmapMarkdown={null} dashboard={dashboard} />,
+      <DashboardHub module={mod} dashboard={dashboard} />,
     );
     expect(screen.getByTestId('dashboard-hub-region')).toBeInTheDocument();
     expect(screen.getByTestId('filmmaker-widget-projects')).toBeInTheDocument();
@@ -271,7 +271,7 @@ describe('Filmmaker hub — DashboardHub convergence (behavior-preserving)', () 
   });
 
   it('renders no dashboard region when the dashboard prop is omitted', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(screen.queryByTestId('dashboard-hub-region')).not.toBeInTheDocument();
   });
 
@@ -283,7 +283,7 @@ describe('Filmmaker hub — DashboardHub convergence (behavior-preserving)', () 
       ],
     });
     render(
-      <DashboardHub module={mod} roadmapMarkdown={null} dashboard={dashboard} />,
+      <DashboardHub module={mod} dashboard={dashboard} />,
     );
     expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
     expect(screen.getByTestId('activity-event-m-1')).toBeInTheDocument();
