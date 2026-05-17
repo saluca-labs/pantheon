@@ -50,6 +50,9 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "invites:*",
         "multi_tenant",
         "hierarchy:manage",
+        # W-H.2.c — first-class agents + prompts CRUD
+        "agents:*",
+        "prompts:*",
     ],
     "operator": [
         "keys:read",
@@ -63,6 +66,11 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "aletheia:read",
         "users:read",
         "teams:read",
+        # W-H.2.c — operators can read + edit agents/prompts but not delete
+        "agents:read",
+        "agents:write",
+        "prompts:read",
+        "prompts:write",
     ],
     "viewer": [
         "audit:read",
@@ -75,6 +83,9 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "enforcement:read",
         "users:read",
         "teams:read",
+        # W-H.2.c — viewers can read agents/prompts (no writes)
+        "agents:read",
+        "prompts:read",
     ],
     "auditor": [
         # Read-only audit surface + MFA-gated decrypt scope.
@@ -91,6 +102,9 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "enforcement:read",
         "users:read",
         "teams:read",
+        # W-H.2.c — auditors read agents/prompts for compliance review
+        "agents:read",
+        "prompts:read",
     ],
 }
 
