@@ -1,0 +1,33 @@
+{
+  "name": "@platform/soul-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dual-surface adapter: exposes the soul/mesh/nexus tool surface as both MCP-over-stdio (for LLM harnesses) and HTTP/REST (for in-cluster Pantheon services). Backed by soul-service for memory primitives; local SQLite for mesh + nexus state.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts",
+    "dev:mcp": "tsx src/server.ts --transport=stdio",
+    "dev:http": "tsx src/server.ts --transport=http",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "better-sqlite3": "^11.3.0",
+    "fastify": "^5.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

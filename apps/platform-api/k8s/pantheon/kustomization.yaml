@@ -23,6 +23,8 @@ resources:
   - platform-web-deployment.yaml
   - memory-service-deployment.yaml
   - tiresias-proxy-deployment.yaml
+  - soul-service-deployment.yaml
+  - soul-mcp-deployment.yaml
   # Service surface
   - services.yaml
   # Reliability
