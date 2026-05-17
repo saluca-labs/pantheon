@@ -96,6 +96,12 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    label: "Prompts",
+    href: "/dashboard/prompts",
+    group: "main",
+    icon: <BookOpen className="w-5 h-5" />,
+  },
+  {
     label: "Policies",
     href: "/dashboard/policies",
     group: "main",
