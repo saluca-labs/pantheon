@@ -1,5 +1,6 @@
 packages:
   - "apps/platform-web"
   - "apps/memory-service"
+  - "apps/soul-mcp"
   - "apps/cronjobs/*"
   - "packages/*"

@@ -1,0 +1,162 @@
+# soul-service — Cryptographic memory service (vendored from
+# github.com/cristianxruvalcaba-coder/soul, Apache 2.0).
+# Source + vendoring policy: apps/soul-service/VENDORED.md.
+#
+# Storage tiers:
+#   Tier 0 — SQLite active buffer at /app/data/active_kb.db (emptyDir, in-pod).
+#            Sub-1ms reads. LRU eviction at SOUL_BUFFER_MAX records per session.
+#            Persistence is per-pod, NOT cross-pod — replicas=1 for MVP. When we
+#            move to multiple replicas we must either (a) externalize Tier 0
+#            (Redis) or (b) shard by session_id at the Service level. Tracked
+#            upstream; not in scope for W-J.2.
+#   Tier 1 — in-process dict cache (always on, ephemeral with pod).
+#   Tier 2 — Supabase cold store. The vendored serve.py only knows Supabase as
+#            a cold backend today. We leave SUPABASE_URL + SUPABASE_SERVICE_KEY
+#            unset by default; Tier 2 writes will surface as runtime errors on
+#            the relevant endpoints until upstream gains a Postgres adapter.
+#            See VENDORED.md ("What runs and what does not").
+#
+# Auth: pantheon_entry.py enforces X-Soul-Service-Key on every non-health
+# request when SOUL_ENV=production. Key sourced from pantheon-secrets
+# (key: soul-service-key) — see RUNBOOK.md for the rotation procedure.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soul-service
+  namespace: pantheon
+  labels:
+    app: soul-service
+    app.kubernetes.io/name: soul-service
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: memory-service
+spec:
+  # MVP single replica — Tier 0 SQLite buffer is per-pod, so scaling to >1
+  # would split a session's hot tier across pods and break cold-start
+  # warm-up integrity assumptions. Revisit once Tier 0 is externalized.
+  # Flip-on steps (externalize Tier 0, then bump replicas + add PDB) are
+  # in apps/soul-service/README.md → "Deferred features" → §4.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soul-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: soul-service
+        app.kubernetes.io/name: soul-service
+        app.kubernetes.io/part-of: pantheon
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: soul-service
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soul-service:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            # /tmp for uvicorn + python tempfiles under a readonly root.
+            - name: tmp
+              mountPath: /tmp
+            # /app/data hosts the SQLite Tier 0 buffer; emptyDir is fine for
+            # MVP since Tier 0 is per-pod by design.
+            - name: soul-data
+              mountPath: /app/data
+          env:
+            - name: SOUL_ENV
+              value: "production"
+            - name: PORT
+              value: "8080"
+            - name: SOUL_BUFFER_PATH
+              value: "/app/data/active_kb.db"
+            # Shared-secret auth — fail-closed if missing in production (see
+            # apps/soul-service/pantheon_entry.py:_require_service_key).
+            - name: SOUL_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: soul-service-key
+            # Tier 2 cold storage — optional. Leave keys unset and Tier 0/1
+            # continue to serve; write_memory() will raise on Tier 2 fan-out.
+            # Wire these in via pantheon-secrets when a Supabase project is
+            # provisioned for Soul, or skip and live with Tier 0/1 only.
+            # Flip-on steps (provision secrets, sync, redeploy) are in
+            # apps/soul-service/README.md → "Deferred features" → §1.
+            #
+            # - name: SUPABASE_URL
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: pantheon-secrets
+            #       key: soul-supabase-url
+            # - name: SUPABASE_SERVICE_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: pantheon-secrets
+            #       key: soul-supabase-key
+            #
+            # Compression layer (Anthropic) — only required if callers exercise
+            # compression endpoints. Leave commented until needed.
+            # Flip-on steps in apps/soul-service/README.md → "Deferred
+            # features" → §2.
+            # - name: ANTHROPIC_API_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: pantheon-secrets
+            #       key: anthropic-api-key
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+              ephemeral-storage: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            failureThreshold: 20
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: soul-data
+          emptyDir:
+            sizeLimit: 512Mi

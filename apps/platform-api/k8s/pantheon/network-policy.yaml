@@ -460,3 +460,95 @@ spec:
     - ports:
         - protocol: TCP
           port: 443
+---
+# soul-service: only accepts from pantheon pods, egress to DNS + WI metadata +
+# 443 for optional Supabase cold tier + Anthropic compression. No cloud-sql-proxy
+# sidecar today (Soul's cold tier is Supabase upstream; switching to Postgres
+# requires an upstream PR — see VENDORED.md). Adding a Postgres sidecar/egress
+# rule is step §3 in apps/soul-service/README.md → "Deferred features".
+# Widening ingress to include the GCE health-prober CIDRs is step §5 (required
+# before exposing the service via the GCE ingress).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soul-service-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soul-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # 443 left open for optional Supabase cold tier writes + Anthropic
+    # compression calls. Both are public-CDN endpoints, so we cannot tighten
+    # to the GCP private VIP range.
+    - ports:
+        - protocol: TCP
+          port: 443
+---
+# soul-mcp: dual-surface adapter — accepts HTTP from any pantheon pod on
+# 8090, egresses to soul-service (8080) for memory primitives, plus DNS +
+# WI metadata. No internet egress required today (mesh/nexus state is
+# local SQLite). Same flip-on rules as soul-service for the public ingress
+# story — see apps/soul-service/README.md → "Deferred features" → §5.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: soul-mcp-netpol
+  namespace: pantheon
+spec:
+  podSelector:
+    matchLabels:
+      app: soul-mcp
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: pantheon
+      ports:
+        - protocol: TCP
+          port: 8090
+  egress:
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+    # Upstream soul-service on 8080.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: soul-service
+      ports:
+        - protocol: TCP
+          port: 8080

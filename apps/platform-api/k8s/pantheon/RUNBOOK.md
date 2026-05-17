@@ -117,7 +117,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO pantheon;
 The superuser password is injected into the Pod via a transient `pantheon-superuser-pw`
 k8s Secret that is deleted immediately after the grants succeed.
 
-### 7. Secret Manager — 8 secrets
+### 7. Secret Manager — 9 secrets
 
 | Secret name                    | Source                                              |
 |--------------------------------|-----------------------------------------------------|
@@ -129,6 +129,7 @@ k8s Secret that is deleted immediately after the grants succeed.
 | `pantheon-jwt-kid`             | literal `pantheon-2026-05`                          |
 | `pantheon-internal-api-key`    | `openssl rand -hex 32`                              |
 | `pantheon-memory-service-key`  | `openssl rand -hex 32`                              |
+| `pantheon-soul-service-key`    | `openssl rand -hex 32` (W-J.2; consumed by soul-service pod) |
 
 Per secret:
 ```bash
