@@ -535,6 +535,49 @@ function SettingsPageInner() {
   const [providerKeyLoading, setProviderKeyLoading] = useState(false);
   const [providerKeyError, setProviderKeyError] = useState<string | null>(null);
 
+  // --- Per-tenant BYOK provider keys state (W-H.2.e) ---
+  type ByokRow = {
+    id: string;
+    tenant_id: string;
+    provider: string;
+    secret_ref: string;
+    base_url: string | null;
+    status: "active" | "disabled";
+    metadata: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+  };
+  const [byokRows, setByokRows] = useState<ByokRow[]>([]);
+  const [byokLoading, setByokLoading] = useState(false);
+  const [byokError, setByokError] = useState<string | null>(null);
+  const [byokTestingId, setByokTestingId] = useState<string | null>(null);
+  const [byokTestResults, setByokTestResults] = useState<
+    Record<string, { ok: boolean; latency_ms: number; error?: string } | null>
+  >({});
+
+  // Add/Edit modal state
+  const [byokModalOpen, setByokModalOpen] = useState(false);
+  const [byokEditId, setByokEditId] = useState<string | null>(null);
+  const [byokForm, setByokForm] = useState<{
+    provider: string;
+    secret_ref: string;
+    base_url: string;
+    status: "active" | "disabled";
+  }>({
+    provider: "anthropic",
+    secret_ref: "env://",
+    base_url: "",
+    status: "active",
+  });
+  const [byokSaving, setByokSaving] = useState(false);
+  const [byokFormError, setByokFormError] = useState<string | null>(null);
+  const [byokInlineTest, setByokInlineTest] = useState<{
+    ok: boolean;
+    latency_ms: number;
+    error?: string;
+  } | null>(null);
+  const [byokInlineTesting, setByokInlineTesting] = useState(false);
+
   // --- Agents Store state (W-H.2.b — LocalPg ↔ Supabase adapter picker) ---
   const [agentsStoreKind, setAgentsStoreKind] = useState<"local" | "supabase">("local");
   const [agentsStoreSavedKind, setAgentsStoreSavedKind] = useState<"local" | "supabase">("local");
@@ -617,6 +660,195 @@ function SettingsPageInner() {
   useEffect(() => {
     if (activeTab === "provider-keys") fetchProviderKeyStatus();
   }, [activeTab, fetchProviderKeyStatus]);
+
+  // --- Per-tenant BYOK provider keys (W-H.2.e) handlers ---
+  const fetchByokRows = useCallback(async () => {
+    setByokLoading(true);
+    setByokError(null);
+    try {
+      const res = await fetch("/api/provider-keys");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as ByokRow[];
+      setByokRows(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setByokError(err instanceof Error ? err.message : "Failed to load BYOK rows");
+    } finally {
+      setByokLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "provider-keys") fetchByokRows();
+  }, [activeTab, fetchByokRows]);
+
+  const openByokModalForCreate = () => {
+    setByokEditId(null);
+    setByokForm({
+      provider: "anthropic",
+      secret_ref: "env://",
+      base_url: "",
+      status: "active",
+    });
+    setByokFormError(null);
+    setByokInlineTest(null);
+    setByokModalOpen(true);
+  };
+
+  const openByokModalForEdit = (row: ByokRow) => {
+    setByokEditId(row.id);
+    setByokForm({
+      provider: row.provider,
+      secret_ref: row.secret_ref,
+      base_url: row.base_url || "",
+      status: row.status,
+    });
+    setByokFormError(null);
+    setByokInlineTest(null);
+    setByokModalOpen(true);
+  };
+
+  const handleByokInlineTest = async () => {
+    setByokInlineTesting(true);
+    setByokInlineTest(null);
+    try {
+      const res = await fetch("/api/provider-keys/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: byokForm.provider,
+          secret_ref: byokForm.secret_ref,
+          base_url: byokForm.base_url || null,
+        }),
+      });
+      const data = await res.json();
+      setByokInlineTest({
+        ok: !!data.ok,
+        latency_ms: data.latency_ms || 0,
+        error: data.error,
+      });
+    } catch (err) {
+      setByokInlineTest({
+        ok: false,
+        latency_ms: 0,
+        error: err instanceof Error ? err.message : "network error",
+      });
+    } finally {
+      setByokInlineTesting(false);
+    }
+  };
+
+  const handleByokSave = async () => {
+    setByokSaving(true);
+    setByokFormError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        secret_ref: byokForm.secret_ref.trim(),
+        base_url: byokForm.base_url.trim() || null,
+        status: byokForm.status,
+      };
+      let res: Response;
+      if (byokEditId) {
+        // PATCH (provider is immutable post-create — it's the natural key)
+        res = await fetch(`/api/provider-keys/${byokEditId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        payload.provider = byokForm.provider;
+        res = await fetch("/api/provider-keys", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setByokFormError(
+          (data as { detail?: string; error?: string })?.detail ||
+            (data as { error?: string })?.error ||
+            `HTTP ${res.status}`,
+        );
+        return;
+      }
+      setByokModalOpen(false);
+      await fetchByokRows();
+    } catch (err) {
+      setByokFormError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setByokSaving(false);
+    }
+  };
+
+  const handleByokTestStored = async (rowId: string) => {
+    setByokTestingId(rowId);
+    setByokTestResults((prev) => ({ ...prev, [rowId]: null }));
+    try {
+      const res = await fetch(`/api/provider-keys/${rowId}/test`, { method: "POST" });
+      const data = await res.json();
+      setByokTestResults((prev) => ({
+        ...prev,
+        [rowId]: {
+          ok: !!data.ok,
+          latency_ms: data.latency_ms || 0,
+          error: data.error,
+        },
+      }));
+    } catch (err) {
+      setByokTestResults((prev) => ({
+        ...prev,
+        [rowId]: {
+          ok: false,
+          latency_ms: 0,
+          error: err instanceof Error ? err.message : "network error",
+        },
+      }));
+    } finally {
+      setByokTestingId(null);
+    }
+  };
+
+  const handleByokToggleStatus = async (row: ByokRow) => {
+    const next = row.status === "active" ? "disabled" : "active";
+    try {
+      const res = await fetch(`/api/provider-keys/${row.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setByokError(
+          (data as { detail?: string; error?: string })?.detail ||
+            (data as { error?: string })?.error ||
+            `HTTP ${res.status}`,
+        );
+        return;
+      }
+      await fetchByokRows();
+    } catch (err) {
+      setByokError(err instanceof Error ? err.message : "Failed to toggle status");
+    }
+  };
+
+  const handleByokDelete = async (rowId: string) => {
+    if (!window.confirm("Delete this per-tenant provider key override? Tiresias will fall back to the platform env-default for this provider.")) return;
+    try {
+      const res = await fetch(`/api/provider-keys/${rowId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setByokError(
+          (data as { detail?: string; error?: string })?.detail ||
+            (data as { error?: string })?.error ||
+            `HTTP ${res.status}`,
+        );
+        return;
+      }
+      await fetchByokRows();
+    } catch (err) {
+      setByokError(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
 
   // --- Agents Store tab: fetch / build proposed payload / save / test ---
   const fetchAgentsStoreConfig = useCallback(async () => {
@@ -1407,23 +1639,24 @@ function SettingsPageInner() {
         </motion.div>
       )}
 
-      {/* Provider Keys Tab — env-var presence view (W-H.1 atom 4) */}
+      {/* Provider Keys Tab — env-var presence view + per-tenant BYOK overrides */}
       {activeTab === "provider-keys" && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
         >
-          {/* Wave H.2 BYOK banner */}
-          <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          {/* Resolution-order explainer (W-H.2.e) */}
+          <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-start gap-3">
+            <svg className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <div className="text-sm">
-              <p className="font-semibold text-amber-300">Platform-wide keys only</p>
-              <p className="text-amber-400/80 mt-0.5 text-xs">
-                This view reports which provider API keys are configured on the running pod (boolean only — values are never returned).
-                Per-tenant BYOK keys (each tenant can supply their own API keys) are coming in <span className="font-semibold">Wave H.2</span>.
+              <p className="font-semibold text-emerald-300">Per-tenant BYOK is live (W-H.2.e)</p>
+              <p className="text-emerald-400/80 mt-0.5 text-xs">
+                Tiresias now resolves provider credentials in this order: <strong>per-tenant override</strong> →{" "}
+                <strong>platform env-default</strong>. Add a row below to use your own API key for any provider.
+                Secret values are NEVER stored in the database — only a <code className="px-1 py-0.5 rounded bg-emerald-900/30 font-mono">platform_secrets</code> URI ref (<code className="px-1 py-0.5 rounded bg-emerald-900/30 font-mono">env://VAR_NAME</code>).
               </p>
             </div>
           </div>
@@ -1498,6 +1731,241 @@ function SettingsPageInner() {
               </ol>
             </div>
           </div>
+
+          {/* Per-tenant BYOK overrides table (W-H.2.e) */}
+          <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-1">Per-tenant overrides</h2>
+                <p className="text-sm text-foreground-muted">
+                  Each row overrides the platform-default credential for a single provider. Tiresias checks per-tenant
+                  rows first; disabled or missing rows fall back to the env-default above.
+                </p>
+              </div>
+              <button
+                onClick={openByokModalForCreate}
+                className="px-3 py-2 rounded-lg bg-of-primary/90 hover:bg-of-primary text-white text-sm font-medium transition-colors"
+              >
+                + Add Override
+              </button>
+            </div>
+
+            {byokLoading && (
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <div className="w-3 h-3 border border-of-primary/30 border-t-of-primary rounded-full animate-spin" />
+                Loading overrides...
+              </div>
+            )}
+
+            {byokError && (
+              <div className="px-3 py-2 mb-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                {byokError}
+              </div>
+            )}
+
+            {!byokLoading && byokRows.length === 0 && !byokError && (
+              <div className="px-4 py-8 text-center text-sm text-foreground-muted border border-dashed border-white/10 rounded-lg">
+                No per-tenant overrides set. Tiresias is using the platform env-defaults for all providers.
+              </div>
+            )}
+
+            {!byokLoading && byokRows.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Provider</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Secret Ref</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Base URL</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Status</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Updated</th>
+                      <th className="text-right px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byokRows.map((row) => {
+                      const test = byokTestResults[row.id];
+                      const updated = row.updated_at ? new Date(row.updated_at).toLocaleString() : "—";
+                      return (
+                        <tr key={row.id} className="border-b border-white/5">
+                          <td className="px-3 py-3 text-foreground font-medium">{row.provider}</td>
+                          <td className="px-3 py-3 text-foreground-muted text-xs font-mono">{row.secret_ref}</td>
+                          <td className="px-3 py-3 text-foreground-muted text-xs font-mono">{row.base_url || "—"}</td>
+                          <td className="px-3 py-3">
+                            {row.status === "active" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-500/15 text-gray-400 border border-gray-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" /> disabled
+                              </span>
+                            )}
+                            {test && (
+                              <span className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${test.ok ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>
+                                {test.ok ? `OK · ${test.latency_ms}ms` : `FAIL: ${test.error || "unknown"}`}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-foreground-muted text-xs">{updated}</td>
+                          <td className="px-3 py-3 text-right space-x-2">
+                            <button
+                              onClick={() => handleByokTestStored(row.id)}
+                              disabled={byokTestingId === row.id}
+                              className="px-2 py-1 text-xs rounded-md bg-white/5 hover:bg-white/10 text-foreground-muted hover:text-foreground border border-white/10 disabled:opacity-50"
+                            >
+                              {byokTestingId === row.id ? "..." : "Test"}
+                            </button>
+                            <button
+                              onClick={() => openByokModalForEdit(row)}
+                              className="px-2 py-1 text-xs rounded-md bg-white/5 hover:bg-white/10 text-foreground-muted hover:text-foreground border border-white/10"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleByokToggleStatus(row)}
+                              className="px-2 py-1 text-xs rounded-md bg-white/5 hover:bg-white/10 text-foreground-muted hover:text-foreground border border-white/10"
+                            >
+                              {row.status === "active" ? "Disable" : "Enable"}
+                            </button>
+                            <button
+                              onClick={() => handleByokDelete(row.id)}
+                              className="px-2 py-1 text-xs rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Add/Edit modal */}
+          {byokModalOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+              onClick={() => !byokSaving && setByokModalOpen(false)}
+            >
+              <div
+                className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6 w-full max-w-lg space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {byokEditId ? "Edit provider override" : "Add provider override"}
+                    </h3>
+                    <p className="text-xs text-foreground-muted mt-0.5">
+                      Per-tenant BYOK. The secret value is resolved at use time — never stored in the DB.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => !byokSaving && setByokModalOpen(false)}
+                    className="text-foreground-muted hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {byokFormError && (
+                  <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                    {byokFormError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">Provider</label>
+                  <select
+                    value={byokForm.provider}
+                    onChange={(e) => setByokForm({ ...byokForm, provider: e.target.value })}
+                    disabled={!!byokEditId /* provider is the natural key — immutable after create */}
+                    className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-of-primary/50 focus:outline-none disabled:opacity-60"
+                  >
+                    {PROVIDER_INFO.map((p) => (
+                      <option key={p.slug} value={p.slug}>{p.label} ({p.slug})</option>
+                    ))}
+                  </select>
+                  {byokEditId && (
+                    <p className="text-[10px] text-foreground-subtle mt-1">Provider is the natural key — to change it, delete this row and create a new one.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">Secret Ref</label>
+                  <input
+                    type="text"
+                    value={byokForm.secret_ref}
+                    onChange={(e) => setByokForm({ ...byokForm, secret_ref: e.target.value })}
+                    placeholder="env://MY_TENANT_ANTHROPIC_KEY"
+                    className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-of-primary/50 focus:outline-none font-mono"
+                  />
+                  <p className="text-[10px] text-foreground-subtle mt-1">
+                    Supported schemes: <code className="font-mono">env://VAR_NAME</code> (other schemes reserved for the
+                    canonical <code className="font-mono">platform_secrets</code> module).
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">Base URL (optional)</label>
+                  <input
+                    type="url"
+                    value={byokForm.base_url}
+                    onChange={(e) => setByokForm({ ...byokForm, base_url: e.target.value })}
+                    placeholder="https://my-azure-openai.openai.azure.com"
+                    className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-of-primary/50 focus:outline-none font-mono"
+                  />
+                  <p className="text-[10px] text-foreground-subtle mt-1">Leave blank to use the provider&apos;s default base URL.</p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">Status</label>
+                  <select
+                    value={byokForm.status}
+                    onChange={(e) => setByokForm({ ...byokForm, status: e.target.value as "active" | "disabled" })}
+                    className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-of-primary/50 focus:outline-none"
+                  >
+                    <option value="active">active</option>
+                    <option value="disabled">disabled (Tiresias falls back to env-default)</option>
+                  </select>
+                </div>
+
+                {byokInlineTest && (
+                  <div className={`px-3 py-2 rounded-lg text-xs ${byokInlineTest.ok ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-300" : "bg-red-500/10 border border-red-500/20 text-red-300"}`}>
+                    {byokInlineTest.ok
+                      ? `OK — upstream responded in ${byokInlineTest.latency_ms}ms`
+                      : `FAIL: ${byokInlineTest.error || "unknown error"}`}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                  <button
+                    onClick={handleByokInlineTest}
+                    disabled={byokInlineTesting || !byokForm.secret_ref}
+                    className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-foreground text-sm border border-white/10 disabled:opacity-50"
+                  >
+                    {byokInlineTesting ? "Testing..." : "Test"}
+                  </button>
+                  <button
+                    onClick={() => !byokSaving && setByokModalOpen(false)}
+                    className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-foreground-muted text-sm border border-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleByokSave}
+                    disabled={byokSaving || !byokForm.secret_ref}
+                    className="px-3 py-2 rounded-lg bg-of-primary hover:bg-of-primary/90 text-white text-sm font-medium disabled:opacity-50"
+                  >
+                    {byokSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 

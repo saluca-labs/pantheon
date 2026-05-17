@@ -53,6 +53,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         # W-H.2.c — first-class agents + prompts CRUD
         "agents:*",
         "prompts:*",
+        # W-H.2.e — per-tenant BYOK provider keys
+        "providers:*",
     ],
     "operator": [
         "keys:read",
@@ -71,6 +73,9 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         "agents:write",
         "prompts:read",
         "prompts:write",
+        # W-H.2.e — operators manage BYOK provider keys (same shape as agents)
+        "providers:read",
+        "providers:write",
     ],
     "viewer": [
         "audit:read",
@@ -86,6 +91,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         # W-H.2.c — viewers can read agents/prompts (no writes)
         "agents:read",
         "prompts:read",
+        # W-H.2.e — viewers can see provider key overrides (masked)
+        "providers:read",
     ],
     "auditor": [
         # Read-only audit surface + MFA-gated decrypt scope.
@@ -105,6 +112,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, list[str]] = {
         # W-H.2.c — auditors read agents/prompts for compliance review
         "agents:read",
         "prompts:read",
+        # W-H.2.e — auditors read provider keys (masked) for compliance review
+        "providers:read",
     ],
 }
 
