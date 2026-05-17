@@ -34,7 +34,7 @@ async function listDistinctTags(
 ): Promise<string[]> {
   const pool = getAutobiographerPool();
   // unnest then DISTINCT — small N so we cap at 200.
-  const r = await pool.query(
+  const r = await pool.query<{ t: unknown }>(
     `SELECT DISTINCT t
        FROM agos_autobiographer_memories,
             unnest(${column}) AS t
@@ -43,7 +43,7 @@ async function listDistinctTags(
       LIMIT 200`,
     [userId],
   );
-  return r.rows.map((row: any) => String(row.t));
+  return r.rows.map((row) => String(row.t));
 }
 
 function pickOne(

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { hashPassword, createSession } from '@platform/auth';
 import { setSessionCookie } from '@platform/auth/cookies';
+import type { MutableCookieStore } from '@platform/auth/cookies';
 import { Pool } from 'pg';
 
 let _pool: Pool | null = null;
@@ -54,7 +55,7 @@ async function registerAction(formData: FormData) {
 
     const session = await createSession(userId, db);
     const cookieStore = await cookies();
-    setSessionCookie(cookieStore as any, session.token);
+    setSessionCookie(cookieStore as unknown as MutableCookieStore, session.token);
   } catch {
     await client.query('ROLLBACK');
     redirect('/register?error=server');

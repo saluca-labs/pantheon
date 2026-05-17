@@ -55,7 +55,16 @@ interface Props {
  */
 async function listExperimentsForHypothesis(hypothesisId: string, userId: string) {
   const pool = getResearchPool();
-  const r = await pool.query(
+  interface RawExperimentLinkRow {
+    link_id: string;
+    experiment_id: string;
+    hypothesis_id: string;
+    role: string | null;
+    notes: string | null;
+    created_at: Date | string;
+    experiment_name: string;
+  }
+  const r = await pool.query<RawExperimentLinkRow>(
     `SELECT lk.id          AS link_id,
             lk.experiment_id,
             lk.hypothesis_id,
@@ -70,7 +79,7 @@ async function listExperimentsForHypothesis(hypothesisId: string, userId: string
       ORDER BY lk.created_at ASC`,
     [hypothesisId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row) => ({
     experimentId: row.experiment_id as string,
     experimentName: row.experiment_name as string,
     link: {

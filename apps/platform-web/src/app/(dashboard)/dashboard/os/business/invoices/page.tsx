@@ -54,7 +54,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
 
   const sp = await searchParams;
   const showNew = sp.new === '1';
-  const activeStatus = STATUSES.includes(sp.status as any) ? sp.status : 'all';
+  const activeStatus = STATUSES.includes(sp.status as (typeof STATUSES)[number]) ? sp.status : 'all';
   const outstandingOnly = sp.outstanding === '1';
 
   const [invoices, people, deals, projects, settingsResult] = await Promise.all([

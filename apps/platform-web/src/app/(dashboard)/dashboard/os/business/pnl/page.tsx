@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { listSnapshots } from '@/lib/agentic-os/business/pnl-snapshots-repo';
-import { PERIOD_KINDS } from '@/lib/agentic-os/business/pnl-snapshots';
+import { PERIOD_KINDS, type PeriodKind } from '@/lib/agentic-os/business/pnl-snapshots';
 import PnlSummaryPanel from '@/components/agentic-os/business/pnl-summary-panel';
 import PnlSnapshotList from '@/components/agentic-os/business/pnl-snapshot-list';
 
@@ -39,7 +39,7 @@ export default async function PnlPage({ searchParams }: Props) {
 
   const [snapshots] = await Promise.all([
     listSnapshots(user.userId, {
-      periodKind: activePeriodKind !== 'all' ? (activePeriodKind as any) : undefined,
+      periodKind: activePeriodKind !== 'all' ? (activePeriodKind as PeriodKind) : undefined,
       locked: lockedOnly || undefined,
       limit: 500,
     }),

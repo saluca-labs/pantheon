@@ -57,7 +57,14 @@ async function listPeopleForBook(
   // Two paths into a book:
   //   1. memory.book_id = bookId (direct attachment)
   //   2. chapter_sources joining a chapter in the book to a memory
-  const r = await pool.query(
+  interface RawPersonRow {
+    id: string;
+    canonical_name: string;
+    aliases: unknown;
+    consent_to_publish: string | null;
+    memory_count: number | string | null;
+  }
+  const r = await pool.query<RawPersonRow>(
     `WITH book_memories AS (
        SELECT id FROM agos_autobiographer_memories
         WHERE user_id = $2 AND book_id = $1
@@ -77,7 +84,7 @@ async function listPeopleForBook(
       ORDER BY lower(p.canonical_name) ASC`,
     [bookId, userId],
   );
-  return r.rows.map((row: any) => ({
+  return r.rows.map((row) => ({
     personId: row.id,
     canonicalName: row.canonical_name,
     aliases: Array.isArray(row.aliases) ? row.aliases : [],

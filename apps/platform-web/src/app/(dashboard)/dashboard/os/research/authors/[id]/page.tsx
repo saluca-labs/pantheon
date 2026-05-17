@@ -24,7 +24,25 @@ interface Props {
 
 async function listPapersForAuthor(authorId: string, userId: string): Promise<Paper[]> {
   const pool = getResearchPool();
-  const r = await pool.query(
+  interface RawPaperRow {
+    id: string;
+    user_id: string;
+    title: string;
+    kind: string | null;
+    doi: string | null;
+    arxiv_id: string | null;
+    url: string | null;
+    authors_text: string | null;
+    venue: string | null;
+    year: number | string | null;
+    abstract_md: string | null;
+    tags: unknown;
+    metadata: unknown;
+    archived_at: Date | string | null;
+    created_at: Date | string;
+    updated_at: Date | string;
+  }
+  const r = await pool.query<RawPaperRow>(
     `SELECT p.id, p.user_id, p.title, p.kind, p.doi, p.arxiv_id, p.url,
             p.authors_text, p.venue, p.year, p.abstract_md, p.tags,
             p.metadata, p.archived_at, p.created_at, p.updated_at,
@@ -41,7 +59,7 @@ async function listPapersForAuthor(authorId: string, userId: string): Promise<Pa
     [authorId, userId],
   );
   return r.rows.map(
-    (row: any): Paper => ({
+    (row): Paper => ({
       id: row.id,
       userId: row.user_id,
       title: row.title,
