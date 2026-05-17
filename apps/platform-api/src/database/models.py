@@ -82,12 +82,11 @@ class SoulTenant(Base):
 class Soulkey(Base):
     """_soulkeys - Durable agent identity credentials.
 
-    A SoulKey is a tenant-scoped credential bound to a persona_id (the natural
-    key for an agent). Optionally, an Agos agent row may be linked via
-    ``agent_id`` so that the SoulKey inherits a display name, description,
-    prompt, and policy from the agent. Pre-Wave H.2.a rows have
-    ``agent_id = NULL``; the H.2.a backfill populates ``agent_id`` for every
-    pre-existing ``(tenant_id, persona_id)`` tuple. See AgosAgent below.
+    A SoulKey is a tenant-scoped credential bound to a persona_id, which is
+    the natural key for an agent. Cross-table joins to ``_agos_agents`` use
+    the ``(tenant_id, persona_id)`` tuple — there is no separate ``agent_id``
+    FK because SoulKeys live in the SoulAuth datastore which may be physically
+    distinct from the agents store (per the Wave H.2 adapter design).
     """
     __tablename__ = "_soulkeys"
 
@@ -106,18 +105,10 @@ class Soulkey(Base):
     revoked_by: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     revocation_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
-    # Wave H.2.a: optional back-link to a first-class Agos agent (see AgosAgent).
-    # Nullable for backwards compatibility; the H.2.a migration backfills this
-    # for all pre-existing rows. Future SoulKey issuance through the agent
-    # CRUD layer (W-H.2.b) will set this on insert.
-    agent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        Uuid, ForeignKey("_agos_agents.id"), nullable=True
-    )
 
     __table_args__ = (
         Index("idx_soulkeys_hash", "key_hash"),
         Index("idx_soulkeys_tenant_persona", "tenant_id", "persona_id"),
-        Index("idx_soulkeys_agent_id", "agent_id"),
     )
 
 
