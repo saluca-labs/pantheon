@@ -37,10 +37,44 @@ interface ChatMessage {
   latency_ms?: number;
 }
 
-const MODELS = [
-  "claude-sonnet-4-20250514",
-  "claude-opus-4-20250514",
-];
+/**
+ * Static map of providers → known models. Mirrors the providers that the
+ * Tiresias `ProviderRouter` knows how to dispatch to (anthropic, openai,
+ * gemini, groq, ollama). Selecting a provider filters the model list and
+ * the chosen model is sent as a `provider/model` prefix; Tiresias parses
+ * the prefix and pins the provider.
+ *
+ * Static by design — a model-discovery endpoint is out of W-H.1 scope.
+ */
+const MODELS_BY_PROVIDER: Record<string, string[]> = {
+  anthropic: [
+    "claude-opus-4-7",
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5",
+    "claude-sonnet-4-20250514",
+    "claude-opus-4-20250514",
+  ],
+  openai: [
+    "gpt-4o",
+    "gpt-4o-mini",
+    "o1",
+    "o1-mini",
+  ],
+  gemini: [
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
+  ],
+  groq: [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+  ],
+  ollama: [
+    "llama3.2",
+    "qwen2.5-coder",
+  ],
+};
+
+const PROVIDERS = Object.keys(MODELS_BY_PROVIDER) as Array<keyof typeof MODELS_BY_PROVIDER>;
 
 export default function PlaygroundPage() {
   return (
@@ -58,7 +92,8 @@ function PlaygroundInner() {
 
   // Form state
   const [input, setInput] = useState("");
-  const [model, setModel] = useState(MODELS[0]);
+  const [provider, setProvider] = useState<string>(PROVIDERS[0]);
+  const [model, setModel] = useState(MODELS_BY_PROVIDER[PROVIDERS[0]][0]);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(1024);
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -83,10 +118,26 @@ function PlaygroundInner() {
       const turn = replayData.turns.find(t => t.turn === importTurnNum) ?? replayData.turns[0];
       if (turn) {
         setInput(turn.prompt);
-        setModel(turn.model ?? MODELS[0]);
+        const turnModel = turn.model ?? MODELS_BY_PROVIDER[PROVIDERS[0]][0];
+        setModel(turnModel);
+        // Try to infer provider from the imported model name (best-effort)
+        const inferred = PROVIDERS.find((p) =>
+          MODELS_BY_PROVIDER[p].some((m) => m === turnModel),
+        );
+        if (inferred) setProvider(inferred);
       }
     }
   }, [replayData, importTurnNum]);
+
+  // When provider changes, snap model to that provider's first option (unless
+  // the current model is already valid for the new provider).
+  function handleProviderChange(next: string) {
+    setProvider(next);
+    const models = MODELS_BY_PROVIDER[next] ?? [];
+    if (!models.includes(model)) {
+      setModel(models[0] ?? "");
+    }
+  }
 
   // Auto-scroll chat
   useEffect(() => {
@@ -114,10 +165,15 @@ function PlaygroundInner() {
         content: m.content,
       }));
 
+      // Send model as `provider/model` prefix so Tiresias's ProviderRouter
+      // pins the provider explicitly (otherwise it falls back to prefix-based
+      // heuristic resolution which may pick the wrong adapter).
+      const qualifiedModel = model.includes("/") ? model : `${provider}/${model}`;
+
       const result = await api.post<RunResult>("/api/playground/run", {
         messages: apiMessages,
         system_prompt: systemPrompt || undefined,
-        model,
+        model: qualifiedModel,
         temperature,
         max_tokens: maxTokens,
       });
@@ -177,12 +233,20 @@ function PlaygroundInner() {
 
       {/* Controls bar */}
       <div className="flex flex-wrap items-center gap-4 px-4 py-3 mb-3 bg-of-surface-container rounded-xl border border-of-outline-variant/5">
+        {/* Provider */}
+        <div className="flex items-center gap-2">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Provider</label>
+          <select value={provider} onChange={e => handleProviderChange(e.target.value)}
+            className="h-7 px-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-xs text-of-on-surface focus:outline-none focus:border-of-primary/40">
+            {PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
         {/* Model */}
         <div className="flex items-center gap-2">
           <label className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Model</label>
           <select value={model} onChange={e => setModel(e.target.value)}
             className="h-7 px-2 bg-of-surface-container-high border border-of-outline-variant/20 rounded-lg text-xs text-of-on-surface focus:outline-none focus:border-of-primary/40">
-            {MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+            {(MODELS_BY_PROVIDER[provider] ?? []).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         {/* Temperature */}

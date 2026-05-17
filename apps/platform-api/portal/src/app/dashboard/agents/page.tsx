@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { tenantName, truncateSoulkey, timeAgo } from "@/lib/display";
+import { tenantName, timeAgo } from "@/lib/display";
+import { api, ApiError, getStoredTenantId } from "@/lib/api";
 
 /** Agent fleet management -- soulkey generation, agent CRUD, and status controls. */
 
@@ -24,17 +24,15 @@ interface Agent {
   recentActivity: { timestamp: string; action: string; resource: string; result: string }[];
 }
 
-function generateSoulkey(): string {
-  const hex = "0123456789abcdef";
-  let result = "sk_";
-  for (let i = 0; i < 64; i++) {
-    result += hex[Math.floor(Math.random() * 16)];
-  }
-  return result;
-}
-
-function soulkeyPrefix(full: string): string {
-  return full.slice(0, 7) + "...";
+/** Response shape from POST /v1/soulauth/admin/keys (and /rotate). */
+interface IssueSoulkeyResponse {
+  soulkey_id: string;
+  raw_key: string;
+  persona_id: string;
+  tenant_id: string;
+  status: string;
+  issued_at: string | null;
+  expires_at: string | null;
 }
 
 /** Shape returned by SoulAuth GET /v1/soulauth/admin/keys */
@@ -184,8 +182,80 @@ const ALL_CAPABILITIES = [
   { label: "Admin", value: "admin" },
 ];
 
+/**
+ * Read-only render of a persona's resolved policy (loaded from
+ * `_soulauth_policy_cache` via GET /v1/soulauth/admin/policy/current).
+ *
+ * Surfaces the rich YAML policy (jit / escalation / resources / model_policies)
+ * that drives both the SoulAuth PDP and the Tiresias ModelRoutingMiddleware.
+ * Edit UI is deferred to Wave H.2 — today the policy is git-managed under
+ * policies/tenants/<slug>/personas/<persona_id>.yaml.
+ */
+function PolicyPanel({
+  tenantId,
+  personaId,
+  policy,
+  loading,
+  error,
+}: {
+  tenantId: string;
+  personaId: string;
+  policy: Record<string, unknown> | null | undefined;
+  loading: boolean;
+  error: string | null;
+}) {
+  const tenantShort = tenantId ? tenantId.slice(0, 8) : "?";
+  return (
+    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">
+          Persona Policy <span className="text-foreground-subtle normal-case">(read-only)</span>
+        </h4>
+        <span className="text-[10px] text-foreground-subtle font-mono">
+          tenant {tenantShort}... / persona {personaId}
+        </span>
+      </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 text-xs text-foreground-muted">
+          <div className="w-3 h-3 border border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
+          Loading policy from cache...
+        </div>
+      )}
+
+      {error && (
+        <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && policy === null && (
+        <div className="px-3 py-3 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground-muted">
+          <p className="text-foreground">No cached policy for this persona.</p>
+          <p className="mt-1 text-foreground-subtle">
+            Persona policies are managed in git. Create one at
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-navy-800 text-teal-400 font-mono">
+              policies/tenants/&lt;slug&gt;/personas/{personaId}.yaml
+            </code>
+            then trigger
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-navy-800 text-teal-400 font-mono">
+              POST /v1/soulauth/admin/policy/sync
+            </code>
+            to load it into the cache.
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && policy && (
+        <pre className="text-[11px] leading-relaxed font-mono text-foreground bg-navy-950 rounded-lg p-3 border border-white/5 overflow-x-auto max-h-96 overflow-y-auto">
+          {JSON.stringify(policy, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 function AgentsPageInner() {
-  const idCounter = useRef(0);
   const searchParams = useSearchParams();
   const expandParam = searchParams.get("expand");
   const [search, setSearch] = useState("");
@@ -195,7 +265,7 @@ function AgentsPageInner() {
   const didAutoExpand = useRef(false);
 
   // Fetch soulkeys from SoulAuth via the API route
-  const { data: apiAgents, loading: agentsLoading, error: agentsError } = useWidgetData<Agent[]>({
+  const { data: apiAgents, loading: agentsLoading, error: agentsError, refetch: refetchAgents } = useWidgetData<Agent[]>({
     endpoint: "/api/soulauth/agents?all=true",
     transform: transformKeys,
     refreshInterval: 30_000,
@@ -208,6 +278,77 @@ function AgentsPageInner() {
     }
   }, [apiAgents]);
 
+  // Register modal state
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [newPersona, setNewPersona] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newClearance, setNewClearance] = useState("standard");
+  const [newCapabilities, setNewCapabilities] = useState<string[]>(["read"]);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  // Raw-key reveal modal (shown once after create or rotate; cannot be recovered later)
+  const [newRawKey, setNewRawKey] = useState<IssueSoulkeyResponse | null>(null);
+  const [rawKeyCopied, setRawKeyCopied] = useState(false);
+  const [rawKeyAction, setRawKeyAction] = useState<"created" | "rotated">("created");
+
+  // Action states
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
+  const [suspendingId, setSuspendingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // Per-agent persona policy cache (keyed by `${tenant_id}::${persona_id}`)
+  // Value states: undefined = not yet fetched, null = 404 / no policy, object = loaded
+  const [policyCache, setPolicyCache] = useState<Record<string, Record<string, unknown> | null>>({});
+  const [policyLoading, setPolicyLoading] = useState<Record<string, boolean>>({});
+  const [policyError, setPolicyError] = useState<Record<string, string | null>>({});
+  const policyCacheRef = useRef(policyCache);
+  const policyLoadingRef = useRef(policyLoading);
+  useEffect(() => { policyCacheRef.current = policyCache; }, [policyCache]);
+  useEffect(() => { policyLoadingRef.current = policyLoading; }, [policyLoading]);
+
+  // When ?expand=<id> is present and not yet cleared, show only that agent with a "Show all" option
+  const [expandFilter, setExpandFilter] = useState<string | null>(expandParam);
+
+  // Fetch persona policy on demand (called from row-expand click handlers)
+  const loadPolicyFor = useCallback(async (tenantId: string, personaId: string) => {
+    if (!tenantId || !personaId) return;
+    const key = `${tenantId}::${personaId}`;
+    if (policyCacheRef.current[key] !== undefined || policyLoadingRef.current[key]) return;
+    setPolicyLoading((prev) => ({ ...prev, [key]: true }));
+    setPolicyError((prev) => ({ ...prev, [key]: null }));
+    try {
+      const policy = await api.get<Record<string, unknown>>(
+        `/v1/soulauth/admin/policy/current?tenant_id=${encodeURIComponent(tenantId)}&persona_id=${encodeURIComponent(personaId)}`,
+      );
+      setPolicyCache((prev) => ({ ...prev, [key]: policy }));
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        // No cached policy for this persona yet — render empty-state hint
+        setPolicyCache((prev) => ({ ...prev, [key]: null }));
+      } else {
+        setPolicyError((prev) => ({
+          ...prev,
+          [key]: err instanceof Error ? err.message : "Failed to load policy",
+        }));
+      }
+    } finally {
+      setPolicyLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  }, []);
+
+  // Helper to toggle expansion and trigger lazy policy load
+  const handleToggleExpand = useCallback((agent: Agent) => {
+    if (expandedAgent === agent.id) {
+      setExpandedAgent(null);
+    } else {
+      setExpandedAgent(agent.id);
+      // Fire-and-forget; PolicyPanel renders loading/error/empty states.
+      loadPolicyFor(agent.tenant, agent.persona);
+    }
+  }, [expandedAgent, loadPolicyFor]);
+
   // Auto-expand and scroll to agent when ?expand=<id> query param is present
   useEffect(() => {
     if (!expandParam || didAutoExpand.current || agents.length === 0) return;
@@ -215,27 +356,15 @@ function AgentsPageInner() {
     if (match) {
       didAutoExpand.current = true;
       setExpandedAgent(match.id);
+      // Eager-load the persona policy alongside the auto-expand
+      loadPolicyFor(match.tenant, match.persona);
       // Scroll to the row after a brief delay so the DOM has rendered
       requestAnimationFrame(() => {
         const el = document.getElementById(`agent-row-${match.id}`);
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }
-  }, [expandParam, agents]);
-
-  // Register modal state
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [newPersona, setNewPersona] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newClearance, setNewClearance] = useState("standard");
-  const [newCapabilities, setNewCapabilities] = useState<string[]>(["read"]);
-
-  // Action states
-  const [rotatingId, setRotatingId] = useState<string | null>(null);
-  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
-
-  // When ?expand=<id> is present and not yet cleared, show only that agent with a "Show all" option
-  const [expandFilter, setExpandFilter] = useState<string | null>(expandParam);
+  }, [expandParam, agents, loadPolicyFor]);
 
   const filtered = (() => {
     let list = agents.filter((a) => {
@@ -270,29 +399,42 @@ function AgentsPageInner() {
     );
   };
 
-  const handleRegister = () => {
-    if (!newPersona.trim()) return;
-    const fullKey = generateSoulkey();
-    const capList = newCapabilities.map((c) => `${c}:*`);
-    const newAgent: Agent = {
-      id: `agent_${++idCounter.current}`,
-      soulkeyPrefix: soulkeyPrefix(fullKey),
-      soulkeyFull: fullKey,
-      persona: newPersona.trim(),
-      status: "Active",
-      tenant: "",
-      created: new Date().toISOString().split("T")[0],
-      lastActive: "Just now",
-      capabilities: capList,
-      clearance: newClearance,
-      description: newDescription.trim() || "New agent",
-      recentActivity: [
-        { timestamp: new Date().toISOString().replace("T", " ").slice(0, 19), action: "register", resource: "agents/self", result: "ALLOW" },
-      ],
-    };
-    setAgents((prev) => [newAgent, ...prev]);
-    setShowRegisterModal(false);
-    resetRegisterForm();
+  const handleRegister = async () => {
+    if (!newPersona.trim() || creating) return;
+    const tenantId = getStoredTenantId();
+    if (!tenantId) {
+      setCreateError("No tenant context — please re-authenticate.");
+      return;
+    }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      // Build metadata: capture clearance + capabilities so the agents list
+      // can render them via deriveCapabilities() on the next refresh.
+      const metadata: Record<string, unknown> = {
+        clearance: newClearance,
+        capabilities: newCapabilities.map((c) => `${c}:*`),
+      };
+      const resp = await api.post<IssueSoulkeyResponse>(
+        "/v1/soulauth/admin/keys",
+        {
+          tenant_id: tenantId,
+          persona_id: newPersona.trim(),
+          label: newDescription.trim() || newPersona.trim(),
+          metadata,
+        },
+      );
+      setNewRawKey(resp);
+      setRawKeyAction("created");
+      setShowRegisterModal(false);
+      resetRegisterForm();
+      // Refresh the agents list so the new soulkey appears
+      refetchAgents();
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : "Failed to register agent");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const resetRegisterForm = () => {
@@ -300,42 +442,70 @@ function AgentsPageInner() {
     setNewDescription("");
     setNewClearance("standard");
     setNewCapabilities(["read"]);
+    setCreateError(null);
   };
 
-  const handleSuspend = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a;
-        if (a.status === "Suspended") {
-          return { ...a, status: "Active" as const, lastActive: "Just now" };
-        }
-        return { ...a, status: "Suspended" as const };
-      })
-    );
+  const copyRawKey = () => {
+    if (!newRawKey) return;
+    navigator.clipboard.writeText(newRawKey.raw_key);
+    setRawKeyCopied(true);
+    setTimeout(() => setRawKeyCopied(false), 2000);
   };
 
-  const handleRotateKey = (id: string) => {
+  const handleSuspend = async (id: string) => {
+    if (suspendingId) return;
+    const agent = agents.find((a) => a.id === id);
+    if (!agent) return;
+    setSuspendingId(id);
+    setActionError(null);
+    try {
+      if (agent.status === "Suspended") {
+        // Reinstate
+        await api.post(`/v1/soulauth/admin/keys/${id}/reinstate`);
+      } else {
+        await api.post(`/v1/soulauth/admin/keys/${id}/suspend`, {
+          suspended_by: "portal-admin",
+          reason: "Suspended via Agents page",
+        });
+      }
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to suspend/reinstate agent");
+    } finally {
+      setSuspendingId(null);
+    }
+  };
+
+  const handleRotateKey = async (id: string) => {
+    if (rotatingId) return;
     setRotatingId(id);
-    setTimeout(() => {
-      const newKey = generateSoulkey();
-      setAgents((prev) =>
-        prev.map((a) =>
-          a.id === id
-            ? { ...a, soulkeyFull: newKey, soulkeyPrefix: soulkeyPrefix(newKey), lastActive: "Just now" }
-            : a
-        )
+    setActionError(null);
+    try {
+      const resp = await api.post<IssueSoulkeyResponse>(
+        `/v1/soulauth/admin/keys/${id}/rotate`,
       );
+      setNewRawKey(resp);
+      setRawKeyAction("rotated");
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to rotate key");
+    } finally {
       setRotatingId(null);
-    }, 1200);
+    }
   };
 
-  const handleRevoke = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: "Revoked" as const } : a
-      )
-    );
-    setRevokeConfirmId(null);
+  const handleRevoke = async (id: string) => {
+    setActionError(null);
+    try {
+      await api.post(`/v1/soulauth/admin/keys/${id}/revoke`, {
+        revoked_by: "portal-admin",
+        reason: "Revoked via Agents page",
+      });
+      setRevokeConfirmId(null);
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to revoke agent");
+    }
   };
 
   return (
@@ -358,6 +528,26 @@ function AgentsPageInner() {
           + Register New Agent
         </button>
       </div>
+
+      {/* Action error banner (suspend/rotate/revoke failures) */}
+      {actionError && (
+        <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span className="text-sm text-red-300">{actionError}</span>
+          </div>
+          <button
+            onClick={() => setActionError(null)}
+            className="text-red-400 hover:text-red-300 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Search / Filter bar */}
       <div className="glass-card rounded-xl p-4 flex flex-col sm:flex-row gap-3">
@@ -445,7 +635,7 @@ function AgentsPageInner() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                      onClick={() => handleToggleExpand(agent)}
                       className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all duration-200"
                     >
                       <td className="px-4 py-3">
@@ -468,7 +658,7 @@ function AgentsPageInner() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                            onClick={() => handleToggleExpand(agent)}
                             className="px-2 py-1 rounded text-xs text-teal-400 hover:bg-teal-500/10 transition-all duration-200"
                           >
                             Details
@@ -603,6 +793,15 @@ function AgentsPageInner() {
                                     </div>
                                   </div>
                                 </div>
+
+                                {/* Persona policy (read-only) */}
+                                <PolicyPanel
+                                  tenantId={agent.tenant}
+                                  personaId={agent.persona}
+                                  policy={policyCache[`${agent.tenant}::${agent.persona}`]}
+                                  loading={!!policyLoading[`${agent.tenant}::${agent.persona}`]}
+                                  error={policyError[`${agent.tenant}::${agent.persona}`] ?? null}
+                                />
                               </div>
                             </motion.div>
                           </td>
@@ -775,6 +974,13 @@ function AgentsPageInner() {
                     <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mb-1">Soulkey will be generated on creation</p>
                     <p className="font-mono text-xs text-teal-400">sk_{"<"}auto-generated{">"}...</p>
                   </div>
+
+                  {/* Inline error */}
+                  {createError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                      {createError}
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}
@@ -782,15 +988,88 @@ function AgentsPageInner() {
                   <button
                     onClick={() => { setShowRegisterModal(false); resetRegisterForm(); }}
                     className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200"
+                    disabled={creating}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleRegister}
-                    disabled={!newPersona.trim() || newCapabilities.length === 0}
+                    disabled={!newPersona.trim() || newCapabilities.length === 0 || creating}
                     className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Register Agent
+                    {creating ? "Registering..." : "Register Agent"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Raw-key reveal modal (shown once after create/rotate) */}
+      <AnimatePresence>
+        {newRawKey && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="glass-card rounded-xl w-full max-w-lg border border-gold-500/30 shadow-2xl shadow-black/50">
+                <div className="px-6 py-4 border-b border-white/10">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {rawKeyAction === "rotated" ? "Key Rotated" : "Agent Registered"}
+                  </h2>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    Persona: <span className="font-mono text-teal-400">{newRawKey.persona_id}</span>
+                  </p>
+                </div>
+                <div className="px-6 py-5 space-y-4">
+                  <div className="px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                    <p className="text-xs font-semibold text-amber-300">Save this key now</p>
+                    <p className="text-[11px] text-amber-400/80 mt-0.5">
+                      This raw SoulKey is shown exactly once. It is hashed with SHA-512 server-side and cannot be recovered.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Raw SoulKey</label>
+                    <div className="flex items-stretch gap-2">
+                      <code className="flex-1 font-mono text-xs text-teal-400 break-all bg-navy-950 rounded-lg p-3 border border-white/5">
+                        {newRawKey.raw_key}
+                      </code>
+                      <button
+                        onClick={copyRawKey}
+                        className="px-3 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-xs font-medium hover:text-foreground transition-all duration-200"
+                      >
+                        {rawKeyCopied ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="text-foreground-subtle uppercase tracking-wider text-[10px]">SoulKey ID</p>
+                      <p className="font-mono text-foreground-muted truncate" title={newRawKey.soulkey_id}>{newRawKey.soulkey_id}</p>
+                    </div>
+                    <div>
+                      <p className="text-foreground-subtle uppercase tracking-wider text-[10px]">Status</p>
+                      <p className="font-mono text-foreground-muted">{newRawKey.status}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
+                  <button
+                    onClick={() => { setNewRawKey(null); setRawKeyCopied(false); }}
+                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+                  >
+                    I&apos;ve saved it
                   </button>
                 </div>
               </div>
