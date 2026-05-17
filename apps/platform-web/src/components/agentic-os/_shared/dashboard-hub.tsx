@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { AgenticOsModule } from '@/lib/agentic-os/registry';
-import { PlanViewer } from '@/components/agentic-os/plan-viewer';
 import {
   ActivityFeed,
   ChartCard,
@@ -97,11 +96,6 @@ export interface DashboardHubProps {
    */
   consentGate?: ReactNode;
   /**
-   * Roadmap markdown to render in the collapsed accordion. Pass `null`
-   * to suppress the accordion entirely.
-   */
-  roadmapMarkdown?: string | null;
-  /**
    * Declarative dashboard region — rendered above the feature grid in a
    * default-open collapsible section. Supply any subset of widgets / chart
    * / activity; each is rendered through the real `_shared/views`
@@ -174,7 +168,6 @@ export function DashboardHub({
   module,
   flagBanner,
   consentGate,
-  roadmapMarkdown,
   dashboard,
   dashboardSlot,
 }: DashboardHubProps) {
@@ -227,8 +220,8 @@ export function DashboardHub({
       {flagBanner ? <div className="mb-5">{flagBanner}</div> : null}
 
       {/* Declarative dashboard region — above the feature grid, in a
-          default-open collapsible matching the roadmap accordion pattern.
-          Only rendered when `dashboard` or `dashboardSlot` is supplied. */}
+          default-open collapsible. Only rendered when `dashboard` or
+          `dashboardSlot` is supplied. */}
       {dashboardContent !== null && (
         <details
           open
@@ -271,36 +264,13 @@ export function DashboardHub({
             <p className="text-xs text-text-secondary">
               {module.status === 'preview'
                 ? 'Schema and plan are live. Feature pages roll out in the parallel rollout phase.'
-                : 'Feature pages for this module have not shipped yet.'}{' '}
-              Track progress in the execution roadmap below.
+                : 'Feature pages for this module have not shipped yet.'}
             </p>
           </div>
         )}
       </section>
 
       {consentGate ? <div className="mb-6">{consentGate}</div> : null}
-
-      {/* Secondary content: collapsed execution roadmap. */}
-      {roadmapMarkdown !== null && (
-        <details className="group rounded-xl border border-border-subtle bg-surface-2">
-          <summary className="cursor-pointer list-none flex items-center justify-between gap-3 p-4 text-sm text-text-primary hover:text-white transition">
-            <span className="flex items-center gap-2">
-              <ChevronDown className="w-4 h-4 text-text-secondary transition group-open:rotate-180" />
-              <span className="font-medium">View execution roadmap</span>
-              <span className="text-xs text-text-secondary">(full plan markdown)</span>
-            </span>
-          </summary>
-          <div className="px-6 pb-6 pt-2 border-t border-border-subtle">
-            {roadmapMarkdown ? (
-              <PlanViewer markdown={roadmapMarkdown} />
-            ) : (
-              <p className="text-text-secondary text-sm">
-                Execution plan not available for this module yet.
-              </p>
-            )}
-          </div>
-        </details>
-      )}
     </div>
   );
 }

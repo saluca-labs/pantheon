@@ -6,7 +6,6 @@ Server-only code that powers the [Agentic OS](../../../../../docs/architecture/a
 
 ```
 registry.ts             Single source of truth for which OS modules exist
-plan-loader.ts          Reads content/agentic-os/<slug>.md for the plan viewer
 audit/                  agos_audit reads + auth helper for the cross-OS viewer
 flags/                  agos_feature_flags read/write
 health/                 Canonical session helper — every other slug re-exports from here

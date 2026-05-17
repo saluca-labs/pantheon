@@ -18,7 +18,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentCyberUser } from '@/lib/agentic-os/cyber/session';
 import {
@@ -43,8 +42,7 @@ export default async function CyberOsHubPage() {
   const mod = findAgenticOsModule(CYBER_SLUG);
   if (!mod) throw new Error('Cyber OS module missing from registry');
 
-  const [plan, stats, trends, alerts, assets] = await Promise.all([
-    loadAgenticOsPlan(CYBER_SLUG),
+  const [stats, trends, alerts, assets] = await Promise.all([
     getCyberDashboardStats(user.userId),
     getCyberTrendsData({ ownerId: user.userId }),
     listAlerts(user.userId, 50),
@@ -60,7 +58,6 @@ export default async function CyberOsHubPage() {
     <div className="space-y-6">
       <DashboardHub
         module={mod}
-        roadmapMarkdown={plan ?? null}
         dashboard={dashboard}
       />
 

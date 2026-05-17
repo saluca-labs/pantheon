@@ -32,7 +32,6 @@ function renderResearchHub(
   return render(
     <DashboardHub
       module={researchModule}
-      roadmapMarkdown={null}
       dashboard={buildResearchDashboardSpec(args)}
     />,
   );

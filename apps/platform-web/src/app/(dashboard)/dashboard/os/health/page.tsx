@@ -23,7 +23,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { RiskFlagBadges } from '@/components/agentic-os/health/risk-flag-badges';
 import { ConsentGate } from '@/components/agentic-os/health/consent-gate';
@@ -55,8 +54,7 @@ export default async function HealthOsPage() {
     throw new Error('Health OS module missing from registry');
   }
 
-  const [plan, flags, consents] = await Promise.all([
-    loadAgenticOsPlan(HEALTH_SLUG),
+  const [flags, consents] = await Promise.all([
     listRiskFlags(user.userId, user.tenantId, { activeOnly: true }),
     listConsents(user.userId, user.tenantId),
   ]);
@@ -134,7 +132,6 @@ export default async function HealthOsPage() {
       module={mod}
       flagBanner={flags.length > 0 ? <RiskFlagBadges flags={flags} /> : null}
       consentGate={<ConsentGate initial={consentMap} />}
-      roadmapMarkdown={plan ?? null}
       dashboard={dashboard}
     />
   );
