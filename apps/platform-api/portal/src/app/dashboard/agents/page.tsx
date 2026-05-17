@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -182,6 +182,79 @@ const ALL_CAPABILITIES = [
   { label: "Admin", value: "admin" },
 ];
 
+/**
+ * Read-only render of a persona's resolved policy (loaded from
+ * `_soulauth_policy_cache` via GET /v1/soulauth/admin/policy/current).
+ *
+ * Surfaces the rich YAML policy (jit / escalation / resources / model_policies)
+ * that drives both the SoulAuth PDP and the Tiresias ModelRoutingMiddleware.
+ * Edit UI is deferred to Wave H.2 — today the policy is git-managed under
+ * policies/tenants/<slug>/personas/<persona_id>.yaml.
+ */
+function PolicyPanel({
+  tenantId,
+  personaId,
+  policy,
+  loading,
+  error,
+}: {
+  tenantId: string;
+  personaId: string;
+  policy: Record<string, unknown> | null | undefined;
+  loading: boolean;
+  error: string | null;
+}) {
+  const tenantShort = tenantId ? tenantId.slice(0, 8) : "?";
+  return (
+    <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">
+          Persona Policy <span className="text-foreground-subtle normal-case">(read-only)</span>
+        </h4>
+        <span className="text-[10px] text-foreground-subtle font-mono">
+          tenant {tenantShort}... / persona {personaId}
+        </span>
+      </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 text-xs text-foreground-muted">
+          <div className="w-3 h-3 border border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
+          Loading policy from cache...
+        </div>
+      )}
+
+      {error && (
+        <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && policy === null && (
+        <div className="px-3 py-3 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground-muted">
+          <p className="text-foreground">No cached policy for this persona.</p>
+          <p className="mt-1 text-foreground-subtle">
+            Persona policies are managed in git. Create one at
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-navy-800 text-teal-400 font-mono">
+              policies/tenants/&lt;slug&gt;/personas/{personaId}.yaml
+            </code>
+            then trigger
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-navy-800 text-teal-400 font-mono">
+              POST /v1/soulauth/admin/policy/sync
+            </code>
+            to load it into the cache.
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && policy && (
+        <pre className="text-[11px] leading-relaxed font-mono text-foreground bg-navy-950 rounded-lg p-3 border border-white/5 overflow-x-auto max-h-96 overflow-y-auto">
+          {JSON.stringify(policy, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 function AgentsPageInner() {
   const searchParams = useSearchParams();
   const expandParam = searchParams.get("expand");
@@ -205,21 +278,6 @@ function AgentsPageInner() {
     }
   }, [apiAgents]);
 
-  // Auto-expand and scroll to agent when ?expand=<id> query param is present
-  useEffect(() => {
-    if (!expandParam || didAutoExpand.current || agents.length === 0) return;
-    const match = agents.find((a) => a.id === expandParam || a.soulkeyFull === expandParam);
-    if (match) {
-      didAutoExpand.current = true;
-      setExpandedAgent(match.id);
-      // Scroll to the row after a brief delay so the DOM has rendered
-      requestAnimationFrame(() => {
-        const el = document.getElementById(`agent-row-${match.id}`);
-        el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-    }
-  }, [expandParam, agents]);
-
   // Register modal state
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [newPersona, setNewPersona] = useState("");
@@ -240,8 +298,73 @@ function AgentsPageInner() {
   const [suspendingId, setSuspendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Per-agent persona policy cache (keyed by `${tenant_id}::${persona_id}`)
+  // Value states: undefined = not yet fetched, null = 404 / no policy, object = loaded
+  const [policyCache, setPolicyCache] = useState<Record<string, Record<string, unknown> | null>>({});
+  const [policyLoading, setPolicyLoading] = useState<Record<string, boolean>>({});
+  const [policyError, setPolicyError] = useState<Record<string, string | null>>({});
+  const policyCacheRef = useRef(policyCache);
+  const policyLoadingRef = useRef(policyLoading);
+  useEffect(() => { policyCacheRef.current = policyCache; }, [policyCache]);
+  useEffect(() => { policyLoadingRef.current = policyLoading; }, [policyLoading]);
+
   // When ?expand=<id> is present and not yet cleared, show only that agent with a "Show all" option
   const [expandFilter, setExpandFilter] = useState<string | null>(expandParam);
+
+  // Fetch persona policy on demand (called from row-expand click handlers)
+  const loadPolicyFor = useCallback(async (tenantId: string, personaId: string) => {
+    if (!tenantId || !personaId) return;
+    const key = `${tenantId}::${personaId}`;
+    if (policyCacheRef.current[key] !== undefined || policyLoadingRef.current[key]) return;
+    setPolicyLoading((prev) => ({ ...prev, [key]: true }));
+    setPolicyError((prev) => ({ ...prev, [key]: null }));
+    try {
+      const policy = await api.get<Record<string, unknown>>(
+        `/v1/soulauth/admin/policy/current?tenant_id=${encodeURIComponent(tenantId)}&persona_id=${encodeURIComponent(personaId)}`,
+      );
+      setPolicyCache((prev) => ({ ...prev, [key]: policy }));
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        // No cached policy for this persona yet — render empty-state hint
+        setPolicyCache((prev) => ({ ...prev, [key]: null }));
+      } else {
+        setPolicyError((prev) => ({
+          ...prev,
+          [key]: err instanceof Error ? err.message : "Failed to load policy",
+        }));
+      }
+    } finally {
+      setPolicyLoading((prev) => ({ ...prev, [key]: false }));
+    }
+  }, []);
+
+  // Helper to toggle expansion and trigger lazy policy load
+  const handleToggleExpand = useCallback((agent: Agent) => {
+    if (expandedAgent === agent.id) {
+      setExpandedAgent(null);
+    } else {
+      setExpandedAgent(agent.id);
+      // Fire-and-forget; PolicyPanel renders loading/error/empty states.
+      loadPolicyFor(agent.tenant, agent.persona);
+    }
+  }, [expandedAgent, loadPolicyFor]);
+
+  // Auto-expand and scroll to agent when ?expand=<id> query param is present
+  useEffect(() => {
+    if (!expandParam || didAutoExpand.current || agents.length === 0) return;
+    const match = agents.find((a) => a.id === expandParam || a.soulkeyFull === expandParam);
+    if (match) {
+      didAutoExpand.current = true;
+      setExpandedAgent(match.id);
+      // Eager-load the persona policy alongside the auto-expand
+      loadPolicyFor(match.tenant, match.persona);
+      // Scroll to the row after a brief delay so the DOM has rendered
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`agent-row-${match.id}`);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [expandParam, agents, loadPolicyFor]);
 
   const filtered = (() => {
     let list = agents.filter((a) => {
@@ -512,7 +635,7 @@ function AgentsPageInner() {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                      onClick={() => handleToggleExpand(agent)}
                       className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer transition-all duration-200"
                     >
                       <td className="px-4 py-3">
@@ -535,7 +658,7 @@ function AgentsPageInner() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                            onClick={() => handleToggleExpand(agent)}
                             className="px-2 py-1 rounded text-xs text-teal-400 hover:bg-teal-500/10 transition-all duration-200"
                           >
                             Details
@@ -670,6 +793,15 @@ function AgentsPageInner() {
                                     </div>
                                   </div>
                                 </div>
+
+                                {/* Persona policy (read-only) */}
+                                <PolicyPanel
+                                  tenantId={agent.tenant}
+                                  personaId={agent.persona}
+                                  policy={policyCache[`${agent.tenant}::${agent.persona}`]}
+                                  loading={!!policyLoading[`${agent.tenant}::${agent.persona}`]}
+                                  error={policyError[`${agent.tenant}::${agent.persona}`] ?? null}
+                                />
                               </div>
                             </motion.div>
                           </td>
