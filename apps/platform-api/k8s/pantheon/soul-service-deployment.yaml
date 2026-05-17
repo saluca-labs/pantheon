@@ -33,6 +33,8 @@ spec:
   # MVP single replica — Tier 0 SQLite buffer is per-pod, so scaling to >1
   # would split a session's hot tier across pods and break cold-start
   # warm-up integrity assumptions. Revisit once Tier 0 is externalized.
+  # Flip-on steps (externalize Tier 0, then bump replicas + add PDB) are
+  # in apps/soul-service/README.md → "Deferred features" → §4.
   replicas: 1
   selector:
     matchLabels:
@@ -95,6 +97,8 @@ spec:
             # continue to serve; write_memory() will raise on Tier 2 fan-out.
             # Wire these in via pantheon-secrets when a Supabase project is
             # provisioned for Soul, or skip and live with Tier 0/1 only.
+            # Flip-on steps (provision secrets, sync, redeploy) are in
+            # apps/soul-service/README.md → "Deferred features" → §1.
             #
             # - name: SUPABASE_URL
             #   valueFrom:
@@ -109,6 +113,8 @@ spec:
             #
             # Compression layer (Anthropic) — only required if callers exercise
             # compression endpoints. Leave commented until needed.
+            # Flip-on steps in apps/soul-service/README.md → "Deferred
+            # features" → §2.
             # - name: ANTHROPIC_API_KEY
             #   valueFrom:
             #     secretKeyRef:

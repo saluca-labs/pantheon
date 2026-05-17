@@ -124,3 +124,9 @@ The pieces that DO run in the vendored service today:
 - **Compression** — calls Anthropic via `ANTHROPIC_API_KEY`. Optional.
 - **Vertex AI, Pub/Sub, KMS, Vector Search, Scheduler GOS** — not in the
   vendored code at all. These are future work tracked upstream.
+
+For the **Pantheon deployment** specifically, see
+[README.md → Deferred features](README.md#deferred-features-and-how-to-flip-them-on)
+for step-by-step instructions on enabling Tier 2 Supabase, the Anthropic
+compression layer, a Postgres cold tier, multi-replica scale-out, a public
+ingress route, and the MCP adapter.

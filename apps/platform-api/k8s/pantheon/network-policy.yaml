@@ -464,7 +464,10 @@ spec:
 # soul-service: only accepts from pantheon pods, egress to DNS + WI metadata +
 # 443 for optional Supabase cold tier + Anthropic compression. No cloud-sql-proxy
 # sidecar today (Soul's cold tier is Supabase upstream; switching to Postgres
-# requires an upstream PR — see VENDORED.md).
+# requires an upstream PR — see VENDORED.md). Adding a Postgres sidecar/egress
+# rule is step §3 in apps/soul-service/README.md → "Deferred features".
+# Widening ingress to include the GCE health-prober CIDRs is step §5 (required
+# before exposing the service via the GCE ingress).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

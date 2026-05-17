@@ -100,12 +100,168 @@ runtime errors on the relevant endpoints; everything else (TKHR,
 hashing, integrity verification, hot cache) works without external
 infrastructure.
 
-## MCP exposure
+## Deferred features (and how to flip them on)
 
-Soul ships HTTP routes (see Endpoints above), not MCP-over-stdio. To
-expose `mcp__soul__*` tool calls to Pantheon's portal a thin adapter is
-needed that translates MCP tool calls to HTTP. That adapter is not part
-of this wave — see the PR description for the deferral note.
+The MVP intentionally ships with several features turned off. Each one
+below is a deliberate deferral, not an oversight — the wiring is in
+place but disabled so production starts in the smallest defensible
+configuration. Future maintainers (or Cristian) can flip any of them on
+without re-architecting.
+
+### 1. Tier 2 cold storage (Supabase)
+
+**Today**: `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are commented out
+in `apps/platform-api/k8s/pantheon/soul-service-deployment.yaml`. Tier 0
+(per-pod SQLite) and Tier 1 (in-process dict cache) serve every read.
+Writes that fan out to Tier 2 surface as runtime errors on the affected
+endpoints (`/memory/write`, `/tkhr/lookup` against unindexed topics).
+
+**Flip on**:
+
+1. Provision a Supabase project for Soul. Capture the URL and the
+   service-role key.
+2. Add two new GCP Secret Manager entries (`pantheon-soul-supabase-url`
+   and `pantheon-soul-supabase-key`), grant `pantheon-sa` the
+   `secretmanager.secretAccessor` role on each (see RUNBOOK.md section
+   7 for the canonical `gcloud secrets create` recipe).
+3. Add the matching k8s keys to `scripts/provision-pantheon-secrets.sh`
+   so they sync into `pantheon-secrets`:
+   ```bash
+   ["soul-supabase-url"]="pantheon-soul-supabase-url"
+   ["soul-supabase-key"]="pantheon-soul-supabase-key"
+   ```
+4. Uncomment the `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` env blocks in
+   `apps/platform-api/k8s/pantheon/soul-service-deployment.yaml`
+   (lines 99-108).
+5. Re-run `scripts/provision-pantheon-secrets.sh`, then cut a new tag
+   to redeploy.
+
+### 2. Compression layer (Anthropic)
+
+**Today**: `ANTHROPIC_API_KEY` is commented out in the deployment.
+Soul's compression endpoints (Level 1 single-session summarization,
+Level 2 recursive Soul synthesis) will fail when called without it.
+TKHR, hashing, storage, and integrity verification are unaffected.
+
+**Flip on**:
+
+1. The pantheon-secrets Secret may already carry an `anthropic-api-key`
+   slot — check with `kubectl get secret pantheon-secrets -n pantheon
+   -o json | jq '.data | keys'`. If not, add it to
+   `scripts/provision-pantheon-secrets.sh` and the RUNBOOK secrets
+   table, then provision via GCP Secret Manager.
+2. Uncomment the `ANTHROPIC_API_KEY` env block in
+   `apps/platform-api/k8s/pantheon/soul-service-deployment.yaml`
+   (lines 112-116).
+3. Cut a tag to redeploy.
+
+### 3. Postgres cold tier (instead of Supabase)
+
+**Today**: the vendored `soul/storage.py` only knows Supabase as a
+Tier 2 backend. Pantheon already runs Cloud SQL Postgres for the rest
+of the namespace and it would be cheaper to share that instance than
+to stand up Supabase.
+
+**Flip on** — this one is NOT a config flip, it's an upstream change:
+
+1. Open a PR against `github.com/cristianxruvalcaba-coder/soul` adding
+   a `PostgresAdapter` alongside the existing Supabase code (mirror
+   the pattern that `@platform/memory` uses — see
+   `apps/memory-service/src/server.ts` for the precedent: dual
+   `SQLiteAdapter` / `PostgresAdapter`, backend selected by env var).
+2. Once merged + released upstream, run `scripts/vendor-soul.sh` to
+   refresh Pantheon's copy, bump the recorded SHA in `VENDORED.md`.
+3. Add `SOUL_BACKEND=postgres` and reuse `pantheon-secrets/database-url-sync`
+   in the deployment env. Add a cloud-sql-proxy sidecar (mirror
+   `memory-service-deployment.yaml` lines 113-133). Add `port: 3307`
+   to the soul-service NetworkPolicy egress (mirror
+   `memory-service-netpol`).
+4. Cut a tag to redeploy.
+
+### 4. Replica count > 1
+
+**Today**: `replicas: 1` in the Deployment. Soul's Tier 0 SQLite
+buffer is per-pod, so two replicas would split a session's hot tier
+across pods and break cold-start warm-up integrity assumptions.
+
+**Flip on** — also requires architectural work, not just config:
+
+1. Externalize Tier 0. Options: switch to Redis (add a Redis instance
+   + adapter upstream — same upstream-PR flow as #3), OR shard at the
+   Service layer (consistent-hash on `session_id`, requires a custom
+   proxy or service-mesh policy).
+2. Once Tier 0 is shared, bump `replicas` in the deployment and add a
+   PodDisruptionBudget entry to `pdb.yaml` (mirror
+   `memory-service-pdb`).
+3. Remove or comment the inline "MVP single replica" note at the top
+   of the deployment so future readers know the constraint lifted.
+
+### 5. Public ingress route (`/v1/soul/*` on `pantheon.saluca.com`)
+
+**Today**: soul-service is internal-only (ClusterIP, no path on
+`pantheon.saluca.com`). Pantheon callers reach it as
+`http://soul-service:8080` in-cluster. Same pattern as
+`memory-service`.
+
+**Flip on**:
+
+1. Decide whether external clients hit the HTTP API directly or go
+   through the MCP adapter (see #6 — they're linked).
+2. Edit `apps/platform-api/k8s/pantheon/ingress.yaml`. Path order
+   matters for GCE ingress (declaration order, not longest-prefix —
+   see the invariant comment at line 22). Add the new rule BEFORE
+   `/v1/*` (which routes to soulauth) because GCE is not
+   longest-prefix:
+   ```yaml
+   - path: /v1/soul/*
+     pathType: ImplementationSpecific
+     backend:
+       service:
+         name: soul-service
+         port:
+           number: 8080
+   ```
+3. Update the soul-service `Service` in `services.yaml` to add a
+   `beta.cloud.google.com/backend-config` annotation (mirror
+   `soulauth` / `soulgate` entries) and add a matching
+   `soul-service-backendconfig` to `backendconfigs.yaml` with
+   appropriate timeouts.
+4. Tighten the soul-service `NetworkPolicy` ingress: add the GCE
+   health-prober CIDRs (`130.211.0.0/22`, `35.191.0.0/16`) to the
+   `from` block so the LB can probe the pod (mirror `soulauth-netpol`
+   lines 31-38).
+5. SoulAuth (the gateway) must mint and validate the
+   `X-Soul-Service-Key` on behalf of external clients, OR external
+   clients must present their own key. Decide before exposing — a
+   shared key on the public internet defeats the auth model.
+6. Cut a tag to redeploy.
+
+### 6. MCP adapter (`mcp__soul__*` tool calls)
+
+**Today**: Soul ships HTTP routes (see Endpoints above), not
+MCP-over-stdio. The `mcp__soul__*` tool surface (soul_session_init,
+soul_memory_search/write, mesh_*, nexus_*, soul_transcript_capture)
+has no backend in Pantheon yet.
+
+**Flip on** — the design decision still needs Cristian's call. Three
+options:
+
+- **Portal-side adapter**: portal exposes the MCP server-over-stdio
+  surface and proxies each tool call to soul-service via HTTP.
+  Cheapest to ship; portal becomes the MCP boundary.
+- **Separate `soul-mcp` microservice**: a small Node/Python service
+  speaks MCP on one side and HTTP to soul-service on the other.
+  Cleaner separation; one more pod.
+- **Sidecar in the soul-service pod**: an MCP adapter container
+  shares the pod and loops back to localhost:8080. Co-located,
+  no cross-pod hop; binds MCP-over-stdio to a single pod which is
+  fine while `replicas: 1` (see #4) is the constraint anyway.
+
+Whichever path is chosen, the adapter implements the
+`mcp__soul__*` tool schema and translates each tool call to a
+`POST /memory/write` / `POST /tkhr/lookup` / etc., carrying the
+`X-Soul-Service-Key` it gets from its env. Public exposure
+follows #5.
 
 ## Refreshing the vendor
 
