@@ -19,8 +19,6 @@
  *                         quick-create interactivity and the pinned /
  *                         recent-notes sections can't be expressed by the
  *                         widgets+chart+activity declarative slots.
- *   - `roadmapMarkdown` — the Creator execution plan in the collapsed
- *                         accordion.
  *
  * Same data, same routes, same counts, same status mixes, same empty
  * states, same quick-create behavior — presentation layer only.
@@ -30,7 +28,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentCreatorUser } from '@/lib/agentic-os/creator/session';
 import { listNotes } from '@/lib/agentic-os/creator/notes-repo';
@@ -53,9 +50,8 @@ export default async function CreatorHubPage() {
     throw new Error('Creator OS module missing from registry');
   }
 
-  const [plan, pinnedNotes, recentNotes, posts, books, subscribers] =
+  const [pinnedNotes, recentNotes, posts, books, subscribers] =
     await Promise.all([
-      loadAgenticOsPlan(CREATOR_SLUG),
       listNotes(user.userId, { isPinned: true, limit: 12 }),
       listNotes(user.userId, { limit: 20 }),
       listPosts(user.userId, { limit: 200 }),
@@ -66,7 +62,6 @@ export default async function CreatorHubPage() {
   return (
     <DashboardHub
       module={mod}
-      roadmapMarkdown={plan ?? null}
       dashboardSlot={
         <CreatorDashboard
           pinnedNotes={pinnedNotes}

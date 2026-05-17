@@ -117,21 +117,9 @@ describe('DashboardHub — backward compatibility', () => {
         `${businessModule.features.length} features available`,
       ),
     ).toBeInTheDocument();
-    // The only <details> is the pre-existing roadmap accordion (rendered
-    // because `roadmapMarkdown` is `undefined`, which is `!== null` — the
-    // unchanged pre-refactor behavior). No dashboard <details> is added.
-    expect(container.querySelectorAll('details')).toHaveLength(1);
-    expect(screen.getByText('View execution roadmap')).toBeInTheDocument();
-    expect(screen.queryByTestId('dashboard-hub-dashboard-details')).toBeNull();
-  });
-
-  it('still renders the roadmap accordion (and only that) when roadmapMarkdown is passed without a dashboard', () => {
-    const { container } = render(
-      <DashboardHub module={healthModule} roadmapMarkdown="# Roadmap" />,
-    );
-    // Exactly one <details> — the roadmap — and no dashboard region.
-    expect(container.querySelectorAll('details')).toHaveLength(1);
-    expect(screen.getByText('View execution roadmap')).toBeInTheDocument();
+    // No <details> elements when neither dashboard nor dashboardSlot is given —
+    // the execution-roadmap accordion was removed in W-G.2.
+    expect(container.querySelectorAll('details')).toHaveLength(0);
     expect(screen.queryByTestId('dashboard-hub-dashboard-details')).toBeNull();
   });
 
@@ -179,9 +167,9 @@ describe('DashboardHub — declarative dashboard region', () => {
       region.compareDocumentPosition(featuresHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // Two <details>: the new dashboard region + the pre-existing roadmap
-    // accordion (`roadmapMarkdown` is `undefined`, i.e. `!== null`).
-    expect(container.querySelectorAll('details')).toHaveLength(2);
+    // One <details>: just the dashboard region — the roadmap accordion was
+    // removed in W-G.2.
+    expect(container.querySelectorAll('details')).toHaveLength(1);
   });
 
   it('renders a DashboardWidget grid when dashboard.widgets is supplied', () => {
