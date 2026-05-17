@@ -3313,7 +3313,7 @@ export async function matchIocAgainstAlerts(args: {
        FROM agos_cyber_alerts a
        JOIN agos_cyber_iocs i ON i.owner_id = a.owner_id
         AND (
-              (i.kind IN ('ipv4','ipv6') AND a.source_ip = i.value)
+              (i.kind IN ('ipv4','ipv6') AND host(a.source_ip) = i.value)
            OR (i.kind = 'domain' AND (a.source ILIKE '%' || i.value || '%'
                                    OR a.raw_jsonb::text ILIKE '%' || i.value || '%'))
            OR (i.kind = 'url'    AND a.raw_jsonb::text ILIKE '%' || i.value || '%')
