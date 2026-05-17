@@ -10,7 +10,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { listExpenses } from '@/lib/agentic-os/business/expenses-repo';
 import { listProjects } from '@/lib/agentic-os/business/projects-repo';
-import { EXPENSE_CATEGORIES } from '@/lib/agentic-os/business/expenses';
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from '@/lib/agentic-os/business/expenses';
 import ExpenseForm from '@/components/agentic-os/business/expense-form';
 import ExpensesList from '@/components/agentic-os/business/expenses-list';
 
@@ -42,7 +42,7 @@ export default async function ExpensesPage({ searchParams }: Props) {
 
   const [expenses, projects] = await Promise.all([
     listExpenses(user.userId, {
-      category: activeCategory !== 'all' ? (activeCategory as any) : undefined,
+      category: activeCategory !== 'all' ? (activeCategory as ExpenseCategory) : undefined,
       projectId: sp.project_id ?? undefined,
       reimbursable: reimbursableOnly || undefined,
       q: query ?? undefined,

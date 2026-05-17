@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ArrowLeft, GitBranch } from 'lucide-react';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import { getTemplate, listTemplates } from '@/lib/agentic-os/business/doc-templates-repo';
+import type { DocTemplate } from '@/lib/agentic-os/business/doc-templates';
 import TemplateForm from '@/components/agentic-os/business/template-form';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +41,7 @@ export default async function TemplateDetailPage({ params }: Props) {
   // Find version history: other templates with this one as parent or siblings
   const [children, siblings] = await Promise.all([
     listTemplates(user.userId, { limit: 100 }),
-    Promise.resolve([] as any[]),
+    Promise.resolve([] as DocTemplate[]),
   ]);
 
   const versionHistory = children.filter(

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { validateSession } from '@platform/auth';
 import { getSessionToken } from '@platform/auth/cookies';
+import type { ReadableCookieStore } from '@platform/auth/cookies';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
@@ -27,7 +28,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const token = getSessionToken(cookieStore as any);
+  const token = getSessionToken(cookieStore as unknown as ReadableCookieStore);
 
   if (!token) {
     redirect('/login');
