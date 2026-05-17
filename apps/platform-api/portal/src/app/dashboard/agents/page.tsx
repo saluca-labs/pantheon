@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { tenantName, truncateSoulkey, timeAgo } from "@/lib/display";
+import { tenantName, timeAgo } from "@/lib/display";
+import { api, ApiError, getStoredTenantId } from "@/lib/api";
 
 /** Agent fleet management -- soulkey generation, agent CRUD, and status controls. */
 
@@ -24,17 +24,15 @@ interface Agent {
   recentActivity: { timestamp: string; action: string; resource: string; result: string }[];
 }
 
-function generateSoulkey(): string {
-  const hex = "0123456789abcdef";
-  let result = "sk_";
-  for (let i = 0; i < 64; i++) {
-    result += hex[Math.floor(Math.random() * 16)];
-  }
-  return result;
-}
-
-function soulkeyPrefix(full: string): string {
-  return full.slice(0, 7) + "...";
+/** Response shape from POST /v1/soulauth/admin/keys (and /rotate). */
+interface IssueSoulkeyResponse {
+  soulkey_id: string;
+  raw_key: string;
+  persona_id: string;
+  tenant_id: string;
+  status: string;
+  issued_at: string | null;
+  expires_at: string | null;
 }
 
 /** Shape returned by SoulAuth GET /v1/soulauth/admin/keys */
@@ -185,7 +183,6 @@ const ALL_CAPABILITIES = [
 ];
 
 function AgentsPageInner() {
-  const idCounter = useRef(0);
   const searchParams = useSearchParams();
   const expandParam = searchParams.get("expand");
   const [search, setSearch] = useState("");
@@ -195,7 +192,7 @@ function AgentsPageInner() {
   const didAutoExpand = useRef(false);
 
   // Fetch soulkeys from SoulAuth via the API route
-  const { data: apiAgents, loading: agentsLoading, error: agentsError } = useWidgetData<Agent[]>({
+  const { data: apiAgents, loading: agentsLoading, error: agentsError, refetch: refetchAgents } = useWidgetData<Agent[]>({
     endpoint: "/api/soulauth/agents?all=true",
     transform: transformKeys,
     refreshInterval: 30_000,
@@ -229,10 +226,19 @@ function AgentsPageInner() {
   const [newDescription, setNewDescription] = useState("");
   const [newClearance, setNewClearance] = useState("standard");
   const [newCapabilities, setNewCapabilities] = useState<string[]>(["read"]);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  // Raw-key reveal modal (shown once after create or rotate; cannot be recovered later)
+  const [newRawKey, setNewRawKey] = useState<IssueSoulkeyResponse | null>(null);
+  const [rawKeyCopied, setRawKeyCopied] = useState(false);
+  const [rawKeyAction, setRawKeyAction] = useState<"created" | "rotated">("created");
 
   // Action states
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
+  const [suspendingId, setSuspendingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // When ?expand=<id> is present and not yet cleared, show only that agent with a "Show all" option
   const [expandFilter, setExpandFilter] = useState<string | null>(expandParam);
@@ -270,29 +276,42 @@ function AgentsPageInner() {
     );
   };
 
-  const handleRegister = () => {
-    if (!newPersona.trim()) return;
-    const fullKey = generateSoulkey();
-    const capList = newCapabilities.map((c) => `${c}:*`);
-    const newAgent: Agent = {
-      id: `agent_${++idCounter.current}`,
-      soulkeyPrefix: soulkeyPrefix(fullKey),
-      soulkeyFull: fullKey,
-      persona: newPersona.trim(),
-      status: "Active",
-      tenant: "",
-      created: new Date().toISOString().split("T")[0],
-      lastActive: "Just now",
-      capabilities: capList,
-      clearance: newClearance,
-      description: newDescription.trim() || "New agent",
-      recentActivity: [
-        { timestamp: new Date().toISOString().replace("T", " ").slice(0, 19), action: "register", resource: "agents/self", result: "ALLOW" },
-      ],
-    };
-    setAgents((prev) => [newAgent, ...prev]);
-    setShowRegisterModal(false);
-    resetRegisterForm();
+  const handleRegister = async () => {
+    if (!newPersona.trim() || creating) return;
+    const tenantId = getStoredTenantId();
+    if (!tenantId) {
+      setCreateError("No tenant context — please re-authenticate.");
+      return;
+    }
+    setCreating(true);
+    setCreateError(null);
+    try {
+      // Build metadata: capture clearance + capabilities so the agents list
+      // can render them via deriveCapabilities() on the next refresh.
+      const metadata: Record<string, unknown> = {
+        clearance: newClearance,
+        capabilities: newCapabilities.map((c) => `${c}:*`),
+      };
+      const resp = await api.post<IssueSoulkeyResponse>(
+        "/v1/soulauth/admin/keys",
+        {
+          tenant_id: tenantId,
+          persona_id: newPersona.trim(),
+          label: newDescription.trim() || newPersona.trim(),
+          metadata,
+        },
+      );
+      setNewRawKey(resp);
+      setRawKeyAction("created");
+      setShowRegisterModal(false);
+      resetRegisterForm();
+      // Refresh the agents list so the new soulkey appears
+      refetchAgents();
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : "Failed to register agent");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const resetRegisterForm = () => {
@@ -300,42 +319,70 @@ function AgentsPageInner() {
     setNewDescription("");
     setNewClearance("standard");
     setNewCapabilities(["read"]);
+    setCreateError(null);
   };
 
-  const handleSuspend = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) => {
-        if (a.id !== id) return a;
-        if (a.status === "Suspended") {
-          return { ...a, status: "Active" as const, lastActive: "Just now" };
-        }
-        return { ...a, status: "Suspended" as const };
-      })
-    );
+  const copyRawKey = () => {
+    if (!newRawKey) return;
+    navigator.clipboard.writeText(newRawKey.raw_key);
+    setRawKeyCopied(true);
+    setTimeout(() => setRawKeyCopied(false), 2000);
   };
 
-  const handleRotateKey = (id: string) => {
+  const handleSuspend = async (id: string) => {
+    if (suspendingId) return;
+    const agent = agents.find((a) => a.id === id);
+    if (!agent) return;
+    setSuspendingId(id);
+    setActionError(null);
+    try {
+      if (agent.status === "Suspended") {
+        // Reinstate
+        await api.post(`/v1/soulauth/admin/keys/${id}/reinstate`);
+      } else {
+        await api.post(`/v1/soulauth/admin/keys/${id}/suspend`, {
+          suspended_by: "portal-admin",
+          reason: "Suspended via Agents page",
+        });
+      }
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to suspend/reinstate agent");
+    } finally {
+      setSuspendingId(null);
+    }
+  };
+
+  const handleRotateKey = async (id: string) => {
+    if (rotatingId) return;
     setRotatingId(id);
-    setTimeout(() => {
-      const newKey = generateSoulkey();
-      setAgents((prev) =>
-        prev.map((a) =>
-          a.id === id
-            ? { ...a, soulkeyFull: newKey, soulkeyPrefix: soulkeyPrefix(newKey), lastActive: "Just now" }
-            : a
-        )
+    setActionError(null);
+    try {
+      const resp = await api.post<IssueSoulkeyResponse>(
+        `/v1/soulauth/admin/keys/${id}/rotate`,
       );
+      setNewRawKey(resp);
+      setRawKeyAction("rotated");
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to rotate key");
+    } finally {
       setRotatingId(null);
-    }, 1200);
+    }
   };
 
-  const handleRevoke = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, status: "Revoked" as const } : a
-      )
-    );
-    setRevokeConfirmId(null);
+  const handleRevoke = async (id: string) => {
+    setActionError(null);
+    try {
+      await api.post(`/v1/soulauth/admin/keys/${id}/revoke`, {
+        revoked_by: "portal-admin",
+        reason: "Revoked via Agents page",
+      });
+      setRevokeConfirmId(null);
+      refetchAgents();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to revoke agent");
+    }
   };
 
   return (
@@ -358,6 +405,26 @@ function AgentsPageInner() {
           + Register New Agent
         </button>
       </div>
+
+      {/* Action error banner (suspend/rotate/revoke failures) */}
+      {actionError && (
+        <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span className="text-sm text-red-300">{actionError}</span>
+          </div>
+          <button
+            onClick={() => setActionError(null)}
+            className="text-red-400 hover:text-red-300 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Search / Filter bar */}
       <div className="glass-card rounded-xl p-4 flex flex-col sm:flex-row gap-3">
@@ -775,6 +842,13 @@ function AgentsPageInner() {
                     <p className="text-[10px] text-foreground-subtle uppercase tracking-wider mb-1">Soulkey will be generated on creation</p>
                     <p className="font-mono text-xs text-teal-400">sk_{"<"}auto-generated{">"}...</p>
                   </div>
+
+                  {/* Inline error */}
+                  {createError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                      {createError}
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}
@@ -782,15 +856,88 @@ function AgentsPageInner() {
                   <button
                     onClick={() => { setShowRegisterModal(false); resetRegisterForm(); }}
                     className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200"
+                    disabled={creating}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleRegister}
-                    disabled={!newPersona.trim() || newCapabilities.length === 0}
+                    disabled={!newPersona.trim() || newCapabilities.length === 0 || creating}
                     className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Register Agent
+                    {creating ? "Registering..." : "Register Agent"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Raw-key reveal modal (shown once after create/rotate) */}
+      <AnimatePresence>
+        {newRawKey && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="glass-card rounded-xl w-full max-w-lg border border-gold-500/30 shadow-2xl shadow-black/50">
+                <div className="px-6 py-4 border-b border-white/10">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {rawKeyAction === "rotated" ? "Key Rotated" : "Agent Registered"}
+                  </h2>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    Persona: <span className="font-mono text-teal-400">{newRawKey.persona_id}</span>
+                  </p>
+                </div>
+                <div className="px-6 py-5 space-y-4">
+                  <div className="px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                    <p className="text-xs font-semibold text-amber-300">Save this key now</p>
+                    <p className="text-[11px] text-amber-400/80 mt-0.5">
+                      This raw SoulKey is shown exactly once. It is hashed with SHA-512 server-side and cannot be recovered.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">Raw SoulKey</label>
+                    <div className="flex items-stretch gap-2">
+                      <code className="flex-1 font-mono text-xs text-teal-400 break-all bg-navy-950 rounded-lg p-3 border border-white/5">
+                        {newRawKey.raw_key}
+                      </code>
+                      <button
+                        onClick={copyRawKey}
+                        className="px-3 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-xs font-medium hover:text-foreground transition-all duration-200"
+                      >
+                        {rawKeyCopied ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p className="text-foreground-subtle uppercase tracking-wider text-[10px]">SoulKey ID</p>
+                      <p className="font-mono text-foreground-muted truncate" title={newRawKey.soulkey_id}>{newRawKey.soulkey_id}</p>
+                    </div>
+                    <div>
+                      <p className="text-foreground-subtle uppercase tracking-wider text-[10px]">Status</p>
+                      <p className="font-mono text-foreground-muted">{newRawKey.status}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10">
+                  <button
+                    onClick={() => { setNewRawKey(null); setRawKeyCopied(false); }}
+                    className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+                  >
+                    I&apos;ve saved it
                   </button>
                 </div>
               </div>
