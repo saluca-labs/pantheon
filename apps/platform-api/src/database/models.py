@@ -844,3 +844,73 @@ class PantheonConfig(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_now, onupdate=_now, nullable=False
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave H.2.e — Per-tenant BYOK provider keys
+#
+# Each tenant may register their own LLM provider API credentials via a
+# `platform_secrets` URI reference (env://VAR_NAME for now; vault:// and
+# friends are reserved schemes wired up by the canonical resolver later).
+# Tiresias's `build_provider()` looks up these per-tenant rows BEFORE
+# falling back to the process-env default — see W-H.2.e provider keys
+# store + resolver in src/agents/provider_keys_store.py.
+# ---------------------------------------------------------------------------
+
+
+class TenantProviderKey(Base):
+    """_tenant_provider_keys - per-tenant BYOK provider credentials.
+
+    Each tenant can override the platform-default provider API keys by
+    registering their own via a ``platform_secrets`` URI ref. Tiresias's
+    :func:`build_provider` resolves per-tenant first, falls back to
+    env-default if no row (or row is disabled, or resolution fails).
+
+    The provider is the natural key per tenant — one row per
+    (tenant, provider). Upserts replace the row.
+
+    Per locked decision #5, the secret itself is NEVER stored — only a
+    URI reference is kept, resolved at use time by
+    :mod:`src.agents.secret_ref` (env:// only for this wave; broader
+    scheme support lives in the future ``platform_secrets`` module).
+    """
+    __tablename__ = "_tenant_provider_keys"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid_default)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("_soul_tenants.id", ondelete="CASCADE"), nullable=False,
+        comment="Always tenant-scoped — no global rows (these are credentials)"
+    )
+    provider: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="anthropic | openai | gemini | groq | ollama"
+    )
+    secret_ref: Mapped[str] = mapped_column(Text, nullable=False,
+        comment="platform_secrets URI, e.g. env://MY_ANTHROPIC_KEY"
+    )
+    base_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True,
+        comment="Optional provider base URL override (Azure endpoint, Ollama host, etc.)"
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active",
+        comment="active | disabled"
+    )
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata_", JSON, default=dict, nullable=True)
+    created_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, nullable=True
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), default=_now, onupdate=_now, nullable=True
+    )
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "provider",
+            name="uq_tenant_provider_keys_tenant_provider",
+        ),
+        CheckConstraint(
+            "status IN ('active', 'disabled')",
+            name="ck_tenant_provider_keys_status",
+        ),
+        Index("idx_tenant_provider_keys_tenant", "tenant_id"),
+    )
