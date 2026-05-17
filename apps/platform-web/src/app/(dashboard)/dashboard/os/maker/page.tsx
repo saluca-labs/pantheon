@@ -22,7 +22,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentMakerUser } from '@/lib/agentic-os/maker/session';
 import {
@@ -46,8 +45,7 @@ export default async function MakerOsPage() {
     throw new Error('Maker OS module missing from registry');
   }
 
-  const [plan, projects, tools, recentLogEntries, blockers] = await Promise.all([
-    loadAgenticOsPlan(MAKER_SLUG),
+  const [projects, tools, recentLogEntries, blockers] = await Promise.all([
     listProjects(user.userId),
     listTools({ userId: user.userId }),
     listRecentLogEntries(user.userId, 25),
@@ -61,11 +59,5 @@ export default async function MakerOsPage() {
     blockers,
   });
 
-  return (
-    <DashboardHub
-      module={mod}
-      roadmapMarkdown={plan ?? null}
-      dashboard={dashboard}
-    />
-  );
+  return <DashboardHub module={mod} dashboard={dashboard} />;
 }

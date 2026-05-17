@@ -154,7 +154,7 @@ describe('Secure-Dev hub — DashboardHub convergence (behavior-preserving)', ()
   const mod = findAgenticOsModule('secure-dev')!;
 
   it('renders the same metadata header the inline [slug] route produced', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(
       screen.getByRole('heading', { name: 'Secure Dev OS', level: 1 }),
     ).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('Secure-Dev hub — DashboardHub convergence (behavior-preserving)', ()
   });
 
   it('renders the registry feature grid — the STRIDE threat-model card', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(
       screen.getByRole('heading', { name: 'Features', level: 2 }),
     ).toBeInTheDocument();
@@ -183,7 +183,7 @@ describe('Secure-Dev hub — DashboardHub convergence (behavior-preserving)', ()
       models: [mkModel({ systemName: 'Patient portal API' })],
     });
     render(
-      <DashboardHub module={mod} roadmapMarkdown={null} dashboard={dashboard} />,
+      <DashboardHub module={mod} dashboard={dashboard} />,
     );
     expect(screen.getByTestId('dashboard-hub-region')).toBeInTheDocument();
     expect(
@@ -198,7 +198,7 @@ describe('Secure-Dev hub — DashboardHub convergence (behavior-preserving)', ()
   });
 
   it('renders no dashboard region when the dashboard prop is omitted', () => {
-    render(<DashboardHub module={mod} roadmapMarkdown={null} />);
+    render(<DashboardHub module={mod} />);
     expect(screen.queryByTestId('dashboard-hub-region')).not.toBeInTheDocument();
   });
 
@@ -210,7 +210,7 @@ describe('Secure-Dev hub — DashboardHub convergence (behavior-preserving)', ()
       ],
     });
     render(
-      <DashboardHub module={mod} roadmapMarkdown={null} dashboard={dashboard} />,
+      <DashboardHub module={mod} dashboard={dashboard} />,
     );
     expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
     expect(screen.getByTestId('activity-event-m-1')).toBeInTheDocument();

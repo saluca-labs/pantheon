@@ -283,7 +283,6 @@ describe('Creator hub — DashboardHub convergence', () => {
     render(
       <DashboardHub
         module={creatorModule}
-        roadmapMarkdown={null}
         dashboardSlot={
           <CreatorDashboard
             pinnedNotes={[]}

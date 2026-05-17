@@ -27,7 +27,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentFilmmakerUser } from '@/lib/agentic-os/filmmaker/session';
 import { listProjects } from '@/lib/agentic-os/filmmaker/repo';
@@ -46,18 +45,9 @@ export default async function FilmmakerOsHubPage() {
     throw new Error('Filmmaker OS module missing from registry');
   }
 
-  const [plan, projects] = await Promise.all([
-    loadAgenticOsPlan(FILMMAKER_SLUG),
-    listProjects(user.userId),
-  ]);
+  const projects = await listProjects(user.userId);
 
   const dashboard = buildFilmmakerDashboardSpec({ projects });
 
-  return (
-    <DashboardHub
-      module={mod}
-      roadmapMarkdown={plan ?? null}
-      dashboard={dashboard}
-    />
-  );
+  return <DashboardHub module={mod} dashboard={dashboard} />;
 }

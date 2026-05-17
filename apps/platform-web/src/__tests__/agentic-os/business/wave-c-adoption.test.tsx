@@ -41,7 +41,6 @@ function renderBusinessHub(
   return render(
     <DashboardHub
       module={businessModule}
-      roadmapMarkdown={null}
       dashboard={buildBusinessDashboardSpec(args)}
     />,
   );

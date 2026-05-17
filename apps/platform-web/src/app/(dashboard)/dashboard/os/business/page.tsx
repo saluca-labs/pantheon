@@ -14,8 +14,6 @@
  *   - `dashboard`       — the Deals / People / Organizations stat trio plus
  *                         the recent-interaction activity feed, built by the
  *                         pure `buildBusinessDashboardSpec` adapter.
- *   - `roadmapMarkdown` — the Business execution plan in the collapsed
- *                         accordion.
  *
  * Same data, same routes, same counts — presentation layer only. The
  * Settings deep-link the bespoke header carried is preserved as the
@@ -26,7 +24,6 @@
 
 import { redirect } from 'next/navigation';
 import { findAgenticOsModule } from '@/lib/agentic-os/registry';
-import { loadAgenticOsPlan } from '@/lib/agentic-os/plan-loader';
 import { DashboardHub } from '@/components/agentic-os/_shared/dashboard-hub';
 import { getCurrentBusinessUser } from '@/lib/agentic-os/business/session';
 import {
@@ -55,7 +52,6 @@ export default async function BusinessHubPage() {
   }
 
   const [
-    plan,
     peopleCount,
     orgsCount,
     recentInteractions,
@@ -63,7 +59,6 @@ export default async function BusinessHubPage() {
     organizations,
     openDeals,
   ] = await Promise.all([
-    loadAgenticOsPlan(BUSINESS_SLUG),
     countActivePeople(user.userId),
     countActiveOrganizations(user.userId),
     listInteractions(user.userId, { limit: 10 }),
@@ -89,7 +84,5 @@ export default async function BusinessHubPage() {
     pipelineWeightedCents: pipeline.totalWeightedValueCents,
   });
 
-  return (
-    <DashboardHub module={mod} roadmapMarkdown={plan ?? null} dashboard={dashboard} />
-  );
+  return <DashboardHub module={mod} dashboard={dashboard} />;
 }
