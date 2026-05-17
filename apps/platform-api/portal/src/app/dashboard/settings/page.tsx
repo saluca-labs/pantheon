@@ -30,7 +30,7 @@ import { TeamSettingsTab } from "@/components/team/TeamSettingsTab";
 import { useAuth } from "@/lib/auth";
 import { useUserPreferences, ALL_SIDEBAR_SECTIONS } from "@/lib/useUserPreferences";
 
-type Tab = "general" | "api-keys" | "provider-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
+type Tab = "general" | "api-keys" | "provider-keys" | "agents-store" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
 
 // Tiers with time-based license (show expiration, no Stripe)
 const LICENSE_TIERS = new Set(["enterprise", "mssp"]);
@@ -116,6 +116,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "team", label: "Team" },
   { id: "api-keys", label: "API Keys" },
   { id: "provider-keys", label: "Provider Keys" },
+  { id: "agents-store", label: "Agents Store" },
   { id: "siem", label: "SIEM Integration" },
   { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
@@ -534,6 +535,17 @@ function SettingsPageInner() {
   const [providerKeyLoading, setProviderKeyLoading] = useState(false);
   const [providerKeyError, setProviderKeyError] = useState<string | null>(null);
 
+  // --- Agents Store state (W-H.2.b — LocalPg ↔ Supabase adapter picker) ---
+  const [agentsStoreKind, setAgentsStoreKind] = useState<"local" | "supabase">("local");
+  const [agentsStoreSavedKind, setAgentsStoreSavedKind] = useState<"local" | "supabase">("local");
+  const [agentsStoreSupabaseUrl, setAgentsStoreSupabaseUrl] = useState("");
+  const [agentsStoreSupabaseKeyRef, setAgentsStoreSupabaseKeyRef] = useState("env://SUPABASE_SERVICE_ROLE_KEY");
+  const [agentsStoreLoading, setAgentsStoreLoading] = useState(false);
+  const [agentsStoreSaving, setAgentsStoreSaving] = useState(false);
+  const [agentsStoreTesting, setAgentsStoreTesting] = useState(false);
+  const [agentsStoreError, setAgentsStoreError] = useState<string | null>(null);
+  const [agentsStoreTestResult, setAgentsStoreTestResult] = useState<{ ok: boolean; latency_ms?: number; error?: string } | null>(null);
+
   // --- Billing state (BILL-01..04) ---
   const [tier, setTier] = useState<string>("starter");
   const [graceStatus, setGraceStatus] = useState<GraceStatus | null>(null);
@@ -605,6 +617,92 @@ function SettingsPageInner() {
   useEffect(() => {
     if (activeTab === "provider-keys") fetchProviderKeyStatus();
   }, [activeTab, fetchProviderKeyStatus]);
+
+  // --- Agents Store tab: fetch / build proposed payload / save / test ---
+  const fetchAgentsStoreConfig = useCallback(async () => {
+    setAgentsStoreLoading(true);
+    setAgentsStoreError(null);
+    setAgentsStoreTestResult(null);
+    try {
+      const res = await fetch("/api/agents-store/config");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as {
+        kind: "local" | "supabase";
+        config?: { url?: string; service_role_key_ref?: { raw?: string } };
+      };
+      setAgentsStoreKind(data.kind);
+      setAgentsStoreSavedKind(data.kind);
+      if (data.kind === "supabase") {
+        setAgentsStoreSupabaseUrl(data.config?.url || "");
+        setAgentsStoreSupabaseKeyRef(data.config?.service_role_key_ref?.raw || "env://SUPABASE_SERVICE_ROLE_KEY");
+      }
+    } catch (err) {
+      setAgentsStoreError(err instanceof Error ? err.message : "Failed to load agents-store config");
+    } finally {
+      setAgentsStoreLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "agents-store") fetchAgentsStoreConfig();
+  }, [activeTab, fetchAgentsStoreConfig]);
+
+  const buildAgentsStorePayload = useCallback(() => {
+    if (agentsStoreKind === "local") return { kind: "local", config: {} };
+    return {
+      kind: "supabase",
+      config: {
+        url: agentsStoreSupabaseUrl.trim(),
+        service_role_key_ref: agentsStoreSupabaseKeyRef.trim(),
+      },
+    };
+  }, [agentsStoreKind, agentsStoreSupabaseUrl, agentsStoreSupabaseKeyRef]);
+
+  const handleAgentsStoreTest = async () => {
+    setAgentsStoreTesting(true);
+    setAgentsStoreTestResult(null);
+    setAgentsStoreError(null);
+    try {
+      const res = await fetch("/api/agents-store/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildAgentsStorePayload()),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAgentsStoreTestResult({ ok: false, error: data?.detail || data?.error || `HTTP ${res.status}` });
+      } else {
+        setAgentsStoreTestResult(data?.health || { ok: false, error: "missing health payload" });
+      }
+    } catch (err) {
+      setAgentsStoreTestResult({ ok: false, error: err instanceof Error ? err.message : "network error" });
+    } finally {
+      setAgentsStoreTesting(false);
+    }
+  };
+
+  const handleAgentsStoreSave = async () => {
+    setAgentsStoreSaving(true);
+    setAgentsStoreError(null);
+    setAgentsStoreTestResult(null);
+    try {
+      const res = await fetch("/api/agents-store/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildAgentsStorePayload()),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAgentsStoreError(data?.detail || data?.error || `HTTP ${res.status}`);
+      } else {
+        setAgentsStoreSavedKind(data?.kind || agentsStoreKind);
+      }
+    } catch (err) {
+      setAgentsStoreError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setAgentsStoreSaving(false);
+    }
+  };
 
   // Fetch billing/grace status when billing tab is active
   useEffect(() => {
@@ -1400,6 +1498,168 @@ function SettingsPageInner() {
               </ol>
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* Agents Store Tab — W-H.2.b — LocalPg ↔ Supabase adapter picker */}
+      {activeTab === "agents-store" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <div className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+            <div className="text-sm">
+              <p className="font-semibold text-blue-300">Agents storage backend</p>
+              <p className="text-blue-400/80 mt-0.5 text-xs">
+                Choose where <code className="px-1 py-0.5 rounded bg-of-surface-container-high font-mono">_agos_agents</code> and{" "}
+                <code className="px-1 py-0.5 rounded bg-of-surface-container-high font-mono">_agos_prompts</code> live.
+                Defaults to pantheon&apos;s in-container Postgres. Switch to Supabase if you want a managed-Postgres backend
+                that&apos;s reachable via PostgREST.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Storage backend</h2>
+                <p className="text-sm text-foreground-muted">Active store:{" "}
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border ml-1 ${agentsStoreSavedKind === "local" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" : "bg-blue-500/15 text-blue-300 border-blue-500/30"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${agentsStoreSavedKind === "local" ? "bg-emerald-400" : "bg-blue-400"}`} />
+                    {agentsStoreSavedKind === "local" ? "Local PG (in-container)" : "Supabase"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {agentsStoreLoading && (
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <div className="w-3 h-3 border border-of-primary/30 border-t-of-primary rounded-full animate-spin" />
+                Loading configuration...
+              </div>
+            )}
+
+            {!agentsStoreLoading && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className={`px-4 py-3 rounded-lg border cursor-pointer transition-colors ${agentsStoreKind === "local" ? "bg-emerald-500/10 border-emerald-500/40" : "bg-of-surface-container-lowest border-white/10 hover:border-white/20"}`}>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        name="agents-store-kind"
+                        className="mt-1"
+                        checked={agentsStoreKind === "local"}
+                        onChange={() => setAgentsStoreKind("local")}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Local PG (in-container)</p>
+                        <p className="text-xs text-foreground-muted mt-0.5">
+                          Uses pantheon&apos;s built-in Postgres. No setup required. Default for self-hosters.
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={`px-4 py-3 rounded-lg border cursor-pointer transition-colors ${agentsStoreKind === "supabase" ? "bg-blue-500/10 border-blue-500/40" : "bg-of-surface-container-lowest border-white/10 hover:border-white/20"}`}>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="radio"
+                        name="agents-store-kind"
+                        className="mt-1"
+                        checked={agentsStoreKind === "supabase"}
+                        onChange={() => setAgentsStoreKind("supabase")}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Supabase</p>
+                        <p className="text-xs text-foreground-muted mt-0.5">
+                          Routes through Supabase&apos;s auto-generated PostgREST. Apply the 0039 SQL to your project first.
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {agentsStoreKind === "supabase" && (
+                  <div className="space-y-3 pt-2 border-t border-white/10">
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">
+                        Supabase URL
+                      </label>
+                      <input
+                        type="url"
+                        value={agentsStoreSupabaseUrl}
+                        onChange={(e) => setAgentsStoreSupabaseUrl(e.target.value)}
+                        placeholder="https://xxxxx.supabase.co"
+                        className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-blue-500/50 focus:outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-1.5">
+                        Service-role key reference
+                      </label>
+                      <input
+                        type="text"
+                        value={agentsStoreSupabaseKeyRef}
+                        onChange={(e) => setAgentsStoreSupabaseKeyRef(e.target.value)}
+                        placeholder="env://SUPABASE_SERVICE_ROLE_KEY"
+                        className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-blue-500/50 focus:outline-none font-mono"
+                      />
+                      <p className="text-xs text-foreground-muted mt-1">
+                        URI reference to the secret. <code className="px-1 py-0.5 rounded bg-of-surface-container-high font-mono">env://VAR_NAME</code> reads a process env var. Other schemes (<code className="font-mono">vault://</code>, <code className="font-mono">gcpsm://</code>) are reserved.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {agentsStoreTestResult && (
+                  <div className={`px-3 py-2 rounded-lg text-xs ${agentsStoreTestResult.ok ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border border-red-500/30 text-red-300"}`}>
+                    {agentsStoreTestResult.ok
+                      ? `Healthy — ${agentsStoreTestResult.latency_ms ?? "?"}ms round-trip`
+                      : `Test failed: ${agentsStoreTestResult.error || "unknown error"}`}
+                  </div>
+                )}
+
+                {agentsStoreError && (
+                  <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">
+                    {agentsStoreError}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    onClick={handleAgentsStoreTest}
+                    disabled={agentsStoreTesting || agentsStoreSaving}
+                    className="px-3 py-1.5 rounded-lg bg-of-surface-container-high text-foreground text-xs font-medium hover:bg-of-surface-container-highest disabled:opacity-50"
+                  >
+                    {agentsStoreTesting ? "Testing..." : "Test connection"}
+                  </button>
+                  <button
+                    onClick={handleAgentsStoreSave}
+                    disabled={agentsStoreSaving || agentsStoreTesting}
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 disabled:opacity-50"
+                  >
+                    {agentsStoreSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {agentsStoreKind === "supabase" && (
+            <div className="px-4 py-3 rounded-lg bg-of-surface-container border border-of-outline-variant/20 text-xs text-foreground-muted space-y-1">
+              <p className="font-semibold text-foreground">Supabase setup checklist:</p>
+              <ol className="list-decimal list-inside space-y-0.5 ml-2">
+                <li>Create a Supabase project (or reuse an existing one).</li>
+                <li>Run the schema SQL (Alembic 0039 — <code className="font-mono text-of-primary">_agos_agents</code> + <code className="font-mono text-of-primary">_agos_prompts</code>) against your Supabase database.</li>
+                <li>Copy the service-role key from Supabase project settings into the pod&apos;s env (matching the variable in your reference above).</li>
+                <li>Click <span className="font-semibold">Test connection</span>, then <span className="font-semibold">Save</span>.</li>
+              </ol>
+            </div>
+          )}
         </motion.div>
       )}
 
