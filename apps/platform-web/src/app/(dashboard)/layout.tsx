@@ -3,9 +3,8 @@ import { cookies } from 'next/headers';
 import { validateSession } from '@platform/auth';
 import { getSessionToken } from '@platform/auth/cookies';
 import type { ReadableCookieStore } from '@platform/auth/cookies';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Topbar } from '@/components/layout/topbar';
-import { MobileNav } from '@/components/layout/mobile-nav';
+import DashboardSidebar from '@/components/layout/dashboard-sidebar';
+import DashboardHeader from '@/components/layout/dashboard-header';
 import { QueryProvider } from '@/lib/providers/query-provider';
 import { RBACProvider } from '@/lib/rbac/context';
 import { extractRoleFromLocalSession } from '@/lib/rbac/check';
@@ -22,6 +21,18 @@ function getPool(): Pool {
   return _pool;
 }
 
+/**
+ * Dashboard layout — unified shell across portal + platform-web (W-G.shell).
+ *
+ * Renders portal's `DashboardSidebar` + `DashboardHeader` (copied into
+ * `components/layout/`) on top of platform-web's existing auth gate +
+ * Query/RBAC providers. The auth gate, flag-loading, and RBAC plumbing are
+ * preserved as-is — only the visible chrome swapped.
+ *
+ * `enabledSlugs` is still resolved server-side for future per-tenant Pantheon
+ * group filtering; the current shell renders all nine OS items unconditionally
+ * (per "no tier gating by default" directive).
+ */
 export default async function DashboardLayout({
   children,
 }: {
@@ -46,9 +57,10 @@ export default async function DashboardLayout({
   // Use default role permissions as the canonical permission set
   const permissions = DEFAULT_ROLE_PERMISSIONS[identity.role] ?? [];
 
-  // Resolve per-user feature flags server-side so the sidebar (client
-  // component) receives only a plain string[] — no DB calls in client land.
-  // Failures here are non-fatal: missing flags rows default to all enabled.
+  // Resolve per-user feature flags server-side so a future filtered nav can
+  // gate items without a client-side DB call. Today the shell renders all
+  // items unconditionally, but the resolved set stays available for per-tenant
+  // filtering when we add it back.
   let enabledSlugs: string[] = AGENTIC_OS_MODULES.map((m) => m.slug);
   try {
     const flags = await getFlags(identity.userId);
@@ -59,6 +71,7 @@ export default async function DashboardLayout({
     // Table may not exist yet on a fresh DB before 0013 has been applied;
     // fall back to "everything enabled" so the dashboard still renders.
   }
+  void enabledSlugs; // reserved for future per-tenant gating
 
   return (
     <QueryProvider>
@@ -68,12 +81,9 @@ export default async function DashboardLayout({
         userId={identity.userId}
       >
         <div className="flex h-screen overflow-hidden">
-          <Sidebar enabledSlugs={enabledSlugs} />
+          <DashboardSidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Topbar userEmail={result.user.email} displayName={result.user.displayName} />
-            <div className="md:hidden px-4 py-2 border-b border-border-subtle bg-surface-2">
-              <MobileNav enabledSlugs={enabledSlugs} />
-            </div>
+            <DashboardHeader />
             <main className="flex-1 overflow-y-auto p-6">
               {children}
             </main>
