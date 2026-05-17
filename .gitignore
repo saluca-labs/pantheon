@@ -26,6 +26,15 @@ target/
 .env.local
 .env.*.local
 
+# Local docker-compose override (must not contain real secrets)
+**/docker-compose.override.yml
+
+# Production env / systemd files (templates only in repo)
+infrastructure/incident-controller/deploy/systemd/incident-controller.env
+infrastructure/**/*.env
+!infrastructure/**/.env.example
+!infrastructure/**/*.env.template
+
 # OS / editor
 .DS_Store
 Thumbs.db

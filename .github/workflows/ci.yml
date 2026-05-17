@@ -16,6 +16,24 @@ env:
   PNPM_VERSION: '9.12.0'
 
 jobs:
+  # ── Secrets scan ─────────────────────────────────────────────────────────────
+  # Gitleaks runs against the full repo on every PR. Findings fail the gate.
+  # NOTE: gitleaks-action @v2 is the current marketplace listing as of this PR;
+  # verify the latest stable version at
+  # https://github.com/gitleaks/gitleaks-action/releases before bumping.
+  secrets-scan:
+    name: Secrets scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE not required for OSS
+          GITLEAKS_NOTIFY_USER_LIST: '@cristianxruvalcaba-coder'
+
   # ── Install ──────────────────────────────────────────────────────────────────
   install:
     name: Install dependencies
