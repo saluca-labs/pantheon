@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { hashPassword, verifyPassword, createSession } from '@platform/auth';
 import { setSessionCookie } from '@platform/auth/cookies';
+import type { MutableCookieStore } from '@platform/auth/cookies';
 import { Pool } from 'pg';
 
 let _pool: Pool | null = null;
@@ -50,7 +51,7 @@ async function loginAction(formData: FormData) {
   });
 
   const cookieStore = await cookies();
-  setSessionCookie(cookieStore as any, session.token);
+  setSessionCookie(cookieStore as unknown as MutableCookieStore, session.token);
   redirect('/dashboard');
 }
 
