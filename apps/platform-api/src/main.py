@@ -58,6 +58,7 @@ from src.tenant.router import router as tenant_router
 from src.support.router import router as support_router
 from src.chatbot.router import router as chatbot_router
 from src.agents.router import router as agents_store_router
+from src.agents.crud_router import router as agents_crud_router
 from src.platform import init_memory_client, shutdown_memory_client
 from src.platform.identity_router import router as platform_identity_router
 from src.platform.health_router import router as platform_health_router
@@ -544,6 +545,9 @@ app.include_router(chatbot_router)
 
 # Wave H.2.b — Agents-store configuration (LocalPg ↔ Supabase adapter)
 app.include_router(agents_store_router)
+
+# Wave H.2.c — Agent + Prompt CRUD (/v1/agents/*, /v1/prompts/*)
+app.include_router(agents_crud_router)
 
 # Portal policy management API (Phase 3 — SaaS two-tier)
 from src.portal.policy_router import router as portal_policy_router
