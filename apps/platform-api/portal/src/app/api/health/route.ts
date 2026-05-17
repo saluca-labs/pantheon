@@ -7,8 +7,8 @@ export async function GET() {
   return NextResponse.json(
     {
       status: "ok",
-      service: "tiresias-portal",
-      mode: process.env.TIRESIAS_DEPLOY_MODE || "saas",
+      service: "pantheon-portal",
+      mode: process.env.PANTHEON_DEPLOY_MODE || process.env.TIRESIAS_DEPLOY_MODE || "local",
       version: process.env.NEXT_PUBLIC_APP_VERSION || "unknown",
       timestamp: new Date().toISOString(),
     },
