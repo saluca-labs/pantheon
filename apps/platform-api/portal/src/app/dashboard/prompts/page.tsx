@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { api, ApiError } from "@/lib/api";
@@ -75,9 +75,12 @@ function PromptsPageInner() {
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [prompts]);
 
-  // All versions for the selected name (for the version-history accordion).
+  // Resolve the effective selection: explicit user choice if still in the
+  // list, otherwise fall back to the first head. Computing this inline lets
+  // us avoid an effect that calls setSelectedPromptId (which lints as a
+  // cascading render under the new react-hooks/set-state-in-effect rule).
   const selectedHead = useMemo(
-    () => heads.find((p) => p.id === selectedPromptId) ?? null,
+    () => heads.find((p) => p.id === selectedPromptId) ?? heads[0] ?? null,
     [heads, selectedPromptId],
   );
   const selectedVersions = useMemo(() => {
@@ -87,6 +90,12 @@ function PromptsPageInner() {
       .sort((a, b) => b.version - a.version);
   }, [prompts, selectedHead]);
 
+  // --- editing state (edits create a new version, not in place) ---
+  const [editing, setEditing] = useState(false);
+  const [editBody, setEditBody] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   // Which specific version row to display in the body preview. Defaults to
   // the head; clicking an older row in the history flips this.
   const [visibleVersionId, setVisibleVersionId] = useState<string | null>(null);
@@ -94,25 +103,15 @@ function PromptsPageInner() {
     () => selectedVersions.find((p) => p.id === visibleVersionId) ?? selectedHead,
     [selectedVersions, visibleVersionId, selectedHead],
   );
-  useEffect(() => {
-    // Reset visible-version when switching prompts.
+
+  // Wrap setSelectedPromptId so callers also reset visible-version + editor
+  // state in a single action.
+  const selectPrompt = useCallback((id: string | null) => {
+    setSelectedPromptId(id);
     setVisibleVersionId(null);
     setEditing(false);
     setEditBody("");
-  }, [selectedPromptId]);
-
-  // Auto-select first prompt when list loads.
-  useEffect(() => {
-    if (!selectedPromptId && heads.length > 0) {
-      setSelectedPromptId(heads[0].id);
-    }
-  }, [heads, selectedPromptId]);
-
-  // --- editing state (edits create a new version, not in place) ---
-  const [editing, setEditing] = useState(false);
-  const [editBody, setEditBody] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
+  }, []);
 
   // --- create modal ---
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -127,8 +126,8 @@ function PromptsPageInner() {
     setRefreshToast(msg);
     setTimeout(() => setRefreshToast(null), 3500);
     refetchPrompts();
-    setSelectedPromptId(null);
-  }, [refetchPrompts]);
+    selectPrompt(null);
+  }, [refetchPrompts, selectPrompt]);
 
   const handleEdit = () => {
     if (!visibleVersion || !selectedHead) return;
@@ -168,7 +167,7 @@ function PromptsPageInner() {
     try {
       await api.delete(`/api/prompts/${selectedHead.id}`);
       refetchPrompts();
-      setSelectedPromptId(null);
+      selectPrompt(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         triggerRefreshToast("Prompt was deleted; refreshing list");
@@ -212,7 +211,7 @@ function PromptsPageInner() {
       setNewBody("");
       refetchPrompts();
       // Select the newly-created prompt so the user lands on its detail
-      setSelectedPromptId(created.id);
+      selectPrompt(created.id);
     } catch (err) {
       setCreateError(err instanceof ApiError ? err.message : "Failed to create prompt");
     } finally {
@@ -310,7 +309,7 @@ function PromptsPageInner() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => setSelectedPromptId(p.id)}
+                  onClick={() => selectPrompt(p.id)}
                   className={`w-full text-left px-4 py-3 transition-all duration-200 ${
                     isSelected
                       ? "bg-gold-500/10 border-l-2 border-gold-500"

@@ -198,7 +198,7 @@ function AgentsPageInner() {
     endpoint: "/api/agents?include_global=true",
     refreshInterval: 30_000,
   });
-  const agents = agentsData ?? [];
+  const agents = useMemo(() => agentsData ?? [], [agentsData]);
 
   // SoulKeys (joined by persona_id for the linked-keys list per agent)
   const {
@@ -216,7 +216,7 @@ function AgentsPageInner() {
     endpoint: "/api/prompts?status=active&include_global=true",
     refreshInterval: 60_000,
   });
-  const prompts = promptsData ?? [];
+  const prompts = useMemo(() => promptsData ?? [], [promptsData]);
 
   // Build a persona_id → SoulKey[] index for the linked-keys section
   const keysByPersona = useMemo(() => {
