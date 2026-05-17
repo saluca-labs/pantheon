@@ -91,16 +91,36 @@ def _detect_provider(upstream_url: str) -> str:
     return "openai"
 
 
-def _resolve_provider_for_model(model: str, cfg: TiresiasSettings):
+def _resolve_provider_for_model(
+    model: str,
+    cfg: TiresiasSettings,
+    tenant_id: str | None = None,
+):
     """If the model name has a provider prefix matching a configured provider,
-    build and return that provider instance.  Otherwise return None."""
+    build and return that provider instance.
+
+    W-H.2.e: when ``tenant_id`` is supplied, ``build_provider()`` will check
+    for a per-tenant BYOK override row in ``_tenant_provider_keys`` before
+    falling back to the platform env-default. Callers that do not pass
+    ``tenant_id`` (background reload, startup) keep env-default behavior.
+    """
     if "/" not in model:
         return None
     prefix = model.split("/", 1)[0].lower()
     cascade = parse_providers(cfg.providers)
     if prefix not in cascade:
         return None
-    return build_provider(prefix, dict(os.environ))
+    # Coerce string → UUID where possible. tenant_id at this layer is the
+    # SaaS-resolved tenant uuid string; for dedicated/onprem it's the
+    # configured cfg.tenant_id (also typically a uuid string).
+    _tid_uuid = None
+    if tenant_id:
+        try:
+            from uuid import UUID as _UUID
+            _tid_uuid = _UUID(str(tenant_id))
+        except (ValueError, TypeError):
+            _tid_uuid = None
+    return build_provider(prefix, dict(os.environ), tenant_id=_tid_uuid)
 
 
 def _build_router(
@@ -317,7 +337,9 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         if is_streaming:
             # Model-prefix routing: if the model has a known provider prefix
             # (e.g. ollama/llama3.1:8b), use that provider's URL directly.
-            resolved_provider = _resolve_provider_for_model(model, cfg)
+            # W-H.2.e: pass tenant_id so build_provider() can consult
+            # _tenant_provider_keys for a per-tenant BYOK override.
+            resolved_provider = _resolve_provider_for_model(model, cfg, tenant_id=tenant_id)
             if resolved_provider:
                 target_url, provider_headers, stream_body = resolved_provider.format_request(body)
                 upstream_headers.update(provider_headers)
