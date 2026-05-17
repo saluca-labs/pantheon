@@ -7,10 +7,13 @@ Runs without Docker. Verifies:
      middleware + /health/live + /health/ready surfaces onto the upstream
      FastAPI app.
   3. /health/live and /health/ready return 200 without an auth header.
-  4. A non-health request with no key (dev mode) is allowed.
-  5. A non-health request without a key in production mode is rejected
-     with 401 by the middleware before reaching the handler.
-  6. The hashing layer round-trips a SHA-256 dual hash (smoke test for
+  4. A non-health request with no key configured is allowed (fail-open).
+  5. With no SOUL_SERVICE_KEY set, production-mode boot succeeds and logs a
+     WARNING — auth is opt-in, not fail-closed.
+  6. With SOUL_SERVICE_KEY set, a non-health request without the matching
+     header is rejected with 401 by the middleware before reaching the
+     handler; a request with the header passes the gate.
+  7. The hashing layer round-trips a SHA-256 dual hash (smoke test for
      the vendored crypto core — proves the scrubbing did not break it).
 
 Run from repo root:
@@ -100,12 +103,22 @@ def main() -> None:
     if h1 != h2 or len(h1) != 64:
         fail("content_hash", f"h1={h1!r} h2={h2!r}")
 
-    step("reload pantheon_entry in production mode WITHOUT key — must exit(1)")
-    # Re-importing pantheon_entry under production mode without a key should
-    # call sys.exit(1). We use subprocess to isolate the failing import.
+    step("reload pantheon_entry in production mode WITHOUT key — must boot fail-open with WARNING")
+    # Re-importing pantheon_entry under production mode without a key must
+    # boot successfully (fail-open) and emit a single startup WARNING. We
+    # use subprocess to isolate import-time side effects (logger config).
     import subprocess
+    no_key_probe = """
+import logging, sys
+logging.basicConfig(level=logging.WARNING, stream=sys.stderr, format='%(levelname)s %(name)s %(message)s')
+import pantheon_entry
+from starlette.testclient import TestClient
+c = TestClient(pantheon_entry.app, raise_server_exceptions=False)
+r = c.post('/tkhr/lookup', json={'topics':['x']})
+print('noauth_not_401=', r.status_code != 401)
+"""
     proc = subprocess.run(
-        [sys.executable, "-c", "import pantheon_entry"],
+        [sys.executable, "-c", no_key_probe],
         env={
             **os.environ,
             "SOUL_ENV": "production",
@@ -115,10 +128,14 @@ def main() -> None:
         capture_output=True,
         text=True,
     )
-    if proc.returncode == 0:
-        fail("prod-no-key boot", "expected non-zero exit; got 0")
-    if "SOUL_SERVICE_KEY is required" not in proc.stderr:
-        fail("prod-no-key boot", f"missing error message; stderr={proc.stderr!r}")
+    if proc.returncode != 0:
+        fail("prod-no-key boot", f"expected fail-open boot to succeed; exit={proc.returncode} stderr={proc.stderr!r}")
+    if "SOUL_SERVICE_KEY not set" not in proc.stderr:
+        fail("prod-no-key boot", f"missing fail-open WARNING; stderr={proc.stderr!r}")
+    if "running fail-open" not in proc.stderr:
+        fail("prod-no-key boot", f"WARNING did not announce fail-open posture; stderr={proc.stderr!r}")
+    if "noauth_not_401= True" not in proc.stdout:
+        fail("prod-no-key auth bypass", f"middleware blocked request without a configured key; stdout={proc.stdout!r}")
 
     step("reload pantheon_entry in production mode WITH key — must boot, enforce")
     # Subprocess-import again with a key set, then call the endpoint without

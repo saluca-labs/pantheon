@@ -7,9 +7,12 @@ upstream FastAPI app from `soul.serve` and bolts on Pantheon-specific
 middleware:
 
   1. Shared-key auth via X-Soul-Service-Key header (env: SOUL_SERVICE_KEY).
-     Fail-closed: in production (SOUL_ENV=production), the process refuses
-     to start if SOUL_SERVICE_KEY is unset. Health endpoints are exempt so
-     liveness/readiness probes work without the secret.
+     Opt-in: when SOUL_SERVICE_KEY is set, every non-health request must
+     present a matching X-Soul-Service-Key header or it is rejected with
+     401. When SOUL_SERVICE_KEY is unset or empty, the service boots
+     fail-open and logs a single WARNING at startup; all requests are
+     accepted without authentication. Health endpoints are always exempt
+     so liveness/readiness probes work without the secret.
 
   2. A separate /health/live and /health/ready surface, matching the rest
      of the Pantheon namespace (memory-service, soulauth, etc. all expose
@@ -21,8 +24,11 @@ Usage:
   uvicorn pantheon_entry:app --host 0.0.0.0 --port 8080
 
 Environment:
-  SOUL_SERVICE_KEY    shared secret required on every non-health request
-  SOUL_ENV            "production" | "development" (default development)
+  SOUL_SERVICE_KEY    shared secret; when set, required on every non-health
+                      request. When unset/empty the service boots fail-open
+                      and logs a startup WARNING.
+  SOUL_ENV            "production" | "development" (default development);
+                      informational only, does not gate auth posture.
   SUPABASE_URL        Tier 2 (cold) Supabase project URL (optional;
                       service degrades to Tier 0/1 if absent)
   SUPABASE_SERVICE_KEY  Tier 2 service-role key (optional, paired with URL)
@@ -32,6 +38,7 @@ Environment:
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from typing import Awaitable, Callable
@@ -54,15 +61,18 @@ from soul.serve import app  # noqa: E402  — must run after sys.path mutation
 SOUL_SERVICE_KEY = os.getenv("SOUL_SERVICE_KEY", "")
 SOUL_ENV = os.getenv("SOUL_ENV", "development").lower()
 
-if SOUL_ENV == "production" and not SOUL_SERVICE_KEY:
-    # Fail-closed boot: matches the memory-service pattern documented in
-    # apps/memory-service/README.md#auth. The deployment manifest wires this
-    # key in from the `pantheon-secrets` Secret (key: soul-service-key).
-    print(
-        "SOUL_SERVICE_KEY is required in production. Refusing to start.",
-        file=sys.stderr,
+_logger = logging.getLogger("pantheon.soul_service")
+
+if not SOUL_SERVICE_KEY:
+    # Fail-open boot for the MVP rollout: the pod must be deploy-able before
+    # the Secret Manager key is wired in. When SOUL_SERVICE_KEY *is* set, the
+    # middleware below still enforces it strictly. The deployment manifest
+    # will wire the key from the `pantheon-secrets` Secret (key:
+    # soul-service-key) once it exists.
+    _logger.warning(
+        "SOUL_SERVICE_KEY not set - soul-service is running fail-open; "
+        "all requests will be accepted without authentication"
     )
-    sys.exit(1)
 
 
 # ── Health surfaces matching the rest of the Pantheon namespace ───────────────
@@ -98,14 +108,15 @@ async def _require_service_key(
     """
     Reject any non-health request that lacks a valid X-Soul-Service-Key.
 
-    In development (SOUL_ENV != "production") with no key configured, this
-    middleware is a no-op so local docker-compose / pytest can call the
-    endpoints freely.
+    When SOUL_SERVICE_KEY is unset (any environment), this middleware is a
+    no-op so local docker-compose / pytest / pre-secret-rollout deploys can
+    call the endpoints freely. The boot-time WARNING above announces that
+    fail-open posture once at startup.
     """
     if request.url.path in _HEALTH_PATHS:
         return await call_next(request)
     if not SOUL_SERVICE_KEY:
-        # dev-mode bypass (see boot-time fail-closed for production)
+        # fail-open bypass (see boot-time WARNING)
         return await call_next(request)
     provided = request.headers.get("x-soul-service-key", "")
     if provided != SOUL_SERVICE_KEY:

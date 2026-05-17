@@ -49,17 +49,20 @@ apps/soul-service/
 | `GET` | `/tkhr/stats` | `X-Soul-Service-Key` | TKHR index stats |
 | `POST` | `/graph/integrity/{session_id}` | `X-Soul-Service-Key` | Recompute + verify dual hashes |
 
-In production (`SOUL_ENV=production`), every non-health request must
-carry `X-Soul-Service-Key: $SOUL_SERVICE_KEY`. The service refuses to
-start if the key env var is missing — same fail-closed pattern as
-[`memory-service`](../memory-service/README.md#auth).
+Auth is opt-in. When `SOUL_SERVICE_KEY` is set, every non-health request
+must carry `X-Soul-Service-Key: $SOUL_SERVICE_KEY` or it is rejected with
+401. When `SOUL_SERVICE_KEY` is unset or empty the service boots fail-open
+and logs a single startup WARNING; all requests are accepted without
+authentication. This deliberately diverges from
+[`memory-service`](../memory-service/README.md#auth) for the MVP rollout
+so the pod is deploy-able before the Secret Manager key exists.
 
 ## Configuration
 
 | Env var | Required | Default | Purpose |
 |---|---|---|---|
-| `SOUL_SERVICE_KEY` | prod | — | Shared secret enforced by auth middleware |
-| `SOUL_ENV` | no | `development` | `production` enables fail-closed boot |
+| `SOUL_SERVICE_KEY` | no | — | Shared secret enforced by auth middleware when set; unset = fail-open with startup WARNING |
+| `SOUL_ENV` | no | `development` | Tag only; no longer gates auth posture (auth is keyed off `SOUL_SERVICE_KEY` presence) |
 | `SUPABASE_URL` | no | `''` | Tier 2 (cold) Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | no | `''` | Tier 2 service-role key |
 | `SOUL_BUFFER_PATH` | no | `/app/data/active_kb.db` | Tier 0 SQLite path |
