@@ -64,9 +64,11 @@ transcripts, mesh coordination, nexus catalog. This adapter:
 | `POST` | `/api/nexus/services/upsert` | catalog feed — node-scanner pushes service state |
 | `POST` | `/api/nexus/projects/upsert` | catalog feed — node-scanner pushes project/GSD state |
 
-All non-health endpoints require `X-Soul-Service-Key: $SOUL_SERVICE_KEY`
-when the env var is set in production. (Dev convenience: with the key
-unset the adapter accepts every request.)
+Auth is opt-in (matches soul-service). When `SOUL_SERVICE_KEY` is set,
+every non-health endpoint requires `X-Soul-Service-Key:
+$SOUL_SERVICE_KEY` or it returns 401. When unset, the adapter accepts
+every request — so the pod is deploy-able before the Secret Manager
+key exists.
 
 ## Configuration
 

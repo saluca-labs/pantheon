@@ -90,13 +90,18 @@ spec:
               value: "http"
             - name: SOUL_SERVICE_URL
               value: "http://soul-service:8080"
-            # Shared with soul-service — one key, both pods. Required for
-            # outbound calls upstream AND inbound auth on this adapter.
+            # Shared with soul-service — one key, both pods. When set, the
+            # adapter sends it on upstream calls AND enforces 401 on its own
+            # API. When unset, both posture fail open (deploy-able before
+            # the Secret Manager key exists) with a startup WARNING. Match
+            # the soul-service fix: presence of the key gates auth, not
+            # SOUL_ENV (which is now informational only).
             - name: SOUL_SERVICE_KEY
               valueFrom:
                 secretKeyRef:
                   name: pantheon-secrets
                   key: soul-service-key
+                  optional: true
             # Auto-init off by default. Flip to "1" to have the adapter
             # call soul_session_init at boot against itself, warming the
             # soul-service hot tier for SOUL_AUTO_INIT_SESSION_ID.

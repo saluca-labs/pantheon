@@ -3,8 +3,10 @@
  *
  * The adapter talks to soul-service exclusively through this client so the
  * tool handlers do not need to know the wire format. All calls carry the
- * shared-secret header (SOUL_SERVICE_KEY) — required by soul-service when
- * SOUL_ENV=production.
+ * shared-secret header (SOUL_SERVICE_KEY) when one is configured —
+ * soul-service treats unset SOUL_SERVICE_KEY as fail-open (deploy-able
+ * before the Secret Manager key exists) and enforces 401 when the key is
+ * set. We always set the header if we have one, so both postures work.
  *
  * Endpoint surface (matches apps/soul-service/soul/serve.py):
  *   GET    /health/live

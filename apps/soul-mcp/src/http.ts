@@ -52,9 +52,12 @@ export async function buildHttp(opts: HttpOptions): Promise<FastifyInstance> {
 
   const app = Fastify({ logger: opts.logger ?? true });
 
-  // Shared-secret auth — skip for health, enforce for everything else when
-  // a key is configured. Dev convenience: if SOUL_SERVICE_KEY is unset the
-  // adapter accepts every request (matches soul-service's dev mode).
+  // Shared-secret auth — opt-in. When SOUL_SERVICE_KEY (or opts.serviceKey)
+  // is set, every non-health request must present a matching
+  // X-Soul-Service-Key header or it is rejected with 401. When unset, the
+  // adapter accepts every request — matches the soul-service fail-open
+  // posture so the pod is deploy-able before the Secret Manager key
+  // exists (see apps/soul-service/pantheon_entry.py).
   app.addHook('onRequest', async (req, reply) => {
     const [pathOnly] = req.url.split('?');
     if (HEALTH_PATHS.has(pathOnly ?? req.url)) return;
