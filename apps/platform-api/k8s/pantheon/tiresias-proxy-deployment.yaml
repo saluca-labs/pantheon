@@ -1,5 +1,12 @@
-# Forked from tiresias/k8s/tiresias-proxy-deployment.yaml @ tiresias-monorepo for pantheon namespace.
-# Differences from tiresias source:
+# Pantheon tiresias-proxy Deployment. Source of truth for the proxy is now
+# apps/platform-api/src/tiresias/ in this repo; the image is built by the
+# pantheon CD pipeline (.github/workflows/cd.yml, build matrix entry
+# `tiresias-proxy`) using apps/platform-api/Dockerfile.proxy and pushed to
+# the pantheon Artifact Registry path. The cross-AR-path reference to the
+# upstream `tiresias/` repo is retired as of W-J.1 — pantheon-sa no longer
+# needs roles/artifactregistry.reader on the `tiresias` repo.
+#
+# History — diverged from tiresias/k8s/tiresias-proxy-deployment.yaml:
 #   - namespace: tiresias -> pantheon
 #   - serviceAccountName: tiresias-sa -> pantheon-sa
 #   - replicas: 3 -> 2 (MVP)
@@ -9,9 +16,6 @@
 #     dependency for MVP. Limitation: rate-limit counters do not survive pod restarts and are
 #     per-pod (not cluster-wide). Acceptable for MVP traffic; revisit if rate-limit accuracy
 #     becomes a problem.
-#   - Image stays in `tiresias/` AR path (not pantheon/) — cross-AR-path reference. pantheon-sa
-#     needs roles/artifactregistry.reader on the tiresias repo (or project-wide); flagged in
-#     report. No re-tag/copy of the image.
 #   - Service moved to services.yaml; HPA + PDB intentionally NOT included (MVP, only 2 replicas).
 apiVersion: apps/v1
 kind: Deployment
@@ -48,7 +52,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: tiresias-proxy
-          image: us-central1-docker.pkg.dev/salucainfrastructure/tiresias/tiresias-proxy:v0.6.9
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/tiresias-proxy:v0.6.9
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

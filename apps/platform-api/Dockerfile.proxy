@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
-LABEL org.opencontainers.image.title="Tiresias"
-LABEL org.opencontainers.image.description="AI observability proxy"
+LABEL org.opencontainers.image.title="Tiresias Proxy"
+LABEL org.opencontainers.image.description="AI observability proxy — built from pantheon source"
 
 WORKDIR /app
 
@@ -10,7 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Python dependencies (matching container's pip freeze)
+# Python dependencies — pinned independently of platform-api/requirements.txt
+# because the proxy ships a tightly-coupled set of runtime versions
+# (aiosqlite/asyncpg/sqlalchemy/cryptography/fastapi/etc.) that were validated
+# against the upstream tiresias-proxy:v0.6.x release. Keeping these pins
+# stable here avoids breakage when the soulauth requirements set drifts.
+# Last validated against tiresias-proxy:v0.6.9 (Z:/tiresias/Dockerfile.proxy).
 RUN pip install --no-cache-dir \
     aiosqlite==0.22.1 \
     asyncpg==0.31.0 \
@@ -27,8 +32,10 @@ RUN pip install --no-cache-dir \
     tiktoken==0.12.0 \
     uvicorn==0.42.0
 
-# Copy proxy core source
-COPY src/tiresias/ src/tiresias/
+# Copy the tiresias package from pantheon's source tree. Build context is
+# the repo root (matches the CD matrix entry: context=.), so the source
+# path is fully qualified.
+COPY apps/platform-api/src/tiresias/ src/tiresias/
 
 # Create non-root user
 RUN useradd -m -u 1000 tiresias && \
