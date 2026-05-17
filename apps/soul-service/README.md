@@ -239,32 +239,35 @@ across pods and break cold-start warm-up integrity assumptions.
    shared key on the public internet defeats the auth model.
 6. Cut a tag to redeploy.
 
-### 6. MCP adapter (`mcp__soul__*` tool calls)
+### 6. MCP adapter (`mcp__soul__*` tool calls) — **shipped**
 
-**Today**: Soul ships HTTP routes (see Endpoints above), not
-MCP-over-stdio. The `mcp__soul__*` tool surface (soul_session_init,
-soul_memory_search/write, mesh_*, nexus_*, soul_transcript_capture)
-has no backend in Pantheon yet.
+**Today**: shipped as the separate-microservice option. See
+[`apps/soul-mcp`](../soul-mcp/README.md) — a Node service that exposes
+the full 22-tool `mcp__soul__*` family over BOTH MCP-over-stdio (for
+LLM harnesses) AND HTTP REST (for in-cluster Pantheon services that
+prefer plain HTTP). Memory primitives proxy to this service; mesh and
+nexus state live in a local SQLite store inside the adapter pod until
+they have first-class upstream backends.
 
-**Flip on** — the design decision still needs Cristian's call. Three
-options:
+soul-mcp is reachable in-cluster at `http://soul-mcp:8090`. The HTTP
+surface (`POST /api/tools/<name>`) takes JSON bodies matching each
+tool's input schema. Connecting an LLM harness:
 
-- **Portal-side adapter**: portal exposes the MCP server-over-stdio
-  surface and proxies each tool call to soul-service via HTTP.
-  Cheapest to ship; portal becomes the MCP boundary.
-- **Separate `soul-mcp` microservice**: a small Node/Python service
-  speaks MCP on one side and HTTP to soul-service on the other.
-  Cleaner separation; one more pod.
-- **Sidecar in the soul-service pod**: an MCP adapter container
-  shares the pod and loops back to localhost:8080. Co-located,
-  no cross-pod hop; binds MCP-over-stdio to a single pod which is
-  fine while `replicas: 1` (see #4) is the constraint anyway.
+```bash
+# Local dev (against a running adapter inside docker)
+docker exec -i soul-mcp node apps/soul-mcp/dist/server.js --transport=stdio
 
-Whichever path is chosen, the adapter implements the
-`mcp__soul__*` tool schema and translates each tool call to a
-`POST /memory/write` / `POST /tkhr/lookup` / etc., carrying the
-`X-Soul-Service-Key` it gets from its env. Public exposure
-follows #5.
+# Deployed pod
+kubectl exec -i -n pantheon deploy/soul-mcp -- \
+  node apps/soul-mcp/dist/server.js --transport=stdio
+```
+
+Wire that command into your MCP client's server config (Claude Code:
+`.mcp.json`; opencode: `agentic-os.toml`; etc.).
+
+Public exposure (so external MCP clients can reach the adapter) follows
+the same flip-on steps as §5 for soul-service, pointing the new
+ingress path at `soul-mcp:8090` instead.
 
 ## Refreshing the vendor
 
