@@ -30,7 +30,7 @@ import { TeamSettingsTab } from "@/components/team/TeamSettingsTab";
 import { useAuth } from "@/lib/auth";
 import { useUserPreferences, ALL_SIDEBAR_SECTIONS } from "@/lib/useUserPreferences";
 
-type Tab = "general" | "api-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
+type Tab = "general" | "api-keys" | "provider-keys" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
 
 // Tiers with time-based license (show expiration, no Stripe)
 const LICENSE_TIERS = new Set(["enterprise", "mssp"]);
@@ -115,12 +115,34 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "general", label: "General" },
   { id: "team", label: "Team" },
   { id: "api-keys", label: "API Keys" },
+  { id: "provider-keys", label: "Provider Keys" },
   { id: "siem", label: "SIEM Integration" },
   { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
   { id: "white-label", label: "White Label" },
   { id: "sso", label: "SSO / Identity" },
   { id: "preferences", label: "User Preferences" },
+];
+
+/**
+ * Static map of provider slug → display info shown in the Provider Keys
+ * tab. The `envVars` arrays mirror those in
+ * /api/provider-keys/status/route.ts and Tiresias's `_ENV_KEY_MAP`.
+ * `secretKey` is the key inside the `pantheon-secrets` k8s Secret that
+ * operators need to set (see apps/platform-api/k8s/pantheon/
+ * platform-web-deployment.yaml).
+ */
+const PROVIDER_INFO: Array<{
+  slug: string;
+  label: string;
+  envVars: string[];
+  secretKey: string;
+}> = [
+  { slug: "anthropic", label: "Anthropic", envVars: ["ANTHROPIC_API_KEY"], secretKey: "anthropic-api-key" },
+  { slug: "openai", label: "OpenAI", envVars: ["OPENAI_API_KEY"], secretKey: "openai-api-key" },
+  { slug: "gemini", label: "Google (Gemini)", envVars: ["GOOGLE_API_KEY"], secretKey: "google-api-key" },
+  { slug: "groq", label: "Groq", envVars: ["GROQ_API_KEY"], secretKey: "groq-api-key" },
+  { slug: "ollama", label: "Ollama", envVars: ["OLLAMA_API_KEY", "OLLAMA_HOST"], secretKey: "ollama-host" },
 ];
 
 /* ── Syslog Configuration Section ──────────────────────────────────── */
@@ -507,6 +529,11 @@ function SettingsPageInner() {
   }>>({});
   const [keyDetailLoading, setKeyDetailLoading] = useState<string | null>(null);
 
+  // --- Provider Keys state (W-H.1 atom 4 — env-var presence view) ---
+  const [providerKeyStatus, setProviderKeyStatus] = useState<Record<string, boolean> | null>(null);
+  const [providerKeyLoading, setProviderKeyLoading] = useState(false);
+  const [providerKeyError, setProviderKeyError] = useState<string | null>(null);
+
   // --- Billing state (BILL-01..04) ---
   const [tier, setTier] = useState<string>("starter");
   const [graceStatus, setGraceStatus] = useState<GraceStatus | null>(null);
@@ -558,6 +585,26 @@ function SettingsPageInner() {
   useEffect(() => {
     if (activeTab === "api-keys" && selectedKeysTenant) fetchKeys();
   }, [activeTab, fetchKeys, selectedKeysTenant]);
+
+  // Fetch provider key status (boolean presence) when Provider Keys tab is active
+  const fetchProviderKeyStatus = useCallback(async () => {
+    setProviderKeyLoading(true);
+    setProviderKeyError(null);
+    try {
+      const res = await fetch("/api/provider-keys/status");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as Record<string, boolean>;
+      setProviderKeyStatus(data);
+    } catch (err) {
+      setProviderKeyError(err instanceof Error ? err.message : "Failed to load provider key status");
+    } finally {
+      setProviderKeyLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "provider-keys") fetchProviderKeyStatus();
+  }, [activeTab, fetchProviderKeyStatus]);
 
   // Fetch billing/grace status when billing tab is active
   useEffect(() => {
@@ -1258,6 +1305,100 @@ function SettingsPageInner() {
                 </table>
               </div>
             )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Provider Keys Tab — env-var presence view (W-H.1 atom 4) */}
+      {activeTab === "provider-keys" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          {/* Wave H.2 BYOK banner */}
+          <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <div className="text-sm">
+              <p className="font-semibold text-amber-300">Platform-wide keys only</p>
+              <p className="text-amber-400/80 mt-0.5 text-xs">
+                This view reports which provider API keys are configured on the running pod (boolean only — values are never returned).
+                Per-tenant BYOK keys (each tenant can supply their own API keys) are coming in <span className="font-semibold">Wave H.2</span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-1">Provider API keys</h2>
+            <p className="text-sm text-foreground-muted mb-6">
+              Tiresias reads provider keys from process env vars. To set or rotate a key, update the
+              <code className="mx-1 px-1.5 py-0.5 rounded bg-of-surface-container-high text-of-primary font-mono text-xs">pantheon-secrets</code>
+              k8s Secret and roll the platform-web + tiresias-proxy deployments.
+            </p>
+
+            {providerKeyLoading && (
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <div className="w-3 h-3 border border-of-primary/30 border-t-of-primary rounded-full animate-spin" />
+                Reading env var presence...
+              </div>
+            )}
+
+            {providerKeyError && (
+              <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                {providerKeyError}
+              </div>
+            )}
+
+            {!providerKeyLoading && !providerKeyError && providerKeyStatus && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Provider</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Configured</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">Env var(s)</th>
+                      <th className="text-left px-3 py-2 text-foreground-muted font-medium text-xs uppercase tracking-wider">k8s secret key</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {PROVIDER_INFO.map((p) => {
+                      const ok = providerKeyStatus[p.slug] === true;
+                      return (
+                        <tr key={p.slug} className="border-b border-white/5">
+                          <td className="px-3 py-3 text-foreground font-medium">{p.label}</td>
+                          <td className="px-3 py-3">
+                            {ok ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                                configured
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-500/15 text-gray-400 border border-gray-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                not set
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-foreground-muted text-xs font-mono">{p.envVars.join(" | ")}</td>
+                          <td className="px-3 py-3 text-foreground-muted text-xs font-mono">pantheon-secrets / {p.secretKey}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-6 px-4 py-3 rounded-lg bg-of-surface-container-high border border-of-outline-variant/20 text-xs text-foreground-muted space-y-1">
+              <p className="font-semibold text-foreground">To set a provider key:</p>
+              <ol className="list-decimal list-inside space-y-0.5 ml-2">
+                <li>Base64-encode the key: <code className="font-mono text-of-primary">printf %s &quot;sk-...&quot; | base64</code></li>
+                <li>Patch the secret: <code className="font-mono text-of-primary">kubectl -n tiresias patch secret pantheon-secrets --type merge -p &apos;{`{"data":{"<key>":"<b64>"}}`}&apos;</code></li>
+                <li>Roll the consumers: <code className="font-mono text-of-primary">kubectl -n tiresias rollout restart deploy/tiresias-proxy deploy/platform-web</code></li>
+              </ol>
+            </div>
           </div>
         </motion.div>
       )}
