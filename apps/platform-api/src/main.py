@@ -59,6 +59,7 @@ from src.support.router import router as support_router
 from src.chatbot.router import router as chatbot_router
 from src.agents.router import router as agents_store_router
 from src.agents.crud_router import router as agents_crud_router
+from src.agents.import_router import router as agents_import_router
 from src.agents.provider_keys_router import router as provider_keys_router
 from src.platform import init_memory_client, shutdown_memory_client
 from src.platform.identity_router import router as platform_identity_router
@@ -552,6 +553,9 @@ app.include_router(agents_crud_router)
 
 # Wave H.2.e — Per-tenant BYOK provider keys (/v1/provider-keys/*)
 app.include_router(provider_keys_router)
+
+# Wave H.2.f — Bulk agent.yaml import (/v1/agents/import)
+app.include_router(agents_import_router)
 
 # Portal policy management API (Phase 3 — SaaS two-tier)
 from src.portal.policy_router import router as portal_policy_router
