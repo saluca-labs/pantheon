@@ -51,6 +51,31 @@ interface PromptRow {
   created_by: string | null;
 }
 
+/** Wire shape returned by POST /v1/agents/import (W-H.2.f). */
+interface ImportApiResultItem {
+  persona_id: string;
+  agent_id: string;
+  prompt_id: string | null;
+  provider_keys_created: number;
+  policy_synced: boolean;
+  created: boolean;
+}
+
+interface ImportApiError {
+  path: string;
+  message: string;
+}
+
+interface ImportApiResponse {
+  imported: ImportApiResultItem[];
+  errors: ImportApiError[];
+}
+
+interface ImportPreviewState {
+  items: ImportApiResultItem[];
+  errors: ImportApiError[];
+}
+
 /** Wire shape returned by POST /v1/soulauth/admin/keys (and /rotate). */
 interface IssueSoulkeyResponse {
   soulkey_id: string;
@@ -547,6 +572,114 @@ function AgentsPageInner() {
     }
   };
 
+  // --- import-from-YAML modal (W-H.2.f) ---
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFiles, setImportFiles] = useState<File[]>([]);
+  const [importPasteText, setImportPasteText] = useState("");
+  const [importDragActive, setImportDragActive] = useState(false);
+  const [importPreview, setImportPreview] = useState<ImportPreviewState | null>(null);
+  const [importPreviewing, setImportPreviewing] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportApiResponse | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const resetImportModal = () => {
+    setImportFiles([]);
+    setImportPasteText("");
+    setImportDragActive(false);
+    setImportPreview(null);
+    setImportPreviewing(false);
+    setImporting(false);
+    setImportResult(null);
+    setImportError(null);
+  };
+
+  // Build the request body for the proxy route. Returns either FormData
+  // (when files are attached) or a string (when only paste text is given).
+  // The proxy auto-detects multipart vs text/yaml.
+  const buildImportRequest = (): {
+    body: FormData | string;
+    contentType: string | null;
+  } | null => {
+    if (importFiles.length > 0) {
+      const fd = new FormData();
+      for (const f of importFiles) {
+        fd.append("files", f, f.name);
+      }
+      return { body: fd, contentType: null /* let browser set boundary */ };
+    }
+    if (importPasteText.trim()) {
+      return { body: importPasteText, contentType: "text/yaml" };
+    }
+    return null;
+  };
+
+  const submitImport = async (dryRun: boolean): Promise<ImportApiResponse | null> => {
+    const req = buildImportRequest();
+    if (!req) {
+      setImportError("Drop a file or paste YAML to import.");
+      return null;
+    }
+    setImportError(null);
+    const url = `/api/agents/import${dryRun ? "?dry_run=true" : ""}`;
+    const init: RequestInit = {
+      method: "POST",
+      body: req.body,
+      credentials: "include",
+    };
+    if (req.contentType) {
+      init.headers = { "Content-Type": req.contentType };
+    }
+    try {
+      const res = await fetch(url, init);
+      const data = (await res.json().catch(() => ({}))) as ImportApiResponse;
+      if (!res.ok && !Array.isArray(data?.errors)) {
+        setImportError(`Import failed (HTTP ${res.status})`);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Network error");
+      return null;
+    }
+  };
+
+  const handleImportPreview = async () => {
+    if (importPreviewing) return;
+    setImportPreviewing(true);
+    setImportPreview(null);
+    const data = await submitImport(true);
+    setImportPreviewing(false);
+    if (!data) return;
+    setImportPreview({
+      items: data.imported ?? [],
+      errors: data.errors ?? [],
+    });
+  };
+
+  const handleImportConfirm = async () => {
+    if (importing) return;
+    setImporting(true);
+    const data = await submitImport(false);
+    setImporting(false);
+    if (!data) return;
+    setImportResult(data);
+    if ((data.errors?.length ?? 0) === 0 && (data.imported?.length ?? 0) > 0) {
+      refetchAgents();
+      refetchSoulkeys();
+      refetchPrompts();
+    }
+  };
+
+  const onImportFilesChosen = (chosen: FileList | File[] | null) => {
+    if (!chosen) return;
+    const arr = Array.from(chosen);
+    if (arr.length === 0) return;
+    setImportFiles((prev) => [...prev, ...arr]);
+    setImportPreview(null);
+    setImportResult(null);
+  };
+
   // --- issue a new SoulKey for an existing agent (when none exists yet) ---
   const [issuingForAgent, setIssuingForAgent] = useState<string | null>(null);
   const handleIssueKeyForAgent = async (agent: AgentRow) => {
@@ -591,12 +724,21 @@ function AgentsPageInner() {
             {counts.active} active
           </span>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
-        >
-          + Create Agent
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setShowImportModal(true); }}
+            className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-semibold hover:text-foreground hover:border-white/20 transition-all duration-200"
+            title="Import from agent.yaml (single or bulk)"
+          >
+            Import from YAML
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors"
+          >
+            + Create Agent
+          </button>
+        </div>
       </div>
 
       {/* Action error banner */}
@@ -1271,6 +1413,250 @@ function AgentsPageInner() {
                   >
                     I&apos;ve saved it
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Import from YAML Modal (W-H.2.f) */}
+      <AnimatePresence>
+        {showImportModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!importing) { setShowImportModal(false); resetImportModal(); } }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div
+                className="glass-card rounded-xl w-full max-w-3xl border border-white/10 shadow-2xl shadow-black/50 max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Import from agent.yaml</h2>
+                    <p className="text-[11px] text-foreground-subtle mt-0.5">
+                      Bulk-import agents, prompts, provider-key overrides, and persona policy in one shot.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { if (!importing) { setShowImportModal(false); resetImportModal(); } }}
+                    className="text-foreground-subtle hover:text-foreground transition-colors"
+                    disabled={importing}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-5 overflow-y-auto">
+                  {/* Drag-and-drop area */}
+                  <div>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+                      Files (.yaml, .yml, .json)
+                    </label>
+                    <div
+                      onDragEnter={(e) => { e.preventDefault(); setImportDragActive(true); }}
+                      onDragOver={(e) => { e.preventDefault(); setImportDragActive(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setImportDragActive(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setImportDragActive(false);
+                        onImportFilesChosen(e.dataTransfer?.files);
+                      }}
+                      className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
+                        importDragActive
+                          ? "border-gold-500/60 bg-gold-500/5"
+                          : "border-white/15 hover:border-white/25"
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        accept=".yaml,.yml,.json,application/yaml,application/json,text/yaml"
+                        onChange={(e) => onImportFilesChosen(e.target.files)}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <p className="text-sm text-foreground">
+                        Drag &amp; drop or click to choose
+                      </p>
+                      <p className="text-[11px] text-foreground-subtle mt-1">
+                        Multiple files become multiple imports. Multi-document YAML (
+                        <code className="font-mono">---</code>) is also supported.
+                      </p>
+                    </div>
+
+                    {/* File pills */}
+                    {importFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {importFiles.map((f, i) => (
+                          <span
+                            key={`${f.name}-${i}`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300"
+                          >
+                            <span className="font-mono">{f.name}</span>
+                            <span className="text-foreground-subtle">({(f.size / 1024).toFixed(1)} KB)</span>
+                            <button
+                              onClick={() => {
+                                setImportFiles((prev) => prev.filter((_, idx) => idx !== i));
+                                setImportPreview(null);
+                              }}
+                              className="text-teal-400 hover:text-teal-200 ml-1"
+                              title="Remove"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Paste-mode */}
+                  <div>
+                    <label className="block text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
+                      …or paste YAML directly
+                    </label>
+                    <textarea
+                      value={importPasteText}
+                      onChange={(e) => { setImportPasteText(e.target.value); setImportPreview(null); }}
+                      placeholder={"metadata:\n  persona: research-coach\nspec:\n  prompt:\n    name: research-coach\n    body: |\n      You are a research coach."}
+                      rows={8}
+                      className="w-full px-3 py-2 rounded-lg bg-navy-950 border border-white/10 text-xs text-foreground placeholder:text-foreground-subtle focus:outline-none focus:border-gold-500/50 transition-all duration-200 font-mono resize-y"
+                      disabled={importFiles.length > 0}
+                    />
+                    {importFiles.length > 0 && (
+                      <p className="text-[10px] text-foreground-subtle mt-1">
+                        Paste-mode is disabled while files are attached.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Preview pane */}
+                  {importPreview && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                          Preview ({importPreview.items.length} agents · {importPreview.errors.length} errors)
+                        </h4>
+                      </div>
+
+                      {importPreview.items.length === 0 && importPreview.errors.length === 0 && (
+                        <p className="px-3 py-2 rounded-lg bg-navy-950 border border-white/5 text-xs text-foreground-muted">
+                          Nothing to preview yet.
+                        </p>
+                      )}
+
+                      {importPreview.items.length > 0 && (
+                        <div className="space-y-1.5">
+                          {importPreview.items.map((item, idx) => (
+                            <div
+                              key={`prev-${idx}`}
+                              className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-green-500/5 border border-green-500/20"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                                <span className="font-mono text-xs text-foreground truncate">{item.persona_id}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-[10px] text-foreground-subtle shrink-0">
+                                {item.prompt_id && <span>+ prompt</span>}
+                                {item.provider_keys_created > 0 && <span>+ {item.provider_keys_created} key{item.provider_keys_created > 1 ? "s" : ""}</span>}
+                                {item.policy_synced && <span>+ policy</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {importPreview.errors.length > 0 && (
+                        <div className="space-y-1.5">
+                          {importPreview.errors.map((err, idx) => (
+                            <div
+                              key={`prev-err-${idx}`}
+                              className="px-3 py-2 rounded-lg bg-red-500/5 border border-red-500/20"
+                            >
+                              <p className="font-mono text-[11px] text-red-300">{err.path}</p>
+                              <p className="text-xs text-red-200 mt-0.5">{err.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Final result (post-confirm) */}
+                  {importResult && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider">
+                        Import result
+                      </h4>
+                      {(importResult.errors?.length ?? 0) === 0 && (importResult.imported?.length ?? 0) > 0 && (
+                        <div className="px-3 py-2.5 rounded-lg bg-green-500/10 border border-green-500/25 text-xs text-green-200">
+                          Imported {importResult.imported.length} agent{importResult.imported.length !== 1 ? "s" : ""} successfully.
+                        </div>
+                      )}
+                      {(importResult.errors?.length ?? 0) > 0 && (
+                        <div className="space-y-1.5">
+                          {importResult.errors.map((err, idx) => (
+                            <div
+                              key={`res-err-${idx}`}
+                              className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/25"
+                            >
+                              <p className="font-mono text-[11px] text-red-300">{err.path}</p>
+                              <p className="text-xs text-red-200 mt-0.5">{err.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {importError && (
+                    <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                      {importError}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-white/10">
+                  <button
+                    onClick={handleImportPreview}
+                    disabled={importPreviewing || importing || (importFiles.length === 0 && !importPasteText.trim())}
+                    className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {importPreviewing ? "Validating..." : "Preview / Validate"}
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => { setShowImportModal(false); resetImportModal(); }}
+                      className="px-4 py-2 rounded-lg bg-navy-700 text-foreground-muted border border-white/10 text-sm font-medium hover:text-foreground transition-all duration-200"
+                      disabled={importing}
+                    >
+                      {importResult && (importResult.errors?.length ?? 0) === 0 ? "Close" : "Cancel"}
+                    </button>
+                    <button
+                      onClick={handleImportConfirm}
+                      disabled={
+                        importing ||
+                        (importFiles.length === 0 && !importPasteText.trim()) ||
+                        (importPreview ? importPreview.errors.length > 0 : false)
+                      }
+                      className="px-5 py-2 rounded-lg bg-gold-500 text-navy-950 text-sm font-semibold hover:bg-gold-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {importing ? "Importing..." : "Confirm import"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
