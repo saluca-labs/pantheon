@@ -122,6 +122,16 @@ jobs:
             image: memory-service
             dockerfile: apps/memory-service/Dockerfile
             context: .
+          # tiresias-proxy — Python FastAPI, built from pantheon source
+          # (apps/platform-api/src/tiresias/). Pre-W-J.1 the deployed image
+          # was forked from Z:/tiresias and frozen at v0.6.9, which meant
+          # the W-H BYOK changes (tenant_id passthrough in proxy/app.py +
+          # providers/__init__.py) never reached prod. Building from
+          # pantheon's own tree fixes that.
+          - service: tiresias-proxy
+            image: tiresias-proxy
+            dockerfile: apps/platform-api/Dockerfile.proxy
+            context: .
           # pantheon-agos-audit-retention — Node cronjob, pnpm monorepo,
           # context = repo root. First scheduled job under the native
           # CronJob platform (apps/platform-api/k8s/pantheon/cronjobs/).
@@ -217,7 +227,7 @@ jobs:
           # `pantheon-<job>` short-name convention (see
           # apps/platform-api/k8s/pantheon/cronjobs/README.md).
           for svc in portal platform-web soulauth soulgate soulwatch memory-service \
-                     pantheon-agos-audit-retention; do
+                     tiresias-proxy pantheon-agos-audit-retention; do
             kustomize edit set image \
               "${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}=${{ env.AR_HOST }}/${{ env.GCP_PROJECT }}/${{ env.AR_REPO }}/${svc}:${TAG}"
           done
@@ -258,7 +268,7 @@ jobs:
       - name: Wait for deployments to roll out
         run: |
           set -euo pipefail
-          for d in portal platform-web soulauth soulgate soulwatch memory-service; do
+          for d in portal platform-web soulauth soulgate soulwatch memory-service tiresias-proxy; do
             echo "── rollout: $d ──"
             kubectl rollout status deployment/$d -n "${{ env.GKE_NAMESPACE }}" --timeout=600s
           done
