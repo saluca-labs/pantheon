@@ -126,10 +126,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // 5. Build response — redirect if returnTo is present and same-origin,
   //    otherwise plain JSON ack.
+  //
+  // Behind the GKE ingress, `request.url` resolves to the pod's internal
+  // hostname (e.g. `platform-web-XYZ:3000`) which is unreachable from the
+  // public internet, so we MUST reconstruct the base URL from the
+  // X-Forwarded-Proto / X-Forwarded-Host headers the proxy injects.
   const returnTo = safeReturnTo(request.nextUrl.searchParams.get('returnTo'));
 
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  const baseUrl = forwardedHost
+    ? `${forwardedProto ?? 'https'}://${forwardedHost}`
+    : request.url;
+
   const response = returnTo
-    ? NextResponse.redirect(new URL(returnTo, request.url), 303)
+    ? NextResponse.redirect(new URL(returnTo, baseUrl), 303)
     : NextResponse.json({ ok: true, userId }, { status: 200 });
 
   // 6. Set platform_session cookie via the canonical helper
