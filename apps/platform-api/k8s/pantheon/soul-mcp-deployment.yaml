@@ -1,0 +1,148 @@
+# soul-mcp — Dual-surface adapter (MCP-over-stdio + HTTP REST) over the
+# vendored soul-service. Surfaces the full mcp__soul__* tool family (22
+# tools across soul/mesh/nexus) so:
+#   - LLM harnesses can kubectl exec into the pod and pipe MCP frames
+#   - other pantheon services can POST /api/tools/<name> over HTTP
+#
+# Memory primitives go through soul-service. Mesh + nexus state and the
+# soul session/cot/transcript bookkeeping live in a local SQLite store
+# (per-pod, replicas=1 — same Tier 0 constraint that pins soul-service).
+# See apps/soul-mcp/README.md for the upstream-migration story.
+#
+# Auth: shares SOUL_SERVICE_KEY with soul-service so the adapter can
+# (a) call upstream and (b) enforce the same key on its own API. One
+# secret, both pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soul-mcp
+  namespace: pantheon
+  labels:
+    app: soul-mcp
+    app.kubernetes.io/name: soul-mcp
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: mcp-adapter
+spec:
+  # MVP single replica — local SQLite holds mesh + nexus state, so
+  # scaling out would split those subsystems. Externalize before
+  # bumping (same rationale as apps/soul-service; see
+  # apps/soul-service/README.md → "Deferred features" → §4 for the
+  # exact pattern). When mesh/nexus move out of local SQLite, this
+  # one is free to scale independently.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soul-mcp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: soul-mcp
+        app.kubernetes.io/name: soul-mcp
+        app.kubernetes.io/part-of: pantheon
+    spec:
+      serviceAccountName: pantheon-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: soul-mcp
+          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soul-mcp:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8090
+              name: http
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            # /app/data holds the SQLite mesh/nexus store; emptyDir is
+            # fine while replicas=1 (per-pod by design).
+            - name: soul-mcp-data
+              mountPath: /app/data
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: SOUL_MCP_HTTP_PORT
+              value: "8090"
+            - name: SOUL_MCP_HTTP_HOST
+              value: "0.0.0.0"
+            - name: SOUL_MCP_DB_PATH
+              value: "/app/data/soul-mcp.db"
+            # Default to HTTP-only in-cluster. Operators that need MCP
+            # over stdio kubectl exec a separate invocation rather than
+            # blocking both transports on the pod's stdin/stdout (which
+            # is plumbed to the container's main process and unsafe to
+            # share with the HTTP listener).
+            - name: SOUL_MCP_TRANSPORT
+              value: "http"
+            - name: SOUL_SERVICE_URL
+              value: "http://soul-service:8080"
+            # Shared with soul-service — one key, both pods. Required for
+            # outbound calls upstream AND inbound auth on this adapter.
+            - name: SOUL_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: soul-service-key
+            # Auto-init off by default. Flip to "1" to have the adapter
+            # call soul_session_init at boot against itself, warming the
+            # soul-service hot tier for SOUL_AUTO_INIT_SESSION_ID.
+            - name: SOUL_AUTO_INIT_SESSION
+              value: "0"
+            - name: SOUL_AUTO_INIT_SESSION_ID
+              value: "pantheon-prod-main"
+            # SOUL_AUTO_INIT_HARNESS / _PERSONA / _NODE_ID intentionally
+            # unset — the adapter falls back to $HOSTNAME for node_id.
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 100Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+              ephemeral-storage: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            failureThreshold: 20
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: soul-mcp-data
+          emptyDir:
+            sizeLimit: 512Mi
