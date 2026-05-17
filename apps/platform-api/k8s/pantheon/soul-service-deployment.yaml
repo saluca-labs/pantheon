@@ -93,6 +93,7 @@ spec:
                 secretKeyRef:
                   name: pantheon-secrets
                   key: soul-service-key
+                  optional: true
             # Tier 2 cold storage — optional. Leave keys unset and Tier 0/1
             # continue to serve; write_memory() will raise on Tier 2 fan-out.
             # Wire these in via pantheon-secrets when a Supabase project is
