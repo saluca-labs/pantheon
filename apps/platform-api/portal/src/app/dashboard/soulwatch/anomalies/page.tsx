@@ -4,7 +4,6 @@ import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { timeAgo } from "@/lib/display";
-import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 
 /** SoulWatch anomaly list -- detailed anomaly inspection with severity and type filters. */
 
@@ -244,9 +243,7 @@ export default function AnomaliesPage() {
         <div className="text-center py-12 text-foreground-muted text-sm">Loading anomalies...</div>
       )}
       {error && (
-        parseErrorStatus(error) === 402
-          ? <UpgradePrompt feature="anomaly_detection" requiredTier="pro" />
-          : <div className="text-center py-12 text-red-400 text-sm">Failed to load anomalies: {error}</div>
+        <div className="text-center py-12 text-red-400 text-sm">Failed to load anomalies: {error}</div>
       )}
       {!loading && !error && anomalies.length === 0 && (
         <div className="text-center py-12">
