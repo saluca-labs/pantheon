@@ -21,7 +21,7 @@ Every phase follows the same sequence:
 3. **Repo** — `server-only` DB calls via `pg.Pool`, parameterized queries
 4. **API routes** — Next.js Route Handlers under `api/tiresias/agentic-os/creator/`
 5. **Components** — React/TSX under `components/agentic-os/creator/`
-6. **Pages** — Server components under `app/(dashboard)/dashboard/os/creator/`
+6. **Pages** — Server components under `app/(dashboard)/dashboard/creator/`
 7. **Registry update** — Feature cards added to `registry.ts`
 
 **Cross-cutting**:
@@ -80,8 +80,8 @@ Every phase follows the same sequence:
 - `components/agentic-os/creator/creator-hub.tsx` — Landing page with pinned notes grid, recent notes list, quick-create button
 
 **Pages:**
-- `app/(dashboard)/dashboard/os/creator/page.tsx` — Creator hub (server component, fetches pinned + recent notes)
-- `app/(dashboard)/dashboard/os/creator/notes/[noteId]/page.tsx` — Note detail with TipTap editor, auto-save via debounced PATCH
+- `app/(dashboard)/dashboard/creator/page.tsx` — Creator hub (server component, fetches pinned + recent notes)
+- `app/(dashboard)/dashboard/creator/notes/[noteId]/page.tsx` — Note detail with TipTap editor, auto-save via debounced PATCH
 
 **Packages to install:**
 - `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-placeholder`, `@tiptap/extension-task-list`, `@tiptap/extension-task-item`, `@tiptap/extension-underline`, `@tiptap/extension-link`, `@tiptap/extension-image`
@@ -336,14 +336,14 @@ Phases 2-5 are independent of each other and can be built in parallel after Phas
 Creator OS features array after all 7 phases:
 ```typescript
 features: [
-  { href: '/dashboard/os/creator', label: 'Hub', description: 'Pinned notes, recent work, and quick-create.' },
-  { href: '/dashboard/os/creator/notes', label: 'Notes', description: 'Nested workspace with TipTap editor, tags, and drag-and-drop tree.' },
-  { href: '/dashboard/os/creator/posts', label: 'Publishing', description: 'Blog/newsletter posts with scheduling, RSS feed, and subscriber management.' },
-  { href: '/dashboard/os/creator/books', label: 'Books', description: 'Long-form writing with chapters, word-count tracking, and Pandoc export.' },
-  { href: '/dashboard/os/creator/podcast', label: 'Podcast', description: 'Episode management with Podcasting 2.0 RSS feed and Plyr audio player.' },
-  { href: '/dashboard/os/creator/videos', label: 'Videos', description: 'Video library with HLS playback via Video.js.' },
-  { href: '/dashboard/os/creator/chat', label: 'AI Chat', description: 'Multi-model chat with streaming, conversation history, and system prompts.' },
-  { href: '/dashboard/os/creator/coach', label: 'AI Coach', description: 'Five-mode content coach: strategy, writing, audience, monetization, and general.' },
+  { href: '/dashboard/creator', label: 'Hub', description: 'Pinned notes, recent work, and quick-create.' },
+  { href: '/dashboard/creator/notes', label: 'Notes', description: 'Nested workspace with TipTap editor, tags, and drag-and-drop tree.' },
+  { href: '/dashboard/creator/posts', label: 'Publishing', description: 'Blog/newsletter posts with scheduling, RSS feed, and subscriber management.' },
+  { href: '/dashboard/creator/books', label: 'Books', description: 'Long-form writing with chapters, word-count tracking, and Pandoc export.' },
+  { href: '/dashboard/creator/podcast', label: 'Podcast', description: 'Episode management with Podcasting 2.0 RSS feed and Plyr audio player.' },
+  { href: '/dashboard/creator/videos', label: 'Videos', description: 'Video library with HLS playback via Video.js.' },
+  { href: '/dashboard/creator/chat', label: 'AI Chat', description: 'Multi-model chat with streaming, conversation history, and system prompts.' },
+  { href: '/dashboard/creator/coach', label: 'AI Coach', description: 'Five-mode content coach: strategy, writing, audience, monetization, and general.' },
 ]
 ```
 

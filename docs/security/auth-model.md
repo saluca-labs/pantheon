@@ -104,7 +104,7 @@ The platform now has **two** audit log tables with intentionally different owner
 | Table | Owner | Purpose | Lifetime |
 |-------|-------|---------|----------|
 | `audit_events` | `packages/auth` | Compliance / security log for auth + session events | Long retention, immutable |
-| `agos_audit` | `apps/platform-web` (Agentic OS layer) | Per-OS product event stream surfaced in `/dashboard/os/audit` | Product-tier retention, see [audit-trail.md](./audit-trail.md) |
+| `agos_audit` | `apps/platform-web` (Agentic OS layer) | Per-OS product event stream surfaced in `/dashboard/audit` | Product-tier retention, see [audit-trail.md](./audit-trail.md) |
 
 When instrumenting a new event, pick by audience:
 

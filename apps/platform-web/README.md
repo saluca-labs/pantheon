@@ -34,10 +34,10 @@ The Agentic OS layer is a registry-driven sub-app under `/dashboard/os/*`. See [
 | Route | Purpose |
 |-------|---------|
 | `/dashboard/os` | Cross-OS index with live counts |
-| `/dashboard/os/audit` | Cross-OS audit log viewer ([ADR-006](../../docs/decisions/ADR-006-cross-os-audit-log.md)) |
-| `/dashboard/os/settings` | Per-user feature flags ([ADR-007](../../docs/decisions/ADR-007-per-user-feature-flags.md)) |
+| `/dashboard/audit` | Cross-OS audit log viewer ([ADR-006](../../docs/decisions/ADR-006-cross-os-audit-log.md)) |
+| `/dashboard/settings` | Per-user feature flags ([ADR-007](../../docs/decisions/ADR-007-per-user-feature-flags.md)) |
 | `/dashboard/os/[slug]` | Generic plan viewer for any registered slug |
-| `/dashboard/os/<slug>/...` | Per-OS feature surfaces (e.g. `/dashboard/os/maker/builds`, `/dashboard/os/filmmaker/projects`) |
+| `/dashboard/os/<slug>/...` | Per-OS feature surfaces (e.g. `/dashboard/maker/builds`, `/dashboard/filmmaker/projects`) |
 
 Modules registered in `src/lib/agentic-os/registry.ts`: `health`, `maker`, `research`, `secure-dev`, `creator`, `filmmaker`, `cyber`, `autobiographer`, `business`.
 

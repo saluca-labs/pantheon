@@ -17,11 +17,11 @@ This document is **plan-only**. The contacts CRM stub from migration `0010_busin
 
 **Registry entry** (`apps/platform-web/src/lib/agentic-os/registry.ts`):
 
-- `slug: 'business'`, `status: 'live'`, accent `teal`, icon `Briefcase`. Tagline "Solo to enterprise without re-architecting." Description "Org profile, contacts, invoicing, finances, and ops modules that unlock as your team grows." One feature card listed today, pointing at `/dashboard/os/business/contacts` ("Contacts CRM").
+- `slug: 'business'`, `status: 'live'`, accent `teal`, icon `Briefcase`. Tagline "Solo to enterprise without re-architecting." Description "Org profile, contacts, invoicing, finances, and ops modules that unlock as your team grows." One feature card listed today, pointing at `/dashboard/business/contacts` ("Contacts CRM").
 
 **Shipped surface (stub features only — pre-Phase-1 sketch):**
 
-- `apps/platform-web/src/app/(dashboard)/dashboard/os/business/contacts/page.tsx` — loads the user's people / organizations / interactions and mounts the `ContactsCrm` component. No deal / pipeline concept yet.
+- `apps/platform-web/src/app/(dashboard)/dashboard/business/contacts/page.tsx` — loads the user's people / organizations / interactions and mounts the `ContactsCrm` component. No deal / pipeline concept yet.
 - `apps/platform-web/src/components/agentic-os/business/contacts-crm.tsx` — client UI for the three-entity contact ledger (people, orgs, recent interactions).
 - `apps/platform-web/src/lib/agentic-os/business/crm.ts` — domain types (`Person`, `Organization`, `Interaction`, `ORG_TYPES`, `INTERACTION_TYPES`, `CONTACT_STAGES`), validators, `fullName` helper. Stage taxonomy `lead | qualified | proposal | negotiation | won | lost | inactive` and interaction taxonomy `call | email | meeting | demo | proposal | follow_up | note | linkedin | other` are already in code.
 - `apps/platform-web/src/lib/agentic-os/business/repo.ts` — CRUD against the three `agos_business_*` tables. Currently uses a thin local `recordAudit` rather than the shared `_shared/audit.ts` writer.
@@ -148,15 +148,15 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/coach` — coach hub. Lists recent sessions, mode picker + per-mode quick prompts + free-form start input. 503-aware empty state when `ANTHROPIC_API_KEY` unset.
-- `/dashboard/os/business/coach/[sessionId]` — session view. Mode pill + scope pill on header.
+- `/dashboard/business/coach` — coach hub. Lists recent sessions, mode picker + per-mode quick prompts + free-form start input. 503-aware empty state when `ANTHROPIC_API_KEY` unset.
+- `/dashboard/business/coach/[sessionId]` — session view. Mode pill + scope pill on header.
 - Deal detail (Phase 2), project detail (Phase 3), and invoice detail (Phase 4) pages all CTA into `/business/coach?<scope>_id=<id>&mode=<default>`.
 
 **Cross-ownership safety:** every read filters by `user_id`. Session ownership checked before fetch / mutation. `project_id` belonging to another user returns 404.
 
 **Phase N seam:** none — this is the terminal phase.
 
-**Hub registry card:** add `AI coach` pointing at `/dashboard/os/business/coach`.
+**Hub registry card:** add `AI coach` pointing at `/dashboard/business/coach`.
 
 ***
 
@@ -196,17 +196,17 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/templates` — template library.
-- `/dashboard/os/business/templates/[id]` — template editor with version history rail.
-- `/dashboard/os/business/documents` — workshop document list with filter chips (status / kind / project / deal).
-- `/dashboard/os/business/documents/[id]` — document detail. Three sections: meta (counterparty + template + status + dates), body editor (markdown when `draft`, read-only otherwise), signature panel (canvas widget when `sent` and the user is the counterparty; signature history otherwise).
+- `/dashboard/business/templates` — template library.
+- `/dashboard/business/templates/[id]` — template editor with version history rail.
+- `/dashboard/business/documents` — workshop document list with filter chips (status / kind / project / deal).
+- `/dashboard/business/documents/[id]` — document detail. Three sections: meta (counterparty + template + status + dates), body editor (markdown when `draft`, read-only otherwise), signature panel (canvas widget when `sent` and the user is the counterparty; signature history otherwise).
 - Deal detail (Phase 2) and project detail (Phase 3) pages — new `Documents` tab listing attached documents with add picker.
 
 **Cross-ownership safety:** every read filters by `user_id`. Document mutation validates `project_id` / `deal_id` / `contact_id` / `template_id` ownership where supplied.
 
 **Phase 7 seam:** Coach `business_strategist` mode can reference document counts and signed-at deltas as a deal-velocity signal in the context loader.
 
-**Hub registry card:** add `Documents` pointing at `/dashboard/os/business/documents`.
+**Hub registry card:** add `Documents` pointing at `/dashboard/business/documents`.
 
 ***
 
@@ -245,15 +245,15 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/expenses` — workshop expense ledger with filter chips (category / project / date range / reimbursable toggle), running totals strip, "Add expense" CTA.
-- `/dashboard/os/business/pnl` — P&L hub. Three panels: live summary (date-range picker + bar chart + category breakdown), snapshot history (locked-period list), export CTAs.
+- `/dashboard/business/expenses` — workshop expense ledger with filter chips (category / project / date range / reimbursable toggle), running totals strip, "Add expense" CTA.
+- `/dashboard/business/pnl` — P&L hub. Three panels: live summary (date-range picker + bar chart + category breakdown), snapshot history (locked-period list), export CTAs.
 - Project detail (Phase 3) — Expenses tab + Profitability badge on header (live computed).
 
 **Cross-ownership safety:** every read filters by `user_id`. Expense mutation validates `project_id` ownership when supplied.
 
 **Phase 7 seam:** Coach `business_strategist` context loader reads the live P&L summary endpoint for the last 6 months when the mode opens.
 
-**Hub registry cards:** add `Expenses` pointing at `/dashboard/os/business/expenses` and `P&L` pointing at `/dashboard/os/business/pnl`.
+**Hub registry cards:** add `Expenses` pointing at `/dashboard/business/expenses` and `P&L` pointing at `/dashboard/business/pnl`.
 
 ***
 
@@ -301,8 +301,8 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/quotes` — quote list with status filter chips. `/quotes/[id]` — quote detail with line-item editor.
-- `/dashboard/os/business/invoices` — invoice list, default filter outstanding (sent + partial + derived-overdue). `/invoices/[id]` — invoice detail with line-item editor, payment ledger, export-PDF button, "Bill unbilled time" CTA when the linked project has unbilled entries.
+- `/dashboard/business/quotes` — quote list with status filter chips. `/quotes/[id]` — quote detail with line-item editor.
+- `/dashboard/business/invoices` — invoice list, default filter outstanding (sent + partial + derived-overdue). `/invoices/[id]` — invoice detail with line-item editor, payment ledger, export-PDF button, "Bill unbilled time" CTA when the linked project has unbilled entries.
 - Deal detail (Phase 2), project detail (Phase 3), contact detail — new `Quotes` and `Invoices` tabs.
 
 **Cross-ownership safety:** every read filters by `user_id`. Quote / invoice / line-item / payment mutation validates parent ownership (deal / project / contact / quote / invoice) before write.
@@ -350,9 +350,9 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/projects` — project grid with status filter chips, billing-model badges, archived toggle.
-- `/dashboard/os/business/projects/[id]` — project detail. Tab strip: `Overview | Tasks | Time | Documents (P6) | Quotes (P4) | Invoices (P4) | Expenses (P5) | Coach (P7)`. Overview shows budget vs spent (billable hours × rate) when budget is set.
-- `/dashboard/os/business/time` — workshop time-entry timeline with filters (project / task / billable toggle / date range).
+- `/dashboard/business/projects` — project grid with status filter chips, billing-model badges, archived toggle.
+- `/dashboard/business/projects/[id]` — project detail. Tab strip: `Overview | Tasks | Time | Documents (P6) | Quotes (P4) | Invoices (P4) | Expenses (P5) | Coach (P7)`. Overview shows budget vs spent (billable hours × rate) when budget is set.
+- `/dashboard/business/time` — workshop time-entry timeline with filters (project / task / billable toggle / date range).
 - Header `RunningTimerPill` mounted on the dashboard shell — visible across all Business OS pages when a timer is running, CTAs to stop.
 
 **Components:** `ProjectList`, `ProjectForm`, `ProjectDetailShell`, `ProjectStatusPill`, `ProjectBudgetGauge`, `TaskBoard` (kanban-style), `TaskRowEditor`, `TimeEntryRow`, `TimeEntryEditor`, `RunningTimerPill`, `TimerStartButton`.
@@ -402,10 +402,10 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business/deals` — pipeline kanban view (one column per stage), filter chips (contact / org / source / tag / open toggle), forecast total strip on top. Drag-to-reorder column ordering moves stage (audited).
-- `/dashboard/os/business/deals/[id]` — deal detail. Sections: meta (contact + org + value + probability + expected close + source), description, activity timeline (interactions filtered to `deal_id`), linked projects (Phase 3) + quotes / invoices (Phase 4) populated when later phases ship.
-- `/dashboard/os/business/contacts/[id]` — contact detail page now added (previously only the contacts list existed). Sections: meta + interaction timeline + linked deals + linked projects (P3).
-- `/dashboard/os/business/organizations/[id]` — org detail page added.
+- `/dashboard/business/deals` — pipeline kanban view (one column per stage), filter chips (contact / org / source / tag / open toggle), forecast total strip on top. Drag-to-reorder column ordering moves stage (audited).
+- `/dashboard/business/deals/[id]` — deal detail. Sections: meta (contact + org + value + probability + expected close + source), description, activity timeline (interactions filtered to `deal_id`), linked projects (Phase 3) + quotes / invoices (Phase 4) populated when later phases ship.
+- `/dashboard/business/contacts/[id]` — contact detail page now added (previously only the contacts list existed). Sections: meta + interaction timeline + linked deals + linked projects (P3).
+- `/dashboard/business/organizations/[id]` — org detail page added.
 
 **Components:** `DealKanban`, `DealCard`, `DealForm`, `DealDetailShell`, `DealStagePicker`, `ForecastStrip`, `InteractionTimeline`, `InteractionEditor`, `ContactDetailShell`, `OrgDetailShell`.
 
@@ -417,7 +417,7 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Phase 7 seam:** Coach `sales_coach` mode reads open deals + recent interactions for context.
 
-**Hub registry card:** add `Deals` pointing at `/dashboard/os/business/deals`.
+**Hub registry card:** add `Deals` pointing at `/dashboard/business/deals`.
 
 ***
 
@@ -451,7 +451,7 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Locked decisions:**
 
-- **No Organization Profile wizard.** The legacy plan front-loaded a multi-step wizard collecting team-size / industry / billing-model / geographic-scope to drive an adaptive sidebar. Phase 1 instead creates a settings row lazily, with sensible defaults, and surfaces a single `/dashboard/os/business/settings` page where the user can edit values when they care. No feature flags, no industry-conditional modules — every Business OS module ships visible to every user.
+- **No Organization Profile wizard.** The legacy plan front-loaded a multi-step wizard collecting team-size / industry / billing-model / geographic-scope to drive an adaptive sidebar. Phase 1 instead creates a settings row lazily, with sensible defaults, and surfaces a single `/dashboard/business/settings` page where the user can edit values when they care. No feature flags, no industry-conditional modules — every Business OS module ships visible to every user.
 - **Audit migration to shared writer.** Every existing `lib/agentic-os/business/repo.ts` mutation flips from the local `recordAudit` to `import { recordAudit } from '../_shared/audit.ts'` with `osSlug: 'business'`. Audit action names get the `business.*` prefix in this phase.
 - **Contacts page extensions.** The shipped `/contacts` page is expanded to a hub with three tabs: People, Organizations, Recent Interactions. The existing `ContactsCrm` component is split into three sub-components but retains the same data fetch.
 - **Soft-archive everywhere.** Both people and orgs get `archived_at` columns; the existing list endpoint accepts `?archived=true|false` (default false). Existing data has `archived_at = NULL` and shows by default.
@@ -468,11 +468,11 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 
 **Pages:**
 
-- `/dashboard/os/business` — hub page. Cards: `People`, `Organizations`, `Recent activity` (the interactions feed). Phase 2-7 cards land as those phases ship.
-- `/dashboard/os/business/people` — people list with filter chips (tag / archived toggle / search). `/people/[id]` — person detail (Phase 2 adds the deal & activity sections; Phase 3 adds projects; Phase 4 adds invoices).
-- `/dashboard/os/business/organizations` — orgs list. `/organizations/[id]` — org detail.
-- `/dashboard/os/business/settings` — settings editor.
-- Existing `/dashboard/os/business/contacts` page kept as a deprecated alias that redirects to `/dashboard/os/business` after a 100ms client-side redirect; the rendered loading state explains the new structure.
+- `/dashboard/business` — hub page. Cards: `People`, `Organizations`, `Recent activity` (the interactions feed). Phase 2-7 cards land as those phases ship.
+- `/dashboard/business/people` — people list with filter chips (tag / archived toggle / search). `/people/[id]` — person detail (Phase 2 adds the deal & activity sections; Phase 3 adds projects; Phase 4 adds invoices).
+- `/dashboard/business/organizations` — orgs list. `/organizations/[id]` — org detail.
+- `/dashboard/business/settings` — settings editor.
+- Existing `/dashboard/business/contacts` page kept as a deprecated alias that redirects to `/dashboard/business` after a 100ms client-side redirect; the rendered loading state explains the new structure.
 
 **Components:** existing `ContactsCrm` is split into `PeopleList`, `OrganizationsList`, `RecentInteractions`. New: `PersonForm`, `PersonDetailShell`, `OrganizationForm`, `OrganizationDetailShell`, `InteractionEditor`, `BusinessSettingsForm`, `BusinessHub` (the new landing page).
 
@@ -489,7 +489,7 @@ All mutating routes audit via `recordAudit({ pool, osSlug: 'business', actorId, 
 ## Reference paths
 
 - Registry: `apps/platform-web/src/lib/agentic-os/registry.ts`
-- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/os/business/`, `apps/platform-web/src/lib/agentic-os/business/`, `apps/platform-web/src/components/agentic-os/business/`, `apps/platform-web/src/app/api/tiresias/agentic-os/business/`
+- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/business/`, `apps/platform-web/src/lib/agentic-os/business/`, `apps/platform-web/src/components/agentic-os/business/`, `apps/platform-web/src/app/api/tiresias/agentic-os/business/`
 - Existing migration: `packages/database/alembic/versions/0010_business_os.py`
 - Shared primitives: `apps/platform-web/src/lib/agentic-os/_shared/` (`audit.ts`, `crud-route.ts`, `session.ts`, `types.ts`, `pdf/`, `safety/`) and `apps/platform-web/src/components/agentic-os/_shared/`
 - Coach pattern anchor: `apps/platform-web/src/lib/agentic-os/maker/coach/`

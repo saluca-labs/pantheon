@@ -5,7 +5,7 @@ Client components for the [Agentic OS](../../../../../docs/architecture/agentic-
 ## Layout
 
 ```
-settings/               Per-user feature flag toggle list (drives /dashboard/os/settings)
+settings/               Per-user feature flag toggle list (drives /dashboard/settings)
 audit/                  Cross-OS audit log table + filter chips
 health/, maker/, …      Per-OS feature components (forms, lists, charts)
 ```

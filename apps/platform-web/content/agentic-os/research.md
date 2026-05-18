@@ -25,13 +25,13 @@
 status `live`, accent `sky`, tagline *"ELN + literature + experiments."*,
 description *"Electronic lab notebook, literature mapping, hypothesis
 ledger, and experiment design for solo PhDs and small labs."* One feature
-card today: `/dashboard/os/research/hypotheses` → Hypothesis ledger.
+card today: `/dashboard/research/hypotheses` → Hypothesis ledger.
 
 ### Shipped surface (what already exists)
 
 | Path | Purpose |
 |---|---|
-| `apps/platform-web/src/app/(dashboard)/dashboard/os/research/hypotheses/page.tsx` | Server component; loads the user's hypotheses and renders the ledger. |
+| `apps/platform-web/src/app/(dashboard)/dashboard/research/hypotheses/page.tsx` | Server component; loads the user's hypotheses and renders the ledger. |
 | `apps/platform-web/src/app/api/tiresias/agentic-os/research/hypotheses/route.ts` | BFF — GET list / POST create with Zod body validation + audit. |
 | `apps/platform-web/src/app/api/tiresias/agentic-os/research/hypotheses/[id]/route.ts` | BFF — GET / PATCH / DELETE single hypothesis (status transitions audited). |
 | `apps/platform-web/src/components/agentic-os/research/HypothesisLedger.tsx` | Client component — list + create/edit form for the ledger. |
@@ -118,7 +118,7 @@ that to mirror the rest of the platform — see Open Question #1.
   default, hard delete on `?hard=true`), POST `restore`. Audited on
   every mutation with `projectId = experiment.id`.
 - Pages: hub page replaced (experiments grid + quick-link to hypothesis
-  ledger), standalone `/dashboard/os/research/experiments` list, and
+  ledger), standalone `/dashboard/research/experiments` list, and
   per-experiment detail at `/experiments/[id]` with Overview / Notebook
   (Phase 2 placeholder) / Hypotheses (Phase 3 placeholder) tabs.
   Legacy hypotheses page kept functional with a Phase 3 notice.
@@ -210,12 +210,12 @@ All mutating routes audit via `recordAudit({ actorId, action:
 
 **Pages:**
 
-- `/dashboard/os/research` — hub. Two-column responsive grid:
+- `/dashboard/research` — hub. Two-column responsive grid:
   experiment list + feature cards (existing Hypothesis ledger card stays;
   later phases add cards beneath it).
-- `/dashboard/os/research/experiments` — full experiment list with
+- `/dashboard/research/experiments` — full experiment list with
   status filter chips + archived toggle.
-- `/dashboard/os/research/experiments/[id]` — per-experiment detail
+- `/dashboard/research/experiments/[id]` — per-experiment detail
   with tab strip — `Overview \| Notebook \| Hypotheses \| Literature \|
   Datasets \| Protocols \| Reproducibility \| Coach`. Tabs render the
   Phase-3+ placeholder until those phases ship.
@@ -279,7 +279,7 @@ chronological, not phased).
 
 **Pages:**
 
-- `/dashboard/os/research/experiments/[id]` → Notebook tab — chronological
+- `/dashboard/research/experiments/[id]` → Notebook tab — chronological
   reverse-time timeline with per-entry "edit" + "archive" affordances.
   Entry composer pinned to top (collapsible). Filter chips by
   `entry_kind`.
@@ -384,13 +384,13 @@ hypotheses; one hypothesis can be tested across multiple experiments).
 
 **Pages:**
 
-- `/dashboard/os/research/hypotheses` — existing list page, augmented
+- `/dashboard/research/hypotheses` — existing list page, augmented
   with archived toggle + link to the new detail page.
-- `/dashboard/os/research/hypotheses/[id]` — per-hypothesis detail
+- `/dashboard/research/hypotheses/[id]` — per-hypothesis detail
   (new). Sections: statement banner (If/Then/Because formatted),
   description, predictions list + editor, falsifiers list + editor,
   evidence panel grouped by polarity, linked experiments.
-- `/dashboard/os/research/experiments/[id]` → Hypotheses tab —
+- `/dashboard/research/experiments/[id]` → Hypotheses tab —
   attached-hypotheses list with add picker (workshop-scoped) and
   per-row role pill + remove affordance.
 
@@ -484,14 +484,14 @@ see Open Question #3.
 
 **Pages:**
 
-- `/dashboard/os/research/library` — workshop-global papers list with
+- `/dashboard/research/library` — workshop-global papers list with
   filter chips + free-text search + tag heatmap (reuses
   `_shared/components/tag-heatmap`).
-- `/dashboard/os/research/library/[id]` — paper detail (metadata,
+- `/dashboard/research/library/[id]` — paper detail (metadata,
   authors, tags, abstract, linked experiments, related notebook
   entries via Phase 3 evidence rows).
-- `/dashboard/os/research/authors` — workshop-global authors list.
-- `/dashboard/os/research/experiments/[id]` → Literature tab —
+- `/dashboard/research/authors` — workshop-global authors list.
+- `/dashboard/research/experiments/[id]` → Literature tab —
   linked-papers list with add picker (filterable + create-new
   fallback).
 
@@ -499,7 +499,7 @@ see Open Question #3.
 `PaperReferenceLinker`, `PaperAbstractCollapsible`, `AuthorChipList`.
 
 **Hub registry card:** add `Literature library` pointing at
-`/dashboard/os/research/library`.
+`/dashboard/research/library`.
 
 ***
 
@@ -587,10 +587,10 @@ project export.
 
 **Pages:**
 
-- `/dashboard/os/research/protocols` — workshop-global library.
-- `/dashboard/os/research/protocols/[id]` — protocol detail with
+- `/dashboard/research/protocols` — workshop-global library.
+- `/dashboard/research/protocols/[id]` — protocol detail with
   version history.
-- `/dashboard/os/research/experiments/[id]` → Datasets tab + Protocols
+- `/dashboard/research/experiments/[id]` → Datasets tab + Protocols
   tab (move out of placeholders). Export-PDF button on the experiment
   header.
 
@@ -688,10 +688,10 @@ doc pinned", "code published", "preregistration filed", and friends.
 
 **Pages:**
 
-- `/dashboard/os/research` hub → Top Blockers widget mounted alongside
+- `/dashboard/research` hub → Top Blockers widget mounted alongside
   any prior widgets.
-- `/dashboard/os/research/blockers` — full workshop blockers list.
-- `/dashboard/os/research/experiments/[id]` → Reproducibility tab
+- `/dashboard/research/blockers` — full workshop blockers list.
+- `/dashboard/research/experiments/[id]` → Reproducibility tab
   (move out of placeholder) with checklist UI + score badge. The
   Overview tab gets a Reproducibility score pill in the header.
 - Per-experiment Dependencies tab — upstream / downstream lists with
@@ -699,7 +699,7 @@ doc pinned", "code published", "preregistration filed", and friends.
 - Per-experiment Milestones strip on Overview.
 
 **Hub registry card:** add `Top blockers` pointing at
-`/dashboard/os/research/blockers`.
+`/dashboard/research/blockers`.
 
 ***
 
@@ -776,10 +776,10 @@ output filter — see Open Question #4.
 
 **Pages:**
 
-- `/dashboard/os/research/coach` — coach hub. Mode picker, recent
+- `/dashboard/research/coach` — coach hub. Mode picker, recent
   sessions, mode-scoped quick prompts. 503-aware empty state when
   `ANTHROPIC_API_KEY` is missing.
-- `/dashboard/os/research/coach/[sessionId]` — session view with
+- `/dashboard/research/coach/[sessionId]` — session view with
   rename + delete affordances and mode + scope pills.
 - Per-experiment Coach tab — CTA into
   `/research/coach?experiment_id=<id>&mode=methods_advisor` (default
@@ -887,7 +887,7 @@ output filter — see Open Question #4.
 ## Reference paths
 
 - Registry: `apps/platform-web/src/lib/agentic-os/registry.ts`
-- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/os/research/`, `apps/platform-web/src/lib/agentic-os/research/`, `apps/platform-web/src/components/agentic-os/research/`
+- Existing shipped surface: `apps/platform-web/src/app/(dashboard)/dashboard/research/`, `apps/platform-web/src/lib/agentic-os/research/`, `apps/platform-web/src/components/agentic-os/research/`
 - Existing migration: `packages/database/alembic/versions/0005_research_os.py`
 - Shared primitives: `apps/platform-web/src/lib/agentic-os/_shared/` (audit, session, pdf, safety, types, crud-route) and `apps/platform-web/src/components/agentic-os/_shared/` (checklist, combobox, dashboard-hub, data-table, stat-card, tag-heatmap, trend-chart, wizard-form)
 - Coach pattern anchor: `apps/platform-web/src/lib/agentic-os/maker/coach/`

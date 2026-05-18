@@ -89,7 +89,7 @@ whatever the writing route chose to record.
 ### Audience
 
 The end user. Every read at `/api/tiresias/agentic-os/audit` is filtered
-to `actor_id = current user`. The viewer at `/dashboard/os/audit` is the
+to `actor_id = current user`. The viewer at `/dashboard/audit` is the
 canonical surface; users see their own activity there, paginated and
 filterable.
 

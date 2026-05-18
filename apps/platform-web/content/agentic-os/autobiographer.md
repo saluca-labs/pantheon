@@ -26,11 +26,11 @@ into Phase 3 / Phase 4 below.
   `BookOpenText`. Tagline "Capture, learn voice, ghostwrite." Description
   "Capture life events, learn the user's voice, and produce ghostwritten
   chapters with full provenance." One feature card listed today, pointing
-  at `/dashboard/os/autobiographer/chapters` ("Chapter capture").
+  at `/dashboard/autobiographer/chapters` ("Chapter capture").
 
 **Shipped surface** (1 stub feature only — pre-Phase-1 sketch):
 
-- `apps/platform-web/src/app/(dashboard)/dashboard/os/autobiographer/chapters/page.tsx` —
+- `apps/platform-web/src/app/(dashboard)/dashboard/autobiographer/chapters/page.tsx` —
   loads the most-recent chapter for the current user and mounts the
   `ChapterEditor` component. No book/project concept yet.
 - `apps/platform-web/src/components/agentic-os/autobiographer/chapter-editor.tsx` —
@@ -235,10 +235,10 @@ carries a role framing on top of four shared hard rules:
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/coach` — coach hub. Lists recent
+- `/dashboard/autobiographer/coach` — coach hub. Lists recent
   sessions, mode picker + per-mode quick prompts + free-form start.
   503-aware empty state when `ANTHROPIC_API_KEY` unset.
-- `/dashboard/os/autobiographer/coach/[sessionId]` — session view.
+- `/dashboard/autobiographer/coach/[sessionId]` — session view.
   Mode pill + book scope pill on header. The `chapter_drafter` mode
   renders the citation map alongside the streamed text (each paragraph
   shows its source memory chips).
@@ -334,7 +334,7 @@ the first letter only, applied left-to-right.
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/privacy` — per-book privacy hub.
+- `/dashboard/autobiographer/privacy` — per-book privacy hub.
   Three panels: people roster with consent state (links into Phase 2
   people page), pseudonym map editor, review checklist grouped by
   chapter.
@@ -343,7 +343,7 @@ the first letter only, applied left-to-right.
   button surfaces the required-check shortfall as a blocking modal.
 - Memory detail page — same `sensitive_kinds` editor.
 - Hub registry card: `Privacy review` pointing at
-  `/dashboard/os/autobiographer/privacy`.
+  `/dashboard/autobiographer/privacy`.
 
 **Cross-ownership safety:** pseudonym creation validates that
 `person_id` belongs to the same user as the `book_id`; review-checks
@@ -416,7 +416,7 @@ schema. Phase 5 joins target the Phase 4 table.
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/timeline` — vertical scroll timeline
+- `/dashboard/autobiographer/timeline` — vertical scroll timeline
   across all memories. Filter chips: theme, kind (McAdams), book,
   decade, person referenced. Workshop-wide by default; per-book filter
   in URL.
@@ -427,7 +427,7 @@ schema. Phase 5 joins target the Phase 4 table.
 - Memory + chapter edit pages — Themes picker (multi-select chip
   input).
 - Hub registry cards: `Timeline` pointing at
-  `/dashboard/os/autobiographer/timeline`.
+  `/dashboard/autobiographer/timeline`.
 
 **Cross-ownership safety:** all theme/arc operations filter by
 `user_id`. Arc chapter attachment validates `chapter_id` belongs to
@@ -525,13 +525,13 @@ Autobiographer OS — provenance preserved".
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/books/[bookId]` — book detail. Chapter
+- `/dashboard/autobiographer/books/[bookId]` — book detail. Chapter
   list with status pills + word count + last-updated. Drag-to-reorder
   by `position` (gated behind "primary arc is default").
-- `/dashboard/os/autobiographer/chapters/[id]` — chapter detail.
+- `/dashboard/autobiographer/chapters/[id]` — chapter detail.
   Three-column layout: revision history rail (left), active revision
   prose (center), source-memory chips with citation count (right).
-- Existing `/dashboard/os/autobiographer/chapters` stub page — kept as
+- Existing `/dashboard/autobiographer/chapters` stub page — kept as
   a workshop-wide chapter index for backward compatibility, scope
   remains user-global with a book filter chip.
 - Hub registry cards: `Chapters` pointing at the workshop chapter
@@ -618,7 +618,7 @@ provider is swappable. The builder writes the new profile with
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/voice` — Voice Studio. Three panels:
+- `/dashboard/autobiographer/voice` — Voice Studio. Three panels:
   sample list (mark / unmark, source link to memory, archive),
   profile list (versions with built_at + sample_count, "Activate"
   CTA, "View JSON" expander), "Build profile from N active samples"
@@ -626,7 +626,7 @@ provider is swappable. The builder writes the new profile with
 - Memory detail page — "Mark as voice sample" toggle that creates a
   backed sample row pointing at the memory.
 - Hub registry card: `Voice studio` pointing at
-  `/dashboard/os/autobiographer/voice`.
+  `/dashboard/autobiographer/voice`.
 
 **Cross-ownership safety:** all reads filter by `user_id`. Sample
 backed by `memory_id` validates ownership.
@@ -685,17 +685,17 @@ across multiple books in a family-history workflow.
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/people` — workshop people roster
+- `/dashboard/autobiographer/people` — workshop people roster
   with consent badge per row, filter chips (pending / withheld /
   granted / deceased / public-figure / N/A), search.
-- `/dashboard/os/autobiographer/people/[id]` — person detail.
+- `/dashboard/autobiographer/people/[id]` — person detail.
   Cover image + relation + birth/death year, consent state + history,
   list of memories mentioning them with role chips, list of books
   they appear in (computed via memory→chapter→book).
 - Memory detail page — People picker (multi-select with create-new
   affordance).
 - Hub registry card: `People` pointing at
-  `/dashboard/os/autobiographer/people`.
+  `/dashboard/autobiographer/people`.
 
 **Cross-ownership safety:** every read filters by `user_id`. Memory↔
 person linking validates both rows belong to caller.
@@ -739,10 +739,10 @@ that landed in code, with their concrete artifacts, are:
   `/memories`,
   `/memories/[id]`.
 - Pages:
-  `/dashboard/os/autobiographer` (hub),
-  `/dashboard/os/autobiographer/books/[id]`,
-  `/dashboard/os/autobiographer/memories`,
-  `/dashboard/os/autobiographer/memories/[id]`,
+  `/dashboard/autobiographer` (hub),
+  `/dashboard/autobiographer/books/[id]`,
+  `/dashboard/autobiographer/memories`,
+  `/dashboard/autobiographer/memories/[id]`,
   plus a soft-notice update on the legacy chapters page.
 - Components: `book-card`, `book-list`, `book-form`, `book-actions`,
   `memory-card`, `memory-list`, `memory-filters`, `memory-form`,
@@ -850,29 +850,29 @@ table.
 
 **Pages:**
 
-- `/dashboard/os/autobiographer/books` — book grid. Each card shows
+- `/dashboard/autobiographer/books` — book grid. Each card shows
   cover image, title, status, target word count + current word count
   rollup across chapters, last-updated. "New book" CTA.
-- `/dashboard/os/autobiographer/books/[bookId]` — book detail. Lifts
+- `/dashboard/autobiographer/books/[bookId]` — book detail. Lifts
   to live once Phase 4 ships chapters; in Phase 1 it shows book meta +
   the list of attached memories (and a quick "Attach existing memory"
   picker).
-- `/dashboard/os/autobiographer/memories` — workshop memories list
+- `/dashboard/autobiographer/memories` — workshop memories list
   with filter chips (book / kind / decade / tag) and search.
-- `/dashboard/os/autobiographer/memories/[memoryId]` — memory detail.
+- `/dashboard/autobiographer/memories/[memoryId]` — memory detail.
   Body editor (markdown), photo URL, audio URL + transcript text area,
   when_in_life + parsed year, location, kind picker, tag chips. Phase
   2 will mount the people picker here; Phase 3 the "Mark as voice
   sample" toggle; Phase 5 the themes picker; Phase 6 the
   sensitive-kinds editor.
-- Existing `/dashboard/os/autobiographer/chapters` stub page — kept,
+- Existing `/dashboard/autobiographer/chapters` stub page — kept,
   but the editor is updated to require a `book_id` on the chapter
   row going forward (Phase 4 finishes the migration). Pre-Phase-4
   chapters from the legacy table render as before so we don't break
   the live registry card.
 - Hub registry cards added: `Books` pointing at
-  `/dashboard/os/autobiographer/books`, `Memories` pointing at
-  `/dashboard/os/autobiographer/memories`. Existing `Chapter capture`
+  `/dashboard/autobiographer/books`, `Memories` pointing at
+  `/dashboard/autobiographer/memories`. Existing `Chapter capture`
   card retained.
 
 **Cross-ownership safety:** every read filters by `user_id`. Memory

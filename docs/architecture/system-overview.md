@@ -169,7 +169,7 @@ Migration topology: [`docs/operations/alembic-branches.md`](../operations/alembi
 6. Route returns the new/updated entity
 ```
 
-The audit row is what the cross-OS viewer at `/dashboard/os/audit`
+The audit row is what the cross-OS viewer at `/dashboard/audit`
 renders (filtered by the current actor). Per-user feature flags
 (`agos_feature_flags`) are read once per request in the dashboard
 layout and passed into the sidebar; they gate visibility, not access.
