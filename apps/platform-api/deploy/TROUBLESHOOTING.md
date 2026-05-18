@@ -242,6 +242,43 @@ Full flip-the-switch walkthrough:
 
 ---
 
+## Header status dot stuck on loading / Aletheia indicator never resolves on minimal deployments
+
+### Symptom
+
+The Aletheia status dot in the dashboard header (top-right) sits on
+its loading colour indefinitely. The rest of the UI is fully
+functional.
+
+### Cause
+
+The dashboard header polls `/v1/aletheia/cot/chain` to surface CoT
+audit-chain status. On minimal / OSS self-host installs that don't
+deploy the Tiresias App Proxy + Aletheia integration, that endpoint
+404s and the indicator never leaves its initial loading state.
+
+```bash
+# Confirm by hitting the endpoint directly
+curl -s -o /dev/null -w "%{http_code}\n" \
+  http://localhost:8000/v1/aletheia/cot/chain
+# 404 → Aletheia not deployed; loading dot is expected.
+# 200 → Aletheia is wired; if the dot still hangs, file a bug.
+```
+
+The 404 was previously hidden by a tier gate; Wave I.3.b dropped that
+gate per the "no tier gating by default" decision, so every session
+now polls regardless of deployment shape.
+
+### Workarounds
+
+1. **Accept the loading dot** — purely cosmetic, no functional impact.
+2. **Deploy Aletheia** if you want the indicator to resolve. See
+   [`apps/platform-app-proxy/README.md`](../../platform-app-proxy/README.md).
+3. **Future enhancement:** detect 404 and render a clear "not
+   configured" state. By design until that lands.
+
+---
+
 ## Postgres unhealthy
 
 ```bash
