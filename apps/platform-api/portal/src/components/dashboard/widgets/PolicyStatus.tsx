@@ -2,8 +2,6 @@
 
 import { useWidgetData } from "@/lib/useWidgetData";
 import { getStoredTenantId } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { tierMeets } from "@/components/dashboard/TierGate";
 import WidgetShell from "./WidgetShell";
 
 /** Policy status -- sync state, version info, and recent policy changes. Uses live API via useWidgetData. */
@@ -64,11 +62,7 @@ function transformPolicy(raw: unknown): PolicyData {
 
 export default function PolicyStatus() {
   const tenantId = typeof window !== "undefined" ? getStoredTenantId() : null;
-  const { session } = useAuth();
-  // Cached PDP policies are an enterprise+ feature. Lower tiers don't run policy
-  // sync, so the endpoint always 404s and spams smoke-test logs. Skip the fetch
-  // entirely; the empty-state render below covers the UI.
-  const policyEnabled = tierMeets(session?.tier ?? "community", "enterprise");
+  const policyEnabled = true;
 
   const { data, loading, error, refetch } = useWidgetData({
     endpoint: `/v1/soulauth/admin/policy/current?tenant_id=${encodeURIComponent(tenantId || "default")}&persona_id=default`,
