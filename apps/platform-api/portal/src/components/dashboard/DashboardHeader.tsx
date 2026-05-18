@@ -118,12 +118,27 @@ export default function DashboardHeader() {
   const isEnterprisePlus = true;
 
   // Aletheia status indicator (ALETH-14)
+  //
+  // On minimal / OSS deploys where the Aletheia subsystem isn't wired,
+  // /v1/aletheia/cot/chain 404s. Once we see any error from the endpoint
+  // we sticky-stop polling and render an explicit "not configured" state
+  // — otherwise the dot would sit in its loading colour forever and the
+  // tooltip would lie ("Aletheia loading").
+  const [aletheiaUnavailable, setAletheiaUnavailable] = useState(false);
   const { data: aletheiaStatus, loading: aletheiaLoading, error: aletheiaError } = useWidgetData<{ entries?: unknown[] }>({
     endpoint: "/v1/aletheia/cot/chain?limit=1",
     refreshInterval: 60000,
-    skip: !isEnterprisePlus,
+    skip: !isEnterprisePlus || aletheiaUnavailable,
   });
-  const aletheiaHealthy = isEnterprisePlus && !aletheiaLoading && !aletheiaError && aletheiaStatus != null;
+  useEffect(() => {
+    if (aletheiaError && !aletheiaUnavailable) setAletheiaUnavailable(true);
+  }, [aletheiaError, aletheiaUnavailable]);
+  const aletheiaHealthy =
+    isEnterprisePlus &&
+    !aletheiaUnavailable &&
+    !aletheiaLoading &&
+    !aletheiaError &&
+    aletheiaStatus != null;
 
   // Update document title when branding.company_name or page title changes (WL-05)
   useEffect(() => {
@@ -184,9 +199,34 @@ export default function DashboardHeader() {
 
         {/* Aletheia status indicator (ALETH-14) */}
         {isEnterprisePlus && (
-          <div className="flex items-center gap-1.5 px-2" title={aletheiaHealthy ? "Aletheia active" : "Aletheia loading"}>
-            <span className={`w-2 h-2 rounded-full ${aletheiaHealthy ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-of-on-surface-variant/40"}`} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant">Aletheia</span>
+          <div
+            className="flex items-center gap-1.5 px-2"
+            title={
+              aletheiaUnavailable
+                ? "Aletheia not configured for this deployment"
+                : aletheiaHealthy
+                ? "Aletheia active"
+                : "Aletheia loading"
+            }
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                aletheiaHealthy
+                  ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                  : aletheiaUnavailable
+                  ? "border border-of-on-surface-variant/30"
+                  : "bg-of-on-surface-variant/40"
+              }`}
+            />
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${
+                aletheiaUnavailable
+                  ? "text-of-on-surface-variant/40"
+                  : "text-of-on-surface-variant"
+              }`}
+            >
+              Aletheia
+            </span>
           </div>
         )}
 
