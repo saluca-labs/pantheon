@@ -26,7 +26,7 @@ apps/platform-web/src/app/api/tiresias/agentic-os/flags/route.ts
    GET  → { flags: Record<slug, boolean> }
    PUT  → { slug, enabled }       (also records an audit row)
 
-apps/platform-web/src/app/(dashboard)/dashboard/os/settings/page.tsx
+apps/platform-web/src/app/(dashboard)/dashboard/settings/page.tsx
    Toggle UI; calls PUT for each change
 
 apps/platform-web/src/app/(dashboard)/layout.tsx
@@ -189,7 +189,7 @@ Every PUT writes to `agos_audit`:
 | payload    | `{ slug, enabled, prev?: bool }` |
 | created_at | `now()`                        |
 
-The viewer at `/dashboard/os/audit` filters on `os_slug = 'flags'` to show
+The viewer at `/dashboard/audit` filters on `os_slug = 'flags'` to show
 the user's flag history.
 
 ## Tests

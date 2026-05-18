@@ -25,8 +25,8 @@ For decision records, see:
                     /dashboard/os                ← cross-OS index (live counts)
                     /dashboard/os/[slug]         ← per-OS landing + plan viewer
                     /dashboard/os/<slug>/<page>  ← per-OS feature pages
-                    /dashboard/os/audit          ← cross-OS audit viewer
-                    /dashboard/os/settings       ← per-user feature flags
+                    /dashboard/audit          ← cross-OS audit viewer
+                    /dashboard/settings       ← per-user feature flags
 
 apps/platform-web/src/lib/agentic-os/
 ├── registry.ts                    ← single source of truth (9 modules)
@@ -88,8 +88,8 @@ graph TB
       OSINDEX["/dashboard/os<br/>cross-OS index"]
       OSSHELL["/dashboard/os/[slug]<br/>landing + plan"]
       OSPAGE["/dashboard/os/&lt;slug&gt;/&lt;page&gt;<br/>feature pages"]
-      AUDITPAGE["/dashboard/os/audit<br/>audit viewer"]
-      FLAGSPAGE["/dashboard/os/settings<br/>flag toggles"]
+      AUDITPAGE["/dashboard/audit<br/>audit viewer"]
+      FLAGSPAGE["/dashboard/settings<br/>flag toggles"]
     end
 
     subgraph bff["BFF / API routes"]
@@ -170,7 +170,7 @@ endpoint. The summary route queries all nine primary tables in parallel via
 field in the response without crashing the whole index. Results are cached
 in-memory for 30 seconds keyed by `userId`.
 
-### `/dashboard/os/audit` — cross-OS audit viewer (Workstream D)
+### `/dashboard/audit` — cross-OS audit viewer (Workstream D)
 
 Paginated, filterable view of `agos_audit` for the current actor. Filters: OS
 slug, action, time range. Cursor encodes `(created_at, id)` as `base64url(JSON)`
@@ -178,7 +178,7 @@ so it's opaque to clients but easy to debug. See
 [`docs/architecture/audit-log.md`](audit-log.md) and
 [ADR-006](../decisions/ADR-006-cross-os-audit-log.md).
 
-### `/dashboard/os/settings` — per-user feature flags (Workstream E)
+### `/dashboard/settings` — per-user feature flags (Workstream E)
 
 Toggle each OS on or off for the current user. Flags are resolved
 server-side in `(dashboard)/layout.tsx` via `getFlags(userId)`; the resolved

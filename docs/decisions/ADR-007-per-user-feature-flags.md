@@ -35,7 +35,7 @@ Org-level overrides are listed under followups.
 
 ### Authority: user-self-serve
 
-A single page at `/dashboard/os/settings` with a row per OS and a toggle
+A single page at `/dashboard/settings` with a row per OS and a toggle
 per row. No admin gate. No approval workflow. Users own their own
 sidebar.
 
