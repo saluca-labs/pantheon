@@ -18,8 +18,9 @@ Endpoints (RBAC permission shown in brackets):
   POST   /v1/provider-keys                  [providers:write]
       Create or upsert a key for (tenant, provider). Validates that
       :func:`src.agents.secret_ref.resolve_secret_ref` accepts the
-      URI scheme BEFORE saving — unsupported schemes (vault://, etc.)
-      surface as 400 because the row would never resolve successfully.
+      URI scheme BEFORE saving — unknown/malformed schemes surface as
+      400 because the row would never resolve. Supported schemes are
+      ``env://``, ``file://``, ``vault://``, ``gcpsm://``, ``awssm://``.
 
   PATCH  /v1/provider-keys/{id}             [providers:write]
       Update mutable fields (secret_ref, base_url, status, metadata).
@@ -110,37 +111,34 @@ def _validate_provider(provider: str) -> str:
     return p
 
 
+_SUPPORTED_SCHEMES = ("env", "file", "vault", "gcpsm", "awssm")
+
+
 def _validate_secret_ref_or_400(ref: str) -> None:
     """Reject obviously-unusable secret refs at write-time.
 
-    We attempt to resolve the URI. If the scheme is reserved-but-unimplemented
-    (vault://, gcpsm://, etc.) we surface 400 because the row would
-    permanently fail to resolve. If resolution fails because the env var
-    is not set (env://NOT_SET), we ACCEPT — the operator may set the
-    var later, and they can verify via /test.
+    We attempt to resolve the URI. If resolution fails because the
+    underlying secret isn't currently available (env://NOT_SET, vault
+    path missing, etc.), we ACCEPT — the operator may populate it later
+    and verify via /test. We only 400 on malformed URIs or schemes the
+    facade can never resolve.
     """
     try:
         resolve_secret_ref(ref)
-    except NotImplementedError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"unsupported secret-ref scheme: {e}",
-        )
     except SecretRefError as e:
-        # Distinguish "malformed/unknown scheme" (reject) from
-        # "env var not set yet" (accept — deferred resolution).
         info = describe_secret_ref(ref)
         if info["scheme"] in (None,) or not info["valid"]:
             raise HTTPException(
                 status_code=400,
                 detail=f"invalid secret ref: {e}",
             )
-        if info["scheme"] not in ("env", "vault", "gcpsm", "awssm", "enc"):
+        if info["scheme"] not in _SUPPORTED_SCHEMES:
             raise HTTPException(
                 status_code=400,
                 detail=f"unknown secret-ref scheme: {info['scheme']!r}",
             )
-        # env://NOT_YET_SET — accept, /test will report failure later.
+        # Supported scheme but value not currently resolvable (e.g.
+        # env://NOT_YET_SET, vault path empty). Accept; /test reports it.
         return
 
 
@@ -473,7 +471,7 @@ async def test_provider_key_route(key_id: UUID, request: Request):
     info = describe_secret_ref(row.secret_ref)
     try:
         api_key = resolve_secret_ref(row.secret_ref)
-    except (SecretRefError, NotImplementedError) as exc:
+    except SecretRefError as exc:
         return ProviderKeyTestResponse(
             ok=False,
             latency_ms=0,
@@ -502,7 +500,7 @@ async def test_inline_provider_key_route(
     info = describe_secret_ref(body.secret_ref)
     try:
         api_key = resolve_secret_ref(body.secret_ref)
-    except (SecretRefError, NotImplementedError) as exc:
+    except SecretRefError as exc:
         return ProviderKeyTestResponse(
             ok=False,
             latency_ms=0,
