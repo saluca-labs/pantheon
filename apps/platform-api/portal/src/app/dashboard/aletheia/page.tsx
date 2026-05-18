@@ -1,7 +1,6 @@
 "use client";
 
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { ShieldCheck, Link2, Activity } from "lucide-react";
 
 /** Aletheia overview -- CoT hash-chain viewer with integrity verification. Uses live API via useWidgetData. */
@@ -85,7 +84,6 @@ export default function AletheiaOverviewPage() {
   const verdictTotal = verdicts.pass + verdicts.warn + verdicts.block;
 
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Aletheia Overview">
       <div className="max-w-7xl space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CoT Chain Health */}
@@ -244,6 +242,5 @@ export default function AletheiaOverviewPage() {
           </div>
         </div>
       </div>
-    </TierGate>
   );
 }
