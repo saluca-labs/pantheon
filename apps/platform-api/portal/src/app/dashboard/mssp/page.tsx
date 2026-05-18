@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { api } from "@/lib/api";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { Building2, Users, AlertTriangle, ShieldAlert, ChevronRight, Bot, X } from "lucide-react";
 
 /** MSSP overview -- multi-tenant management console for managed security providers. Uses live API via useWidgetData. */
@@ -434,8 +433,6 @@ function MsspContent() {
 
 export default function MsspOverviewPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="MSSP Multi-Tenant Overview">
       <MsspContent />
-    </TierGate>
   );
 }

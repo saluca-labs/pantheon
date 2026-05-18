@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { BookOpen, FileText, Server, Network } from "lucide-react";
 
-/** Document registry — all docs visible to everyone (Pantheon is OSS, no tier gating by default; see ADR-011). */
+/** Document registry — all docs available in the OSS portal. */
 export const DOCS_REGISTRY: Array<{
   slug: string;
   title: string;

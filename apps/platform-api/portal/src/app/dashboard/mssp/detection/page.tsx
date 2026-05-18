@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { tenantName, truncateSoulkey } from "@/lib/display";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 
@@ -217,8 +216,6 @@ function MsspDetectionContent() {
 
 export default function MsspDetectionPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Cross-Tenant Detection">
       <MsspDetectionContent />
-    </TierGate>
   );
 }

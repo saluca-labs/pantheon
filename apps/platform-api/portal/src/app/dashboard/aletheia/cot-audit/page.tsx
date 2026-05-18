@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { Download, CheckCircle, XCircle, ChevronDown, ChevronRight, Link2 } from "lucide-react";
 
@@ -87,7 +86,6 @@ export default function CoTAuditPage() {
   }
 
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Aletheia CoT Audit">
       <div className="max-w-7xl space-y-6">
         {/* Actions bar */}
         <div className="flex items-center gap-3">
@@ -221,6 +219,5 @@ export default function CoTAuditPage() {
           </div>
         )}
       </div>
-    </TierGate>
   );
 }

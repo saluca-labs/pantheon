@@ -20,7 +20,6 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Search, Bell, Settings, LogOut, User, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { tierMeets } from "@/components/dashboard/TierGate";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { useBranding } from "@/lib/branding";
 
@@ -116,7 +115,7 @@ export default function DashboardHeader() {
     }
   }, [avatarMenuOpen]);
   const badge = session?.tier ? BADGE_TIERS[session.tier] : undefined;
-  const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
+  const isEnterprisePlus = true;
 
   // Aletheia status indicator (ALETH-14)
   const { data: aletheiaStatus, loading: aletheiaLoading, error: aletheiaError } = useWidgetData<{ entries?: unknown[] }>({

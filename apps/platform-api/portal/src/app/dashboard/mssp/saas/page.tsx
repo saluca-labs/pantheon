@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { Plus, PauseCircle, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
 
@@ -334,8 +333,6 @@ function SaasAdminContent() {
 
 export default function SaasAdminPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="SaaS Admin">
       <SaasAdminContent />
-    </TierGate>
   );
 }

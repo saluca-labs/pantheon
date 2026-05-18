@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { ArrowLeft, Key, Activity, AlertTriangle, HardDrive, X } from "lucide-react";
 
 interface TenantDetail {
@@ -304,8 +303,6 @@ function TenantDetailContent() {
 
 export default function TenantDetailPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Tenant Detail">
       <TenantDetailContent />
-    </TierGate>
   );
 }

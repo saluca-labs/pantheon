@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { ShieldCheck, ChevronDown, ChevronRight, X } from "lucide-react";
 
 /** Response sanitizer dashboard -- pattern match stats and invocation log. Uses live API via useWidgetData. */
@@ -102,7 +101,6 @@ export default function SanitizerPage() {
   const activeFilter = verdictFilter || patternFilter;
 
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Aletheia Sanitizer">
       <div className="max-w-7xl space-y-6">
         {/* Active Filter Banner */}
         {activeFilter && (
@@ -390,6 +388,5 @@ export default function SanitizerPage() {
           </div>
         </div>
       </div>
-    </TierGate>
   );
 }

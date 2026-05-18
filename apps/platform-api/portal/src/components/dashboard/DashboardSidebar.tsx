@@ -22,9 +22,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, GitBranch, Users, Boxes, DollarSign, FlaskConical, ShieldAlert, Radar, BookOpen, Code2, Activity, Server, Building2, ScanSearch, Ban, LifeBuoy, Eye, Link2, Terminal, ShieldCheck, FileCode, ChevronDown, Search, FileText, Crown, MessageCircle, Heart, Wrench, Microscope, Shield, Film, PenTool, Briefcase, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
-import { tierMeets, type Tier } from "@/components/dashboard/TierGate";
 
-// Tier helper inline (avoids circular import from TierGate)
+// Tier helper inline
 const MSSP_TIERS = new Set(["mssp", "saas", "owner"]);
 
 interface NavItem {
@@ -34,8 +33,6 @@ interface NavItem {
   group?: "observability" | "main" | "security" | "soulwatch" | "soulgate" | "system" | "mssp" | "aletheia" | "platform-admin" | "oscar-suite";
   /** When true, only visible for saas-tier tenants. */
   saasOnly?: boolean;
-  /** Minimum tier required to see this nav item. Hidden for lower tiers. */
-  minTier?: Tier;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -144,28 +141,24 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/detection/siem",
     group: "security",
     icon: <Server className="w-5 h-5" />,
-    minTier: "enterprise",
   },
   {
     label: "Rule Editor",
     href: "/dashboard/detection/rules",
     group: "security",
     icon: <Code2 className="w-5 h-5" />,
-    minTier: "pro",
   },
   {
     label: "Playbooks",
     href: "/dashboard/detection/playbooks",
     group: "security",
     icon: <BookOpen className="w-5 h-5" />,
-    minTier: "pro",
   },
   {
     label: "Quarantine",
     href: "/dashboard/quarantine",
     group: "security",
     icon: <ShieldAlert className="w-5 h-5" />,
-    minTier: "enterprise",
   },
   {
     label: "SoulWatch",
@@ -293,7 +286,6 @@ const NAV_ITEMS: NavItem[] = [
     label: "Analytics",
     href: "/dashboard/analytics",
     group: "system",
-    minTier: "pro",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
@@ -492,9 +484,8 @@ export default function DashboardSidebar() {
   const { branding } = useBranding();
   const isMsspTier = MSSP_TIERS.has(session?.tier ?? "");
   const isSaasTier = (session?.tier ?? "") === "saas" || (session?.tier ?? "") === "owner";
-  const isEnterprisePlus = tierMeets(session?.tier ?? "community", "enterprise");
-  // Oscar Suite is a paid-tier feature; community users see no OS items in the sidebar.
-  const isOscarSuiteVisible = tierMeets(session?.tier ?? "community", "starter");
+  const isEnterprisePlus = true;
+  const isOscarSuiteVisible = true;
   const isSalucaUser = session?.user_email?.endsWith("@saluca.com") ?? false;
   const isInvestigationActive = pathname === "/dashboard/investigation";
   const isSupportActive = pathname === "/dashboard/support" || pathname === "/dashboard/support/chat";
@@ -613,7 +604,7 @@ export default function DashboardSidebar() {
       {/* Nav items */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto scrollbar-thin">
         {groups.map((group, groupIdx) => {
-          const items = NAV_ITEMS.filter((item) => item.group === group.key && (!item.saasOnly || isSaasTier) && (!item.minTier || tierMeets(session?.tier ?? "community", item.minTier)));
+          const items = NAV_ITEMS.filter((item) => item.group === group.key && (!item.saasOnly || isSaasTier));
           const isSectionCollapsed = !!sectionCollapsed[group.key];
           return (
             <div key={group.key}>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { FileText, Upload, CheckCircle2, AlertTriangle, Shield, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -181,8 +180,6 @@ function ContractsContent() {
 
 export default function ContractsPage() {
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Contract Management">
       <ContractsContent />
-    </TierGate>
   );
 }

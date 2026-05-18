@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { TENANT_NAMES } from "@/lib/display";
@@ -113,7 +112,6 @@ export default function PoliciesPage() {
   };
 
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Aletheia Policy Editor">
       <div className="max-w-7xl space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* YAML Policy Editor */}
@@ -343,6 +341,5 @@ export default function PoliciesPage() {
           )}
         </div>
       </div>
-    </TierGate>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import {
   Users,
   Link2,
@@ -307,8 +306,6 @@ function PartnerContent() {
 
 export default function PartnerPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Partner Dashboard">
       <PartnerContent />
-    </TierGate>
   );
 }

@@ -18,7 +18,6 @@ import React, {
 } from "react";
 import { useAuth } from "./auth";
 import { api } from "./api";
-import { tierMeets } from "@/components/dashboard/TierGate";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,13 +128,6 @@ export function BrandingProvider({ children }: { children: ReactNode }): React.R
       clearBrandingFromDOM();
       setBranding({});
       setCommitted({});
-      return;
-    }
-
-    const isWhiteLabelTier = tierMeets(session.tier, "mssp");
-    if (!isWhiteLabelTier) {
-      // Non-white-label tier: clear any leftover DOM overrides
-      clearBrandingFromDOM();
       return;
     }
 

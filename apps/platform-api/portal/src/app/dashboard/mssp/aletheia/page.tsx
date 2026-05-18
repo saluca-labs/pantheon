@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { Link2, Users, Clock, ChevronRight, FileText } from "lucide-react";
 
 /** MSSP Aletheia -- cross-tenant CoT chain viewer for managed providers. Uses live API via useWidgetData. */
@@ -316,8 +315,6 @@ function MsspAletheiaContent() {
 
 export default function MsspAletheiaAuditPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="MSSP Aletheia Audit">
       <MsspAletheiaContent />
-    </TierGate>
   );
 }
