@@ -184,5 +184,27 @@ cd apps/platform-api && pytest       # Python tests
 
 ## License
 
-See [LICENSE](apps/platform-api/LICENSE) for the core platform license.  
-`packages/memory` is vendored from saluca-labs/elysium under Apache-2.0 — see [packages/memory/LICENSE](packages/memory/LICENSE).
+Pantheon is licensed under
+[**FSL-1.1-Apache**](LICENSE) — the Functional Source License v1.1 with a
+two-year automatic conversion to Apache 2.0 (the same pattern used by
+Sentry).
+
+- Free for internal commercial use — consultants, startups, and enterprises
+  may run Pantheon for their own operations at no cost.
+- Restricts only **Competing Use**: offering Pantheon to third parties as
+  a managed/hosted service that substitutes for what we offer.
+- Each released version automatically converts to **Apache 2.0** on the
+  second anniversary of its first distribution, becoming true OSS.
+
+Contributions are governed by the
+[Developer Certificate of Origin](.github/DCO.md) — no CLA. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the sign-off workflow.
+
+The Pantheon name and visual assets are trademarks; see
+[TRADEMARKS.md](TRADEMARKS.md) for the trademark policy.
+
+Several subdirectories carry their own licenses where vendored or
+historically separate: `infrastructure/rules/` (Sigma rules, Apache-2.0),
+`apps/soul-service/` (Apache-2.0), `packages/memory/` (vendored from
+saluca-labs/elysium under Apache-2.0). Those files retain their existing
+LICENSE headers.
