@@ -2004,7 +2004,7 @@ function SettingsPageInner() {
                         className="w-full px-3 py-2 rounded-lg bg-of-surface-container-lowest border border-white/10 text-sm text-foreground focus:border-blue-500/50 focus:outline-none font-mono"
                       />
                       <p className="text-xs text-foreground-muted mt-1">
-                        URI reference to the secret. <code className="px-1 py-0.5 rounded bg-of-surface-container-high font-mono">env://VAR_NAME</code> reads a process env var. Other schemes (<code className="font-mono">vault://</code>, <code className="font-mono">gcpsm://</code>) are reserved.
+                        URI reference to the secret. Supported schemes: <code className="px-1 py-0.5 rounded bg-of-surface-container-high font-mono">env://VAR_NAME</code>, <code className="font-mono">file:///path</code>, <code className="font-mono">vault://</code>, <code className="font-mono">gcpsm://</code>, <code className="font-mono">awssm://</code>.
                       </p>
                     </div>
                   </div>

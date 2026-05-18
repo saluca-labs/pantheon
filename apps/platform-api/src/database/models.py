@@ -850,8 +850,9 @@ class PantheonConfig(Base):
 # Wave H.2.e — Per-tenant BYOK provider keys
 #
 # Each tenant may register their own LLM provider API credentials via a
-# `platform_secrets` URI reference (env://VAR_NAME for now; vault:// and
-# friends are reserved schemes wired up by the canonical resolver later).
+# `platform_secrets` URI reference. Supported schemes: env://, file://,
+# vault://, gcpsm://, awssm:// — all resolved through the canonical
+# facade in packages/secrets/python/.
 # Tiresias's `build_provider()` looks up these per-tenant rows BEFORE
 # falling back to the process-env default — see W-H.2.e provider keys
 # store + resolver in src/agents/provider_keys_store.py.

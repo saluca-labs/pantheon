@@ -156,7 +156,7 @@ pointing at the offending JSONPath.
   "errors": [
     {"path": "agents[0].metadata.persona",                 "message": "required"},
     {"path": "agents[1].spec.provider_overrides[0].secret_ref",
-     "message": "scheme 'vault://' is reserved but not yet implemented (only env:// is supported in this version)"}
+     "message": "unknown or malformed secret-ref scheme: 'ftp'"}
   ]
 }
 ```
@@ -168,8 +168,7 @@ Common failure modes:
 | `required` on `metadata.persona` | Missing top-level persona key | Add `metadata.persona: <slug>`. Per-tenant unique. |
 | `does not match caller tenant 'your-slug'` | `metadata.tenant` in the YAML doesn't match the caller's tenant | Drop the field (it defaults to the caller's tenant) or set it correctly. |
 | `cannot be empty when spec.prompt is present` | Body is missing inside the `spec.prompt` block | Either remove the entire `spec.prompt:` block or fill `spec.prompt.body`. |
-| `scheme 'vault://' is reserved but not yet implemented` | A `provider_overrides[*].secret_ref` uses a reserved-but-unimplemented scheme | Use `env://VAR_NAME` (the only supported scheme today). See [`docs/operations/byok-provider-keys.md`](../../../docs/operations/byok-provider-keys.md). |
-| `unknown or malformed secret-ref scheme` | Typo in the URI | Re-check; must be `env://`, `vault://`, `gcpsm://`, `awssm://`, or `enc://`. |
+| `unknown or malformed secret-ref scheme` | Typo or an unsupported URI scheme | Re-check; supported schemes are `env://`, `file://`, `vault://`, `gcpsm://`, `awssm://`. See [`docs/operations/byok-provider-keys.md`](../../../docs/operations/byok-provider-keys.md). |
 
 Schema reference:
 [`../src/agents/agent_yaml_schema.md`](../src/agents/agent_yaml_schema.md).
@@ -204,7 +203,7 @@ returns `{ok, latency_ms, error?, secret_ref_info}`.
 | `auth rejected (HTTP 401)` | The key resolved, but the provider rejected it | Wrong / rotated / scope-limited key. Generate a new one upstream and PATCH `secret_ref`. |
 | `auth rejected (HTTP 403)` | Key is valid but lacks the model / route permission | Check the provider console — most providers gate models per workspace. |
 | `timeout` | Network egress blocked or the provider endpoint is unreachable | If you set `base_url`, verify it's reachable from the container (`docker compose exec platform-api curl -I <base_url>`). |
-| `unsupported secret-ref scheme: …` on write | URI uses `vault://`, `gcpsm://`, `awssm://`, or `enc://` | Only `env://` is implemented today. The other schemes are reserved for future work. |
+| `secret_ref resolution failed: …` for `vault://` / `gcpsm://` / `awssm://` | Backend SDK missing, credentials unset, or the secret store is unreachable from the platform-api container | Install the backend extra (`pip install platform-secrets[vault\|aws\|gcp]`) and set the standard backend env vars (`VAULT_ADDR` + `VAULT_TOKEN`; `AWS_REGION`; `GOOGLE_APPLICATION_CREDENTIALS`). See [`packages/secrets/python/README.md`](../../../packages/secrets/python/README.md). |
 
 The resolved secret value is **never** included in any response body
 or log line. Full BYOK reference:

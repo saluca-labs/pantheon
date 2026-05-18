@@ -169,9 +169,12 @@ To add one:
 
 1. Click **New Key**.
 2. Pick **Provider** — `anthropic`, `openai`, `gemini`, `groq`, `ollama`.
-3. Paste **Secret Ref** — currently `env://VAR_NAME` is the only
-   implemented scheme. Reserved schemes (`vault://`, `gcpsm://`,
-   `awssm://`, `enc://`) validate but fail at write time.
+3. Paste **Secret Ref** — supported schemes: `env://VAR_NAME`,
+   `file:///path`, `vault://<mount>/data/<path>#<field>`,
+   `gcpsm://projects/<id>/secrets/<name>/versions/<v>`,
+   `awssm://<arn-or-name>[#<json-field>]`. Backend credentials are
+   discovered from the standard env vars on the platform-api
+   container — see [`packages/secrets/python/README.md`](../../../packages/secrets/python/README.md).
 4. Optional **Base URL** — overrides the default (Azure OpenAI,
    alternate Ollama host, etc.).
 5. Click **Save**.
