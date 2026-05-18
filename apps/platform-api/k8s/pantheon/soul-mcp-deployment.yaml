@@ -23,12 +23,12 @@ metadata:
     app.kubernetes.io/part-of: pantheon
     app.kubernetes.io/component: mcp-adapter
 spec:
-  # MVP single replica — local SQLite holds mesh + nexus state, so
-  # scaling out would split those subsystems. Externalize before
-  # bumping (same rationale as apps/soul-service; see
-  # apps/soul-service/README.md → "Deferred features" → §4 for the
-  # exact pattern). When mesh/nexus move out of local SQLite, this
-  # one is free to scale independently.
+  # Intentionally single-replica. Local SQLite holds mesh + nexus state;
+  # scaling out would split those subsystems across pods. Architectural
+  # fix was considered and explicitly rejected (#150 closed not-planned)
+  # — soul-mcp internal state is bounded and the operational SPOF posture
+  # (PDB + PVC + snapshots + runbook) is the chosen path. See
+  # deploy/SOUL_SPOF_RUNBOOK.md.
   replicas: 1
   selector:
     matchLabels:
@@ -68,8 +68,10 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            # /app/data holds the SQLite mesh/nexus store; emptyDir is
-            # fine while replicas=1 (per-pod by design).
+            # /app/data holds the SQLite mesh/nexus store. Backed by a
+            # PVC (see soul-data-pvc.yaml) so pod restarts no longer
+            # wipe state. SPOF posture + snapshot/restore procedure are
+            # in deploy/SOUL_SPOF_RUNBOOK.md.
             - name: soul-mcp-data
               mountPath: /app/data
           env:
@@ -149,5 +151,5 @@ spec:
             medium: Memory
             sizeLimit: 64Mi
         - name: soul-mcp-data
-          emptyDir:
-            sizeLimit: 512Mi
+          persistentVolumeClaim:
+            claimName: soul-mcp-data

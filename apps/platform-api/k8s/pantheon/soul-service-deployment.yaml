@@ -30,11 +30,14 @@ metadata:
     app.kubernetes.io/part-of: pantheon
     app.kubernetes.io/component: memory-service
 spec:
-  # MVP single replica — Tier 0 SQLite buffer is per-pod, so scaling to >1
-  # would split a session's hot tier across pods and break cold-start
-  # warm-up integrity assumptions. Revisit once Tier 0 is externalized.
-  # Flip-on steps (externalize Tier 0, then bump replicas + add PDB) are
-  # in apps/soul-service/README.md → "Deferred features" → §4.
+  # Intentionally single-replica. Tier 0 SQLite buffer is per-pod by design
+  # — scaling to >1 would split a session's hot tier across pods. The
+  # architectural fix (externalize Tier 0 to Redis) was considered and
+  # explicitly rejected (#150 closed not-planned). The operational posture
+  # is: PDB blocks voluntary disruption, PVC persists state across pod
+  # restarts, snapshots give an RPO independent of pod uptime, and the
+  # runbook documents planned-restart + recovery procedures.
+  # See deploy/SOUL_SPOF_RUNBOOK.md.
   replicas: 1
   selector:
     matchLabels:
@@ -75,8 +78,10 @@ spec:
             # /tmp for uvicorn + python tempfiles under a readonly root.
             - name: tmp
               mountPath: /tmp
-            # /app/data hosts the SQLite Tier 0 buffer; emptyDir is fine for
-            # MVP since Tier 0 is per-pod by design.
+            # /app/data hosts the SQLite Tier 0 buffer. Backed by a PVC
+            # (see soul-data-pvc.yaml) so pod restarts no longer wipe
+            # state. SPOF posture + snapshot/restore procedure are in
+            # deploy/SOUL_SPOF_RUNBOOK.md.
             - name: soul-data
               mountPath: /app/data
           env:
@@ -159,5 +164,5 @@ spec:
             medium: Memory
             sizeLimit: 64Mi
         - name: soul-data
-          emptyDir:
-            sizeLimit: 512Mi
+          persistentVolumeClaim:
+            claimName: soul-service-data

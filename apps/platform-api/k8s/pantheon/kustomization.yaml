@@ -23,6 +23,11 @@ resources:
   - platform-web-deployment.yaml
   - memory-service-deployment.yaml
   - tiresias-proxy-deployment.yaml
+  # PVCs for soul-service / soul-mcp Tier 0 SQLite. Apply BEFORE the
+  # deployments so they can claim on first roll-out. See
+  # deploy/SOUL_SPOF_RUNBOOK.md for migration steps if you're rolling
+  # this PR onto an existing emptyDir-backed deploy with live data.
+  - soul-data-pvc.yaml
   - soul-service-deployment.yaml
   - soul-mcp-deployment.yaml
   # Service surface
