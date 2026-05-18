@@ -4,6 +4,12 @@
 **Date:** 2026-01  
 **Deciders:** Platform team  
 
+> **Note (2026-05-17):** This ADR predates the Pantheon rename. The
+> "Tiresias codebase" referenced below is what now lives in the
+> Pantheon monorepo at `salucallc/pantheon`. The decision and its
+> consequences are unchanged; only the umbrella name shifted. See
+> [ADR-011](./ADR-011-pantheon-rename.md) for the rename record.
+
 ## Context
 
 The Tiresias codebase was spread across ~10 repositories (`tiresias`, `tiresias-web`, `tiresias-app-proxy`, `tiresias-sovereign`, `tiresias-grafana`, `tiresias-incident-controller`, `tiresias-monitor`, `tiresias-pentest`, `tiresias-rules`, `tiresias-enforcement`). This created friction in:

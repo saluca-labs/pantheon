@@ -9,7 +9,7 @@ graph TB
     AGENT["AI Agent"]
   end
 
-  subgraph platform["Tiresias Platform"]
+  subgraph platform["Pantheon Platform"]
     direction TB
 
     subgraph apps["Apps (profile: default)"]

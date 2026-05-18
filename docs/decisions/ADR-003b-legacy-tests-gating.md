@@ -1,4 +1,4 @@
-# ADR-003: Legacy platform-api Tests — Gating Policy
+# ADR-003b: Legacy platform-api Tests — Gating Policy
 
 > Status: accepted (May 2026, platform/unification-v3)
 > Supersedes: prior implicit policy of `pytest --ignore=tests/platform || true`
