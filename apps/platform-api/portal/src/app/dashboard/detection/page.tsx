@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { truncateSoulkey } from "@/lib/display";
 import { TrendingUp, Cpu, Clock, MapPin, ShieldAlert, AlertTriangle, ExternalLink, Download } from "lucide-react";
-import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 
 /** Detection overview -- anomaly matches with severity and type breakdown. Uses live API via useWidgetData. */
 
@@ -116,10 +115,6 @@ export default function DetectionPage() {
 
   return (
     <div className="max-w-7xl space-y-6">
-      {/* Anomaly sub-fetch upgrade prompt */}
-      {anomaliesError && parseErrorStatus(anomaliesError) === 402 && (
-        <UpgradePrompt feature="threat_detection" requiredTier="pro" />
-      )}
       {/* Anomaly indicator strip (QUAR-06) */}
       <div>
         <p className="text-[10px] font-bold uppercase tracking-wider text-of-on-surface-variant mb-3">

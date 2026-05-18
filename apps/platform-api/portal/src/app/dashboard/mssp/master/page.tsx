@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
 import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
-import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 import {
   Plus,
   RefreshCw,
@@ -414,15 +413,11 @@ function PlatformAdminContent() {
         )}
 
         {tenantsError && (
-          parseErrorStatus(tenantsError) === 402 ? (
-            <UpgradePrompt feature="mssp_admin" requiredTier="mssp" />
-          ) : (
-            <div className="bg-of-error/10 border border-of-error/20 rounded-xl p-4">
-              <p className="text-sm text-of-error">
-                Failed to load tenants. Ensure the SaaS admin API is reachable.
-              </p>
-            </div>
-          )
+          <div className="bg-of-error/10 border border-of-error/20 rounded-xl p-4">
+            <p className="text-sm text-of-error">
+              Failed to load tenants. Ensure the SaaS admin API is reachable.
+            </p>
+          </div>
         )}
 
         {!tenantsLoading && !tenantsError && tree.length > 0 && (
