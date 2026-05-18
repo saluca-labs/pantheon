@@ -8,6 +8,43 @@ need to know before opening a PR.
 If you are looking to **use** Pantheon (not contribute), start at
 [`docs/operations/quickstart.md`](docs/operations/quickstart.md).
 
+## Licensing & DCO
+
+Pantheon is licensed under
+[**FSL-1.1-Apache**](LICENSE) — the Functional Source License v1.1 with a
+two-year automatic conversion to Apache 2.0. Internal commercial use is
+permitted; only offering Pantheon as a competing managed service to third
+parties is restricted. See [`LICENSE`](LICENSE) for the full terms.
+
+Contributions are accepted under the
+[**Developer Certificate of Origin** (DCO)](.github/DCO.md). There is **no
+CLA** — instead, every commit must carry a `Signed-off-by` trailer that
+asserts the four points of the DCO v1.1.
+
+The easiest way is to let git add the trailer for you:
+
+```bash
+# One-off: sign off a single commit
+git commit -s -m "feat(scope): subject"
+
+# Recommended: configure git to always sign off in this repo
+git config commit.gpgsign true        # if you also want GPG-signed commits
+git config format.signoff true        # auto-add Signed-off-by on every commit
+```
+
+If you forget the sign-off on an existing commit, amend it:
+
+```bash
+git commit --amend -s --no-edit
+# or, for a range of commits:
+git rebase --signoff <base>
+```
+
+The Pantheon name and logo are trademarks; see
+[`TRADEMARKS.md`](TRADEMARKS.md) for what is permitted without prior
+written permission. The trademark policy is independent of the FSL-1.1-Apache
+source license.
+
 ## Quickstart for contributors
 
 ```bash
@@ -222,8 +259,11 @@ Closes #XXX. Part of Wave I.3 — contributor docs pass.
 
 ## License
 
-Pantheon is MIT-licensed except where otherwise noted (the Sigma
-ruleset under `infrastructure/rules/` is Apache 2.0; vendored
-upstream services keep their own licenses). All contributions are
-accepted under MIT unless the file you are editing carries a
-different license header.
+Pantheon is licensed under [FSL-1.1-Apache](LICENSE) — source-available
+now, automatically Apache 2.0 two years after each version's first
+distribution. The Sigma ruleset under `infrastructure/rules/` is Apache 2.0,
+and vendored upstream services keep their own licenses.
+
+All contributions are accepted under FSL-1.1-Apache via the
+[DCO](.github/DCO.md) sign-off on each commit, unless the file you are
+editing carries a different license header.

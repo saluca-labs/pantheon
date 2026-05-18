@@ -3,7 +3,7 @@ title = "Pantheon gitleaks config"
 useDefault = true
 
 [allowlist]
-description = "Test fixtures, redactor pattern definitions, and planning docs are allowed to contain key-shaped strings for testing"
+description = "Test fixtures, redactor pattern definitions, planning docs, and license/governance text are allowed to contain key-shaped strings"
 paths = [
   '''.*tests?/.*sanitizer.*\.py''',
   '''.*test.*secret.?redaction.*\.ts''',
@@ -14,4 +14,7 @@ paths = [
   '''.*apps/platform-web/src/lib/agentic-os/cyber/coach/secret-redaction\.ts''',
   '''.*pnpm-lock\.yaml''',
   '''.*node_modules/.*''',
+  '''^LICENSE$''',
+  '''^TRADEMARKS\.md$''',
+  '''^\.github/DCO\.md$''',
 ]
