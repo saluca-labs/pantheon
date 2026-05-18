@@ -1,464 +1,318 @@
-# Tiresias -- Verification and Troubleshooting Guide
+# Pantheon Self-Host Troubleshooting
 
-This guide covers post-deployment verification and common issue resolution for the Tiresias platform. Run these checks immediately after deployment and whenever you suspect a problem.
+Failure-mode reference for operators running the docker compose stack.
+For the architecture this is troubleshooting against, start with
+[`docs/architecture/system-overview.md`](../../../docs/architecture/system-overview.md);
+for migration topology see
+[`docs/operations/alembic-branches.md`](../../../docs/operations/alembic-branches.md).
 
----
-
-## Post-Deployment Verification
-
-### 1. Service Health Checks
-
-Run each command and compare against the expected output.
-
-**Proxy**
-
-```bash
-curl -s http://localhost:8080/health | jq .
-```
-
-Expected:
-
-```json
-{
-  "status": "ok",
-  "service": "tiresias-proxy",
-  "mode": "onprem"
-}
-```
-
-**SoulAuth**
-
-```bash
-curl -s http://localhost:8000/health | jq .
-```
-
-Expected:
-
-```json
-{
-  "status": "healthy",
-  "service": "soulauth",
-  "version": "3.4.4"
-}
-```
-
-**Portal**
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/
-```
-
-Expected: `200`
-
-**All Containers**
-
-```bash
-docker compose ps
-```
-
-Expected: all 6 services show status `healthy`. If any service shows `unhealthy` or `restarting`, jump to the relevant troubleshooting section below.
+The structure mirrors how problems actually surface: by which
+container is unhealthy, then by which subsystem inside it.
 
 ---
 
-### 2. Proxy Verification
+## Quick diagnostic snapshot
 
-Send a test request through the Tiresias proxy to confirm it is intercepting and forwarding traffic:
+Run this first, paste the output anywhere you're asking for help:
 
 ```bash
-curl http://localhost:8080/v1/chat/completions \
-  -H "Authorization: Bearer $OPENAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "gpt-4",
-    "messages": [{"role": "user", "content": "hello"}]
-  }'
+echo "=== Pantheon Diagnostic ===" && \
+echo "--- Container Status ---" && docker compose ps && \
+echo "--- Health: platform-api ---" && curl -s http://localhost:8000/health | jq . && \
+echo "--- Health: platform-web ---" && curl -sI http://localhost:3000 | head -1 && \
+echo "--- Recent Errors ---" && \
+docker compose logs --tail 200 2>&1 | grep -i -E "error|fatal|panic" | tail -30
 ```
-
-You should receive a normal chat completion response from the upstream provider. The request is now logged in Tiresias -- it will appear in the portal dashboard and audit log.
-
-If you receive a `502` or connection error, see [Proxy returns 502](#proxy-returns-502) below.
 
 ---
 
-### 3. Portal Verification
+## platform-web won't start
 
-1. Open your browser and navigate to `http://localhost:3000`
-2. Log in with your credentials
-3. Open the dashboard -- it should display the test request you sent in step 2
-4. Confirm the request details (model, timestamp, token count) are visible
-
-If the page is blank or fails to load, see [Portal shows blank page](#portal-shows-blank-page) below.
-
----
-
-## Common Issues
-
-### Container won't start
-
-**Diagnose:**
+### Symptom: container exits during boot
 
 ```bash
-docker compose logs <service> --tail 50
+docker compose logs platform-web --tail 50
 ```
 
-Replace `<service>` with the name of the failing container (e.g., `tiresias-proxy`, `soulauth`, `portal`).
-
-**Common causes:**
-
-- **Missing required environment variable** -- Look for messages like `Error: VARIABLE_NAME is required`. Check your `.env` file against the example config and ensure every required variable is set.
-- **Port conflict** -- Look for `address already in use`. See [Port conflicts](#port-conflicts) below.
-- **Image not found** -- Run `docker compose pull` to ensure all images are available locally.
-
----
-
-### SoulAuth unhealthy
-
-Run the health check and inspect the error:
-
-```bash
-curl -s http://localhost:8000/health | jq .
-```
-
-| Error message | Cause | Fix |
+| Error fragment | Cause | Fix |
 |---|---|---|
-| `No JWT signing key configured` | Missing key pair | Set `JWT_PRIVATE_KEY` and `JWT_PUBLIC_KEY` in your `.env`. For development only, set `SOULAUTH_DEBUG=true` to bypass. |
-| `license.grace_period` or `license.expired_past_grace` | License key has expired or is in grace period. Search logs for `license.grace_period` or `license.expired_past_grace` | Contact support@saluca.com to renew your license key. Update `TIRESIAS_LICENSE_KEY` in `.env` and restart: `docker compose restart soulauth` |
-| `duplicate key value violates unique constraint "pg_type_typname_nsp_index"` on startup | PostgreSQL error indicating types/tables from a prior deployment already exist | Safe to ignore. SoulAuth runs migrations on boot; this means the tables already exist. |
-| Database connection refused | Postgres unreachable or credentials mismatch | Verify `POSTGRES_PASSWORD` in `.env` matches across services. Confirm postgres is healthy: `docker compose ps postgres` |
+| `SESSION_SECRET … must be at least 32 characters` | Default `.env` not edited | `openssl rand -base64 48` and paste into `.env`; `docker compose up -d platform-web` |
+| `ECONNREFUSED … 5432` | Postgres not healthy yet (platform-web booted first) | `docker compose ps db` should report `(healthy)`. If it isn't, see "Postgres unhealthy" below. |
+| `ECONNREFUSED … 8000` | platform-api unhealthy | Hit `curl http://localhost:8000/health`; if that fails, jump to "platform-api won't start" below. |
+| `argon2 native module not found` | Image rebuilt against the wrong arch (rare, mostly on ARM hosts after an `x86_64` image cache) | `docker compose build --no-cache platform-web && docker compose up -d platform-web` |
 
----
+### Symptom: dashboard loads but returns 500 from every page
 
-### Environment Variable Prefixes
+The Next.js BFF routes need both `WEB_PUBLIC_URL` and `API_PUBLIC_URL`
+to be set correctly. If `API_PUBLIC_URL` points at `localhost:8000`
+but the platform-web container is in a separate network, BFF routes
+can't reach the API. Inside docker compose the value should be the
+service-name URL (`http://platform-api:8000`), and outside it should
+be the host URL (`http://localhost:8000`). The `.env.example` defaults
+work for `pnpm docker:up`.
 
-Tiresias services use prefixed environment variables:
-- SoulAuth: `SOULAUTH_*` (e.g., `SOULAUTH_DATABASE_URL`, `SOULAUTH_LOG_LEVEL`)
-- SoulGate: `SOULGATE_*` (e.g., `SOULGATE_DATABASE_URL`)
-- SoulWatch: `SOULWATCH_*` (e.g., `SOULWATCH_DATABASE_URL`)
-- Proxy: `TIRESIAS_*` (e.g., `TIRESIAS_KEK`, `TIRESIAS_TENANT_ID`)
+### Symptom: blank page in browser, console shows `NEXT_PUBLIC_…` undefined
 
-Using unprefixed names (e.g., `DATABASE_URL` instead of `SOULAUTH_DATABASE_URL`) will cause the service to fall back to defaults, typically `localhost`, causing connection failures.
-
----
-
-### TIRESIAS_LICENSE_SECRET missing or incorrect
-
-If `TIRESIAS_LICENSE_SECRET` is not set or does not match the secret provided with your license key at checkout, license validation will fail with an HMAC signature error.
-
-**Fix:** Set `TIRESIAS_LICENSE_SECRET` in your `.env` file to the exact value provided at checkout, then restart:
+Next.js bakes `NEXT_PUBLIC_*` env vars into the JS bundle at build
+time. If you customized those values and built your own image, rebuild
+explicitly:
 
 ```bash
-docker compose restart soulauth
+docker compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 platform-web
+docker compose up -d platform-web
+```
+
+The pre-built images that ship with the repo bake in localhost
+defaults that work out of the box.
+
+---
+
+## platform-api won't start
+
+### Symptom: container exits during boot
+
+```bash
+docker compose logs platform-api --tail 50
+```
+
+| Error fragment | Cause | Fix |
+|---|---|---|
+| `DATABASE_URL not set` or `host=localhost port=5432: Connection refused` | Postgres unhealthy or hostname wrong | Inside docker compose, the value should be `postgresql+asyncpg://platform:$POSTGRES_PASSWORD@db:5432/platform` (note: service name `db`, not `localhost`). |
+| `alembic.util.exc.CommandError: Can't locate revision` | The DB has data from a different schema | Either drop the volume (`docker compose down -v` — destructive) or downgrade to the matching revision. See [`docs/operations/alembic-branches.md`](../../../docs/operations/alembic-branches.md). |
+| `permission denied for schema public` | The Postgres role doesn't own the schema | Recreate the `db` volume: `docker compose down -v && docker compose up -d`. |
+| `ImportError: cannot import name … from src.agents.…` | Image was built against a different commit | `docker compose build --no-cache platform-api && docker compose up -d platform-api` |
+
+### Symptom: alembic migration fails
+
+```bash
+docker compose exec platform-api python -m alembic current
+docker compose exec platform-api python -m alembic history --verbose | tail -40
+```
+
+The repo runs **two** alembic trees:
+
+- `packages/database` — local-auth schema (`users`, `sessions`,
+  `password_credentials`, `audit_events`, `organizations`).
+- `apps/platform-api` — agent-platform schema (`_soul_tenants`,
+  `_agos_agents`, `_agos_prompts`, `_tenant_provider_keys`,
+  `_soulauth_policy_cache`, …).
+
+A failure in one does not affect the other; targeted fix:
+
+```bash
+# Local-auth tree
+docker compose exec platform-api bash -lc '
+  cd /app/packages/database && python -m alembic current'
+
+# Agent-platform tree
+docker compose exec platform-api bash -lc '
+  cd /app/apps/platform-api && python -m alembic current'
+```
+
+If a head is missing, run `python -m alembic upgrade head` from the
+tree's own directory. The dual-tree boundary, the locked revisions,
+and the recommended order are documented in
+[`docs/operations/alembic-branches.md`](../../../docs/operations/alembic-branches.md).
+
+---
+
+## SoulAuth federated-auth confusion
+
+Pantheon has **two distinct auth paths**, and they're easy to confuse:
+
+1. **SoulAuth federated auth** — the production user login path.
+   Separate Python service, separate database (`_soulauth_*` schema,
+   bcrypt password hashes), federates user identity into the
+   `platform-api` request context.
+2. **`@platform/auth` Argon2id local-auth** — the legacy
+   in-platform-web local-auth layer (`packages/auth/`). It's still in
+   the repo but **not the active production path**; it exists as a
+   reference / for tests.
+
+The two failure modes:
+
+| Symptom | Likely cause | Where to look |
+|---|---|---|
+| Portal login UI works, but `X-SoulKey` API calls return 401 | You're logged in via SoulAuth (session cookie) but no SoulKey has been minted for your tenant | Settings → Agents → New SoulKey, or via `/v1/soulauth/admin/keys` |
+| SoulAuth user can log in but Pantheon dashboard says "no organization" | The federated user wasn't mapped to a tenant in `_soul_tenants` | Re-run the admin seed: `docker compose exec platform-api python scripts/seed-admin.py` |
+| Docs say "Argon2id is the production password algorithm" | You're reading a stale `docs/security/auth-model.md` revision | Treat `@platform/auth` Argon2id as legacy; SoulAuth bcrypt is production. See [`docs/operations/soulauth-integration.md`](../../../docs/operations/soulauth-integration.md). |
+| `seed-admin.py` finished but you can't find the password | The output goes to stdout once; if you missed it, re-run with `--reset` to mint a fresh password | `docker compose exec platform-api python scripts/seed-admin.py --reset` |
+
+Full posture write-up:
+[`docs/operations/soulauth-integration.md`](../../../docs/operations/soulauth-integration.md).
+
+---
+
+## `agent.yaml` import errors
+
+`POST /v1/agents/import` does **all-or-nothing** validation: if any
+agent in the bulk payload has a validation error, the entire request
+is rejected with HTTP 400 and a flat `errors` list, each entry
+pointing at the offending JSONPath.
+
+```json
+{
+  "imported": [],
+  "errors": [
+    {"path": "agents[0].metadata.persona",                 "message": "required"},
+    {"path": "agents[1].spec.provider_overrides[0].secret_ref",
+     "message": "scheme 'vault://' is reserved but not yet implemented (only env:// is supported in this version)"}
+  ]
+}
+```
+
+Common failure modes:
+
+| `errors[].message` excerpt | Cause | Fix |
+|---|---|---|
+| `required` on `metadata.persona` | Missing top-level persona key | Add `metadata.persona: <slug>`. Per-tenant unique. |
+| `does not match caller tenant 'your-slug'` | `metadata.tenant` in the YAML doesn't match the caller's tenant | Drop the field (it defaults to the caller's tenant) or set it correctly. |
+| `cannot be empty when spec.prompt is present` | Body is missing inside the `spec.prompt` block | Either remove the entire `spec.prompt:` block or fill `spec.prompt.body`. |
+| `scheme 'vault://' is reserved but not yet implemented` | A `provider_overrides[*].secret_ref` uses a reserved-but-unimplemented scheme | Use `env://VAR_NAME` (the only supported scheme today). See [`docs/operations/byok-provider-keys.md`](../../../docs/operations/byok-provider-keys.md). |
+| `unknown or malformed secret-ref scheme` | Typo in the URI | Re-check; must be `env://`, `vault://`, `gcpsm://`, `awssm://`, or `enc://`. |
+
+Schema reference:
+[`../src/agents/agent_yaml_schema.md`](../src/agents/agent_yaml_schema.md).
+Use `?dry_run=true` to preview without writing:
+
+```bash
+curl -X POST "http://localhost:8000/v1/agents/import?dry_run=true" \
+  -H "X-SoulKey: $SOULKEY" \
+  -H "Content-Type: text/yaml" \
+  --data-binary @my-agents.yaml
 ```
 
 ---
 
-### SoulGate returns 502
+## Provider key resolution failures
 
-This means soulgate cannot reach soulauth.
-
-**Diagnose:**
+`POST /v1/provider-keys` validates the URI scheme at write time but
+defers value resolution to call time. This lets you stage a row before
+the env var exists. When something downstream actually tries to use
+the key:
 
 ```bash
-docker compose logs soulgate --tail 20
+curl -X POST "http://localhost:8000/v1/provider-keys/<key-id>/test" \
+  -H "X-SoulKey: $SOULKEY"
 ```
 
-**Common causes:**
+returns `{ok, latency_ms, error?, secret_ref_info}`.
 
-- `SOULGATE_SOULAUTH_BASE_URL` is not set or does not point to soulauth (e.g., should be `http://soulauth:8000`)
-- soulgate and soulauth are not on the same Docker network -- verify with `docker network inspect` and check your `docker-compose.yml`
+| `error` excerpt | Cause | Fix |
+|---|---|---|
+| `secret_ref resolution failed: env var 'X' not set` | The env var the URI points at doesn't exist in the platform-api container | Add it to the platform-api service env in `docker-compose.yml` (or `.env` if the service reads from it), then `docker compose up -d platform-api`. |
+| `auth rejected (HTTP 401)` | The key resolved, but the provider rejected it | Wrong / rotated / scope-limited key. Generate a new one upstream and PATCH `secret_ref`. |
+| `auth rejected (HTTP 403)` | Key is valid but lacks the model / route permission | Check the provider console — most providers gate models per workspace. |
+| `timeout` | Network egress blocked or the provider endpoint is unreachable | If you set `base_url`, verify it's reachable from the container (`docker compose exec platform-api curl -I <base_url>`). |
+| `unsupported secret-ref scheme: …` on write | URI uses `vault://`, `gcpsm://`, `awssm://`, or `enc://` | Only `env://` is implemented today. The other schemes are reserved for future work. |
+
+The resolved secret value is **never** included in any response body
+or log line. Full BYOK reference:
+[`docs/operations/byok-provider-keys.md`](../../../docs/operations/byok-provider-keys.md).
 
 ---
 
-### SoulWatch not receiving events
+## Agents store adapter config issues
 
-**Diagnose:**
+The agent + prompt store is selected at runtime from
+`_pantheon_config`. Default is LocalPg; you can flip to Supabase via
+the portal Settings → Agents Store pane or via `POST
+/v1/agents-store/config`.
 
 ```bash
-docker compose logs soulwatch --tail 20
+# Check current
+curl -s http://localhost:8000/v1/agents-store/config -H "X-SoulKey: $SOULKEY" | jq .
+
+# Test a proposed config without persisting it
+curl -X POST http://localhost:8000/v1/agents-store/test \
+  -H "X-SoulKey: $SOULKEY" -H "Content-Type: application/json" \
+  -d '{"kind":"supabase","config":{"url":"https://xxxxx.supabase.co","service_role_key_ref":"env://SUPABASE_SERVICE_ROLE_KEY"}}'
 ```
 
-**Common causes:**
+| Error | Cause | Fix |
+|---|---|---|
+| `supabase config missing 'url'` | URL not provided | Pass `config.url`. |
+| `supabase config missing 'service_role_key_ref'` | Ref not provided | Pass `config.service_role_key_ref` as `env://VAR_NAME`. |
+| `could not resolve service_role_key_ref` | Env var isn't set inside the container | Add it to the platform-api service env, then `docker compose up -d platform-api`. |
+| Switch succeeded but agents list returns empty | The Supabase project doesn't yet have the Pantheon schema applied | Apply the schema (see [`docs/operations/store-adapter-config.md`](../../../docs/operations/store-adapter-config.md)). |
+| Flip from local → supabase loses existing agents | Adapters do NOT migrate data | If you need to preserve data, export from LocalPg and re-import via `POST /v1/agents/import` against the new store. |
 
-- `SOULWATCH_DATABASE_URL` is not set or is incorrect -- soulwatch needs database access to receive events
-- soulwatch is not on the same Docker network as soulauth and postgres -- verify with `docker network inspect`
+Full flip-the-switch walkthrough:
+[`docs/operations/store-adapter-config.md`](../../../docs/operations/store-adapter-config.md).
 
 ---
 
-### Proxy returns 502
-
-This means the proxy cannot reach the upstream AI provider.
-
-**Diagnose:**
+## Postgres unhealthy
 
 ```bash
-docker compose logs tiresias-proxy --tail 20
+docker compose ps db
+docker compose logs db --tail 40
 ```
 
-**Check outbound connectivity from inside the container:**
-
-```bash
-docker compose exec tiresias-proxy curl -s -o /dev/null -w "%{http_code}" https://api.openai.com/v1/models
-docker compose exec tiresias-proxy curl -s -o /dev/null -w "%{http_code}" https://api.anthropic.com/v1/messages
-```
-
-Expected: `401` (unauthorized, but reachable). If you get `000` or a timeout, outbound HTTPS is blocked.
-
-**Common causes:**
-
-- Corporate firewall or proxy blocking outbound HTTPS to `api.openai.com` or `api.anthropic.com`
-- DNS resolution failure inside the container -- check `docker compose exec tiresias-proxy nslookup api.openai.com`
-- Incorrect `UPSTREAM_URL` override in `.env`
+| Error fragment | Cause | Fix |
+|---|---|---|
+| `FATAL: password authentication failed for user "platform"` | `POSTGRES_PASSWORD` changed after the volume was initialized | Either change the value back to what the volume expects, or `docker compose down -v` (destructive) and re-up. |
+| `database "platform" does not exist` | Volume from a prior install with a different `POSTGRES_DB` | Same fix as above: align `POSTGRES_DB` with the existing volume, or recreate. |
+| `pg_isready` returns refused | Container is still starting | Wait 10–30s; start_period is 10s. If it's been > 1 min, inspect logs. |
 
 ---
 
-### Portal shows blank page
+## Port conflicts
 
-**Primary cause:** `NEXT_PUBLIC_SOULAUTH_API_URL` was not set at build time.
-
-Next.js bakes `NEXT_PUBLIC_*` variables into the JavaScript bundle at build time, not at runtime. If these were missing during the Docker image build, the portal cannot reach SoulAuth.
-
-**Fix for custom builds:**
-
-```bash
-docker compose build --build-arg NEXT_PUBLIC_SOULAUTH_API_URL=http://localhost:8000 portal
-docker compose up -d portal
-```
-
-**Note:** Docker Hub images ship with these values pre-configured. This issue only affects custom builds.
-
-**Other causes:**
-
-- Browser console errors (open DevTools > Console) -- look for CORS or network errors
-- SoulAuth is down -- the portal depends on it for authentication. Check `docker compose ps soulauth`.
-
----
-
-### Port conflicts
-
-Another service on your host is already using port 8080, 8000, or 3000.
-
-**Diagnose:**
+Default port bindings: 3000 (platform-web), 8000 (platform-api), 5432
+(db), 8025 (mailhog), 8910 (memory-service), 8080 (tiresias-proxy with
+`full` profile).
 
 ```bash
 # Linux / macOS
-ss -tlnp | grep -E '8080|8000|3000'
+ss -tlnp | grep -E '3000|8000|5432|8080|8910'
 
 # Windows (PowerShell)
-netstat -ano | findstr ":8080 :8000 :3000"
+netstat -ano | findstr ":3000 :8000 :5432 :8080 :8910"
 ```
 
-**Fix:** Override the default ports in your `.env` file:
+Override in `.env`:
 
-```bash
-PROXY_PORT=9080
-SOULAUTH_PORT=9000
-PORTAL_PORT=3001
+```
+PLATFORM_WEB_PORT=3001
+PLATFORM_API_PORT=8001
+DB_PORT=5433
 ```
 
-Then restart:
-
-```bash
-docker compose down && docker compose up -d
-```
+Then `docker compose down && docker compose up -d`.
 
 ---
 
-### Database issues
-
-**Backup before making changes:**
+## Log inspection
 
 ```bash
-docker exec $(docker compose ps -q postgres) pg_dump -U tiresias tiresias > backup.sql
-```
-
-**Restore from backup:**
-
-```bash
-cat backup.sql | docker exec -i $(docker compose ps -q postgres) psql -U tiresias tiresias
-```
-
-**Full reset (WARNING: deletes all data):**
-
-```bash
-docker compose down -v && docker compose up -d
-```
-
-The `-v` flag removes all named volumes including the database. Only use this as a last resort.
-
----
-
-## Action Pipeline Issues
-
-The action pipeline routes requests from SoulGate to the action execution layer. These issues only apply when the pipeline is enabled (both `SOULGATE_PICOCLAW_BASE_URL` and `SOULGATE_PICOCLAW_ACTION_TOKEN` are set).
-
-### Actions not reaching the execution layer (502/504)
-
-**Symptoms:**
-- Action requests return HTTP 502 or 504
-- SoulGate logs show `upstream_connect_error` or `upstream_timeout`
-
-**Resolution:**
-
-1. Confirm the action execution endpoint is reachable from the SoulGate container:
-   ```bash
-   docker compose exec soulgate python -c \
-     "import httpx; print(httpx.get('${SOULGATE_PICOCLAW_BASE_URL}/health').status_code)"
-   ```
-
-2. If the execution layer is on a different Docker network, verify network connectivity. Services on `tiresias-net` cannot reach external containers unless explicitly connected.
-
-3. Check for DNS resolution issues. If using a hostname, confirm it resolves:
-   ```bash
-   docker compose exec soulgate python -c \
-     "import socket; print(socket.gethostbyname('picoclaw'))"
-   ```
-
-4. If timeouts are occurring, the execution layer may be under load. Check its logs and resource usage.
-
-### Auth failures on action submit (401)
-
-**Symptoms:**
-- Action requests return HTTP 401
-- Execution layer logs show `invalid_token` or `authentication_failed`
-
-**Resolution:**
-
-1. Verify the token matches on both sides. The value of `SOULGATE_PICOCLAW_ACTION_TOKEN` in your `.env` must be identical to the token configured on the action execution endpoint.
-
-2. Check for trailing whitespace or newlines in the token value. A common cause is copy-paste errors:
-   ```bash
-   grep SOULGATE_PICOCLAW_ACTION_TOKEN .env | cat -A
-   # The line should end with the token, no trailing spaces or ^M characters
-   ```
-
-3. Regenerate and re-deploy both sides if the token is compromised or uncertain:
-   ```bash
-   NEW_TOKEN=$(openssl rand -hex 32)
-   echo "New token: $NEW_TOKEN"
-   # Set this value in .env and restart both SoulGate and the execution layer
-   ```
-
-### Token mismatch between SoulGate and action layer
-
-**Symptoms:**
-- SoulGate health check shows `"action_pipeline": {"status": "connected"}` but action requests fail with 401
-- This occurs after rotating the token on one side but not the other
-
-**Resolution:**
-
-Both SoulGate and the action execution layer must be restarted after a token change. The token is read at startup and cached in memory.
-
-1. Update `SOULGATE_PICOCLAW_ACTION_TOKEN` in `.env`
-2. Update the same token on the action execution endpoint
-3. Restart both services:
-   ```bash
-   docker compose -f deploy/docker-compose.production.yml restart soulgate
-   # Also restart the action execution layer per its own procedures
-   ```
-
-### Checking the action audit log
-
-All action pipeline activity is recorded in the audit log, regardless of whether the pipeline is in monitor-only or active mode.
-
-```bash
-# Query recent action events via the SoulAuth audit API
-curl -s "https://tiresias.network/v1/soulauth/admin/audit/report?event_type=action_pipeline&limit=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" | jq .
-```
-
-Each audit entry includes:
-
-| Field | Description |
-|-------|-------------|
-| `event_type` | `action_pipeline` |
-| `action` | The action that was requested (e.g. `quarantine`, `notify`, `block`) |
-| `status` | `forwarded`, `failed`, `monitor_only` |
-| `upstream_status` | HTTP status returned by the execution layer (null if monitor-only) |
-| `latency_ms` | Round-trip time to the execution layer |
-| `soulkey_id` | The agent that triggered the action |
-
-If you see `"status": "monitor_only"` for all entries, the pipeline is not configured for active forwarding. Set `SOULGATE_PICOCLAW_BASE_URL` and restart SoulGate to enable it.
-
----
-
-## Log Locations
-
-**Stream all logs in real time:**
-
-```bash
+# Stream everything
 docker compose logs -f
-```
 
-**Stream logs for a single service:**
+# Stream a single service
+docker compose logs -f platform-api
 
-```bash
-docker compose logs <service> -f
-```
+# Errors only (structured logs)
+docker compose logs platform-api --tail 200 --no-log-prefix \
+  | jq 'select(.level == "error")'
 
-Replace `<service>` with: `tiresias-proxy`, `soulauth`, `soulgate`, `soulwatch`, `portal`, or `postgres`.
-
-**Readable structured logs:**
-
-SoulAuth, SoulGate, and SoulWatch emit structured JSON logs. Pipe through `jq` for readability:
-
-```bash
-docker compose logs soulauth --tail 50 --no-log-prefix | jq .
-```
-
-**Filter for errors only:**
-
-```bash
-docker compose logs soulauth --tail 200 --no-log-prefix | jq 'select(.level == "error")'
+# Around a specific timestamp
+docker compose logs --since 10m platform-api | grep -i 'soulauth\|provider_key'
 ```
 
 ---
 
-## Resource Usage
+## When you need to file a bug
 
-**Expected baseline:** approximately 2 GB RAM total across all 6 containers.
+Include:
 
-**Monitor in real time:**
+1. Output of `docker compose ps`.
+2. Output of `docker compose logs --tail 200 platform-api platform-web db`.
+3. The exact request that failed (curl command + response body), with
+   any secret values redacted.
+4. The output of the "Quick diagnostic snapshot" at the top of this
+   document.
 
-```bash
-docker stats
-```
-
-**Postgres storage:** grows with audit log retention. Plan for approximately 1 GB per million proxied requests. Monitor disk usage:
-
-```bash
-docker compose exec postgres psql -U tiresias -c "SELECT pg_size_pretty(pg_database_size('tiresias'));"
-```
-
-If storage is growing faster than expected, review your log retention policy or run:
-
-```bash
-docker compose exec postgres psql -U tiresias -c "SELECT relname, pg_size_pretty(pg_total_relation_size(relid)) FROM pg_catalog.pg_statio_user_tables ORDER BY pg_total_relation_size(relid) DESC LIMIT 10;"
-```
-
----
-
-## Quick Diagnostic Script
-
-Run this to capture the full state of your deployment for support tickets:
-
-```bash
-echo "=== Tiresias Diagnostic ===" && \
-echo "--- Container Status ---" && docker compose ps && \
-echo "--- Health: Proxy ---" && curl -s http://localhost:8080/health | jq . && \
-echo "--- Health: SoulAuth ---" && curl -s http://localhost:8000/health | jq . && \
-echo "--- Health: Portal ---" && curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:3000/ && \
-echo "--- Resource Usage ---" && docker stats --no-stream && \
-echo "--- Recent Errors ---" && docker compose logs --tail 50 2>&1 | grep -i -E "error|fatal|panic" | tail -20
-```
-
----
-
-## Getting Help
-
-- **Documentation:** https://tiresias.network/docs
-- **Email:** support@saluca.com
-- **Support tickets:** Always include the output of:
-  ```bash
-  docker compose ps
-  docker compose logs --tail 100
-  ```
+Open the issue on GitHub:
+[`https://github.com/salucallc/pantheon/issues`](https://github.com/salucallc/pantheon/issues).
+For security-sensitive reports, see [`../SECURITY.md`](../SECURITY.md).

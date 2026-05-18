@@ -1,436 +1,237 @@
-# Tiresias Platform -- Customer Installation Guide
+# Pantheon Self-Host Install
 
-Version: 3.4  
-Last updated: 2026-04-05
+A reference for installing Pantheon on a single host using docker
+compose. Pantheon is local-first OSS — there are no license keys, no
+private container registry, and no tier gating. If you want the
+canonical 15-minute path use
+[`docs/operations/quickstart.md`](../../../docs/operations/quickstart.md);
+this document is the longer reference for operators standing up a
+durable environment.
 
----
+For the production-leaning container topology see
+[`docs/operations/container-deployment.md`](../../../docs/operations/container-deployment.md).
 
 ## Prerequisites
-
-Before you begin, verify that your deployment host meets the following requirements.
 
 ### Hardware
 
 | Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| RAM      | 4 GB    | 8 GB        |
-| CPU      | 2 cores | 4 cores     |
-| Disk     | 20 GB   | 50 GB       |
+|---|---|---|
+| RAM | 4 GB | 8 GB |
+| CPU | 2 cores | 4 cores |
+| Disk | 20 GB | 50 GB (more if you keep audit history) |
 
 ### Software
 
-- **Docker Engine 24.0+** and **Docker Compose v2** (bundled with Docker Desktop or installed standalone)
-- **Operating system:** Ubuntu 22.04 LTS, RHEL 9, or Windows Server 2022 with WSL2 enabled
+- **Docker Engine 24+** with the Compose v2 plugin (bundled in Docker
+  Desktop; `docker compose version` should report `v2.x`).
+- **Linux, macOS, or Windows with WSL2.** Native Windows shells are
+  not supported.
+- **git** to clone the repo.
 
-Verify your Docker installation:
+Verify your install:
 
 ```bash
-docker --version
-# Expected: Docker version 24.x or later
-
-docker compose version
-# Expected: Docker Compose version v2.x
+docker --version              # Docker version 24.x or later
+docker compose version        # Docker Compose version v2.x
 ```
 
 ### Network
 
-The deployment host requires outbound HTTPS (TCP 443) to the following endpoints:
+The default stack only needs **outbound** HTTPS:
 
-| Destination              | Purpose                        |
-|--------------------------|--------------------------------|
-| `api.anthropic.com`      | Proxied Anthropic LLM calls    |
-| `api.openai.com`         | Proxied OpenAI LLM calls       |
-| `registry-1.docker.io`   | Pull container images           |
+| Destination | Purpose |
+|---|---|
+| `github.com` | Clone the repo |
+| `registry-1.docker.io`, `ghcr.io` | Pull `postgres:16-alpine`, `mailhog`, etc. |
+| Per-tenant LLM providers (anthropic, openai, gemini, …) | Only if you configure BYOK keys |
 
-No inbound ports need to be exposed to the public internet unless you choose to make the portal externally accessible.
+No inbound ports need to be exposed to the public internet unless you
+choose to publish the dashboard.
 
-### License
+### What you do NOT need
 
-You must have a valid Tiresias license. Your license package includes:
+- A license key. There isn't one.
+- A Docker Hub pull token. Images are public.
+- A Tenant ID issued by Saluca. You manage your own tenants.
+- A KEK / JWT signing key from a vendor. The bootstrap generates
+  development defaults; you replace them when you go production.
 
-- Docker Hub pull token
-- Tenant ID (`TIRESIAS_TENANT_ID`)
-- License key (`TIRESIAS_LICENSE_KEY`)
-
-These are provided at purchase or through your Tiresias account representative.
-
----
-
-## Step 1: Authenticate with Docker Hub
-
-Tiresias container images are hosted in a private Docker Hub repository. Authenticate using the pull token provided with your license:
+## Step 1 — Clone
 
 ```bash
-docker login -u <customer-username> -p <pull-token>
+git clone https://github.com/salucallc/pantheon.git
+cd pantheon
 ```
 
-Replace `<customer-username>` and `<pull-token>` with the credentials from your license package.
-
-Verify access:
+## Step 2 — Configure environment
 
 ```bash
-docker pull salucalabs/tiresias-proxy:latest
+cp .env.example .env
 ```
 
-If the pull succeeds, authentication is configured correctly.
+Edit `.env`. At minimum, set strong values for:
 
----
+| Variable | Purpose |
+|---|---|
+| `POSTGRES_PASSWORD` | Internal Postgres password (default `platform` for dev — change for anything beyond local). |
+| `SESSION_SECRET` | Signs session cookies. Must be at least 32 characters. Generate with `openssl rand -base64 48`. |
+| `WEB_PUBLIC_URL` | Public URL of platform-web (e.g. `http://localhost:3000`). |
+| `API_PUBLIC_URL` | Public URL of platform-api (e.g. `http://localhost:8000`). |
 
-## Step 2: Download Deployment Files
+The full authoritative list of environment variables lives in
+[`.env.example`](../../../.env.example) at the repo root. Every
+service-level prefix (`SOULAUTH_*`, `SOULGATE_*`, the in-process
+`@platform/auth` settings, the agent platform BYOK secrets) is
+documented inline there.
 
-Obtain the following files from your Tiresias license checkout page or from your account representative:
-
-| File                              | Description                                    |
-|-----------------------------------|------------------------------------------------|
-| `docker-compose.production.yml`   | Production Compose manifest (all 6 services)   |
-| `.env.production.template`        | Environment variable template                  |
-
-Place both files in a dedicated directory on the deployment host:
+## Step 3 — Start the stack
 
 ```bash
-mkdir -p /opt/tiresias
-cp docker-compose.production.yml /opt/tiresias/
-cp .env.production.template /opt/tiresias/.env
-cd /opt/tiresias
+# Default profile: postgres + mailhog + platform-api + platform-web + memory-service
+pnpm docker:up
+
+# Or, if you don't have pnpm installed on the host:
+docker compose up -d
 ```
 
-All subsequent commands in this guide assume `/opt/tiresias` as the working directory.
+Expected output (your service set may differ based on which profile
+you select):
 
----
+```
+[+] Running 5/5
+ ✔ Container pantheon-db-1              Started
+ ✔ Container pantheon-mailhog-1         Started
+ ✔ Container pantheon-memory-service-1  Started
+ ✔ Container pantheon-platform-api-1    Started
+ ✔ Container pantheon-platform-web-1    Started
+```
 
-## Step 3: Configure Environment
+First boot takes 30–60 seconds. The Postgres init runs alembic
+migrations against both the `packages/database` tree (local-auth
+schema) and the `apps/platform-api` tree (agent-platform schema). See
+[`docs/operations/alembic-branches.md`](../../../docs/operations/alembic-branches.md)
+for the dual-tree topology.
 
-Open `.env` in a text editor and populate the required variables.
-
-### Required Variables
-
-| Variable                | Description                                          |
-|-------------------------|------------------------------------------------------|
-| `POSTGRES_PASSWORD`     | Password for the internal PostgreSQL database         |
-| `TIRESIAS_TENANT_ID`    | Your tenant identifier (from license package)         |
-| `TIRESIAS_LICENSE_KEY`  | Your license key (from license package)               |
-| `TIRESIAS_LICENSE_SECRET` | License secret (from license package)               |
-| `TIRESIAS_KEK`          | Key Encryption Key for envelope encryption at rest    |
-| `ADMIN_EMAIL`           | Email address for the auto-created admin account      |
-| `ADMIN_PASSWORD`        | Password for the auto-created admin account           |
-
-### Generate POSTGRES_PASSWORD
-
-Use a strong random password:
+## Step 4 — Verify
 
 ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(24))"
+# platform-api health
+curl -s http://localhost:8000/health | jq .
+
+# platform-web (dashboard)
+curl -sI http://localhost:3000 | head -1
+# → HTTP/1.1 200 OK
+
+# Container status
+docker compose ps
 ```
 
-### Generate TIRESIAS_KEK
+All containers should be `Up (healthy)`. Anything else: see
+[`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-The KEK protects all stored encryption keys. Generate a 256-bit hex key:
+## Step 5 — First login
+
+The `pnpm docker:up` flow runs the admin seed inside `platform-web` on
+first boot. The seeded credentials are written to the container logs:
 
 ```bash
-python3 -c "import secrets; print(secrets.token_hex(32))"
+docker compose logs platform-web | grep -i "seeded admin"
 ```
 
-Copy the output into your `.env` file:
+Open the dashboard at `http://localhost:3000`, log in with those
+credentials, and **change the password immediately** via Settings →
+Account.
 
-```
-TIRESIAS_KEK=<paste-hex-string-here>
-```
+The dashboard URL structure (post-rename, see PR #139):
 
-> **WARNING:** Store the KEK securely outside the deployment host (e.g., in a hardware security module or secrets vault). If the KEK is lost, encrypted data cannot be recovered.
+| Surface | Path |
+|---|---|
+| Per-OS landing pages | `http://localhost:3000/dashboard/<slug>` |
+| Cross-OS audit log | `http://localhost:3000/dashboard/audit` |
+| Per-user feature flags | `http://localhost:3000/dashboard/settings` |
+| Agents / Prompts | `http://localhost:3000/dashboard/settings` (Agents + Prompts panes) |
+| Provider keys (BYOK) | `http://localhost:3000/dashboard/settings` (Provider Keys pane) |
 
-### Generate JWT Signing Keys
+## Step 6 — Configure per-tenant BYOK keys
 
-Tiresias uses EC P-256 keys for JWT authentication. Generate a key pair:
+If your agents will call commercial LLM providers, register a BYOK
+provider key per tenant. Step-by-step:
+[`docs/operations/byok-provider-keys.md`](../../../docs/operations/byok-provider-keys.md).
+
+Quick form:
 
 ```bash
-openssl ecparam -genkey -name prime256v1 -noout -out jwt-private.pem
-openssl ec -in jwt-private.pem -pubout -out jwt-public.pem
-```
-
-Base64-encode the keys for the `.env` file:
-
-```bash
-echo "SOULAUTH_JWT_PRIVATE_KEY=$(base64 -w 0 jwt-private.pem)"
-echo "SOULAUTH_JWT_PUBLIC_KEY=$(base64 -w 0 jwt-public.pem)"
-```
-
-Copy both values into `.env`.
-
-### Optional Variables
-
-| Variable               | Default            | Description                                       |
-|------------------------|--------------------|---------------------------------------------------|
-| `TIRESIAS_PROVIDERS`   | `anthropic,openai` | Comma-separated list of enabled LLM providers     |
-| `TIRESIAS_UPSTREAM_URL`| (none)             | Custom upstream LLM endpoint URL                  |
-| `TIRESIAS_REDIS_URL`   | (none)             | External Redis URL for caching and rate limiting   |
-| `SOULAUTH_LOG_LEVEL`   | `info`             | Log verbosity: `debug`, `info`, `warn`, `error`   |
-
-> **NOTE:** SIEM log forwarding is configured through the SoulWatch service dashboard, not via environment variables.
-
----
-
-## Step 4: Deploy
-
-Pull the images and start all services:
-
-```bash
-docker compose -f docker-compose.production.yml pull
-```
-
-```bash
-docker compose -f docker-compose.production.yml up -d
-```
-
-Expected output:
-
-```
-[+] Running 6/6
- ✔ Container postgres            Started
- ✔ Container soulauth           Started
- ✔ Container soulgate           Started
- ✔ Container soulwatch          Started
- ✔ Container tiresias-proxy     Started
- ✔ Container portal             Started
-```
-
-The database initializes its schema automatically on first boot. Allow 30--60 seconds for all services to become healthy.
-
----
-
-## Step 5: Verify Deployment
-
-### Health Checks
-
-Check each service endpoint:
-
-```bash
-curl -s http://localhost:8080/health
-# Expected: {"status":"ok","service":"tiresias-proxy","mode":"onprem"}
-```
-
-```bash
-curl -s http://localhost:8000/health
-# Expected: {"status":"healthy","service":"soulauth","version":"3.4.4"}
-```
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
-# Expected: 200
-```
-
-### Container Status
-
-```bash
-docker compose -f docker-compose.production.yml ps
-```
-
-All containers should show `Up` with `(healthy)` status. Example:
-
-```
-NAME                  STATUS
-postgres              Up 2 minutes (healthy)
-soulauth              Up 2 minutes (healthy)
-soulgate              Up 2 minutes (healthy)
-soulwatch             Up 2 minutes (healthy)
-tiresias-proxy        Up 2 minutes (healthy)
-portal                Up 2 minutes (healthy)
-```
-
-### Log Inspection
-
-If any container is not healthy, inspect its logs:
-
-```bash
-docker compose -f docker-compose.production.yml logs soulauth --tail 20
-docker compose -f docker-compose.production.yml logs proxy --tail 20
-```
-
-Common first-boot issues:
-
-| Symptom                         | Cause                              | Fix                                      |
-|---------------------------------|------------------------------------|------------------------------------------|
-| `soulauth` exits with code 1   | Missing `TIRESIAS_KEK`             | Set the variable in `.env` and restart   |
-| `proxy` cannot reach upstream   | Outbound HTTPS blocked             | Open TCP 443 to `api.anthropic.com` etc. |
-| `db` exits with code 1         | Weak `POSTGRES_PASSWORD`           | Use a password with 16+ characters       |
-
----
-
-## Step 6: First Login
-
-1. The admin account is created automatically on first boot using the `ADMIN_EMAIL` and `ADMIN_PASSWORD` values from your `.env` file.
-
-2. Open a browser and navigate to `http://localhost:3000` (or the host's IP/DNS name on port 3000).
-
-3. Log in with the `ADMIN_EMAIL` and `ADMIN_PASSWORD` credentials you configured in Step 3.
-
-4. **Change the default admin password** immediately after first login via **Settings > Account**.
-
-5. From the admin dashboard, you can invite additional users, configure integrations, and manage provider API keys.
-
-> **NOTE:** Additional users created through the admin dashboard are assigned the default **Analyst** role. Promote users to **Admin** from **Settings > Team**.
-
----
-
-## Step 7: Point AI Agents at the Proxy
-
-Tiresias operates as a transparent proxy. Redirect your AI agents and tools to route LLM traffic through Tiresias by changing their base URL configuration.
-
-### OpenAI-Compatible Agents
-
-Set the following environment variable in your agent's runtime:
-
-```bash
-export OPENAI_BASE_URL=http://<tiresias-host>:8080/v1
-```
-
-### Anthropic-Compatible Agents
-
-```bash
-export ANTHROPIC_BASE_URL=http://<tiresias-host>:8080
-```
-
-Replace `<tiresias-host>` with the hostname or IP address of the machine running Tiresias.
-
-### Verification
-
-Send a test request through the proxy:
-
-```bash
-curl -s http://<tiresias-host>:8080/v1/chat/completions \
-  -H "Authorization: Bearer <your-openai-key>" \
+export SOULKEY="sk_agent_…"     # mint via the portal or via seed-admin output
+curl -X POST http://localhost:8000/v1/provider-keys \
+  -H "X-SoulKey: $SOULKEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"ping"}],"max_tokens":5}'
+  -d '{
+    "provider": "anthropic",
+    "secret_ref": "env://TENANT_ANTHROPIC_KEY",
+    "status": "active"
+  }'
 ```
 
-A successful response confirms that LLM traffic is flowing through Tiresias. All requests are now logged, audited, and subject to your configured policies.
+The secret value never appears in any wire response — only the URI
+ref (`env://TENANT_ANTHROPIC_KEY`) is stored, and resolution happens
+at call time. Reserved schemes (`vault://`, `gcpsm://`, `awssm://`,
+`enc://`) validate at write time but return a structured 400 until
+implemented.
 
----
+## Step 7 — Import your first agent
 
-## Action Pipeline Setup
+Pantheon's Wave-H agent platform ingests a unified `agent.yaml`
+schema. Operator walkthrough:
+[`docs/operations/agents-platform-quickstart.md`](../../../docs/operations/agents-platform-quickstart.md).
+Schema reference:
+[`../src/agents/agent_yaml_schema.md`](../src/agents/agent_yaml_schema.md).
 
-The action pipeline connects SoulGate (the API gateway) to an external action execution layer. By default, the pipeline is **monitor-only** -- SoulGate logs action requests but does not forward them until the pipeline is configured.
+## Going beyond local
 
-### Generate the shared action token
+Once the local stack is healthy:
 
-Both SoulGate and the action execution endpoint must share the same secret token:
+- **Persistent data** — the `db_data` named volume holds Postgres
+  state. Back it up before upgrades:
+  ```bash
+  docker run --rm -v pantheon_db_data:/data -v $(pwd):/backup \
+    alpine tar czf /backup/pg-$(date +%F).tar.gz -C /data .
+  ```
+- **Upgrade** — `git pull && pnpm docker:up`. Migrations run
+  automatically on boot.
+- **Production-leaning container topology** —
+  [`docs/operations/container-deployment.md`](../../../docs/operations/container-deployment.md)
+  covers the `full` profile (adds Redis, platform-app-proxy,
+  platform-sovereign, worker).
+- **Federated auth** — the dashboard logs users in via SoulAuth
+  (separate Python service, bcrypt). For local dev the bootstrap admin
+  is sufficient; if you need to wire an LDAP / OIDC IdP, see
+  [`docs/operations/soulauth-integration.md`](../../../docs/operations/soulauth-integration.md).
+- **Agents store adapter** — by default the agent platform writes to
+  the local Postgres. To point it at a managed Supabase project:
+  [`docs/operations/store-adapter-config.md`](../../../docs/operations/store-adapter-config.md).
+
+## Uninstall
 
 ```bash
-openssl rand -hex 32
+# Stop services (keeps data)
+docker compose down
+
+# Stop + delete all data (irreversible)
+docker compose down -v
+
+# Also remove pulled images
+docker compose down -v --rmi all
 ```
 
-Set this value in `.env` for both sides:
+## Appendix — port reference
 
-```
-SOULGATE_PICOCLAW_ACTION_TOKEN=<the token you generated>
-```
-
-### Set the action execution URL
-
-Point SoulGate at the action execution endpoint:
-
-```
-SOULGATE_PICOCLAW_BASE_URL=http://picoclaw:18790
-```
-
-Replace `picoclaw:18790` with the hostname and port of your action execution layer. If the execution layer runs on the same Docker network, use the container service name. If it runs externally, use the full URL.
-
-### Verify the pipeline
-
-After starting the stack, confirm SoulGate can reach the action layer:
-
-```bash
-curl -s http://localhost:8002/health | jq '.components.action_pipeline'
-```
-
-Expected response when configured:
-
-```json
-{
-  "status": "connected",
-  "upstream": "http://picoclaw:18790"
-}
-```
-
-If the action token or URL is not set, the health check reports `"status": "disabled"` -- this is normal for monitor-only deployments.
-
-### Monitor-only mode
-
-If you do not set `SOULGATE_PICOCLAW_BASE_URL`, SoulGate operates in monitor-only mode. Action requests are logged to the audit trail but not forwarded. This is the default and is suitable for deployments that only need detection and alerting without automated response.
-
-See `docs/ADMIN_GUIDE.md` Section 8 (SoulGate Configuration) for advanced action pipeline options including rate limiting, circuit breaker settings, and action approval workflows.
-
----
-
-## Upgrading
-
-To upgrade Tiresias to the latest version:
-
-```bash
-cd /opt/tiresias
-docker compose -f docker-compose.production.yml pull
-docker compose -f docker-compose.production.yml up -d
-```
-
-Compose performs a rolling restart with health checks. Services are replaced one at a time; the proxy continues to serve traffic during the upgrade. Database migrations run automatically on boot.
-
-> **TIP:** Before upgrading, back up your database volume:
-> ```bash
-> docker compose -f docker-compose.production.yml stop db
-> docker run --rm -v tiresias_db_data:/data -v $(pwd):/backup alpine tar czf /backup/db-backup.tar.gz -C /data .
-> docker compose -f docker-compose.production.yml start db
-> ```
-
-Review the [CHANGELOG](https://www.tiresias.network/changelog) for breaking changes before upgrading across major versions.
-
----
-
-## Uninstalling
-
-To stop all Tiresias services:
-
-```bash
-docker compose -f docker-compose.production.yml down
-```
-
-To stop all services **and delete all data** (database, logs, cached models):
-
-```bash
-docker compose -f docker-compose.production.yml down -v
-```
-
-> **WARNING:** The `-v` flag permanently deletes all Docker volumes, including the PostgreSQL database. This action is irreversible. Export any required audit logs before running this command.
-
-To remove pulled images:
-
-```bash
-docker compose -f docker-compose.production.yml down -v --rmi all
-```
-
----
-
-## Appendix A: Port Reference
-
-| Port  | Service    | Protocol | Description                    |
-|-------|------------|----------|--------------------------------|
-| 3000  | Portal     | HTTP     | Web management console         |
-| 8000  | SoulAuth   | HTTP     | Authentication and licensing   |
-| 8080  | Proxy      | HTTP     | LLM proxy endpoint             |
-| 5432  | PostgreSQL | TCP      | Internal database (not exposed)|
-
-## Appendix B: File Layout
-
-```
-/opt/tiresias/
-├── docker-compose.production.yml
-├── .env
-├── jwt-private.pem    # Generated in Step 3
-└── jwt-public.pem     # Generated in Step 3
-```
-
-## Appendix C: Support
-
-- Documentation: [https://www.tiresias.network/docs](https://www.tiresias.network/docs)
-- Support email: support@tiresias.network
-- Status page: [https://status.tiresias.network](https://status.tiresias.network)
-
-Include the output of `docker compose ps` and relevant container logs when filing a support ticket.
+| Port | Service | Notes |
+|---|---|---|
+| 3000 | platform-web | Dashboard |
+| 8000 | platform-api | FastAPI core + `/docs` |
+| 8025 | mailhog | Web UI (dev SMTP capture) |
+| 1025 | mailhog | SMTP |
+| 5432 | postgres | Bound to host for dev convenience; firewall in prod |
+| 8910 | memory-service | Memory sidecar |
+| 8080 | tiresias-proxy (full profile) | App proxy with Cedar policy enforcement |

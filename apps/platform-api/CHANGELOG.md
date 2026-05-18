@@ -1,8 +1,40 @@
 # Changelog
 
-All notable changes to the Tiresias Platform will be documented in this file.
+All notable changes to the Pantheon platform-api will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+> **Rename note (Wave I, 2026-05).** The repository and product were
+> renamed from "Tiresias Platform" to "Pantheon". The historical
+> entries below reference the pre-rename product name. The
+> `tiresias` code namespace (`apps/platform-app-proxy/`,
+> `apps/platform-api/src/tiresias/`, the `tiresias-proxy` service) is
+> intentionally preserved.
+
+## [Unreleased]
+
+### Changed
+
+- Renamed top-level project from "Tiresias Platform" to "Pantheon".
+  The `tiresias` code namespace stays. Self-host documentation
+  rewritten under `docs/operations/` and `apps/platform-api/deploy/`
+  for OSS framing (no license keys, no tier gating). See Wave I.1.
+- `apps/platform-api/README.md`, `QUICKSTART.md`, `deploy/INSTALL.md`,
+  and `deploy/TROUBLESHOOTING.md` rewritten for Pantheon self-host
+  audience.
+
+### Added
+
+- New docs under `docs/operations/`:
+  `agents-platform-quickstart.md`, `byok-provider-keys.md`,
+  `store-adapter-config.md`, `soulauth-integration.md`.
+
+### Removed
+
+- `apps/platform-api/SETUP_CHECKLIST.md`,
+  `apps/platform-api/SPEC.md`,
+  `apps/platform-api/deploy/LICENSING.md` — pre-implementation
+  artifacts superseded by shipped code.
 
 ## [3.6.1] - 2026-04-10
 

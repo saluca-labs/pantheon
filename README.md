@@ -12,12 +12,18 @@ the shared platform shell.
 ```
 apps/
   platform-web          Next.js 16 dashboard + BFF + Agentic OS layer
-  platform-api          FastAPI core (SoulAuth, SoulGate, SoulWatch)
+  platform-api          FastAPI core (Wave-H agent platform, SoulKey agent
+                        auth, federated SoulAuth, PDP, audit log)
   platform-app-proxy    Agent-facing proxy with Cedar policy enforcement
+                        (intentionally Tiresias-branded — see app README)
   platform-sovereign    On-premises deployment variant
+  soul-service          Vendored Soul memory service (FastAPI)
+  soul-mcp              MCP adapter for the Soul tool surface
 
 packages/
-  @platform/auth        Local-auth: Argon2id + Postgres sessions
+  @platform/auth        Legacy local-auth (Argon2id + Postgres sessions).
+                        Production user auth is federated through SoulAuth;
+                        see docs/operations/soulauth-integration.md.
   @platform/memory      Agent memory (vendored from elysium @ 758a4a5)
   @platform/config      Zod/Pydantic env validation
   @platform/types       Shared TypeScript domain types
@@ -155,9 +161,14 @@ cd apps/platform-api && pytest       # Python tests
 - [Feature flags](docs/architecture/feature-flags.md) — per-user OS toggles
 
 **Operations:**
+- [Quickstart (15 minutes)](docs/operations/quickstart.md)
 - [Local development](docs/operations/local-development.md)
 - [Container deployment](docs/operations/container-deployment.md)
 - [Alembic branches](docs/operations/alembic-branches.md) — migration topology
+- [Agents platform quickstart](docs/operations/agents-platform-quickstart.md) — Wave-H agent + prompt + import
+- [BYOK provider keys](docs/operations/byok-provider-keys.md) — per-tenant LLM credentials
+- [Agents store adapter config](docs/operations/store-adapter-config.md) — LocalPg vs Supabase
+- [SoulAuth federated integration](docs/operations/soulauth-integration.md) — production user auth
 
 **Security:**
 - [Auth model](docs/security/auth-model.md)

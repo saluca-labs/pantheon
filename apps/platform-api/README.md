@@ -1,138 +1,149 @@
-# Tiresias Platform
+# platform-api
 
-Enterprise LLM security: identity, policy enforcement, and runtime monitoring for AI agents.
+FastAPI core for Pantheon. Hosts SoulKey agent authentication, the
+Wave-H agent platform (`/v1/agents`, `/v1/prompts`, `/v1/agents/import`,
+per-tenant BYOK provider keys), the policy decision point, and the
+audit log.
 
-**Version v3.4.4 | License: [BSL 1.1](LICENSE)**
+> Historical note: this codebase shipped previously as "Tiresias
+> Platform v3.x" with an enterprise-SaaS framing (license keys, partner
+> program, tier gating). The repo has been renamed to Pantheon and
+> reoriented around local-first OSS deployment. The `tiresias`
+> code namespace (`apps/platform-app-proxy/`, `apps/platform-api/src/tiresias/`,
+> the `tiresias-proxy` service) stays Tiresias-branded by design — see
+> [`apps/platform-app-proxy/README.md`](../platform-app-proxy/README.md).
 
-## Products
+## What this service does
 
-**SoulAuth** -- Agent identity and zero-trust policy enforcement. SoulKey credentials (SHA-512), 8-stage Policy Decision Point, capability tokens (ES256 JWT, 300-900s TTL), immutable audit hash chain (SHA-256), policy-as-code from YAML/git, multi-tenancy, escalation and delegation, team RBAC with 7 roles, partner program with commissions engine, contract management with hash chain verification.
+- **SoulKey agent auth** — `X-SoulKey` header, SHA-512 hashed credentials,
+  per-tenant scoping. Code in [`src/auth/soulkey.py`](src/auth/soulkey.py).
+- **Agent platform (Wave H)** — CRUD over agents and prompts,
+  `agent.yaml` bulk import, per-tenant BYOK provider keys, configurable
+  agents store adapter. See:
+  - [`src/agents/agent_yaml_schema.md`](src/agents/agent_yaml_schema.md)
+    — canonical schema for `POST /v1/agents/import`
+  - [`docs/operations/agents-platform-quickstart.md`](../../docs/operations/agents-platform-quickstart.md)
+    — operator walkthrough
+- **Policy decision point** — YAML policy evaluation, capability tokens
+  (short-lived ES256 JWTs), JIT scopes.
+- **Audit log** — `audit_events` table for auth/compliance,
+  [`docs/security/audit-trail.md`](../../docs/security/audit-trail.md)
+  for the boundary with the per-OS `agos_audit` stream.
+- **Federated identity** — SoulAuth (a separate Python service with its
+  own bcrypt-backed user DB) federates portal logins into platform-api;
+  see [`docs/operations/soulauth-integration.md`](../../docs/operations/soulauth-integration.md).
 
-**SoulGate** -- API security gateway. Token-bucket rate limiting, circuit breaker, deterministic prompt injection detection, HTTP proxy with upstream routing, geo-IP and IP allowlisting, request/response audit logging.
+## Endpoint surfaces
 
-**SoulWatch** -- Behavioral anomaly detection. 7-day sliding window baseline engine, Sigma rule engine, automated response playbooks, quarantine engine, SIEM forwarding (Splunk, Elastic, Syslog, Webhook, Azure Sentinel), CEF formatting, WebSocket live event streaming.
+| Surface | Mount | Auth | Notes |
+|---|---|---|---|
+| Agent identity / PDP | `/v1/auth/*` | `X-SoulKey` | `whoami`, `evaluate`, `escalate`, `delegate` |
+| Agents CRUD | `/v1/agents/*` | `agents:read` / `agents:write` | List, create, patch, soft-delete |
+| Prompts CRUD | `/v1/prompts/*` | `prompts:read` / `prompts:write` | Append-only versioning, resolve-by-name |
+| Bulk import | `POST /v1/agents/import` | `agents:write` | YAML / JSON / multipart; per-agent atomic |
+| BYOK provider keys | `/v1/provider-keys/*` | `providers:read` / `providers:write` | Anthropic / OpenAI / Gemini / Groq / Ollama |
+| Agents store config | `/v1/agents-store/*` | `policy:read` | LocalPg or Supabase adapter |
+| OpenAPI docs | `/docs` | none | Swagger UI |
+| Health | `/health` | none | `?detail=true` for component health |
 
-**Aletheia** -- Chain-of-thought audit layer. Cryptographic chains (SHA-512), AES-256-GCM encrypted storage, PII/secrets sanitization, CoT policy enforcement at proxy layer (inject/reject/warn), tool call evaluation.
+## Run it (self-host)
 
-**Portal** -- Next.js 16 + React 19 dashboard. 60+ pages covering all products, Stripe billing integration, partner management, contract viewer, policy playground, compliance reporting, Obsidian Flux design system.
+This service ships inside the Pantheon docker compose stack. The
+authoritative path for a fresh checkout is the repo-root
+[`docs/operations/quickstart.md`](../../docs/operations/quickstart.md);
+the per-service quickstart is [`QUICKSTART.md`](QUICKSTART.md) in this
+directory.
 
-## Architecture
+```bash
+# From the repo root
+cp .env.example .env
+pnpm docker:up
+# platform-api is now on http://localhost:8000
+curl http://localhost:8000/health
+open http://localhost:8000/docs
+```
+
+Run the test suite:
+
+```bash
+source .venv/bin/activate
+cd apps/platform-api
+pytest
+```
+
+## Agents store adapter
+
+The agent + prompt store is **adapter-pluggable**. Two adapters ship:
+
+- **LocalPg** (default) — writes to the same Postgres instance that
+  hosts the rest of platform-api. Zero extra setup.
+- **Supabase** — writes to a managed Supabase project via the
+  service-role key. The key is referenced via `env://VAR_NAME` (never
+  stored inline).
+
+The selection lives in `_pantheon_config` and is editable from the
+portal at `/dashboard/settings` (Agents Store) or via `POST
+/v1/agents-store/config`. Full walk-through:
+[`docs/operations/store-adapter-config.md`](../../docs/operations/store-adapter-config.md).
+
+## Per-tenant BYOK
+
+Each tenant supplies its own provider API keys via `POST
+/v1/provider-keys` (or via `spec.provider_overrides` inside an
+`agent.yaml` bulk import). Pantheon supports `env://VAR_NAME` secret
+refs out of the box; `vault://`, `gcpsm://`, `awssm://`, and `enc://`
+are reserved schemes that validate but are not yet implemented (they
+return a structured 400 with the path of the offending field). Full
+operator guide:
+[`docs/operations/byok-provider-keys.md`](../../docs/operations/byok-provider-keys.md).
+
+## Code layout
 
 ```
-                         +-----------+
-                         |  Portal   |  Next.js 16 / React 19
-                         +-----+-----+
-                               |
-              +----------------+----------------+
-              |                |                |
-        +-----+-----+   +-----+-----+   +------+------+
-        |  SoulAuth  |   |  SoulGate  |   |  SoulWatch  |
-        | Identity & |   | API Gateway|   |  Behavioral |
-        |   Policy   |   | Rate Limit |   |  Monitoring |
-        +-----+------+   +-----+-----+   +------+------+
-              |                |                |
-              |          +-----+-----+          |
-              |          |  Aletheia |          |
-              |          |  CoT Audit|          |
-              |          +-----+-----+          |
-              |                |                |
-              +----------------+----------------+
-                               |
-                        +------+------+
-                        |  Cloud SQL  |
-                        |  PostgreSQL |
-                        +-------------+
+apps/platform-api/
+├── src/
+│   ├── main.py            FastAPI app factory + router wiring
+│   ├── agents/            Wave-H agent platform (CRUD, import, BYOK, store factory)
+│   ├── auth/              SoulKey verification, RBAC, federated SoulAuth client
+│   ├── policy/            PDP, YAML loader, capability tokens
+│   ├── audit/             audit_events writer
+│   ├── tiresias/          Tiresias app-proxy adapter (legacy-branded by design)
+│   └── …
+├── alembic/               Migrations for platform-api's own schema
+├── deploy/
+│   ├── docker-compose.production.yml
+│   ├── INSTALL.md         Self-host install reference
+│   └── TROUBLESHOOTING.md Failure-mode reference
+├── tests/                 pytest suite
+├── README.md              this file
+├── QUICKSTART.md          self-host quickstart
+├── CHANGELOG.md
+├── SECURITY.md            vuln disclosure policy
+└── pyproject.toml
 ```
-
-## Feature Matrix
-
-| Capability | Status |
-| --- | --- |
-| SoulKey identity (SHA-512 credentials) | Built |
-| Policy Decision Point (8-stage, YAML policy-as-code) | Built |
-| Capability tokens (ES256 JWT, 300-900s TTL) | Built |
-| Immutable audit hash chain (SHA-256, encrypted columns) | Built |
-| Team RBAC (owner, admin, operator, viewer, team_admin, analyst, member) | Built |
-| Delegation with TTL and scope | Built |
-| Multi-tenancy and MSSP tenant isolation | Built |
-| API gateway (rate limiting, circuit breaker, proxy) | Built |
-| Prompt injection detection (rule-based) | Built |
-| Geo-IP / IP allowlist enforcement | Built |
-| Behavioral anomaly detection (18 types, 7-day baseline) | Built |
-| Sigma detection engine | Built |
-| SIEM connector configuration (per-tenant, Splunk/Elastic/Syslog/Webhook/Azure Sentinel) | Built |
-| Notification channels (per-tenant) | Built |
-| Automated response playbooks and quarantine | Built |
-| Aletheia CoT chains (SHA-512, AES-256-GCM) | Built |
-| CoT policy enforcement at proxy layer | Built |
-| Local authentication (email/password, bcrypt, self-service password reset) | Built |
-| LDAP / Active Directory authentication (LDAPS, self-signed cert support) | Built |
-| Google OAuth / Generic OIDC (any OIDC IdP, PKCE, JIT provisioning) | Built |
-| Stripe billing (6 tiers, metering, grace periods, webhooks) | Built |
-| Partner program (Stripe Connect, commissions engine, invitations, promo codes) | Built |
-| Contracts with hash chain verification and review workflow | Built |
-| Investigation tokens (forensic audit access) | Built |
-| Configurable login rate limiter | Built |
-| Portal dashboard (60+ pages) | Built |
-| Python SDK (`tiresias-sdk`, async) | Built |
-| Python CLI (`soulauth` command) | Built |
-| Go CLI shim (`tiresias-exec`, policy-gated execution) | Built |
-| Prometheus metrics + Alertmanager | Built |
-| GKE deployment (HPA, PDB, NetworkPolicy, non-root containers) | Built |
-| JWT license validation with phone-home relay | Built |
-| 19 database migrations (identity through team RBAC) | Built |
-
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| Backend services | Python (FastAPI) |
-| Portal | Next.js 16, React 19, TypeScript |
-| CLI | Python (Click), Go |
-| Database | PostgreSQL 16 (Cloud SQL), 19 Alembic migrations |
-| Infrastructure | GKE, Cloud Build, Prometheus, Alertmanager |
-| Auth | Local (bcrypt), LDAP/Active Directory, OIDC/Google |
-| Billing | Stripe (6 tiers, webhooks, Stripe Connect for partners) |
-| Container security | Trivy, non-root images |
-
-## Quick Start
-
-See [QUICKSTART.md](QUICKSTART.md) for setup instructions.
 
 ## Documentation
 
-- [Architecture](ARCHITECTURE.md)
-- [Specification](SPEC.md)
-- [Setup Checklist](SETUP_CHECKLIST.md)
+**Self-host operations (start here):**
+- [Quickstart (15-min)](../../docs/operations/quickstart.md)
+- [Local development](../../docs/operations/local-development.md)
+- [Container deployment](../../docs/operations/container-deployment.md)
+- [Agents platform quickstart](../../docs/operations/agents-platform-quickstart.md)
+- [BYOK provider keys](../../docs/operations/byok-provider-keys.md)
+- [Agents store adapter config](../../docs/operations/store-adapter-config.md)
+- [SoulAuth federated integration](../../docs/operations/soulauth-integration.md)
+
+**Architecture:**
+- [System overview](../../docs/architecture/system-overview.md)
+- [Module boundaries](../../docs/architecture/module-boundaries.md)
+- [Alembic dual-tree topology](../../docs/operations/alembic-branches.md)
+- [Cross-OS audit log](../../docs/architecture/audit-log.md)
+
+**Reference:**
+- [`agent.yaml` schema](src/agents/agent_yaml_schema.md)
+- [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
-- [Security Policy](SECURITY.md)
-
-### Repo-Wide Docs
-
-Cross-cutting platform docs (covering both `platform-api` and `platform-web`) live in the repo root under [`docs/`](../../docs):
-
-- [Architecture overview](../../docs/architecture/system-overview.md) and [module boundaries](../../docs/architecture/module-boundaries.md)
-- [Agentic OS layer](../../docs/architecture/agentic-os.md) (lives in `platform-web`, see [ADR-005](../../docs/decisions/ADR-005-agentic-os-module-registry.md))
-- [Cross-OS audit log](../../docs/architecture/audit-log.md) and [audit trail boundary](../../docs/security/audit-trail.md) (`audit_events` vs `agos_audit`)
-- [Alembic dual-tree ordering](../../docs/operations/alembic-branches.md)
-- [Auth model](../../docs/security/auth-model.md), [smoke matrix](../../docs/operations/smoke-matrix.md), [Agentic OS rollout playbook](../../docs/operations/agentic-os-rollout.md)
-
-## Links
-
-- Production: [https://tiresias.network](https://tiresias.network)
-- Company: [https://www.saluca.com](https://www.saluca.com)
-
-## Roadmap
-
-- Cloud KMS BYOK providers (AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault)
-- Granular data access levels (read-only, hash-only, report-download)
-- Team-scoped data filtering (detection events, investigations, quarantine)
-- Admin-configurable role permissions per tenant
-- GitHub and Okta OAuth providers
-- LDAP group-based auto-provisioning enhancements
 
 ## License
 
-[Business Source License 1.1](LICENSE) -- See LICENSE for details.
-
-Built by [Saluca LLC](https://www.saluca.com)
+See [LICENSE](LICENSE).
