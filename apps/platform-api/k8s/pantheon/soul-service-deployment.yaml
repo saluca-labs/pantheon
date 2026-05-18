@@ -94,23 +94,25 @@ spec:
                   name: pantheon-secrets
                   key: soul-service-key
                   optional: true
-            # Tier 2 cold storage — optional. Leave keys unset and Tier 0/1
-            # continue to serve; write_memory() will raise on Tier 2 fan-out.
-            # Wire these in via pantheon-secrets when a Supabase project is
-            # provisioned for Soul, or skip and live with Tier 0/1 only.
-            # Flip-on steps (provision secrets, sync, redeploy) are in
-            # apps/soul-service/README.md → "Deferred features" → §1.
-            #
-            # - name: SUPABASE_URL
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: pantheon-secrets
-            #       key: soul-supabase-url
-            # - name: SUPABASE_SERVICE_KEY
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: pantheon-secrets
-            #       key: soul-supabase-key
+            # Tier 2 cold storage — REQUIRED since v0.1.124. The prev_hash
+            # chain (SALUCA-013 §7.3) reads the prior row before every write,
+            # so write_memory() now calls Supabase on every memory_write.
+            # Keys live in pantheon-secrets (soul-supabase-url, soul-supabase-key)
+            # synced from GCP SM (pantheon-soul-supabase-url, pantheon-soul-supabase-key)
+            # via the ExternalSecret at k8s/pantheon/external-secrets/.
+            # NOTE the key must be the JWT-format service_role token
+            # (eyJhbGc...), NOT the newer sb_secret_* publishable format —
+            # supabase-py validates the legacy JWT shape.
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: soul-supabase-url
+            - name: SUPABASE_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pantheon-secrets
+                  key: soul-supabase-key
             #
             # Compression layer (Anthropic) — only required if callers exercise
             # compression endpoints. Leave commented until needed.
