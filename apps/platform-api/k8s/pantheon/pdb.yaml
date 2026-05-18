@@ -90,3 +90,39 @@ spec:
   selector:
     matchLabels:
       app: memory-service
+---
+# soul-service and soul-mcp are intentionally single-replica (per-pod
+# SQLite state — see deploy/SOUL_SPOF_RUNBOOK.md). minAvailable: 1 on a
+# single-replica Deployment means voluntary disruption (node drain, cluster
+# maintenance) is blocked unless the operator explicitly proceeds. This is
+# the desired posture: surprise restarts cost RTO and a snapshot interval
+# of RPO; planned restarts use the runbook.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soul-service-pdb
+  namespace: pantheon
+  labels:
+    app: soul-service
+    app.kubernetes.io/name: soul-service
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soul-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: soul-mcp-pdb
+  namespace: pantheon
+  labels:
+    app: soul-mcp
+    app.kubernetes.io/name: soul-mcp
+    app.kubernetes.io/part-of: pantheon
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: soul-mcp

@@ -1,0 +1,51 @@
+# Persistent storage for soul-service Tier 0 and soul-mcp mesh/nexus state.
+#
+# These two services are intentionally single-replica (per-pod SQLite —
+# see deploy/SOUL_SPOF_RUNBOOK.md for the architectural decision). Using
+# PVCs instead of emptyDir means pod restarts no longer wipe state; the
+# SPOF window collapses from "since the last pod uptime" to "since the
+# last snapshot" (RPO is controlled by the snapshot cadence in the
+# runbook).
+#
+# ReadWriteOnce is fine — only the live pod ever mounts these. The
+# snapshot CronJob reads via `kubectl exec` into the live pod, not by
+# co-mounting (see runbook for the trade-offs vs. a ReadWriteMany class).
+#
+# Storage class is intentionally unset → cluster default. On GKE this
+# is `standard-rwo` (Persistent Disk pd-balanced). Override per-cluster
+# in a kustomize overlay if needed.
+#
+# Size: 5Gi covers Tier 0 LRU buffer + WAL + snapshot scratch space
+# with generous headroom. Resize via `kubectl edit pvc` and a pod
+# restart if a tenant ever fills it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: soul-service-data
+  namespace: pantheon
+  labels:
+    app: soul-service
+    app.kubernetes.io/name: soul-service
+    app.kubernetes.io/part-of: pantheon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: soul-mcp-data
+  namespace: pantheon
+  labels:
+    app: soul-mcp
+    app.kubernetes.io/name: soul-mcp
+    app.kubernetes.io/part-of: pantheon
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
