@@ -149,7 +149,7 @@ references:
   "errors": [
     {"path": "agents[0].metadata.persona", "message": "required"},
     {"path": "agents[1].spec.provider_overrides[0].secret_ref",
-     "message": "scheme 'vault://' is reserved but not yet implemented (only env:// is supported in this version)"}
+     "message": "unknown or malformed secret-ref scheme: 'ftp'"}
   ]
 }
 ```

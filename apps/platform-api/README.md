@@ -90,10 +90,11 @@ portal at `/dashboard/settings` (Agents Store) or via `POST
 
 Each tenant supplies its own provider API keys via `POST
 /v1/provider-keys` (or via `spec.provider_overrides` inside an
-`agent.yaml` bulk import). Pantheon supports `env://VAR_NAME` secret
-refs out of the box; `vault://`, `gcpsm://`, `awssm://`, and `enc://`
-are reserved schemes that validate but are not yet implemented (they
-return a structured 400 with the path of the offending field). Full
+`agent.yaml` bulk import). The supported `secret_ref` schemes are
+`env://`, `file://`, `vault://`, `gcpsm://`, and `awssm://` — all
+resolved through the `platform_secrets` facade in
+`packages/secrets/python/`. Unknown schemes are rejected at write
+time with a structured 400 and the path of the offending field. Full
 operator guide:
 [`docs/operations/byok-provider-keys.md`](../../docs/operations/byok-provider-keys.md).
 

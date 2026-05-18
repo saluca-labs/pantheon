@@ -30,31 +30,25 @@ unset, the default above is used.
 
 ## Secret-ref URI schemes
 
-Pantheon recognizes five URI schemes for `secret_ref`:
+Pantheon recognizes five URI schemes for `secret_ref`. All five resolve
+through the `platform_secrets` facade in `packages/secrets/python/`.
 
-| Scheme | Status | Resolves to |
+| Scheme | Resolves to | Backend deps |
 |---|---|---|
-| `env://VAR_NAME` | **implemented** | `os.environ["VAR_NAME"]` inside the platform-api container |
-| `vault://…` | **reserved** | HashiCorp Vault read (not yet wired) |
-| `gcpsm://…` | **reserved** | GCP Secret Manager read (not yet wired) |
-| `awssm://…` | **reserved** | AWS Secrets Manager read (not yet wired) |
-| `enc://…` | **reserved** | Local envelope-encrypted blob (not yet wired) |
+| `env://VAR_NAME` | `os.environ["VAR_NAME"]` inside the platform-api container | none |
+| `file:///path` | File contents (Docker/k8s mounted secrets) | none |
+| `vault://<mount>/data/<path>#<field>` | HashiCorp Vault KV-v2 | `hvac` (install via `platform-secrets[vault]`); requires `VAULT_ADDR` + `VAULT_TOKEN` (and optionally `VAULT_NAMESPACE`) on the platform-api container |
+| `gcpsm://projects/<id>/secrets/<name>/versions/<v>` | GCP Secret Manager | `google-cloud-secret-manager` (install via `platform-secrets[gcp]`); requires `GOOGLE_APPLICATION_CREDENTIALS` or ambient ADC |
+| `awssm://<arn-or-name>[#<json-field>]` | AWS Secrets Manager | `boto3` (install via `platform-secrets[aws]`); requires `AWS_REGION` + standard AWS credential discovery |
 
-Reserved schemes parse cleanly but **fail with a structured 400** at
-write time:
+A write fails with a structured 400 only when the URI is malformed or
+uses a scheme the facade doesn't know about (e.g. `ftp://`). Supported
+scheme but currently unresolvable (env var not set, vault path empty,
+backend unreachable) is **accepted** — Pantheon assumes you'll populate
+the secret later, and you can verify with the `/test` endpoint.
 
-```json
-{"detail": "unsupported secret-ref scheme: vault://… is reserved but not yet implemented (only env:// is supported in this version)"}
-```
-
-This is intentional: it gives operators a clear error message instead
-of silently storing an unresolvable row. Anything outside the five
-schemes above is rejected as malformed.
-
-`env://NOT_YET_SET` (an env var that doesn't currently exist) is
-**accepted** at write time — Pantheon assumes you'll set the variable
-later. Resolution failure surfaces at call time, or earlier via the
-`/test` endpoint.
+For backend setup details (credential discovery, caching, error
+classes), see [`packages/secrets/python/README.md`](../../packages/secrets/python/README.md).
 
 ## Setting it up
 
@@ -224,10 +218,11 @@ There's no dedicated rotation endpoint — rotation is just a PATCH:
 4. Run `/test` to verify.
 5. Remove the old env var on the next deploy cycle.
 
-When the reserved `vault://`, `gcpsm://`, and `awssm://` schemes are
-implemented, rotation will be a no-op (the upstream secret store
-handles versioning). For `env://` rotation today, the swap-and-PATCH
-flow is the supported path.
+For `vault://`, `gcpsm://`, and `awssm://`, rotation is a no-op as far
+as Pantheon is concerned — the upstream secret store handles
+versioning, and the cached resolution refreshes on its next TTL
+(default 30s). For `env://` rotation, the swap-and-PATCH flow above
+is the supported path.
 
 ## See also
 

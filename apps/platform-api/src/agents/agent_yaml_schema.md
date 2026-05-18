@@ -135,7 +135,7 @@ List of per-tenant BYOK provider key rows. Each entry upserts a row into
 | Field        | Type   | Required | Default  | Notes |
 |--------------|--------|----------|----------|-------|
 | `provider`   | enum   | **yes**  | —        | `anthropic \| openai \| gemini \| groq \| ollama` |
-| `secret_ref` | string | **yes**  | —        | Secret URI; **only `env://VAR_NAME` is supported in this version**. Reserved schemes (`vault://`, `gcpsm://`, `awssm://`, `enc://`) are **rejected at validation time** with a helpful message — no row is created. |
+| `secret_ref` | string | **yes**  | —        | Secret URI resolved through `platform_secrets`. Supported schemes: `env://VAR_NAME`, `file:///path`, `vault://...`, `gcpsm://...`, `awssm://...`. Unknown schemes are **rejected at validation time** with a helpful message — no row is created. Supported-scheme-but-not-currently-resolvable (e.g. `env://NOT_YET_SET`, vault path missing) is **accepted** — verify with `POST /v1/provider-keys/{id}/test`. |
 | `base_url`   | string | no       | `null`   | Provider base URL override (Azure endpoint, Ollama host, etc.) |
 | `status`     | enum   | no       | active   | `active \| disabled` |
 
@@ -153,7 +153,7 @@ can bind each error to its source input:
     { "path": "agents[0].metadata.persona",          "message": "required" },
     { "path": "agents[0].spec.prompt.body",          "message": "cannot be empty when spec.prompt is present" },
     { "path": "agents[0].spec.provider_overrides[1].secret_ref",
-      "message": "scheme 'vault://' is reserved but not yet implemented (only env:// is supported in this version)" },
+      "message": "unknown or malformed secret-ref scheme: 'ftp'" },
     { "path": "agents[1].metadata.tenant",
       "message": "'other-tenant' does not match caller tenant 'your-tenant'" }
   ]

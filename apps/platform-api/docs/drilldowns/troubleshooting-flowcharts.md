@@ -58,9 +58,9 @@ POST /v1/agents/import → 400
 │   YAML missing `metadata.persona` for at least one document.
 │   Each agent needs metadata.persona + metadata.name minimum.
 │
-├─ "scheme 'vault://' is reserved but not yet implemented"
+├─ "unknown or malformed secret-ref scheme: '…'"
 │   provider_overrides[].secret_ref uses an unsupported scheme.
-│   Use env://VAR_NAME (only implemented scheme today).
+│   Supported schemes: env://, file://, vault://, gcpsm://, awssm://.
 │
 ├─ "tenant_id does not match SoulKey tenant"
 │   metadata.tenant_id (optional) explicitly conflicts with the
@@ -89,8 +89,9 @@ POST /v1/provider-keys/{id}/test → error
 │   - env://VAR_NAME → echo $VAR_NAME inside the platform-api container:
 │     docker compose exec platform-api env | grep VAR_NAME
 │     If empty: set in .env, then `docker compose up -d platform-api`
-│   - Reserved schemes (vault://, gcpsm://, etc.) are not yet
-│     implemented and will fail at write time, not test time
+│   - vault:// / gcpsm:// / awssm:// → ensure the backend SDK is
+│     installed (platform-secrets[vault|aws|gcp]) and the standard
+│     backend env vars are set on the platform-api container.
 │
 ├─ "upstream returned 401"
 │   The resolved secret is invalid against the provider.
