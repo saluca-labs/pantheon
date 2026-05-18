@@ -1,9 +1,33 @@
-# ADR-012: SoulAuth Federated Auth (Supersedes ADR-002)
+# ADR-012: SoulAuth Federated Auth (Extends ADR-002)
 
 **Status:** Accepted  
 **Date:** 2026-05-17  
 **Deciders:** Cristian (sole maintainer at decision time)  
-**Supersedes:** [ADR-002 — Local Auth Default — Replace WorkOS AuthKit](./ADR-002-local-auth-default.md)
+**Relationship to ADR-002:** Extends, not supersedes — see "Status update" below.
+
+## Status update (2026-05-18)
+
+The original text of this ADR (preserved unchanged below) framed
+`@platform/auth` as "reclassified as legacy / dead code." That framing
+turned out to be inaccurate in practice: the `@platform/auth` Argon2id
+login path is the OSS / fallback path that fires when no SoulAuth
+session is present, per the middleware in
+`apps/platform-web/src/middleware.ts`. Both auth paths are live and
+intentionally so:
+
+- **SoulAuth federated (primary)** — for deployments that want LDAP /
+  OIDC / JIT-provisioned identity.
+- **`@platform/auth` Argon2id (OSS / fallback)** — for deployments
+  that don't stand up SoulAuth, and as the no-cookie fallback in any
+  deployment.
+
+ADR-002's local-auth decision therefore remains in force for the OSS /
+fallback case; ADR-012 adds the federated path on top, it doesn't
+replace it. See [`docs/security/auth-model.md`](../security/auth-model.md)
+for the current write-up of both paths. The body of this ADR below is
+the original historical text.
+
+---
 
 ## Context
 

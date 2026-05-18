@@ -68,10 +68,11 @@ local users:
 3. Send an invite (email-based). The invitee sets their own password
    on first login.
 
-The `@platform/auth` Argon2id layer in older docs is **legacy / dead
-code** that predates the federated split. If you see docs that say
-"Argon2id is the production password hash", treat them as stale.
-SoulAuth is bcrypt.
+Both user-auth paths are live: SoulAuth uses **bcrypt** for the
+federated path described above; `@platform/auth` Argon2id is the
+OSS / fallback path that fires when no SoulAuth session is present.
+See [`docs/security/auth-model.md`](../../../docs/security/auth-model.md)
+for the full posture.
 
 ### Enabling federated IdPs (LDAP / OIDC)
 
