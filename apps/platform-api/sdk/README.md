@@ -1,6 +1,18 @@
 # Tiresias SDK
 
-Python SDK for [Tiresias](https://tiresias.network) - Zero-trust agent identity and authorization.
+Python SDK for the **Tiresias App Proxy** — the zero-trust agent
+identity and authorization sub-product that ships inside the Pantheon
+monorepo at `apps/platform-app-proxy/`.
+
+> **Branding note.** The App Proxy stays branded as Tiresias under
+> the Pantheon umbrella; the SDK targets the App Proxy directly and
+> therefore keeps the Tiresias name. See
+> [ADR-013](../../../docs/decisions/ADR-013-app-proxy-tiresias-branding.md)
+> for the carve-out decision.
+
+Use this SDK to talk to a Tiresias App Proxy instance — resolve agent
+identity, evaluate Cedar policy decisions, and exchange SoulKeys for
+short-lived capability tokens.
 
 ## Installation
 

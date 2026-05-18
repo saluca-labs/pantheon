@@ -1,4 +1,4 @@
-# Element Web — Tiresias Matrix Console
+# Element Web — Pantheon Matrix Console
 
 This directory ships the static configuration for the
 [`vectorim/element-web`](https://hub.docker.com/r/vectorim/element-web)
@@ -33,7 +33,7 @@ PR E (matrix sequence) implements this by:
   pinned to the internal Synapse, this enforces V-09 from the browser
   side as well.
 - `disable_guests: true` and `disable_3pid_login: true` — only
-  appservice-provisioned (Tiresias-owned) users can sign in. Aligns
+  appservice-provisioned (Pantheon-owned) users can sign in. Aligns
   with the user provisioning rules from PR A.
 - `room_directory.servers: []` — Element will not list rooms from
   external federated servers; combined with Synapse's own
