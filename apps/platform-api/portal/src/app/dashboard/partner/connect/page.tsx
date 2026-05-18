@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { ExternalLink, CheckCircle2, AlertCircle, RefreshCw, CreditCard, ShieldCheck, FileText, Building2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -194,8 +193,6 @@ function ConnectContent() {
 
 export default function ConnectPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Stripe Connect">
       <ConnectContent />
-    </TierGate>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { UpgradePrompt, parseErrorStatus } from "@/components/UpgradePrompt";
 import {
@@ -472,8 +471,6 @@ function PlatformAdminContent() {
 
 export default function PlatformAdminPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Platform Admin">
       <PlatformAdminContent />
-    </TierGate>
   );
 }

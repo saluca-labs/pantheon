@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { Search, Eye, Lock, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -131,8 +130,6 @@ function InvestigationContent() {
 
 export default function InvestigationPage() {
   return (
-    <TierGate requiredTier="pro" featureLabel="Investigation Access">
       <InvestigationContent />
-    </TierGate>
   );
 }

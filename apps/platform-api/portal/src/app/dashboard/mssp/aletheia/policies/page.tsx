@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { api } from "@/lib/api";
 import { CheckCircle, XCircle, Upload } from "lucide-react";
 
@@ -239,8 +238,6 @@ function MsspPolicyPushContent() {
 
 export default function MsspPolicyPushPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="MSSP Policy Management">
       <MsspPolicyPushContent />
-    </TierGate>
   );
 }
