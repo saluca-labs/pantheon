@@ -1,26 +1,38 @@
-# NEW for pantheon — no tiresias precedent at apps/platform-api/k8s/.
-# Image source: apps/platform-web/ (Next.js).
-# Listens on :3000, routes via /api/web/* in ingress.yaml.
+# AUTO-RECONCILED from live cluster state on 2026-05-18.
+# Cluster runs image :v0.1.122 deployed by CI/CD (this repo file was previously
+# pinned at :v0.1.0 - drift created when CI applied newer manifests without
+# updating the source file). This re-sync brings the repo back in line.
+#
+# Ephemeral fields stripped: status, managedFields, last-applied-configuration,
+# autopilot.gke.io/resource-adjustment, deployment.kubernetes.io/revision,
+# kubectl.kubernetes.io/restartedAt, creationTimestamp.
+#
+# Selector now includes app.kubernetes.io/part-of: pantheon (it was missing
+# from the prior repo file but present on the cluster object - that is why
+# kubectl apply was throwing "selector field is immutable").
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: platform-web
-  namespace: pantheon
   labels:
     app: platform-web
+    app.kubernetes.io/component: web-frontend
     app.kubernetes.io/name: platform-web
     app.kubernetes.io/part-of: pantheon
-    app.kubernetes.io/component: web-frontend
+  name: platform-web
+  namespace: pantheon
 spec:
+  progressDeadlineSeconds: 600
   replicas: 2
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app: platform-web
+      app.kubernetes.io/part-of: pantheon
   strategy:
-    type: RollingUpdate
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -28,216 +40,221 @@ spec:
         app.kubernetes.io/name: platform-web
         app.kubernetes.io/part-of: pantheon
     spec:
-      serviceAccountName: pantheon-sa
+      containers:
+      - env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              key: database-url-sync
+              name: pantheon-secrets
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: session-secret
+              name: pantheon-secrets
+        - name: WEB_PUBLIC_URL
+          value: https://pantheon.saluca.com
+        - name: API_PUBLIC_URL
+          value: http://soulauth.pantheon.svc.cluster.local
+        - name: SOULAUTH_INTERNAL_URL
+          value: http://soulauth.pantheon.svc.cluster.local
+        - name: MEMORY_SERVICE_URL
+          value: http://memory-service.pantheon.svc.cluster.local:8910
+        - name: MEMORY_SERVICE_KEY
+          valueFrom:
+            secretKeyRef:
+              key: memory-service-key
+              name: pantheon-secrets
+        - name: COOKIE_DOMAIN
+          value: pantheon.saluca.com
+        - name: NODE_ENV
+          value: production
+        - name: BLOB_STORE_DRIVER
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-driver
+              name: pantheon-secrets
+              optional: true
+        - name: BLOB_STORE_BUCKET
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-bucket
+              name: pantheon-secrets
+              optional: true
+        - name: BLOB_STORE_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-endpoint
+              name: pantheon-secrets
+              optional: true
+        - name: BLOB_STORE_REGION
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-region
+              name: pantheon-secrets
+              optional: true
+        - name: BLOB_STORE_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-access-key
+              name: pantheon-secrets
+              optional: true
+        - name: BLOB_STORE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: blob-store-secret-key
+              name: pantheon-secrets
+              optional: true
+        - name: LLM_DEFAULT_PROVIDER
+          value: anthropic
+        - name: LLM_DEFAULT_MODEL
+          value: claude-sonnet-4-6
+        - name: LLM_RATE_LIMIT_RPM
+          valueFrom:
+            secretKeyRef:
+              key: llm-rate-limit-rpm
+              name: pantheon-secrets
+              optional: true
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: anthropic-api-key
+              name: pantheon-secrets
+              optional: true
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: openai-api-key
+              name: pantheon-secrets
+              optional: true
+        - name: COACH_MODEL
+          valueFrom:
+            secretKeyRef:
+              key: coach-model
+              name: pantheon-secrets
+              optional: true
+        - name: ANTHROPIC_COACH_MODEL
+          valueFrom:
+            secretKeyRef:
+              key: anthropic-coach-model
+              name: pantheon-secrets
+              optional: true
+        - name: VOICE_BUILDER_MODEL
+          valueFrom:
+            secretKeyRef:
+              key: voice-builder-model
+              name: pantheon-secrets
+              optional: true
+        image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/platform-web:v0.1.122
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: platform-web
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: '1'
+            ephemeral-storage: 100Mi
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            ephemeral-storage: 100Mi
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+        startupProbe:
+          failureThreshold: 12
+          httpGet:
+            path: /
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /app/.next/cache
+          name: nextjs-cache
+      - args:
+        - --structured-logs
+        - --auto-iam-authn
+        - salucainfrastructure:us-central1:tiresias-db
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+        imagePullPolicy: IfNotPresent
+        name: cloud-sql-proxy
+        resources:
+          limits:
+            cpu: 200m
+            ephemeral-storage: 1Gi
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            ephemeral-storage: 1Gi
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
       securityContext:
+        fsGroup: 1000
         runAsNonRoot: true
         runAsUser: 1000
-        fsGroup: 1000
-      containers:
-        - name: platform-web
-          image: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/platform-web:v0.1.0
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 3000
-              name: http
-              protocol: TCP
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: [ALL]
-            seccompProfile:
-              type: RuntimeDefault
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: nextjs-cache
-              mountPath: /app/.next/cache
-          env:
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: database-url-sync
-            - name: SESSION_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: session-secret
-            - name: WEB_PUBLIC_URL
-              value: "https://pantheon.saluca.com"
-            - name: API_PUBLIC_URL
-              value: "http://soulauth.pantheon.svc.cluster.local"
-            # Used by packages/auth/src/tiresias-session.ts verifyTiresiasSession()
-            # for the token exchange BFF (/api/auth/exchange) to validate portal-issued
-            # tiresias_session cookies against SoulAuth. The default fallback in code
-            # points at the wrong namespace (soulauth.tiresias.svc); set explicitly here.
-            - name: SOULAUTH_INTERNAL_URL
-              value: "http://soulauth.pantheon.svc.cluster.local"
-            - name: MEMORY_SERVICE_URL
-              value: "http://memory-service.pantheon.svc.cluster.local:8910"
-            - name: MEMORY_SERVICE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: memory-service-key
-            - name: COOKIE_DOMAIN
-              value: "pantheon.saluca.com"
-            - name: NODE_ENV
-              value: "production"
-            # @platform/blob-store wiring. Values intentionally NOT set in
-            # this commit — env-vars rollout is a separate Wave-N pass per
-            # Cristian's gating decision. Until DRIVER is flipped to
-            # `minio` or `s3`, every PDF route falls back to inline Buffer
-            # responses (the pre-blob-store baseline).
-            - name: BLOB_STORE_DRIVER
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-driver
-                  optional: true
-            - name: BLOB_STORE_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-bucket
-                  optional: true
-            - name: BLOB_STORE_ENDPOINT
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-endpoint
-                  optional: true
-            - name: BLOB_STORE_REGION
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-region
-                  optional: true
-            - name: BLOB_STORE_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-access-key
-                  optional: true
-            - name: BLOB_STORE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: blob-store-secret-key
-                  optional: true
-            # --- @platform/llm wiring (Wave 0) ----------------------------------
-            # Provider selection priority (highest first):
-            #   1. per-call opts.provider, 2. tenant feature flag,
-            #   3. LLM_DEFAULT_PROVIDER (this var), 4. 'ollama' built-in default.
-            # Coaches pass provider: 'anthropic' explicitly today; ANTHROPIC_API_KEY
-            # must be present (>=32 chars) for the registry to register it.
-            - name: LLM_DEFAULT_PROVIDER
-              value: "anthropic"
-            - name: LLM_DEFAULT_MODEL
-              value: "claude-sonnet-4-6"
-            - name: LLM_RATE_LIMIT_RPM
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: llm-rate-limit-rpm
-                  optional: true
-            - name: ANTHROPIC_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: anthropic-api-key
-                  optional: true
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: openai-api-key
-                  optional: true
-            - name: OLLAMA_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: ollama-host
-                  optional: true
-            # Per-OS coach model overrides — read by coach/anthropic.ts
-            # wrappers via process.env. Optional; default = LLM_DEFAULT_MODEL.
-            - name: COACH_MODEL
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: coach-model
-                  optional: true
-            - name: ANTHROPIC_COACH_MODEL
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: anthropic-coach-model
-                  optional: true
-            - name: VOICE_BUILDER_MODEL
-              valueFrom:
-                secretKeyRef:
-                  name: pantheon-secrets
-                  key: voice-builder-model
-                  optional: true
-          resources:
-            requests:
-              cpu: 250m
-              memory: 256Mi
-              ephemeral-storage: 100Mi
-            limits:
-              cpu: "1"
-              memory: 512Mi
-              ephemeral-storage: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 15
-            periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
-          startupProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            failureThreshold: 12
-        - name: cloud-sql-proxy
-          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
-          args:
-            - "--structured-logs"
-            - "--auto-iam-authn"
-            - "salucainfrastructure:us-central1:tiresias-db"
-          securityContext:
-            readOnlyRootFilesystem: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: [ALL]
-            seccompProfile:
-              type: RuntimeDefault
-            runAsNonRoot: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 200m
-              memory: 128Mi
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: pantheon-sa
+      serviceAccountName: pantheon-sa
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
       volumes:
-        - name: tmp
-          emptyDir:
-            medium: Memory
-            sizeLimit: 64Mi
-        - name: nextjs-cache
-          emptyDir:
-            sizeLimit: 256Mi
+      - emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
+        name: tmp
+      - emptyDir:
+          sizeLimit: 256Mi
+        name: nextjs-cache

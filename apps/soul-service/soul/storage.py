@@ -42,7 +42,7 @@ except ImportError:
 
 # Internal imports
 from . import tkhr
-from .hashing import content_hash, structure_hash
+from .hashing import content_hash, structure_hash, chain_genesis_hash, next_prev_hash
 from .local_buffer import ActiveBuffer, warm_from_records, buffer_delete
 
 # Per-session active buffers (instantiated lazily on first access)
@@ -92,6 +92,31 @@ def _hot_evict(session_id: str, memory_id: str) -> bool:
     return len(_hot_cache[session_id]) < before
 
 
+def _fetch_last_chain_entry(session_id: Optional[str]) -> Optional[dict]:
+    """
+    Fetch the most recent (full_context_hash, prev_hash) pair for this session.
+
+    Used by write_memory() to compute the new row's prev_hash. Returns None if
+    the session has no prior rows (caller falls back to chain_genesis_hash).
+
+    NOTE: This is a read-then-write pattern. Safe under the current single-
+    replica soul-service deployment (Pantheon Tier 0 SPOF, accepted by design).
+    If the service ever scales horizontally, wrap the read + insert in
+    pg_advisory_xact_lock(hashtext(session_id)) to serialize per-session writes.
+    """
+    db = _db()
+    q = db.table(_TABLE).select('full_context_hash, prev_hash')
+    if session_id is None:
+        q = q.is_('session_id', 'null')
+    else:
+        q = q.eq('session_id', session_id)
+    res = (q.order('created_at', desc=True)
+            .order('id', desc=True)
+            .limit(1)
+            .execute())
+    return res.data[0] if res.data else None
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def write_memory(
@@ -124,6 +149,16 @@ def write_memory(
     existing_ids = [r['id'] for r in _hot_cache.get(session_id, [])]
     sh = structure_hash(existing_ids, session_id)
 
+    # Linear forensic chain (SALUCA-013 §7.3, SALUCA-ALFRED §7.7).
+    # prev_hash links this row to its predecessor in the same session, allowing
+    # downstream verifiers to detect reordering, deletion, or content tampering
+    # anywhere in the chain. First row of a session gets the per-session genesis.
+    last = _fetch_last_chain_entry(session_id)
+    if last and last.get('prev_hash'):
+        ph = next_prev_hash(last['full_context_hash'], last['prev_hash'])
+    else:
+        ph = chain_genesis_hash(session_id)
+
     record = {
         'id': memory_id,
         'session_id': session_id,
@@ -136,6 +171,7 @@ def write_memory(
         'cross_ref_summary_hashes': [],
         'node_type': 'full',
         'topics': topics,
+        'prev_hash': ph,
         'metadata': {
             **(metadata or {}),
             'content_hash': ch,
