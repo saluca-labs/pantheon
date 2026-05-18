@@ -5,30 +5,33 @@ distinction matters for self-hosters. This doc clarifies which one is
 production, which one is legacy, and what to do when the docs
 disagree.
 
-> **TL;DR.** Production user auth is **SoulAuth federated** (separate
-> Python service, separate Cloud SQL database, bcrypt password
-> hashes). The `@platform/auth` Argon2id layer in platform-web is
-> **legacy / dead code** that predates the federated split. If you see
-> docs that say "Argon2id is the production password hash", treat them
-> as stale.
+> **TL;DR.** Pantheon supports two user-auth paths and both are live.
+> **SoulAuth federated** (separate Python service, bcrypt, IdP support
+> via LDAP / OIDC) is the **primary** path — it's what
+> `pantheon.saluca.com` runs and what self-hosters who want federated
+> identity should configure. **`@platform/auth` Argon2id** (in-process
+> inside platform-web, local accounts only) is the **OSS / fallback**
+> path — it's what runs when neither cookie is present (see
+> `apps/platform-web/src/middleware.ts` fallback) and what OSS
+> self-hosters who don't want to stand up SoulAuth can rely on. Both
+> paths share the same `audit_events` table for compliance logging.
 
 ## The two auth paths, side by side
 
-|  | SoulAuth federated (production) | `@platform/auth` (legacy / dead) |
+|  | SoulAuth federated (primary) | `@platform/auth` (OSS / fallback) |
 |---|---|---|
 | **Service** | Separate Python service. | In-process inside platform-web (Next.js BFF) and a Python sibling in `packages/auth/python`. |
 | **User DB** | Separate Postgres DB; tables prefixed `_soulauth_*` (`_soulauth_users`, `_soulauth_sessions`, `_soulauth_idp`). | Pantheon's main Postgres; tables `users`, `password_credentials`, `sessions`. |
 | **Password hash** | bcrypt. | Argon2id (parameters in [`docs/security/auth-model.md`](../security/auth-model.md)). |
-| **Token surface** | Session cookies for users + SoulKeys for agents (ES256 JWT capability tokens for short-lived per-resource grants). | Session cookies only (CSRF via double-submit, see auth-model.md). |
+| **Token surface** | Session cookies (`tiresias_session`) for users + SoulKeys for agents (ES256 JWT capability tokens for short-lived per-resource grants). | Session cookies (`platform_session`) only (CSRF via double-submit, see auth-model.md). |
 | **Federated IdP support** | LDAP / Active Directory, OIDC (Google, generic), JIT provisioning. | None — local accounts only. |
-| **Status** | **Production.** This is what runs in `pantheon.saluca.com` and what self-hosters should configure. | **Legacy.** Code path exists; tables exist; not the live path. Treat as a reference implementation that predates the federated split. |
+| **When it fires** | Browser arrives carrying `tiresias_session` (SoulAuth-issued); middleware accepts it directly. If only `tiresias_session` is present but no `platform_session`, middleware redirects through `/api/auth/exchange` to mint a `platform_session`. | Browser has neither cookie → middleware redirects to `/login` → user submits credentials → server action queries `users` JOIN `password_credentials` and verifies Argon2id. |
 
-The dead-code status of `@platform/auth` is the most common source of
-confusion for new contributors and self-hosters. The argon2 reference
-in `README.md` and in `docs/security/auth-model.md` describes the
-in-platform-web layer — which is **not** the path your portal users
-take. Until `auth-model.md` is rewritten under Wave I.3, treat that
-document as historical.
+Both cookie names coexist by design: SoulAuth issues `tiresias_session`,
+`@platform/auth` issues `platform_session`. The middleware in
+`apps/platform-web/src/middleware.ts` handles all three states (both
+cookies / `tiresias_session` only / no cookies) and routes
+accordingly.
 
 ## Posture for self-hosters
 
@@ -50,8 +53,8 @@ identity providers" below.
 | `apps/platform-api/src/auth/soulauth.py` | The SoulAuth client used by platform-api to validate session cookies and resolve user identity. |
 | `apps/platform-api/src/auth/soulkey.py` | SoulKey (agent credential) verification. Separate from federated user auth. |
 | `apps/platform-api/alembic/versions/0001_*.py` onwards | `_soulauth_*` table migrations. |
-| `apps/platform-web/src/lib/auth/` | Next.js BFF auth helpers — includes the legacy `@platform/auth` integration. The production flow uses SoulAuth's session cookie, not the local one. |
-| `packages/auth/` | The legacy `@platform/auth` package (TypeScript + Python halves). Still imported but not the production path. |
+| `apps/platform-web/src/lib/auth/` | Next.js BFF auth helpers — wires both SoulAuth's `tiresias_session` validation and `@platform/auth`'s `platform_session` issuance / validation. Used by the dashboard layout, the tiresias proxy, and the RBAC routes. |
+| `packages/auth/` | The `@platform/auth` package (TypeScript + Python halves). Owns the OSS / fallback login path AND general-purpose session-cookie / CSRF utilities that the BFF uses regardless of which login path issued the cookie. |
 
 A separate SoulAuth service exists outside the repo for Cristian's
 production GCP deployment; for OSS self-hosting, the relevant code is
@@ -117,19 +120,33 @@ expect either to convert into the other.
 
 ### "The docs say argon2 — is that what I configure?"
 
-No. `@platform/auth` Argon2id is the legacy layer. SoulAuth is bcrypt.
-You do not configure password hashing for SoulAuth — it's a default,
-not a knob. If you need to change it, the change happens inside the
-SoulAuth service, not via environment variables on the Pantheon
-container.
+Depends on which path is fielding your logins. `@platform/auth`
+uses Argon2id (64 MiB / 3 iterations / 4 lanes) — see
+[`docs/security/auth-model.md`](../security/auth-model.md) for the
+parameter set. SoulAuth uses bcrypt and the cost factor is set
+inside the SoulAuth service, not via environment variables on the
+Pantheon container. If you've stood up SoulAuth and your users
+authenticate through it, the Argon2id parameters don't matter for
+your deployment.
 
 ### "Can I disable SoulAuth and use just `@platform/auth`?"
 
-Not supported. The dashboard's auth flow assumes SoulAuth session
-cookies and platform-api's request context assumes SoulAuth-resolved
-identity. Running Pantheon against `@platform/auth` alone would
-require code changes across both platform-web BFF routes and
-platform-api middleware.
+Yes — that's the OSS / fallback posture, supported by design. If
+you don't configure SoulAuth, the middleware in
+`apps/platform-web/src/middleware.ts` routes sessionless requests
+to `/login`, which exercises the `@platform/auth` Argon2id path
+against `users` + `password_credentials` tables. The dashboard,
+the tiresias proxy, the RBAC routes, and the agentic-os session
+helpers all accept either cookie type. The trade-off vs. running
+SoulAuth: no LDAP / OIDC / JIT provisioning, local accounts only.
+
+### "Can I run both?"
+
+Yes — that's the default. The middleware handles all three cookie
+states (both present / `tiresias_session` only / neither) and
+routes accordingly. A user can hold a `tiresias_session` from
+SoulAuth and a `platform_session` from `@platform/auth`
+simultaneously; the BFF helpers accept either.
 
 ### "My federated SoulAuth user can log in but has no organization"
 
@@ -193,8 +210,8 @@ are the authoritative reference once you're up.
 ## See also
 
 - [`docs/security/auth-model.md`](../security/auth-model.md) —
-  current write-up of the `@platform/auth` legacy layer. Read with
-  the disclaimer that it describes the dead path, not production.
+  full write-up of both paths (SoulAuth primary, `@platform/auth`
+  OSS / fallback) with schema and request-flow detail.
 - [`docs/security/audit-trail.md`](../security/audit-trail.md) —
   `audit_events` vs `agos_audit` boundary; both are populated by
   the SoulAuth-validated request context.

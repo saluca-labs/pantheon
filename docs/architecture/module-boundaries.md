@@ -102,30 +102,31 @@ architecture.
 
 ## packages/auth
 
-> **Auth dual-track note.** `@platform/auth` is the **legacy** local-auth
-> implementation. It still compiles and the schema is still migrated, but
-> production user auth in Pantheon runs through **SoulAuth federated** —
-> a separate Python service that hashes passwords with **bcrypt** and
-> stores users in its own database. See
+> **Auth dual-track note.** `@platform/auth` is the **OSS / fallback**
+> local-auth path: Argon2id, in-process inside platform-web, local
+> accounts only. It fires whenever no SoulAuth session cookie is
+> present, per the middleware in `apps/platform-web/src/middleware.ts`.
+> For deployments that want federated identity (LDAP, OIDC, JIT
+> provisioning), **SoulAuth federated** runs alongside as the primary
+> path — a separate Python service that hashes with **bcrypt** and
+> stores users in its own database. Both are supported; see
 > [`docs/operations/soulauth-integration.md`](../operations/soulauth-integration.md)
-> and [`docs/security/auth-model.md`](../security/auth-model.md) for the
-> dual-track explainer. The boundaries below describe the `@platform/auth`
-> code path as it exists today — they do not describe the runtime auth
-> path.
+> and [`docs/security/auth-model.md`](../security/auth-model.md) for
+> the full dual-track explainer.
 
-**Owns (within the legacy `@platform/auth` track):**
-- Password hashing (Argon2id only — no bcrypt, no scrypt; SoulAuth uses bcrypt and lives outside this package)
-- Session lifecycle: create, validate, invalidate
-- Cookie helpers (httpOnly, secure, sameSite)
-- CSRF double-submit token
+**Owns:**
+- Argon2id password hashing for the OSS / fallback login path
+- Session lifecycle for `platform_session` cookies: create, validate, invalidate
+- Cookie helpers (httpOnly, secure, sameSite) — used by both auth paths
+- CSRF double-submit token — used by both auth paths
 - In-memory rate limiter
-- Audit event emitter
+- Audit event emitter — shared across both paths via `audit_events`
 
 **Must NOT:**
-- Implement OAuth/OIDC flows (that's a future `packages/auth/oidc` extension)
+- Implement OAuth/OIDC flows (that's SoulAuth's responsibility)
 - Store secrets in memory beyond the immediate request
 - Import from `apps/platform-web` or `apps/platform-api`
-- Be treated as the production auth path — use SoulAuth federated for that
+- Try to validate SoulAuth-issued `tiresias_session` cookies (those go through `apps/platform-api/src/auth/soulauth.py`)
 
 ---
 

@@ -118,24 +118,31 @@ and the recommended order are documented in
 
 ## SoulAuth federated-auth confusion
 
-Pantheon has **two distinct auth paths**, and they're easy to confuse:
+Pantheon has **two distinct auth paths** and both are live:
 
-1. **SoulAuth federated auth** — the production user login path.
-   Separate Python service, separate database (`_soulauth_*` schema,
-   bcrypt password hashes), federates user identity into the
-   `platform-api` request context.
-2. **`@platform/auth` Argon2id local-auth** — the legacy
-   in-platform-web local-auth layer (`packages/auth/`). It's still in
-   the repo but **not the active production path**; it exists as a
-   reference / for tests.
+1. **SoulAuth federated auth** — the primary login path for any
+   deployment that wants federated identity. Separate Python service,
+   separate database (`_soulauth_*` schema, bcrypt password hashes),
+   federates user identity into the `platform-api` request context.
+   IdP support: LDAP, OIDC.
+2. **`@platform/auth` Argon2id local-auth** — the OSS / fallback
+   login path (`packages/auth/`). Fires when no SoulAuth session is
+   present (per the middleware fallback in
+   `apps/platform-web/src/middleware.ts`). Local accounts only, no
+   IdP support. This is the default for OSS deployments that don't
+   stand up SoulAuth.
 
-The two failure modes:
+The two cookie types coexist (`tiresias_session` from SoulAuth,
+`platform_session` from `@platform/auth`); the BFF helpers accept
+either.
+
+Common failure modes:
 
 | Symptom | Likely cause | Where to look |
 |---|---|---|
-| Portal login UI works, but `X-SoulKey` API calls return 401 | You're logged in via SoulAuth (session cookie) but no SoulKey has been minted for your tenant | Settings → Agents → New SoulKey, or via `/v1/soulauth/admin/keys` |
+| Portal login UI works, but `X-SoulKey` API calls return 401 | You're logged in as a user but no SoulKey has been minted for your tenant — user-session and agent-SoulKey are different surfaces | Settings → Agents → New SoulKey, or via `/v1/soulauth/admin/keys` |
 | SoulAuth user can log in but Pantheon dashboard says "no organization" | The federated user wasn't mapped to a tenant in `_soul_tenants` | Re-run the admin seed: `docker compose exec platform-api python scripts/seed-admin.py` |
-| Docs say "Argon2id is the production password algorithm" | You're reading a stale `docs/security/auth-model.md` revision | Treat `@platform/auth` Argon2id as legacy; SoulAuth bcrypt is production. See [`docs/operations/soulauth-integration.md`](../../../docs/operations/soulauth-integration.md). |
+| Confused which path your users are on | Check which cookie they hold. `tiresias_session` → SoulAuth path. `platform_session` only (no tiresias) → Argon2id fallback fired. Both → user has been through both paths, BFF accepts either. | Browser dev tools → Application → Cookies on the dashboard origin |
 | `seed-admin.py` finished but you can't find the password | The output goes to stdout once; if you missed it, re-run with `--reset` to mint a fresh password | `docker compose exec platform-api python scripts/seed-admin.py --reset` |
 
 Full posture write-up:

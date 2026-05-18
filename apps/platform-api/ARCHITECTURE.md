@@ -17,7 +17,7 @@ For per-area drill-downs, see:
 - [`docs/architecture/store-adapters.md`](../../docs/architecture/store-adapters.md) — LocalPg vs Supabase adapter pattern
 - [`docs/architecture/audit-log.md`](../../docs/architecture/audit-log.md) — `agos_audit` schema and retention
 - [`docs/architecture/feature-flags.md`](../../docs/architecture/feature-flags.md) — per-user feature flags
-- [`docs/security/auth-model.md`](../../docs/security/auth-model.md) — SoulAuth federated vs `@platform/auth` legacy
+- [`docs/security/auth-model.md`](../../docs/security/auth-model.md) — both user-auth paths (SoulAuth federated primary, `@platform/auth` OSS / fallback)
 - [`apps/platform-api/src/agents/agent_yaml_schema.md`](src/agents/agent_yaml_schema.md) — canonical `agent.yaml` schema
 
 For platform-api-internal layout (router map, src/ tree), see

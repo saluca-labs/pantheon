@@ -5,14 +5,14 @@ distinct authentication code paths** and the distinction is
 load-bearing for anyone reading the code, configuring a self-host, or
 writing security documentation.
 
-> **TL;DR.** Production user auth runs through **SoulAuth federated**
-> (separate Python service, separate database, **bcrypt** password
-> hashes). The `@platform/auth` package in this repo (Argon2id,
-> in-process inside platform-web / Python sibling) is **legacy / dead
-> code** that predates the federated split. If you see docs or code
-> comments that say "Argon2id is the production password hash for
-> Pantheon", treat them as stale relative to this document. Agent
-> auth — SoulKey — is independent of both and remains unchanged.
+> **TL;DR.** Both user-auth paths are live and supported. **SoulAuth
+> federated** (separate Python service, **bcrypt**, IdP support) is
+> the primary path for any deployment that wants federated identity
+> — it's what `pantheon.saluca.com` runs. **`@platform/auth` Argon2id**
+> (in-process inside platform-web, local accounts only) is the OSS /
+> fallback path — it fires when no SoulAuth session is present and
+> is what self-hosters who don't stand up SoulAuth rely on for login.
+> Agent auth — SoulKey — is independent of both and remains unchanged.
 
 For an operator-facing version of the same posture, see
 [`docs/operations/soulauth-integration.md`](../operations/soulauth-integration.md).
@@ -25,23 +25,21 @@ which supersedes
 
 ## The two paths, side by side
 
-|  | **SoulAuth federated (production)** | **`@platform/auth` (legacy / dead)** |
+|  | **SoulAuth federated (primary)** | **`@platform/auth` (OSS / fallback)** |
 |---|---|---|
 | Service | Separate Python service. In OSS self-hosting it runs inside the platform-api container; in Cristian's GCP deployment it is its own service. | In-process: TypeScript inside platform-web, plus a Python sibling in `packages/auth/python`. |
 | User DB | Separate logical database; tables prefixed `_soulauth_*` (`_soulauth_users`, `_soulauth_sessions`, `_soulauth_idp`). | Pantheon's main Postgres; tables `users`, `password_credentials`, `sessions`. |
 | Password hash | **bcrypt** | Argon2id (64 MiB / 3 iterations / 4 lanes) |
-| Session model | Session cookie issued by SoulAuth; validated by platform-api on every request via a SoulAuth client. | Session cookie issued by `@platform/auth`; validated against the `sessions` table. |
+| Session cookie | `tiresias_session` — issued by SoulAuth; validated by platform-api on every request via a SoulAuth client. | `platform_session` — issued by `@platform/auth`'s `createSession`; validated against the `sessions` table. |
 | Federated IdP | LDAP / Active Directory, OIDC (Google, generic), JIT provisioning. | None — local accounts only. |
 | Agent auth | Out of scope — SoulKey handles agent auth, see "Agent auth" below. | Same — `@platform/auth` is user-only. |
-| Status | **Production.** What `pnpm bootstrap` configures and what self-hosters log in against. | **Legacy / dead code.** The package still ships, the schema is still migrated, the imports compile, but the runtime auth path bypasses it. |
+| When it fires | Browser arrives carrying `tiresias_session`. If only `tiresias_session` is present but no `platform_session`, middleware redirects through `/api/auth/exchange` to mint a `platform_session`. | No cookie of either type → middleware redirects to `/login` → server action verifies Argon2id against `password_credentials`. Used by OSS deployments that don't stand up SoulAuth, and as the fallback whenever a SoulAuth session isn't available. |
 
-The dead-code status of `@platform/auth` is the single most common
-source of confusion when reading the auth surface for the first time.
-Useful diagnostic: in a running Pantheon stack, the login form posts
-to a SoulAuth-mounted route under `/v1/auth/*`, not to
-`@platform/auth`-defined server-action endpoints. If you grep
-`loginAction` inside `apps/platform-web` you will find the legacy
-code path; it is not what fires on a real login.
+Both cookie names coexist; the BFF helpers accept either. The choice
+of which path is "your" production path depends on whether you need
+federated identity (IdP support) — if yes, configure SoulAuth and
+direct your users at it; if no, the Argon2id fallback works
+out-of-box.
 
 ---
 
@@ -60,7 +58,7 @@ code path; it is not what fires on a real login.
 
 - Agent credentials (SoulKey) — separate subsystem
 - Per-OS UI session helpers (see "Agentic OS session helpers" below)
-- The legacy `audit_events` table — see "Audit duality" below
+- The `audit_events` table — emitted from `@platform/auth` and shared across both login paths; see "Audit duality" below
 
 ### Request flow (SoulAuth)
 
@@ -102,33 +100,51 @@ which exposes the same endpoints under `/v1/auth/*`.
 
 ---
 
-## `@platform/auth` — legacy / dead code
+## `@platform/auth` — OSS / fallback path
 
 The `@platform/auth` package (`packages/auth/`) was Pantheon's first
 local-auth implementation, designed when the platform was still a
-single monolith. It was superseded by SoulAuth federated when
-multi-IdP and a separate auth-data boundary became requirements.
+single monolith. SoulAuth was added later when multi-IdP and a
+separate auth-data boundary became requirements — but `@platform/auth`
+was kept live as the OSS / fallback path so deployments without a
+federated identity provider still have a working login.
 
-### Why it is still in the tree
+### What it owns
 
-1. The schema (`users`, `password_credentials`, `sessions`, etc.) is
-   referenced by other historical SQL and by some tests. Pulling it
-   out is a non-trivial migration that has not been prioritized.
-2. Some helper modules in `packages/auth/src/` (cookies, CSRF token
-   helpers, audit event emitter) are still imported for utility use
-   even though the auth flow does not depend on them.
-3. The ADR (`ADR-002-local-auth-default.md`) remains as a historical
-   decision record, marked **superseded by ADR-012**.
+- The Argon2id password-hashing flow and the `users` /
+  `password_credentials` / `sessions` / `password_reset_tokens` tables.
+- The login / register / forgot-password server actions under
+  `apps/platform-web/src/app/(auth)/...` and `/api/auth/...`.
+- General-purpose cookie + CSRF + session-validation utilities
+  (`cookies.ts`, `csrf.ts`, `session.ts`, `tiresias-session.ts`) that
+  the BFF uses regardless of which login path issued the cookie. The
+  RBAC routes, the tiresias proxy, the dashboard layout, and the
+  agentic-os session helpers all depend on these utilities to
+  resolve `platform_session` cookies.
+- The `audit_events` emitter (shared with SoulAuth-issued sessions —
+  same table, see "Audit duality" below).
 
-### What you should NOT do
+### When you'd configure it as your primary
 
-- Do not configure or document `@platform/auth` as the production
-  auth path.
-- Do not point self-hosters at the `password_credentials` table —
-  that path is not the live login path.
-- Do not re-add Argon2id parameter recommendations to the
-  self-hoster docs — bcrypt is what SoulAuth uses, and the parameter
-  question lives on the SoulAuth side.
+- You're running Pantheon OSS without standing up SoulAuth.
+- You don't need LDAP / OIDC / JIT provisioning; local accounts are
+  fine.
+- You want a single binary to operate; no auxiliary auth service.
+
+Once SoulAuth is configured, it becomes the primary path and the
+Argon2id fallback only fires when no SoulAuth cookie is present
+(e.g. brand-new browser, or SoulAuth temporarily unreachable).
+
+### What you should still NOT do
+
+- Do not advertise `@platform/auth` as having federated IdP support —
+  it doesn't, and never will. Use SoulAuth for that.
+- Do not migrate sessions between the two paths in either direction
+  programmatically. They issue different cookie names and back
+  different table families.
+- Do not configure both `@platform/auth`'s Argon2id and SoulAuth's
+  bcrypt for the SAME user account — choose per-user (a user belongs
+  to exactly one of `users` or `_soulauth_users`).
 
 ### Cookie / CSRF helpers (still usable)
 
@@ -163,7 +179,7 @@ the main Pantheon database.
 
 | Table | Owner | Purpose | Lifetime |
 |---|---|---|---|
-| `audit_events` | `packages/auth` (legacy emitter still used opportunistically) | Auth + session compliance log | Long retention, immutable |
+| `audit_events` | `packages/auth` emitter (shared across both login paths) | Auth + session compliance log | Long retention, immutable |
 | `agos_audit` | `apps/platform-web` (Agentic OS layer) | Per-OS product event stream surfaced in `/dashboard/audit` | Product-tier retention, see [audit-trail.md](./audit-trail.md) |
 
 When instrumenting a new event, pick by audience:
@@ -224,17 +240,19 @@ and
 
 ---
 
-## Schema (legacy `@platform/auth` reference)
+## Schema (`@platform/auth` reference)
 
-For completeness, the legacy schema in the main Pantheon DB:
+For completeness, the `@platform/auth` schema in the main Pantheon
+DB. These tables are live whenever the OSS / fallback login path is
+in use:
 
 | Table | Purpose |
 |---|---|
-| `users` | Local user accounts (legacy) |
-| `password_credentials` | Argon2id hashes, 1:1 with users (legacy) |
-| `sessions` | Active and invalidated sessions (legacy) |
-| `password_reset_tokens` | Time-limited reset tokens (legacy) |
-| `audit_events` | Auth / session compliance log (still emitted opportunistically) |
+| `users` | Local user accounts (Argon2id login path) |
+| `password_credentials` | Argon2id hashes, 1:1 with users |
+| `sessions` | Active and invalidated `platform_session` cookies |
+| `password_reset_tokens` | Time-limited reset tokens |
+| `audit_events` | Auth / session compliance log (shared with SoulAuth-issued sessions) |
 | `organizations` | Tenant organizations |
 | `memberships` | User ↔ organization role assignments |
 

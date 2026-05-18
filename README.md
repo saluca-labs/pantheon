@@ -21,9 +21,11 @@ apps/
   soul-mcp              MCP adapter for the Soul tool surface
 
 packages/
-  @platform/auth        Legacy local-auth (Argon2id + Postgres sessions).
-                        Production user auth is federated through SoulAuth;
-                        see docs/operations/soulauth-integration.md.
+  @platform/auth        OSS / fallback local-auth (Argon2id + Postgres
+                        sessions) + general-purpose cookie / CSRF /
+                        session-validation utilities used by the BFF.
+                        For federated identity (LDAP, OIDC) layer
+                        SoulAuth on top — see docs/operations/soulauth-integration.md.
   @platform/memory      Agent memory (vendored from elysium @ 758a4a5)
   @platform/config      Zod/Pydantic env validation
   @platform/types       Shared TypeScript domain types

@@ -245,9 +245,11 @@ Closes #XXX. Part of Wave I.3 — contributor docs pass.
   `tiresias-proxy` service — they are code-namespace literals.
 - Do not rebrand `apps/platform-app-proxy/` — the App Proxy stays
   Tiresias under the Pantheon umbrella ([ADR-013](docs/decisions/ADR-013-app-proxy-tiresias-branding.md)).
-- Do not configure or document `@platform/auth` as the production
-  auth path — SoulAuth federated (bcrypt) is production;
-  `@platform/auth` (Argon2id) is legacy / dead code.
+- Do not advertise `@platform/auth` as having federated IdP support
+  — it doesn't, and never will. Both user-auth paths are live:
+  SoulAuth federated (bcrypt) is the primary path when configured
+  and adds LDAP / OIDC; `@platform/auth` (Argon2id) is the OSS /
+  fallback path for deployments without SoulAuth.
   ([ADR-012](docs/decisions/ADR-012-soulauth-federated.md),
   [`docs/security/auth-model.md`](docs/security/auth-model.md))
 - Do not re-introduce tier gating in user-visible docs surfaces.

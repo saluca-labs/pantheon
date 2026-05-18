@@ -156,7 +156,7 @@ Top-level tables and what they hold. Detailed Alembic chain is in
 
 | Surface | Status | Notes |
 |---|---|---|
-| `@platform/auth` Argon2id local-auth | **Legacy / dead code** | Superseded by SoulAuth federated. Tables (`users`, `password_credentials`, `sessions`) remain in schema but are not the prod path. |
+| `@platform/auth` Argon2id local-auth | **Live (OSS / fallback path)** | Co-exists with SoulAuth federated. SoulAuth is the primary path when configured; `@platform/auth` is the OSS default and the no-cookie fallback. See `docs/security/auth-model.md` for the dual-track posture. |
 | Tier-gating (`TierGate`, `feature_gate`) | **Removed from OSS surface** | All features available in every deployment. |
 | `TIRESIAS_LICENSE_KEY` | **Removed** | Pantheon does not require a license. |
 | RSA JWT signing | **Replaced by ES256** | EC P-256 keys via `SOULAUTH_JWT_ALGORITHM=ES256` |
