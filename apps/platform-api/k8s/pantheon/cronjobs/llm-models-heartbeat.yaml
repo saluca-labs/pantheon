@@ -1,0 +1,392 @@
+# llm-models-heartbeat — every 6h, polls cloud LLM providers and refreshes
+# _llm_available_models. Source of truth for model pickers, agent config,
+# and the dashboard widget at /api/llm/models.
+#
+# Providers polled (current set):
+#   anthropic      api.anthropic.com/v1/models       (auth: ANTHROPIC_API_KEY)
+#   openrouter     openrouter.ai/api/v1/models       (no auth required)
+#   gemini         generativelanguage.googleapis.com/v1beta/models (auth: GEMINI_API_KEY)
+#   ollama_cloud   ollama.com/library (HTML scrape — no official JSON API)
+#
+# Soft-deprecation: a model not seen for 2+ consecutive polls gets
+# deprecated_at set; the row is retained for audit.
+#
+# Failure mode: per-provider isolation — if one provider's poll fails, the
+# others still complete. Total job exit is non-zero only if all providers fail.
+#
+# To trigger a one-off run for testing:
+#   kubectl create job -n pantheon --from=cronjob/llm-models-heartbeat \
+#     llm-models-heartbeat-manual-$(date +%s)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-models-heartbeat-script
+  namespace: pantheon
+data:
+  heartbeat.py: |
+    """LLM-models heartbeat. Polls 4 cloud providers, upserts _llm_available_models."""
+
+    import json
+    import os
+    import re
+    import sys
+    import time
+    import uuid
+    from datetime import datetime, timezone, timedelta
+
+    import psycopg2
+    import psycopg2.extras
+    import requests
+
+
+    DEPRECATION_THRESHOLD = timedelta(hours=13)  # 2+ consecutive 6h polls missed
+    REQUEST_TIMEOUT = 30
+
+
+    def fetch_anthropic():
+        """https://docs.anthropic.com/en/api/models-list"""
+        key = os.environ.get("ANTHROPIC_API_KEY")
+        if not key:
+            raise RuntimeError("ANTHROPIC_API_KEY not set")
+        r = requests.get(
+            "https://api.anthropic.com/v1/models",
+            headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
+            timeout=REQUEST_TIMEOUT,
+        )
+        r.raise_for_status()
+        out = []
+        for m in r.json().get("data", []):
+            out.append({
+                "provider": "anthropic",
+                "model_id": m["id"],
+                "display_name": m.get("display_name"),
+                "context_window": None,  # Anthropic doesn't return this in /models
+                "max_output_tokens": None,
+                "capabilities": {},
+                "pricing": {},
+                "metadata": m,
+            })
+        return out
+
+
+    def fetch_openrouter():
+        """https://openrouter.ai/docs/api-reference/list-available-models"""
+        r = requests.get("https://openrouter.ai/api/v1/models", timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
+        out = []
+        for m in r.json().get("data", []):
+            pricing_raw = m.get("pricing", {}) or {}
+            # OpenRouter returns prices as "0.000001" $/token. Normalize to $/1M tokens.
+            def _per_1m(s):
+                try:
+                    return float(s) * 1_000_000
+                except (TypeError, ValueError):
+                    return None
+            pricing = {}
+            if pricing_raw.get("prompt") is not None:
+                pricing["input_per_1m_usd"] = _per_1m(pricing_raw["prompt"])
+            if pricing_raw.get("completion") is not None:
+                pricing["output_per_1m_usd"] = _per_1m(pricing_raw["completion"])
+            if pricing:
+                pricing["currency"] = "USD"
+
+            ctx = m.get("context_length")
+            caps = {}
+            for arch_modal in (m.get("architecture", {}) or {}).get("input_modalities", []):
+                if arch_modal == "image":
+                    caps["vision"] = True
+            top = m.get("top_provider", {}) or {}
+
+            out.append({
+                "provider": "openrouter",
+                "model_id": m["id"],
+                "display_name": m.get("name"),
+                "context_window": ctx,
+                "max_output_tokens": top.get("max_completion_tokens"),
+                "capabilities": caps,
+                "pricing": pricing,
+                "metadata": m,
+            })
+        return out
+
+
+    def fetch_gemini():
+        """https://ai.google.dev/api/models#method:-models.list"""
+        key = os.environ.get("GEMINI_API_KEY")
+        if not key:
+            raise RuntimeError("GEMINI_API_KEY not set")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}&pageSize=200"
+        r = requests.get(url, timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
+        out = []
+        for m in r.json().get("models", []):
+            caps = {}
+            methods = m.get("supportedGenerationMethods", []) or []
+            if "generateContent" in methods:
+                caps["chat"] = True
+            if "embedContent" in methods:
+                caps["embedding"] = True
+            out.append({
+                "provider": "gemini",
+                "model_id": m["name"].replace("models/", ""),
+                "display_name": m.get("displayName"),
+                "context_window": m.get("inputTokenLimit"),
+                "max_output_tokens": m.get("outputTokenLimit"),
+                "capabilities": caps,
+                "pricing": {},  # Gemini API doesn't return pricing in /models
+                "metadata": m,
+            })
+        return out
+
+
+    def fetch_ollama_cloud():
+        """Ollama has no official JSON /models endpoint. Scrape ollama.com/library."""
+        r = requests.get(
+            "https://ollama.com/library",
+            headers={"User-Agent": "pantheon-llm-heartbeat/1.0"},
+            timeout=REQUEST_TIMEOUT,
+        )
+        r.raise_for_status()
+        html = r.text
+        # Library page links each model at /library/<name>. Extract distinct names.
+        names = sorted(set(re.findall(r'href="/library/([a-zA-Z0-9._\-]+)"', html)))
+        out = []
+        for n in names:
+            out.append({
+                "provider": "ollama_cloud",
+                "model_id": n,
+                "display_name": n,
+                "context_window": None,
+                "max_output_tokens": None,
+                "capabilities": {},
+                "pricing": {},
+                "metadata": {"source": "ollama.com/library scrape"},
+            })
+        return out
+
+
+    PROVIDERS = {
+        "anthropic": fetch_anthropic,
+        "openrouter": fetch_openrouter,
+        "gemini": fetch_gemini,
+        "ollama_cloud": fetch_ollama_cloud,
+    }
+
+
+    def upsert(conn, rows):
+        """Insert or update model rows. Returns (inserted, updated)."""
+        with conn.cursor() as cur:
+            inserted = 0
+            updated = 0
+            for r in rows:
+                cur.execute(
+                    """
+                    INSERT INTO _llm_available_models (
+                        id, provider, model_id, display_name, context_window,
+                        max_output_tokens, capabilities, pricing, metadata,
+                        first_seen_at, last_seen_at, deprecated_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
+                            now(), now(), NULL)
+                    ON CONFLICT (provider, model_id) DO UPDATE SET
+                        display_name      = EXCLUDED.display_name,
+                        context_window    = EXCLUDED.context_window,
+                        max_output_tokens = EXCLUDED.max_output_tokens,
+                        capabilities      = EXCLUDED.capabilities,
+                        pricing           = EXCLUDED.pricing,
+                        metadata          = EXCLUDED.metadata,
+                        last_seen_at      = now(),
+                        deprecated_at     = NULL
+                    RETURNING (xmax = 0) AS was_inserted
+                    """,
+                    (
+                        str(uuid.uuid4()),
+                        r["provider"],
+                        r["model_id"],
+                        r["display_name"],
+                        r["context_window"],
+                        r["max_output_tokens"],
+                        json.dumps(r["capabilities"]),
+                        json.dumps(r["pricing"]),
+                        json.dumps(r["metadata"]),
+                    ),
+                )
+                was_inserted = cur.fetchone()[0]
+                if was_inserted:
+                    inserted += 1
+                else:
+                    updated += 1
+            return inserted, updated
+
+
+    def mark_deprecations(conn, provider):
+        """Mark rows not seen in the deprecation window."""
+        cutoff = datetime.now(timezone.utc) - DEPRECATION_THRESHOLD
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE _llm_available_models
+                SET deprecated_at = now()
+                WHERE provider = %s
+                  AND last_seen_at < %s
+                  AND deprecated_at IS NULL
+                """,
+                (provider, cutoff),
+            )
+            return cur.rowcount
+
+
+    def main():
+        dsn = os.environ["DATABASE_URL_SYNC"]
+        # psycopg2 doesn't accept the "+asyncpg" suffix; strip the driver if present.
+        if "+" in dsn.split("://", 1)[0]:
+            scheme = dsn.split("+", 1)[0]
+            rest = dsn.split("://", 1)[1]
+            dsn = f"{scheme}://{rest}"
+
+        conn = psycopg2.connect(dsn)
+        conn.autocommit = False
+
+        total_inserted = 0
+        total_updated = 0
+        total_deprecated = 0
+        successes = 0
+        failures = []
+
+        for name, fetcher in PROVIDERS.items():
+            t0 = time.time()
+            try:
+                rows = fetcher()
+                ins, upd = upsert(conn, rows)
+                dep = mark_deprecations(conn, name)
+                conn.commit()
+                total_inserted += ins
+                total_updated += upd
+                total_deprecated += dep
+                successes += 1
+                print(f"[OK]   {name:14} {len(rows):4} models  (ins={ins} upd={upd} dep={dep})  {time.time()-t0:.1f}s",
+                      flush=True)
+            except Exception as e:
+                conn.rollback()
+                failures.append((name, str(e)))
+                print(f"[FAIL] {name:14} {type(e).__name__}: {e}", flush=True)
+
+        print(f"\nTotal: inserted={total_inserted} updated={total_updated} deprecated={total_deprecated}",
+              flush=True)
+        print(f"Providers OK: {successes}/{len(PROVIDERS)}", flush=True)
+
+        # Exit non-zero only if ALL providers failed (so transient single-provider blips don't page).
+        if successes == 0:
+            sys.exit(1)
+
+
+    if __name__ == "__main__":
+        main()
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: llm-models-heartbeat
+  namespace: pantheon
+  labels:
+    app.kubernetes.io/part-of: pantheon
+    app.kubernetes.io/component: llm-heartbeat
+spec:
+  # Every 6 hours at the top of the hour: 00:00, 06:00, 12:00, 18:00 UTC.
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/part-of: pantheon
+            app.kubernetes.io/component: llm-heartbeat
+        spec:
+          serviceAccountName: pantheon-sa
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          initContainers:
+            - name: cloud-sql-proxy
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.3
+              restartPolicy: Always
+              args:
+                - --structured-logs
+                - --auto-iam-authn
+                - --exit-zero-on-sigterm
+                - salucainfrastructure:us-central1:tiresias-db
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: { drop: [ALL] }
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+              resources:
+                requests: { cpu: "50m", memory: "64Mi" }
+                limits:   { cpu: "200m", memory: "128Mi" }
+          containers:
+            - name: heartbeat
+              image: python:3.12-slim
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -e
+                  echo "Waiting for cloud-sql-proxy..."
+                  for i in $(seq 1 30); do
+                    if (echo > /dev/tcp/127.0.0.1/5432) 2>/dev/null; then
+                      echo "  proxy ready"
+                      break
+                    fi
+                    sleep 1
+                  done
+                  export HOME=/tmp
+                  export PYTHONUSERBASE=/tmp/pylibs
+                  export PATH=$PYTHONUSERBASE/bin:$PATH
+                  echo "Installing deps to $PYTHONUSERBASE..."
+                  pip install --quiet --no-cache-dir --user psycopg2-binary==2.9.10 requests==2.32.3
+                  echo "Running heartbeat..."
+                  python /script/heartbeat.py
+              env:
+                - name: HOME
+                  value: /tmp
+              env:
+                - name: DATABASE_URL_SYNC
+                  valueFrom:
+                    secretKeyRef:
+                      name: pantheon-secrets
+                      key: database-url-sync
+                - name: ANTHROPIC_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pantheon-secrets
+                      key: anthropic-api-key
+                - name: GEMINI_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: pantheon-secrets
+                      key: gemini-api-key
+                      optional: true
+              # Note: HOME=/tmp set above as command env, NOT duplicated here.
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities: { drop: [ALL] }
+                readOnlyRootFilesystem: false
+              resources:
+                requests: { cpu: "100m", memory: "256Mi" }
+                limits:   { cpu: "500m", memory: "512Mi" }
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: llm-models-heartbeat-script
+                defaultMode: 0444

@@ -41,3 +41,28 @@ resources:
   # own manifest under cronjobs/. See cronjobs/README.md.
   - cronjobs/rbac.yaml
   - cronjobs/audit-retention.yaml
+
+# Image tag overrides. CI bumps these via `kustomize edit set image`
+# during deploy. Listed here so local `kubectl apply -k` does not silently
+# roll back to the (old) tags hardcoded in each <name>-deployment.yaml.
+# Source of truth is what the CI sets here — when CI publishes a new
+# version it should also commit the bumped kustomization.yaml back to git.
+images:
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/memory-service
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/platform-web
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/portal
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soul-mcp
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soul-service
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulauth
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulgate
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/soulwatch
+    newTag: v0.1.122
+  - name: us-central1-docker.pkg.dev/salucainfrastructure/pantheon/tiresias-proxy
+    newTag: v0.1.122

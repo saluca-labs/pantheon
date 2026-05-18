@@ -124,6 +124,47 @@ def verify_integrity(
     return 'VALID'
 
 
+# ── Linear forensic chain (SALUCA-013 §7.3, SALUCA-ALFRED §7.7) ──────────────
+
+GENESIS_PREFIX = "hctp-genesis-v1::"
+ORPHAN_KEY = "_orphan_pre_session_id"
+
+
+def chain_genesis_hash(session_id: Optional[str]) -> str:
+    """
+    Per-session genesis prev_hash for the linear memory chain.
+
+    Used as the prev_hash of the first memory written into a session. The
+    full chain rolls forward from here: each subsequent row's prev_hash is
+    derived from the prior row's (full_context_hash, prev_hash) pair.
+
+    Args:
+        session_id: Owning session identifier, or None for orphan rows.
+
+    Returns:
+        64-character hex SHA-256 digest.
+    """
+    chain_key = session_id if session_id else ORPHAN_KEY
+    return content_hash(GENESIS_PREFIX + chain_key)
+
+
+def next_prev_hash(prev_content_hash: str, prev_prev_hash: str) -> str:
+    """
+    Compute prev_hash for a new memory given the prior row in its chain.
+
+    Formula (parent-pointer Merkle, per patent SALUCA-013 §7.3):
+        prev_hash[N] = SHA-256(row[N-1].full_context_hash || row[N-1].prev_hash)
+
+    Args:
+        prev_content_hash: full_context_hash of the immediately prior row.
+        prev_prev_hash:    prev_hash of the immediately prior row.
+
+    Returns:
+        64-character hex SHA-256 digest for the new row's prev_hash.
+    """
+    return content_hash(prev_content_hash + prev_prev_hash)
+
+
 def update_structure_hashes(
     session_id: str,
     memory_ids: list[str],
