@@ -1,20 +1,26 @@
 /**
  * @module SettingsPage
  *
- * Settings page with 7 tabs, each governing a different configuration domain:
+ * Settings page tabs, each governing a different configuration domain:
  *
  *  1. **general**       -- Tenant display name (placeholder for future settings)
  *  2. **api-keys**      -- SoulKey lifecycle: create, revoke, suspend/reactivate,
  *                          view per-key usage, copy raw key on creation
- *  3. **siem**          -- SIEM destination configuration (Splunk, Elastic)
- *  4. **notifications** -- Notification channel toggles (Slack, PagerDuty, email, webhook)
- *  5. **billing**       -- Grace period status, tier display, upgrade/manage subscription
- *  6. **white-label**   -- Branding configuration: company name, logo URL, favicon URL,
+ *  3. **provider-keys** -- Per-tenant BYOK provider key management (Wave H)
+ *  4. **agents-store**  -- LocalPg / Supabase adapter selection (Wave H)
+ *  5. **siem**          -- SIEM destination configuration (Splunk, Elastic)
+ *  6. **notifications** -- Notification channel toggles (Slack, PagerDuty, email, webhook)
+ *  7. **white-label**   -- Branding configuration: company name, logo URL, favicon URL,
  *                          accent color, custom domain (enterprise+ only)
- *  7. **sso**           -- Enterprise SSO / OIDC IdP management (enterprise+ only,
+ *  8. **sso**           -- Enterprise SSO / OIDC IdP management (enterprise+ only,
  *                          rendered via `SSOSettingsTab`)
  *
  * The active tab is controlled via the `?tab=` query parameter for deep linking.
+ *
+ * Note: Pantheon is OSS by default with no tier gating, so there is no
+ * Billing tab or Stripe upgrade flow in the portal. Backend `/v1/billing/*`
+ * routes remain available for SaaS deployments that surface billing through
+ * other channels.
  */
 "use client";
 
@@ -30,12 +36,7 @@ import { TeamSettingsTab } from "@/components/team/TeamSettingsTab";
 import { useAuth } from "@/lib/auth";
 import { useUserPreferences, ALL_SIDEBAR_SECTIONS } from "@/lib/useUserPreferences";
 
-type Tab = "general" | "api-keys" | "provider-keys" | "agents-store" | "siem" | "notifications" | "billing" | "white-label" | "sso" | "preferences" | "team";
-
-// Tiers with time-based license (show expiration, no Stripe)
-const LICENSE_TIERS = new Set(["enterprise", "mssp"]);
-// Tiers where billing tab is hidden entirely
-const HIDDEN_BILLING_TIERS = new Set(["nda"]);
+type Tab = "general" | "api-keys" | "provider-keys" | "agents-store" | "siem" | "notifications" | "white-label" | "sso" | "preferences" | "team";
 
 /** Reusable "Coming Soon" banner */
 function ComingSoonBanner({ message }: { message?: string }) {
@@ -72,14 +73,6 @@ interface CreateKeyResponse {
   issued_at: string | null;
   expires_at: string | null;
   status: string;
-}
-
-interface GraceStatus {
-  tenant_id: string;
-  status: string;
-  payment_failed_at: string | null;
-  grace_deadline: string | null;
-  days_remaining: number | null;
 }
 
 interface KeyUsage {
@@ -119,7 +112,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "agents-store", label: "Agents Store" },
   { id: "siem", label: "SIEM Integration" },
   { id: "notifications", label: "Notifications" },
-  { id: "billing", label: "Billing" },
   { id: "white-label", label: "White Label" },
   { id: "sso", label: "SSO / Identity" },
   { id: "preferences", label: "User Preferences" },
@@ -435,21 +427,6 @@ function SyslogConfigSection() {
   );
 }
 
-// Tier display config
-const TIER_LABELS: Record<string, string> = {
-  community: "Community",
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-  mssp: "MSSP",
-  saas: "SaaS",
-};
-
-const UPGRADE_OPTIONS = [
-  { tier: "pro", label: "Upgrade to Pro", priceId: "price_pro" },
-  { tier: "enterprise", label: "Upgrade to Enterprise", priceId: "price_enterprise" },
-];
-
 function SettingsPageInner() {
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab) || "general";
@@ -457,12 +434,9 @@ function SettingsPageInner() {
   const { session } = useAuth();
   const { prefs, setPref, resetAll: resetPrefs } = useUserPreferences();
 
-  // Determine the effective tier for billing visibility
+  // Filter tabs based on tier (Team tab hidden for community tier)
   const sessionTier = session?.tier || "starter";
-
-  // Filter tabs based on tier (hide billing for NDA, team for community)
   const visibleTabs = TABS.filter((tab) => {
-    if (tab.id === "billing" && HIDDEN_BILLING_TIERS.has(sessionTier)) return false;
     if (tab.id === "team" && sessionTier === "community") return false;
     return true;
   });
@@ -588,13 +562,6 @@ function SettingsPageInner() {
   const [agentsStoreTesting, setAgentsStoreTesting] = useState(false);
   const [agentsStoreError, setAgentsStoreError] = useState<string | null>(null);
   const [agentsStoreTestResult, setAgentsStoreTestResult] = useState<{ ok: boolean; latency_ms?: number; error?: string } | null>(null);
-
-  // --- Billing state (BILL-01..04) ---
-  const [tier, setTier] = useState<string>("starter");
-  const [graceStatus, setGraceStatus] = useState<GraceStatus | null>(null);
-  const [billingLoading, setBillingLoading] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
   const [tenantId, setTenantId] = useState(session?.tenant_id || "");
   const [tenantIdDraft, setTenantIdDraft] = useState(session?.tenant_id || "");
@@ -936,19 +903,6 @@ function SettingsPageInner() {
     }
   };
 
-  // Fetch billing/grace status when billing tab is active
-  useEffect(() => {
-    if (activeTab !== "billing") return;
-    setBillingLoading(true);
-    api.get<GraceStatus>("/v1/billing/grace-status")
-      .then((data) => {
-        setGraceStatus(data);
-        if (data.status === "downgraded") setTier("community");
-      })
-      .catch(() => { /* grace status unavailable — show static tier */ })
-      .finally(() => setBillingLoading(false));
-  }, [activeTab]);
-
   // Sync draft branding (existing WL logic — unchanged)
   useEffect(() => {
     setDraftBranding({ ...branding });
@@ -1077,32 +1031,6 @@ function SettingsPageInner() {
     navigator.clipboard.writeText(newRawKey.raw_key);
     setRawKeyCopied(true);
     setTimeout(() => setRawKeyCopied(false), 2000);
-  }
-
-  // Billing actions
-  async function handleManageBilling() {
-    try {
-      const { url } = await api.post<{ url: string }>("/v1/billing/portal-session");
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : "Could not open billing portal");
-    }
-  }
-
-  async function handleUpgrade(newTier: string, priceId?: string) {
-    setUpgrading(true);
-    setUpgradeError(null);
-    try {
-      const result = await api.post<{ new_tier: string }>("/v1/billing/upgrade", {
-        new_tier: newTier,
-        stripe_price_id: priceId,
-      });
-      setTier(result.new_tier);
-    } catch (err) {
-      setUpgradeError(err instanceof ApiError ? err.message : "Upgrade failed");
-    } finally {
-      setUpgrading(false);
-    }
   }
 
   return (
@@ -2307,129 +2235,6 @@ function SettingsPageInner() {
           )}
         </motion.div>
       )}
-
-      {/* Billing Tab — tier-based rendering (BILL-01, BILL-02, BILL-04) */}
-      {activeTab === "billing" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6 max-w-lg"
-        >
-          {/* --- Enterprise / MSSP: license expiration view (no Stripe) --- */}
-          {LICENSE_TIERS.has(sessionTier) ? (
-            <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Current Plan</p>
-                  <p className="text-xl font-bold text-gradient-gold mt-1">
-                    {TIER_LABELS[sessionTier] ?? sessionTier}
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-blue-500/15 text-blue-400 border-blue-500/20">
-                  Licensed
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">License Expiration</p>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-of-surface-container-high border border-white/10">
-                  <svg className="w-5 h-5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                  </svg>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {session?.expires_at
-                        ? new Date(session.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-                        : "Contact your account manager for details"}
-                    </p>
-                    <p className="text-xs text-foreground-muted mt-0.5">
-                      To renew or modify your license, contact your Pantheon account representative.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* --- SaaS / Community / Starter: Stripe billing view --- */
-            <>
-              {/* Payment failure banner (BILL-04) */}
-              {graceStatus?.status === "payment_failed" && (
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/25">
-                  <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-red-300">Payment Failed</p>
-                    <p className="text-xs text-red-400/80 mt-0.5">
-                      Update your payment method to avoid service interruption.
-                      {graceStatus.days_remaining !== null && (
-                        <> <span className="font-semibold">{graceStatus.days_remaining} day{graceStatus.days_remaining !== 1 ? "s" : ""} remaining</span> in grace period.</>
-                      )}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleManageBilling}
-                    className="shrink-0 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-xs font-semibold text-red-300 transition-colors"
-                  >
-                    Fix Now
-                  </button>
-                </div>
-              )}
-
-              {/* Current plan card */}
-              <div className="bg-of-surface-container border border-of-outline-variant/20 rounded-xl p-6 space-y-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Current Plan</p>
-                    <p className="text-xl font-bold text-gradient-gold mt-1">
-                      {billingLoading ? "Loading..." : (TIER_LABELS[tier] ?? tier)}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
-                    graceStatus?.status === "payment_failed"
-                      ? "bg-red-500/15 text-red-400 border-red-500/20"
-                      : "bg-green-500/15 text-green-400 border-green-500/20"
-                  }`}>
-                    {graceStatus?.status === "payment_failed" ? "Payment Failed" : "Active"}
-                  </span>
-                </div>
-
-                {/* Manage billing */}
-                <button
-                  onClick={handleManageBilling}
-                  className="w-full px-4 py-2.5 rounded-lg bg-of-surface-container-high border border-white/10 text-sm font-medium text-foreground hover:text-of-primary hover:border-of-primary/30 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                  </svg>
-                  Manage Billing
-                </button>
-              </div>
-
-              {/* Upgrade options */}
-              {upgradeError && (
-                <p className="text-xs text-red-400">{upgradeError}</p>
-              )}
-              <div className="space-y-2">
-                <p className="text-xs text-foreground-subtle uppercase tracking-wider font-medium">Upgrade Plan</p>
-                <div className="flex gap-3 flex-wrap">
-                  {UPGRADE_OPTIONS.filter((o) => o.tier !== tier).map((opt) => (
-                    <button
-                      key={opt.tier}
-                      onClick={() => handleUpgrade(opt.tier, opt.priceId)}
-                      disabled={upgrading}
-                      className="px-5 py-2.5 rounded-lg bg-of-primary text-of-on-primary text-sm font-semibold hover:bg-of-primary-fixed transition-colors disabled:opacity-50"
-                    >
-                      {upgrading ? "Upgrading..." : opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </motion.div>
-      )}
-
 
       {/* Team Management Tab */}
       {activeTab === "team" && (
