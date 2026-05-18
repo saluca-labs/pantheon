@@ -1,23 +1,31 @@
-"""Minimal secret-URI resolver (W-H.2.b).
+"""Secret-URI resolver for the agent BYOK code path.
 
-The canonical `platform_secrets` URI resolver (mentioned in the HANDOFF
-and locked decision #5) does not yet exist in this repo. To unblock the
-Supabase store this ship, we implement the narrowest possible resolver:
-``env://VAR_NAME`` reads from process env.
+Thin adapter over ``platform_secrets`` so callers can keep using the
+``SecretRefError`` exception type and the ``describe_secret_ref`` wire-safe
+summary helper without depending on the facade's exception hierarchy.
 
-Other schemes (``vault://``, ``gcpsm://``, ``enc://``) raise NotImplementedError
-so callers fail loudly rather than silently storing plaintext. When the
-canonical resolver lands later, this module should delegate to it.
+Originally this module was a minimal env-only stub written before the
+canonical resolver existed (see W-H.2.b history). The facade now ships
+in ``packages/secrets/python`` and supports ``env://``, ``file://``,
+``vault://``, ``gcpsm://``, and ``awssm://``. This module delegates to it.
 
-Wire format:
+Wire format examples:
     env://ANTHROPIC_API_KEY
-    env://SUPABASE_SERVICE_ROLE_KEY
+    vault://kv/data/anthropic#api_key
+    gcpsm://projects/saluca-prod/secrets/anthropic-key/versions/latest
+    awssm://arn:aws:secretsmanager:us-east-1:1234:secret:anthropic#api_key
 """
 
 from __future__ import annotations
 
-import os
 from typing import Optional
+
+from platform_secrets import (
+    SecretBackendError,
+    SecretNotFoundError,
+    SecretReferenceError,
+    get_facade,
+)
 
 
 class SecretRefError(ValueError):
@@ -30,10 +38,9 @@ def resolve_secret_ref(ref: str) -> str:
     Raises
     ------
     SecretRefError
-        If the URI scheme is unknown, malformed, or the underlying value
-        cannot be found.
-    NotImplementedError
-        If the URI uses a scheme that's reserved but not yet implemented.
+        If the URI scheme is unknown, malformed, the underlying value
+        cannot be found, or the backend itself fails (missing SDK,
+        unreachable, auth rejected).
     """
     if not ref or not isinstance(ref, str):
         raise SecretRefError("secret ref must be a non-empty string")
@@ -43,25 +50,10 @@ def resolve_secret_ref(ref: str) -> str:
             f"secret ref missing scheme (expected e.g. 'env://VAR_NAME'): {ref!r}"
         )
 
-    scheme, _, target = ref.partition("://")
-    scheme = scheme.lower()
-
-    if scheme == "env":
-        if not target:
-            raise SecretRefError("env:// missing variable name")
-        val = os.environ.get(target)
-        if val is None or val == "":
-            raise SecretRefError(f"env var {target!r} is not set")
-        return val
-
-    if scheme in {"vault", "gcpsm", "awssm", "enc"}:
-        # Reserved schemes the future platform_secrets resolver will own.
-        raise NotImplementedError(
-            f"secret-ref scheme {scheme!r} is reserved but not yet implemented; "
-            "use env:// for now or wait for the platform_secrets module"
-        )
-
-    raise SecretRefError(f"unknown secret-ref scheme: {scheme!r}")
+    try:
+        return get_facade().resolve_required(ref)
+    except (SecretNotFoundError, SecretReferenceError, SecretBackendError) as exc:
+        raise SecretRefError(str(exc)) from exc
 
 
 def describe_secret_ref(ref: Optional[str]) -> dict:

@@ -387,17 +387,17 @@ def test_create_provider_key_with_env_not_set_is_accepted(client, monkeypatch):
 
 
 def test_create_provider_key_with_unsupported_scheme_rejected(client):
-    """vault:// is a reserved-but-unimplemented scheme → 400."""
+    """ftp:// is not a backend the facade knows about — 400."""
     resp = client.post(
         "/v1/provider-keys",
         json={
             "provider": "anthropic",
-            "secret_ref": "vault://kv/data/anthropic#key",
+            "secret_ref": "ftp://server/path",
         },
         headers=hdr_a(),
     )
     assert resp.status_code == 400
-    assert "unsupported" in resp.text.lower() or "scheme" in resp.text.lower()
+    assert "unknown" in resp.text.lower() or "scheme" in resp.text.lower()
 
 
 def test_create_provider_key_unknown_provider_rejected(client, monkeypatch):
@@ -573,13 +573,17 @@ def test_test_endpoint_cross_tenant_returns_404(client, monkeypatch):
     assert resp.status_code == 404
 
 
-def test_inline_test_endpoint_unsupported_scheme_returns_failure(client):
-    """Inline /test of a vault:// secret_ref returns ok=false (not 400 —
-    the inline endpoint reports failures inline so the modal UI can
-    show them without a status-code branch)."""
+def test_inline_test_endpoint_unreachable_backend_returns_failure(client):
+    """Inline /test of a vault:// secret_ref with no Vault reachable
+    returns ok=false (not 400 — the inline endpoint reports failures
+    inline so the modal UI can show them without a status-code branch).
+
+    The facade now supports vault://, so this is no longer a 'scheme
+    unsupported' error but a backend-unreachable / SDK-missing error;
+    the contract for the /test endpoint is the same either way."""
     resp = client.post(
         "/v1/provider-keys/test",
-        json={"provider": "anthropic", "secret_ref": "vault://something"},
+        json={"provider": "anthropic", "secret_ref": "vault://kv/data/x#y"},
         headers=hdr_a(),
     )
     assert resp.status_code == 200
