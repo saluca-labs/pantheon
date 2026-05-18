@@ -35,9 +35,11 @@
  *   - 500 on any other unhandled exception
  */
 
+import { randomUUID } from 'node:crypto';
 import Fastify, { type FastifyInstance, type FastifyRequest, type FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { SoulServiceError, type SoulClient } from './soul-client.js';
 import type { AllTools } from './mcp.js';
 import { buildToolRegistry, buildMcpServer } from './mcp.js';
@@ -99,42 +101,76 @@ export async function buildHttp(opts: HttpOptions): Promise<FastifyInstance> {
   });
 
   // ── MCP Streamable HTTP transport ───────────────────────────────────────────
-  // Stateless mode: a fresh Server + Transport is constructed per request, so
-  // we never accumulate dangling sessions and the endpoint scales trivially.
-  // This trades the ability to push server-initiated notifications mid-session
-  // for operational simplicity — soul-mcp tools are all request/response, no
-  // streaming notifications today, so stateless is the right fit.
+  // Stateful per-session mode. The MCP protocol REQUIRES initialize handshake
+  // state to persist across requests in the same session — the first POST
+  // sends `initialize`, subsequent POSTs (tools/list, tools/call) must hit a
+  // server that knows it's been initialized. A stateless mode (fresh server
+  // per request) breaks this: every non-initialize request gets a 400
+  // "Server not initialized" because the fresh server hasn't received
+  // initialize yet.
   //
-  // Comet, Claude Connectors, and other remote MCP clients hit POST /mcp with
-  // an Authorization: Bearer <SOUL_SERVICE_KEY> header (gated by the
-  // onRequest hook above). GET / DELETE return 405 — they're reserved for
-  // session-bound transports.
+  // Implementation: a module-scoped Map<sessionId, transport>. New session on
+  // POST initialize (returns Mcp-Session-Id header). Subsequent POSTs route
+  // by Mcp-Session-Id. GET supports server-initiated SSE notifications (we
+  // don't emit any yet but the SDK requires the route). DELETE closes a
+  // session and frees memory.
+  //
+  // Memory boundedness: each session holds one Server + one Transport, both
+  // lightweight (~kilobytes). transport.onclose deletes from the map on
+  // session close. Single-replica deployment so no cross-pod session affinity
+  // needed — when soul-mcp eventually scales out, this needs Redis-backed
+  // session sharing (or sticky sessions at the LB).
+  //
+  // Auth: SOUL_SERVICE_KEY via Authorization: Bearer (new) or
+  // X-Soul-Service-Key (legacy), enforced by the onRequest hook above.
+  const transports: Record<string, StreamableHTTPServerTransport> = {};
+
   app.post('/mcp', async (req, reply) => {
-    // Fresh sessionIdGenerator on every request → effectively stateless: each
-    // POST creates a new server + transport, the SDK assigns a session-id that
-    // we never persist, and the next POST starts clean. enableJsonResponse
-    // tells the transport to return a single JSON response (no SSE stream)
-    // since soul-mcp tools don't push server-initiated notifications.
-    const { randomUUID } = await import('node:crypto');
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-      enableJsonResponse: true,
-    });
-    const { server } = buildMcpServer(tools);
-    // SDK Transport interface declares onclose as required () => void, but
-    // StreamableHTTPServerTransport's onclose is optional. With our
-    // exactOptionalPropertyTypes the structural check fails; runtime is fine,
-    // so cast through unknown to bridge the optional-vs-required asymmetry.
-    type SdkTransport = Parameters<typeof server.connect>[0];
-    try {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    let transport: StreamableHTTPServerTransport;
+
+    if (sessionId && transports[sessionId]) {
+      transport = transports[sessionId];
+    } else if (!sessionId && isInitializeRequest(req.body)) {
+      // New session: SDK generates the session id during handleRequest and
+      // fires onsessioninitialized once it's set on the transport.
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        enableJsonResponse: true,
+        onsessioninitialized: (sid: string) => {
+          transports[sid] = transport;
+        },
+      });
+      // SDK Transport interface declares onclose as required () => void; we
+      // cast through unknown when calling .connect to bridge the optional-vs-
+      // required asymmetry from exactOptionalPropertyTypes. The runtime
+      // contract is the same.
+      transport.onclose = () => {
+        const sid = transport.sessionId;
+        if (sid && transports[sid]) delete transports[sid];
+      };
+      const { server } = buildMcpServer(tools);
+      type SdkTransport = Parameters<typeof server.connect>[0];
       await server.connect(transport as unknown as SdkTransport);
+    } else {
+      reply.code(400).send({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: sessionId
+            ? `Unknown session id: ${sessionId}`
+            : 'Bad Request: missing Mcp-Session-Id and body is not an initialize request',
+        },
+        id: null,
+      });
+      return;
+    }
+
+    try {
       await transport.handleRequest(req.raw, reply.raw, req.body as unknown);
-      // handleRequest writes directly to the raw response; signal Fastify to
-      // step back so it doesn't try to re-serialize or double-send.
       reply.hijack();
     } catch (err) {
       req.log.error({ err }, 'mcp.streamableHttp handler failed');
-      // Best-effort error envelope (only reaches the client if response not started yet)
       if (!reply.raw.headersSent) {
         reply.raw.writeHead(500, { 'Content-Type': 'application/json' });
         reply.raw.end(
@@ -145,29 +181,43 @@ export async function buildHttp(opts: HttpOptions): Promise<FastifyInstance> {
           }),
         );
       }
-    } finally {
-      // Defer cleanup until the response is done. Avoids cutting the stream
-      // out from under handleRequest when an early error happens.
-      reply.raw.on('close', () => {
-        void transport.close().catch(() => undefined);
-        void server.close().catch(() => undefined);
-      });
     }
   });
 
-  for (const method of ['GET', 'DELETE'] as const) {
-    app.route({
-      method,
-      url: '/mcp',
-      handler: async (_req: FastifyRequest, reply: FastifyReply) => {
-        reply.code(405).send({
-          jsonrpc: '2.0',
-          error: { code: -32000, message: 'Method Not Allowed (stateless transport — use POST)' },
-          id: null,
-        });
-      },
-    });
-  }
+  // GET /mcp: server-to-client SSE for notifications (none today, but the SDK
+  // protocol requires the route).
+  // DELETE /mcp: explicit session close — frees transport + server immediately
+  // rather than waiting for onclose via timeout/disconnect.
+  const handleSessionRequest = async (req: FastifyRequest, reply: FastifyReply) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    if (!sessionId || !transports[sessionId]) {
+      reply.code(400).send({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Invalid or missing Mcp-Session-Id' },
+        id: null,
+      });
+      return;
+    }
+    const transport = transports[sessionId];
+    try {
+      await transport.handleRequest(req.raw, reply.raw);
+      reply.hijack();
+    } catch (err) {
+      req.log.error({ err }, 'mcp.streamableHttp session handler failed');
+      if (!reply.raw.headersSent) {
+        reply.raw.writeHead(500, { 'Content-Type': 'application/json' });
+        reply.raw.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: { code: -32603, message: 'Internal error' },
+            id: null,
+          }),
+        );
+      }
+    }
+  };
+  app.get('/mcp', handleSessionRequest);
+  app.delete('/mcp', handleSessionRequest);
 
   // ── Generic tool surface ───────────────────────────────────────────────────
 
