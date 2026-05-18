@@ -92,7 +92,7 @@ services:
       SOULGATE_SOULAUTH_BASE_URL: http://soulauth:8000
       SOULGATE_SOULWATCH_BASE_URL: http://soulwatch:8001
       SOULGATE_PICOCLAW_BASE_URL: http://picoclaw-saluca:18790
-      SOULGATE_PICOCLAW_ACTION_TOKEN: "***REMOVED***"
+      SOULGATE_PICOCLAW_ACTION_TOKEN: "${SOULGATE_PICOCLAW_ACTION_TOKEN:-}"
     networks:
       - tiresias-net
       - saluca-net
