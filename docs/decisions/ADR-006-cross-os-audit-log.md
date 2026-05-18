@@ -29,7 +29,7 @@ the current actor, no compliance constraints.
 
 Introduce a single shared table `agos_audit` plus a single read API
 (`/api/tiresias/agentic-os/audit`) and a single viewer page
-(`/dashboard/os/audit`). Every per-OS BFF write path calls a shared
+(`/dashboard/audit`). Every per-OS BFF write path calls a shared
 `recordAudit({ actorId, projectId, osSlug, action, payload })` helper as
 part of completing the request.
 

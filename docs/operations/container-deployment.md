@@ -42,8 +42,8 @@ docker compose down -v   # -v removes volumes (db data)
 | platform-app-proxy | http://localhost:8080 |
 | Mailhog UI | http://localhost:8025 |
 | Agentic OS index | http://localhost:3000/dashboard/os |
-| Cross-OS audit log | http://localhost:3000/dashboard/os/audit |
-| Per-user OS settings | http://localhost:3000/dashboard/os/settings |
+| Cross-OS audit log | http://localhost:3000/dashboard/audit |
+| Per-user OS settings | http://localhost:3000/dashboard/settings |
 
 ### Running migrations inside Docker
 

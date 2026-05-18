@@ -145,8 +145,8 @@ After a merge that touches Agentic OS:
 
 - [ ] Verify the cross-OS index at `/dashboard/os` renders the new card
       (or unchanged cards still render)
-- [ ] Check `/dashboard/os/audit` filters work for the new slug
-- [ ] Confirm `/dashboard/os/settings` lists the new slug as an
+- [ ] Check `/dashboard/audit` filters work for the new slug
+- [ ] Confirm `/dashboard/settings` lists the new slug as an
       enable-by-default toggle
 - [ ] Tail platform-web logs in production for `recordAudit` warnings —
       a sudden uptick may indicate a route forgot to await the call
@@ -168,7 +168,7 @@ make this safe to repeat.
 ### UI rollback (without redeploy)
 
 If a flag-controlled UI change is too disruptive, the affected user can
-toggle the OS off in `/dashboard/os/settings`. This is a UX-only
+toggle the OS off in `/dashboard/settings`. This is a UX-only
 escape hatch — see [ADR-007](../decisions/ADR-007-per-user-feature-flags.md).
 A platform-wide kill-switch is a follow-up (the per-org flag layer).
 

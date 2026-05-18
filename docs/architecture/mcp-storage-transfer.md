@@ -68,7 +68,7 @@ The "MCP" in the workstream name is honest under D: the CLI is the MCP boundary.
                      R2 wrangler, yt-dlp …)
 ```
 
-The display path is symmetric: pantheon's `<img src={project.coverImageUrl}>` in `apps/platform-web/src/app/(dashboard)/dashboard/os/filmmaker/projects/[id]/page.tsx` fetches directly from the user's storage — pantheon never proxies bytes.
+The display path is symmetric: pantheon's `<img src={project.coverImageUrl}>` in `apps/platform-web/src/app/(dashboard)/dashboard/filmmaker/projects/[id]/page.tsx` fetches directly from the user's storage — pantheon never proxies bytes.
 
 ## 2. Data model
 
@@ -227,6 +227,6 @@ Whether pantheon's CSP `img-src` directive in `apps/platform-web/src/middleware.
 
 - `packages/database/alembic/versions/0021_filmmaker_project_meta.py` — defines the contract (`cover_image_url TEXT`, with column comment pointing to this workstream)
 - `apps/platform-web/src/components/agentic-os/filmmaker/project-hub-actions.tsx` — the only UI that currently exposes an attachment URL input; future copy tweak lands here
-- `apps/platform-web/src/app/(dashboard)/dashboard/os/filmmaker/projects/[id]/page.tsx` — the display side (`<img src={project.coverImageUrl}>`); shows the empty-state placeholder pattern other OSes should mirror
+- `apps/platform-web/src/app/(dashboard)/dashboard/filmmaker/projects/[id]/page.tsx` — the display side (`<img src={project.coverImageUrl}>`); shows the empty-state placeholder pattern other OSes should mirror
 - `apps/platform-web/src/middleware.ts` — CSP `img-src` directive must permit external storage origins (the blocking unknown above)
 - `apps/platform-web/src/lib/agentic-os/filmmaker/repo.ts` — the tenant-isolation pattern (`WHERE id = $1 AND user_id = $2`) that every consumer of attachment URLs must replicate

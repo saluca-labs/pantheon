@@ -66,8 +66,8 @@ pnpm dev
 
 - Dashboard: http://localhost:3000
 - Cross-OS index: http://localhost:3000/dashboard/os
-- Audit log viewer: http://localhost:3000/dashboard/os/audit
-- OS Settings (per-user feature flags): http://localhost:3000/dashboard/os/settings
+- Audit log viewer: http://localhost:3000/dashboard/audit
+- OS Settings (per-user feature flags): http://localhost:3000/dashboard/settings
 - API docs: http://localhost:8000/docs
 - Mailhog (email): http://localhost:8025
 

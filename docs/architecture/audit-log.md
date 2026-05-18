@@ -5,7 +5,7 @@
 
 The Agentic OS layer ships a single shared, append-only audit table
 (`agos_audit`) that every per-OS BFF route writes to. The viewer at
-`/dashboard/os/audit` is a paginated, filterable read interface over that
+`/dashboard/audit` is a paginated, filterable read interface over that
 table for the current actor.
 
 This is **not** the platform-wide compliance audit log — see
@@ -147,7 +147,7 @@ that's a follow-up that requires an RBAC scope.
 
 ## UI
 
-[`/dashboard/os/audit`](../../apps/platform-web/src/app/(dashboard)/dashboard/os/audit/page.tsx)
+[`/dashboard/audit`](../../apps/platform-web/src/app/(dashboard)/dashboard/audit/page.tsx)
 renders a server-fetched first page and the
 [`AuditViewer`](../../apps/platform-web/src/components/agentic-os/audit/audit-viewer.tsx)
 client component handles filters + "Load more". The component never
