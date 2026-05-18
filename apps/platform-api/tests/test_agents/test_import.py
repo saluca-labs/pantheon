@@ -380,10 +380,11 @@ def test_matching_tenant_slug_in_metadata_accepted(client):
 
 
 def test_provider_override_unsupported_scheme_rejected(client, patched_factory):
-    bad = _valid_agent_payload("vault-user")
+    # ftp:// is not a backend the facade knows about — rejected as unknown.
+    bad = _valid_agent_payload("ftp-user")
     bad["spec"]["provider_overrides"] = [
         {"provider": "openai", "secret_ref": "env://OK"},
-        {"provider": "anthropic", "secret_ref": "vault://path/to/secret"},
+        {"provider": "anthropic", "secret_ref": "ftp://path/to/secret"},
     ]
     resp = client.post(
         "/v1/agents/import", json={"agents": [bad]}, headers=hdr_a()
@@ -397,8 +398,8 @@ def test_provider_override_unsupported_scheme_rejected(client, patched_factory):
         None,
     )
     assert bad_err is not None
-    assert "vault" in bad_err["message"].lower()
-    assert "reserved" in bad_err["message"].lower()
+    assert "ftp" in bad_err["message"].lower()
+    assert "unknown" in bad_err["message"].lower() or "malformed" in bad_err["message"].lower()
 
     # NOTHING committed — the good override (index 0) must not have landed
     # because validation failed for the bad one.

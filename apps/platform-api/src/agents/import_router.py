@@ -28,9 +28,10 @@ Locked decisions honoured:
   * #2 — agents keyed by (tenant_id, persona_id); update on conflict.
   * #3 — prompts append-only via supersedes_id chain.
   * #4 — plain-text prompts only (no templating).
-  * #5 — provider_overrides.secret_ref must use a supported scheme;
-         reserved schemes (vault://, gcpsm://, …) are rejected with a
-         helpful validator message — NOT a 500.
+  * #5 — provider_overrides.secret_ref must use a supported scheme
+         (env://, file://, vault://, gcpsm://, awssm://); unknown
+         schemes are rejected with a helpful validator message — NOT
+         a 500.
 """
 
 from __future__ import annotations
@@ -157,6 +158,9 @@ def _parse_yaml_or_json(text: str, source: str) -> list[dict]:
     return out
 
 
+_SUPPORTED_SECRET_SCHEMES = {"env", "file", "vault", "gcpsm", "awssm"}
+
+
 def _validate_secret_ref_scheme(
     ref: str, path: str
 ) -> Optional[AgentImportError]:
@@ -164,34 +168,19 @@ def _validate_secret_ref_scheme(
 
     Mirrors :func:`src.agents.provider_keys_router._validate_secret_ref_or_400`
     but produces a structured error with ``path`` instead of raising 400.
+
+    Resolution failures for a known scheme (e.g. env var not set, vault
+    path missing) are accepted — the operator can populate the secret
+    later and verify via POST /v1/provider-keys/{id}/test.
     """
     info = describe_secret_ref(ref)
     try:
         resolve_secret_ref(ref)
         return None
-    except NotImplementedError:
-        scheme = info.get("scheme") or "?"
-        return AgentImportError(
-            path=path,
-            message=(
-                f"scheme {scheme!r}:// is reserved but not yet implemented "
-                f"(only env:// is supported in this version)"
-            ),
-        )
     except SecretRefError:
-        # env://NOT_SET is acceptable — the env var may be set later and
-        # the operator can verify via POST /v1/provider-keys/{id}/test.
         scheme = info.get("scheme")
-        if scheme == "env":
+        if scheme in _SUPPORTED_SECRET_SCHEMES:
             return None
-        if scheme in {"vault", "gcpsm", "awssm", "enc"}:
-            return AgentImportError(
-                path=path,
-                message=(
-                    f"scheme {scheme!r}:// is reserved but not yet "
-                    f"implemented (only env:// is supported in this version)"
-                ),
-            )
         return AgentImportError(
             path=path,
             message=f"unknown or malformed secret-ref scheme: {scheme!r}",
