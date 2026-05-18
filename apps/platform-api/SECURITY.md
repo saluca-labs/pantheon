@@ -2,11 +2,19 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 3.4.x   | Yes (current)      |
-| 2.4.x   | Security fixes only |
-| < 2.4   | No (EOL)           |
+Pantheon ships from `main` — there's no long-lived release branch
+strategy. Security fixes land on `main` and are tagged when a
+backport-worthy issue surfaces.
+
+| Branch / tag | Supported |
+| --- | --- |
+| `main` (current) | Yes |
+| Tagged releases on `main` from the last 90 days | Security fixes only |
+| Anything older, including pre-rename `tiresias-*` tags | No — please upgrade |
+
+> **Historical note:** This component shipped previously as "Tiresias
+> Platform v2.x / v3.x" before the rename to Pantheon. The pre-rename
+> tags are not supported; please migrate to the current `main`.
 
 ## Reporting a Vulnerability
 
