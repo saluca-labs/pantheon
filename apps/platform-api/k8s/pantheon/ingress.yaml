@@ -33,6 +33,25 @@ spec:
         # MUST go above /api/tiresias/* or it silently routes to platform-web.
         # Never add anything below /*.
         paths:
+          # ── Remote MCP endpoint (soul-mcp /mcp Streamable HTTP) ──────────
+          # Public surface for external MCP clients (Anthropic Claude
+          # Connectors, Perplexity Comet, etc). soul-mcp serves MCP over
+          # Streamable HTTP at POST /mcp; bearer auth via SOUL_SERVICE_KEY.
+          # Two rules because GCE Ingress treats /mcp and /mcp/* as separate.
+          - path: /mcp
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soul-mcp
+                port:
+                  number: 8090
+          - path: /mcp/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: soul-mcp
+                port:
+                  number: 8090
           # SoulGate routes
           - path: /gate/*
             pathType: ImplementationSpecific
