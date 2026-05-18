@@ -1,6 +1,14 @@
 # Tiresias Node.js SDK
 
-Official Node.js/TypeScript client for the Tiresias AI Observability Proxy.
+Official Node.js / TypeScript client for the **Tiresias App Proxy** —
+the AI-observability and zero-trust agent-auth sub-product that ships
+inside the Pantheon monorepo at `apps/platform-app-proxy/`.
+
+> **Branding note.** The App Proxy stays branded as Tiresias under
+> the Pantheon umbrella; the SDK targets the App Proxy directly and
+> therefore keeps the Tiresias name. See
+> [ADR-013](../../../../docs/decisions/ADR-013-app-proxy-tiresias-branding.md)
+> for the carve-out decision.
 
 Route your LLM calls through Tiresias for encrypted audit logging, cost tracking, policy enforcement, and investigation.
 

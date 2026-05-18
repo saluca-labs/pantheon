@@ -1,5 +1,7 @@
 # Tiresias Detection Rules Reference
 
+> _This document is part of the Tiresias App Proxy knowledge base — the App Proxy stays branded Tiresias under the Pantheon umbrella. See ADR-013 in `docs/decisions/` for the carve-out._
+
 ## Sigma Rule Format
 
 Tiresias uses a subset of the Sigma rule specification for detection rules.

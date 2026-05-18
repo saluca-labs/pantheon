@@ -1,8 +1,19 @@
 # ADR-002: Local Auth Default — Replace WorkOS AuthKit
 
-**Status:** Accepted  
+**Status:** Superseded by [ADR-012 — SoulAuth federated auth](./ADR-012-soulauth-federated.md) (2026-05-17)  
+**Original status:** Accepted  
 **Date:** 2026-01  
 **Deciders:** Platform team  
+
+> **Superseded note (2026-05-17):** the local-auth-default code path
+> described here (`@platform/auth`, Argon2id, `password_credentials`
+> table) was replaced as the production user-auth path by **SoulAuth
+> federated** — a separate Python service with bcrypt hashing and
+> federated IdP support. The `@platform/auth` package and its schema
+> still live in the tree as legacy / dead code; see
+> [ADR-012](./ADR-012-soulauth-federated.md) and
+> [`docs/security/auth-model.md`](../security/auth-model.md). This ADR
+> is preserved as historical record of the WorkOS replacement decision.
 
 ## Context
 

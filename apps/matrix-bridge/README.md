@@ -1,6 +1,6 @@
 # matrix-bridge
 
-Synapse Matrix homeserver + Tiresias appservice. Provides the real-time inter-agent and agent↔user communication channel for the platform.
+Synapse Matrix homeserver + Pantheon appservice. Provides the real-time inter-agent and agent↔user communication channel for the platform.
 
 License: Apache 2.0 — matches `infrastructure/rules/` and the upstream Synapse + Matrix license.
 
@@ -10,7 +10,7 @@ License: Apache 2.0 — matches `infrastructure/rules/` and the upstream Synapse
 synapse/                      Matrix homeserver config (Apache 2.0, upstream image)
   homeserver.yaml             localhost-only listener; uses platform Postgres
   log.config.yaml             structured stdout logs for SoulWatch tail
-appservice/                   Tiresias appservice — bridges Matrix → SoulWatch
+appservice/                   Pantheon appservice — bridges Matrix → SoulWatch
   tiresias-appservice.yaml    Synapse appservice registration
   Dockerfile                  Multi-stage Python 3.11 image
   pyproject.toml              FastAPI + httpx; no GPL deps
@@ -34,7 +34,7 @@ The integration plan ([tiresias-matrix-integration-plan.md](../../tiresias-matri
 
 - Lets us version their compose stanza and registration file together.
 - Lets `infrastructure/rules/` ship Matrix detection rules without depending on Synapse images.
-- Keeps the Tiresias appservice's Python deps isolated from `platform-api`.
+- Keeps the Pantheon appservice's Python deps isolated from `platform-api`.
 
 ## Boot order
 

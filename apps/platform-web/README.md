@@ -1,6 +1,6 @@
 # platform-web
 
-Next.js 16 dashboard and BFF for the Tiresias platform. Hosts the operator console, the [Agentic OS](../../docs/architecture/agentic-os.md) layer, and all server-rendered routes that talk to `platform-api`.
+Next.js 16 dashboard and BFF for the Pantheon platform. Hosts the operator console, the [Agentic OS](../../docs/architecture/agentic-os.md) layer, and all server-rendered routes that talk to `platform-api`.
 
 ## TL;DR
 

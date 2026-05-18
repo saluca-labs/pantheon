@@ -1,6 +1,6 @@
-# tiresias-matrix-bridge (appservice)
+# pantheon-matrix-bridge (appservice)
 
-FastAPI application service for the Tiresias Matrix bridge. Receives Matrix
+FastAPI application service for the Pantheon Matrix bridge. Receives Matrix
 events from Synapse via the appservice transaction API, forwards them to the
 SoulWatch ingest endpoint, and exposes a stub user/room provisioning surface.
 

@@ -102,8 +102,19 @@ architecture.
 
 ## packages/auth
 
-**Owns:**
-- Password hashing (Argon2id only — no bcrypt, no scrypt)
+> **Auth dual-track note.** `@platform/auth` is the **legacy** local-auth
+> implementation. It still compiles and the schema is still migrated, but
+> production user auth in Pantheon runs through **SoulAuth federated** —
+> a separate Python service that hashes passwords with **bcrypt** and
+> stores users in its own database. See
+> [`docs/operations/soulauth-integration.md`](../operations/soulauth-integration.md)
+> and [`docs/security/auth-model.md`](../security/auth-model.md) for the
+> dual-track explainer. The boundaries below describe the `@platform/auth`
+> code path as it exists today — they do not describe the runtime auth
+> path.
+
+**Owns (within the legacy `@platform/auth` track):**
+- Password hashing (Argon2id only — no bcrypt, no scrypt; SoulAuth uses bcrypt and lives outside this package)
 - Session lifecycle: create, validate, invalidate
 - Cookie helpers (httpOnly, secure, sameSite)
 - CSRF double-submit token
@@ -114,6 +125,7 @@ architecture.
 - Implement OAuth/OIDC flows (that's a future `packages/auth/oidc` extension)
 - Store secrets in memory beyond the immediate request
 - Import from `apps/platform-web` or `apps/platform-api`
+- Be treated as the production auth path — use SoulAuth federated for that
 
 ---
 
