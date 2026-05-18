@@ -21,7 +21,6 @@
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBranding, type BrandingConfig } from "@/lib/branding";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { api, ApiError } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 import { SSOSettingsTab } from "@/components/sso/SSOSettingsTab";
@@ -2437,9 +2436,7 @@ function SettingsPageInner() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <TierGate requiredTier="starter" featureLabel="Team Management">
             <TeamSettingsTab />
-          </TierGate>
         </motion.div>
       )}
 
@@ -2449,9 +2446,7 @@ function SettingsPageInner() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <TierGate requiredTier="enterprise" featureLabel="SSO / Identity Providers">
             <SSOSettingsTab />
-          </TierGate>
         </motion.div>
       )}
 
@@ -2461,7 +2456,6 @@ function SettingsPageInner() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <TierGate requiredTier="mssp" featureLabel="White Label Branding">
             <div className="space-y-8">
               <div>
                 <h2 className="text-sm font-bold text-of-on-surface mb-1">White Label Branding</h2>
@@ -2622,7 +2616,6 @@ function SettingsPageInner() {
 
               </div>
             </div>
-          </TierGate>
         </motion.div>
       )}
 

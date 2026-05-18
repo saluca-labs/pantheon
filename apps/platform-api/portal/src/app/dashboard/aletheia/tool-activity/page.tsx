@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useWidgetData } from "@/lib/useWidgetData";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { Terminal, AlertTriangle, ChevronDown, ChevronRight, X } from "lucide-react";
 
 /** Tool activity monitor -- tracks agent tool invocations with risk flags. Uses live API via useWidgetData. */
@@ -107,7 +106,6 @@ export default function ToolActivityPage() {
   const activeFilter = commandFilter || agentFilter;
 
   return (
-    <TierGate requiredTier="enterprise" featureLabel="Aletheia Tool Activity">
       <div className="max-w-7xl space-y-6">
         {/* Active Filter Banner */}
         {activeFilter && (
@@ -491,6 +489,5 @@ export default function ToolActivityPage() {
           </div>
         </div>
       </div>
-    </TierGate>
   );
 }

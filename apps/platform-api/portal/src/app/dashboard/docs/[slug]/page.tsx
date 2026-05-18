@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import DocViewer from "./DocViewer";
 
 /** Minimal registry duplicated server-side for static file resolution. */
-const DOCS_MAP: Record<string, { title: string; file: string; minTier: string }> = {
-  "platform-overview": { title: "Platform Overview", file: "PLATFORM_OVERVIEW.md", minTier: "community" },
-  "user-guide": { title: "User & Developer Guide", file: "USER_GUIDE.md", minTier: "community" },
-  "architecture": { title: "Architecture", file: "ARCHITECTURE.md", minTier: "enterprise" },
-  "admin-guide": { title: "Administrator Guide", file: "ADMIN_GUIDE.md", minTier: "enterprise" },
+const DOCS_MAP: Record<string, { title: string; file: string }> = {
+  "platform-overview": { title: "Platform Overview", file: "PLATFORM_OVERVIEW.md" },
+  "user-guide": { title: "User & Developer Guide", file: "USER_GUIDE.md" },
+  "architecture": { title: "Architecture", file: "ARCHITECTURE.md" },
+  "admin-guide": { title: "Administrator Guide", file: "ADMIN_GUIDE.md" },
 };
 
 interface Props {
@@ -45,8 +45,6 @@ export default async function DocSlugPage({ params }: Props) {
     <DocViewer
       content={content}
       title={doc.title}
-      minTier={doc.minTier}
-      slug={slug}
     />
   );
 }

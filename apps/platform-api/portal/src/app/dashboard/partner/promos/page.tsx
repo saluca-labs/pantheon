@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { TierGate } from "@/components/dashboard/TierGate";
 import { Tag, Plus, RefreshCw, CheckCircle2, XCircle, BarChart3 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useWidgetData } from "@/lib/useWidgetData";
@@ -157,8 +156,6 @@ function PromoContent() {
 
 export default function PromosPage() {
   return (
-    <TierGate requiredTier="mssp" featureLabel="Promo Code Management">
       <PromoContent />
-    </TierGate>
   );
 }
