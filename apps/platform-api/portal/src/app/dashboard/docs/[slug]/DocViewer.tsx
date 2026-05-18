@@ -8,10 +8,9 @@ import MarkdownContent from "@/components/docs/MarkdownContent";
 interface DocViewerProps {
   content: string;
   title: string;
-  slug: string;
 }
 
-export default function DocViewer({ content, title, slug }: DocViewerProps) {
+export default function DocViewer({ content, title }: DocViewerProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">

@@ -45,7 +45,6 @@ export default async function DocSlugPage({ params }: Props) {
     <DocViewer
       content={content}
       title={doc.title}
-      slug={slug}
     />
   );
 }
