@@ -1,7 +1,7 @@
 # Pantheon Trademark Policy
 
 The names **"Pantheon"** and **"Saluca"**, along with the Pantheon logo and
-associated visual assets, are trademarks of Cristian Ruvalcaba ("we", "us").
+associated visual assets, are trademarks of Saluca LLC ("we", "us").
 The source code is licensed under [FSL-1.1-Apache](LICENSE), but trademark
 rights are not granted by that license. The marks are governed separately by
 this policy.
