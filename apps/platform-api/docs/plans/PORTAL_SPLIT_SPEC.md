@@ -1,3 +1,17 @@
+---
+classification: meta-internal
+audience: contributors
+status: historical
+---
+
+> **Meta / internal.** This spec describes the marketing portal /
+> dashboard portal split as it was planned during the pre-Pantheon
+> era. It is kept in-tree as a historical design reference for
+> contributors working on portal layout, but is **not** a user-facing
+> or self-hoster-facing document. The actual portal split is shipped
+> code; see `apps/platform-api/portal/` and
+> `apps/platform-api/portal-marketing/`.
+
 # Portal Split Spec: Marketing Site + Platform Dashboard
 
 ## 1. Executive Summary

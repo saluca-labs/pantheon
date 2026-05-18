@@ -1,26 +1,21 @@
-# Tiresias Incident Controller
+# Incident controller (internal ops)
 
-Automated incident-response engine for the Tiresias security platform. Receives alerts from Prometheus/Alertmanager, selects a severity-matched playbook, and executes remediation steps (Kubernetes isolation, DNS failover, WAF blocking, credential suspension) with full audit logging, forensic collection, and AI-assisted root-cause analysis.
+> **Internal ops only.** This service is an automated incident-response
+> engine that Cristian / Saluca LLC runs against the production Pantheon
+> environment. It receives Prometheus / Alertmanager webhooks, selects
+> a severity-matched playbook, and executes remediation actions
+> (Kubernetes pod isolation, DNS failover, Cloudflare / Cloud Armor WAF
+> blocks, credential suspension) with audit logging, forensic
+> collection, and AI-assisted root-cause analysis.
+>
+> It is **not** part of the OSS Pantheon self-hoster experience.
+> Self-hosters do not need to deploy this — `platform-api`,
+> `platform-web`, and the App Proxy run perfectly without it. The
+> controller assumes the existence of internal Saluca infrastructure
+> (GCP project, GKE cluster, Cloudflare account, Cloud Armor policies)
+> that does not exist in an OSS deployment.
 
-## Quick Start
-
-```bash
-# Clone and install
-cd tiresias-incident-controller
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-# Configure
-cp .env.example .env
-# Edit .env with your credentials and endpoints
-
-# Run
-PYTHONPATH=. uvicorn src.main:app --host 0.0.0.0 --port 8090 --log-level info
-```
-
-## Architecture
-
-The controller follows the architecture defined in `TIRESIAS_ENFORCEMENT_POLICY_SPEC`:
+## What it does
 
 ```
 Alertmanager webhook
@@ -36,12 +31,16 @@ Alertmanager webhook
   K8s  CF  Armor Cred Notif Forensics
 ```
 
-- **PlaybookEngine** (`src/playbooks/engine.py`) -- Loads YAML playbook definitions, matches by severity, and drives step execution.
-- **Action executors** (`src/actions/`) -- Kubernetes, Cloudflare, Cloud Armor, credential, and notification integrations.
-- **Forensic collector** (`src/forensics/`) -- Captures pod logs, network state, and stores snapshots in GCS.
-- **RCA pipeline** (`src/rca/`) -- Builds event timelines and generates reports via Claude.
+- **PlaybookEngine** (`src/playbooks/engine.py`) — Loads YAML playbook
+  definitions, matches by severity, drives step execution.
+- **Action executors** (`src/actions/`) — Kubernetes, Cloudflare,
+  Cloud Armor, credential, and notification integrations.
+- **Forensic collector** (`src/forensics/`) — Captures pod logs,
+  network state, stores snapshots in GCS.
+- **RCA pipeline** (`src/rca/`) — Builds event timelines and generates
+  reports via Claude.
 
-## API Endpoints
+## API endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -53,17 +52,21 @@ Alertmanager webhook
 | `GET` | `/health` | Liveness check |
 | `GET` | `/ready` | Readiness check (verifies DB and K8s connectivity) |
 
-## Deployment
+## Running it (internal)
 
-**Docker:**
 ```bash
-docker build -f deploy/Dockerfile -t tiresias-incident-controller .
-docker run --env-file .env -p 8090:8090 tiresias-incident-controller
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env  # internal credentials
+PYTHONPATH=. uvicorn src.main:app --host 0.0.0.0 --port 8090 --log-level info
 ```
 
-**Systemd (bare metal on GCP node):**
-```bash
-sudo cp deploy/systemd/incident-controller.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now incident-controller
-```
+The systemd unit at `deploy/systemd/incident-controller.service` is
+also internal-ops only.
+
+## For OSS self-hosters
+
+This service is intentionally not documented in the self-hoster docs
+(`docs/operations/`). If you are running Pantheon as an OSS
+self-hoster, you do not need this and it will not work out-of-the-box
+in your environment.

@@ -1,18 +1,16 @@
-# Tiresias Detection Rules -- AI Agent Security Content
+# Pantheon Detection Rules — AI Agent Security Content
 
 [![Rules](https://img.shields.io/badge/detection_rules-49-blue)](rules/)
 [![Playbooks](https://img.shields.io/badge/response_playbooks-7-green)](playbooks/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-orange)](LICENSE)
 
-Open-source, Sigma-compatible detection rules and response playbooks for **AI agent runtime security**. Built for [Tiresias](https://tiresias.network) -- the security monitoring platform purpose-built for autonomous AI agent infrastructure.
+Open-source, Sigma-compatible detection rules and response playbooks for **AI agent runtime security**, shipping inside the Pantheon monorepo. The rules target the **Tiresias App Proxy** sub-product — the agent-facing security monitoring layer that Pantheon ships at `apps/platform-app-proxy/` (the App Proxy stays Tiresias-branded under the Pantheon umbrella; see [ADR-013](../../docs/decisions/ADR-013-app-proxy-tiresias-branding.md)).
 
-## What is Tiresias?
+## What this library covers
 
-Tiresias is a real-time security monitoring and detection platform designed for environments where AI agents operate autonomously -- calling tools, accessing data, authenticating to services, and communicating with other agents. Traditional SIEM rules were built for human-driven workflows. Tiresias rules target the distinct threat patterns that emerge when AI agents are the principals.
+The rules in this directory target environments where AI agents operate autonomously — calling tools, accessing data, authenticating to services, and communicating with other agents. Traditional SIEM rules were built for human-driven workflows; these rules target the distinct threat patterns that emerge when AI agents are the principals.
 
-This repository contains the community detection rule library and response playbooks that ship with Tiresias. Rules are written in a Sigma-compatible YAML format extended with Tiresias-specific fields for agent telemetry, SoulKey authentication, and multi-tenant isolation.
-
-For more information, visit [tiresias.network](https://tiresias.network).
+The ruleset is **Sigma-compatible** so it can be converted to Splunk SPL, Elasticsearch, Sentinel, and other SIEMs. Tiresias-/Pantheon-specific fields (SoulKey identifiers, tenant isolation hints, baseline comparisons) are preserved as extensions and only resolve when the rules are loaded into a running Tiresias App Proxy instance.
 
 ## Rule Categories
 
@@ -32,14 +30,13 @@ For more information, visit [tiresias.network](https://tiresias.network).
 
 ## Quick Start
 
-### Load rules into Tiresias
+### Load rules into a Tiresias App Proxy
 
 ```bash
-# Clone the rule repository
-git clone https://github.com/salucallc/tiresias-rules.git
-cd tiresias-rules
+# The rules ship inside the Pantheon monorepo — no separate clone needed
+cd infrastructure/rules
 
-# Load all rules into a running Tiresias instance
+# Load all rules into a running Tiresias App Proxy instance
 tiresias rules load ./rules/ --recursive
 
 # Load playbooks
@@ -64,7 +61,7 @@ sigma convert -t splunk -p sysmon rules/credential/credential-001-brute-force.ym
 sigma convert -t elasticsearch rules/exfiltration/exfil-001-bulk-data-read.yml
 ```
 
-> **Note:** Tiresias-specific extensions (baseline comparisons, SoulKey fields, tenant isolation) require the Tiresias backend and are not available in generic Sigma conversions.
+> **Note:** the Tiresias App Proxy-specific extensions (baseline comparisons, SoulKey fields, tenant isolation) require the App Proxy at evaluation time and are not preserved by generic Sigma conversions.
 
 ## Rule Format Specification
 
@@ -81,7 +78,7 @@ author: Saluca LLC
 date: YYYY/MM/DD
 references:
   - https://attack.mitre.org/techniques/TXXXX/
-  - https://tiresias.network/docs/rules/<rule-id>
+  - https://github.com/salucallc/pantheon/tree/main/infrastructure/rules
 tags:
   - attack.<tactic>              # MITRE ATT&CK tactic
   - mitre.<technique>            # MITRE ATT&CK technique ID
@@ -242,7 +239,7 @@ We welcome contributions from the AI security community. To contribute:
 
 ### Reporting Issues
 
-If you find a false positive, detection gap, or have a rule request, please [open an issue](https://github.com/salucallc/tiresias-rules/issues).
+If you find a false positive, detection gap, or have a rule request, please [open an issue](https://github.com/salucallc/pantheon/issues).
 
 ## Directory Structure
 
@@ -276,4 +273,4 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the f
 
 ---
 
-Built by [Saluca LLC](https://saluca.co) for the [Tiresias](https://tiresias.network) project.
+Built by [Saluca LLC](https://saluca.co) for the Pantheon platform (rules target the Tiresias App Proxy sub-product).
