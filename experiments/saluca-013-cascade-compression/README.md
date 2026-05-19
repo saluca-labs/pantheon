@@ -48,6 +48,21 @@ tokens across 15 calls at $1/MTok input + $5/MTok output).
 Results overwrite `cascade_compression_results.json` in this directory by
 default. To write somewhere else: `CASCADE_RESULTS_PATH=/tmp/myrun.json`.
 
+## Historical note on the included responses
+
+The shipped `cascade_compression_results.json` is verbatim from the original
+2026-04-01 run, when Saluca Labs' funding model was "research org funded by
+Tiresias (our AI agent security product)." Saluca Labs has since
+open-sourced Tiresias (it's now part of Pantheon) and shifted funding to
+book sales (*Think Like a CISO*) plus planned Patreon, Kickstarter, and
+paid Substack tiers. The agent responses in the JSON reference the old
+"Tiresias-as-product" framing because that was the cascade content the
+agent received on 2026-04-01. The underlying methodology and findings
+remain valid — the framing shift doesn't change what the cascade
+compression study measures — but reproducers re-running today against
+the included example files will see responses that match present-day
+framing, not the historical Tiresias-as-funding-source language.
+
 ## Bring Your Own Cascade
 
 The example cascade files (`VISION.example.md`, `bludhaven.example.md`) will

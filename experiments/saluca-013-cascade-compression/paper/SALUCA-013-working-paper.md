@@ -562,8 +562,19 @@ paper is a continuation of conversations across many prior sessions; its
 ability to synthesize this work depended on cumulative context from those
 prior interactions, archived in the Saluca Labs Soul memory substrate.
 
-Saluca Labs is a research organization funded by Tiresias, our AI agent
-security product. Findings published as they land.
+Saluca Labs is a research organization focused on Synthetic Human Intellect
+(SHI). The research program is funded by book sales (*Think Like a CISO*),
+with planned expansion via Patreon, Kickstarter, and paid Substack
+subscriptions. Tiresias — Saluca Labs' former commercial AI agent security
+product — has been open-sourced and is now part of the Pantheon platform.
+The experiment described in this paper ran on 2026-04-01 against a cascade
+that reflected the then-current "research-funded-by-Tiresias" framing; the
+underlying personality measurement findings remain valid under the new
+funding model, but reproducers should expect responses in
+`cascade_compression_results.json` to reference Tiresias-as-product
+framing that no longer matches Saluca Labs' present positioning.
+
+Findings published as they land.
 
 # 12. References
 
