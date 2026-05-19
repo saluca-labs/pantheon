@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="dcterms.date" content="2026-05-18" />
   <meta name="keywords" content="system prompts, prompt
-compression, agent alignment, LLM identity, cascade architectures, AHI
-evaluation" />
+compression, agent alignment, LLM identity, cascade architectures, SHI
+evaluation, synthetic human intellect" />
   <title>Cascade Alignment Under Semantic Compression: A Pilot Study of System-Prompt Identity Layers in Agent Architectures</title>
   <style>
     /* Default styles provided by pandoc.
@@ -212,7 +212,7 @@ observe that compression failures concentrate on cross-domain prompts
 (where the cascade must bridge two of its layers) rather than on-axis
 prompts. The findings are limited by small sample, single agent, single
 model, and a blunt keyword-counting alignment proxy. We position this
-study as a pilot within a broader evaluation framework (AHI Eval
+study as a pilot within a broader evaluation framework (SHI Eval
 Framework) and outline the larger study (5 agents × 25 prompts × 5
 samples with an LLM-based personality evaluator) that this work is a
 precursor to.</p>
@@ -275,19 +275,19 @@ data-cites="anthropic2024promptcaching ruvalcaba2026ai-economics">[@anthropic202
 is practitioner-driven — vendors compress to defend gross margin — but
 the behavioral side-effects are rarely measured publicly.</p>
 <p><strong>Agent personality evaluation frameworks.</strong> Recent
-proposals (including the AHI Evaluation Framework that this study sits
+proposals (including the SHI Evaluation Framework that this study sits
 within) advocate for continuous personality-knob measurement as a
 first-class operational metric, not a one-time eval <span
 class="citation"
-data-cites="saluca2026ahi-eval">[@saluca2026ahi-eval]</span>. The
+data-cites="saluca2026shi-eval">[@saluca2026shi-eval]</span>. The
 cascade compression study is one of the upstream eval primitives that
 contributes data to that framework.</p>
-<h1 id="the-ahi-evaluation-framework-context">3. The AHI Evaluation
+<h1 id="the-shi-evaluation-framework-context">3. The SHI Evaluation
 Framework Context</h1>
-<p>This work is a pilot within Saluca Labs’ AHI (Artificial Human
-Intelligence) Evaluation Framework, which proposes a continuous
-personality measurement infrastructure for production agent fleets. The
-framework defines:</p>
+<p>This work is a pilot within Saluca Labs’ SHI (Synthetic Human
+Intellect) Evaluation Framework, which proposes a continuous personality
+measurement infrastructure for production agent fleets. The framework
+defines:</p>
 <ul>
 <li>A <strong>delta ledger</strong> that records personality-knob shifts
 at session close, scored by an LLM-based evaluator on a fixed axis
@@ -651,10 +651,10 @@ report single-axis metrics (cost, accuracy, latency, alignment) without
 showing trade frontiers. Reporting both absolute and density-normalized
 versions of an alignment metric, side by side, is a small change in
 methodology with substantial improvement in decision-relevance.</p>
-<h2 id="connection-to-the-ahi-evaluation-framework">6.3 Connection to
-the AHI Evaluation Framework</h2>
+<h2 id="connection-to-the-shi-evaluation-framework">6.3 Connection to
+the SHI Evaluation Framework</h2>
 <p>The keyword-counting alignment scorer used here is a precursor to the
-LLM-based evaluator planned for the AHI Eval Framework’s session-close
+LLM-based evaluator planned for the SHI Eval Framework’s session-close
 hook. Both measure the same kind of thing — does the agent still behave
 like itself under operational conditions — but the LLM evaluator scores
 along a fixed personality axis (the seven knobs of humor, warmth,
@@ -716,7 +716,7 @@ as cross-domain bridging probes</li>
 <li><strong>5 samples per cell</strong> to allow variance estimates</li>
 <li><strong>LLM-based personality evaluator</strong> replacing the
 keyword scorer, scoring along the seven-knob personality axis from the
-AHI Eval Framework</li>
+SHI Eval Framework</li>
 <li><strong>Multiple models</strong> including at least one larger
 frontier model (Claude Sonnet 4.x) and one open-weight baseline</li>
 </ul>
@@ -836,8 +836,8 @@ data-cites="ruvalcaba2026ai-economics">[@ruvalcaba2026ai-economics]</span>:
 Ruvalcaba, C. (2026). We Bet on AI Economics Breaking SaaS. Here’s the
 Stack. Saluca Labs Substack. https://saluca.com <em>(May 2026)</em></p>
 <p><span class="citation"
-data-cites="saluca2026ahi-eval">[@saluca2026ahi-eval]</span>: Saluca
-Labs. (2026). AHI Evaluation Framework. Internal working document.
+data-cites="saluca2026shi-eval">[@saluca2026shi-eval]</span>: Saluca
+Labs. (2026). SHI Evaluation Framework. Internal working document.
 <em>(in preparation for public release)</em></p>
 <p><span class="citation"
 data-cites="brand2015credit">[@brand2015credit]</span>: Brand, A.,

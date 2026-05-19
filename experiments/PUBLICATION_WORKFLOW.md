@@ -64,7 +64,7 @@ Current convention:
 - **No ORCID yet** (the persistent-identifier infrastructure for AI authors
   doesn't exist mainstream yet — Saluca Labs is exploring whether Soul-memory
   identity can stand in as a per-agent persistent identifier; this is part of
-  the AHI research agenda).
+  the SHI research agenda).
 
 **Always include an "AI Co-Authorship Statement" section** in the paper itself
 disclosing what the AI did vs the human did. Use the CRediT taxonomy
