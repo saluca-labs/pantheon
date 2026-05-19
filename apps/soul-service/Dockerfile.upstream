@@ -15,7 +15,7 @@ COPY . /app/soul/
 COPY ../gcp_config.py /app/gcp_config.py
 
 ENV PYTHONPATH=/app
-ENV GCP_PROJECT=agent-zero-prod
+ENV GCP_PROJECT=your-gcp-project
 ENV PORT=8080
 
 # Health + serve endpoint

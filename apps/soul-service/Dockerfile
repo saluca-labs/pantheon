@@ -1,11 +1,10 @@
 # apps/soul-service/Dockerfile — Pantheon container for the Soul memory service.
 #
-# Vendored from github.com/cristianxruvalcaba-coder/soul (Apache 2.0). The
-# upstream Dockerfile lives next to this one as `Dockerfile.upstream` for
+# Vendored from github.com/salucallc/soul (Apache 2.0). The upstream
+# Dockerfile lives next to this one as `Dockerfile.upstream` for
 # reference, but it COPYs `../gcp_config.py` from outside its build context
-# (which only works in upstream's own checkout) and wires the container to
-# the `agent-zero-prod` GCP project as a default. This Pantheon-built
-# variant fixes both: build context is apps/soul-service/, no host-coupled
+# (which only works in upstream's own checkout). This Pantheon-built
+# variant fixes that: build context is apps/soul-service/, no host-coupled
 # project defaults, non-root user, /health/live + /health/ready surfaces.
 #
 # Build (from repo root):

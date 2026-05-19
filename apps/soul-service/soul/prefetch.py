@@ -54,6 +54,8 @@ _DEFAULT_GUARDRAILS = (
 def _db():
     if not _SUPABASE_AVAILABLE:
         raise RuntimeError("supabase package not installed — prefetch unavailable")
+    if not _SUPABASE_URL or not _SUPABASE_KEY:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY env vars required")
     return create_client(_SUPABASE_URL, _SUPABASE_KEY)
 
 
