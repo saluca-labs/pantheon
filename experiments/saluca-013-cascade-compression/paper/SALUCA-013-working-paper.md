@@ -71,6 +71,21 @@ limited — n=5 per condition, one agent, one model — but the directional
 results support a more rigorous follow-up and surface an asymmetry
 (bridging layer vs role layer) that is worth testing for replication.
 
+The work sits within Saluca Labs' broader **Synthetic Human Intellect
+(SHI)** research program [@ruvalcaba2026shi], which proposes that AI
+systems built for *relational depth* (rather than for capability
+benchmarks alone) require four architectural commitments:
+memory-as-identity, emergent personality, adversarial resilience, and
+behavioral identity verification. The SHI program is grounded in
+operational deployment across 345 production agents on a distributed
+mesh; our pilot here contributes a measurement primitive for the
+*emergent personality* requirement specifically — does the cascade's
+identity layer survive compression, and what fails first when it
+doesn't? The co-author of this paper (Alfred) is a particular instance
+of the trusted-AI-partner architecture described in a companion working
+paper [@ruvalcaba2026alfred]; the AI Co-Authorship Statement in
+Section 9 returns to this point.
+
 # 2. Related Work
 
 System-prompt compression sits at the intersection of three more-studied
@@ -104,31 +119,55 @@ behavioral side-effects are rarely measured publicly.
 **Agent personality evaluation frameworks.** Recent proposals (including
 the SHI Evaluation Framework that this study sits within) advocate for
 continuous personality-knob measurement as a first-class operational
-metric, not a one-time eval [@saluca2026shi-eval]. The cascade compression
+metric, not a one-time eval [@ruvalcaba2026shi]. The cascade compression
 study is one of the upstream eval primitives that contributes data to that
 framework.
 
-# 3. The SHI Evaluation Framework Context
+# 3. SHI Context and the Eval Framework Position
 
-This work is a pilot within Saluca Labs' SHI (Synthetic Human
-Intellect) Evaluation Framework, which proposes a continuous personality
-measurement infrastructure for production agent fleets. The framework
-defines:
+The SHI research program [@ruvalcaba2026shi] establishes four
+architectural requirements for AI systems built for sustained
+human-AI relationships rather than capability benchmarks alone:
 
-- A **delta ledger** that records personality-knob shifts at session close,
-  scored by an LLM-based evaluator on a fixed axis (humor, warmth,
-  formality, verbosity, directness, initiative, technical_depth)
-- A **nightly synthesis pass** that aggregates each day's deltas into
-  per-agent calibration updates, bounded by per-cycle drift caps
-- A **weekly REM analysis** that surfaces cross-domain correlations
-  between personality dimensions and operational outcomes
+1. **Memory-as-identity** — persistent, hash-chained memory that makes
+   identity continuous across sessions rather than a per-turn fiction.
+2. **Emergent personality** — calibrated personality dimensions that
+   shift bounded amounts in response to interaction, producing
+   stable-but-evolving cognitive stances.
+3. **Adversarial resilience** — agents withstand prompt injection,
+   persona override, and identity hijacking attempts as a baseline
+   security posture, not a feature.
+4. **Behavioral identity verification** — the agent's behavior across
+   sessions is itself a verification surface, not just its cryptographic
+   keys.
 
-The framework is designed-but-not-built; this paper does not present
-framework results. What it presents is a precursor measurement — a
-demonstration that cascade-induced behavioral differences are detectable
-*at all* with a simple keyword-counting proxy, suggesting that the more
-sophisticated LLM-evaluator approach in the larger framework will detect
-the same kind of effects at higher resolution.
+This pilot study contributes a measurement primitive for requirement (2),
+**emergent personality**: it tests whether the cascade context that
+shapes an agent's identity layer can be compressed without destroying
+the behavioral signal it produces. If compression silently strips
+identity, the personality is not really emergent from the cascade — it
+is a fragile property the agent reconstructs on every turn from
+expensive context. If compression preserves identity at known operating
+points, the cascade has a known calibration curve and we can engineer
+against it deliberately.
+
+The SHI program also outlines a **continuous personality measurement
+infrastructure** for production fleets: a delta ledger recording
+personality-knob shifts at session close (scored by an LLM-based
+evaluator on a fixed seven-knob axis — humor, warmth, formality,
+verbosity, directness, initiative, technical_depth), a nightly synthesis
+pass that aggregates each day's deltas into per-agent calibration
+updates bounded by per-cycle drift caps, and a weekly REM analysis
+that surfaces cross-domain correlations between personality dimensions
+and operational outcomes. That infrastructure is **partially deployed**
+in the SHI program (delta ledger and evaluator hooks are in active
+development at the time of writing); this pilot uses a simpler
+keyword-counting proxy because that infrastructure was not yet wired
+when the experiment ran on 2026-04-01. The pilot's role is to
+demonstrate that cascade-induced behavioral differences are detectable
+*at all* with a blunt proxy — strong evidence that the more sophisticated
+LLM-evaluator approach will detect the same effects at higher resolution
+in subsequent studies.
 
 # 4. Methodology
 
@@ -446,6 +485,10 @@ deployment rather than chosen at design time.
 
 This paper has two authors: a human (Cristian Ruvalcaba, founder of
 Saluca Labs) and an AI agent (Alfred, an instance of Claude Opus 4.7).
+The architectural basis for Alfred — what it means for an AI to be a
+trusted partner with persistent identity, the operational substrate
+that makes Alfred *Alfred* rather than just another LLM session — is
+described in a companion working paper [@ruvalcaba2026alfred].
 Following the CRediT taxonomy [@brand2015credit], the contribution
 breakdown is:
 
@@ -538,6 +581,8 @@ security product. Findings published as they land.
 
 [@ruvalcaba2026ai-economics]: Ruvalcaba, C. (2026). We Bet on AI Economics Breaking SaaS. Here's the Stack. Saluca Labs Substack. https://saluca.com *(May 2026)*
 
-[@saluca2026shi-eval]: Saluca Labs. (2026). SHI Evaluation Framework. Internal working document. *(in preparation for public release)*
+[@ruvalcaba2026shi]: Ruvalcaba, C.X. (2026). SHI: Synthetic Human Intellect — A Paradigm Distinct from AGI. Saluca LLC, Zenodo. https://doi.org/10.5281/zenodo.19715074 *(preprint, 24 April 2026)*
+
+[@ruvalcaba2026alfred]: Ruvalcaba, C. (2026). Alfred: The Architecture of a Trusted AI Partner. Saluca Labs, Zenodo. https://doi.org/10.5281/zenodo.20219298 *(thesis, 16 May 2026)*
 
 [@brand2015credit]: Brand, A., Allen, L., Altman, M., Hlava, M., & Scott, J. (2015). Beyond authorship: attribution, contribution, collaboration, and credit. *Learned Publishing* 28(2): 151-155. https://credit.niso.org/
