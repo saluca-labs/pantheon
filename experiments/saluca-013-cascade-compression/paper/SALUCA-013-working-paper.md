@@ -550,8 +550,8 @@ Reproduction cost (using the included example cascade and an
 Anthropic API key): ~\$0.025 per full run. Reproducers swapping in
 their own cascade and keyword scorer should expect comparable costs.
 
-This paper itself is archived at Zenodo with DOI:
-`10.5281/zenodo.XXXXXXX` *(to be filled in upon deposit)*.
+This paper is archived at Zenodo: <https://doi.org/10.5281/zenodo.20278233>
+(DOI: `10.5281/zenodo.20278233`, deposited 19 May 2026).
 
 # 11. Acknowledgments
 
