@@ -13,6 +13,7 @@ import {
   CascadeToggle,
   readCascadePreference,
 } from '@/components/providers/cascade-toggle';
+import { LlmModelsWidget } from '@/components/providers/llm-models-widget';
 
 export default function ProvidersPage() {
   const [timeRange, setTimeRange] = useState('24h');
@@ -57,6 +58,10 @@ export default function ProvidersPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <LatencyChart data={latency.data} isLoading={latency.isLoading} />
         <ErrorRateChart data={errors.data} isLoading={errors.isLoading} />
+      </div>
+
+      <div className="mt-6">
+        <LlmModelsWidget />
       </div>
     </div>
   );

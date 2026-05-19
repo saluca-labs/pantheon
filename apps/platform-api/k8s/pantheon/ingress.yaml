@@ -171,6 +171,17 @@ spec:
                 name: platform-web
                 port:
                   number: 80
+          # LLM model registry BFF — must precede /api/* catch-all. Reads the
+          # _llm_available_models table populated by the 6h heartbeat CronJob
+          # (Anthropic, OpenRouter, Gemini, Ollama Cloud). Consumed by the
+          # dashboard LlmModelsWidget on /dashboard/providers.
+          - path: /api/llm/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: platform-web
+                port:
+                  number: 80
           # Static assets for platform-web Next.js (assetPrefix=/_pw); see next.config
           - path: /_pw/*
             pathType: ImplementationSpecific
