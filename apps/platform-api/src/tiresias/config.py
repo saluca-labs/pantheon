@@ -67,6 +67,15 @@ class TiresiasSettings(BaseSettings):
     # API service label for cost attribution (e.g. "stripe", "twilio")
     api_service: str | None = Field(default=None, alias="TIRESIAS_API_SERVICE")
 
+    # Dedicated Supabase data-plane proxy upstream (PostgREST base URL).
+    # When set, /supabase/{path:path} forwards there with api_service="supabase"
+    # in telemetry. Independent of upstream_url so one Pantheon deployment can
+    # proxy both the model plane (/v1/chat/completions) and the Supabase data
+    # plane (/supabase/*) concurrently.
+    supabase_upstream_url: str | None = Field(
+        default=None, alias="TIRESIAS_SUPABASE_UPSTREAM_URL"
+    )
+
     # AWS KMS
     aws_kms_key_id: str | None = Field(default=None, alias="TIRESIAS_AWS_KMS_KEY_ID")
     aws_kms_region: str | None = Field(default=None, alias="TIRESIAS_AWS_KMS_REGION")
