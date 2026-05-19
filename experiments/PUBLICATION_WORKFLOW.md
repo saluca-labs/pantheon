@@ -11,14 +11,26 @@ Every research output ships through **three channels in order**:
 
 | Channel | Purpose | Audience | Format | Cadence |
 |---|---|---|---|---|
-| **Zenodo** | Citable archive + DOI | Researchers, future citations, reproducibility | Working paper PDF + code+data archive | Once per experiment, versioned on revision |
+| **Zenodo** | Citable archive + DOI | Researchers, future citations, reproducibility | Working paper (`.md` accepted; PDF optional) + code/data archive | Once per experiment, versioned on revision |
 | **Substack** | Long-form narrative | Practitioners + technical generalists who follow our newsletter | 1500-2000 word essay with data tables | Within 1 week of Zenodo deposit |
-| **LinkedIn** | Discovery + signal | Industry network, hiring pipeline, prospective customers | 200-300 word post linking to Zenodo DOI + Substack | Same day as Substack publish |
+| **LinkedIn Articles** | Same essay, different reach | LinkedIn-native audience, industry network | **Same body as Substack**, cross-posted from Saluca Labs company page | Same day as Substack publish |
+| **LinkedIn feed post** | Discovery + signal back to the article | Industry network, hiring pipeline | 100-200 word teaser linking to Substack + Zenodo DOI | ~4h after Substack publish |
 
 **The flow is one-way.** Zenodo first (the citable record), then Substack (the
-narrative), then LinkedIn (the announcement). Substack and LinkedIn both link
-back to the Zenodo DOI — the DOI is the canonical reference, the rest are
-discovery vehicles.
+narrative), then LinkedIn Article + feed teaser (the announcement). Substack,
+LinkedIn Article, and LinkedIn feed post all link back to the Zenodo DOI — the
+DOI is the canonical reference, the rest are discovery vehicles.
+
+**On format:** Zenodo accepts markdown directly — PDF generation via pandoc +
+xelatex/tectonic is *optional polish*, not a requirement. Ship the `.md` and
+the rendered `.html` (also pandoc-generated, zero LaTeX deps) as the working
+paper artifact; PDF can be added later if a venue or reader needs it.
+
+**On article reuse across Substack + LinkedIn Articles:** one article body
+serves both. LinkedIn allows duplicate cross-posting from your own newsletter
+without penalty. Don't write two versions; ship the same essay to both, with
+the same Zenodo DOI reference. The LinkedIn feed post is a separate short
+teaser that points at the article — that one IS different (200 words vs 1800).
 
 ## Directory Convention
 
