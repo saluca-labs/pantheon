@@ -29,7 +29,7 @@
 
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| supabase-py | 2.x | Supabase client | Existing Supabase project (cgtuoiggcngldtzfqosm). Operational layer for baselines, incidents, audit trail. Already used across Alfred fleet. | HIGH |
+| supabase-py | 2.x | Supabase client | Existing Supabase project. Operational layer for baselines, incidents, audit trail. Already used across Alfred fleet. | HIGH |
 | Git (YAML files) | -- | Policy layer | Baseline YAML files version-controlled in git. PR-reviewable, diffable, provides change management audit trail. One-directional sync to Supabase. | HIGH |
 
 ### Security Monitoring

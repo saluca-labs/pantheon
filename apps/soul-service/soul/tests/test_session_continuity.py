@@ -411,9 +411,9 @@ ALFRED_MEMORIES = [
     },
     {
         "session": 1,
-        "content": "USER: Cristian Ruvalcaba. GitHub: cristianxruvalcaba-coder. PREF: Alfred replaced Perplexity workflow.",
+        "content": "USER: Test User. GitHub: example-user. PREF: Alfred replaced Perplexity workflow.",
         "topics": ["user", "alfred", "identity"],
-        "key_facts": ["Cristian", "Alfred", "Perplexity"],
+        "key_facts": ["Test User", "Alfred", "Perplexity"],
     },
     # Session 2 — Preferences and system config
     {
@@ -424,9 +424,9 @@ ALFRED_MEMORIES = [
     },
     {
         "session": 2,
-        "content": "SYS: Supabase project cgtuoiggcngldtzfqosm. GCP project agent-zero-prod. MCP servers: google-workspace, notion.",
+        "content": "SYS: Supabase project example-project-ref. GCP project example-gcp-project. MCP servers: google-workspace, notion.",
         "topics": ["supabase", "gcp", "system"],
-        "key_facts": ["cgtuoiggcngldtzfqosm", "agent-zero-prod"],
+        "key_facts": ["example-project-ref", "example-gcp-project"],
     },
     {
         "session": 2,
@@ -526,9 +526,9 @@ ALFRED_MEMORIES = [
     },
     {
         "session": 8,
-        "content": "SYS: Slack johnny_blaze bot. DM Cristian: D0AJ054SWJU.",
+        "content": "SYS: Slack johnny_blaze bot. DM Test User: D0EXAMPLE000.",
         "topics": ["slack", "communication", "system"],
-        "key_facts": ["johnny_blaze", "D0AJ054SWJU"],
+        "key_facts": ["johnny_blaze", "D0EXAMPLE000"],
     },
     # Session 9 — Linear projects status
     {
@@ -736,7 +736,7 @@ def run_session_continuity_test() -> ContinuityTestResult:
 
     # Sample 10 representative facts for the retention check
     sampled_facts = [
-        "Tiresias", "Soul", "Cristian", "Linear", "agent-zero-prod",
+        "Tiresias", "Soul", "Test User", "Linear", "example-gcp-project",
         "terminal disclaimer", "US12118471B2", "WAVE-1", "_memories", "PenPal",
     ]
     for fact in sampled_facts:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/vendor-soul.sh — Refresh the vendored copy of Soul in apps/soul-service/.
 #
-# Source of truth: github.com/cristianxruvalcaba-coder/soul (Apache 2.0, soul-memory on PyPI).
+# Source of truth: github.com/salucallc/soul (Apache 2.0, soul-memory on PyPI).
 # This script copies Soul's Python sources and docs into apps/soul-service/soul/,
 # scrubs hardcoded defaults that should never ship as fallbacks (Supabase URL +
 # JWT placeholders), and records the upstream revision in VENDORED.md.
@@ -9,7 +9,7 @@
 # Usage:
 #   scripts/vendor-soul.sh                          # uses default SOUL_UPSTREAM=Z:/soul
 #   SOUL_UPSTREAM=/path/to/soul scripts/vendor-soul.sh
-#   SOUL_UPSTREAM=https://github.com/cristianxruvalcaba-coder/soul scripts/vendor-soul.sh
+#   SOUL_UPSTREAM=https://github.com/salucallc/soul scripts/vendor-soul.sh
 #
 # Vendoring policy: see apps/soul-service/VENDORED.md.
 #
@@ -41,7 +41,7 @@ echo "  source: ${SRC}"
 echo "  dest:   ${DEST}"
 
 if [[ ! -d "${SRC}" ]]; then
-    echo "error: ${SRC} not found. Set SOUL_UPSTREAM to a local clone of github.com/cristianxruvalcaba-coder/soul" >&2
+    echo "error: ${SRC} not found. Set SOUL_UPSTREAM to a local clone of github.com/salucallc/soul" >&2
     exit 1
 fi
 
@@ -100,11 +100,13 @@ if [[ -f "${SRC}/Dockerfile" ]]; then
     cp -f "${SRC}/Dockerfile" "${DOCS_DEST}/Dockerfile.upstream"
 fi
 
-# Scrub hardcoded Supabase fallback URL + redacted JWT placeholders in the
-# vendored copy so we never ship someone else's project as a default. The
-# upstream module-level defaults reference cgtuoiggcngldtzfqosm.supabase.co
-# (Cristian's personal Supabase) and "REDACTED_ROTATED" placeholder tokens.
-# Self-hosters get a clean empty default; production MUST set SUPABASE_URL.
+# Defensive scrub for hardcoded Supabase fallback URL + redacted JWT
+# placeholders in the vendored copy. As of upstream b3fdd96 these are no-ops
+# (upstream has already removed the project-specific defaults); the scrubs
+# stay in place to catch any accidental future reintroduction. The literals
+# below match the specific pattern that previously shipped upstream — any
+# matching default gets rewritten to '' so self-hosters fail loudly at boot
+# instead of silently pointing at someone else's Supabase project.
 SCRUB_FILES=(storage.py graph.py hashing.py prefetch.py tkhr.py)
 for f in "${SCRUB_FILES[@]}"; do
     fpath="${DEST}/${f}"
