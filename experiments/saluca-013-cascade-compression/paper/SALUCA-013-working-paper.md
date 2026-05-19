@@ -26,7 +26,7 @@ abstract: |
   the cascade must bridge two of its layers) rather than on-axis prompts. The
   findings are limited by small sample, single agent, single model, and a
   blunt keyword-counting alignment proxy. We position this study as a pilot
-  within a broader evaluation framework (AHI Eval Framework) and outline the
+  within a broader evaluation framework (SHI Eval Framework) and outline the
   larger study (5 agents × 25 prompts × 5 samples with an LLM-based
   personality evaluator) that this work is a precursor to.
 keywords:
@@ -35,7 +35,8 @@ keywords:
   - agent alignment
   - LLM identity
   - cascade architectures
-  - AHI evaluation
+  - SHI evaluation
+  - synthetic human intellect
 license: CC-BY-4.0
 geometry: margin=1in
 fontsize: 11pt
@@ -101,16 +102,16 @@ practitioner-driven — vendors compress to defend gross margin — but the
 behavioral side-effects are rarely measured publicly.
 
 **Agent personality evaluation frameworks.** Recent proposals (including
-the AHI Evaluation Framework that this study sits within) advocate for
+the SHI Evaluation Framework that this study sits within) advocate for
 continuous personality-knob measurement as a first-class operational
-metric, not a one-time eval [@saluca2026ahi-eval]. The cascade compression
+metric, not a one-time eval [@saluca2026shi-eval]. The cascade compression
 study is one of the upstream eval primitives that contributes data to that
 framework.
 
-# 3. The AHI Evaluation Framework Context
+# 3. The SHI Evaluation Framework Context
 
-This work is a pilot within Saluca Labs' AHI (Artificial Human
-Intelligence) Evaluation Framework, which proposes a continuous personality
+This work is a pilot within Saluca Labs' SHI (Synthetic Human
+Intellect) Evaluation Framework, which proposes a continuous personality
 measurement infrastructure for production agent fleets. The framework
 defines:
 
@@ -364,10 +365,10 @@ showing trade frontiers. Reporting both absolute and density-normalized
 versions of an alignment metric, side by side, is a small change in
 methodology with substantial improvement in decision-relevance.
 
-## 6.3 Connection to the AHI Evaluation Framework
+## 6.3 Connection to the SHI Evaluation Framework
 
 The keyword-counting alignment scorer used here is a precursor to the
-LLM-based evaluator planned for the AHI Eval Framework's session-close
+LLM-based evaluator planned for the SHI Eval Framework's session-close
 hook. Both measure the same kind of thing — does the agent still behave
 like itself under operational conditions — but the LLM evaluator scores
 along a fixed personality axis (the seven knobs of humor, warmth,
@@ -427,7 +428,7 @@ more statistical power:
   bridging probes
 - **5 samples per cell** to allow variance estimates
 - **LLM-based personality evaluator** replacing the keyword scorer, scoring
-  along the seven-knob personality axis from the AHI Eval Framework
+  along the seven-knob personality axis from the SHI Eval Framework
 - **Multiple models** including at least one larger frontier model
   (Claude Sonnet 4.x) and one open-weight baseline
 
@@ -537,6 +538,6 @@ security product. Findings published as they land.
 
 [@ruvalcaba2026ai-economics]: Ruvalcaba, C. (2026). We Bet on AI Economics Breaking SaaS. Here's the Stack. Saluca Labs Substack. https://saluca.com *(May 2026)*
 
-[@saluca2026ahi-eval]: Saluca Labs. (2026). AHI Evaluation Framework. Internal working document. *(in preparation for public release)*
+[@saluca2026shi-eval]: Saluca Labs. (2026). SHI Evaluation Framework. Internal working document. *(in preparation for public release)*
 
 [@brand2015credit]: Brand, A., Allen, L., Altman, M., Hlava, M., & Scott, J. (2015). Beyond authorship: attribution, contribution, collaboration, and credit. *Learned Publishing* 28(2): 151-155. https://credit.niso.org/
