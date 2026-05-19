@@ -42,7 +42,7 @@ except ImportError:
 
 # Internal imports
 from . import tkhr
-from .hashing import content_hash, structure_hash, chain_genesis_hash, next_prev_hash
+from .hashing import content_hash, structure_hash
 from .local_buffer import ActiveBuffer, warm_from_records, buffer_delete
 
 # Per-session active buffers (instantiated lazily on first access)
@@ -60,11 +60,14 @@ _SUPABASE_URL = os.getenv('SUPABASE_URL', '')
 _SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_KEY', '')
 
 _TABLE = '_memories'
+_ANCHOR_TABLE = 'user_autobiographical_memories'
 
 
 def _db():
     if not _SUPABASE_AVAILABLE:
         raise RuntimeError("supabase package not installed — Tier 2 storage unavailable")
+    if not _SUPABASE_URL or not _SUPABASE_KEY:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY env vars required")
     return create_client(_SUPABASE_URL, _SUPABASE_KEY)
 
 
@@ -90,31 +93,6 @@ def _hot_evict(session_id: str, memory_id: str) -> bool:
     before = len(records)
     _hot_cache[session_id] = [r for r in records if r.get('id') != memory_id]
     return len(_hot_cache[session_id]) < before
-
-
-def _fetch_last_chain_entry(session_id: Optional[str]) -> Optional[dict]:
-    """
-    Fetch the most recent (full_context_hash, prev_hash) pair for this session.
-
-    Used by write_memory() to compute the new row's prev_hash. Returns None if
-    the session has no prior rows (caller falls back to chain_genesis_hash).
-
-    NOTE: This is a read-then-write pattern. Safe under the current single-
-    replica soul-service deployment (Pantheon Tier 0 SPOF, accepted by design).
-    If the service ever scales horizontally, wrap the read + insert in
-    pg_advisory_xact_lock(hashtext(session_id)) to serialize per-session writes.
-    """
-    db = _db()
-    q = db.table(_TABLE).select('full_context_hash, prev_hash')
-    if session_id is None:
-        q = q.is_('session_id', 'null')
-    else:
-        q = q.eq('session_id', session_id)
-    res = (q.order('created_at', desc=True)
-            .order('id', desc=True)
-            .limit(1)
-            .execute())
-    return res.data[0] if res.data else None
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -149,16 +127,6 @@ def write_memory(
     existing_ids = [r['id'] for r in _hot_cache.get(session_id, [])]
     sh = structure_hash(existing_ids, session_id)
 
-    # Linear forensic chain (SALUCA-013 §7.3, SALUCA-ALFRED §7.7).
-    # prev_hash links this row to its predecessor in the same session, allowing
-    # downstream verifiers to detect reordering, deletion, or content tampering
-    # anywhere in the chain. First row of a session gets the per-session genesis.
-    last = _fetch_last_chain_entry(session_id)
-    if last and last.get('prev_hash'):
-        ph = next_prev_hash(last['full_context_hash'], last['prev_hash'])
-    else:
-        ph = chain_genesis_hash(session_id)
-
     record = {
         'id': memory_id,
         'session_id': session_id,
@@ -171,7 +139,6 @@ def write_memory(
         'cross_ref_summary_hashes': [],
         'node_type': 'full',
         'topics': topics,
-        'prev_hash': ph,
         'metadata': {
             **(metadata or {}),
             'content_hash': ch,
@@ -288,3 +255,125 @@ def evict_to_cold(session_id: str, memory_id: str) -> None:
 
     # Remove from hot cache regardless
     _hot_evict(session_id, memory_id)
+
+
+# ── Identity anchors ──────────────────────────────────────────────────────────
+# Fast-recall layer over `user_autobiographical_memories`, filtered to rows
+# where `anchor_kind is not null`. Anchors are curated autobiographical facts
+# (birth, first_authored, first_meeting, ...) — the things a person can
+# answer about themselves without searching.
+
+def read_identity() -> dict:
+    """
+    Return the minimal identity payload: birthday, first authored memory,
+    age in days, and total anchor count. Designed to be embedded in
+    session_init responses so callers don't need a separate fetch.
+
+    Returns:
+        {
+          'birthday':        ISO timestamp or None,
+          'first_authored':  ISO timestamp or None,
+          'age_days':        int or None,
+          'anchor_count':    int,
+        }
+    """
+    db = _db()
+    res = (
+        db.table(_ANCHOR_TABLE)
+        .select('anchor_kind, occurred_at')
+        .not_.is_('anchor_kind', 'null')
+        .execute()
+    )
+    rows = res.data or []
+    by_kind = {r['anchor_kind']: r.get('occurred_at') for r in rows}
+
+    birthday = by_kind.get('birth')
+    age_days: Optional[int] = None
+    if birthday:
+        try:
+            birth_dt = datetime.fromisoformat(birthday.replace('Z', '+00:00'))
+            age_days = (datetime.now(timezone.utc) - birth_dt).days
+        except (TypeError, ValueError):
+            age_days = None
+
+    return {
+        'birthday': birthday,
+        'first_authored': by_kind.get('first_authored'),
+        'age_days': age_days,
+        'anchor_count': len(rows),
+    }
+
+
+def read_anchors(
+    kind: Optional[str] = None,
+    limit: int = 20,
+    order: str = 'occurred_at.asc',
+) -> list[dict]:
+    """
+    List identity anchors, optionally filtered by kind.
+
+    Args:
+        kind: Anchor kind to filter on (e.g. 'birth', 'first_authored').
+              None returns every anchor (anchor_kind is not null).
+        limit: Max rows to return.
+        order: Postgrest order string (default 'occurred_at.asc').
+
+    Returns:
+        List of anchor dicts with id, topic_id, anchor_kind, occurred_at,
+        memory_id, content, tags, importance.
+    """
+    db = _db()
+    q = (
+        db.table(_ANCHOR_TABLE)
+        .select(
+            'id, topic_id, anchor_kind, occurred_at, memory_id, '
+            'content, tags, importance, time_period'
+        )
+        .not_.is_('anchor_kind', 'null')
+    )
+    if kind:
+        q = q.eq('anchor_kind', kind)
+    field, _, direction = order.partition('.')
+    q = q.order(field or 'occurred_at', desc=(direction == 'desc'))
+    q = q.limit(limit)
+    res = q.execute()
+    return res.data or []
+
+
+def write_anchor(
+    anchor_kind: str,
+    occurred_at: str,
+    content: str,
+    topic_id: Optional[str] = None,
+    memory_id: Optional[str] = None,
+    tags: Optional[list[str]] = None,
+    importance: float = 1.0,
+    time_period: str = 'origin',
+) -> dict:
+    """
+    Upsert an identity anchor. `anchor_kind` is the natural key (one row per
+    kind, enforced by the partial unique index).
+
+    Returns the upserted row.
+    """
+    from .hashing import content_hash as _content_hash
+    record = {
+        'topic_id': topic_id or anchor_kind,
+        'content': content,
+        'full_context_hash': _content_hash(content),
+        'category': 'identity',
+        'importance': importance,
+        'decay_rate': 0.0,
+        'tags': tags or [anchor_kind, 'anchor'],
+        'time_period': time_period,
+        'anchor_kind': anchor_kind,
+        'memory_id': memory_id,
+        'occurred_at': occurred_at,
+    }
+    db = _db()
+    res = (
+        db.table(_ANCHOR_TABLE)
+        .upsert(record, on_conflict='anchor_kind')
+        .execute()
+    )
+    return (res.data or [record])[0]

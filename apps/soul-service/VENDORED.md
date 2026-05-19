@@ -7,11 +7,11 @@ verbatim from an external Apache 2.0 project. Pantheon-specific shims
 
 ## Upstream
 
-- **Repository:** https://github.com/cristianxruvalcaba-coder/soul
+- **Repository:** https://github.com/salucallc/soul
 - **PyPI:** https://pypi.org/project/soul-memory/
 - **License:** Apache License 2.0 (preserved in `LICENSE`)
-- **Vendored revision:** `4b70d88a88401ef8ad34ead2691273c63dc233af`
-- **Vendored on:** 2026-05-17
+- **Vendored revision:** `b3fdd964ac5f95dfde84a72b1474a160c862428a`
+- **Vendored on:** 2026-05-19
 
 The exact commit is recorded above so reviewers can diff against the
 upstream tree. Bump this SHA whenever `scripts/vendor-soul.sh` is re-run.
@@ -51,29 +51,29 @@ public GitHub URL.
 
 ## Scrubs applied at vendor time
 
-The copy script (`scripts/vendor-soul.sh`) rewrites two classes of leaked
-defaults before they land in Pantheon:
+The copy script (`scripts/vendor-soul.sh`) defensively rewrites two
+patterns from the vendored copy. As of upstream `b3fdd96` these are
+no-ops, but the scrubs remain in place so any accidental future
+reintroduction of an environment-specific default upstream gets caught
+at vendor time rather than landing in Pantheon:
 
-1. **Hardcoded Supabase fallback URL** — upstream `storage.py`, `graph.py`,
-   `hashing.py`, `prefetch.py`, and `tkhr.py` ship with
-   `os.getenv('SUPABASE_URL', 'https://cgtuoiggcngldtzfqosm.supabase.co')`
-   as a module-level default. That host is Cristian's personal Supabase
-   project and must never be a fallback for self-hosters. The script
-   rewrites the default to `''`.
-2. **Placeholder JWT default** — the same files ship with a multi-line
-   `os.getenv('SUPABASE_SERVICE_KEY', (...".REDACTED_ROTATED"))` default.
-   The value is already redacted (so no real credential leaked upstream)
-   but the placeholder is confusing for self-hosters and would make a
-   `create_client(...)` call fail loudly mid-request rather than at boot.
-   The script rewrites the default to `''`.
+1. **Hardcoded Supabase fallback URL** — if any of `storage.py`,
+   `graph.py`, `hashing.py`, `prefetch.py`, or `tkhr.py` ships with a
+   hardcoded `os.getenv('SUPABASE_URL', 'https://<project>.supabase.co')`
+   default, the script rewrites it to `''`. A specific Supabase project
+   ref should never be a silent fallback for self-hosters.
+2. **Placeholder JWT default** — if the same files ship with a hardcoded
+   `os.getenv('SUPABASE_SERVICE_KEY', '...placeholder...')` default, the
+   script rewrites it to `''`. A placeholder default would make
+   `create_client(...)` fail mid-request rather than at boot.
 
 Both scrubs are idempotent — re-running the vendor script on an already
-scrubbed tree is a no-op.
+clean tree is a no-op.
 
 ## How to refresh
 
 ```bash
-# Pull from default upstream (Cristian's NAS clone):
+# Pull from default upstream path (Z:/soul):
 scripts/vendor-soul.sh
 
 # Or from any other checkout:
@@ -90,7 +90,7 @@ git commit -m "chore(soul-service): refresh vendor to <sha>"
 clobbered the next time the vendor script runs. The correct fix path is:
 
 1. Open a PR upstream against
-   https://github.com/cristianxruvalcaba-coder/soul.
+   https://github.com/salucallc/soul.
 2. Once merged + released, run `scripts/vendor-soul.sh` to pull the new
    revision into Pantheon.
 3. Commit the refresh as a chore.
