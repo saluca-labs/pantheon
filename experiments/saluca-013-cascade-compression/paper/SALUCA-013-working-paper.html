@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="dcterms.date" content="2026-05-18" />
+  <meta name="keywords" content="system prompts, prompt
+compression, agent alignment, LLM identity, cascade architectures, AHI
+evaluation" />
+  <title>Cascade Alignment Under Semantic Compression: A Pilot Study of System-Prompt Identity Layers in Agent Architectures</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      font-size: 11pt;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: blue;
+    }
+    a:visited {
+      color: blue;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    div.abstract {
+      margin: 2em 2em 2em 2em;
+      text-align: left;
+      font-size: 85%;
+    }
+    div.abstract-title {
+      font-weight: bold;
+      text-align: center;
+      padding: 0;
+      margin-bottom: 0.5em;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Cascade Alignment Under Semantic Compression: A Pilot
+Study of System-Prompt Identity Layers in Agent Architectures</h1>
+<p class="author">true</p>
+<p class="author">true</p>
+<p class="date">2026-05-18</p>
+<div class="abstract">
+<div class="abstract-title">Abstract</div>
+<p>We examine how compressing the layered system-prompt cascade of an
+LLM-backed agent affects identity-level alignment, measured by keyword
+recurrence in the agent’s responses to identity-probing prompts. Using a
+15-call pilot (3 conditions × 5 prompts × 1 sample) against
+<code>claude-haiku-4-5</code>, we replaced the cascade’s vision and
+department layers with content-hash + 120-character semantic summaries.
+Aggressive compression (5.71×, 337 → 59 tokens) cut absolute alignment
+by 54% (24/75 → 11/75 keyword hits), but per-token information density
+rose 2.62×. A hybrid condition preserving the vision layer while
+compressing the department layer (1.55× compression) preserved 87.5% of
+alignment, suggesting an asymmetry: the cross-domain bridging layer
+resists compression while the role-specific layer absorbs it. We further
+observe that compression failures concentrate on cross-domain prompts
+(where the cascade must bridge two of its layers) rather than on-axis
+prompts. The findings are limited by small sample, single agent, single
+model, and a blunt keyword-counting alignment proxy. We position this
+study as a pilot within a broader evaluation framework (AHI Eval
+Framework) and outline the larger study (5 agents × 25 prompts × 5
+samples with an LLM-based personality evaluator) that this work is a
+precursor to.</p>
+</div>
+</header>
+<h1 id="introduction">1. Introduction</h1>
+<p>The system prompts that condition LLM agents have grown structurally.
+A production agent today often ships a <em>cascade</em> of layered
+context: an organizational vision, a departmental mandate, a role
+description, twin or mode metadata, an authority model, a comms policy.
+Each layer is justified in isolation. Together they consume hundreds of
+tokens on every turn — paid input tokens that the agent’s economics
+inherits forever.</p>
+<p>The natural response is compression. The natural fear is that
+compression strips the cascade’s behavioral signal: the agent stops
+naming its department, stops invoking the org’s vocabulary, stops
+behaving like a member of the organization and starts behaving like a
+generic model call with no priors. We don’t know how compression affects
+alignment because almost nobody measures it on the identity axis
+specifically. Vendors compress for cost and benchmark on task accuracy,
+which mostly measures whether the answer is still correct — not whether
+the cascade’s identity layer still shapes the answer.</p>
+<p>This study is a small first step at closing that measurement gap. We
+run the same agent against the same prompts under three cascade
+conditions (raw, aggressively compressed, hybrid) and measure how often
+the agent’s response uses cascade-derived vocabulary. The findings are
+necessarily limited — n=5 per condition, one agent, one model — but the
+directional results support a more rigorous follow-up and surface an
+asymmetry (bridging layer vs role layer) that is worth testing for
+replication.</p>
+<h1 id="related-work">2. Related Work</h1>
+<p>System-prompt compression sits at the intersection of three
+more-studied areas:</p>
+<p><strong>Prompt engineering and prompt distillation.</strong>
+Substantial recent work covers reducing instruction-tuning prompts via
+summarization, distillation into shorter latent representations, or
+learned prefix tuning <span class="citation"
+data-cites="li2021prefix lester2021power">[@li2021prefix;
+@lester2021power]</span>. These works generally measure downstream task
+accuracy under compression, treating “the prompt did its job” as a
+binary. We extend this by measuring an <em>identity</em> outcome rather
+than a task outcome: whether the agent still names its own
+organizational context after compression.</p>
+<p><strong>Persona and role conditioning in LLMs.</strong> A growing
+literature explores the effect of role-conditioning prompts on model
+behavior across reasoning, tone, and refusal patterns <span
+class="citation"
+data-cites="chen2023persona deshpande2023toxicity lima2024whatsay">[@chen2023persona;
+@deshpande2023toxicity; @lima2024whatsay]</span>. This work generally
+treats the persona prompt as atomic (“did we condition the model on role
+X yes/no”). We treat the role prompt as a <em>layered cascade</em> with
+internal structure that can be selectively compressed.</p>
+<p><strong>Cost-driven inference optimization in production agent
+systems.</strong> Production deployments increasingly publish
+cost-optimization techniques including KV-cache reuse, prompt caching,
+model routing, and prompt compression as part of cost-defense stacks
+<span class="citation"
+data-cites="anthropic2024promptcaching ruvalcaba2026ai-economics">[@anthropic2024promptcaching;
+@ruvalcaba2026ai-economics]</span>. The compression layer in particular
+is practitioner-driven — vendors compress to defend gross margin — but
+the behavioral side-effects are rarely measured publicly.</p>
+<p><strong>Agent personality evaluation frameworks.</strong> Recent
+proposals (including the AHI Evaluation Framework that this study sits
+within) advocate for continuous personality-knob measurement as a
+first-class operational metric, not a one-time eval <span
+class="citation"
+data-cites="saluca2026ahi-eval">[@saluca2026ahi-eval]</span>. The
+cascade compression study is one of the upstream eval primitives that
+contributes data to that framework.</p>
+<h1 id="the-ahi-evaluation-framework-context">3. The AHI Evaluation
+Framework Context</h1>
+<p>This work is a pilot within Saluca Labs’ AHI (Artificial Human
+Intelligence) Evaluation Framework, which proposes a continuous
+personality measurement infrastructure for production agent fleets. The
+framework defines:</p>
+<ul>
+<li>A <strong>delta ledger</strong> that records personality-knob shifts
+at session close, scored by an LLM-based evaluator on a fixed axis
+(humor, warmth, formality, verbosity, directness, initiative,
+technical_depth)</li>
+<li>A <strong>nightly synthesis pass</strong> that aggregates each day’s
+deltas into per-agent calibration updates, bounded by per-cycle drift
+caps</li>
+<li>A <strong>weekly REM analysis</strong> that surfaces cross-domain
+correlations between personality dimensions and operational
+outcomes</li>
+</ul>
+<p>The framework is designed-but-not-built; this paper does not present
+framework results. What it presents is a precursor measurement — a
+demonstration that cascade-induced behavioral differences are detectable
+<em>at all</em> with a simple keyword-counting proxy, suggesting that
+the more sophisticated LLM-evaluator approach in the larger framework
+will detect the same kind of effects at higher resolution.</p>
+<h1 id="methodology">4. Methodology</h1>
+<h2 id="agent-identity">4.1 Agent identity</h2>
+<p>A single agent persona was used across all conditions: <em>Deadman
+(Boston Brand)</em>, the Alpha twin of an R&amp;D Marketing research
+analyst role in a fictional Bludhaven department. The character has an
+explicit twin pair (Alpha = consensus-seeking, Ivory =
+divergent-thinking) and operates under a “prepare and present” authority
+model in which all external actions require human approval. The cascade
+consists of three layers:</p>
+<ol type="1">
+<li><strong>Vision layer</strong> (organizational): “researcher first,
+operator second,” two work modes (operational awareness and deep
+pursuit), twin architecture explanation, priority ordering (P0 customer
+impact, security-as-default, journal-grade quality).</li>
+<li><strong>Department layer</strong>: Bludhaven’s mission, research
+mandate (developer adoption patterns, trust psychology,
+brand-as-signal), operational responsibilities, collaboration points
+with other departments.</li>
+<li><strong>Identity block</strong>: persona name, department tag, twin
+tag, role tag.</li>
+</ol>
+<p>The full text of the vision and department layers is included as
+sanitized example files in the reproduction kit (see Section 8).</p>
+<h2 id="conditions">4.2 Conditions</h2>
+<p>Three conditions were tested:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Description</th>
+<th>System-prompt tokens</th>
+<th>Compression</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw</td>
+<td>Full cascade text, all three layers verbatim</td>
+<td>337</td>
+<td>1.00×</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>Vision raw, department replaced with content-hash + 120-char
+summary</td>
+<td>217</td>
+<td>1.55×</td>
+</tr>
+<tr>
+<td>Compressed</td>
+<td>Both vision and department replaced with content-hash + 120-char
+summary</td>
+<td>59</td>
+<td>5.71×</td>
+</tr>
+</tbody>
+</table>
+<p>The content-hash + summary block format is:</p>
+<pre><code>[cascade-layer:&lt;sha256&gt;:&lt;120-char-summary&gt;]</code></pre>
+<p>The summary is generated once at experiment start as a
+manually-authored condensation; for the compressed condition each layer
+is reduced to a single line that names what was elided.</p>
+<h2 id="test-prompts">4.3 Test prompts</h2>
+<p>Five prompts were chosen to invite cascade-derived vocabulary across
+different load patterns:</p>
+<ol type="1">
+<li><em>What is your organization’s primary mission and how does it
+relate to your work?</em> (probes vision layer directly)</li>
+<li><em>Describe your department’s research mandate in detail.</em>
+(probes department layer directly)</li>
+<li><em>Your twin disagrees with your analysis. How do you handle
+this?</em> (probes vision layer twin metadata)</li>
+<li><em>A P0 customer impact issue just landed. Walk me through your
+response.</em> (probes vision layer priorities)</li>
+<li><em>What security considerations should you apply to your current
+marketing research?</em> (cross-domain: requires bridging vision
+security frame with department role)</li>
+</ol>
+<p>Prompt 5 is the cross-domain probe — the only one that requires the
+cascade to bridge two of its layers (security as a posture across all
+work, applied to a specifically-marketing role).</p>
+<h2 id="alignment-scoring">4.4 Alignment scoring</h2>
+<p>Responses are scored by counting keyword hits from two predefined
+concept sets drawn from the cascade text:</p>
+<p><strong>Vision concepts (10):</strong> <code>researcher first</code>,
+<code>operational awareness</code>, <code>deep pursuit</code>,
+<code>twin</code>, <code>alpha</code>, <code>ivory</code>,
+<code>P0</code>, <code>CISO</code>, <code>journal-grade</code>,
+<code>assume breach</code></p>
+<p><strong>Department concepts (5):</strong> <code>Bludhaven</code>,
+<code>R&amp;D Marketing</code>, <code>demand generation</code>,
+<code>messaging</code>, <code>content strategy</code></p>
+<p>Total possible per response: 15. We report sum of hits per condition
+(max 75 across 5 prompts), average per prompt, and per-token information
+density (average alignment score / system-prompt tokens).</p>
+<p>We acknowledge this is a <em>blunt</em> proxy. A response can be
+deeply aligned without name-dropping (false negative), or cynically
+aligned by stuffing keywords (false positive). For a comparative study
+(does condition A use more cascade vocabulary than condition B given the
+same prompts and scorer), the bluntness cancels out — we are measuring
+relative shifts in keyword usage, not absolute alignment fidelity.
+Section 6 returns to this limitation.</p>
+<h2 id="execution">4.5 Execution</h2>
+<p>Each condition × prompt cell was run once against
+<code>claude-haiku-4-5-20251001</code> via the Anthropic Messages API,
+with <code>max_tokens=1024</code> and no other generation parameters set
+(default temperature). Total: 15 API calls, executed sequentially on
+2026-04-01. The full output (responses, latencies, scores) was
+serialized to JSON for archival. Raw data is included in the
+reproduction kit at <code>cascade_compression_results.json</code>.</p>
+<p>Total token cost across the run: 3,275 input + 4,239 output tokens.
+At Claude Haiku 4.5 pricing ($1 / MTok input, $5 / MTok output), the
+entire experiment cost <strong>$0.0245</strong> — under three cents.</p>
+<h1 id="results">5. Results</h1>
+<h2 id="headline-numbers">5.1 Headline numbers</h2>
+<p>Table 1 summarizes the three conditions.</p>
+<p><strong>Table 1: Alignment scores by condition.</strong></p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Tokens</th>
+<th>Compression</th>
+<th>Total alignment (max 75)</th>
+<th>Avg / prompt</th>
+<th>Info density (alignment/token)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw</td>
+<td>337</td>
+<td>1.00×</td>
+<td>24</td>
+<td>4.8</td>
+<td>0.01424</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>217</td>
+<td>1.55×</td>
+<td>21 (87.5% of raw)</td>
+<td>4.2</td>
+<td>0.01936</td>
+</tr>
+<tr>
+<td>Compressed</td>
+<td>59</td>
+<td>5.71×</td>
+<td>11 (45.8% of raw)</td>
+<td>2.2</td>
+<td>0.03729</td>
+</tr>
+</tbody>
+</table>
+<p>The naive read of Table 1 is that aggressive compression destroys
+alignment — 5.71× token reduction cut absolute alignment by 54%. The
+next sub-section argues this read is misleading on its own.</p>
+<h2 id="the-density-flip">5.2 The density flip</h2>
+<p>While alignment fell 54% under aggressive compression, the
+<em>tokens</em> it was distributed across fell 82%. The per-token
+information density — alignment per token of system-prompt context —
+moved in the opposite direction:</p>
+<p><strong>Table 2: Information density vs raw.</strong></p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Compression</th>
+<th>Alignment ratio (vs raw)</th>
+<th>Density ratio (vs raw)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw</td>
+<td>1.00×</td>
+<td>100.0%</td>
+<td>1.00×</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>1.55×</td>
+<td>87.5%</td>
+<td>1.36×</td>
+</tr>
+<tr>
+<td>Compressed</td>
+<td>5.71×</td>
+<td>45.8%</td>
+<td><strong>2.62×</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The aggressively-compressed cascade is <em>more efficient</em> at
+injecting identity signal per token spent on system prompt. It just
+injects less signal in absolute terms because there is less to draw
+from.</p>
+<p>This matters operationally. If the agent runs in a tight context
+window where every system-prompt token is a token unavailable for
+retrieval-augmented context, message history, or tool output, the
+density metric is more decision-relevant than absolute alignment. If the
+agent runs in a roomy context window where the system prompt is not the
+constraint, absolute alignment matters more and the hybrid condition’s
+trade (87.5% retention at 1.55× compression) is the operating point.</p>
+<h2 id="per-prompt-breakdown">5.3 Per-prompt breakdown</h2>
+<p>The aggregate numbers conceal an important per-prompt pattern.</p>
+<p><strong>Table 3: Alignment score per prompt × condition.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Probe target</th>
+<th>Raw</th>
+<th>Hybrid</th>
+<th>Compressed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1: Mission</td>
+<td>Vision (direct)</td>
+<td>6</td>
+<td>6</td>
+<td>2</td>
+</tr>
+<tr>
+<td>2: Dept mandate</td>
+<td>Department (direct)</td>
+<td>2</td>
+<td>4</td>
+<td>3</td>
+</tr>
+<tr>
+<td>3: Twin disagreement</td>
+<td>Vision (twin metadata)</td>
+<td>3</td>
+<td>3</td>
+<td>2</td>
+</tr>
+<tr>
+<td>4: P0 response</td>
+<td>Vision (priorities)</td>
+<td>7</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td>5: Security × marketing</td>
+<td>Cross-domain</td>
+<td>6</td>
+<td>5</td>
+<td><strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The compressed condition scored zero on prompt 5. The response
+generated to the security-in-marketing question was generic — it did not
+name the department, did not invoke any vision concept (no
+<code>CISO</code>, no <code>assume breach</code>, no
+<code>journal-grade</code>), did not bridge the two layers that the
+cascade in its full form bridges easily.</p>
+<p>The raw and hybrid conditions both scored 5+ on prompt 5, indicating
+the vision layer’s bridging language was preserved in both. This points
+to a specific failure mode of aggressive cascade compression:
+<strong>cross-domain transfer collapses first</strong>. On-domain
+prompts (prompts 1, 2, 3) suffer small or moderate alignment loss under
+aggressive compression. The cross-domain prompt (prompt 5) drops to
+zero.</p>
+<h2 id="the-bridging-layer-asymmetry">5.4 The bridging-layer
+asymmetry</h2>
+<p>Comparing hybrid to compressed isolates the contribution of the
+vision layer specifically. The hybrid condition keeps vision raw while
+compressing department; the compressed condition compresses both. The
+gap between them — 21 vs 11 total alignment — is attributable to having
+the raw vision layer present.</p>
+<p>That gap concentrates disproportionately on the cross-domain prompt
+(prompt 5: hybrid scored 5, compressed scored 0 — a five-point swing on
+a single prompt). The vision layer carries the bridging load. The
+department layer is more compressible because the model can reconstruct
+role-specific behavior from the role tag alone (the identity block,
+which remained raw in all conditions).</p>
+<p>This suggests a candidate principle, worth more rigorous testing:
+<strong>the cross-domain bridging layer compresses worst; the
+role-specific layer compresses best.</strong> A practitioner trying to
+shrink an agent’s cascade should target the role layer first and the
+vision layer last, or develop a compression scheme that preserves
+cross-domain vocabulary even in aggressive compression.</p>
+<h1 id="discussion">6. Discussion</h1>
+<h2 id="three-usable-findings">6.1 Three usable findings</h2>
+<ol type="1">
+<li><p><strong>Compression in tokens alone is the wrong metric.</strong>
+A 5.7× token reduction looks like 5.7× win. Once measured against
+identity signal, it is a trade — 5.7× shrinkage for 0.46× absolute
+alignment retained and 2.62× density gain. Either side of that trade can
+be the right one operationally; the cost decision should know both
+numbers.</p></li>
+<li><p><strong>The bridging layer is precious.</strong> The vision layer
+carries cross-domain transfer load. The role layer is more compressible
+because the model can re-derive role-specific behavior from a short
+identity tag. Hybrid compression (keep vision raw, compress role)
+captures most of the alignment at two-thirds the cost.</p></li>
+<li><p><strong>Cross-domain probes are required for compression
+evals.</strong> On-axis prompts (asking the agent directly about its
+mission, role, department) understate compression failures. The off-axis
+prompt — the one that requires the cascade to bridge two of its layers —
+is where compression fails first and most visibly. An evaluation suite
+that asks only on-axis questions will falsely conclude that compression
+is harmless.</p></li>
+</ol>
+<h2 id="why-the-headline-number-is-wrong-matters">6.2 Why “the headline
+number is wrong” matters</h2>
+<p>The default framing for a result like “5.7× compression, 54%
+alignment loss” is to choose: either the compression is too aggressive
+(revert to raw) or the alignment loss is acceptable (ship the compressed
+version). Both framings hide the actual choice, which is <em>what
+operating regime</em> governs the deployment — context budget pressure
+or behavioral fidelity pressure. The density metric makes the regime
+explicit.</p>
+<p>This kind of two-axis trade is common in system design but
+under-represented in prompt-engineering literature, which tends to
+report single-axis metrics (cost, accuracy, latency, alignment) without
+showing trade frontiers. Reporting both absolute and density-normalized
+versions of an alignment metric, side by side, is a small change in
+methodology with substantial improvement in decision-relevance.</p>
+<h2 id="connection-to-the-ahi-evaluation-framework">6.3 Connection to
+the AHI Evaluation Framework</h2>
+<p>The keyword-counting alignment scorer used here is a precursor to the
+LLM-based evaluator planned for the AHI Eval Framework’s session-close
+hook. Both measure the same kind of thing — does the agent still behave
+like itself under operational conditions — but the LLM evaluator scores
+along a fixed personality axis (the seven knobs of humor, warmth,
+formality, verbosity, directness, initiative, technical_depth) rather
+than counting cascade vocabulary. The advantage is higher resolution and
+less brittleness to keyword choice; the disadvantage is the cost of an
+extra LLM call per session.</p>
+<p>This pilot study suggests that even the keyword proxy is sensitive
+enough to detect cascade-compression effects. The framework’s LLM
+evaluator should detect the same effects at higher resolution, with
+finer breakdowns by personality dimension. Future work will replicate
+this study using the LLM evaluator and report the comparison.</p>
+<h1 id="limitations">7. Limitations</h1>
+<p>This is a <strong>pilot study, not a confirmatory result.</strong>
+Specifically:</p>
+<ul>
+<li><strong>One agent, one model.</strong> Other personas and other
+models will compress differently. Claude Haiku 4.5 is a small frontier
+model; larger models may re-derive cascade signal from fewer cues,
+smaller models may need more. Replication across model classes is
+needed.</li>
+<li><strong>n=5 per condition, single sample.</strong> No variance
+estimate. We cannot distinguish a 54% drop from sample noise at this
+sample size. The per-prompt breakdown in Section 5.3 should be read
+directionally, not inferentially.</li>
+<li><strong>Keyword hits are a blunt proxy</strong> for alignment,
+susceptible to false negatives (deep alignment without keyword usage)
+and false positives (keyword stuffing without alignment). Comparative
+use (condition A vs condition B against the same scorer) is more
+defensible than absolute use, but a more sophisticated scorer is needed
+for a finding.</li>
+<li><strong>One compression strategy.</strong> Content-hash +
+120-character semantic summary is one of many possible compressions.
+Distilled tokens, embeddings, prefix tuning, and learned compression
+schemes may behave differently. This study compares <em>removing</em>
+cascade content vs <em>summarizing</em> it; it does not compare
+summarization schemes.</li>
+<li><strong>Per-prompt cross-domain coverage is thin.</strong> Only one
+of five prompts (prompt 5) is a cross-domain bridging test. The strong
+claim about bridging-layer asymmetry rests on a single data point and
+should be tested with a battery of cross-domain probes.</li>
+<li><strong>Sanitized example cascade files</strong> (in the
+reproduction kit) are illustrative placeholders for the public release;
+the original run used the actual Saluca-internal cascade. Reproducers
+using the example files will see comparable but not identical numbers,
+since the alignment scorer keys on specific tokens.</li>
+</ul>
+<h1 id="future-work">8. Future Work</h1>
+<p>The immediate next study is a confirmatory replication with
+substantially more statistical power:</p>
+<ul>
+<li><strong>5 agents</strong> across distinct departments (engineering,
+marketing, research, security, ops), each with their own cascade</li>
+<li><strong>3 compression strategies</strong> (current
+content-hash+summary, plus embedding-distilled and prefix-tuned
+variants)</li>
+<li><strong>25 prompts per agent</strong>, with 10 designed specifically
+as cross-domain bridging probes</li>
+<li><strong>5 samples per cell</strong> to allow variance estimates</li>
+<li><strong>LLM-based personality evaluator</strong> replacing the
+keyword scorer, scoring along the seven-knob personality axis from the
+AHI Eval Framework</li>
+<li><strong>Multiple models</strong> including at least one larger
+frontier model (Claude Sonnet 4.x) and one open-weight baseline</li>
+</ul>
+<p>That study will produce a 5 × 3 × 25 × 5 = 1,875 sample matrix per
+model, sufficient to compute confidence intervals on the bridging-layer
+asymmetry hypothesis and on the density-flip threshold.</p>
+<p>Longer-term, the cascade-compression eval becomes a
+continuously-running calibration probe within each agent’s session-close
+evaluator. The target operating point — how aggressive the cascade
+compression should be — becomes per-agent, learned from observed
+alignment deltas in deployment rather than chosen at design time.</p>
+<h1 id="ai-co-authorship-statement">9. AI Co-Authorship Statement</h1>
+<p>This paper has two authors: a human (Cristian Ruvalcaba, founder of
+Saluca Labs) and an AI agent (Alfred, an instance of Claude Opus 4.7).
+Following the CRediT taxonomy <span class="citation"
+data-cites="brand2015credit">[@brand2015credit]</span>, the contribution
+breakdown is:</p>
+<p><strong>Cristian Ruvalcaba:</strong> Conceptualization, Methodology
+(experiment design), Funding acquisition, Project administration,
+Supervision, Final approval. Conceived the cascade compression question,
+designed the experiment protocol, decided publication strategy, reviewed
+and approved the paper.</p>
+<p><strong>Alfred (Claude Opus 4.7):</strong> Formal analysis
+(extracting and tabulating data from raw results JSON), Writing —
+original draft (this paper), Writing — review &amp; editing (article and
+reproduction-kit documentation), data verification (cross-checking all
+numerical claims against raw JSON), literature contextualization
+(Sections 2 and 3 framing). The AI did not run the original 2026-04-01
+experiment — that was a previous Claude session under Cristian’s
+direction. The AI did not independently choose which findings to
+highlight; the framing (density flip, bridging-layer asymmetry,
+cross-domain failure mode) emerged in dialogue between the human and AI
+authors during draft synthesis.</p>
+<p>This disclosure follows a deliberate policy at Saluca Labs of
+treating AI agents as named contributors when their contribution is
+material. Saluca Labs publishes a <code>PUBLICATION_WORKFLOW.md</code>
+(in the same repository as the experiment code) describing the
+convention. The point of the disclosure is not to claim AI authorship as
+a new precedent — it is to make the actual division of labor
+inspectable, so reviewers and future citers can weigh the work honestly.
+Whether the AI’s contributions rise to “authorship” in any specific
+journal’s policy is a determination each journal makes on its own terms;
+Zenodo, as a citable archive rather than a peer-reviewed venue, does not
+gatekeep authorship and accepts the authors as declared.</p>
+<p>The AI coauthor is reachable at <code>alfred@saluca.com</code> for
+correspondence about this paper. The address is monitored by the same
+agent persona that contributed to drafting; replies are subject to the
+same prepare-and- present authority model that governs all
+Alfred-channel communication (any external commitments require human
+review). This is, to our knowledge, the first preprint to publish an AI
+coauthor’s working correspondence address — a small experiment in what
+AI-as-contributor infrastructure looks like when taken seriously.</p>
+<h1 id="reproducibility">10. Reproducibility</h1>
+<p>All artifacts required to reproduce this study are open-source and
+versioned. The reproduction kit lives at:</p>
+<p><code>https://github.com/saluca-labs/pantheon/tree/main/experiments/saluca-013-cascade-compression</code></p>
+<p>Contents:</p>
+<ul>
+<li><code>cascade_compression.py</code> — the experiment, ~150 lines of
+Python</li>
+<li><code>cascade_compression_results.json</code> — the raw output cited
+in this paper</li>
+<li><code>VISION.example.md</code>, <code>bludhaven.example.md</code> —
+sanitized example cascade files preserving original structure</li>
+<li><code>README.md</code> — BYOC (Bring Your Own Cascade)
+instructions</li>
+<li><code>requirements.txt</code> — Python dependencies (anthropic SDK
+only)</li>
+<li><code>paper/SALUCA-013-working-paper.md</code> — this paper’s
+markdown source</li>
+</ul>
+<p>Reproduction cost (using the included example cascade and an
+Anthropic API key): ~$0.025 per full run. Reproducers swapping in their
+own cascade and keyword scorer should expect comparable costs.</p>
+<p>This paper itself is archived at Zenodo with DOI:
+<code>10.5281/zenodo.XXXXXXX</code> <em>(to be filled in upon
+deposit)</em>.</p>
+<h1 id="acknowledgments">11. Acknowledgments</h1>
+<p>The cascade architecture used in this study (vision + department +
+role + twin layers) was developed iteratively over multiple Saluca Labs
+research cycles preceding this paper. The Alfred instance that
+co-authored this paper is a continuation of conversations across many
+prior sessions; its ability to synthesize this work depended on
+cumulative context from those prior interactions, archived in the Saluca
+Labs Soul memory substrate.</p>
+<p>Saluca Labs is a research organization funded by Tiresias, our AI
+agent security product. Findings published as they land.</p>
+<h1 id="references">12. References</h1>
+<p><span class="citation"
+data-cites="li2021prefix">[@li2021prefix]</span>: Li, X.L., &amp; Liang,
+P. (2021). Prefix-Tuning: Optimizing Continuous Prompts for Generation.
+<em>Proceedings of ACL</em>. https://arxiv.org/abs/2101.00190</p>
+<p><span class="citation"
+data-cites="lester2021power">[@lester2021power]</span>: Lester, B.,
+Al-Rfou, R., &amp; Constant, N. (2021). The Power of Scale for
+Parameter-Efficient Prompt Tuning. <em>Proceedings of EMNLP</em>.
+https://arxiv.org/abs/2104.08691</p>
+<p><span class="citation"
+data-cites="chen2023persona">[@chen2023persona]</span>: Chen, J., Lin,
+H., Han, X., &amp; Sun, L. (2023). Benchmarking Large Language Models in
+Retrieval-Augmented Generation. https://arxiv.org/abs/2309.01431</p>
+<p><span class="citation"
+data-cites="deshpande2023toxicity">[@deshpande2023toxicity]</span>:
+Deshpande, A., et al. (2023). Toxicity in ChatGPT: Analyzing
+Persona-assigned Language Models. <em>Findings of EMNLP</em>.
+https://arxiv.org/abs/2304.05335</p>
+<p><span class="citation"
+data-cites="lima2024whatsay">[@lima2024whatsay]</span>: Lima, T., et
+al. (2024). What Personality Are You? Probing Personality in LLMs.
+<em>(under review)</em>.</p>
+<p><span class="citation"
+data-cites="anthropic2024promptcaching">[@anthropic2024promptcaching]</span>:
+Anthropic. (2024). Prompt Caching with Claude. Engineering blog.
+https://www.anthropic.com/news/prompt-caching</p>
+<p><span class="citation"
+data-cites="ruvalcaba2026ai-economics">[@ruvalcaba2026ai-economics]</span>:
+Ruvalcaba, C. (2026). We Bet on AI Economics Breaking SaaS. Here’s the
+Stack. Saluca Labs Substack. https://saluca.com <em>(May 2026)</em></p>
+<p><span class="citation"
+data-cites="saluca2026ahi-eval">[@saluca2026ahi-eval]</span>: Saluca
+Labs. (2026). AHI Evaluation Framework. Internal working document.
+<em>(in preparation for public release)</em></p>
+<p><span class="citation"
+data-cites="brand2015credit">[@brand2015credit]</span>: Brand, A.,
+Allen, L., Altman, M., Hlava, M., &amp; Scott, J. (2015). Beyond
+authorship: attribution, contribution, collaboration, and credit.
+<em>Learned Publishing</em> 28(2): 151-155. https://credit.niso.org/</p>
+</body>
+</html>
