@@ -224,10 +224,14 @@ Each version gets its own DOI, and Zenodo shows them all linked from a single
 - **Not press release distribution.** No press wires, no embargoed
   pitches. Saluca Labs research speaks for itself; the discovery network
   is the channels above plus organic citation.
-- **Not a product launch.** Research findings are not marketing. The
-  "Tiresias / Saluca product" framing belongs in product marketing
-  channels; the experiment narrative belongs in research channels even
-  when the experiment validates a product mechanism.
+- **Not a sales pitch, not a book promotion, not a crowdfunding pitch.**
+  Research findings are not marketing. Saluca Labs' funding lives in its
+  own channels (book sales for *Think Like a CISO*, planned Patreon /
+  Kickstarter / paid Substack tiers); the experiment narrative belongs in
+  research channels even when the experiment indirectly supports the
+  fundability case. If a paper's conclusions naturally lead a reader to
+  the book or to a Patreon page, that's organic discovery — the paper
+  itself doesn't pitch.
 
 ## Maintained by
 
