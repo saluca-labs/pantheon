@@ -171,6 +171,15 @@ the first real upload — see `experiments/.tools/` once it lands.)
   ---
   ```
 - Cross-link: paper PDF, GitHub repo dir, raw results JSON
+- **Tables: screenshot, don't paste.** Markdown pipe tables don't
+  round-trip reliably through rich-text editors (Substack, LinkedIn,
+  Word, OpenOffice Writer). Render the .md in a browser or in your
+  editor's preview, take a screenshot of each data table, embed as a
+  figure (PNG) in the Substack post. The structured data still lives
+  in the .md / Zenodo paper / GitHub repo for citation; the published
+  surface gets clean visuals that look identical across every reader.
+  Same advice applies to LinkedIn Articles and any other rich-text
+  publishing surface.
 
 ## LinkedIn — Pattern
 
