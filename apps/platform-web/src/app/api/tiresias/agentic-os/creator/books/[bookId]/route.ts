@@ -12,6 +12,14 @@ const UpdateBody = z.object({
   description: z.string().max(5000).nullable().optional(),
   coverImageUrl: z.string().max(2000).nullable().optional(),
   status: z.enum(['draft', 'writing', 'complete', 'published']).optional(),
+  subtitle: z.string().max(500).nullable().optional(),
+  authorDisplayName: z.string().max(200).nullable().optional(),
+  copyrightYear: z.number().int().min(1000).max(9999).nullable().optional(),
+  language: z.string().max(35).optional(),
+  dedication: z.string().max(5000).nullable().optional(),
+  aboutAuthor: z.string().max(10000).nullable().optional(),
+  seriesName: z.string().max(200).nullable().optional(),
+  seriesPosition: z.number().int().min(1).max(9999).nullable().optional(),
 });
 
 export async function GET(
