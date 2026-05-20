@@ -25,9 +25,9 @@ const BOOK_COLUMNS = `id, user_id, title, description,
                        cover_image_url, status,
                        created_at, updated_at`;
 
-const CHAPTER_COLUMNS = `id, book_id, title, content,
-                          "order", word_count, status,
-                          created_at, updated_at`;
+const CHAPTER_COLUMNS = `c.id, c.book_id, c.title, c.content,
+                          c."order", c.word_count, c.status,
+                          c.created_at, c.updated_at`;
 
 function toIso(v: unknown): string {
   if (v instanceof Date) return v.toISOString();
@@ -257,7 +257,7 @@ export async function listChapters(
 ): Promise<CreatorChapter[]> {
   const pool = getCreatorPool();
   const r = await pool.query(
-    `SELECT c.${CHAPTER_COLUMNS}
+    `SELECT ${CHAPTER_COLUMNS}
        FROM agos_creator_chapters c
        JOIN agos_creator_books b ON c.book_id = b.id
       WHERE c.book_id = $1 AND b.user_id = $2
@@ -276,7 +276,7 @@ export async function getChapter(
 ): Promise<CreatorChapter | null> {
   const pool = getCreatorPool();
   const r = await pool.query(
-    `SELECT c.${CHAPTER_COLUMNS}
+    `SELECT ${CHAPTER_COLUMNS}
        FROM agos_creator_chapters c
        JOIN agos_creator_books b ON c.book_id = b.id
       WHERE c.id = $1 AND c.book_id = $2 AND b.user_id = $3
