@@ -370,7 +370,11 @@ export function BookEditor({
           {/* Export + Settings */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <ExportButton bookId={book.id} bookTitle={book.title} />
+              <ExportButton
+                bookId={book.id}
+                bookTitle={book.title}
+                targets={publishingTargets}
+              />
             </div>
             <button
               type="button"
