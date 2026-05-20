@@ -17,6 +17,14 @@ export interface CreatorBook {
   description: string | null;
   coverImageUrl: string | null;
   status: BookStatus;
+  subtitle: string | null;
+  authorDisplayName: string | null;
+  copyrightYear: number | null;
+  language: string;
+  dedication: string | null;
+  aboutAuthor: string | null;
+  seriesName: string | null;
+  seriesPosition: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +45,14 @@ export interface CreateCreatorBookInput {
   title: string;
   description?: string;
   coverImageUrl?: string;
+  subtitle?: string;
+  authorDisplayName?: string;
+  copyrightYear?: number;
+  language?: string;
+  dedication?: string;
+  aboutAuthor?: string;
+  seriesName?: string;
+  seriesPosition?: number;
 }
 
 export interface UpdateCreatorBookInput {
@@ -44,6 +60,14 @@ export interface UpdateCreatorBookInput {
   description?: string | null;
   coverImageUrl?: string | null;
   status?: BookStatus;
+  subtitle?: string | null;
+  authorDisplayName?: string | null;
+  copyrightYear?: number | null;
+  language?: string;
+  dedication?: string | null;
+  aboutAuthor?: string | null;
+  seriesName?: string | null;
+  seriesPosition?: number | null;
 }
 
 export interface CreateCreatorChapterInput {
