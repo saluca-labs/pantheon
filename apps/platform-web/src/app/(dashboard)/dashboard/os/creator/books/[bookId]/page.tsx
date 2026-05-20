@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { getCurrentCreatorUser } from '@/lib/agentic-os/creator/session';
 import { getBook, listChapters } from '@/lib/agentic-os/creator/books-repo';
+import { listTargets } from '@/lib/agentic-os/creator/publishing-targets-repo';
 import { BookEditor } from '@/components/agentic-os/creator/book-editor';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,10 @@ export default async function BookEditorPage({ params }: PageProps) {
 
   const { bookId } = await params;
 
-  const [book, chapters] = await Promise.all([
+  const [book, chapters, publishingTargets] = await Promise.all([
     getBook(bookId, user.userId),
     listChapters(bookId, user.userId),
+    listTargets(bookId, user.userId),
   ]);
 
   if (!book) notFound();
@@ -36,7 +38,11 @@ export default async function BookEditorPage({ params }: PageProps) {
           Open Writing Coach
         </a>
       </div>
-      <BookEditor book={book} chapters={chapters} />
+      <BookEditor
+        book={book}
+        chapters={chapters}
+        publishingTargets={publishingTargets}
+      />
     </>
   );
 }

@@ -41,18 +41,22 @@ import {
   GripVertical,
   ChevronLeft,
   ExternalLink,
+  Settings,
 } from 'lucide-react';
 import { TipTapEditor } from '@/components/agentic-os/_shared/tiptap-editor';
 import { ExportButton } from './export-button';
+import { BookSettingsDrawer } from './book-settings-drawer';
 import type {
   CreatorBook,
   CreatorChapter,
   BookStatus,
 } from '@/lib/agentic-os/creator/books';
+import type { PublishingTarget } from '@/lib/agentic-os/creator/publishing-targets';
 
 interface BookEditorProps {
   book: CreatorBook;
   chapters: CreatorChapter[];
+  publishingTargets: PublishingTarget[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -162,14 +166,20 @@ function SortableChapterRow({
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export function BookEditor({ book: initialBook, chapters: initialChapters }: BookEditorProps) {
+export function BookEditor({
+  book: initialBook,
+  chapters: initialChapters,
+  publishingTargets: initialTargets,
+}: BookEditorProps) {
   const router = useRouter();
   const [book, setBook] = useState(initialBook);
   const [chapterList, setChapterList] = useState(initialChapters);
+  const [publishingTargets, setPublishingTargets] = useState(initialTargets);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(
     chapterList[0]?.id ?? null,
   );
   const [creatingChapter, setCreatingChapter] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedChapter = chapterList.find((c) => c.id === selectedChapterId) ?? null;
@@ -357,8 +367,21 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
             ~{readingTimeMin} min reading time
           </div>
 
-          {/* Export */}
-          <ExportButton bookId={book.id} bookTitle={book.title} />
+          {/* Export + Settings */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <ExportButton bookId={book.id} bookTitle={book.title} />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="px-2 py-1.5 text-text-secondary hover:text-white border border-border-subtle hover:border-accent rounded transition-colors"
+              aria-label="Open book settings"
+              title="Book settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Chapter list header */}
@@ -450,6 +473,16 @@ export function BookEditor({ book: initialBook, chapters: initialChapters }: Boo
           </div>
         )}
       </main>
+
+      {settingsOpen && (
+        <BookSettingsDrawer
+          book={book}
+          targets={publishingTargets}
+          onBookChange={setBook}
+          onTargetsChange={setPublishingTargets}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }
