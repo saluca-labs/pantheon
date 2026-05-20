@@ -23,6 +23,9 @@ import type {
 
 const BOOK_COLUMNS = `id, user_id, title, description,
                        cover_image_url, status,
+                       subtitle, author_display_name, copyright_year,
+                       language, dedication, about_author,
+                       series_name, series_position,
                        created_at, updated_at`;
 
 const CHAPTER_COLUMNS = `c.id, c.book_id, c.title, c.content,
@@ -47,6 +50,14 @@ interface RawBookRow {
   description: string | null;
   cover_image_url: string | null;
   status: CreatorBook['status'];
+  subtitle: string | null;
+  author_display_name: string | null;
+  copyright_year: number | string | null;
+  language: string;
+  dedication: string | null;
+  about_author: string | null;
+  series_name: string | null;
+  series_position: number | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -71,6 +82,15 @@ function rowToBook(row: RawBookRow): CreatorBook {
     description: row.description ?? null,
     coverImageUrl: row.cover_image_url ?? null,
     status: row.status,
+    subtitle: row.subtitle ?? null,
+    authorDisplayName: row.author_display_name ?? null,
+    copyrightYear: row.copyright_year == null ? null : Number(row.copyright_year),
+    language: row.language,
+    dedication: row.dedication ?? null,
+    aboutAuthor: row.about_author ?? null,
+    seriesName: row.series_name ?? null,
+    seriesPosition:
+      row.series_position == null ? null : Number(row.series_position),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };
@@ -132,14 +152,25 @@ export async function createBook(
   const id = randomUUID();
   await pool.query(
     `INSERT INTO agos_creator_books
-       (id, user_id, title, description, cover_image_url)
-     VALUES ($1,$2,$3,$4,$5)`,
+       (id, user_id, title, description, cover_image_url,
+        subtitle, author_display_name, copyright_year,
+        language, dedication, about_author,
+        series_name, series_position)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'en-US'),$10,$11,$12,$13)`,
     [
       id,
       userId,
       input.title,
       input.description ?? null,
       input.coverImageUrl ?? null,
+      input.subtitle ?? null,
+      input.authorDisplayName ?? null,
+      input.copyrightYear ?? null,
+      input.language ?? null,
+      input.dedication ?? null,
+      input.aboutAuthor ?? null,
+      input.seriesName ?? null,
+      input.seriesPosition ?? null,
     ],
   );
 
@@ -191,6 +222,46 @@ export async function updateBook(
     params.push(patch.status);
     n += 1;
     set.push(`status = $${n}`);
+  }
+  if (patch.subtitle !== undefined) {
+    params.push(patch.subtitle);
+    n += 1;
+    set.push(`subtitle = $${n}`);
+  }
+  if (patch.authorDisplayName !== undefined) {
+    params.push(patch.authorDisplayName);
+    n += 1;
+    set.push(`author_display_name = $${n}`);
+  }
+  if (patch.copyrightYear !== undefined) {
+    params.push(patch.copyrightYear);
+    n += 1;
+    set.push(`copyright_year = $${n}`);
+  }
+  if (patch.language !== undefined) {
+    params.push(patch.language);
+    n += 1;
+    set.push(`language = $${n}`);
+  }
+  if (patch.dedication !== undefined) {
+    params.push(patch.dedication);
+    n += 1;
+    set.push(`dedication = $${n}`);
+  }
+  if (patch.aboutAuthor !== undefined) {
+    params.push(patch.aboutAuthor);
+    n += 1;
+    set.push(`about_author = $${n}`);
+  }
+  if (patch.seriesName !== undefined) {
+    params.push(patch.seriesName);
+    n += 1;
+    set.push(`series_name = $${n}`);
+  }
+  if (patch.seriesPosition !== undefined) {
+    params.push(patch.seriesPosition);
+    n += 1;
+    set.push(`series_position = $${n}`);
   }
 
   if (set.length === 0) {
