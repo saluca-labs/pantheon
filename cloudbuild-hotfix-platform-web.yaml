@@ -1,0 +1,21 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - apps/platform-web/Dockerfile
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/pantheon/platform-web:$_TAG
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - us-central1-docker.pkg.dev/$PROJECT_ID/pantheon/platform-web:$_TAG
+substitutions:
+  _TAG: v0.1.126-hotfix-books-ambig
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/pantheon/platform-web:$_TAG
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s

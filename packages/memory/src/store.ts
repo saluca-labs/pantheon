@@ -10,7 +10,7 @@ import type {
 } from './types.js'
 import { extractTopicsLocal } from './topic.js'
 import { reciprocalRankFusion } from './hybrid/rrf.js'
-import { scoreModifier } from './hybrid/decay.js'
+import { scoreModifierFor } from './hybrid/decay.js'
 import { normalizeEmbedding, DEDUP_THRESHOLD } from './hybrid/dedup.js'
 
 const DEFAULT_MAX_TOPICS   = 10
@@ -162,7 +162,7 @@ export class Asphodel {
     if (decay) {
       scored = scored.map(m => ({
         ...m,
-        score: m.score * scoreModifier(m.created_at, m.recall_count),
+        score: m.score * scoreModifierFor(m),
       }))
       scored.sort((a, b) => b.score - a.score)
     }

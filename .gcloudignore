@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gcloudignore
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+**/.turbo/
+**/dist/
+.venv/
+**/__pycache__/
+.pytest_cache/
+.vscode/
+.idea/
+*.log

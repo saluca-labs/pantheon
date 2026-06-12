@@ -4,6 +4,7 @@ import { dirname, join } from 'path'
 import { homedir } from 'os'
 import type { Adapter, Memory, ScoredMemory } from '../types.js'
 import { l2ToCosineSimilarity } from '../hybrid/dedup.js'
+import { M2_ENABLED, M2_H0_DAYS, stabilityAfterRecall } from '../hybrid/decay.js'
 
 export interface SQLiteAdapterOptions {
   /** Path to the SQLite database file. Defaults to ASPHODEL_DB env or ~/.asphodel/memory.db */
@@ -88,6 +89,20 @@ export class SQLiteAdapter implements Adapter {
       )
     }
 
+    // Migration 004: M2 activation-gated memory — per-memory stability (half-life,
+    // days) + last_recall_at (decay anchored to last recall, the testing effect).
+    // Columns are additive and harmless when M2 is disabled.
+    if (!cols.some(c => c.name === 'stability')) {
+      this.db.exec(
+        `ALTER TABLE memories ADD COLUMN stability REAL NOT NULL DEFAULT ${M2_H0_DAYS}`
+      )
+    }
+    if (!cols.some(c => c.name === 'last_recall_at')) {
+      this.db.exec(`ALTER TABLE memories ADD COLUMN last_recall_at TEXT`)
+      // Backfill: anchor decay to creation for pre-existing rows.
+      this.db.exec(`UPDATE memories SET last_recall_at = created_at WHERE last_recall_at IS NULL`)
+    }
+
     // Migration 003: vector search via sqlite-vec (optional — skipped if not installed
     // or vectorDims is 0)
     if (this.vectorDims > 0) {
@@ -159,7 +174,7 @@ export class SQLiteAdapter implements Adapter {
 
   async recall(topic: string, limit: number): Promise<Memory[]> {
     const rows = this.db.prepare(`
-      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count
+      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count, m.stability, m.last_recall_at
       FROM memories m
       JOIN topic_index ti ON ti.memory_id = m.id
       WHERE ti.word = ?
@@ -167,6 +182,7 @@ export class SQLiteAdapter implements Adapter {
       LIMIT ?
     `).all(topic.toLowerCase().trim(), limit) as Array<{
       id: number; content: string; topics: string; created_at: string; recall_count: number
+      stability: number; last_recall_at: string
     }>
 
     const memories = rows.map(r => ({ ...r, topics: JSON.parse(r.topics) as string[] }))
@@ -178,7 +194,7 @@ export class SQLiteAdapter implements Adapter {
 
   async search(query: string, limit: number): Promise<Memory[]> {
     const rows = this.db.prepare(`
-      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count
+      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count, m.stability, m.last_recall_at
       FROM memories_fts f
       JOIN memories m ON m.id = f.rowid
       WHERE memories_fts MATCH ?
@@ -186,6 +202,7 @@ export class SQLiteAdapter implements Adapter {
       LIMIT ?
     `).all(query, limit) as Array<{
       id: number; content: string; topics: string; created_at: string; recall_count: number
+      stability: number; last_recall_at: string
     }>
 
     const memories = rows.map(r => ({ ...r, topics: JSON.parse(r.topics) as string[] }))
@@ -221,7 +238,7 @@ export class SQLiteAdapter implements Adapter {
     if (!this.vecLoaded) return []
 
     const rows = this.db.prepare(`
-      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count, v.distance
+      SELECT m.id, m.content, m.topics, m.created_at, m.recall_count, m.stability, m.last_recall_at, v.distance
       FROM memories_vec v
       JOIN memories m ON m.id = CAST(v.rowid AS INTEGER)
       WHERE v.embedding MATCH vec_f32(?)
@@ -233,16 +250,20 @@ export class SQLiteAdapter implements Adapter {
       topics: string
       created_at: string
       recall_count: number
+      stability: number
+      last_recall_at: string
       distance: number
     }>
 
     return rows.map(r => ({
-      id:           r.id,
-      content:      r.content,
-      topics:       JSON.parse(r.topics) as string[],
-      created_at:   r.created_at,
-      recall_count: r.recall_count,
-      score:        l2ToCosineSimilarity(r.distance),
+      id:             r.id,
+      content:        r.content,
+      topics:         JSON.parse(r.topics) as string[],
+      created_at:     r.created_at,
+      recall_count:   r.recall_count,
+      stability:      r.stability,
+      last_recall_at: r.last_recall_at,
+      score:          l2ToCosineSimilarity(r.distance),
     }))
   }
 
@@ -252,6 +273,30 @@ export class SQLiteAdapter implements Adapter {
   }
 
   private bumpRecallCountSync(ids: number[]): void {
+    if (M2_ENABLED) {
+      // M2: gate the stability gain on retrievability-at-recall, and reset the
+      // decay clock (last_recall_at = now) — the testing effect.
+      const sel = this.db.prepare(
+        `SELECT stability, last_recall_at, created_at FROM memories WHERE id = ?`
+      )
+      const upd = this.db.prepare(
+        `UPDATE memories SET recall_count = recall_count + 1, stability = ?, last_recall_at = ? WHERE id = ?`
+      )
+      const now = new Date().toISOString()
+      const updateAll = this.db.transaction((ids: number[]) => {
+        for (const id of ids) {
+          const row = sel.get(id) as
+            | { stability: number | null; last_recall_at: string | null; created_at: string }
+            | undefined
+          if (!row) continue
+          const stability = row.stability ?? M2_H0_DAYS
+          const lastRecall = row.last_recall_at ?? row.created_at
+          upd.run(stabilityAfterRecall(stability, lastRecall), now, id)
+        }
+      })
+      updateAll(ids)
+      return
+    }
     const stmt = this.db.prepare(`UPDATE memories SET recall_count = recall_count + 1 WHERE id = ?`)
     const updateAll = this.db.transaction((ids: number[]) => {
       for (const id of ids) stmt.run(id)
@@ -276,6 +321,7 @@ export class SQLiteAdapter implements Adapter {
       LIMIT ? OFFSET ?
     `).all(limit, offset) as Array<{
       id: number; content: string; topics: string; created_at: string; recall_count: number
+      stability: number; last_recall_at: string
     }>
 
     return rows.map(r => ({ ...r, topics: JSON.parse(r.topics) as string[] }))

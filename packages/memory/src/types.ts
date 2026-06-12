@@ -5,6 +5,11 @@ export interface Memory {
   content: string
   topics: string[]   // max MAX_TOPICS_PER_MEMORY words
   created_at: string // ISO 8601
+  /** M2 (activation-gated memory): per-memory stability (half-life, days) and the
+   *  timestamp of the last recall, from which decay is measured (the testing
+   *  effect). Present only when the M2 columns exist; absent → M1 scoring. */
+  stability?: number
+  last_recall_at?: string
   /** Set to true when hybridSearch detects the stored memory is a near-duplicate. */
   isDuplicate?: boolean
 }
