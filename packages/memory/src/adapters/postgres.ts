@@ -1,4 +1,5 @@
 import type { Adapter, Memory } from '../types.js'
+import { M2_ENABLED, M2_H0_DAYS, stabilityAfterRecall } from '../hybrid/decay.js'
 
 // pg is a peer dependency — import dynamically so SQLite users don't need it
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +46,12 @@ export class PostgresAdapter implements Adapter {
       CREATE INDEX IF NOT EXISTS idx_topic_word ON topic_index(word);
       CREATE INDEX IF NOT EXISTS idx_memories_fts
         ON memories USING gin(to_tsvector('english', content));
+
+      -- Access-frequency + M2 activation-gated memory columns (additive, safe).
+      ALTER TABLE memories ADD COLUMN IF NOT EXISTS recall_count   INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE memories ADD COLUMN IF NOT EXISTS stability      DOUBLE PRECISION NOT NULL DEFAULT ${M2_H0_DAYS};
+      ALTER TABLE memories ADD COLUMN IF NOT EXISTS last_recall_at TIMESTAMPTZ;
+      UPDATE memories SET last_recall_at = created_at WHERE last_recall_at IS NULL;
     `)
   }
 
@@ -79,7 +86,7 @@ export class PostgresAdapter implements Adapter {
 
   async recall(topic: string, limit: number): Promise<Memory[]> {
     const { rows } = await this.pool.query(`
-      SELECT m.id, m.content, m.topics, m.created_at
+      SELECT m.id, m.content, m.topics, m.created_at, m.stability, m.last_recall_at
       FROM memories m
       JOIN topic_index ti ON ti.memory_id = m.id
       WHERE ti.word = $1
@@ -87,17 +94,24 @@ export class PostgresAdapter implements Adapter {
       LIMIT $2
     `, [topic.toLowerCase().trim(), limit])
 
-    return rows.map((r: { id: number; content: string; topics: string[]; created_at: Date }) => ({
+    return rows.map((r: {
+      id: number; content: string; topics: string[]; created_at: Date
+      stability?: number; last_recall_at?: Date | string | null
+    }) => ({
       id: r.id,
       content: r.content,
       topics: r.topics,
       created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+      stability: r.stability ?? undefined,
+      last_recall_at: r.last_recall_at == null
+        ? undefined
+        : r.last_recall_at instanceof Date ? r.last_recall_at.toISOString() : r.last_recall_at,
     }))
   }
 
   async search(query: string, limit: number): Promise<Memory[]> {
     const { rows } = await this.pool.query(`
-      SELECT id, content, topics, created_at,
+      SELECT id, content, topics, created_at, stability, last_recall_at,
              ts_rank(to_tsvector('english', content), plainto_tsquery('english', $1)) AS rank
       FROM memories
       WHERE to_tsvector('english', content) @@ plainto_tsquery('english', $1)
@@ -105,11 +119,18 @@ export class PostgresAdapter implements Adapter {
       LIMIT $2
     `, [query, limit])
 
-    return rows.map((r: { id: number; content: string; topics: string[]; created_at: Date }) => ({
+    return rows.map((r: {
+      id: number; content: string; topics: string[]; created_at: Date
+      stability?: number; last_recall_at?: Date | string | null
+    }) => ({
       id: r.id,
       content: r.content,
       topics: r.topics,
       created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+      stability: r.stability ?? undefined,
+      last_recall_at: r.last_recall_at == null
+        ? undefined
+        : r.last_recall_at instanceof Date ? r.last_recall_at.toISOString() : r.last_recall_at,
     }))
   }
 
@@ -123,18 +144,60 @@ export class PostgresAdapter implements Adapter {
 
   async list(limit: number, offset: number): Promise<Memory[]> {
     const { rows } = await this.pool.query(`
-      SELECT id, content, topics, created_at
+      SELECT id, content, topics, created_at, stability, last_recall_at
       FROM memories
       ORDER BY id DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset])
 
-    return rows.map((r: { id: number; content: string; topics: string[]; created_at: Date }) => ({
+    return rows.map((r: {
+      id: number; content: string; topics: string[]; created_at: Date
+      stability?: number; last_recall_at?: Date | string | null
+    }) => ({
       id: r.id,
       content: r.content,
       topics: r.topics,
       created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+      stability: r.stability ?? undefined,
+      last_recall_at: r.last_recall_at == null
+        ? undefined
+        : r.last_recall_at instanceof Date ? r.last_recall_at.toISOString() : r.last_recall_at,
     }))
+  }
+
+  /**
+   * Recall update. M1 (flag off): postgres never tracked recalls — preserve that
+   * (no-op), so M1 behavior is byte-for-byte unchanged. M2 (flag on): gate the
+   * stability gain on retrievability-at-recall and reset last_recall_at (the
+   * testing effect), transactionally per id.
+   */
+  async bumpRecallCount(ids: number[]): Promise<void> {
+    if (ids.length === 0 || !M2_ENABLED) return
+    const client = await this.pool.connect()
+    try {
+      await client.query('BEGIN')
+      const now = new Date().toISOString()
+      for (const id of ids) {
+        const { rows } = await client.query(
+          'SELECT stability, last_recall_at, created_at FROM memories WHERE id = $1 FOR UPDATE',
+          [id]
+        )
+        if (!rows[0]) continue
+        const stability: number = rows[0].stability ?? M2_H0_DAYS
+        const lr = rows[0].last_recall_at ?? rows[0].created_at
+        const lastIso = lr instanceof Date ? lr.toISOString() : lr
+        await client.query(
+          'UPDATE memories SET recall_count = recall_count + 1, stability = $1, last_recall_at = $2 WHERE id = $3',
+          [stabilityAfterRecall(stability, lastIso), now, id]
+        )
+      }
+      await client.query('COMMIT')
+    } catch (e) {
+      await client.query('ROLLBACK')
+      throw e
+    } finally {
+      client.release()
+    }
   }
 
   async close(): Promise<void> {
