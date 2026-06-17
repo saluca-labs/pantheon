@@ -65,20 +65,30 @@ apps/soul-service/
 | `GET` | `/tkhr/stats` | `X-Soul-Service-Key` | TKHR index stats |
 | `POST` | `/graph/integrity/{session_id}` | `X-Soul-Service-Key` | Recompute + verify dual hashes |
 
-Auth is opt-in. When `SOUL_SERVICE_KEY` is set, every non-health request
-must carry `X-Soul-Service-Key: $SOUL_SERVICE_KEY` or it is rejected with
-401. When `SOUL_SERVICE_KEY` is unset or empty the service boots fail-open
-and logs a single startup WARNING; all requests are accepted without
-authentication. This deliberately diverges from
-[`memory-service`](../memory-service/README.md#auth) for the MVP rollout
-so the pod is deploy-able before the Secret Manager key exists.
+Auth is fail-closed in production. The posture is decided once at boot from
+`SOUL_SERVICE_KEY` and `SOUL_ENV`:
+
+- **`SOUL_SERVICE_KEY` set** — every non-health request must carry
+  `X-Soul-Service-Key: $SOUL_SERVICE_KEY` or it is rejected with 401.
+- **No key, `SOUL_ENV=production`** — the service **refuses to start**.
+  soul-service holds the agent's memory; it must not run unauthenticated in
+  production, so a missing key fails the boot rather than silently serving
+  memory to anyone. This matches the sibling
+  [`memory-service`](../memory-service/README.md#auth), which already exits
+  on a missing key in production.
+- **No key, `SOUL_ENV=development`** (default) — the service boots fail-open
+  and logs a single startup WARNING; all requests are accepted without
+  authentication. This is the local-dev / pre-secret convenience path.
+
+Health endpoints (`/health`, `/health/live`, `/health/ready`) are always
+exempt so liveness/readiness probes work without the secret.
 
 ## Configuration
 
 | Env var | Required | Default | Purpose |
 |---|---|---|---|
-| `SOUL_SERVICE_KEY` | no | — | Shared secret enforced by auth middleware when set; unset = fail-open with startup WARNING |
-| `SOUL_ENV` | no | `development` | Tag only; no longer gates auth posture (auth is keyed off `SOUL_SERVICE_KEY` presence) |
+| `SOUL_SERVICE_KEY` | yes in production | — | Shared secret enforced on every non-health request when set. Unset + `SOUL_ENV=production` refuses to start; unset + development fails open with a startup WARNING. |
+| `SOUL_ENV` | no | `development` | Gates the no-key auth posture: `production` refuses to start without a key; `development` fails open. |
 | `SUPABASE_URL` | no | `''` | Tier 2 (cold) Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | no | `''` | Tier 2 service-role key |
 | `SOUL_BUFFER_PATH` | no | `/app/data/active_kb.db` | Tier 0 SQLite path |
