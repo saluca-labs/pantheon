@@ -142,7 +142,6 @@ const featureMatrix: { feature: string; open: string; starter: string; pro: stri
   { feature: "Audit log export", open: "dash", starter: "dash", pro: "dash", enterprise: "check" },
   { feature: "Air-gap deployment", open: "dash", starter: "dash", pro: "dash", enterprise: "check" },
   { feature: "Support", open: "Community", starter: "Email (48h)", pro: "Priority (24h)", enterprise: "Dedicated (4h P0)" },
-  { feature: "SLA", open: "Best effort", starter: "Best effort", pro: "99.5%", enterprise: "Negotiated (up to 99.99%)" },
 ];
 
 const faqs = [
@@ -524,7 +523,6 @@ export default function PricingContent() {
                 <ul className="mt-4 space-y-2 text-sm text-foreground-muted">
                   <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Everything in Platform</span></li>
                   <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Full white-label</span></li>
-                  <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Custom SLAs (up to 99.99%)</span></li>
                   <li className="flex items-start gap-2"><CheckIcon className="h-3.5 w-3.5 mt-0.5 text-gold-400 shrink-0" /><span>Tier 1 scale (Zapier/Make class)</span></li>
                 </ul>
                 <Link
