@@ -765,12 +765,12 @@ export default function LegalPage() {
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Pro</td>
-                      <td className="py-2 pr-4">Advanced analytics, 99.5% SLA, priority support, SSO</td>
+                      <td className="py-2 pr-4">Advanced analytics, priority support, SSO</td>
                       <td className="py-2">Growing teams, mid-market</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Enterprise</td>
-                      <td className="py-2 pr-4">Custom SLA, dedicated support, envelope encryption with customer-supplied KEK, data residency, custom integrations</td>
+                      <td className="py-2 pr-4">Dedicated support, envelope encryption with customer-supplied KEK, data residency, custom integrations</td>
                       <td className="py-2">Large organizations</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
