@@ -39,8 +39,8 @@ const QUICKSTART_STEPS = [
   {
     step: "1",
     title: "Install the SDK",
-    code: "pip install tiresias-sdk",
-    note: "Requires Python 3.10+",
+    code: 'pip install "git+https://github.com/saluca-labs/pantheon.git#subdirectory=apps/platform-api/sdk"',
+    note: "Installs from source on GitHub; requires Python 3.10+ and git. Not on PyPI.",
   },
   {
     step: "2",

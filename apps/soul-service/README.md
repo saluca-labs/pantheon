@@ -6,7 +6,7 @@ SHA-256 dual-integrity hashing (content + topology), an O(1) topic
 routing index (TKHR), recursive compression to a bounded Soul object,
 and a three-tier hot/cold storage cascade.
 
-The upstream package (`soul-memory` on PyPI, Apache 2.0) is vendored
+The upstream package (`soul-memory`, Apache 2.0, from salucallc/soul; not on PyPI) is vendored
 verbatim under `soul/`; see [VENDORED.md](VENDORED.md) for the upstream
 SHA, scrubs applied at vendor time, and the refresh procedure.
 

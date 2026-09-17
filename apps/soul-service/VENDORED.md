@@ -8,7 +8,9 @@ verbatim from an external Apache 2.0 project. Pantheon-specific shims
 ## Upstream
 
 - **Repository:** https://github.com/salucallc/soul
-- **PyPI:** https://pypi.org/project/soul-memory/
+- **PyPI:** none. Soul is not published to PyPI; a PyPI package named `soul-memory`
+  would not be ours. (The vendored `README.upstream.md` still says `pip install soul-memory`;
+  that is an upstream docs defect to fix in salucallc/soul, not here.)
 - **License:** Apache License 2.0 (preserved in `LICENSE`)
 - **Vendored revision:** `b3fdd964ac5f95dfde84a72b1474a160c862428a`
 - **Vendored on:** 2026-05-19
@@ -113,8 +115,8 @@ TKHR lookup, integrity check) — about 70 lines of FastAPI. Most of the
 GCP component map described in `ARCH.md` (Vertex AI summarization, Pub/Sub
 triggers, Cloud KMS HMAC, Vector Search, Firestore hot tier, Cloud
 Scheduler GOS job) is **not implemented in the vendored code** — it is
-the target architecture for the Cloud Run deployment, not what ships with
-the PyPI package.
+the target architecture for the Cloud Run deployment, not what ships in
+the upstream package.
 
 The pieces that DO run in the vendored service today:
 

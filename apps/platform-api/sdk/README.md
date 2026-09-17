@@ -16,9 +16,14 @@ short-lived capability tokens.
 
 ## Installation
 
+The SDK is installed from source on GitHub. It is not published to PyPI, and a
+PyPI package named `tiresias-sdk` or `tiresias` would not be ours.
+
 ```bash
-pip install tiresias-sdk
+pip install "git+https://github.com/saluca-labs/pantheon.git#subdirectory=apps/platform-api/sdk"
 ```
+
+Requires Python 3.10+ and git.
 
 ## Quickstart
 

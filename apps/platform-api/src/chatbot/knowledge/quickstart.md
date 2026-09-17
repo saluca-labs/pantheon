@@ -4,13 +4,13 @@
 
 ## Installation
 
-Install the Tiresias SDK using pip:
+Install the Tiresias SDK from source on GitHub (it is not published to PyPI):
 
 ```
-pip install tiresias-sdk
+pip install "git+https://github.com/saluca-labs/pantheon.git#subdirectory=apps/platform-api/sdk"
 ```
 
-Requirements: Python 3.9+, pip 21+.
+Requirements: Python 3.10+, pip 21+, git.
 
 ## Creating a SoulKey
 
