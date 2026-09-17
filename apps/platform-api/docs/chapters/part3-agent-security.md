@@ -87,12 +87,16 @@ resolved secret. Supported providers and probe endpoints:
 | `groq` | `/openai/v1/models` | `Authorization: Bearer …` |
 | `ollama` | `/api/tags` | unauthenticated |
 
-Supported `secret_ref` schemes today:
+Supported `secret_ref` schemes — all resolved through the
+`platform_secrets` facade in `packages/secrets/python/`:
 
-- `env://VAR_NAME` — implemented; reads from the platform-api
-  container's environment.
-- `vault://`, `gcpsm://`, `awssm://`, `enc://` — reserved; validate
-  cleanly but fail with a structured 400 at write time.
+- `env://VAR_NAME` — reads from the platform-api container's environment.
+- `file:///path` — reads file contents (Docker/k8s mounted secrets).
+- `vault://<mount>/data/<path>#<field>` — HashiCorp Vault KV-v2.
+- `gcpsm://projects/<id>/secrets/<name>/versions/<v>` — GCP Secret Manager.
+- `awssm://<arn-or-name>[#<json-field>]` — AWS Secrets Manager.
+
+Unknown schemes are rejected at write time with a structured 400.
 
 Full mechanics including probe semantics, masking rules, and the
 "why isn't my key resolving" failure modes:

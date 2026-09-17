@@ -112,10 +112,10 @@ The BYOK provider key table. Per-tenant. Holds:
 
 - `tenant_id`, `key_id` (URL-safe slug, unique per tenant)
 - `provider` (`anthropic`, `openai`, `google`, etc.)
-- `secret_ref` — a `env://VAR_NAME` reference (only `env://` is
-  accepted today; future schemes like `vault://` / `awssm://` /
-  `gcpsm://` are reserved by the `packages/secrets/python` facade
-  but not yet enabled for provider keys)
+- `secret_ref` — a `platform_secrets` URI reference. `env://VAR_NAME`,
+  `file:///path`, `vault://...`, `gcpsm://...`, and `awssm://...` are
+  all supported; the BYOK code path delegates to the
+  `packages/secrets/python` facade.
 - `metadata` (JSONB) — model whitelists, region pins, etc.
 
 The Tiresias App Proxy (`tiresias-proxy`) calls into the provider

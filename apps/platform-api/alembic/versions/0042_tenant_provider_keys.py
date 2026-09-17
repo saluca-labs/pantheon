@@ -2,9 +2,10 @@
 
 Each tenant can override the platform-default LLM provider API keys
 (``ANTHROPIC_API_KEY``, ``OPENAI_API_KEY``, …) by registering their own
-credential via a ``platform_secrets`` URI reference (``env://VAR_NAME``
-for now; ``vault://``, ``gcpsm://``, ``awssm://`` are reserved schemes
-that will be wired up by the canonical resolver in a later wave).
+credential via a ``platform_secrets`` URI reference. Supported schemes:
+``env://VAR_NAME``, ``file:///path``, ``vault://...``, ``gcpsm://...``,
+``awssm://...`` (all resolved through the ``platform_secrets`` facade in
+``packages/secrets/python/``).
 
 Schema:
 
