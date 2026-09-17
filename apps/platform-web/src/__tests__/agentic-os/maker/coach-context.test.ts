@@ -426,17 +426,25 @@ describe('enforceContextSizeCap', () => {
     expect(enforceContextSizeCap(payload)).toBe(payload);
   });
 
+  // enforceContextSizeCap re-serialises the whole payload after every pop, so its
+  // cost grows with the square of the overshoot. A 5000-entry payload (~8x the
+  // cap) took 0.8-1.5s locally and hit the 5s default on a loaded CI runner
+  // (pantheon#177, 2026-09-16). 1000 entries is still ~1.6x the cap, so the
+  // truncation path runs, in tens of milliseconds. The explicit timeout is a
+  // backstop, not the fix.
   it('truncates the largest array tail-first when over cap', () => {
-    // Build a payload whose JSON is well over MAX_CONTEXT_BYTES.
-    const big = Array.from({ length: 5000 }, (_, i) => ({
+    // Build a payload whose JSON is over MAX_CONTEXT_BYTES.
+    const big = Array.from({ length: 1000 }, (_, i) => ({
       id: `entry-${i}`,
       padding: 'x'.repeat(50),
     }));
     const payload = { bom_lines: big };
+    // Guard: the input must really exceed the cap, or this test proves nothing.
+    expect(JSON.stringify(payload).length).toBeGreaterThan(MAX_CONTEXT_BYTES);
     const out = enforceContextSizeCap(payload) as unknown as { bom_lines: { _truncated: boolean; _kept: number } };
     expect(JSON.stringify(out).length).toBeLessThanOrEqual(MAX_CONTEXT_BYTES);
     // The container is wrapped with the truncated shim.
     expect(out.bom_lines._truncated).toBe(true);
     expect(typeof out.bom_lines._kept).toBe('number');
-  });
+  }, 20_000);
 });
