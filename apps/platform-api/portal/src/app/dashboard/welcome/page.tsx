@@ -123,6 +123,13 @@ export default function WelcomePage() {
     "  -d '{\"model\": \"gpt-4o\", \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]}'",
   ].join("\n");
 
+  // There is no SDK package to install (npm was retired as a Saluca channel on
+  // 2026-09-16); the gateway speaks the OpenAI API, so standard clients work.
+  const clientEnvExample = [
+    "OPENAI_BASE_URL=https://pantheon.saluca.com/v1",
+    "OPENAI_API_KEY=" + soulkeyDisplay,
+  ].join("\n");
+
   const steps = [
     {
       number: 1,
@@ -146,14 +153,12 @@ export default function WelcomePage() {
     },
     {
       number: 2,
-      title: "Install the SDK",
-      description: "Use the Pantheon SDK to instrument your AI application.",
+      title: "Point your client at the gateway",
+      description: "No SDK to install: any OpenAI-compatible client works. Set its base URL to the gateway and use your SoulKey as the API key.",
       content: (
         <div className="mt-3 space-y-3">
           <div className="bg-of-surface-container-high rounded-lg px-4 py-3 border border-of-outline-variant/10">
-            <code className="font-mono text-sm text-of-on-surface-variant">
-              npm install @tiresias/sdk
-            </code>
+            <pre className="font-mono text-sm text-of-on-surface-variant whitespace-pre">{clientEnvExample}</pre>
           </div>
           {!completedSteps.has(2) && (
             <button
@@ -178,7 +183,7 @@ export default function WelcomePage() {
           {!completedSteps.has(3) && (
             <div className="flex items-center gap-2 text-xs text-of-on-surface-variant">
               {step3Polling && <SpinnerIcon />}
-              <span>{step3Polling ? "Waiting for first request..." : "Start the SDK to trigger detection."}</span>
+              <span>{step3Polling ? "Waiting for first request..." : "Send the request above to trigger detection."}</span>
             </div>
           )}
         </div>
