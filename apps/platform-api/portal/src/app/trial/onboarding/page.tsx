@@ -20,8 +20,8 @@ const steps = [
     number: 2,
     title: "Install the SDK",
     description:
-      "Install the Pantheon Python SDK to integrate agent authentication into your application.",
-    code: `pip install tiresias-sdk`,
+      "Install the Pantheon Python SDK from source on GitHub (it is not on PyPI) to integrate agent authentication into your application. Requires Python 3.10+ and git.",
+    code: `pip install "git+https://github.com/saluca-labs/pantheon.git#subdirectory=apps/platform-api/sdk"`,
     language: "bash",
   },
   {

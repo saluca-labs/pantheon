@@ -8,7 +8,9 @@ verbatim from an external Apache 2.0 project. Pantheon-specific shims
 ## Upstream
 
 - **Repository:** https://github.com/salucallc/soul
-- **PyPI:** https://pypi.org/project/soul-memory/
+- **PyPI:** none. Soul is not published to PyPI; a PyPI package named `soul-memory`
+  would not be ours. (The vendored `README.upstream.md` still says `pip install soul-memory`;
+  that is an upstream docs defect to fix in salucallc/soul, not here.)
 - **License:** Apache License 2.0 (preserved in `LICENSE`)
 - **Vendored revision:** `b3fdd964ac5f95dfde84a72b1474a160c862428a`
 - **Vendored on:** 2026-05-19

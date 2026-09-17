@@ -433,7 +433,7 @@ app = FastAPI(
         "- **Enterprise**: Enforcement, SIEM forwarding, audit export, multi-tenant, custom detection\n\n"
         "## Resources\n\n"
         "- [Documentation](https://tiresias.network/docs)\n"
-        "- [SDK (PyPI)](https://pypi.org/project/tiresias-sdk/)\n"
+        "- [SDK (source on GitHub; not on PyPI)](https://github.com/saluca-labs/pantheon/tree/main/apps/platform-api/sdk)\n"
         f"- [Support](mailto:{settings.support_email})\n"
     ),
     lifespan=lifespan,
