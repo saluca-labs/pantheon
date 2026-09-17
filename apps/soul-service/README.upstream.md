@@ -5,7 +5,6 @@
 [![CI](https://github.com/cristianxruvalcaba-coder/soul/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianxruvalcaba-coder/soul/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![PyPI](https://img.shields.io/pypi/v/soul-memory.svg)](https://pypi.org/project/soul-memory/)
 
 ---
 
@@ -164,9 +163,17 @@ GDPR erasure downgrades a node to `PGN`: all payload content is nullified while 
 
 ## Quickstart
 
+Soul is **not published to PyPI**. Saluca ships source from its own GitHub organisation, and any
+`soul-memory` package on PyPI is not ours. Install from the repository (it is private, so git
+needs GitHub credentials that can read `salucallc/soul`):
+
 ```bash
-pip install soul-memory
+pip install "git+https://github.com/salucallc/soul.git"
+# or pin a commit:
+pip install "git+https://github.com/salucallc/soul.git@<commit-sha>"
 ```
+
+The distribution is named `soul-memory` and installs the `soul` package.
 
 ```python
 import os
@@ -244,7 +251,7 @@ Contributions are welcome. Please follow these guidelines:
 2. **Tests required** — all new functionality must be accompanied by tests in `soul/tests/`. The test suite must pass without live credentials (use in-memory stubs).
 3. **No breaking changes to hash contracts** — the `content_hash` and `structure_hash` algorithms are stability-critical. Any proposed change must include a migration path.
 4. **One concern per PR** — storage changes, hashing changes, and compression changes should be submitted separately.
-5. **Style**: `black` for formatting, `ruff` for linting. Run `pip install soul-memory[dev]` to get the dev tools.
+5. **Style**: `black` for formatting, `ruff` for linting. From a clone, `pip install -e ".[dev]"` installs the dev tools (there is no PyPI package to install them from).
 
 ```bash
 pip install -e ".[dev]"
