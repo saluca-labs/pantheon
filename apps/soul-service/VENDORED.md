@@ -42,7 +42,7 @@ public GitHub URL.
 |---|---|
 | Package sources | `soul/{__init__,compression,gcp_config,graph,hashing,local_buffer,prefetch,serve,storage,tkhr}.py` |
 | Tests | `soul/tests/{__init__,test_local_buffer,test_session_continuity}.py` |
-| Docs | `README.md`, `ARCH.md`, `PAPER.md`, `LICENSE`, `pyproject.toml` |
+| Docs | `README.md` (as `README.upstream.md`), `ARCH.md`, `LICENSE`, `pyproject.toml`; `PAPER.md` was vendored once and is now pantheon-owned (see below) |
 | Reference | `Dockerfile.upstream` (kept for diffing; not used in CD) |
 
 ## What was deliberately excluded
@@ -50,6 +50,7 @@ public GitHub URL.
 | Path | Reason |
 |---|---|
 | `soul-paper.tex` | 52 KB LaTeX source; not runtime-relevant. PAPER.md is the rendered companion. |
+| `PAPER.md` (on refresh) | Pantheon-owned: it carries pantheon's own edits, including the 2026-09-16 erratum. `vendor-soul.sh` refuses to overwrite it (or anything else on its `PANTHEON_OWNED` list); port upstream paper changes by hand. Guarded by `scripts/tests/test-vendor-soul-guard.sh` in CI. |
 | `.git`, `.github`, `.pytest_cache`, `__pycache__` | Build/VCS artifacts. |
 
 ## Scrubs applied at vendor time

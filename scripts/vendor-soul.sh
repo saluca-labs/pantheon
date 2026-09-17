@@ -17,7 +17,7 @@
 #   Python sources: __init__.py, compression.py, graph.py, hashing.py,
 #                   local_buffer.py, prefetch.py, serve.py, storage.py,
 #                   tkhr.py, gcp_config.py
-#   Docs:           README.md, ARCH.md, PAPER.md
+#   Docs:           README.md (as README.upstream.md), ARCH.md
 #   Misc:           LICENSE, pyproject.toml, Dockerfile (upstream Dockerfile
 #                   kept as Dockerfile.upstream for reference; the Pantheon
 #                   container is built from apps/soul-service/Dockerfile)
@@ -26,7 +26,14 @@
 #
 # Explicitly excluded:
 #   soul-paper.tex (52 KB LaTeX source, not runtime-relevant)
+#   PAPER.md (pantheon-owned since the 2026-09-16 erratum, see PANTHEON_OWNED)
 #   .git, .github, .pytest_cache, __pycache__, dist/, build/
+#
+# Pantheon-owned files (PANTHEON_OWNED below) are NEVER written by this script.
+# Every copy goes through vendor_copy, which refuses with a non-zero exit if
+# the destination is on that list, so a future edit to a whitelist cannot
+# silently clobber pantheon's own edits. Guarded by
+# scripts/tests/test-vendor-soul-guard.sh (run in CI).
 
 set -euo pipefail
 
@@ -45,6 +52,38 @@ if [[ ! -d "${SRC}" ]]; then
     exit 1
 fi
 
+# Files under apps/soul-service/ that pantheon edits itself. Paths are
+# relative to apps/soul-service/. vendor_copy refuses to write any of them.
+#   PAPER.md  carries pantheon's own edits, including the 2026-09-16 erratum;
+#             upstream's PAPER.md is NOT re-synced. Port upstream changes by
+#             hand in a reviewed PR.
+#   README.md, Dockerfile, pantheon_entry.py, VENDORED.md: pantheon wrapper.
+#   soul/tests/test_prev_hash_chain.py: pantheon-only test.
+# README.upstream.md and Dockerfile.upstream are intentionally NOT on this
+# list: they are verbatim upstream copies and are meant to re-sync.
+PANTHEON_OWNED=(
+    PAPER.md
+    README.md
+    Dockerfile
+    pantheon_entry.py
+    VENDORED.md
+    soul/tests/test_prev_hash_chain.py
+)
+
+# vendor_copy SRC_FILE DEST_FILE: copy, unless DEST_FILE is pantheon-owned.
+vendor_copy() {
+    local src="$1" dst="$2" rel owned
+    rel="${dst#"${DOCS_DEST}/"}"
+    for owned in "${PANTHEON_OWNED[@]}"; do
+        if [[ "${rel}" == "${owned}" ]]; then
+            echo "error: refusing to overwrite pantheon-owned file apps/soul-service/${owned}" >&2
+            echo "       (see PANTHEON_OWNED in scripts/vendor-soul.sh). Port upstream changes by hand." >&2
+            exit 3
+        fi
+    done
+    cp -f "${src}" "${dst}"
+}
+
 # Whitelisted Python sources
 PY_FILES=(
     __init__.py
@@ -62,7 +101,8 @@ PY_FILES=(
 # Whitelisted docs (copied to apps/soul-service/, NOT into the package).
 # README.md is renamed to README.upstream.md so it does not clobber the
 # Pantheon-authored README.md that explains the wrapper layout.
-DOC_FILES=(ARCH.md PAPER.md LICENSE pyproject.toml)
+# PAPER.md is deliberately absent: it is pantheon-owned (see PANTHEON_OWNED).
+DOC_FILES=(ARCH.md LICENSE pyproject.toml)
 
 mkdir -p "${DEST}" "${DEST_TESTS}"
 
@@ -72,18 +112,18 @@ for f in "${PY_FILES[@]}"; do
         echo "error: missing required file ${SRC}/${f}" >&2
         exit 1
     fi
-    cp -f "${SRC}/${f}" "${DEST}/${f}"
+    vendor_copy "${SRC}/${f}" "${DEST}/${f}"
 done
 
 # Copy tests
-cp -f "${SRC}/tests/__init__.py" "${DEST_TESTS}/__init__.py"
-cp -f "${SRC}/tests/test_local_buffer.py" "${DEST_TESTS}/test_local_buffer.py"
-cp -f "${SRC}/tests/test_session_continuity.py" "${DEST_TESTS}/test_session_continuity.py"
+vendor_copy "${SRC}/tests/__init__.py" "${DEST_TESTS}/__init__.py"
+vendor_copy "${SRC}/tests/test_local_buffer.py" "${DEST_TESTS}/test_local_buffer.py"
+vendor_copy "${SRC}/tests/test_session_continuity.py" "${DEST_TESTS}/test_session_continuity.py"
 
 # Copy docs to apps/soul-service/ (sibling to soul/ package)
 for f in "${DOC_FILES[@]}"; do
     if [[ -f "${SRC}/${f}" ]]; then
-        cp -f "${SRC}/${f}" "${DOCS_DEST}/${f}"
+        vendor_copy "${SRC}/${f}" "${DOCS_DEST}/${f}"
     fi
 done
 
@@ -91,13 +131,13 @@ done
 # README.md (which documents the wrapper, k8s wiring, and edit policy) is
 # not overwritten on refresh.
 if [[ -f "${SRC}/README.md" ]]; then
-    cp -f "${SRC}/README.md" "${DOCS_DEST}/README.upstream.md"
+    vendor_copy "${SRC}/README.md" "${DOCS_DEST}/README.upstream.md"
 fi
 
 # Keep upstream Dockerfile for reference (renamed; the Pantheon build uses
 # apps/soul-service/Dockerfile which is purpose-built for the monorepo).
 if [[ -f "${SRC}/Dockerfile" ]]; then
-    cp -f "${SRC}/Dockerfile" "${DOCS_DEST}/Dockerfile.upstream"
+    vendor_copy "${SRC}/Dockerfile" "${DOCS_DEST}/Dockerfile.upstream"
 fi
 
 # Defensive scrub for hardcoded Supabase fallback URL + redacted JWT
@@ -167,6 +207,7 @@ echo "── vendored ──"
 echo "  python files:  ${#PY_FILES[@]}"
 echo "  test files:    3"
 echo "  doc files:     ${#DOC_FILES[@]}"
+echo "  not touched:   ${PANTHEON_OWNED[*]} (pantheon-owned)"
 echo "  upstream sha:  ${UPSTREAM_SHA:-unknown}"
 echo ""
 echo "Next steps:"
