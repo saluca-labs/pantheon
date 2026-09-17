@@ -1,7 +1,7 @@
 """Wave H.2.b — tests for the AgentStore + PromptStore adapter layer.
 
 Covers:
-  * secret_ref: env:// resolution, reserved schemes, malformed input
+  * secret_ref: env:// resolution, unknown schemes, malformed input
   * LocalPg AgentStore: CRUD, list, get-by-persona, health
   * LocalPg PromptStore: CRUD, resolve_active_prompt fallback, version chain
   * Config table: get/set, defaults, agents-store config helpers
@@ -123,15 +123,26 @@ def test_secret_ref_missing_scheme_raises():
         resolve_secret_ref("just-a-string")
 
 
-def test_secret_ref_reserved_schemes_raise_not_implemented():
-    for scheme in ("vault", "gcpsm", "awssm", "enc"):
-        with pytest.raises(NotImplementedError):
-            resolve_secret_ref(f"{scheme}://anything")
-
-
 def test_secret_ref_unknown_scheme_raises():
     with pytest.raises(SecretRefError):
         resolve_secret_ref("ftp://server/path")
+
+
+def test_secret_ref_enc_scheme_raises_as_unknown():
+    # enc:// was historically a reserved-but-unimplemented scheme; the
+    # canonical facade does not register it, so it now surfaces as a
+    # SecretRefError (unknown scheme) rather than NotImplementedError.
+    with pytest.raises(SecretRefError):
+        resolve_secret_ref("enc://anything")
+
+
+def test_secret_ref_vault_scheme_no_server_raises_secret_ref_error():
+    # Schemes that the facade knows about but have no backend reachable
+    # in the test environment (no Vault, no AWS creds, no GCP project)
+    # surface as SecretRefError — the resolver no longer pre-rejects
+    # them as "reserved / not implemented".
+    with pytest.raises(SecretRefError):
+        resolve_secret_ref("vault://kv/data/nope#field")
 
 
 def test_describe_secret_ref_safe_summary():
