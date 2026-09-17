@@ -115,8 +115,8 @@ TKHR lookup, integrity check) — about 70 lines of FastAPI. Most of the
 GCP component map described in `ARCH.md` (Vertex AI summarization, Pub/Sub
 triggers, Cloud KMS HMAC, Vector Search, Firestore hot tier, Cloud
 Scheduler GOS job) is **not implemented in the vendored code** — it is
-the target architecture for the Cloud Run deployment, not what ships with
-the PyPI package.
+the target architecture for the Cloud Run deployment, not what ships in
+the upstream package.
 
 The pieces that DO run in the vendored service today:
 

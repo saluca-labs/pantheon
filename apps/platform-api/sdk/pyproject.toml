@@ -41,8 +41,8 @@ dev = [
 [project.urls]
 Homepage = "https://tiresias.network"
 Documentation = "https://tiresias.network/docs"
-Repository = "https://github.com/saluca/tiresias-sdk"
-Issues = "https://github.com/saluca/tiresias-sdk/issues"
+Repository = "https://github.com/saluca-labs/pantheon/tree/main/apps/platform-api/sdk"
+Issues = "https://github.com/saluca-labs/pantheon/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["tiresias"]
