@@ -11,6 +11,19 @@
 
 ---
 
+## Erratum (2026-09-16)
+
+This note corrects the distribution details in the header above. The original text is left unchanged.
+
+Saluca retired npm as a distribution channel on 2026-09-16 and removed its packages from the registry. **`tartarus-mcp` and `@salucallc/soul-mcp` are no longer distributed on npm.** Any `npx` or `npm install` instruction for them is stale. Get them from source in our GitHub organisations instead:
+
+- **tartarus-mcp:** https://github.com/saluca-labs/tartarus-mcp (public). Clone it and run it from the checkout.
+- **soul-mcp:** the `soul-mcp` repository in the `salucallc` GitHub organisation (https://github.com/salucallc/soul-mcp). It is private, so running it from source requires access to that repository.
+
+Related: the unscoped `asphodel` package on npm is not a Saluca package. The Asphodel storage layer is available as source from the repository linked above.
+
+---
+
 ## Abstract
 
 Large language models are stateless by design: each invocation begins with no memory of prior interactions, forcing practitioners to either re-inject full conversation histories (at significant token cost) or accept degraded continuity. We present **Soul**, a persistent memory architecture for LLM agents that addresses this problem through four coordinated mechanisms: (1) a dual-path storage model that simultaneously writes raw payloads to a fast hot tier and compressed summaries to a persistent cold tier; (2) a dual-integrity hash mapping scheme that maintains independent SHA-256 fingerprints over both content (`H(P)`) and graph topology (`H(S)`), enabling tamper detection at sub-millisecond cost; (3) a Hash-Graph v2 node density spectrum with three enumerated node types (FULL, CAN, PGN) that supports information-theoretic compression and GDPR-compliant erasure while preserving graph topology; and (4) a Topic-Keyed Hash Routing (TKHR) index that provides O(1) topic-to-memory-ID lookup with real-time personalization weights. An end-to-end evaluation across a 10-session continuity benchmark demonstrates 100% memory retention, 100% key-fact preservation after recursive compression, and 26/26 hash integrity verifications. Soul is released under Apache 2.0 as the reference implementation and defensive prior art publication for this class of cryptographically verified LLM memory systems.
