@@ -9,11 +9,12 @@ verbatim from an external Apache 2.0 project. Pantheon-specific shims
 
 - **Repository:** https://github.com/salucallc/soul
 - **PyPI:** none. Soul is not published to PyPI; a PyPI package named `soul-memory`
-  would not be ours. (The vendored `README.upstream.md` still says `pip install soul-memory`;
-  that is an upstream docs defect to fix in salucallc/soul, not here.)
+  would not be ours. Upstream fixed its README to install from git in salucallc/soul#1.
 - **License:** Apache License 2.0 (preserved in `LICENSE`)
 - **Vendored revision:** `b3fdd964ac5f95dfde84a72b1474a160c862428a`
 - **Vendored on:** 2026-05-19
+- **`README.upstream.md` re-synced:** 2026-09-16 from upstream `eed6373d92e04c445e637edbec724c9411dcd537`
+  (the only upstream change since `b3fdd96` is that README, so the vendored sources are unchanged)
 
 The exact commit is recorded above so reviewers can diff against the
 upstream tree. Bump this SHA whenever `scripts/vendor-soul.sh` is re-run.

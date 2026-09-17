@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/vendor-soul.sh — Refresh the vendored copy of Soul in apps/soul-service/.
 #
-# Source of truth: github.com/salucallc/soul (Apache 2.0, soul-memory on PyPI).
+# Source of truth: github.com/salucallc/soul (Apache 2.0; not published to PyPI).
 # This script copies Soul's Python sources and docs into apps/soul-service/soul/,
 # scrubs hardcoded defaults that should never ship as fallbacks (Supabase URL +
 # JWT placeholders), and records the upstream revision in VENDORED.md.
