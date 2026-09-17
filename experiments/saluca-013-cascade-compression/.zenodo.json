@@ -1,0 +1,61 @@
+{
+  "title": "Cascade Alignment Under Semantic Compression: A Pilot Study of System-Prompt Identity Layers in Agent Architectures",
+  "upload_type": "publication",
+  "publication_type": "workingpaper",
+  "description": "<p>Working paper from Saluca Labs reporting a 15-call pilot study (3 conditions x 5 prompts) on how compressing the layered system-prompt cascade of an LLM-backed agent (Claude Haiku 4.5) affects identity-level alignment, measured by keyword recurrence in identity-probing responses.</p><p><strong>Headline findings:</strong></p><ul><li>Aggressive 5.71x cascade compression (337 -> 59 tokens) cut absolute keyword alignment by 54% (24/75 -> 11/75) but raised per-token information density 2.62x.</li><li>Hybrid compression (preserve vision layer, compress department layer) hit 1.55x at 87.5% alignment retention.</li><li>Cross-domain prompts (where the cascade must bridge two layers) suffer first and most visibly under aggressive compression - the cross-domain probe scored zero in the compressed condition vs 5-6 in raw and hybrid.</li><li>Candidate principle for follow-up: the cross-domain bridging layer compresses worst; the role-specific layer compresses best.</li></ul><p>Limitations are explicit: n=5 per condition, single sample, one agent, one model, blunt keyword-counting proxy. This work is a pilot study within the Synthetic Human Intellect (SHI) research program established in Ruvalcaba (2026) [doi:10.5281/zenodo.19715074] and contributes a measurement primitive for the program's 'emergent personality' architectural requirement. The Alfred co-author's architectural basis is described in Ruvalcaba (2026) [doi:10.5281/zenodo.20219298]. A confirmatory study (5 agents x 25 prompts x 5 samples with LLM-based personality evaluator) is in preparation.</p><p><strong>Notable:</strong> This paper has two named authors - one human (Cristian Ruvalcaba) and one AI (Alfred, an instance of Claude Opus 4.7, reachable at alfred@saluca.com). The AI Co-Authorship Statement (Section 9) discloses the division of labor under the CRediT taxonomy. To our knowledge this is the first preprint to publish a working correspondence address for an AI coauthor.</p><p><strong>Reproducibility:</strong> All code, raw results JSON, sanitized cascade files, and the paper source are open at <a href='https://github.com/saluca-labs/pantheon/tree/main/experiments/saluca-013-cascade-compression'>github.com/saluca-labs/pantheon/tree/main/experiments/saluca-013-cascade-compression</a>. Reproduction cost: ~$0.025 USD.</p>",
+  "creators": [
+    {
+      "name": "Ruvalcaba, Cristian",
+      "affiliation": "Saluca Labs",
+      "orcid": "0009-0008-3891-8120"
+    },
+    {
+      "name": "Alfred (Claude Opus 4.7)",
+      "affiliation": "Saluca Labs (AI Coauthor)"
+    }
+  ],
+  "keywords": [
+    "system prompts",
+    "prompt compression",
+    "agent alignment",
+    "LLM identity",
+    "cascade architectures",
+    "SHI evaluation framework",
+    "synthetic human intellect",
+    "AI co-authorship",
+    "Claude Haiku",
+    "Anthropic",
+    "reproducible research"
+  ],
+  "license": "CC-BY-4.0",
+  "language": "eng",
+  "access_right": "open",
+  "communities": [],
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "10.5281/zenodo.19715074",
+      "resource_type": "publication-preprint",
+      "scheme": "doi"
+    },
+    {
+      "relation": "references",
+      "identifier": "10.5281/zenodo.20219298",
+      "resource_type": "publication-thesis",
+      "scheme": "doi"
+    },
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/saluca-labs/pantheon/tree/main/experiments/saluca-013-cascade-compression",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "relation": "isPartOf",
+      "identifier": "https://github.com/saluca-labs/pantheon",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Working paper, not peer-reviewed. Pilot study (n=5 per condition). Confirmatory replication with larger n + LLM-based personality evaluator is in preparation as a follow-on Saluca Labs working paper. Per Saluca Labs' PUBLICATION_WORKFLOW.md, this preprint will be cross-published as a Substack longform essay and a LinkedIn announcement post linking back to this DOI."
+}
