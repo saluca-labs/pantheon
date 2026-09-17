@@ -9,6 +9,7 @@ from .anthropic import AnthropicProvider
 from .gemini import GeminiProvider
 from .groq import GroqProvider
 from .ollama import OllamaProvider
+from .openrouter import OpenRouterProvider
 
 PROVIDER_MAP: dict[str, type[BaseProvider]] = {
     "openai": OpenAIProvider,
@@ -16,6 +17,7 @@ PROVIDER_MAP: dict[str, type[BaseProvider]] = {
     "gemini": GeminiProvider,
     "groq": GroqProvider,
     "ollama": OllamaProvider,
+    "openrouter": OpenRouterProvider,
 }
 
 _ENV_KEY_MAP = {
@@ -24,6 +26,7 @@ _ENV_KEY_MAP = {
     "gemini": "GOOGLE_API_KEY",
     "groq": "GROQ_API_KEY",
     "ollama": "OLLAMA_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
 
 _DEFAULT_BASE_MAP = {
@@ -32,6 +35,7 @@ _DEFAULT_BASE_MAP = {
     "gemini": "https://generativelanguage.googleapis.com",
     "groq": "https://api.groq.com",
     "ollama": "http://localhost:11434",
+    "openrouter": "https://openrouter.ai/api",
 }
 
 
@@ -41,6 +45,7 @@ _ENV_BASE_MAP = {
     "gemini": "GEMINI_BASE_URL",
     "groq": "GROQ_BASE_URL",
     "ollama": "OLLAMA_BASE_URL",
+    "openrouter": "OPENROUTER_BASE_URL",
 }
 
 
@@ -154,6 +159,7 @@ __all__ = [
     "GeminiProvider",
     "GroqProvider",
     "OllamaProvider",
+    "OpenRouterProvider",
     "PROVIDER_MAP",
     "build_provider",
 ]

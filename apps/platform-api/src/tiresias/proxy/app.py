@@ -505,6 +505,76 @@ def create_app(settings: TiresiasSettings | None = None) -> FastAPI:
         )
 
     # -------------------------------------------------------------------------
+    # Supabase data-plane proxy
+    #
+    # Dedicated route for Supabase PostgREST traffic so a single Pantheon
+    # deployment can proxy both the model plane (/v1/chat/completions) and the
+    # data plane (/supabase/*) without overloading TIRESIAS_UPSTREAM_URL.
+    # Telemetry is recorded under api_service="supabase" regardless of the
+    # generic api_service setting.
+    #
+    # Unlike /api/{path:path}, this route preserves the inbound `apikey` and
+    # `Authorization` headers because Supabase REST/PostgREST authenticates
+    # off them. A follow-up will replace pass-through with server-side
+    # injection (TIRESIAS_SUPABASE_API_KEY) so callers hold only a Pantheon
+    # tenant token.
+    # -------------------------------------------------------------------------
+
+    @app.api_route(
+        "/supabase/{path:path}",
+        methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+    )
+    async def supabase_proxy(request: Request, path: str) -> Response:
+        cfg = get_settings()
+        if not cfg.supabase_upstream_url:
+            raise HTTPException(
+                status_code=503,
+                detail="Supabase proxy disabled: TIRESIAS_SUPABASE_UPSTREAM_URL not configured",
+            )
+
+        tenant_id = _resolve_tenant_id(request)
+        client = get_http_client()
+        body_bytes = await request.body()
+        params = dict(request.query_params)
+        upstream_headers = {
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in ("host", "content-length", "transfer-encoding", "x-tiresias-api-key")
+        }
+
+        from tiresias.proxy.generic import forward_generic_request
+
+        engine = await get_engine(tenant_id, cfg.data_root)
+        async with AsyncSession(engine) as db_session:
+            await set_tenant_context(db_session, tenant_id)
+            try:
+                upstream_resp = await forward_generic_request(
+                    client=client,
+                    upstream_url=cfg.supabase_upstream_url,
+                    api_service="supabase",
+                    method=request.method,
+                    path=path,
+                    headers=upstream_headers,
+                    body_bytes=body_bytes,
+                    params=params,
+                    tenant_id=tenant_id,
+                    db_session=db_session,
+                )
+            except httpx.RequestError as exc:
+                raise HTTPException(status_code=502, detail=f"Supabase upstream error: {exc}")
+
+        resp_headers = dict(upstream_resp.headers)
+        for h in ("transfer-encoding", "content-encoding", "content-length"):
+            resp_headers.pop(h, None)
+
+        return Response(
+            content=upstream_resp.content,
+            status_code=upstream_resp.status_code,
+            headers=resp_headers,
+            media_type=upstream_resp.headers.get("content-type"),
+        )
+
+    # -------------------------------------------------------------------------
     # Phase 5: Analytics endpoints (APIP-02 to APIP-06)
     # -------------------------------------------------------------------------
 
