@@ -68,6 +68,18 @@ jobs:
             --redact \
             --log-opts="--no-merges --first-parent $RANGE"
 
+  # ── vendor-soul guard ────────────────────────────────────────────────────────
+  # scripts/vendor-soul.sh must never overwrite pantheon-owned files under
+  # apps/soul-service/ (PAPER.md and friends). The test fails if the guard is
+  # removed or PAPER.md is re-added to the vendored whitelist.
+  vendor-soul-guard:
+    name: vendor-soul guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run vendor-soul guard test
+        run: bash scripts/tests/test-vendor-soul-guard.sh
+
   # ── Install ──────────────────────────────────────────────────────────────────
   install:
     name: Install dependencies
