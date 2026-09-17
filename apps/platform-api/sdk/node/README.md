@@ -14,15 +14,15 @@ Route your LLM calls through Tiresias for encrypted audit logging, cost tracking
 
 ## Installation
 
-```bash
-npm install tiresias
-# or
-yarn add tiresias
-```
+There is no installable Node SDK package. It is not published to npm: npm was retired as a Saluca channel on 2026-09-16, and Saluca publishes nothing there.
 
-> **No package published yet?** You can use the proxy directly with any HTTP client or the OpenAI SDK — see [Direct Integration](#direct-integration-openai-sdk) below.
+> **Do not run `npm install tiresias` or `yarn add tiresias`.** The unscoped `tiresias` name on npm belongs to an unrelated third party and is not this SDK.
+
+Use the proxy directly with any HTTP client or the OpenAI SDK, see [Direct Integration](#direct-integration-openai-sdk) below.
 
 ## Quickstart
+
+> The `TiresiasClient` interface below describes the planned SDK. No package ships it yet, so the `'tiresias'` import will not resolve to it.
 
 ```typescript
 import { TiresiasClient } from 'tiresias';
