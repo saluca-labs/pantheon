@@ -765,12 +765,12 @@ export default function LegalPage() {
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Pro</td>
-                      <td className="py-2 pr-4">Advanced analytics, 99.5% SLA, priority support, SSO</td>
+                      <td className="py-2 pr-4">Advanced analytics, priority support, SSO</td>
                       <td className="py-2">Growing teams, mid-market</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
                       <td className="py-2 pr-4">Enterprise</td>
-                      <td className="py-2 pr-4">Custom SLA, dedicated support, envelope encryption with customer-supplied KEK, data residency, custom integrations</td>
+                      <td className="py-2 pr-4">Dedicated support, envelope encryption with customer-supplied KEK, data residency, custom integrations</td>
                       <td className="py-2">Large organizations</td>
                     </tr>
                     <tr className="border-b border-of-outline-variant/15">
@@ -949,47 +949,15 @@ export default function LegalPage() {
               </p>
             </div>
 
-            {/* 7. Service Level and Support */}
+            {/* 7. Support */}
             <div className="bg-of-surface-container border border-of-outline-variant/15 rounded-xl rounded-xl p-6">
               <h3 className="text-lg font-semibold text-foreground mb-3">
-                <span className="text-of-primary">7.</span> Service Level and Support
+                <span className="text-of-primary">7.</span> Support
               </h3>
 
-              <h4 className="text-foreground font-medium mt-4 mb-2">7.1 Availability</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-of-outline-variant/15 text-left">
-                      <th className="py-2 pr-4 text-foreground font-medium">Tier</th>
-                      <th className="py-2 text-foreground font-medium">Uptime Commitment</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-of-on-surface-variant">
-                    <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Open</td>
-                      <td className="py-2">Best effort (self-hosted)</td>
-                    </tr>
-                    <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Starter</td>
-                      <td className="py-2">Best effort</td>
-                    </tr>
-                    <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Pro</td>
-                      <td className="py-2">99.5% monthly uptime</td>
-                    </tr>
-                    <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Enterprise</td>
-                      <td className="py-2">Per agreement (up to 99.99%)</td>
-                    </tr>
-                    <tr className="border-b border-of-outline-variant/15">
-                      <td className="py-2 pr-4">Platform</td>
-                      <td className="py-2">Per agreement (up to 99.99%)</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <h4 className="text-foreground font-medium mt-6 mb-2">7.2 Support</h4>
+              <p className="text-of-on-surface-variant mb-3">
+                Support is provided by tier as follows:
+              </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -1022,16 +990,6 @@ export default function LegalPage() {
                   </tbody>
                 </table>
               </div>
-
-              <h4 className="text-foreground font-medium mt-6 mb-2">7.3 Maintenance</h4>
-              <p className="text-of-on-surface-variant">
-                We will provide at least <span className="text-foreground font-medium">24 hours&apos; notice</span> for scheduled maintenance that may affect Service availability. Emergency maintenance may be performed without prior notice when necessary to protect the Service or its users.
-              </p>
-
-              <h4 className="text-foreground font-medium mt-6 mb-2">7.4 SLA Credits</h4>
-              <p className="text-of-on-surface-variant">
-                If we fail to meet the uptime commitment for your tier, you may request service credits. Credits are calculated based on the duration of the outage and are capped at a maximum of <span className="text-foreground font-medium">30% of your monthly fee</span>. Credits must be requested within 30 days of the incident and are applied to future invoices.
-              </p>
             </div>
 
             {/* 8. Acceptable Use */}
