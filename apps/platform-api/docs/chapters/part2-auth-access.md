@@ -12,20 +12,20 @@ this chapter is the deeper admin-guide version.
 
 ---
 
-## 2.1 The two paths
+## 2.1 The three paths
 
 | Path | For | Header / cookie | Hash | Notes |
 |---|---|---|---|---|
-| **SoulAuth federated** | Human users | session cookie | bcrypt | Production. Separate service, separate user DB. |
-| **SoulKey** | Agents / machines | `X-SoulKey: sk_agent_…` | SHA-512 | Issued per persona; scoped to a tenant. |
-| `@platform/auth` (Argon2id) | — | — | Argon2id | **Legacy / dead code.** Don't configure against it. |
+| **SoulAuth federated** | Human users | `tiresias_session` | bcrypt | Primary user-auth path when configured. Separate service, separate user DB. Adds LDAP / OIDC. |
+| **`@platform/auth`** | Human users | `platform_session` | Argon2id | OSS / fallback user-auth path. Fires when no SoulAuth session is present; default for deployments without SoulAuth. Local accounts only. |
+| **SoulKey** | Agents / machines | `X-SoulKey: sk_agent_…` | SHA-512 | Issued per persona; scoped to a tenant. Independent of user-auth. |
 
-The `@platform/auth` layer in `packages/auth/` is a pre-federation
-prototype that predates SoulAuth. It still compiles and the
-`password_credentials` table still exists, but it is not the path
-your portal users take. If older docs (e.g.
-`docs/security/auth-model.md`) describe Argon2id as the production
-path, treat them as stale — they are awaiting rewrite in Wave I.3.
+Both user-auth paths are live; the BFF helpers accept either cookie.
+SoulAuth is preferred when you need federated identity (LDAP /
+OIDC / JIT provisioning); `@platform/auth` is the supported default
+for OSS deployments and the no-cookie fallback in any deployment.
+See [`docs/security/auth-model.md`](../../../../docs/security/auth-model.md)
+for the full posture write-up.
 
 ## 2.2 Local user auth (default)
 
